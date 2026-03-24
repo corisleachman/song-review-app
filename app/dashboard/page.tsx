@@ -2,223 +2,283 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getIdentity, getAuth, formatTimestamp } from '@/lib/auth';
 import { createClient } from '@/lib/supabase';
+import { getAuth, getIdentity } from '@/lib/auth';
 import Link from 'next/link';
 import styles from './dashboard.module.css';
+
+interface Action {
+  id: string;
+  song_id: string;
+  description: string;
+  suggested_by: string;
+  status: 'pending' | 'approved' | 'completed';
+  created_at: string;
+}
 
 interface Song {
   id: string;
   title: string;
-  created_at: string;
-  updated_at: string;
-  versions?: Array<{ version_number: number; label: string | null }>;
+  actions?: Action[];
+}
+
+interface GroupedActions {
+  [songId: string]: {
+    song: Song;
+    actions: Action[];
+  };
 }
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [songs, setSongs] = useState<Song[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showNewSongForm, setShowNewSongForm] = useState(false);
-  const [newSongTitle, setNewSongTitle] = useState('');
-  const [newVersionLabel, setNewVersionLabel] = useState('');
-  const [newVersionFile, setNewVersionFile] = useState<File | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
   const identity = getIdentity();
+  const [songs, setSongs] = useState<Song[]>([]);
+  const [actions, setActions] = useState<GroupedActions>({});
+  const [loading, setLoading] = useState(true);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed'>('all');
 
   useEffect(() => {
     if (!getAuth() || !identity) {
-      router.push('/?redirectTo=/dashboard');
+      router.push('/?redirectTo=' + encodeURIComponent(window.location.pathname));
       return;
     }
-    loadSongs();
+
+    loadData();
   }, [router, identity]);
 
-  const loadSongs = async () => {
+  const loadData = async () => {
     try {
       const supabase = createClient();
-      const { data, error: fetchError } = await supabase
-        .from('songs')
-        .select(`
-          id,
-          title,
-          created_at,
-          updated_at,
-          song_versions(version_number, label)
-        `)
-        .order('updated_at', { ascending: false });
 
-      if (fetchError) throw fetchError;
-      setSongs(data || []);
+      // Load songs
+      const { data: songsData, error: songsError } = await supabase
+        .from('songs')
+        .select('id, title')
+        .order('created_at', { ascending: false });
+
+      if (songsError) throw songsError;
+
+      // Load all actions
+      const { data: actionsData, error: actionsError } = await supabase
+        .from('actions')
+        .select('id, song_id, description, suggested_by, status, created_at')
+        .order('created_at', { ascending: false });
+
+      if (actionsError) throw actionsError;
+
+      // Group actions by song
+      const grouped: GroupedActions = {};
+      if (songsData) {
+        songsData.forEach(song => {
+          grouped[song.id] = {
+            song,
+            actions: (actionsData || []).filter(a => a.song_id === song.id),
+          };
+        });
+      }
+
+      setSongs(songsData || []);
+      setActions(grouped);
     } catch (err) {
-      console.error('Error loading songs:', err);
-      setError('Failed to load songs');
+      console.error('Error loading data:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreateSong = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newSongTitle || !newVersionFile) {
-      setError('Please fill in all fields');
-      return;
-    }
-
-    setSubmitting(true);
-    setError('');
+  const handleCreateSong = async () => {
+    if (!newTitle.trim()) return;
 
     try {
       const response = await fetch('/api/songs/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: newSongTitle,
-          versionLabel: newVersionLabel || 'Demo',
-          fileName: newVersionFile.name,
-          fileSize: newVersionFile.size,
+          title: newTitle,
         }),
       });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to create song');
-      }
+      if (!response.ok) throw new Error('Failed to create song');
 
-      const { songId, versionId, uploadUrl } = await response.json();
-
-      // Upload file to Supabase Storage
-      const uploadResponse = await fetch(uploadUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'audio/mpeg' },
-        body: newVersionFile,
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error('Failed to upload audio file');
-      }
-
-      // Clear form and reload
-      setNewSongTitle('');
-      setNewVersionLabel('');
-      setNewVersionFile(null);
-      setShowNewSongForm(false);
-      loadSongs();
+      setNewTitle('');
+      setShowCreateForm(false);
+      loadData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error creating song');
-    } finally {
-      setSubmitting(false);
+      console.error('Error creating song:', err);
+      alert('Failed to create song');
     }
   };
 
-  if (loading) return <div className={styles.loading}>Loading...</div>;
+  const handleToggleAction = async (actionId: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
+
+    try {
+      const response = await fetch(`/api/actions/${actionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update action');
+      loadData();
+    } catch (err) {
+      console.error('Error updating action:', err);
+    }
+  };
+
+  const pendingActionsCount = Object.values(actions).reduce(
+    (sum, { actions: a }) => sum + a.filter(act => act.status === 'pending').length,
+    0
+  );
+
+  const filteredActions = Object.entries(actions).map(([songId, { song, actions: songActions }]) => ({
+    songId,
+    song,
+    actions: songActions.filter(a => filterStatus === 'all' || a.status === filterStatus),
+  })).filter(item => item.actions.length > 0);
+
+  if (loading) {
+    return <div className={styles.container}><div className={styles.loading}>Loading...</div></div>;
+  }
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1 className={styles.title}>Song Review</h1>
-        <p className={styles.user}>Logged in as: {identity}</p>
+        <div className={styles.headerContent}>
+          <h1 className={styles.title}>🏠 Song Review</h1>
+          <p className={styles.user}>Logged in as: <strong>{identity}</strong></p>
+        </div>
       </div>
 
-      {songs.length === 0 && !showNewSongForm && (
-        <p className={styles.empty}>No songs yet. Create one to get started.</p>
-      )}
+      <div className={styles.content}>
+        <div className={styles.actionsSection}>
+          <div className={styles.actionsHeader}>
+            <div>
+              <h2 className={styles.sectionTitle}>📋 Actions</h2>
+              <p className={styles.actionCount}>
+                {pendingActionsCount} pending • {songs.length} song{songs.length !== 1 ? 's' : ''}
+              </p>
+            </div>
+            <div className={styles.filterButtons}>
+              <button
+                className={`${styles.filterButton} ${filterStatus === 'all' ? styles.active : ''}`}
+                onClick={() => setFilterStatus('all')}
+              >
+                All
+              </button>
+              <button
+                className={`${styles.filterButton} ${filterStatus === 'pending' ? styles.active : ''}`}
+                onClick={() => setFilterStatus('pending')}
+              >
+                Pending
+              </button>
+              <button
+                className={`${styles.filterButton} ${filterStatus === 'completed' ? styles.active : ''}`}
+                onClick={() => setFilterStatus('completed')}
+              >
+                Completed
+              </button>
+            </div>
+          </div>
 
-      {songs.length > 0 && (
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Song</th>
-              <th>Latest Version</th>
-              <th>Updated</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {songs.map((song) => {
-              const latestVersion = song.versions && song.versions.length > 0 
-                ? song.versions.sort((a, b) => b.version_number - a.version_number)[0]
-                : null;
-              const updated = new Date(song.updated_at).toLocaleDateString();
-              return (
-                <tr key={song.id}>
-                  <td className={styles.songTitle}>{song.title}</td>
-                  <td className={styles.version}>
-                    {latestVersion
-                      ? `Version ${latestVersion.version_number}${latestVersion.label ? ` - ${latestVersion.label}` : ''}`
-                      : 'No versions'}
-                  </td>
-                  <td className={styles.updated}>{updated}</td>
-                  <td className={styles.action}>
-                    <Link href={`/songs/${song.id}`} className={styles.link}>
-                      Open
-                    </Link>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      )}
+          {filteredActions.length > 0 ? (
+            <div className={styles.actionsList}>
+              {filteredActions.map(({ songId, song, actions: songActions }) => (
+                <div key={songId} className={styles.songGroup}>
+                  <Link href={`/songs/${songId}`} className={styles.songLink}>
+                    <div className={styles.songHeader}>
+                      <h3 className={styles.songTitle}>{song.title}</h3>
+                      <span className={styles.actionCountBadge}>{songActions.length}</span>
+                    </div>
+                  </Link>
 
-      {showNewSongForm ? (
-        <form onSubmit={handleCreateSong} className={styles.form}>
-          <h2>New Song</h2>
-          <div className={styles.formGroup}>
-            <label>Song Title</label>
-            <input
-              type="text"
-              value={newSongTitle}
-              onChange={(e) => setNewSongTitle(e.target.value)}
-              placeholder="e.g., Fake It Like You've Made It"
-              required
-              autoFocus
-            />
-          </div>
-          <div className={styles.formGroup}>
-            <label>Version Label</label>
-            <input
-              type="text"
-              value={newVersionLabel}
-              onChange={(e) => setNewVersionLabel(e.target.value)}
-              placeholder="e.g., Demo"
-            />
-          </div>
-          <div className={styles.formGroup}>
-            <label>Upload MP3</label>
-            <input
-              type="file"
-              accept=".mp3"
-              onChange={(e) => setNewVersionFile((e.target as HTMLInputElement).files?.[0] || null)}
-              required
-            />
-          </div>
-          {error && <p className={styles.error}>{error}</p>}
-          <div className={styles.formActions}>
-            <button type="submit" disabled={submitting}>
-              {submitting ? 'Creating...' : 'Create Song'}
-            </button>
+                  <div className={styles.actionsGroup}>
+                    {songActions.map(action => (
+                      <div
+                        key={action.id}
+                        className={`${styles.actionItem} ${action.status === 'completed' ? styles.completed : ''}`}
+                      >
+                        <button
+                          className={styles.checkbox}
+                          onClick={() => handleToggleAction(action.id, action.status)}
+                          title={action.status === 'completed' ? 'Mark as pending' : 'Mark as completed'}
+                        >
+                          {action.status === 'completed' ? '✓' : '○'}
+                        </button>
+                        <div className={styles.actionContent}>
+                          <p className={styles.actionText}>{action.description}</p>
+                          <span className={styles.actionMeta}>
+                            Suggested by {action.suggested_by}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className={styles.empty}>
+              {filterStatus === 'all'
+                ? 'No actions yet. Mark comments as actions to see them here.'
+                : `No ${filterStatus} actions.`}
+            </div>
+          )}
+        </div>
+
+        <div className={styles.songsSection}>
+          <div className={styles.songsHeader}>
+            <h2 className={styles.sectionTitle}>🎵 Songs</h2>
             <button
-              type="button"
-              onClick={() => {
-                setShowNewSongForm(false);
-                setError('');
-              }}
-              className={styles.cancelButton}
+              onClick={() => setShowCreateForm(!showCreateForm)}
+              className={styles.createButton}
             >
-              Cancel
+              + New Song
             </button>
           </div>
-        </form>
-      ) : (
-        <button
-          onClick={() => setShowNewSongForm(true)}
-          className={styles.newSongButton}
-        >
-          + New Song
-        </button>
-      )}
+
+          {showCreateForm && (
+            <div className={styles.createForm}>
+              <input
+                type="text"
+                placeholder="Song title..."
+                value={newTitle}
+                onChange={e => setNewTitle(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleCreateSong()}
+                autoFocus
+                className={styles.input}
+              />
+              <div className={styles.formButtons}>
+                <button onClick={handleCreateSong} className={styles.submitButton}>
+                  Create
+                </button>
+                <button
+                  onClick={() => {
+                    setShowCreateForm(false);
+                    setNewTitle('');
+                  }}
+                  className={styles.cancelButton}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className={styles.songsList}>
+            {songs.map(song => (
+              <Link key={song.id} href={`/songs/${song.id}`} className={styles.songCard}>
+                <h3>{song.title}</h3>
+                <p className={styles.songMeta}>
+                  {actions[song.id]?.actions.length || 0} action{(actions[song.id]?.actions.length || 0) !== 1 ? 's' : ''}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
