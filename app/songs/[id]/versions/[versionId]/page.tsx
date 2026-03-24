@@ -36,6 +36,8 @@ interface Song {
   title: string;
 }
 
+const MARKER_COLORS = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F'];
+
 export default function VersionPage() {
   const router = useRouter();
   const params = useParams();
@@ -47,13 +49,12 @@ export default function VersionPage() {
   const identity = getIdentity();
   const waveformRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<WaveSurfer | null>(null);
+  const markersRef = useRef<HTMLDivElement>(null);
 
   const [song, setSong] = useState<Song | null>(null);
   const [version, setVersion] = useState<Version | null>(null);
   const [threads, setThreads] = useState<Thread[]>([]);
-  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(
-    focusThreadId
-  );
+  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [audioUrl, setAudioUrl] = useState<string>('');
   const [creatingThread, setCreatingThread] = useState(false);
@@ -62,10 +63,11 @@ export default function VersionPage() {
   const [replyText, setReplyText] = useState('');
   const [error, setError] = useState('');
   const [isPlaying, setIsPlaying] = useState(false);
+  const [waveformDuration, setWaveformDuration] = useState(0);
 
   useEffect(() => {
     if (!getAuth() || !identity) {
-      router.push('/');
+      router.push('/?redirectTo=' + encodeURIComponent(window.location.pathname));
       return;
     }
     loadData();
@@ -122,15 +124,18 @@ export default function VersionPage() {
 
       // If there's a focused thread ID, set it after loading
       if (focusThreadId && threadsData) {
-        setSelectedThreadId(focusThreadId);
         const thread = threadsData.find((t) => t.id === focusThreadId);
         if (thread) {
-          // Jump to that timestamp
+          setSelectedThreadId(focusThreadId);
+          // Jump to that timestamp after waveform is ready
           setTimeout(() => {
             if (wavesurferRef.current) {
-              wavesurferRef.current.seekTo(thread.timestamp_seconds / wavesurferRef.current.getDuration());
+              const duration = wavesurferRef.current.getDuration();
+              if (duration > 0) {
+                wavesurferRef.current.seekTo(thread.timestamp_seconds / duration);
+              }
             }
-          }, 100);
+          }, 500);
         }
       }
     } catch (err) {
@@ -149,11 +154,12 @@ export default function VersionPage() {
       waveColor: '#cccccc',
       progressColor: '#000000',
       url: audioUrl,
-      height: 100,
+      height: 120,
     });
 
     ws.on('ready', () => {
-      console.log('WaveSurfer ready');
+      const duration = ws.getDuration();
+      setWaveformDuration(duration);
     });
 
     ws.on('play', () => setIsPlaying(true));
@@ -164,9 +170,9 @@ export default function VersionPage() {
       const clickedTime = relativeX * duration;
       const roundedSeconds = Math.round(clickedTime);
 
-      // Check if clicking on existing thread
+      // Check if clicking on existing thread (within 1 second)
       const existingThread = threads.find(
-        (t) => Math.abs(t.timestamp_seconds - roundedSeconds) < 2
+        (t) => Math.abs(t.timestamp_seconds - roundedSeconds) < 1
       );
 
       if (existingThread) {
@@ -244,6 +250,10 @@ export default function VersionPage() {
     }
   };
 
+  const getMarkerColor = (index: number) => {
+    return MARKER_COLORS[index % MARKER_COLORS.length];
+  };
+
   if (loading) return <div className={styles.loading}>Loading...</div>;
   if (!song || !version) return <div className={styles.error}>Not found</div>;
 
@@ -268,158 +278,166 @@ export default function VersionPage() {
         <p className={styles.user}>Logged in as: {identity}</p>
       </div>
 
-      <div className={styles.playerSection}>
-        <div className={styles.controls}>
-          <button
-            onClick={() => {
-              if (wavesurferRef.current) {
-                wavesurferRef.current.playPause();
-              }
-            }}
-            className={styles.playButton}
-          >
-            {isPlaying ? '⏸ Pause' : '▶ Play'}
-          </button>
-          <p className={styles.instruction}>
-            Click on the waveform to create a comment
-          </p>
-        </div>
-        <div ref={waveformRef} className={styles.waveform} />
-        <div className={styles.threadMarkers}>
-          {threads.map((thread) => {
-            const duration = wavesurferRef.current?.getDuration() || 1;
-            const position = (thread.timestamp_seconds / duration) * 100;
-            return (
-              <button
-                key={thread.id}
-                onClick={() => {
-                  setSelectedThreadId(thread.id);
-                  setCreatingThread(false);
-                  if (wavesurferRef.current) {
-                    wavesurferRef.current.seekTo(
-                      thread.timestamp_seconds / wavesurferRef.current.getDuration()
-                    );
-                  }
-                }}
-                className={`${styles.marker} ${
-                  selectedThreadId === thread.id ? styles.activeMarker : ''
-                }`}
-                style={{ left: `${position}%` }}
-                title={formatTimestamp(thread.timestamp_seconds)}
-              >
-                •
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className={styles.threadsSection}>
-        {creatingThread && threadTimestamp !== null ? (
-          <div className={styles.threadPanel}>
-            <h3>New Comment at {formatTimestamp(threadTimestamp)}</h3>
-            <textarea
-              value={threadCommentText}
-              onChange={(e) => setThreadCommentText(e.target.value)}
-              placeholder="Write your comment..."
-              autoFocus
-              className={styles.textarea}
-            />
-            {error && <p className={styles.error}>{error}</p>}
-            <div className={styles.actions}>
-              <button
-                onClick={handleCreateThread}
-                disabled={!threadCommentText.trim()}
-                className={styles.submitButton}
-              >
-                Post Comment
-              </button>
-              <button
-                onClick={() => {
-                  setCreatingThread(false);
-                  setThreadTimestamp(null);
-                  setThreadCommentText('');
-                  setError('');
-                }}
-                className={styles.cancelButton}
-              >
-                Cancel
-              </button>
-            </div>
+      <div className={styles.mainLayout}>
+        <div className={styles.playerSection}>
+          <div className={styles.controls}>
+            <button
+              onClick={() => {
+                if (wavesurferRef.current) {
+                  wavesurferRef.current.playPause();
+                }
+              }}
+              className={styles.playButton}
+            >
+              {isPlaying ? '⏸ Pause' : '▶ Play'}
+            </button>
+            <p className={styles.instruction}>
+              Click on the waveform to create a comment
+            </p>
           </div>
-        ) : selectedThread ? (
-          <div className={styles.threadPanel}>
-            <h3>Thread at {formatTimestamp(selectedThread.timestamp_seconds)}</h3>
-            <div className={styles.threadMessages}>
-              {selectedThread.comments && selectedThread.comments.length > 0 ? (
-                selectedThread.comments.map((comment) => (
-                  <div key={comment.id} className={styles.message}>
-                    <div className={styles.messageHeader}>
-                      <strong>{comment.author}</strong>
-                      <span className={styles.timestamp}>
-                        {new Date(comment.created_at).toLocaleString()}
-                      </span>
-                    </div>
-                    <p className={styles.messageBody}>{comment.body}</p>
-                  </div>
-                ))
-              ) : (
-                <p className={styles.empty}>No comments yet</p>
-              )}
-            </div>
-
-            <div className={styles.replyForm}>
-              <textarea
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                placeholder="Write a reply..."
-                className={styles.textarea}
-              />
-              <div className={styles.actions}>
-                <button
-                  onClick={() => handleReply(selectedThread.id)}
-                  disabled={!replyText.trim()}
-                  className={styles.submitButton}
-                >
-                  Reply
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : threads.length > 0 ? (
-          <div className={styles.threadPanel}>
-            <h3>Comments ({threads.length})</h3>
-            <div className={styles.threadsList}>
-              {threads.map((thread) => (
+          <div ref={waveformRef} className={styles.waveform} />
+          <div ref={markersRef} className={styles.threadMarkers}>
+            {threads.map((thread, index) => {
+              const position = waveformDuration > 0 ? (thread.timestamp_seconds / waveformDuration) * 100 : 0;
+              return (
                 <button
                   key={thread.id}
                   onClick={() => {
                     setSelectedThreadId(thread.id);
+                    setCreatingThread(false);
                     if (wavesurferRef.current) {
                       wavesurferRef.current.seekTo(
                         thread.timestamp_seconds / wavesurferRef.current.getDuration()
                       );
                     }
                   }}
-                  className={styles.threadLink}
+                  className={`${styles.marker} ${
+                    selectedThreadId === thread.id ? styles.activeMarker : ''
+                  }`}
+                  style={{
+                    left: `${position}%`,
+                    backgroundColor: getMarkerColor(index),
+                  }}
+                  title={formatTimestamp(thread.timestamp_seconds)}
                 >
-                  <span className={styles.threadTime}>
-                    {formatTimestamp(thread.timestamp_seconds)}
-                  </span>
-                  <span className={styles.threadPreview}>
-                    {thread.comments && thread.comments.length > 0
-                      ? thread.comments[0].body.substring(0, 50) + '...'
-                      : 'No comments'}
-                  </span>
+                  💬
                 </button>
-              ))}
+              );
+            })}
+          </div>
+        </div>
+
+        <div className={styles.commentsPanelContainer}>
+          {creatingThread && threadTimestamp !== null ? (
+            <div className={styles.threadPanel}>
+              <h3>New Comment at {formatTimestamp(threadTimestamp)}</h3>
+              <textarea
+                value={threadCommentText}
+                onChange={(e) => setThreadCommentText(e.target.value)}
+                placeholder="Write your comment..."
+                autoFocus
+                className={styles.textarea}
+              />
+              {error && <p className={styles.error}>{error}</p>}
+              <div className={styles.actions}>
+                <button
+                  onClick={handleCreateThread}
+                  disabled={!threadCommentText.trim()}
+                  className={styles.submitButton}
+                >
+                  Post Comment
+                </button>
+                <button
+                  onClick={() => {
+                    setCreatingThread(false);
+                    setThreadTimestamp(null);
+                    setThreadCommentText('');
+                    setError('');
+                  }}
+                  className={styles.cancelButton}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className={styles.threadPanel}>
-            <p className={styles.empty}>No comments yet. Click the waveform to add one.</p>
-          </div>
-        )}
+          ) : selectedThread ? (
+            <div className={styles.threadPanel}>
+              <h3>Thread at {formatTimestamp(selectedThread.timestamp_seconds)}</h3>
+              <div className={styles.threadMessages}>
+                {selectedThread.comments && selectedThread.comments.length > 0 ? (
+                  selectedThread.comments.map((comment) => (
+                    <div key={comment.id} className={styles.message}>
+                      <div className={styles.messageHeader}>
+                        <strong>{comment.author}</strong>
+                        <span className={styles.timestamp}>
+                          {new Date(comment.created_at).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className={styles.messageBody}>{comment.body}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className={styles.empty}>No comments yet</p>
+                )}
+              </div>
+
+              <div className={styles.replyForm}>
+                <textarea
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  placeholder="Write a reply..."
+                  className={styles.textarea}
+                />
+                <div className={styles.actions}>
+                  <button
+                    onClick={() => handleReply(selectedThread.id)}
+                    disabled={!replyText.trim()}
+                    className={styles.submitButton}
+                  >
+                    Reply
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : threads.length > 0 ? (
+            <div className={styles.threadPanel}>
+              <h3>Comments ({threads.length})</h3>
+              <div className={styles.threadsList}>
+                {threads.map((thread, index) => (
+                  <button
+                    key={thread.id}
+                    onClick={() => {
+                      setSelectedThreadId(thread.id);
+                      if (wavesurferRef.current) {
+                        wavesurferRef.current.seekTo(
+                          thread.timestamp_seconds / wavesurferRef.current.getDuration()
+                        );
+                      }
+                    }}
+                    className={styles.threadLink}
+                  >
+                    <span
+                      className={styles.threadDot}
+                      style={{ backgroundColor: getMarkerColor(index) }}
+                    />
+                    <span className={styles.threadTime}>
+                      {formatTimestamp(thread.timestamp_seconds)}
+                    </span>
+                    <span className={styles.threadPreview}>
+                      {thread.comments && thread.comments.length > 0
+                        ? thread.comments[0].body.substring(0, 40) + '...'
+                        : 'No comments'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className={styles.threadPanel}>
+              <p className={styles.empty}>No comments yet. Click the waveform to add one.</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
