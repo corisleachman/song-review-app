@@ -3,59 +3,91 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background-color: #ffffff;
+  background: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%);
+  padding: var(--space-lg);
 }
 
 .box {
   width: 100%;
   max-width: 400px;
-  padding: 40px;
-  border: 1px solid #000000;
+  padding: var(--space-3xl);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
 }
 
 .title {
-  font-size: 24px;
-  font-weight: normal;
-  margin-bottom: 30px;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: var(--space-2xl);
   text-align: center;
+  color: var(--color-text);
+  letter-spacing: -0.5px;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: var(--space-lg);
 }
 
 .input {
-  padding: 10px;
-  border: 1px solid #000000;
-  font-size: 16px;
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border);
+  font-size: 14px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-primary);
+  color: var(--color-text);
+  transition: all var(--transition-base);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
 }
 
 .input::placeholder {
-  color: #999999;
+  color: var(--color-text-tertiary);
 }
 
 .button {
-  padding: 10px;
-  background-color: #000000;
-  color: #ffffff;
+  padding: var(--space-lg) var(--space-xl);
+  background-color: var(--color-primary);
+  color: var(--color-secondary);
   border: none;
-  font-size: 16px;
-  font-weight: normal;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-sm);
 }
 
 .button:hover {
-  background-color: #333333;
+  background-color: var(--color-text);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.button:active {
+  transform: translateY(0);
 }
 
 .button:disabled {
-  background-color: #cccccc;
+  background-color: var(--color-text-tertiary);
   cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .error {
-  color: #cc0000;
-  font-size: 14px;
+  color: var(--color-danger);
+  font-size: 13px;
   text-align: center;
+  padding: var(--space-lg);
+  background: rgba(239, 68, 68, 0.05);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-danger);
+  margin-bottom: var(--space-lg);
 }
