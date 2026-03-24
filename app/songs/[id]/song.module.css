@@ -24,14 +24,32 @@
 
 .titleDisplay {
   display: flex;
-  align-items: baseline;
-  gap: 20px;
+  gap: var(--space-lg);
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.headerWithImage {
+  display: flex;
+  gap: var(--space-xl);
+  align-items: flex-start;
+  width: 100%;
+}
+
+.headerImage {
+  width: 120px;
+  height: 120px;
+  border-radius: var(--radius-lg);
+  object-fit: cover;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
 }
 
 .titleDisplay h1 {
-  font-size: 32px;
-  font-weight: normal;
   margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-text);
 }
 
 .editButton {

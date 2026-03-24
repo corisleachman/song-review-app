@@ -18,6 +18,7 @@ interface Version {
 interface Song {
   id: string;
   title: string;
+  image_url?: string;
   versions: Version[];
 }
 
@@ -57,6 +58,7 @@ export default function SongPage() {
           `
           id,
           title,
+          image_url,
           song_versions(id, version_number, label, created_by, created_at)
         `
         )
@@ -215,13 +217,20 @@ export default function SongPage() {
           </div>
         ) : (
           <div className={styles.titleDisplay}>
-            <h1>{song.title}</h1>
-            <button
-              onClick={() => setEditingTitle(true)}
-              className={styles.editButton}
-            >
-              Edit
-            </button>
+            <div className={styles.headerWithImage}>
+              {song.image_url && (
+                <img src={song.image_url} alt={song.title} className={styles.headerImage} />
+              )}
+              <div>
+                <h1>{song.title}</h1>
+                <button
+                  onClick={() => setEditingTitle(true)}
+                  className={styles.editButton}
+                >
+                  Edit
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
