@@ -77,7 +77,7 @@ export default function SettingsPage() {
     }
   }, [identity]);
 
-  // Apply theme to CSS variables
+  // Apply theme to CSS variables and update page styling
   const applyTheme = (newTheme: Theme) => {
     document.documentElement.style.setProperty('--color-primary', newTheme.primary_color);
     document.documentElement.style.setProperty('--color-accent', newTheme.accent_color);
@@ -144,7 +144,7 @@ export default function SettingsPage() {
         <Link href="/dashboard" className={styles.backButton}>
           ← Back
         </Link>
-        <h1 className={styles.title}>🎨 Brand Explorer</h1>
+        <h1 className={styles.title}>⚙️ Settings</h1>
       </div>
 
       {error && (
@@ -157,12 +157,14 @@ export default function SettingsPage() {
       <div className={styles.content}>
         <div className={styles.brandExplorer}>
           <div className={styles.explorerHeader}>
-            <h2>Live Color Picker</h2>
-            <p>Changes update in real-time below</p>
+            <h2>Color Theme</h2>
+            <p>Customize your colors. Changes apply live across the app.</p>
           </div>
 
+          {/* Color Picker Section */}
           <div className={styles.colorPicker}>
             <div className={styles.pickerRow}>
+              {/* Primary Color */}
               <div className={styles.colorControl}>
                 <label className={styles.label}>Primary Color</label>
                 <div className={styles.colorInputWrapper}>
@@ -177,10 +179,12 @@ export default function SettingsPage() {
                     value={theme.primary_color}
                     onChange={e => handleColorChange('primary_color', e.target.value)}
                     className={styles.textInput}
+                    placeholder="#ff1493"
                   />
                 </div>
               </div>
 
+              {/* Accent Color */}
               <div className={styles.colorControl}>
                 <label className={styles.label}>Accent Color</label>
                 <div className={styles.colorInputWrapper}>
@@ -195,10 +199,12 @@ export default function SettingsPage() {
                     value={theme.accent_color}
                     onChange={e => handleColorChange('accent_color', e.target.value)}
                     className={styles.textInput}
+                    placeholder="#a855f7"
                   />
                 </div>
               </div>
 
+              {/* Background Color */}
               <div className={styles.colorControl}>
                 <label className={styles.label}>Background</label>
                 <div className={styles.colorInputWrapper}>
@@ -213,27 +219,14 @@ export default function SettingsPage() {
                     value={theme.background_color}
                     onChange={e => handleColorChange('background_color', e.target.value)}
                     className={styles.textInput}
+                    placeholder="#0d0914"
                   />
                 </div>
               </div>
             </div>
           </div>
 
-          <div className={styles.previewSection}>
-            <h3>Live Preview</h3>
-            <div
-              className={styles.previewBox}
-              style={{
-                background: `linear-gradient(135deg, ${theme.background_color}, ${theme.primary_color}33)`,
-              }}
-            >
-              <div className={styles.previewContent}>
-                <h4 style={{ color: theme.primary_color }}>Song Review</h4>
-                <p style={{ color: theme.accent_color }}>Your theme preview</p>
-              </div>
-            </div>
-          </div>
-
+          {/* Preset Buttons */}
           <div className={styles.presetsSection}>
             <h3>Quick Presets</h3>
             <div className={styles.presetGrid}>
@@ -252,6 +245,7 @@ export default function SettingsPage() {
             </div>
           </div>
 
+          {/* Action Buttons */}
           <div className={styles.actions}>
             <button
               onClick={handleSave}
@@ -269,14 +263,17 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* Info Panel */}
         <div className={styles.infoPanel}>
-          <h3>ℹ️ Tips</h3>
+          <h3>ℹ️ How It Works</h3>
           <ul className={styles.tipsList}>
-            <li>Colors update live as you change them</li>
+            <li>Colors update <strong>live</strong> as you change them</li>
+            <li>See changes immediately on the page</li>
             <li>Click presets to try different themes</li>
             <li>Use hex colors or the color picker</li>
             <li>Click Save to store your theme</li>
-            <li>Your theme persists across sessions</li>
+            <li>Your colors persist when you log out</li>
+            <li>Coris and Al each have separate color preferences</li>
           </ul>
 
           <div style={{ marginTop: 'var(--space-2xl)' }}>
