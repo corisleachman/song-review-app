@@ -190,7 +190,7 @@ export default function DashboardPage() {
             <input
               type="file"
               accept=".mp3"
-              onChange={(e) => setNewVersionFile(e.files?.[0] || null)}
+              onChange={(e) => setNewVersionFile((e.target as HTMLInputElement).files?.[0] || null)}
               required
             />
           </div>
