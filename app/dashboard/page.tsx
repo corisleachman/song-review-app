@@ -357,7 +357,9 @@ export default function DashboardPage() {
                     className={styles.editButton}
                     title="Edit song"
                   >
-                    ✏️
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M2 14.5L2.5 11.5L12 2C12.3333 1.66667 12.8333 1.5 13.5 1.5C14.1667 1.5 14.6667 1.66667 15 2L16 3C16.3333 3.33333 16.5 3.83333 16.5 4.5C16.5 5.16667 16.3333 5.66667 16 6L6.5 15.5L3.5 16C2.83333 16 2.5 15.6667 2 14.5Z" stroke="white" strokeWidth="1.2" fill="none"/>
+                    </svg>
                   </button>
                   <button
                     onClick={async (e) => {
@@ -384,10 +386,23 @@ export default function DashboardPage() {
                     className={styles.deleteButton}
                     title="Delete song"
                   >
-                    🗑️
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3 4H15M7 1H11M2 4H16L14.5 15C14.4 15.9 13.6 16.6 12.7 16.6H5.3C4.4 16.6 3.6 15.9 3.5 15L2 4Z" stroke="white" strokeWidth="1.2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
                   </button>
                   <label className={styles.uploadLabel} onClick={(e) => e.stopPropagation()}>
-                    {uploadingSongId === song.id ? '⏳' : '🖼️'}
+                    {uploadingSongId === song.id ? (
+                      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="9" cy="9" r="8" stroke="white" strokeWidth="1.2" fill="none"/>
+                        <path d="M9 5V13M5 9H13" stroke="white" strokeWidth="1.2" strokeLinecap="round"/>
+                      </svg>
+                    ) : (
+                      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="2" y="3" width="14" height="12" rx="1" stroke="white" strokeWidth="1.2" fill="none"/>
+                        <circle cx="5.5" cy="6" r="1" fill="white"/>
+                        <path d="M2 12L6 8L10 12M10 12L14 8L16 10" stroke="white" strokeWidth="1.2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
                     <input
                       type="file"
                       accept="image/*"
