@@ -127,7 +127,14 @@ export default function VersionPage() {
         const thread = threadsData.find((t) => t.id === focusThreadId);
         if (thread) {
           setSelectedThreadId(focusThreadId);
-          // Jump to that timestamp after waveform is ready
+          // Scroll to thread after render
+          setTimeout(() => {
+            const threadPanel = document.querySelector(`.${styles.threadPanel}`);
+            if (threadPanel) {
+              threadPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }, 100);
+          // Also seek waveform to that timestamp
           setTimeout(() => {
             if (wavesurferRef.current) {
               const duration = wavesurferRef.current.getDuration();
