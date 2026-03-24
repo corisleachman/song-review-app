@@ -311,7 +311,7 @@ export default function SongPage() {
             <input
               type="file"
               accept=".mp3"
-              onChange={(e) => setUploadFile(e.files?.[0] || null)}
+              onChange={(e) => setUploadFile((e.target as HTMLInputElement).files?.[0] || null)}
               required
             />
           </div>
