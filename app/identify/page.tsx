@@ -1,5 +1,3 @@
-'use client';
-
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { getAuth, setIdentity } from '@/lib/auth';
@@ -43,7 +41,7 @@ export default function IdentifyPage() {
             onClick={() => handleSelectIdentity('Al')}
             className={styles.card}
           >
-            <div className={styles.avatar}>🎸</div>
+            <div className={styles.avatar}>🎤</div>
             <h2 className={styles.name}>Al</h2>
             <p className={styles.email}>furthertcb@gmail.com</p>
           </button>
