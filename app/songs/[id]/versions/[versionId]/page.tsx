@@ -280,7 +280,7 @@ export default function VersionPage() {
         throw new Error(data.error || 'Failed to mark as action');
       }
 
-      setMarkedActions(new Set([...markedActions, commentId]));
+      setMarkedActions(prev => new Set([...Array.from(prev), commentId]));
       setShowActionModal(null);
       setActionText('');
     } catch (err) {
