@@ -52,6 +52,7 @@ function VersionContent() {
 
   const [song, setSong] = useState<Song | null>(null);
   const [version, setVersion] = useState<Version | null>(null);
+  const [allVersions, setAllVersions] = useState<Version[]>([]);
   const [threads, setThreads] = useState<Thread[]>([]);
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -97,6 +98,16 @@ function VersionContent() {
 
       if (versionError) throw versionError;
       setVersion(versionData);
+
+      // Fetch all versions for this song
+      const { data: allVersionsData, error: allVersionsError } = await supabase
+        .from('song_versions')
+        .select('*')
+        .eq('song_id', songId)
+        .order('version_number', { ascending: false });
+
+      if (allVersionsError) throw allVersionsError;
+      setAllVersions(allVersionsData || []);
 
       const { data: urlData } = supabase.storage.from('song-files').getPublicUrl(versionData.file_path);
       setAudioUrl(urlData.publicUrl);
