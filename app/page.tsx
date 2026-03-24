@@ -18,7 +18,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     if (password === 'further_forever') {
-      setAuth('authenticated');
+      setAuth();
       const redirectTo = searchParams.get('redirectTo') || '/identify';
       router.push(redirectTo);
     } else {
