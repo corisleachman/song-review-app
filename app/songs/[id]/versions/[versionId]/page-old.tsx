@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState, Suspense } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
+import { getIdentity, getAuth, formatTimestamp } from '@/lib/auth';
 import { createClient } from '@/lib/supabase';
-import { getAuth, getIdentity, formatTimestamp } from '@/lib/auth';
 import WaveSurfer from 'wavesurfer.js';
+import Link from 'next/link';
 import styles from './version.module.css';
 
 interface Comment {
@@ -35,9 +36,9 @@ interface Song {
   title: string;
 }
 
-const MARKER_COLORS = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#ffa07a', '#98d8c8', '#f7dc6f', '#bb8fce'];
+const MARKER_COLORS = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F'];
 
-function VersionContent() {
+export default function VersionPage() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -66,7 +67,6 @@ function VersionContent() {
   const [markedActions, setMarkedActions] = useState<Set<string>>(new Set());
   const [showActionModal, setShowActionModal] = useState<string | null>(null);
   const [actionText, setActionText] = useState('');
-  const [hoveredMarkerId, setHoveredMarkerId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!getAuth() || !identity) {
@@ -80,6 +80,7 @@ function VersionContent() {
     try {
       const supabase = createClient();
 
+      // Load song
       const { data: songData, error: songError } = await supabase
         .from('songs')
         .select('id, title')
@@ -89,6 +90,7 @@ function VersionContent() {
       if (songError) throw songError;
       setSong(songData);
 
+      // Load version
       const { data: versionData, error: versionError } = await supabase
         .from('song_versions')
         .select('*')
@@ -98,28 +100,44 @@ function VersionContent() {
       if (versionError) throw versionError;
       setVersion(versionData);
 
-      const { data: urlData } = supabase.storage.from('song-files').getPublicUrl(versionData.file_path);
+      // Get audio download URL
+      const { data: urlData } = supabase.storage
+        .from('song-files')
+        .getPublicUrl(versionData.file_path);
+
       setAudioUrl(urlData.publicUrl);
 
+      // Load threads with comments
       const { data: threadsData, error: threadsError } = await supabase
         .from('comment_threads')
-        .select(`
+        .select(
+          `
           id,
           timestamp_seconds,
           created_by,
           created_at,
           comments(id, author, body, created_at)
-        `)
+        `
+        )
         .eq('song_version_id', versionId)
         .order('timestamp_seconds', { ascending: true });
 
       if (threadsError) throw threadsError;
       setThreads(threadsData || []);
 
+      // If there's a focused thread ID, set it after loading
       if (focusThreadId && threadsData) {
         const thread = threadsData.find((t) => t.id === focusThreadId);
         if (thread) {
           setSelectedThreadId(focusThreadId);
+          // Scroll to thread after render
+          setTimeout(() => {
+            const threadPanel = document.querySelector(`.${styles.threadPanel}`);
+            if (threadPanel) {
+              threadPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }, 100);
+          // Also seek waveform to that timestamp
           setTimeout(() => {
             if (wavesurferRef.current) {
               const duration = wavesurferRef.current.getDuration();
@@ -143,18 +161,15 @@ function VersionContent() {
 
     const ws = WaveSurfer.create({
       container: waveformRef.current,
-      waveColor: '#e0e7ff',
-      progressColor: '#3b82f6',
+      waveColor: '#cccccc',
+      progressColor: '#000000',
       url: audioUrl,
-      height: 100,
-      cursorWidth: 2,
-      cursorColor: '#3b82f6',
+      height: 120,
     });
 
     ws.on('ready', () => {
       const duration = ws.getDuration();
       setWaveformDuration(duration);
-      renderMarkers();
     });
 
     ws.on('play', () => setIsPlaying(true));
@@ -165,7 +180,10 @@ function VersionContent() {
       const clickedTime = relativeX * duration;
       const roundedSeconds = Math.round(clickedTime);
 
-      const existingThread = threads.find((t) => Math.abs(t.timestamp_seconds - roundedSeconds) < 1);
+      // Check if clicking on existing thread (within 1 second)
+      const existingThread = threads.find(
+        (t) => Math.abs(t.timestamp_seconds - roundedSeconds) < 1
+      );
 
       if (existingThread) {
         setSelectedThreadId(existingThread.id);
@@ -183,45 +201,6 @@ function VersionContent() {
       ws.destroy();
     };
   }, [audioUrl, threads]);
-
-  const renderMarkers = () => {
-    if (!markersRef.current || !threads.length || waveformDuration === 0) return;
-
-    markersRef.current.innerHTML = '';
-
-    threads.forEach((thread, index) => {
-      const percent = (thread.timestamp_seconds / waveformDuration) * 100;
-      
-      const marker = document.createElement('button');
-      marker.className = styles.marker;
-      marker.style.left = `${percent}%`;
-      marker.style.background = MARKER_COLORS[index % MARKER_COLORS.length];
-      
-      const commentCount = thread.comments?.length || 0;
-      marker.innerHTML = `
-        <span style="font-size: 14px; font-weight: 600;">●</span>
-      `;
-      
-      marker.title = `${formatTimestamp(thread.timestamp_seconds)} • ${commentCount} comment${commentCount !== 1 ? 's' : ''}`;
-      
-      marker.addEventListener('click', (e) => {
-        e.stopPropagation();
-        setSelectedThreadId(thread.id);
-        if (wavesurferRef.current) {
-          wavesurferRef.current.seekTo(thread.timestamp_seconds / wavesurferRef.current.getDuration());
-        }
-      });
-
-      marker.addEventListener('mouseenter', () => setHoveredMarkerId(thread.id));
-      marker.addEventListener('mouseleave', () => setHoveredMarkerId(null));
-
-      markersRef.current?.appendChild(marker);
-    });
-  };
-
-  useEffect(() => {
-    renderMarkers();
-  }, [threads, waveformDuration]);
 
   const handleCreateThread = async () => {
     if (!threadCommentText.trim() || threadTimestamp === null) return;
@@ -284,7 +263,7 @@ function VersionContent() {
   const handleMarkAsAction = async (commentId: string, commentBody: string) => {
     try {
       const description = actionText.trim() || commentBody;
-
+      
       const response = await fetch('/api/actions/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -309,91 +288,106 @@ function VersionContent() {
     }
   };
 
-  const getMarkerColor = (index: number) => MARKER_COLORS[index % MARKER_COLORS.length];
+  const getMarkerColor = (index: number) => {
+    return MARKER_COLORS[index % MARKER_COLORS.length];
+  };
 
-  if (loading) return <div className={styles.container}><div className={styles.loading}>Loading...</div></div>;
+  if (loading) return <div className={styles.loading}>Loading...</div>;
   if (!song || !version) return <div className={styles.error}>Not found</div>;
 
-  const selectedThread = selectedThreadId ? threads.find((t) => t.id === selectedThreadId) : null;
+  const selectedThread = selectedThreadId
+    ? threads.find((t) => t.id === selectedThreadId)
+    : null;
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <div className={styles.headerLeft}>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className={styles.homeIcon}
-            title="Back to Dashboard"
-          >
-            🏠
-          </button>
-          <div>
-            <h1 className={styles.songTitle}>{song.title}</h1>
-            <p className={styles.versionLabel}>
-              Version {version.version_number}
-              {version.label && ` • ${version.label}`}
-            </p>
-          </div>
-        </div>
-        <div className={styles.headerRight}>
-          <p className={styles.user}>
-            <span className={styles.userBadge}>{identity?.[0]}</span>
-            {identity}
-          </p>
-        </div>
+      <div className={styles.topBar}>
+        <Link href="/dashboard" className={styles.homeIcon} title="Back to Dashboard">
+          🏠
+        </Link>
+        <Link href={`/songs/${songId}`} className={styles.backLink}>
+          ← Back to Song
+        </Link>
       </div>
 
-      <div className={styles.mainContent}>
-        <div className={styles.playerPanel}>
-          <div className={styles.playerControls}>
+      <div className={styles.header}>
+        <div>
+          <h1 className={styles.songTitle}>{song.title}</h1>
+          <p className={styles.versionLabel}>
+            Version {version.version_number}
+            {version.label && ` - ${version.label}`}
+          </p>
+        </div>
+        <p className={styles.user}>Logged in as: {identity}</p>
+      </div>
+
+      <div className={styles.mainLayout}>
+        <div className={styles.playerSection}>
+          <div className={styles.controls}>
             <button
-              onClick={() => wavesurferRef.current?.playPause()}
+              onClick={() => {
+                if (wavesurferRef.current) {
+                  wavesurferRef.current.playPause();
+                }
+              }}
               className={styles.playButton}
             >
-              {isPlaying ? '⏸' : '▶'}
+              {isPlaying ? '⏸ Pause' : '▶ Play'}
             </button>
-            <p className={styles.instruction}>Click the waveform to add a comment</p>
+            <p className={styles.instruction}>
+              Click on the waveform to create a comment
+            </p>
           </div>
-
-          <div className={styles.waveformContainer}>
-            <div ref={waveformRef} className={styles.waveform} />
-            <div ref={markersRef} className={styles.markerTrack} />
+          <div ref={waveformRef} className={styles.waveform} />
+          <div ref={markersRef} className={styles.threadMarkers}>
+            {threads.map((thread, index) => {
+              const position = waveformDuration > 0 ? (thread.timestamp_seconds / waveformDuration) * 100 : 0;
+              return (
+                <button
+                  key={thread.id}
+                  onClick={() => {
+                    setSelectedThreadId(thread.id);
+                    setCreatingThread(false);
+                    if (wavesurferRef.current) {
+                      wavesurferRef.current.seekTo(
+                        thread.timestamp_seconds / wavesurferRef.current.getDuration()
+                      );
+                    }
+                  }}
+                  className={`${styles.marker} ${
+                    selectedThreadId === thread.id ? styles.activeMarker : ''
+                  }`}
+                  style={{
+                    left: `${position}%`,
+                    backgroundColor: getMarkerColor(index),
+                  }}
+                  title={formatTimestamp(thread.timestamp_seconds)}
+                >
+                  💬
+                </button>
+              );
+            })}
           </div>
-
-          {hoveredMarkerId && (
-            <div className={styles.markerTooltip}>
-              {threads.find(t => t.id === hoveredMarkerId) && (
-                <>
-                  <p className={styles.tooltipTime}>
-                    {formatTimestamp(threads.find(t => t.id === hoveredMarkerId)!.timestamp_seconds)}
-                  </p>
-                  <p className={styles.tooltipCount}>
-                    {threads.find(t => t.id === hoveredMarkerId)!.comments.length} comment
-                    {threads.find(t => t.id === hoveredMarkerId)!.comments.length !== 1 ? 's' : ''}
-                  </p>
-                </>
-              )}
-            </div>
-          )}
         </div>
 
-        <div className={styles.commentsPanel}>
+        <div className={styles.commentsPanelContainer}>
           {creatingThread && threadTimestamp !== null ? (
-            <div className={styles.threadCard}>
-              <div className={styles.threadTime}>
-                <span className={styles.timeBadge}>{formatTimestamp(threadTimestamp)}</span>
-                <h3>New Comment</h3>
-              </div>
+            <div className={styles.threadPanel}>
+              <h3>New Comment at {formatTimestamp(threadTimestamp)}</h3>
               <textarea
                 value={threadCommentText}
                 onChange={(e) => setThreadCommentText(e.target.value)}
-                placeholder="What's on your mind..."
+                placeholder="Write your comment..."
                 autoFocus
                 className={styles.textarea}
               />
               {error && <p className={styles.error}>{error}</p>}
               <div className={styles.actions}>
-                <button onClick={handleCreateThread} disabled={!threadCommentText.trim()} className={styles.submitButton}>
+                <button
+                  onClick={handleCreateThread}
+                  disabled={!threadCommentText.trim()}
+                  className={styles.submitButton}
+                >
                   Post Comment
                 </button>
                 <button
@@ -410,34 +404,17 @@ function VersionContent() {
               </div>
             </div>
           ) : selectedThread ? (
-            <div className={styles.threadCard}>
-              <div className={styles.threadTime}>
-                <span className={styles.timeBadge}>{formatTimestamp(selectedThread.timestamp_seconds)}</span>
-                <h3>Comments</h3>
-              </div>
-
-              <div className={styles.messagesContainer}>
+            <div className={styles.threadPanel}>
+              <h3>Thread at {formatTimestamp(selectedThread.timestamp_seconds)}</h3>
+              <div className={styles.threadMessages}>
                 {selectedThread.comments && selectedThread.comments.length > 0 ? (
-                  selectedThread.comments.map((comment, idx) => (
-                    <div key={comment.id} className={styles.messageCard}>
+                  selectedThread.comments.map((comment) => (
+                    <div key={comment.id} className={styles.message}>
                       <div className={styles.messageHeader}>
-                        <div className={styles.avatarSection}>
-                          <div
-                            className={styles.avatar}
-                            style={{
-                              background:
-                                ['#3b82f6', '#a855f7', '#06b6d4', '#ec4899', '#f59e0b', '#10b981'][
-                                  idx % 6
-                                ],
-                            }}
-                          >
-                            {comment.author[0]}
-                          </div>
-                          <div>
-                            <strong className={styles.author}>{comment.author}</strong>
-                            <span className={styles.timestamp}>{new Date(comment.created_at).toLocaleString()}</span>
-                          </div>
-                        </div>
+                        <strong>{comment.author}</strong>
+                        <span className={styles.timestamp}>
+                          {new Date(comment.created_at).toLocaleString()}
+                        </span>
                       </div>
                       <p className={styles.messageBody}>{comment.body}</p>
                       {!markedActions.has(comment.id) && (
@@ -451,7 +428,11 @@ function VersionContent() {
                           📌 Mark as Action
                         </button>
                       )}
-                      {markedActions.has(comment.id) && <div className={styles.actionBadge}>✓ Action</div>}
+                      {markedActions.has(comment.id) && (
+                        <div className={styles.actionBadge}>
+                          ✓ Marked as action
+                        </div>
+                      )}
                     </div>
                   ))
                 ) : (
@@ -463,47 +444,56 @@ function VersionContent() {
                 <textarea
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="Reply..."
+                  placeholder="Write a reply..."
                   className={styles.textarea}
                 />
-                <button onClick={() => handleReply(selectedThread.id)} disabled={!replyText.trim()} className={styles.submitButton}>
-                  Reply
-                </button>
+                <div className={styles.actions}>
+                  <button
+                    onClick={() => handleReply(selectedThread.id)}
+                    disabled={!replyText.trim()}
+                    className={styles.submitButton}
+                  >
+                    Reply
+                  </button>
+                </div>
               </div>
             </div>
           ) : threads.length > 0 ? (
-            <div className={styles.threadsList}>
-              <h3 className={styles.panelTitle}>Comments ({threads.length})</h3>
-              <div className={styles.threadsGrid}>
+            <div className={styles.threadPanel}>
+              <h3>Comments ({threads.length})</h3>
+              <div className={styles.threadsList}>
                 {threads.map((thread, index) => (
                   <button
                     key={thread.id}
                     onClick={() => {
                       setSelectedThreadId(thread.id);
                       if (wavesurferRef.current) {
-                        wavesurferRef.current.seekTo(thread.timestamp_seconds / wavesurferRef.current.getDuration());
+                        wavesurferRef.current.seekTo(
+                          thread.timestamp_seconds / wavesurferRef.current.getDuration()
+                        );
                       }
                     }}
-                    className={styles.threadPreview}
+                    className={styles.threadLink}
                   >
-                    <div
+                    <span
                       className={styles.threadDot}
-                      style={{ background: getMarkerColor(index) }}
+                      style={{ backgroundColor: getMarkerColor(index) }}
                     />
-                    <div className={styles.threadInfo}>
-                      <span className={styles.threadTime}>{formatTimestamp(thread.timestamp_seconds)}</span>
-                      <p className={styles.preview}>
-                        {thread.comments?.[0]?.body.substring(0, 50)}...
-                      </p>
-                    </div>
-                    <span className={styles.count}>{thread.comments?.length || 0}</span>
+                    <span className={styles.threadTime}>
+                      {formatTimestamp(thread.timestamp_seconds)}
+                    </span>
+                    <span className={styles.threadPreview}>
+                      {thread.comments && thread.comments.length > 0
+                        ? thread.comments[0].body.substring(0, 40) + '...'
+                        : 'No comments'}
+                    </span>
                   </button>
                 ))}
               </div>
             </div>
           ) : (
-            <div className={styles.empty}>
-              <p>No comments yet. Click the waveform to add one.</p>
+            <div className={styles.threadPanel}>
+              <p className={styles.empty}>No comments yet. Click the waveform to add one.</p>
             </div>
           )}
         </div>
@@ -513,12 +503,26 @@ function VersionContent() {
         <div className={styles.modalOverlay}>
           <div className={styles.modalBox}>
             <h3>Mark as Action</h3>
-            <textarea value={actionText} onChange={(e) => setActionText(e.target.value)} className={styles.textarea} />
+            <p className={styles.modalText}>Edit the action description or keep as is:</p>
+            <textarea
+              value={actionText}
+              onChange={(e) => setActionText(e.target.value)}
+              className={styles.textarea}
+            />
             <div className={styles.actions}>
-              <button onClick={() => handleMarkAsAction(showActionModal, actionText)} className={styles.submitButton}>
+              <button
+                onClick={() => handleMarkAsAction(showActionModal, actionText)}
+                className={styles.submitButton}
+              >
                 Mark as Action
               </button>
-              <button onClick={() => setShowActionModal(null)} className={styles.cancelButton}>
+              <button
+                onClick={() => {
+                  setShowActionModal(null);
+                  setActionText('');
+                }}
+                className={styles.cancelButton}
+              >
                 Cancel
               </button>
             </div>
@@ -526,13 +530,5 @@ function VersionContent() {
         </div>
       )}
     </div>
-  );
-}
-
-export default function VersionPage() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <VersionContent />
-    </Suspense>
   );
 }
