@@ -241,12 +241,12 @@
   cursor: not-allowed;
 }
 
-/* Songs List */
+/* Songs List - Vertical Stack */
 .songsList {
   flex: 1;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
   overflow-y: auto;
   padding-right: var(--space-sm);
 }
@@ -269,34 +269,71 @@
 }
 
 .songCardWrapper {
+  position: relative;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+/* Layered effect for multiple versions */
+.songCardWrapper.hasVersions {
+  margin-left: 0;
+}
+
+.songCard {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  text-decoration: none;
   border-radius: var(--radius-md);
-  overflow: hidden;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--color-border);
   transition: all var(--transition-base);
 }
 
-.songCardWrapper:hover {
+.songCard:hover {
   background: rgba(255, 255, 255, 0.08);
   border-color: var(--color-primary);
   box-shadow: 0 8px 24px rgba(255, 20, 147, 0.2);
 }
 
-.songCard {
-  display: flex;
-  flex-direction: column;
-  text-decoration: none;
-  flex: 1;
-  cursor: pointer;
+/* Layered cards effect */
+.songCardWrapper:nth-child(n+2)::before,
+.songCardWrapper:nth-child(n+3)::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--color-border);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.songCardWrapper:nth-child(n+3)::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  pointer-events: none;
+  z-index: -2;
 }
 
 .songImageContainer {
-  width: 100%;
-  aspect-ratio: 1;
+  width: 60px;
+  height: 60px;
+  min-width: 60px;
+  flex-shrink: 0;
   background: linear-gradient(135deg, rgba(255, 20, 147, 0.1), rgba(0, 212, 255, 0.1));
-  border-bottom: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -310,31 +347,217 @@
 }
 
 .songImagePlaceholder {
-  font-size: 32px;
+  font-size: 24px;
 }
 
 .songInfo {
-  padding: var(--space-sm);
   flex: 1;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: var(--space-xs);
 }
 
 .songInfo h3 {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--color-text);
   word-break: break-word;
-  line-height: 1.4;
+  line-height: 1.3;
+}
+
+.songVersionCount {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin: 0;
 }
 
 .songActions {
   display: flex;
   gap: var(--space-xs);
-  padding: var(--space-xs);
-  border-top: 1px solid var(--color-border);
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.editButton,
+.deleteButton,
+.uploadLabel {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
   justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all var(--transition-base);
+  padding: 0;
+}
+
+.editButton:hover,
+.deleteButton:hover,
+.uploadLabel:hover {
+  border-color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.deleteButton:hover {
+  border-color: #ff4444;
+  color: #ff4444;
+}
+
+.uploadLabel {
+  position: relative;
+  cursor: pointer;
+}
+
+.fileInput {
+  display: none;
+}
+
+/* Modal Overlay */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn var(--transition-base);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal {
+  background: rgba(13, 9, 20, 0.95);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-2xl);
+  min-width: 400px;
+  box-shadow: 0 20px 60px rgba(255, 20, 147, 0.2);
+  animation: slideUp var(--transition-base);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal h2 {
+  margin: 0 0 var(--space-lg) 0;
+  font-size: 20px;
+  color: white;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.modalInput {
+  width: 100%;
+  padding: var(--space-md);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: white;
+  font-size: 14px;
+  font-family: inherit;
+  margin-bottom: var(--space-md);
+  transition: all var(--transition-base);
+}
+
+.modalInput:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 12px rgba(255, 20, 147, 0.2);
+}
+
+.modalInput::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.createError {
+  color: #ff4444;
+  font-size: 12px;
+  margin-bottom: var(--space-md);
+  padding: var(--space-sm);
+  background: rgba(255, 68, 68, 0.1);
+  border-radius: var(--radius-sm);
+  border-left: 2px solid #ff4444;
+}
+
+.modalButtons {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: flex-end;
+}
+
+.submitButton {
+  padding: var(--space-sm) var(--space-lg);
+  background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+  border: none;
+  border-radius: var(--radius-md);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  font-size: 14px;
+}
+
+.submitButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(255, 20, 147, 0.3);
+}
+
+.submitButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cancelButton {
+  padding: var(--space-sm) var(--space-lg);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-md);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.cancelButton:hover:not(:disabled) {
+  border-color: white;
+  color: white;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.cancelButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .editButton,
