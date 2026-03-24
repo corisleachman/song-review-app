@@ -2,10 +2,10 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { setIdentity, getAuth } from '@/lib/auth';
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import styles from './identify.module.css';
 
-export default function IdentifyPage() {
+function IdentifyContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirectTo') || '/dashboard';
@@ -41,5 +41,13 @@ export default function IdentifyPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function IdentifyPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <IdentifyContent />
+    </Suspense>
   );
 }
