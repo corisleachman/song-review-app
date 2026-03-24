@@ -1,0 +1,247 @@
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.backLink {
+  display: inline-block;
+  margin-bottom: 30px;
+  color: #000000;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+.songHeader {
+  margin-bottom: 40px;
+  border-bottom: 1px solid #000000;
+  padding-bottom: 20px;
+}
+
+.titleDisplay {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+}
+
+.titleDisplay h1 {
+  font-size: 32px;
+  font-weight: normal;
+  margin: 0;
+}
+
+.editButton {
+  padding: 5px 10px;
+  border: 1px solid #000000;
+  background-color: #ffffff;
+  color: #000000;
+  font-size: 12px;
+}
+
+.editButton:hover {
+  background-color: #f0f0f0;
+}
+
+.titleEdit {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.titleEdit input {
+  padding: 10px;
+  border: 1px solid #000000;
+  font-size: 32px;
+  font-weight: normal;
+  flex: 1;
+}
+
+.titleEdit button {
+  padding: 8px 15px;
+  border: 1px solid #000000;
+  background-color: #000000;
+  color: #ffffff;
+  font-size: 12px;
+}
+
+.titleEdit button:hover {
+  background-color: #333333;
+}
+
+.versionsSection {
+  margin-bottom: 40px;
+}
+
+.versionsSection h2 {
+  font-size: 18px;
+  font-weight: normal;
+  margin-bottom: 20px;
+}
+
+.versionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.versionItem {
+  border: 1px solid #000000;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.versionInfo {
+  flex: 1;
+}
+
+.labelDisplay {
+  display: flex;
+  align-items: baseline;
+  gap: 15px;
+  margin-bottom: 8px;
+}
+
+.versionLabel {
+  font-size: 16px;
+  font-weight: normal;
+}
+
+.versionMeta {
+  font-size: 13px;
+  color: #666666;
+  margin: 0;
+}
+
+.labelEdit {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.labelEdit input {
+  padding: 8px;
+  border: 1px solid #000000;
+  font-size: 14px;
+  flex: 1;
+}
+
+.labelEdit button {
+  padding: 6px 12px;
+  border: 1px solid #000000;
+  background-color: #000000;
+  color: #ffffff;
+  font-size: 12px;
+}
+
+.labelEdit button:hover {
+  background-color: #333333;
+}
+
+.openButton {
+  padding: 8px 15px;
+  border: 1px solid #000000;
+  color: #000000;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.openButton:hover {
+  background-color: #f0f0f0;
+  text-decoration: none;
+}
+
+.empty {
+  color: #999999;
+  font-size: 14px;
+}
+
+.uploadForm {
+  border: 1px solid #000000;
+  padding: 30px;
+  margin-bottom: 20px;
+}
+
+.uploadForm h3 {
+  font-size: 18px;
+  font-weight: normal;
+  margin-bottom: 20px;
+}
+
+.formGroup {
+  margin-bottom: 20px;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.formGroup input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #000000;
+  font-size: 14px;
+}
+
+.formActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.formActions button {
+  padding: 10px 20px;
+  border: 1px solid #000000;
+  background-color: #000000;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.formActions button:hover {
+  background-color: #333333;
+}
+
+.formActions button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.cancelButton {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.cancelButton:hover {
+  background-color: #f0f0f0 !important;
+}
+
+.uploadButton {
+  padding: 10px 20px;
+  border: 1px solid #000000;
+  background-color: #000000;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.uploadButton:hover {
+  background-color: #333333;
+}
+
+.error {
+  color: #cc0000;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+}

@@ -1,0 +1,40 @@
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #ffffff;
+}
+
+.box {
+  width: 100%;
+  max-width: 400px;
+  padding: 40px;
+  border: 1px solid #000000;
+  text-align: center;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: normal;
+  margin-bottom: 40px;
+}
+
+.buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.button {
+  padding: 15px;
+  background-color: #000000;
+  color: #ffffff;
+  border: none;
+  font-size: 16px;
+  font-weight: normal;
+}
+
+.button:hover {
+  background-color: #333333;
+}

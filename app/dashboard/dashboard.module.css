@@ -1,0 +1,171 @@
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.header {
+  margin-bottom: 40px;
+  border-bottom: 1px solid #000000;
+  padding-bottom: 20px;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: normal;
+  margin: 0 0 10px 0;
+}
+
+.user {
+  font-size: 14px;
+  color: #666666;
+  margin: 0;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 40px;
+}
+
+.table thead {
+  border-bottom: 1px solid #000000;
+}
+
+.table th {
+  text-align: left;
+  padding: 15px 0;
+  font-weight: normal;
+  font-size: 14px;
+}
+
+.table td {
+  padding: 12px 0;
+  border-bottom: 1px solid #eeeeee;
+}
+
+.songTitle {
+  font-weight: normal;
+}
+
+.version {
+  font-size: 14px;
+  color: #666666;
+}
+
+.updated {
+  font-size: 14px;
+  color: #999999;
+}
+
+.action {
+  text-align: right;
+}
+
+.link {
+  padding: 5px 10px;
+  border: 1px solid #000000;
+  text-decoration: none;
+  color: #000000;
+}
+
+.link:hover {
+  background-color: #f0f0f0;
+  text-decoration: none;
+}
+
+.empty {
+  text-align: center;
+  color: #999999;
+  padding: 40px;
+  font-size: 16px;
+}
+
+.form {
+  border: 1px solid #000000;
+  padding: 30px;
+  margin-bottom: 20px;
+}
+
+.form h2 {
+  font-size: 20px;
+  font-weight: normal;
+  margin-bottom: 25px;
+}
+
+.formGroup {
+  margin-bottom: 20px;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.formGroup input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #000000;
+  font-size: 14px;
+}
+
+.formGroup input::placeholder {
+  color: #999999;
+}
+
+.formActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 25px;
+}
+
+.formActions button {
+  padding: 10px 20px;
+  background-color: #000000;
+  color: #ffffff;
+  border: none;
+  font-size: 14px;
+}
+
+.formActions button:hover {
+  background-color: #333333;
+}
+
+.formActions button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.cancelButton {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid #000000 !important;
+}
+
+.cancelButton:hover {
+  background-color: #f0f0f0 !important;
+}
+
+.newSongButton {
+  padding: 10px 20px;
+  background-color: #000000;
+  color: #ffffff;
+  border: none;
+  font-size: 14px;
+}
+
+.newSongButton:hover {
+  background-color: #333333;
+}
+
+.error {
+  color: #cc0000;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+}
