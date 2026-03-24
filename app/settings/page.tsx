@@ -2,61 +2,141 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { themeManager, ColorTheme } from '@/lib/themeManager';
+import { getIdentity } from '@/lib/auth';
 import styles from './settings.module.css';
 
+interface Theme {
+  primary_color: string;
+  accent_color: string;
+  background_color: string;
+}
+
+const PRESETS: { [key: string]: Theme } = {
+  Pulse: {
+    primary_color: '#ff1493',
+    accent_color: '#a855f7',
+    background_color: '#0d0914',
+  },
+  Ocean: {
+    primary_color: '#0ea5e9',
+    accent_color: '#06b6d4',
+    background_color: '#0f172a',
+  },
+  Sunset: {
+    primary_color: '#f97316',
+    accent_color: '#ec4899',
+    background_color: '#1c1917',
+  },
+  Forest: {
+    primary_color: '#10b981',
+    accent_color: '#14b8a6',
+    background_color: '#0f766e',
+  },
+  Purple: {
+    primary_color: '#a855f7',
+    accent_color: '#7c3aed',
+    background_color: '#2e1065',
+  },
+  Rose: {
+    primary_color: '#f43f5e',
+    accent_color: '#e11d48',
+    background_color: '#500724',
+  },
+};
+
 export default function SettingsPage() {
-  const [theme, setTheme] = useState<ColorTheme>({
-    primary: '#3b82f6',
-    secondary: '#1e40af',
-    accent: '#a855f7',
-    background: '#0f172a',
-    text: '#ffffff',
+  const identity = getIdentity();
+  const [theme, setTheme] = useState<Theme>({
+    primary_color: '#ff1493',
+    accent_color: '#a855f7',
+    background_color: '#0d0914',
   });
-
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  // Load settings on mount
   useEffect(() => {
-    const currentTheme = themeManager.getTheme();
-    setTheme(currentTheme);
-  }, []);
+    const loadSettings = async () => {
+      try {
+        const response = await fetch('/api/settings');
+        const data = await response.json();
+        setTheme(data);
+        applyTheme(data);
+      } catch (err) {
+        console.error('Error loading settings:', err);
+        setError('Failed to load settings');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleColorChange = (key: keyof ColorTheme, value: string) => {
+    if (identity) {
+      loadSettings();
+    }
+  }, [identity]);
+
+  // Apply theme to CSS variables
+  const applyTheme = (newTheme: Theme) => {
+    document.documentElement.style.setProperty('--color-primary', newTheme.primary_color);
+    document.documentElement.style.setProperty('--color-accent', newTheme.accent_color);
+    document.documentElement.style.setProperty('--color-bg-darkest', newTheme.background_color);
+  };
+
+  const handleColorChange = (key: keyof Theme, value: string) => {
     const updated = { ...theme, [key]: value };
     setTheme(updated);
-    themeManager.applyTheme(updated);
+    applyTheme(updated);
     setSaved(false);
   };
 
-  const handleSave = () => {
-    themeManager.setTheme(theme);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const handleSave = async () => {
+    setSaving(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(theme),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to save settings');
+      }
+
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save settings';
+      console.error('Error saving settings:', err);
+      setError(errorMessage);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handlePreset = (presetTheme: Theme) => {
+    setTheme(presetTheme);
+    applyTheme(presetTheme);
+    setSaved(false);
   };
 
   const handleReset = () => {
-    const defaultTheme = {
-      primary: '#3b82f6',
-      secondary: '#1e40af',
-      accent: '#a855f7',
-      background: '#0f172a',
-      text: '#ffffff',
-    };
-    setTheme(defaultTheme);
-    themeManager.setTheme(defaultTheme);
+    handlePreset(PRESETS.Pulse);
   };
 
-  const generatePairing = () => {
-    const newTheme: ColorTheme = {
-      primary: theme.primary,
-      secondary: theme.secondary,
-      accent: theme.accent,
-      background: theme.background,
-      text: theme.text,
-    };
-    setTheme(newTheme);
-    themeManager.applyTheme(newTheme);
-  };
+  if (loading) {
+    return (
+      <div className={styles.container}>
+        <div style={{ textAlign: 'center', color: 'rgba(255, 255, 255, 0.5)' }}>
+          Loading settings...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
@@ -64,173 +144,145 @@ export default function SettingsPage() {
         <Link href="/dashboard" className={styles.backButton}>
           ← Back
         </Link>
-        <h1>⚙️ Settings & Branding</h1>
+        <h1 className={styles.title}>🎨 Brand Explorer</h1>
       </div>
 
+      {error && (
+        <div className={styles.errorBanner}>
+          <span>❌ {error}</span>
+          <button onClick={() => setError(null)}>×</button>
+        </div>
+      )}
+
       <div className={styles.content}>
-        {/* Brand Explorer */}
         <div className={styles.brandExplorer}>
           <div className={styles.explorerHeader}>
-            <h2>🎨 Brand Explorer</h2>
-            <p>Customize your color scheme and watch it update live across the entire app.</p>
+            <h2>Live Color Picker</h2>
+            <p>Changes update in real-time below</p>
           </div>
 
           <div className={styles.colorPicker}>
-            {/* Primary & Accent */}
             <div className={styles.pickerRow}>
               <div className={styles.colorControl}>
-                <label>Primary Color</label>
+                <label className={styles.label}>Primary Color</label>
                 <div className={styles.colorInputWrapper}>
                   <input
                     type="color"
-                    value={theme.primary}
-                    onChange={e => handleColorChange('primary', e.target.value)}
+                    value={theme.primary_color}
+                    onChange={e => handleColorChange('primary_color', e.target.value)}
                     className={styles.colorInput}
                   />
                   <input
                     type="text"
-                    value={theme.primary}
-                    onChange={e => handleColorChange('primary', e.target.value)}
+                    value={theme.primary_color}
+                    onChange={e => handleColorChange('primary_color', e.target.value)}
                     className={styles.textInput}
                   />
                 </div>
               </div>
-
-              <div className={styles.arrowIcon}>→</div>
 
               <div className={styles.colorControl}>
-                <label>Accent Color</label>
+                <label className={styles.label}>Accent Color</label>
                 <div className={styles.colorInputWrapper}>
                   <input
                     type="color"
-                    value={theme.accent}
-                    onChange={e => handleColorChange('accent', e.target.value)}
+                    value={theme.accent_color}
+                    onChange={e => handleColorChange('accent_color', e.target.value)}
                     className={styles.colorInput}
                   />
                   <input
                     type="text"
-                    value={theme.accent}
-                    onChange={e => handleColorChange('accent', e.target.value)}
+                    value={theme.accent_color}
+                    onChange={e => handleColorChange('accent_color', e.target.value)}
                     className={styles.textInput}
                   />
                 </div>
               </div>
-            </div>
 
-            {/* Background */}
-            <div className={styles.pickerRow}>
               <div className={styles.colorControl}>
-                <label>Background</label>
+                <label className={styles.label}>Background</label>
                 <div className={styles.colorInputWrapper}>
                   <input
                     type="color"
-                    value={theme.background}
-                    onChange={e => handleColorChange('background', e.target.value)}
+                    value={theme.background_color}
+                    onChange={e => handleColorChange('background_color', e.target.value)}
                     className={styles.colorInput}
                   />
                   <input
                     type="text"
-                    value={theme.background}
-                    onChange={e => handleColorChange('background', e.target.value)}
+                    value={theme.background_color}
+                    onChange={e => handleColorChange('background_color', e.target.value)}
                     className={styles.textInput}
                   />
                 </div>
               </div>
-
-              <button onClick={handleReset} className={styles.resetButton}>
-                ↺
-              </button>
             </div>
           </div>
 
-          {/* Preview */}
           <div className={styles.previewSection}>
             <h3>Live Preview</h3>
             <div
               className={styles.previewBox}
               style={{
-                background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})`,
+                background: `linear-gradient(135deg, ${theme.background_color}, ${theme.primary_color}33)`,
               }}
             >
               <div className={styles.previewContent}>
-                <h4 style={{ color: theme.text }}>Your Theme</h4>
-                <p style={{ color: theme.text }}>Colors update live as you change them</p>
+                <h4 style={{ color: theme.primary_color }}>Song Review</h4>
+                <p style={{ color: theme.accent_color }}>Your theme preview</p>
               </div>
             </div>
           </div>
 
-          {/* Presets */}
           <div className={styles.presetsSection}>
-            <h3>✨ Color Presets</h3>
+            <h3>Quick Presets</h3>
             <div className={styles.presetGrid}>
-              {[
-                { name: 'Ocean', primary: '#0066cc', accent: '#00d4ff', bg: '#0a0e27' },
-                { name: 'Sunset', primary: '#ff6b35', accent: '#ff1493', bg: '#1a0f0f' },
-                { name: 'Forest', primary: '#2d6a4f', accent: '#40916c', bg: '#0f1f18' },
-                { name: 'Purple', primary: '#7209b7', accent: '#f72585', bg: '#10041b' },
-                { name: 'Neon', primary: '#00ff41', accent: '#0099ff', bg: '#0a0e27' },
-                { name: 'Rose', primary: '#f75590', accent: '#ffa502', bg: '#1a0f1f' },
-              ].map(preset => (
+              {Object.entries(PRESETS).map(([name, preset]) => (
                 <button
-                  key={preset.name}
+                  key={name}
+                  onClick={() => handlePreset(preset)}
                   className={styles.presetButton}
-                  onClick={() => {
-                    const newTheme: ColorTheme = {
-                      primary: preset.primary,
-                      secondary: preset.primary,
-                      accent: preset.accent,
-                      background: preset.bg,
-                      text: '#ffffff',
-                    };
-                    setTheme(newTheme);
-                    themeManager.applyTheme(newTheme);
-                  }}
                   style={{
-                    background: `linear-gradient(135deg, ${preset.primary}, ${preset.accent})`,
+                    background: `linear-gradient(135deg, ${preset.primary_color}, ${preset.accent_color})`,
                   }}
                 >
-                  {preset.name}
+                  {name}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Actions */}
           <div className={styles.actions}>
-            <button onClick={handleSave} className={styles.saveButton}>
-              {saved ? '✓ Saved!' : '💾 Save Theme'}
+            <button
+              onClick={handleSave}
+              className={styles.saveButton}
+              disabled={saving}
+            >
+              {saving ? 'Saving...' : saved ? '✓ Saved!' : 'Save Theme'}
             </button>
-            <button onClick={handleReset} className={styles.resetButtonLarge}>
-              ↻ Reset to Default
+            <button
+              onClick={handleReset}
+              className={styles.resetButtonLarge}
+            >
+              Reset to Default
             </button>
           </div>
         </div>
 
-        {/* Info Panel */}
         <div className={styles.infoPanel}>
-          <h3>💡 Tips</h3>
+          <h3>ℹ️ Tips</h3>
           <ul className={styles.tipsList}>
-            <li>Colors are saved to your browser and will persist</li>
-            <li>Both Coris and Al can set their own themes</li>
-            <li>Changes apply instantly across all pages</li>
-            <li>Use presets for quick theme selection</li>
-            <li>Primary + Accent colors create your brand gradient</li>
+            <li>Colors update live as you change them</li>
+            <li>Click presets to try different themes</li>
+            <li>Use hex colors or the color picker</li>
+            <li>Click Save to store your theme</li>
+            <li>Your theme persists across sessions</li>
           </ul>
 
-          <h3 style={{ marginTop: '24px' }}>📱 Current Theme Values</h3>
-          <div className={styles.themeValues}>
-            <div className={styles.themeValue}>
-              <span>Primary:</span>
-              <code>{theme.primary}</code>
-            </div>
-            <div className={styles.themeValue}>
-              <span>Accent:</span>
-              <code>{theme.accent}</code>
-            </div>
-            <div className={styles.themeValue}>
-              <span>Background:</span>
-              <code>{theme.background}</code>
-            </div>
+          <div style={{ marginTop: 'var(--space-2xl)' }}>
+            <p style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.3)' }}>
+              Logged in as: <strong>{identity}</strong>
+            </p>
           </div>
         </div>
       </div>

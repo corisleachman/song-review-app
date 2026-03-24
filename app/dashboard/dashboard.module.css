@@ -586,29 +586,56 @@
 
 .songActions {
   display: flex;
-  gap: var(--space-md);
+  gap: var(--space-sm);
+  align-items: center;
+  justify-content: center;
 }
 
 .uploadLabel {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  padding: var(--space-md);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px dashed rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-md);
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 50%;
   cursor: pointer;
-  font-size: 18px;
-  transition: all var(--transition-base);
-  position: relative;
-  z-index: 1;
+  font-size: 16px;
+  transition: all var(--transition-fast);
 }
 
 .uploadLabel:hover {
-  border-color: #ff1493;
-  background: linear-gradient(135deg, rgba(255, 20, 147, 0.1), rgba(0, 212, 255, 0.1));
-  color: white;
+  background: rgba(255, 20, 147, 0.2);
+  transform: scale(1.1);
+}
+
+.editButton,
+.deleteButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+}
+
+.editButton:hover {
+  background: rgba(0, 212, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.deleteButton:hover {
+  background: rgba(239, 68, 68, 0.2);
+  transform: scale(1.1);
 }
 
 .fileInput {
