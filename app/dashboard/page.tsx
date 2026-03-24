@@ -19,6 +19,7 @@ interface Action {
 interface Song {
   id: string;
   title: string;
+  image_url?: string;
   actions?: Action[];
 }
 
@@ -38,6 +39,7 @@ export default function DashboardPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed'>('all');
+  const [uploadingSongId, setUploadingSongId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!getAuth() || !identity) {
@@ -55,7 +57,7 @@ export default function DashboardPage() {
       // Load songs
       const { data: songsData, error: songsError } = await supabase
         .from('songs')
-        .select('id, title')
+        .select('id, title, image_url')
         .order('created_at', { ascending: false });
 
       if (songsError) throw songsError;
@@ -125,6 +127,38 @@ export default function DashboardPage() {
       loadData();
     } catch (err) {
       console.error('Error updating action:', err);
+    }
+  };
+
+  const handleImageUpload = async (songId: string, file: File) => {
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    setUploadingSongId(songId);
+
+    try {
+      const formData = new FormData();
+      formData.append('songId', songId);
+      formData.append('file', file);
+
+      const response = await fetch('/api/songs/upload-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Upload failed');
+      }
+
+      loadData();
+    } catch (err) {
+      console.error('Error uploading image:', err);
+      alert(`Upload failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setUploadingSongId(null);
     }
   };
 
@@ -272,12 +306,39 @@ export default function DashboardPage() {
 
           <div className={styles.songsList}>
             {songs.map(song => (
-              <Link key={song.id} href={`/songs/${song.id}`} className={styles.songCard}>
-                <h3>{song.title}</h3>
-                <p className={styles.songMeta}>
-                  {actions[song.id]?.actions.length || 0} action{(actions[song.id]?.actions.length || 0) !== 1 ? 's' : ''}
-                </p>
-              </Link>
+              <div key={song.id} className={styles.songCardWrapper}>
+                <Link href={`/songs/${song.id}`} className={styles.songCard}>
+                  <div className={styles.songImageContainer}>
+                    {song.image_url ? (
+                      <img src={song.image_url} alt={song.title} className={styles.songImage} />
+                    ) : (
+                      <div className={styles.songImagePlaceholder}>🎵</div>
+                    )}
+                  </div>
+                  <div className={styles.songInfo}>
+                    <h3>{song.title}</h3>
+                    <p className={styles.songMeta}>
+                      {actions[song.id]?.actions.length || 0} action{(actions[song.id]?.actions.length || 0) !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                </Link>
+                <div className={styles.songActions}>
+                  <label className={styles.uploadLabel}>
+                    {uploadingSongId === song.id ? '⏳' : '🖼️'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={e => {
+                        if (e.target.files?.[0]) {
+                          handleImageUpload(song.id, e.target.files[0]);
+                        }
+                      }}
+                      disabled={uploadingSongId === song.id}
+                      className={styles.fileInput}
+                    />
+                  </label>
+                </div>
+              </div>
             ))}
           </div>
         </div>
