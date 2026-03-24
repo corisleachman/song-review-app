@@ -336,6 +336,24 @@ function VersionContent() {
           </div>
         </div>
         <div className={styles.headerRight}>
+          {versions && versions.length > 1 && (
+            <select
+              value={versionId}
+              onChange={(e) => {
+                const newVersionId = e.target.value;
+                router.push(`/songs/${songId}/versions/${newVersionId}`);
+              }}
+              className={styles.versionPicker}
+            >
+              {versions
+                .sort((a, b) => b.version_number - a.version_number)
+                .map(v => (
+                  <option key={v.id} value={v.id}>
+                    Version {v.version_number}{v.label ? ` - ${v.label}` : ''}
+                  </option>
+                ))}
+            </select>
+          )}
           <p className={styles.user}>
             <span className={styles.userBadge}>{identity?.[0]}</span>
             {identity}

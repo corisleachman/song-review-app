@@ -670,3 +670,35 @@
     max-height: 40vh;
   }
 }
+
+/* Version Picker */
+.versionPicker {
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+  margin-right: var(--space-md);
+  transition: all var(--transition-base);
+  font-family: inherit;
+  max-width: 200px;
+}
+
+.versionPicker:hover {
+  border-color: var(--color-primary);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.versionPicker:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 12px rgba(255, 20, 147, 0.2);
+}
+
+.versionPicker option {
+  background: #0d0914;
+  color: white;
+  padding: var(--space-md);
+}

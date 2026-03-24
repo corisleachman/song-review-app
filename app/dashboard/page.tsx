@@ -20,7 +20,8 @@ interface Song {
   id: string;
   title: string;
   image_url?: string;
-  actions?: Action[];
+  created_at: string;
+  version_count?: number;
 }
 
 interface GroupedActions {
@@ -37,7 +38,7 @@ export default function DashboardPage() {
   const [actions, setActions] = useState<GroupedActions>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [createError, setCreateError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -59,33 +60,46 @@ export default function DashboardPage() {
       setError(null);
 
       const supabase = createClient();
+      
+      // Load songs
       const { data: songsData, error: songsError } = await supabase
         .from('songs')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (songsError) {
-        throw songsError;
-      }
+      if (songsError) throw songsError;
 
-      setSongs(songsData || []);
+      // Get version count for each song
+      const songsWithVersions = await Promise.all(
+        (songsData || []).map(async (song) => {
+          const { count, error: countError } = await supabase
+            .from('song_versions')
+            .select('*', { count: 'exact' })
+            .eq('song_id', song.id);
 
-      // Load actions for all songs
+          return {
+            ...song,
+            version_count: count || 0,
+          };
+        })
+      );
+
+      setSongs(songsWithVersions);
+
+      // Load actions
       const { data: actionsData, error: actionsError } = await supabase
         .from('actions')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (actionsError) {
-        throw actionsError;
-      }
+      if (actionsError) throw actionsError;
 
       // Group actions by song
       const groupedActions: GroupedActions = {};
       (actionsData || []).forEach(action => {
         if (!groupedActions[action.song_id]) {
           groupedActions[action.song_id] = {
-            song: songsData?.find(s => s.id === action.song_id) || { id: action.song_id, title: 'Unknown' },
+            song: songsWithVersions.find(s => s.id === action.song_id) || { id: action.song_id, title: 'Unknown', created_at: '' },
             actions: [],
           };
         }
@@ -123,9 +137,23 @@ export default function DashboardPage() {
         throw new Error(data.error || 'Failed to create song');
       }
 
+      const newSong = await response.json();
       setNewTitle('');
-      setShowCreateForm(false);
-      await loadData();
+      setShowCreateModal(false);
+      
+      // Navigate directly to the new song's waveform view
+      const { data: versions } = await createClient()
+        .from('song_versions')
+        .select('id')
+        .eq('song_id', newSong.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (versions && versions.length > 0) {
+        router.push(`/songs/${newSong.id}/versions/${versions[0].id}`);
+      } else {
+        router.push(`/songs/${newSong.id}`);
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create song';
       setCreateError(errorMessage);
@@ -181,6 +209,26 @@ export default function DashboardPage() {
     }
   };
 
+  // Navigate to song's latest version
+  const goToSongWaveform = async (songId: string) => {
+    try {
+      const { data: versions } = await createClient()
+        .from('song_versions')
+        .select('id')
+        .eq('song_id', songId)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (versions && versions.length > 0) {
+        router.push(`/songs/${songId}/versions/${versions[0].id}`);
+      } else {
+        router.push(`/songs/${songId}`);
+      }
+    } catch (err) {
+      console.error('Error navigating to song:', err);
+    }
+  };
+
   const filteredActions = Object.entries(actions).flatMap(([songId, { song, actions: songActions }]) => {
     const filtered =
       filterStatus === 'all'
@@ -230,52 +278,60 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Create Song Modal */}
+      {showCreateModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowCreateModal(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h2>Create New Song</h2>
+            <input
+              type="text"
+              placeholder="Song title..."
+              value={newTitle}
+              onChange={e => setNewTitle(e.target.value)}
+              onKeyPress={e => e.key === 'Enter' && handleCreateSong()}
+              className={styles.modalInput}
+              disabled={isCreating}
+              autoFocus
+            />
+            {createError && <div className={styles.createError}>{createError}</div>}
+            <div className={styles.modalButtons}>
+              <button onClick={handleCreateSong} className={styles.submitButton} disabled={isCreating}>
+                {isCreating ? 'Creating...' : 'Create'}
+              </button>
+              <button
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setNewTitle('');
+                  setCreateError(null);
+                }}
+                className={styles.cancelButton}
+                disabled={isCreating}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
       <div className={styles.content}>
         {/* SONGS PANEL (Left) */}
         <div className={styles.songsPanel}>
           <div className={styles.songsHeader}>
             <h2 className={styles.sectionTitle}>🎵 Songs</h2>
-            <button onClick={() => setShowCreateForm(!showCreateForm)} className={styles.createButton}>
+            <button onClick={() => setShowCreateModal(true)} className={styles.createButton}>
               + NEW SONG
             </button>
           </div>
 
-          {showCreateForm && (
-            <div className={styles.createForm}>
-              <input
-                type="text"
-                placeholder="Song title..."
-                value={newTitle}
-                onChange={e => setNewTitle(e.target.value)}
-                onKeyPress={e => e.key === 'Enter' && handleCreateSong()}
-                className={styles.input}
-                disabled={isCreating}
-              />
-              {createError && <div className={styles.createError}>{createError}</div>}
-              <div className={styles.formButtons}>
-                <button onClick={handleCreateSong} className={styles.submitButton} disabled={isCreating}>
-                  {isCreating ? 'Creating...' : 'Create'}
-                </button>
-                <button
-                  onClick={() => {
-                    setShowCreateForm(false);
-                    setNewTitle('');
-                    setCreateError(null);
-                  }}
-                  className={styles.cancelButton}
-                  disabled={isCreating}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
-
           <div className={styles.songsList}>
             {songs.map(song => (
               <div key={song.id} className={styles.songCardWrapper}>
-                <Link href={`/songs/${song.id}`} className={styles.songCard}>
+                <div
+                  className={styles.songCard}
+                  onClick={() => goToSongWaveform(song.id)}
+                >
                   <div className={styles.songImageContainer}>
                     {song.image_url ? (
                       <img src={song.image_url} alt={song.title} className={styles.songImage} />
@@ -285,15 +341,27 @@ export default function DashboardPage() {
                   </div>
                   <div className={styles.songInfo}>
                     <h3>{song.title}</h3>
+                    {song.version_count ? (
+                      <p className={styles.songVersionCount}>
+                        {song.version_count} version{song.version_count !== 1 ? 's' : ''}
+                      </p>
+                    ) : null}
                   </div>
-                </Link>
+                </div>
                 <div className={styles.songActions}>
-                  <Link href={`/songs/${song.id}`} className={styles.editButton} title="Edit song">
-                    ✏️
-                  </Link>
                   <button
-                    onClick={async e => {
-                      e.preventDefault();
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      goToSongWaveform(song.id);
+                    }}
+                    className={styles.editButton}
+                    title="Edit song"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    onClick={async (e) => {
+                      e.stopPropagation();
                       if (confirm(`Delete "${song.title}"? This cannot be undone.`)) {
                         try {
                           const response = await fetch(`/api/songs/${song.id}`, {
@@ -318,7 +386,7 @@ export default function DashboardPage() {
                   >
                     🗑️
                   </button>
-                  <label className={styles.uploadLabel}>
+                  <label className={styles.uploadLabel} onClick={(e) => e.stopPropagation()}>
                     {uploadingSongId === song.id ? '⏳' : '🖼️'}
                     <input
                       type="file"
@@ -373,12 +441,15 @@ export default function DashboardPage() {
             <div className={styles.actionsList}>
               {filteredActions.map(({ songId, song, actions: songActions }) => (
                 <div key={songId} className={styles.songGroup}>
-                  <Link href={`/songs/${songId}`} className={styles.songLink}>
+                  <button
+                    onClick={() => goToSongWaveform(songId)}
+                    className={styles.songLink}
+                  >
                     <div className={styles.songHeader}>
                       <h3 className={styles.songTitle}>{song.title}</h3>
                       <span className={styles.actionCountBadge}>{songActions.length}</span>
                     </div>
-                  </Link>
+                  </button>
 
                   <div className={styles.actionsGroup}>
                     {songActions.map(action => (
