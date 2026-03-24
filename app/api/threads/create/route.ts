@@ -40,8 +40,8 @@ export async function POST(req: NextRequest) {
 
     if (commentError) throw commentError;
 
-    // Send email notification
-    await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/email/notify-thread`, {
+    // Send email notification (fire and forget, but with error handling)
+    fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/email/notify-thread`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
         commentText,
         isReply: false,
       }),
-    }).catch(err => console.error('Error sending email:', err));
+    }).catch(err => console.error('Error sending email notification:', err));
 
     return NextResponse.json({ threadId: threadData.id });
   } catch (error) {
