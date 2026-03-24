@@ -19,12 +19,20 @@ export async function POST(req: NextRequest) {
       .select('id')
       .single();
 
-    if (songError) throw songError;
+    if (songError) {
+      console.error('Supabase insert error:', {
+        message: songError.message,
+        code: songError.code,
+        details: songError.details,
+      });
+      throw songError;
+    }
 
     const songId = songData.id;
 
     // If no file, just return the song ID (version will be created later when file is uploaded)
     if (!fileName) {
+      console.log('Song created successfully:', songId);
       return NextResponse.json({
         songId,
         versionId: null,
@@ -39,7 +47,10 @@ export async function POST(req: NextRequest) {
       .from('song-files')
       .createSignedUploadUrl(filePath);
 
-    if (urlError) throw urlError;
+    if (urlError) {
+      console.error('Signed URL error:', urlError);
+      throw urlError;
+    }
 
     // Create song version
     const { data: versionData, error: versionError } = await supabaseServer
@@ -57,17 +68,25 @@ export async function POST(req: NextRequest) {
       .select('id')
       .single();
 
-    if (versionError) throw versionError;
+    if (versionError) {
+      console.error('Version creation error:', versionError);
+      throw versionError;
+    }
 
+    console.log('Song and version created successfully:', { songId, versionId: versionData.id });
     return NextResponse.json({
       songId,
       versionId: versionData.id,
       uploadUrl: urlData.signedUrl,
     });
   } catch (error) {
-    console.error('Error creating song:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error creating song:', {
+      error: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return NextResponse.json(
-      { error: 'Failed to create song' },
+      { error: errorMessage || 'Failed to create song' },
       { status: 500 }
     );
   }

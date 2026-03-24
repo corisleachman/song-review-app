@@ -36,8 +36,11 @@ export default function DashboardPage() {
   const [songs, setSongs] = useState<Song[]>([]);
   const [actions, setActions] = useState<GroupedActions>({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newTitle, setNewTitle] = useState('');
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed'>('all');
   const [uploadingSongId, setUploadingSongId] = useState<string | null>(null);
 
@@ -52,6 +55,8 @@ export default function DashboardPage() {
 
   const loadData = async () => {
     try {
+      setError(null);
+      setLoading(true);
       const supabase = createClient();
 
       // Load songs
@@ -60,7 +65,10 @@ export default function DashboardPage() {
         .select('id, title, image_url')
         .order('created_at', { ascending: false });
 
-      if (songsError) throw songsError;
+      if (songsError) {
+        console.error('Songs query error:', songsError);
+        throw new Error(`Failed to load songs: ${songsError.message}`);
+      }
 
       // Load all actions
       const { data: actionsData, error: actionsError } = await supabase
@@ -68,7 +76,10 @@ export default function DashboardPage() {
         .select('id, song_id, description, suggested_by, status, created_at')
         .order('created_at', { ascending: false });
 
-      if (actionsError) throw actionsError;
+      if (actionsError) {
+        console.error('Actions query error:', actionsError);
+        throw new Error(`Failed to load actions: ${actionsError.message}`);
+      }
 
       // Group actions by song
       const grouped: GroupedActions = {};
@@ -84,7 +95,9 @@ export default function DashboardPage() {
       setSongs(songsData || []);
       setActions(grouped);
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error loading data';
       console.error('Error loading data:', err);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -93,23 +106,35 @@ export default function DashboardPage() {
   const handleCreateSong = async () => {
     if (!newTitle.trim()) return;
 
+    setCreateError(null);
+    setIsCreating(true);
+
     try {
       const response = await fetch('/api/songs/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: newTitle,
-        }),
+        body: JSON.stringify({ title: newTitle }),
       });
 
-      if (!response.ok) throw new Error('Failed to create song');
+      const data = await response.json();
 
+      if (!response.ok) {
+        const errorMsg = data.error || 'Failed to create song';
+        console.error('Create song error:', { status: response.status, error: data.error });
+        throw new Error(errorMsg);
+      }
+
+      // Only clear on success
       setNewTitle('');
+      setCreateError(null);
       setShowCreateForm(false);
-      loadData();
+      await loadData();
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create song';
       console.error('Error creating song:', err);
-      alert('Failed to create song');
+      setCreateError(errorMessage);
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -179,6 +204,23 @@ export default function DashboardPage() {
 
   return (
     <div className={styles.container}>
+      {error && (
+        <div className={styles.errorBanner}>
+          <div className={styles.errorContent}>
+            <span className={styles.errorIcon}>⚠️</span>
+            <div className={styles.errorText}>
+              <strong>Error loading data:</strong> {error}
+            </div>
+            <button
+              className={styles.errorClose}
+              onClick={() => setError(null)}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className={styles.header}>
         <div className={styles.headerContent}>
           <h1 className={styles.title}>🏠 Song Review</h1>
@@ -278,25 +320,38 @@ export default function DashboardPage() {
 
           {showCreateForm && (
             <div className={styles.createForm}>
+              {createError && (
+                <div className={styles.createError}>
+                  <span>❌ {createError}</span>
+                  <button onClick={() => setCreateError(null)}>×</button>
+                </div>
+              )}
               <input
                 type="text"
                 placeholder="Song title..."
                 value={newTitle}
                 onChange={e => setNewTitle(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleCreateSong()}
+                onKeyDown={e => e.key === 'Enter' && !isCreating && handleCreateSong()}
                 autoFocus
                 className={styles.input}
+                disabled={isCreating}
               />
               <div className={styles.formButtons}>
-                <button onClick={handleCreateSong} className={styles.submitButton}>
-                  Create
+                <button
+                  onClick={handleCreateSong}
+                  className={styles.submitButton}
+                  disabled={isCreating || !newTitle.trim()}
+                >
+                  {isCreating ? 'Creating...' : 'Create'}
                 </button>
                 <button
                   onClick={() => {
                     setShowCreateForm(false);
                     setNewTitle('');
+                    setCreateError(null);
                   }}
                   className={styles.cancelButton}
+                  disabled={isCreating}
                 >
                   Cancel
                 </button>

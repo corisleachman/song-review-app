@@ -8,6 +8,54 @@
   flex-direction: column;
 }
 
+.errorBanner {
+  width: 100%;
+  background: rgba(239, 68, 68, 0.1);
+  border-bottom: 2px solid rgba(239, 68, 68, 0.3);
+  padding: var(--space-lg) var(--space-2xl);
+}
+
+.errorContent {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  width: 100%;
+}
+
+.errorIcon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.errorText {
+  flex: 1;
+  color: #fca5a5;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.errorText strong {
+  color: #f87171;
+  font-weight: 700;
+}
+
+.errorClose {
+  background: none;
+  border: none;
+  color: #fca5a5;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  transition: color var(--transition-base);
+  flex-shrink: 0;
+}
+
+.errorClose:hover {
+  color: #f87171;
+}
+
 .header {
   background: rgba(8, 5, 14, 0.8);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -322,8 +370,37 @@
   border-radius: var(--radius-lg);
   padding: var(--space-lg);
   display: flex;
+  flex-direction: column;
   gap: var(--space-lg);
   margin-bottom: var(--space-xl);
+}
+
+.createError {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  padding: var(--space-md) var(--space-lg);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-md);
+  color: #fca5a5;
+  font-size: 13px;
+}
+
+.createError button {
+  background: none;
+  border: none;
+  color: #fca5a5;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0;
+  transition: color var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.createError button:hover {
+  color: #f87171;
 }
 
 .input {
@@ -342,6 +419,11 @@
   background: rgba(255, 255, 255, 0.08);
   border-color: #ff1493;
   box-shadow: 0 0 0 3px rgba(255, 20, 147, 0.2);
+}
+
+.input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .formButtons {
@@ -369,9 +451,14 @@
   box-shadow: 0 8px 24px rgba(255, 20, 147, 0.3);
 }
 
-.submitButton:hover {
+.submitButton:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 12px 32px rgba(255, 20, 147, 0.4);
+}
+
+.submitButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .cancelButton {
@@ -380,10 +467,15 @@
   color: rgba(255, 255, 255, 0.7);
 }
 
-.cancelButton:hover {
+.cancelButton:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.2);
   color: white;
+}
+
+.cancelButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .songsList {
