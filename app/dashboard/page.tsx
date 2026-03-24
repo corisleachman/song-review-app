@@ -378,6 +378,36 @@ export default function DashboardPage() {
                   </div>
                 </Link>
                 <div className={styles.songActions}>
+                  <Link href={`/songs/${song.id}`} className={styles.editButton} title="Edit song">
+                    ✏️
+                  </Link>
+                  <button
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      if (confirm(`Delete "${song.title}"? This cannot be undone.`)) {
+                        try {
+                          const response = await fetch(`/api/songs/${song.id}`, {
+                            method: 'DELETE',
+                          });
+                          
+                          if (!response.ok) {
+                            const data = await response.json();
+                            throw new Error(data.error || 'Failed to delete song');
+                          }
+                          
+                          await loadData();
+                        } catch (err) {
+                          const errorMessage = err instanceof Error ? err.message : 'Failed to delete song';
+                          console.error('Error deleting song:', err);
+                          alert(`Error: ${errorMessage}`);
+                        }
+                      }
+                    }}
+                    className={styles.deleteButton}
+                    title="Delete song"
+                  >
+                    🗑️
+                  </button>
                   <label className={styles.uploadLabel}>
                     {uploadingSongId === song.id ? '⏳' : '🖼️'}
                     <input
