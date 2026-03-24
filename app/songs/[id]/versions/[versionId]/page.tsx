@@ -336,7 +336,7 @@ function VersionContent() {
           </div>
         </div>
         <div className={styles.headerRight}>
-          {versions && versions.length > 1 && (
+          {allVersions && allVersions.length > 1 && (
             <select
               value={versionId}
               onChange={(e) => {
@@ -345,7 +345,7 @@ function VersionContent() {
               }}
               className={styles.versionPicker}
             >
-              {versions
+              {allVersions
                 .sort((a, b) => b.version_number - a.version_number)
                 .map(v => (
                   <option key={v.id} value={v.id}>
