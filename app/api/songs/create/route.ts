@@ -5,9 +5,9 @@ export async function POST(req: NextRequest) {
   try {
     const { title, versionLabel, fileName, fileSize } = await req.json();
 
-    if (!title || !fileName) {
+    if (!title) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing title' },
         { status: 400 }
       );
     }
@@ -22,6 +22,16 @@ export async function POST(req: NextRequest) {
     if (songError) throw songError;
 
     const songId = songData.id;
+
+    // If no file, just return the song ID (version will be created later when file is uploaded)
+    if (!fileName) {
+      return NextResponse.json({
+        songId,
+        versionId: null,
+        uploadUrl: null,
+      });
+    }
+
     const filePath = `songs/${songId}/version-1/${fileName}`;
 
     // Create signed URL for upload
