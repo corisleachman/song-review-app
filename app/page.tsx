@@ -1,60 +1,72 @@
 'use client';
 
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { setAuth } from '@/lib/auth';
 import styles from './page.module.css';
 
 export default function LoginPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
+    setIsLoading(true);
 
-    try {
-      const res = await fetch('/api/auth/verify-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
-      });
-
-      if (!res.ok) {
-        setError('Incorrect password');
-        setLoading(false);
-        return;
-      }
-
-      setAuth();
-      router.push('/identify');
-    } catch (err) {
-      setError('Error verifying password');
-      setLoading(false);
+    if (password === 'further_forever') {
+      setAuth('authenticated');
+      const redirectTo = searchParams.get('redirectTo') || '/identify';
+      router.push(redirectTo);
+    } else {
+      setError('Incorrect password');
+      setIsLoading(false);
     }
   };
 
   return (
     <div className={styles.container}>
-      <div className={styles.box}>
-        <h1 className={styles.title}>Song Review</h1>
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <input
-            type="password"
-            placeholder="Enter password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className={styles.input}
-            autoFocus
-          />
-          {error && <p className={styles.error}>{error}</p>}
-          <button type="submit" disabled={loading} className={styles.button}>
-            {loading ? 'Verifying...' : 'Enter'}
-          </button>
-        </form>
+      {/* Animated background gradient */}
+      <div className={styles.gradientBg}></div>
+
+      <div className={styles.content}>
+        <div className={styles.card}>
+          <div className={styles.header}>
+            <h1 className={styles.title}>🎵 Song Review</h1>
+            <p className={styles.subtitle}>Collaborate on music with Coris & Al</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className={styles.form}>
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Enter password to continue..."
+                autoFocus
+                className={styles.input}
+              />
+            </div>
+
+            {error && <div className={styles.error}>{error}</div>}
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className={styles.submitButton}
+            >
+              {isLoading ? 'Unlocking...' : 'Continue'}
+            </button>
+          </form>
+
+          <div className={styles.footer}>
+            <p className={styles.hint}>🔑 A password is required to access this app</p>
+          </div>
+        </div>
       </div>
     </div>
   );
