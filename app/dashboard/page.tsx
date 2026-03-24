@@ -150,6 +150,9 @@ export default function DashboardPage() {
           <h1 className={styles.title}>🏠 Song Review</h1>
           <p className={styles.user}>Logged in as: <strong>{identity}</strong></p>
         </div>
+        <Link href="/settings" className={styles.settingsButton}>
+          ⚙️ Settings
+        </Link>
       </div>
 
       <div className={styles.content}>

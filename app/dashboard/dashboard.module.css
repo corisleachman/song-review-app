@@ -10,12 +10,32 @@
   background: var(--color-bg-secondary);
   border-bottom: 1px solid var(--color-border);
   padding: var(--space-2xl);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .headerContent {
   max-width: 1400px;
   margin: 0 auto;
   width: 100%;
+}
+
+.settingsButton {
+  padding: var(--space-md) var(--space-xl);
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-dark, #1d4ed8));
+  color: white;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all var(--transition-base);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.settingsButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
 }
 
 .title {
