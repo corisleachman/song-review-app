@@ -64,7 +64,11 @@ export default function SongPage() {
         .single();
 
       if (fetchError) throw fetchError;
-      setSong(data);
+      const songData = {
+        ...data,
+        versions: data.song_versions || []
+      };
+      setSong(songData);
       setNewTitle(data.title);
     } catch (err) {
       console.error('Error loading song:', err);
