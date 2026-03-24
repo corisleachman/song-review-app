@@ -64,6 +64,9 @@ export default function VersionPage() {
   const [error, setError] = useState('');
   const [isPlaying, setIsPlaying] = useState(false);
   const [waveformDuration, setWaveformDuration] = useState(0);
+  const [markedActions, setMarkedActions] = useState<Set<string>>(new Set());
+  const [showActionModal, setShowActionModal] = useState<string | null>(null);
+  const [actionText, setActionText] = useState('');
 
   useEffect(() => {
     if (!getAuth() || !identity) {
@@ -257,6 +260,34 @@ export default function VersionPage() {
     }
   };
 
+  const handleMarkAsAction = async (commentId: string, commentBody: string) => {
+    try {
+      const description = actionText.trim() || commentBody;
+      
+      const response = await fetch('/api/actions/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          commentId,
+          songId,
+          description,
+          suggestedBy: identity,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to mark as action');
+      }
+
+      setMarkedActions(new Set([...markedActions, commentId]));
+      setShowActionModal(null);
+      setActionText('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error marking as action');
+    }
+  };
+
   const getMarkerColor = (index: number) => {
     return MARKER_COLORS[index % MARKER_COLORS.length];
   };
@@ -270,9 +301,14 @@ export default function VersionPage() {
 
   return (
     <div className={styles.container}>
-      <Link href={`/songs/${songId}`} className={styles.backLink}>
-        ← Back to Song
-      </Link>
+      <div className={styles.topBar}>
+        <Link href="/dashboard" className={styles.homeIcon} title="Back to Dashboard">
+          🏠
+        </Link>
+        <Link href={`/songs/${songId}`} className={styles.backLink}>
+          ← Back to Song
+        </Link>
+      </div>
 
       <div className={styles.header}>
         <div>
@@ -381,6 +417,22 @@ export default function VersionPage() {
                         </span>
                       </div>
                       <p className={styles.messageBody}>{comment.body}</p>
+                      {!markedActions.has(comment.id) && (
+                        <button
+                          onClick={() => {
+                            setShowActionModal(comment.id);
+                            setActionText(comment.body);
+                          }}
+                          className={styles.actionButton}
+                        >
+                          📌 Mark as Action
+                        </button>
+                      )}
+                      {markedActions.has(comment.id) && (
+                        <div className={styles.actionBadge}>
+                          ✓ Marked as action
+                        </div>
+                      )}
                     </div>
                   ))
                 ) : (
@@ -446,6 +498,37 @@ export default function VersionPage() {
           )}
         </div>
       </div>
+
+      {showActionModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalBox}>
+            <h3>Mark as Action</h3>
+            <p className={styles.modalText}>Edit the action description or keep as is:</p>
+            <textarea
+              value={actionText}
+              onChange={(e) => setActionText(e.target.value)}
+              className={styles.textarea}
+            />
+            <div className={styles.actions}>
+              <button
+                onClick={() => handleMarkAsAction(showActionModal, actionText)}
+                className={styles.submitButton}
+              >
+                Mark as Action
+              </button>
+              <button
+                onClick={() => {
+                  setShowActionModal(null);
+                  setActionText('');
+                }}
+                className={styles.cancelButton}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
