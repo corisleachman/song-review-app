@@ -101,41 +101,44 @@
 
 .threadMarkers {
   position: relative;
-  height: 30px;
+  height: 50px;
   width: 100%;
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  margin-top: 5px;
+  margin-top: 10px;
+  background: #f9f9f9;
+  border-top: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .marker {
   position: absolute;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   background: #FF6B6B;
-  border: 2px solid #fff;
+  border: 3px solid #fff;
   padding: 0;
   cursor: pointer;
-  font-size: 16px;
-  transform: translateX(-50%);
+  font-size: 18px;
+  transform: translateX(-50%) translateY(-50%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  top: -1px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  transition: all 0.2s;
+  top: 50%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  transition: all 0.2s ease;
 }
 
 .marker:hover {
-  transform: translateX(-50%) scale(1.15);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  transform: translateX(-50%) translateY(-50%) scale(1.2);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
 }
 
 .activeMarker {
   border-color: #000;
-  box-shadow: 0 0 0 3px #000;
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.4);
 }
 
 .commentsPanelContainer {
