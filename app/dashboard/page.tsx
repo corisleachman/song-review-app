@@ -334,9 +334,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className={styles.content}>
+      <div className={styles.content} data-active-tab={activeTab}>
         {/* SONGS PANEL (Left) - Show on desktop or when tab is active on mobile */}
-        {activeTab === 'songs' && (
         <div className={styles.songsPanel}>
           <div className={styles.songsHeader}>
             <h2 className={styles.sectionTitle}>🎵 Songs</h2>
@@ -440,10 +439,8 @@ export default function DashboardPage() {
             ))}
           </div>
         </div>
-        )}
 
         {/* ACTIONS PANEL (Right) - Show on desktop or when tab is active on mobile */}
-        {activeTab === 'actions' && (
         <div className={styles.actionsPanel}>
           <div className={styles.actionsHeader}>
             <div>
@@ -519,7 +516,6 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
-        )}
       </div>
     </div>
   );

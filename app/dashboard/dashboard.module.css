@@ -165,9 +165,21 @@
     gap: 0;
   }
 
-  .songsPanel,
+  .songsPanel {
+    display: none;
+  }
+
   .actionsPanel {
-    flex: 1 !important;
+    display: none;
+  }
+
+  /* Show the active tab's content using data attribute */
+  [data-active-tab="songs"] .songsPanel {
+    display: flex !important;
+  }
+
+  [data-active-tab="actions"] .actionsPanel {
+    display: flex !important;
   }
 }
 
