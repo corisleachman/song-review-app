@@ -145,14 +145,14 @@ export default function DashboardPage() {
       const { data: versions } = await createClient()
         .from('song_versions')
         .select('id')
-        .eq('song_id', newSong.id)
+        .eq('song_id', newSong.songId)
         .order('created_at', { ascending: false })
         .limit(1);
 
       if (versions && versions.length > 0) {
-        router.push(`/songs/${newSong.id}/versions/${versions[0].id}`);
+        router.push(`/songs/${newSong.songId}/versions/${versions[0].id}`);
       } else {
-        router.push(`/songs/${newSong.id}`);
+        router.push(`/songs/${newSong.songId}`);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create song';
