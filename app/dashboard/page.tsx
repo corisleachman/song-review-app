@@ -347,8 +347,7 @@ export default function DashboardPage() {
                       </p>
                     ) : null}
                   </div>
-                </div>
-                <div className={styles.songActions}>
+                  <div className={styles.songActions}>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -415,6 +414,7 @@ export default function DashboardPage() {
                       className={styles.fileInput}
                     />
                   </label>
+                </div>
                 </div>
               </div>
             ))}
