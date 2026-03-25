@@ -115,6 +115,62 @@
   min-height: 0;
 }
 
+/* Tab Container */
+.tabContainer {
+  display: none;
+  padding: var(--space-lg) var(--space-lg) 0 var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tabNavigation {
+  display: none;
+  gap: var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tab {
+  flex: 1;
+  padding: var(--space-md);
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all var(--transition-fast);
+  border-bottom: 2px solid transparent;
+}
+
+.tab:hover {
+  color: var(--color-text);
+}
+
+.tab.activeTab {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+/* Mobile - Show tabs and hide second panel */
+@media (max-width: 768px) {
+  .tabContainer {
+    display: block;
+  }
+
+  .tabNavigation {
+    display: flex;
+  }
+
+  .content {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .songsPanel,
+  .actionsPanel {
+    flex: 1 !important;
+  }
+}
+
 /* Songs Panel (Left) */
 .songsPanel {
   flex: 1.5;

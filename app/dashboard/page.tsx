@@ -44,6 +44,7 @@ export default function DashboardPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed'>('all');
   const [uploadingSongId, setUploadingSongId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'songs' | 'actions'>('songs');
 
   useEffect(() => {
     if (!getAuth() || !identity) {
@@ -315,8 +316,27 @@ export default function DashboardPage() {
       )}
 
       {/* Main Content */}
+      <div className={styles.tabContainer}>
+        {/* Mobile Tabs */}
+        <div className={styles.tabNavigation}>
+          <button 
+            className={`${styles.tab} ${activeTab === 'songs' ? styles.activeTab : ''}`}
+            onClick={() => setActiveTab('songs')}
+          >
+            🎵 Songs
+          </button>
+          <button 
+            className={`${styles.tab} ${activeTab === 'actions' ? styles.activeTab : ''}`}
+            onClick={() => setActiveTab('actions')}
+          >
+            📋 Actions
+          </button>
+        </div>
+      </div>
+
       <div className={styles.content}>
-        {/* SONGS PANEL (Left) */}
+        {/* SONGS PANEL (Left) - Show on desktop or when tab is active on mobile */}
+        {activeTab === 'songs' && (
         <div className={styles.songsPanel}>
           <div className={styles.songsHeader}>
             <h2 className={styles.sectionTitle}>🎵 Songs</h2>
@@ -420,8 +440,10 @@ export default function DashboardPage() {
             ))}
           </div>
         </div>
+        )}
 
-        {/* ACTIONS PANEL (Right) */}
+        {/* ACTIONS PANEL (Right) - Show on desktop or when tab is active on mobile */}
+        {activeTab === 'actions' && (
         <div className={styles.actionsPanel}>
           <div className={styles.actionsHeader}>
             <div>
@@ -497,6 +519,7 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
+        )}
       </div>
     </div>
   );
