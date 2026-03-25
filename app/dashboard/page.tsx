@@ -298,14 +298,7 @@ function DashboardContent() {
                     {song.latestVersionNumber != null && (
                       <span className={styles.versionBadge}>v{song.latestVersionNumber}</span>
                     )}
-                    {song.commentCount > 0 && (
-                      <span className={styles.commentBadge}>
-                        <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-                          <path d="M1 1h6v4.5H4.5L3 7V5.5H1V1z" stroke="currentColor" strokeWidth="0.9" strokeLinejoin="round"/>
-                        </svg>
-                        {song.commentCount}
-                      </span>
-                    )}
+
                   </div>
 
                   {/* Card body */}
