@@ -190,10 +190,10 @@
 .inlineTextarea:focus { outline: none; border-color: #ff1493; }
 .inlineFormActions { display: flex; gap: 8px; justify-content: flex-end; }
 
-/* ── Two-column body ────────────────────────────────────────── */
+/* ── Three-column body ──────────────────────────────────────── */
 .body {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1.4fr 1fr;
   flex: 1;
   min-height: 0;
 }
@@ -438,10 +438,193 @@
 .modalTextarea:focus { outline: none; border-color: #ff1493; }
 .modalActions { display: flex; gap: 8px; justify-content: flex-end; }
 
+/* ── Song Admin panel (right) ───────────────────────────────── */
+.adminPanel {
+  border-left: 1px solid #1e1630;
+  padding: 20px 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.adminPanelHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #1e1630;
+}
+.adminPanelTitle {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #888;
+}
+.adminCount {
+  background: rgba(255,20,147,0.15);
+  color: #ff1493;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 10px;
+  margin-left: auto;
+}
+
+/* Add task row */
+.addTaskRow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.addTaskInput {
+  flex: 1;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #fff;
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+.addTaskInput:focus { outline: none; border-color: rgba(255,20,147,0.5); }
+.addTaskInput::placeholder { color: rgba(255,255,255,0.25); }
+.addTaskBtn {
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(135deg, #ff1493, #a855f7);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+.addTaskBtn:disabled { opacity: 0.3; cursor: not-allowed; }
+.addTaskBtn:not(:disabled):hover { opacity: 0.85; }
+
+/* Task list */
+.taskList { display: flex; flex-direction: column; gap: 4px; }
+.taskEmpty { font-size: 0.82rem; color: #555; margin: 4px 0; }
+
+.taskRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 6px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  transition: background 0.12s, border-color 0.12s;
+  cursor: default;
+}
+.taskRow:hover { background: rgba(255,255,255,0.03); }
+.taskRowDragOver {
+  border-color: rgba(255,20,147,0.4);
+  background: rgba(255,20,147,0.05);
+}
+.taskRowDone { opacity: 0.5; }
+
+.taskDragHandle {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.2);
+  cursor: grab;
+  user-select: none;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.taskDragHandle:active { cursor: grabbing; }
+
+.taskCircle {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.25);
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: border-color 0.15s;
+}
+.taskCircle:hover { border-color: #22c55e; }
+.taskCircleDone {
+  background: #22c55e;
+  border-color: #22c55e;
+}
+
+.taskDesc {
+  flex: 1;
+  font-size: 0.85rem;
+  color: #ddd;
+  line-height: 1.4;
+  cursor: text;
+  word-break: break-word;
+}
+.taskDescDone {
+  text-decoration: line-through;
+  color: #666;
+}
+.taskEditInput {
+  flex: 1;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,20,147,0.5);
+  border-radius: 6px;
+  padding: 3px 8px;
+  color: #fff;
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+.taskEditInput:focus { outline: none; }
+
+.taskDeleteBtn {
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.2);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+.taskDeleteBtn:hover { color: #ff6b6b; background: rgba(255,107,107,0.1); }
+
+/* Completed section */
+.completedSection {
+  margin-top: 20px;
+  border-top: 1px solid #1e1630;
+  padding-top: 14px;
+}
+.completedHeading {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #555;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.completedCount {
+  background: rgba(255,255,255,0.06);
+  color: #666;
+  padding: 1px 7px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
 /* ── Mobile ─────────────────────────────────────────────────── */
 @media (max-width: 700px) {
   .body { grid-template-columns: 1fr; }
   .actionsPanel { border-right: none; border-bottom: 1px solid #1e1630; }
+  .adminPanel { border-left: none; border-top: 1px solid #1e1630; }
   .topBar { padding: 12px 16px; gap: 8px; }
   .playerSection { padding: 16px; }
   .songTitle { font-size: 1rem; }

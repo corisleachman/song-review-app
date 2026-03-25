@@ -56,3 +56,18 @@ CREATE POLICY "Allow all" ON songs FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all" ON song_versions FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all" ON comment_threads FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all" ON comments FOR ALL USING (true) WITH CHECK (true);
+
+-- ─── Song Tasks (added for per-song admin task tracking) ───────────────────
+CREATE TABLE IF NOT EXISTS song_tasks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  song_id UUID NOT NULL REFERENCES songs(id) ON DELETE CASCADE,
+  description TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed')),
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_song_tasks_song_id ON song_tasks(song_id, sort_order);
+
+ALTER TABLE song_tasks ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all" ON song_tasks FOR ALL USING (true) WITH CHECK (true);
