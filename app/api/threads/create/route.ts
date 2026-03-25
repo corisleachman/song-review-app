@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       .insert([
         {
           song_version_id: versionId,
-          timestamp_seconds: timestamp,
+          timestamp_seconds: Math.round(timestamp),
           created_by: author,
         },
       ])

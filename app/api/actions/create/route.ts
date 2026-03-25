@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
           description,
           suggested_by: suggestedBy,
           status: 'pending',
-          ...(timestampSeconds != null && { timestamp_seconds: timestampSeconds }),
+          ...(timestampSeconds != null && { timestamp_seconds: Math.round(timestampSeconds) }),
         },
       ])
       .select()
