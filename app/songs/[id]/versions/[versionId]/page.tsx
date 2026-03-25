@@ -193,7 +193,7 @@ function VersionContent() {
     const res = await fetch('/api/threads/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ versionId, timestampSeconds: pendingTimestamp, createdBy: identity, initialComment: pendingComment }),
+      body: JSON.stringify({ versionId, songId, timestamp: pendingTimestamp, author: identity, commentText: pendingComment }),
     });
     const data = await res.json();
     setSending(false);
@@ -209,7 +209,7 @@ function VersionContent() {
     await fetch('/api/threads/reply', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ threadId: activeThreadId, author: identity, body: replyText, versionId }),
+      body: JSON.stringify({ threadId: activeThreadId, author: identity, text: replyText, songId, versionId }),
     });
     setSending(false);
     setReplyText('');

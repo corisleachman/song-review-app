@@ -1,10 +1,15 @@
+/* ── Dashboard ───────────────────────────────────────── */
+
 .page {
   min-height: 100vh;
-  background: var(--bg);
+  background: #0d0914;
+  color: #fff;
   display: flex;
   flex-direction: column;
+  font-family: inherit;
 }
 
+/* Header */
 .header {
   display: flex;
   align-items: center;
@@ -13,28 +18,29 @@
   border-bottom: 0.5px solid rgba(255,255,255,0.08);
   position: sticky;
   top: 0;
-  z-index: 10;
-  background: var(--bg);
+  z-index: 20;
+  background: #0d0914;
 }
 
 .headerLeft { display: flex; align-items: center; gap: 16px; }
-.headerRight { display: flex; align-items: center; gap: 12px; }
+.headerRight { display: flex; align-items: center; gap: 10px; }
 
 .logo {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #fff;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: -0.01em;
 }
 
 .logoDot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--primary, #ff1493);
-  display: inline-block;
+  flex-shrink: 0;
 }
 
 .settingsBtn {
@@ -45,6 +51,7 @@
   padding: 6px 12px;
   border-radius: 7px;
   cursor: pointer;
+  font-family: inherit;
   transition: border-color 0.15s, color 0.15s;
 }
 .settingsBtn:hover { border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.7); }
@@ -57,7 +64,8 @@
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
+  flex-shrink: 0;
 }
 
 /* Mobile tabs — hidden on desktop */
@@ -78,16 +86,17 @@
   border-bottom: 2px solid transparent;
   color: rgba(255,255,255,0.3);
   font-size: 13px;
+  font-family: inherit;
   cursor: pointer;
   transition: color 0.15s;
+  margin-bottom: -0.5px;
 }
-
 .mobileTabActive {
   color: var(--primary, #ff1493);
   border-bottom-color: var(--primary, #ff1493);
 }
 
-.badge {
+.tabBadge {
   background: rgba(255,20,147,0.2);
   color: var(--primary, #ff1493);
   font-size: 10px;
@@ -95,6 +104,7 @@
   border-radius: 10px;
 }
 
+/* Body */
 .body {
   display: grid;
   grid-template-columns: 1fr 280px;
@@ -102,14 +112,10 @@
   min-height: 0;
 }
 
+/* Songs panel */
 .songsPanel {
   padding: 20px 24px;
   border-right: 0.5px solid rgba(255,255,255,0.08);
-  overflow-y: auto;
-}
-
-.actionsPanel {
-  padding: 20px 20px;
   overflow-y: auto;
 }
 
@@ -124,7 +130,7 @@
   color: rgba(255,255,255,0.3);
   font-size: 11px;
   font-weight: 500;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
@@ -140,11 +146,12 @@
   border-radius: 8px;
   border: none;
   cursor: pointer;
+  font-family: inherit;
   transition: opacity 0.15s;
 }
 .newBtn:hover { opacity: 0.85; }
 
-/* Songs grid */
+/* Song grid */
 .songsGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -157,9 +164,13 @@
   border: 0.5px solid rgba(255,255,255,0.08);
   overflow: hidden;
   cursor: pointer;
-  transition: border-color 0.15s, transform 0.1s;
+  transition: border-color 0.15s, transform 0.12s;
+  position: relative;
 }
-.card:hover { border-color: rgba(255,20,147,0.35); transform: translateY(-1px); }
+.card:hover {
+  border-color: rgba(255,20,147,0.35);
+  transform: translateY(-1px);
+}
 
 .cardThumb {
   height: 86px;
@@ -167,14 +178,22 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  background: linear-gradient(135deg, rgba(255,20,147,0.1), rgba(168,85,247,0.08));
+  overflow: hidden;
+  background: rgba(255,255,255,0.03);
+}
+
+.cardThumbImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .thumbPlaceholder {
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background: rgba(255,20,147,0.1);
+  background: rgba(255,20,147,0.08);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -182,8 +201,8 @@
 
 .versionBadge {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 7px;
+  right: 7px;
   background: rgba(255,20,147,0.15);
   color: var(--primary, #ff1493);
   font-size: 9px;
@@ -191,24 +210,26 @@
   padding: 2px 7px;
   border-radius: 10px;
   border: 0.5px solid rgba(255,20,147,0.25);
+  pointer-events: none;
 }
 
 .commentBadge {
   position: absolute;
   bottom: 7px;
-  left: 8px;
+  left: 7px;
   background: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.4);
+  color: rgba(255,255,255,0.5);
   font-size: 9px;
   padding: 2px 6px;
   border-radius: 10px;
   display: flex;
   align-items: center;
   gap: 3px;
+  pointer-events: none;
 }
 
 .cardBody {
-  padding: 9px 10px;
+  padding: 9px 10px 8px;
 }
 
 .cardTitle {
@@ -228,9 +249,11 @@
   border-radius: 5px;
   color: #fff;
   font-size: 12px;
+  font-family: inherit;
   padding: 3px 6px;
   outline: none;
   margin-bottom: 4px;
+  box-sizing: border-box;
 }
 
 .cardMeta {
@@ -239,12 +262,13 @@
   justify-content: space-between;
   color: rgba(255,255,255,0.25);
   font-size: 10px;
+  min-height: 20px;
 }
 
 .cardActions {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
   opacity: 0;
   transition: opacity 0.15s;
 }
@@ -260,11 +284,12 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: rgba(255,255,255,0.45);
-  transition: background 0.15s, color 0.15s;
+  color: rgba(255,255,255,0.4);
+  transition: background 0.12s, color 0.12s;
 }
 .iconBtn:hover { background: rgba(255,255,255,0.12); color: #fff; }
 
+/* Ghost card */
 .cardGhost {
   background: transparent;
   border-radius: 10px;
@@ -280,13 +305,27 @@
   font-size: 11px;
   transition: border-color 0.15s, color 0.15s;
 }
-.cardGhost:hover { border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.35); }
+.cardGhost:hover { border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.4); }
+
+/* Empty state */
+.emptyState {
+  color: rgba(255,255,255,0.2);
+  font-size: 12px;
+  text-align: center;
+  padding: 24px 0;
+}
 
 /* Actions panel */
+.actionsPanel {
+  padding: 20px;
+  overflow-y: auto;
+}
+
 .filterRow {
   display: flex;
   gap: 6px;
   margin-bottom: 16px;
+  flex-wrap: wrap;
 }
 
 .filterPill {
@@ -297,26 +336,17 @@
   background: transparent;
   color: rgba(255,255,255,0.35);
   cursor: pointer;
+  font-family: inherit;
   transition: all 0.15s;
 }
 .filterPill:hover { border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); }
-
 .filterPillActive {
-  background: rgba(255,20,147,0.12);
+  background: rgba(255,20,147,0.1);
   border-color: rgba(255,20,147,0.3);
   color: var(--primary, #ff1493);
 }
 
-.emptyState {
-  color: rgba(255,255,255,0.2);
-  font-size: 12px;
-  text-align: center;
-  padding: 24px 0;
-}
-
-.actionGroup {
-  margin-bottom: 18px;
-}
+.actionGroup { margin-bottom: 18px; }
 
 .groupLabel {
   color: rgba(255,255,255,0.2);
@@ -331,10 +361,10 @@
   display: flex;
   align-items: flex-start;
   gap: 9px;
-  margin-bottom: 10px;
+  margin-bottom: 9px;
 }
 
-.actionCheck {
+.actionToggle {
   width: 15px;
   height: 15px;
   border-radius: 50%;
@@ -348,12 +378,8 @@
   justify-content: center;
   transition: all 0.15s;
 }
-.actionCheck:hover { border-color: rgba(255,255,255,0.4); }
-
-.actionCheckDone {
-  background: #1D9E75;
-  border-color: #1D9E75;
-}
+.actionToggle:hover { border-color: rgba(255,255,255,0.4); }
+.actionToggleDone { background: #1d9e75; border-color: #1d9e75; }
 
 .actionContent { flex: 1; min-width: 0; }
 
@@ -362,16 +388,16 @@
   font-size: 12px;
   line-height: 1.5;
 }
-
-.actionDone {
+.actionTextDone {
   opacity: 0.3;
   text-decoration: line-through;
 }
 
-.actionMeta {
+.actionTimestamp {
   color: rgba(255,165,122,0.5);
   font-size: 10px;
   margin-top: 2px;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Modal */
@@ -399,7 +425,7 @@
   color: #fff;
   font-size: 16px;
   font-weight: 500;
-  margin-bottom: 16px;
+  margin: 0 0 16px;
 }
 
 .modalInput {
@@ -409,10 +435,12 @@
   border-radius: 8px;
   color: #fff;
   font-size: 14px;
+  font-family: inherit;
   padding: 10px 14px;
   outline: none;
   margin-bottom: 16px;
   transition: border-color 0.15s;
+  box-sizing: border-box;
 }
 .modalInput:focus { border-color: rgba(255,20,147,0.5); }
 .modalInput::placeholder { color: rgba(255,255,255,0.25); }
@@ -428,6 +456,7 @@
   border: 0.5px solid rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.45);
   font-size: 13px;
+  font-family: inherit;
   padding: 8px 16px;
   border-radius: 8px;
   cursor: pointer;
@@ -441,6 +470,7 @@
   color: #fff;
   font-size: 13px;
   font-weight: 500;
+  font-family: inherit;
   padding: 8px 20px;
   border-radius: 8px;
   cursor: pointer;
@@ -453,22 +483,16 @@
 @media (max-width: 768px) {
   .mobileTabs { display: flex; }
 
-  .body {
-    display: block;
-  }
+  .body { display: block; }
 
   .songsPanel {
     padding: 16px;
     border-right: none;
   }
 
-  .actionsPanel {
-    padding: 16px;
-  }
+  .actionsPanel { padding: 16px; }
 
-  .hideMobile {
-    display: none;
-  }
+  .hideMobile { display: none; }
 
   .songsGrid {
     grid-template-columns: 1fr;
@@ -483,11 +507,11 @@
   }
 
   .cardThumb {
-    width: 52px;
+    width: 56px;
     height: auto;
-    min-height: 60px;
-    border-radius: 0;
+    min-height: 64px;
     flex-shrink: 0;
+    border-radius: 0;
   }
 
   .cardActions { opacity: 1; }
@@ -495,6 +519,5 @@
   .cardGhost {
     flex-direction: row;
     min-height: 52px;
-    justify-content: center;
   }
 }

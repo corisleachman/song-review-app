@@ -1,358 +1,183 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import { getIdentity, getAuth } from '@/lib/auth';
+import { useEffect, useRef, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
-import Link from 'next/link';
+import { getIdentity } from '@/lib/auth';
 import styles from './song.module.css';
 
-interface Version {
-  id: string;
-  version_number: number;
-  label: string | null;
-  created_by: string;
-  created_at: string;
-}
+const supabase = createClient();
 
-interface Song {
-  id: string;
-  title: string;
-  image_url?: string;
-  versions: Version[];
-}
-
-export default function SongPage() {
+export default function SongUploadPage() {
   const router = useRouter();
   const params = useParams();
   const songId = params.id as string;
   const identity = getIdentity();
 
-  const [song, setSong] = useState<Song | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [editingTitle, setEditingTitle] = useState(false);
-  const [newTitle, setNewTitle] = useState('');
-  const [showUploadForm, setShowUploadForm] = useState(false);
-  const [uploadLabel, setUploadLabel] = useState('');
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [songTitle, setSongTitle] = useState('');
+  const [dragging, setDragging] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [label, setLabel] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
-  const [editingVersions, setEditingVersions] = useState<{
-    [key: string]: string;
-  }>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!getAuth() || !identity) {
-      router.push('/');
-      return;
-    }
+    if (!identity) { router.push('/identify'); return; }
     loadSong();
-  }, [router, identity, songId]);
+  }, []);
 
-  const loadSong = async () => {
-    try {
-      const supabase = createClient();
-      const { data, error: fetchError } = await supabase
-        .from('songs')
-        .select(
-          `
-          id,
-          title,
-          image_url,
-          song_versions(id, version_number, label, created_by, created_at)
-        `
-        )
-        .eq('id', songId)
-        .single();
-
-      if (fetchError) throw fetchError;
-      const songData = {
-        ...data,
-        versions: data.song_versions || []
-      };
-      setSong(songData);
-      setNewTitle(data.title);
-    } catch (err) {
-      console.error('Error loading song:', err);
-      setError('Failed to load song');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleUpdateTitle = async () => {
-    if (!newTitle.trim()) return;
-
-    try {
-      const supabase = createClient();
-      const { error: updateError } = await supabase
-        .from('songs')
-        .update({ title: newTitle })
-        .eq('id', songId);
-
-      if (updateError) throw updateError;
-      setSong(song ? { ...song, title: newTitle } : null);
-      setEditingTitle(false);
-    } catch (err) {
-      setError('Failed to update song title');
-    }
-  };
-
-  const handleUpdateVersionLabel = async (versionId: string) => {
-    const label = editingVersions[versionId];
-    if (!label) return;
-
-    try {
-      const supabase = createClient();
-      const { error: updateError } = await supabase
+  async function loadSong() {
+    const { data } = await supabase.from('songs').select('id, title, song_versions(id)').eq('id', songId).single();
+    if (!data) return;
+    setSongTitle(data.title);
+    // If versions already exist, redirect to latest
+    const versions = (data as any).song_versions ?? [];
+    if (versions.length > 0) {
+      const { data: versionsData } = await supabase
         .from('song_versions')
-        .update({ label })
-        .eq('id', versionId);
-
-      if (updateError) throw updateError;
-
-      setSong(
-        song
-          ? {
-              ...song,
-              versions: song.versions.map((v) =>
-                v.id === versionId ? { ...v, label } : v
-              ),
-            }
-          : null
-      );
-      setEditingVersions({ ...editingVersions, [versionId]: '' });
-    } catch (err) {
-      setError('Failed to update version label');
+        .select('id')
+        .eq('song_id', songId)
+        .order('version_number', { ascending: false })
+        .limit(1)
+        .single();
+      if (versionsData) router.replace(`/songs/${songId}/versions/${versionsData.id}`);
     }
-  };
+  }
 
-  const handleUploadVersion = async (e: React.FormEvent) => {
+  function handleDrop(e: React.DragEvent) {
     e.preventDefault();
-    if (!uploadFile) {
-      setError('Please select a file');
-      return;
-    }
+    setDragging(false);
+    const f = e.dataTransfer.files[0];
+    if (f && f.type.startsWith('audio/')) setFile(f);
+  }
 
+  async function handleUpload() {
+    if (!file || !identity) return;
     setUploading(true);
+    setProgress(0);
     setError('');
 
     try {
-      if (!song) return;
-
-      const nextVersion = (song.versions?.length || 0) + 1;
-      const fileName = uploadFile.name;
-      const filePath = `songs/${songId}/version-${nextVersion}/${fileName}`;
-
-      // Get signed upload URL
-      const createResponse = await fetch('/api/versions/create', {
+      const res = await fetch('/api/versions/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           songId,
-          versionNumber: nextVersion,
-          label: uploadLabel || `Version ${nextVersion}`,
-          filePath,
-          fileName,
+          fileName: file.name,
+          fileSize: file.size,
+          createdBy: identity,
+          label: label.trim() || null,
         }),
       });
+      const { versionId, uploadUrl } = await res.json();
 
-      if (!createResponse.ok) {
-        const data = await createResponse.json();
-        throw new Error(data.error || 'Failed to create version');
-      }
-
-      const { uploadUrl } = await createResponse.json();
-
-      // Upload file
-      const uploadResponse = await fetch(uploadUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'audio/mpeg' },
-        body: uploadFile,
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.upload.addEventListener('progress', e => {
+          if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100));
+        });
+        xhr.addEventListener('load', () => (xhr.status < 300 ? resolve() : reject(new Error('Upload failed'))));
+        xhr.addEventListener('error', () => reject(new Error('Upload failed')));
+        xhr.open('PUT', uploadUrl);
+        xhr.setRequestHeader('Content-Type', file.type || 'audio/mpeg');
+        xhr.send(file);
       });
 
-      if (!uploadResponse.ok) {
-        throw new Error('Failed to upload file');
-      }
-
-      setUploadLabel('');
-      setUploadFile(null);
-      setShowUploadForm(false);
-      loadSong();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error uploading version');
-    } finally {
+      router.push(`/songs/${songId}/versions/${versionId}`);
+    } catch {
+      setError('Upload failed. Please try again.');
       setUploading(false);
     }
-  };
-
-  if (loading) return <div className={styles.loading}>Loading...</div>;
-  if (!song) return <div className={styles.error}>Song not found</div>;
+  }
 
   return (
-    <div className={styles.container}>
-      <Link href="/dashboard" className={styles.backLink}>
-        ← Back to Dashboard
-      </Link>
+    <div className={styles.page}>
+      <header className={styles.header}>
+        <button className={styles.backBtn} onClick={() => router.push('/dashboard')}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M9 11L5 7l4-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Songs
+        </button>
+        {songTitle && <span className={styles.songTitle}>{songTitle}</span>}
+      </header>
 
-      <div className={styles.songHeader}>
-        {editingTitle ? (
-          <div className={styles.titleEdit}>
-            <input
-              type="text"
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              autoFocus
-            />
-            <button onClick={handleUpdateTitle}>Save</button>
-            <button
-              onClick={() => {
-                setEditingTitle(false);
-                setNewTitle(song.title);
-              }}
-              className={styles.cancelButton}
-            >
-              Cancel
-            </button>
-          </div>
-        ) : (
-          <div className={styles.titleDisplay}>
-            <div className={styles.headerWithImage}>
-              {song.image_url && (
-                <img src={song.image_url} alt={song.title} className={styles.headerImage} />
-              )}
-              <div>
-                <h1>{song.title}</h1>
+      <div className={styles.body}>
+        <div className={styles.uploadCard}>
+          <div className={styles.uploadTitle}>Upload first version</div>
+          <div className={styles.uploadSub}>Drop your audio file to get started</div>
+
+          <div
+            className={`${styles.dropZone} ${dragging ? styles.dropZoneActive : ''} ${file ? styles.dropZoneHasFile : ''}`}
+            onDragOver={e => { e.preventDefault(); setDragging(true); }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={handleDrop}
+            onClick={() => !file && fileInputRef.current?.click()}
+          >
+            {file ? (
+              <div className={styles.fileInfo}>
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                  <path d="M8 11l2.5 2.5 4-4" stroke="#1d9e75" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                  <circle cx="11" cy="11" r="8.5" stroke="#1d9e75" strokeWidth="1.4"/>
+                </svg>
+                <span className={styles.fileName}>{file.name}</span>
+                <span className={styles.fileSize}>{(file.size / 1024 / 1024).toFixed(1)} MB</span>
                 <button
-                  onClick={() => setEditingTitle(true)}
-                  className={styles.editButton}
+                  className={styles.removeFile}
+                  onClick={e => { e.stopPropagation(); setFile(null); setProgress(0); }}
                 >
-                  Edit
+                  ✕
                 </button>
               </div>
-            </div>
+            ) : (
+              <>
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                  <path d="M16 22V10M11 15l5-5 5 5M8 24h16" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span className={styles.dropText}>Drop audio file here</span>
+                <span className={styles.dropOr}>or click to browse</span>
+              </>
+            )}
           </div>
-        )}
-      </div>
 
-      <div className={styles.versionsSection}>
-        <h2>Versions</h2>
-        {song.versions && song.versions.length > 0 ? (
-          <div className={styles.versionsList}>
-            {song.versions.map((version) => (
-              <div key={version.id} className={styles.versionItem}>
-                <div className={styles.versionInfo}>
-                  {editingVersions[version.id] !== undefined ? (
-                    <div className={styles.labelEdit}>
-                      <input
-                        type="text"
-                        value={editingVersions[version.id]}
-                        onChange={(e) =>
-                          setEditingVersions({
-                            ...editingVersions,
-                            [version.id]: e.target.value,
-                          })
-                        }
-                        autoFocus
-                      />
-                      <button onClick={() => handleUpdateVersionLabel(version.id)}>
-                        Save
-                      </button>
-                      <button
-                        onClick={() => {
-                          const newEditing = { ...editingVersions };
-                          delete newEditing[version.id];
-                          setEditingVersions(newEditing);
-                        }}
-                        className={styles.cancelButton}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <div className={styles.labelDisplay}>
-                      <span className={styles.versionLabel}>
-                        Version {version.version_number}
-                        {version.label && ` - ${version.label}`}
-                      </span>
-                      <button
-                        onClick={() =>
-                          setEditingVersions({
-                            ...editingVersions,
-                            [version.id]: version.label || '',
-                          })
-                        }
-                        className={styles.editButton}
-                      >
-                        Edit
-                      </button>
-                    </div>
-                  )}
-                  <p className={styles.versionMeta}>
-                    Uploaded by {version.created_by} on{' '}
-                    {new Date(version.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-                <Link
-                  href={`/songs/${songId}/versions/${version.id}`}
-                  className={styles.openButton}
-                >
-                  Open
-                </Link>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="audio/*"
+            style={{ display: 'none' }}
+            onChange={e => { const f = e.target.files?.[0]; if (f) setFile(f); }}
+          />
+
+          <input
+            className={styles.labelInput}
+            placeholder='Version label (optional, e.g. "Rough mix")'
+            value={label}
+            onChange={e => setLabel(e.target.value)}
+            disabled={uploading}
+          />
+
+          {uploading && (
+            <div>
+              <div className={styles.progressWrap}>
+                <div className={styles.progressBar} style={{ width: `${progress}%` }} />
               </div>
-            ))}
-          </div>
-        ) : (
-          <p className={styles.empty}>No versions yet</p>
-        )}
-      </div>
+              <span className={styles.progressLabel}>{progress}%</span>
+            </div>
+          )}
 
-      {showUploadForm ? (
-        <form onSubmit={handleUploadVersion} className={styles.uploadForm}>
-          <h3>Upload New Version</h3>
-          <div className={styles.formGroup}>
-            <label>Version Label (optional)</label>
-            <input
-              type="text"
-              value={uploadLabel}
-              onChange={(e) => setUploadLabel(e.target.value)}
-              placeholder="e.g., Drums Up"
-            />
-          </div>
-          <div className={styles.formGroup}>
-            <label>MP3 File</label>
-            <input
-              type="file"
-              accept=".mp3"
-              onChange={(e) => setUploadFile((e.target as HTMLInputElement).files?.[0] || null)}
-              required
-            />
-          </div>
-          {error && <p className={styles.error}>{error}</p>}
-          <div className={styles.formActions}>
-            <button type="submit" disabled={uploading}>
-              {uploading ? 'Uploading...' : 'Upload Version'}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setShowUploadForm(false);
-                setError('');
-              }}
-              className={styles.cancelButton}
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      ) : (
-        <button
-          onClick={() => setShowUploadForm(true)}
-          className={styles.uploadButton}
-        >
-          + Upload New Version
-        </button>
-      )}
+          {error && <div className={styles.errorMsg}>{error}</div>}
+
+          <button
+            className={styles.uploadBtn}
+            onClick={handleUpload}
+            disabled={!file || uploading}
+          >
+            {uploading ? 'Uploading…' : 'Upload version'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

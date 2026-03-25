@@ -11,7 +11,7 @@ const supabase = createClient();
 interface Song {
   id: string;
   title: string;
-  cover_art_url?: string | null;
+  image_url?: string | null;
   latestVersionId: string | null;
   latestVersionNumber: number | null;
   commentCount: number;
@@ -67,7 +67,7 @@ function DashboardContent() {
   async function loadSongs() {
     const { data: songsData } = await supabase
       .from('songs')
-      .select('id, title, cover_art_url')
+      .select('id, title, image_url')
       .order('created_at', { ascending: false });
 
     if (!songsData) return;
@@ -96,7 +96,7 @@ function DashboardContent() {
       return {
         id: song.id,
         title: song.title,
-        cover_art_url: song.cover_art_url ?? null,
+        image_url: song.image_url ?? null,
         latestVersionId: latest?.id ?? null,
         latestVersionNumber: latest?.version_number ?? null,
         commentCount,
@@ -170,8 +170,8 @@ function DashboardContent() {
     if (error) return;
     const { data: urlData } = supabase.storage.from('song-images').getPublicUrl(path);
     const url = urlData.publicUrl;
-    await supabase.from('songs').update({ cover_art_url: url }).eq('id', songId);
-    setSongs(prev => prev.map(s => s.id === songId ? { ...s, cover_art_url: url } : s));
+    await supabase.from('songs').update({ image_url: url }).eq('id', songId);
+    setSongs(prev => prev.map(s => s.id === songId ? { ...s, image_url: url } : s));
   }
 
   function handleCardClick(e: React.MouseEvent, song: Song) {
@@ -241,7 +241,7 @@ function DashboardContent() {
           onClick={() => setMobileTab('actions')}
         >
           Actions
-          {pendingCount > 0 && <span className={styles.badge}>{pendingCount}</span>}
+          {pendingCount > 0 && <span className={styles.tabBadge}>{pendingCount}</span>}
         </button>
       </div>
 
@@ -270,9 +270,9 @@ function DashboardContent() {
                 >
                   {/* Thumbnail */}
                   <div className={styles.cardThumb}>
-                    {song.cover_art_url ? (
+                    {song.image_url ? (
                       <img
-                        src={song.cover_art_url}
+                        src={song.image_url}
                         alt={song.title}
                         style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                       />
@@ -410,7 +410,7 @@ function DashboardContent() {
                 {songActions.map(action => (
                   <div key={action.id} className={styles.actionRow}>
                     <button
-                      className={`${styles.actionCheck} ${action.status === 'completed' ? styles.actionCheckDone : ''}`}
+                      className={`${styles.actionToggle} ${action.status === 'completed' ? styles.actionToggleDone : ''}`}
                       onClick={() => toggleAction(action)}
                     >
                       {action.status === 'completed' && (
@@ -420,11 +420,11 @@ function DashboardContent() {
                       )}
                     </button>
                     <div className={styles.actionContent}>
-                      <div className={`${styles.actionText} ${action.status === 'completed' ? styles.actionDone : ''}`}>
+                      <div className={`${styles.actionText} ${action.status === 'completed' ? styles.actionTextDone : ''}`}>
                         {action.description}
                       </div>
                       {action.timestamp_seconds != null && (
-                        <div className={styles.actionMeta}>@ {formatTime(action.timestamp_seconds)}</div>
+                        <div className={styles.actionTimestamp}>@ {formatTime(action.timestamp_seconds)}</div>
                       )}
                     </div>
                   </div>
