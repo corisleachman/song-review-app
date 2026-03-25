@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
+import { getIdentity } from '@/lib/auth';
+import styles from './dashboard.module.css';
 
 const supabase = createClient();
-import { getIdentity } from '@/lib/auth';
 
 interface Thread {
   id: string;
