@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { getIdentity } from '@/lib/auth';
-import styles from './version.module.css';
 
 interface Thread {
   id: string;
