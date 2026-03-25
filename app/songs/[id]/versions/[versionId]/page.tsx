@@ -59,6 +59,7 @@ export default function VersionPage() {
   const [clickedTime, setClickedTime] = useState<number | null>(null);
   const [identity, setIdentity] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [waveError, setWaveError] = useState<string | null>(null);
 
   const supabase = createClient();
 
@@ -103,10 +104,18 @@ export default function VersionPage() {
         setVersion(versionData);
 
         if (versionData?.file_path) {
-          const { data: urlData } = supabase.storage
+          // Prefer signed URL (works regardless of bucket public/private setting)
+          const { data: signedData } = await supabase.storage
             .from('song-files')
-            .getPublicUrl(versionData.file_path);
-          setAudioUrl(urlData.publicUrl);
+            .createSignedUrl(versionData.file_path, 3600);
+          if (signedData?.signedUrl) {
+            setAudioUrl(signedData.signedUrl);
+          } else {
+            const { data: urlData } = supabase.storage
+              .from('song-files')
+              .getPublicUrl(versionData.file_path);
+            setAudioUrl(urlData.publicUrl);
+          }
         }
 
         // Threads + comments
@@ -157,8 +166,14 @@ export default function VersionPage() {
     });
 
     ws.on('ready', (duration) => {
+      setWaveError(null);
       setDuration(duration);
       setIsReady(true);
+    });
+
+    ws.on('error', (err) => {
+      console.error('WaveSurfer error:', err);
+      setWaveError(err.message ?? String(err));
     });
 
     ws.on('timeupdate', (currentTime) => {
@@ -182,11 +197,24 @@ export default function VersionPage() {
     wavesurferRef.current = ws;
   }, []);
 
-  // Trigger init when both audioUrl and the container are ready
+  // Trigger init when audioUrl is ready — retry until ref is attached
   useEffect(() => {
-    if (!audioUrl || !waveformRef.current) return;
+    if (!audioUrl) return;
     setIsReady(false);
-    initWaveSurfer(waveformRef.current, audioUrl);
+    setWaveError(null);
+
+    // The waveformRef may not be attached on the very first microtask,
+    // so we poll briefly (max 20 × 50ms = 1s) before giving up.
+    let attempts = 0;
+    const tryInit = () => {
+      if (waveformRef.current) {
+        initWaveSurfer(waveformRef.current, audioUrl);
+      } else if (attempts < 20) {
+        attempts++;
+        setTimeout(tryInit, 50);
+      }
+    };
+    tryInit();
 
     return () => {
       if (wavesurferRef.current) {
@@ -310,8 +338,11 @@ export default function VersionPage() {
           <span className={styles.timeDisplay}>
             {formatTime(currentTime)} / {formatTime(duration)}
           </span>
-          {!isReady && audioUrl && (
+          {!isReady && audioUrl && !waveError && (
             <span className={styles.loadingWave}>Loading waveform…</span>
+          )}
+          {waveError && (
+            <span className={styles.waveError}>⚠ Audio error: {waveError}</span>
           )}
         </div>
 
