@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, Suspense } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import { getIdentity } from '@/lib/auth';
@@ -53,7 +53,7 @@ function formatTime(seconds: number) {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-export default function VersionPage() {
+function DashboardContent() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -471,5 +471,13 @@ export default function VersionPage() {
         onChange={e => { const f = e.target.files?.[0]; if (f) uploadNewVersion(f); }}
       />
     </div>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <DashboardContent />
+    </Suspense>
   );
 }
