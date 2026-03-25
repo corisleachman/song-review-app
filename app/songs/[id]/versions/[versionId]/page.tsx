@@ -87,7 +87,7 @@ export default function VersionPage() {
   const [replyText, setReplyText] = useState('');
   const [actionModalCommentId, setActionModalCommentId] = useState<string | null>(null);
   const [actionText, setActionText] = useState('');
-  const [markedCommentIds, setMarkedCommentIds] = useState<Set<string>>(new Set());
+  // markedCommentIds derived from loaded actions — no separate state needed
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTaskText, setNewTaskText] = useState('');
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -372,7 +372,6 @@ export default function VersionPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ commentId: actionModalCommentId, songId, description: actionText.trim(), suggestedBy: identity }),
     });
-    setMarkedCommentIds(prev => { const next = new Set(prev); next.add(actionModalCommentId!); return next; });
     setActionModalCommentId(null);
     setActionText('');
     await loadActions();
@@ -535,7 +534,7 @@ export default function VersionPage() {
                       {c.body}
                     </div>
                     {c.author === identity && <span className={styles.bubbleAuthor}>{c.author}</span>}
-                    {!markedCommentIds.has(c.id) && (
+                    {!actions.some(a => a.comment_id === c.id) && (
                       <button className={styles.markActionBtn} onClick={() => { setActionModalCommentId(c.id); setActionText(c.body); }}>
                         + Mark as action
                       </button>
