@@ -1,25 +1,19 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback, Suspense } from 'react';
-import { useRouter, useParams, useSearchParams } from 'next/navigation';
+import { useEffect, useRef, useState, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import { getIdentity } from '@/lib/auth';
 import styles from './dashboard.module.css';
 
 const supabase = createClient();
 
-interface Thread {
+interface Song {
   id: string;
-  timestamp_seconds: number;
-  created_by: string;
-  comments: Comment[];
-}
-
-interface Comment {
-  id: string;
-  author: string;
-  body: string;
-  created_at: string;
+  title: string;
+  latestVersionId: string | null;
+  latestVersionNumber: number | null;
+  commentCount: number;
 }
 
 interface Action {
@@ -27,208 +21,92 @@ interface Action {
   description: string;
   status: string;
   suggested_by: string;
-  comment_id?: string;
   timestamp_seconds?: number;
-}
-
-interface Version {
-  id: string;
-  version_number: number;
-  label?: string;
-  file_path: string;
-  file_name: string;
-  created_by: string;
-}
-
-interface Song {
-  id: string;
-  title: string;
-}
-
-const MARKER_COLORS = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#ffa07a', '#98d8c8', '#f7dc6f', '#bb8fce'];
-
-function formatTime(seconds: number) {
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}:${String(s).padStart(2, '0')}`;
+  song_id: string;
+  songTitle?: string;
 }
 
 function DashboardContent() {
   const router = useRouter();
-  const params = useParams();
-  const searchParams = useSearchParams();
-  const songId = params.id as string;
-  const versionId = params.versionId as string;
+  const identity = getIdentity();
 
-  const [identity, setIdentity] = useState('');
-  const [song, setSong] = useState<Song | null>(null);
-  const [versions, setVersions] = useState<Version[]>([]);
-  const [currentVersion, setCurrentVersion] = useState<Version | null>(null);
-  const [threads, setThreads] = useState<Thread[]>([]);
+  const [songs, setSongs] = useState<Song[]>([]);
   const [actions, setActions] = useState<Action[]>([]);
-  const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
-  const [replyText, setReplyText] = useState('');
-  const [sending, setSending] = useState(false);
-  const [pendingTimestamp, setPendingTimestamp] = useState<number | null>(null);
-  const [pendingComment, setPendingComment] = useState('');
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [audioUrl, setAudioUrl] = useState('');
-  const [actionDescriptions, setActionDescriptions] = useState<Record<string, string>>({});
-  const [uploadingVersion, setUploadingVersion] = useState(false);
-
-  const waveformRef = useRef<HTMLDivElement>(null);
-  const wavesurferRef = useRef<any>(null);
-  const audioUploadRef = useRef<HTMLInputElement>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const replyInputRef = useRef<HTMLInputElement>(null);
-
-  const activeThread = threads.find(t => t.id === activeThreadId) ?? null;
+  const [loading, setLoading] = useState(true);
+  const [mobileTab, setMobileTab] = useState<'songs' | 'actions'>('songs');
+  const [actionFilter, setActionFilter] = useState<'all' | 'pending' | 'done'>('all');
+  const [showNewModal, setShowNewModal] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newFile, setNewFile] = useState<File | null>(null);
+  const [creating, setCreating] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const id = getIdentity();
-    if (!id) { router.push('/identify'); return; }
-    setIdentity(id);
-    loadData();
-  }, [versionId]);
+    if (!identity) { router.push('/identify'); return; }
+    loadAll();
+  }, []);
 
-  useEffect(() => {
-    const threadParam = searchParams.get('threadId');
-    if (threadParam) setActiveThreadId(threadParam);
-  }, [searchParams, threads]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [activeThread?.comments?.length]);
-
-  async function loadData() {
-    const [songRes, versionsRes] = await Promise.all([
-      supabase.from('songs').select('id, title').eq('id', songId).single(),
-      supabase.from('song_versions').select('*').eq('song_id', songId).order('version_number', { ascending: false }),
-    ]);
-    setSong(songRes.data);
-    setVersions(versionsRes.data ?? []);
-    const ver = versionsRes.data?.find(v => v.id === versionId) ?? null;
-    setCurrentVersion(ver);
-    if (ver) {
-      const { data: urlData } = await supabase.storage.from('song-files').createSignedUrl(ver.file_path, 3600);
-      if (urlData?.signedUrl) setAudioUrl(urlData.signedUrl);
-    }
-    await loadThreads();
-    await loadActions();
+  async function loadAll() {
+    setLoading(true);
+    await Promise.all([loadSongs(), loadActions()]);
+    setLoading(false);
   }
 
-  async function loadThreads() {
-    const { data: threadData } = await supabase
+  async function loadSongs() {
+    const { data: songsData } = await supabase
+      .from('songs')
+      .select('id, title')
+      .order('created_at', { ascending: false });
+
+    if (!songsData) return;
+
+    const { data: versionsData } = await supabase
+      .from('song_versions')
+      .select('id, song_id, version_number')
+      .order('version_number', { ascending: false });
+
+    const { data: threadsData } = await supabase
       .from('comment_threads')
-      .select('*, comments(*)')
-      .eq('song_version_id', versionId)
-      .order('timestamp_seconds', { ascending: true });
-    setThreads(threadData?.map(t => ({ ...t, comments: t.comments ?? [] })) ?? []);
+      .select('id, song_version_id');
+
+    const { data: commentsData } = await supabase
+      .from('comments')
+      .select('id, thread_id');
+
+    const assembled: Song[] = songsData.map(song => {
+      const songVersions = (versionsData ?? []).filter(v => v.song_id === song.id);
+      const latest = songVersions[0] ?? null;
+      const versionIds = songVersions.map(v => v.id);
+      const threadIds = (threadsData ?? [])
+        .filter(t => versionIds.includes(t.song_version_id))
+        .map(t => t.id);
+      const commentCount = (commentsData ?? []).filter(c => threadIds.includes(c.thread_id)).length;
+      return {
+        id: song.id,
+        title: song.title,
+        latestVersionId: latest?.id ?? null,
+        latestVersionNumber: latest?.version_number ?? null,
+        commentCount,
+      };
+    });
+
+    setSongs(assembled);
   }
 
   async function loadActions() {
-    const { data } = await supabase
+    const { data: actionsData } = await supabase
       .from('actions')
       .select('*')
-      .eq('song_id', songId)
       .order('created_at', { ascending: false });
-    setActions(data ?? []);
-  }
 
-  useEffect(() => {
-    if (!audioUrl || !waveformRef.current) return;
-    let ws: any;
-    import('wavesurfer.js').then(({ default: WaveSurfer }) => {
-      if (wavesurferRef.current) { wavesurferRef.current.destroy(); }
-      ws = WaveSurfer.create({
-        container: waveformRef.current!,
-        waveColor: 'rgba(255,255,255,0.15)',
-        progressColor: 'rgba(255,20,147,0.7)',
-        cursorColor: '#ff1493',
-        cursorWidth: 1.5,
-        height: 80,
-        barWidth: 2.5,
-        barGap: 1.5,
-        barRadius: 1,
-        interact: true,
-      });
-      ws.load(audioUrl);
-      ws.on('ready', () => setDuration(ws.getDuration()));
-      ws.on('audioprocess', () => setCurrentTime(ws.getCurrentTime()));
-      ws.on('play', () => setIsPlaying(true));
-      ws.on('pause', () => setIsPlaying(false));
-      ws.on('seek', () => setCurrentTime(ws.getCurrentTime()));
-      wavesurferRef.current = ws;
-    });
-    return () => { ws?.destroy(); };
-  }, [audioUrl]);
+    const { data: songsData } = await supabase.from('songs').select('id, title');
 
-  function handleWaveformClick(e: React.MouseEvent<HTMLDivElement>) {
-    if (!waveformRef.current || !wavesurferRef.current) return;
-    const rect = waveformRef.current.getBoundingClientRect();
-    const ratio = (e.clientX - rect.left) / rect.width;
-    const ts = ratio * duration;
-    wavesurferRef.current.seekTo(ratio);
-    setPendingTimestamp(ts);
-    setPendingComment('');
-    setActiveThreadId(null);
-    setTimeout(() => replyInputRef.current?.focus(), 50);
-  }
+    const withTitles = (actionsData ?? []).map(a => ({
+      ...a,
+      songTitle: songsData?.find(s => s.id === a.song_id)?.title ?? 'Unknown',
+    }));
 
-  function handleMarkerClick(thread: Thread, e: React.MouseEvent) {
-    e.stopPropagation();
-    setActiveThreadId(thread.id);
-    setPendingTimestamp(null);
-    if (wavesurferRef.current && duration > 0) {
-      wavesurferRef.current.seekTo(thread.timestamp_seconds / duration);
-    }
-  }
-
-  async function submitNewThread() {
-    if (!pendingComment.trim() || pendingTimestamp === null) return;
-    setSending(true);
-    const res = await fetch('/api/threads/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ versionId, timestampSeconds: pendingTimestamp, createdBy: identity, initialComment: pendingComment }),
-    });
-    const data = await res.json();
-    setSending(false);
-    setPendingTimestamp(null);
-    setPendingComment('');
-    await loadThreads();
-    if (data.threadId) setActiveThreadId(data.threadId);
-  }
-
-  async function submitReply() {
-    if (!replyText.trim() || !activeThreadId) return;
-    setSending(true);
-    await fetch('/api/threads/reply', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ threadId: activeThreadId, author: identity, body: replyText, versionId }),
-    });
-    setSending(false);
-    setReplyText('');
-    await loadThreads();
-  }
-
-  async function markAsAction(comment: Comment) {
-    const desc = actionDescriptions[comment.id] ?? comment.body;
-    await fetch('/api/actions/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        songId,
-        commentId: comment.id,
-        description: desc,
-        suggestedBy: identity,
-        timestampSeconds: activeThread?.timestamp_seconds,
-      }),
-    });
-    await loadActions();
+    setActions(withTitles);
   }
 
   async function toggleAction(action: Action) {
@@ -237,239 +115,255 @@ function DashboardContent() {
     loadActions();
   }
 
-  async function uploadNewVersion(file: File) {
-    setUploadingVersion(true);
-    const res = await fetch('/api/versions/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ songId, fileName: file.name, fileSize: file.size, createdBy: identity }),
-    });
-    const { uploadUrl, versionId: newVerId } = await res.json();
-    await fetch(uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } });
-    setUploadingVersion(false);
-    router.push(`/songs/${songId}/versions/${newVerId}`);
+  async function createSong() {
+    if (!newTitle.trim()) return;
+    setCreating(true);
+    try {
+      const res = await fetch('/api/songs/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newTitle.trim(),
+          fileName: newFile?.name ?? null,
+          fileSize: newFile?.size ?? null,
+        }),
+      });
+      const { songId, versionId, uploadUrl } = await res.json();
+      if (newFile && uploadUrl) {
+        await fetch(uploadUrl, { method: 'PUT', body: newFile, headers: { 'Content-Type': newFile.type } });
+      }
+      setShowNewModal(false);
+      setNewTitle('');
+      setNewFile(null);
+      if (versionId) {
+        router.push(`/songs/${songId}/versions/${versionId}`);
+      } else {
+        loadSongs();
+      }
+    } finally {
+      setCreating(false);
+    }
   }
 
+  function handleCardClick(song: Song) {
+    if (!song.latestVersionId) return;
+    router.push(`/songs/${song.id}/versions/${song.latestVersionId}`);
+  }
+
+  function formatTime(seconds: number) {
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${String(s).padStart(2, '0')}`;
+  }
+
+  const filteredActions = actions.filter(a => {
+    if (actionFilter === 'pending') return a.status === 'pending';
+    if (actionFilter === 'done') return a.status === 'completed';
+    return true;
+  });
+
   const pendingCount = actions.filter(a => a.status === 'pending').length;
+
+  // Group actions by song title
+  const actionsBySong: Record<string, Action[]> = {};
+  for (const a of filteredActions) {
+    const key = a.songTitle ?? 'Unknown';
+    if (!actionsBySong[key]) actionsBySong[key] = [];
+    actionsBySong[key].push(a);
+  }
 
   return (
     <div className={styles.page}>
       {/* Header */}
       <header className={styles.header}>
         <div className={styles.headerLeft}>
-          <button className={styles.backBtn} onClick={() => router.push('/dashboard')}>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 11L5 7l4-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
-            Songs
-          </button>
-          <span className={styles.songTitle}>{song?.title ?? '…'}</span>
-          {currentVersion && <span className={styles.versionPill}>v{currentVersion.version_number}</span>}
+          <div className={styles.logo}>
+            <span className={styles.logoDot} />
+            Pulse
+          </div>
         </div>
         <div className={styles.headerRight}>
-          {versions.length > 1 && (
-            <select
-              className={styles.versionSelect}
-              value={versionId}
-              onChange={e => router.push(`/songs/${songId}/versions/${e.target.value}`)}
-            >
-              {versions.map(v => (
-                <option key={v.id} value={v.id}>v{v.version_number}{v.label ? ` — ${v.label}` : ''}</option>
-              ))}
-            </select>
-          )}
-          <button className={styles.uploadBtn} onClick={() => audioUploadRef.current?.click()} disabled={uploadingVersion}>
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 9V4M4 6.5l2.5-2.5 2.5 2.5M2 10.5h9" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
-            {uploadingVersion ? 'Uploading…' : 'Upload new version'}
-          </button>
-          <div className={styles.avatar} style={{ background: identity === 'Coris' ? 'rgba(255,20,147,0.2)' : 'rgba(0,212,255,0.2)', color: identity === 'Coris' ? '#ff1493' : '#00d4ff' }}>
+          <div
+            className={styles.avatar}
+            style={{
+              background: identity === 'Coris' ? 'rgba(255,20,147,0.2)' : 'rgba(0,212,255,0.2)',
+              color: identity === 'Coris' ? '#ff1493' : '#00d4ff',
+            }}
+          >
             {identity?.[0]}
           </div>
         </div>
       </header>
 
-      {/* Player */}
-      <div className={styles.playerArea}>
-        <div className={styles.playerControls}>
-          <button className={styles.playBtn} onClick={() => wavesurferRef.current?.playPause()}>
-            {isPlaying
-              ? <svg width="14" height="14" viewBox="0 0 14 14" fill="white"><rect x="2" y="1" width="4" height="12" rx="1"/><rect x="8" y="1" width="4" height="12" rx="1"/></svg>
-              : <svg width="14" height="14" viewBox="0 0 14 14" fill="white"><path d="M3 1.5l10 5.5-10 5.5z"/></svg>
-            }
-          </button>
-          <span className={styles.time}>{formatTime(currentTime)}</span>
-          <span className={styles.timeSep}>/</span>
-          <span className={styles.timeDur}>{formatTime(duration)}</span>
-        </div>
-
-        <div className={styles.waveformWrap} onClick={handleWaveformClick}>
-          <div ref={waveformRef} className={styles.waveform} />
-          {threads.map((thread, i) => (
-            <div
-              key={thread.id}
-              className={`${styles.marker} ${activeThreadId === thread.id ? styles.markerActive : ''}`}
-              style={{ left: `${(thread.timestamp_seconds / (duration || 1)) * 100}%` }}
-              onClick={e => handleMarkerClick(thread, e)}
-            >
-              <div className={styles.markerDot} style={{ background: MARKER_COLORS[i % MARKER_COLORS.length] }} />
-              <div className={styles.markerLine} style={{ background: MARKER_COLORS[i % MARKER_COLORS.length] }} />
-            </div>
-          ))}
-        </div>
-        <p className={styles.waveformHint}>click anywhere on the waveform to leave a comment</p>
-
-        {/* Inline new comment input — appears after clicking waveform */}
-        {pendingTimestamp !== null && (
-          <div className={styles.inlineCommentBar}>
-            <div className={styles.inlineTimestamp}>{formatTime(pendingTimestamp)}</div>
-            <input
-              ref={replyInputRef}
-              className={styles.inlineInput}
-              placeholder="Add a comment at this point…"
-              value={pendingComment}
-              onChange={e => setPendingComment(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') submitNewThread(); if (e.key === 'Escape') setPendingTimestamp(null); }}
-            />
-            <button className={styles.sendBtn} onClick={submitNewThread} disabled={sending || !pendingComment.trim()}>
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5h9M7 3l4.5 3.5L7 10" stroke="white" strokeWidth="1.3" strokeLinecap="round"/></svg>
-            </button>
-            <button className={styles.cancelInline} onClick={() => setPendingTimestamp(null)}>✕</button>
-          </div>
-        )}
+      {/* Mobile tabs */}
+      <div className={styles.mobileTabs}>
+        <button
+          className={`${styles.mobileTab} ${mobileTab === 'songs' ? styles.mobileTabActive : ''}`}
+          onClick={() => setMobileTab('songs')}
+        >
+          Songs
+        </button>
+        <button
+          className={`${styles.mobileTab} ${mobileTab === 'actions' ? styles.mobileTabActive : ''}`}
+          onClick={() => setMobileTab('actions')}
+        >
+          Actions
+          {pendingCount > 0 && <span className={styles.badge}>{pendingCount}</span>}
+        </button>
       </div>
 
-      {/* Main body — two columns */}
-      <div className={styles.mainBody}>
-        {/* Actions column */}
-        <div className={styles.actionsCol}>
-          <div className={styles.colHeader}>
-            <span className={styles.colLabel}>Actions</span>
-            {pendingCount > 0 && <span className={styles.pendingCount}>{pendingCount} pending</span>}
+      <div className={styles.body}>
+        {/* Songs panel */}
+        <div className={`${styles.songsPanel} ${mobileTab === 'actions' ? styles.hideMobile : ''}`}>
+          <div className={styles.panelHeader}>
+            <span className={styles.panelLabel}>Songs</span>
+            <button className={styles.newBtn} onClick={() => setShowNewModal(true)}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+              New song
+            </button>
           </div>
-          <div className={styles.actionsList}>
-            {actions.length === 0 && <p className={styles.emptyActions}>Mark comments as actions to track them here</p>}
-            {actions.map(action => (
-              <div key={action.id} className={styles.actionItem}>
-                <button
-                  className={`${styles.actionCheck} ${action.status === 'completed' ? styles.actionDone : ''}`}
-                  onClick={() => toggleAction(action)}
+
+          {loading ? (
+            <p className={styles.emptyState}>Loading…</p>
+          ) : (
+            <div className={styles.songsGrid}>
+              {songs.map(song => (
+                <div
+                  key={song.id}
+                  className={styles.card}
+                  onClick={() => handleCardClick(song)}
+                  style={{ cursor: song.latestVersionId ? 'pointer' : 'default' }}
                 >
-                  {action.status === 'completed' && (
-                    <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2 3-3" stroke="white" strokeWidth="1.2" strokeLinecap="round"/></svg>
-                  )}
-                </button>
-                <div>
-                  <div className={`${styles.actionText} ${action.status === 'completed' ? styles.actionTextDone : ''}`}>{action.description}</div>
-                  {action.timestamp_seconds != null && (
-                    <div className={styles.actionTimestamp}>@ {formatTime(action.timestamp_seconds)}</div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Comments column */}
-        <div className={styles.commentsCol}>
-          <div className={styles.colHeader}>
-            {activeThread ? (
-              <div className={styles.threadSelector}>
-                <div className={styles.threadDot} style={{ background: MARKER_COLORS[threads.findIndex(t => t.id === activeThreadId) % MARKER_COLORS.length] }} />
-                <span className={styles.threadTime}>@ {formatTime(activeThread.timestamp_seconds)}</span>
-              </div>
-            ) : (
-              <span className={styles.colLabel}>Comments</span>
-            )}
-            {threads.length > 0 && (
-              <select
-                className={styles.threadPicker}
-                value={activeThreadId ?? ''}
-                onChange={e => setActiveThreadId(e.target.value || null)}
-              >
-                <option value="">{threads.length} thread{threads.length !== 1 ? 's' : ''}</option>
-                {threads.map((t, i) => (
-                  <option key={t.id} value={t.id}>@ {formatTime(t.timestamp_seconds)} · {t.comments.length} msg{t.comments.length !== 1 ? 's' : ''}</option>
-                ))}
-              </select>
-            )}
-          </div>
-
-          {!activeThread && threads.length === 0 && (
-            <div className={styles.noThreads}>
-              <p>No comments yet.</p>
-              <p>Click anywhere on the waveform to start a thread.</p>
-            </div>
-          )}
-
-          {!activeThread && threads.length > 0 && (
-            <div className={styles.threadList}>
-              {threads.map((thread, i) => (
-                <div key={thread.id} className={styles.threadListItem} onClick={() => setActiveThreadId(thread.id)}>
-                  <div className={styles.threadListDot} style={{ background: MARKER_COLORS[i % MARKER_COLORS.length] }} />
-                  <div>
-                    <div className={styles.threadListTime}>@ {formatTime(thread.timestamp_seconds)}</div>
-                    <div className={styles.threadListPreview}>{thread.comments[0]?.body?.substring(0, 60)}{(thread.comments[0]?.body?.length ?? 0) > 60 ? '…' : ''}</div>
+                  <div className={styles.cardThumb}>
+                    <div className={styles.thumbPlaceholder}>
+                      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                        <path d="M9 3v8M6 8l3 3 3-3M4 13.5h10" stroke="rgba(255,20,147,0.6)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                    {song.latestVersionNumber != null && (
+                      <span className={styles.versionBadge}>v{song.latestVersionNumber}</span>
+                    )}
+                    {song.commentCount > 0 && (
+                      <span className={styles.commentBadge}>
+                        <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                          <path d="M1 1h6v4.5H4.5L3 7V5.5H1V1z" stroke="currentColor" strokeWidth="0.9" strokeLinejoin="round"/>
+                        </svg>
+                        {song.commentCount}
+                      </span>
+                    )}
                   </div>
-                  <div className={styles.threadListCount}>{thread.comments.length}</div>
+                  <div className={styles.cardBody}>
+                    <div className={styles.cardTitle}>{song.title}</div>
+                    <div className={styles.cardMeta}>
+                      <span>{song.latestVersionNumber ? `${song.latestVersionNumber} version${song.latestVersionNumber !== 1 ? 's' : ''}` : 'No audio yet'}</span>
+                    </div>
+                  </div>
                 </div>
               ))}
+
+              {/* Ghost add card */}
+              <div className={styles.cardGhost} onClick={() => setShowNewModal(true)}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 2v12M2 8h12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                </svg>
+                Add song
+              </div>
             </div>
           )}
+        </div>
 
-          {activeThread && (
-            <>
-              <div className={styles.messages}>
-                {activeThread.comments.map(comment => {
-                  const isMe = comment.author === identity;
-                  const isActioned = actions.some(a => a.comment_id === comment.id);
-                  return (
-                    <div key={comment.id} className={`${styles.messageGroup} ${isMe ? styles.messageMe : styles.messageThem}`}>
-                      <div className={styles.messageMeta}>{comment.author}</div>
-                      <div className={`${styles.bubble} ${isMe ? styles.bubbleMe : styles.bubbleThem}`}>
-                        {comment.body}
+        {/* Actions panel */}
+        <div className={`${styles.actionsPanel} ${mobileTab === 'songs' ? styles.hideMobile : ''}`}>
+          <div className={styles.panelHeader}>
+            <span className={styles.panelLabel}>Actions</span>
+          </div>
+
+          <div className={styles.filterRow}>
+            {(['all', 'pending', 'done'] as const).map(f => (
+              <button
+                key={f}
+                className={`${styles.filterPill} ${actionFilter === f ? styles.filterPillActive : ''}`}
+                onClick={() => setActionFilter(f)}
+              >
+                {f === 'all' ? 'All' : f === 'pending' ? 'Pending' : 'Done'}
+              </button>
+            ))}
+          </div>
+
+          {filteredActions.length === 0 ? (
+            <p className={styles.emptyState}>No actions yet</p>
+          ) : (
+            Object.entries(actionsBySong).map(([songTitle, songActions]) => (
+              <div key={songTitle} className={styles.actionGroup}>
+                <div className={styles.groupLabel}>{songTitle}</div>
+                {songActions.map(action => (
+                  <div key={action.id} className={styles.actionRow}>
+                    <button
+                      className={`${styles.actionCheck} ${action.status === 'completed' ? styles.actionCheckDone : ''}`}
+                      onClick={() => toggleAction(action)}
+                    >
+                      {action.status === 'completed' && (
+                        <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                          <path d="M1.5 4l2 2 3-3" stroke="white" strokeWidth="1.1" strokeLinecap="round"/>
+                        </svg>
+                      )}
+                    </button>
+                    <div className={styles.actionContent}>
+                      <div className={`${styles.actionText} ${action.status === 'completed' ? styles.actionDone : ''}`}>
+                        {action.description}
                       </div>
-                      {isActioned ? (
-                        <div className={styles.actionedPill}>
-                          <svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1.5 4.5l2 2 4-4" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/></svg>
-                          Action added
-                        </div>
-                      ) : (
-                        <button
-                          className={styles.markActionBtn}
-                          onClick={() => markAsAction(comment)}
-                        >
-                          <svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1 4.5h7M4.5 1v7" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/></svg>
-                          Mark as action
-                        </button>
+                      {action.timestamp_seconds != null && (
+                        <div className={styles.actionMeta}>@ {formatTime(action.timestamp_seconds)}</div>
                       )}
                     </div>
-                  );
-                })}
-                <div ref={messagesEndRef} />
+                  </div>
+                ))}
               </div>
-
-              <div className={styles.replyBar}>
-                <input
-                  className={styles.replyInput}
-                  placeholder="Reply…"
-                  value={replyText}
-                  onChange={e => setReplyText(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') submitReply(); }}
-                />
-                <button className={styles.sendBtn} onClick={submitReply} disabled={sending || !replyText.trim()}>
-                  <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5h9M7 3l4.5 3.5L7 10" stroke="white" strokeWidth="1.3" strokeLinecap="round"/></svg>
-                </button>
-              </div>
-            </>
+            ))
           )}
         </div>
       </div>
 
-      <input
-        ref={audioUploadRef}
-        type="file"
-        accept="audio/*"
-        style={{ display: 'none' }}
-        onChange={e => { const f = e.target.files?.[0]; if (f) uploadNewVersion(f); }}
-      />
+      {/* New song modal */}
+      {showNewModal && (
+        <div className={styles.modalOverlay} onClick={e => { if (e.target === e.currentTarget) setShowNewModal(false); }}>
+          <div className={styles.modal}>
+            <div className={styles.modalTitle}>New song</div>
+            <input
+              className={styles.modalInput}
+              placeholder="Song title"
+              value={newTitle}
+              onChange={e => setNewTitle(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') createSong(); if (e.key === 'Escape') setShowNewModal(false); }}
+              autoFocus
+            />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="audio/*"
+              style={{ display: 'none' }}
+              onChange={e => setNewFile(e.target.files?.[0] ?? null)}
+            />
+            <button
+              className={styles.modalInput}
+              style={{ cursor: 'pointer', textAlign: 'left', color: newFile ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.25)', marginBottom: 16 }}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {newFile ? newFile.name : 'Attach audio file (optional)'}
+            </button>
+            <div className={styles.modalActions}>
+              <button className={styles.modalCancel} onClick={() => { setShowNewModal(false); setNewTitle(''); setNewFile(null); }}>
+                Cancel
+              </button>
+              <button className={styles.modalConfirm} onClick={createSong} disabled={creating || !newTitle.trim()}>
+                {creating ? 'Creating…' : 'Create'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
