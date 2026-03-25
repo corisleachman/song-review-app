@@ -284,6 +284,8 @@
   gap: 12px;
 }
 .bubbleWrap { display: flex; flex-direction: column; gap: 4px; }
+.bubbleWrapOwn { align-items: flex-end; }
+.bubbleWrapOther { align-items: flex-start; }
 .bubbleAuthor { font-size: 0.72rem; color: #888; padding: 0 4px; }
 .bubble {
   max-width: 80%;
@@ -312,7 +314,6 @@
   padding: 4px 12px;
   font-size: 0.75rem;
   cursor: pointer;
-  align-self: flex-start;
   transition: background 0.2s;
 }
 .markActionBtn:hover { background: rgba(168,85,247,0.25); }

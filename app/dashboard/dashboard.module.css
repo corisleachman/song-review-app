@@ -166,6 +166,7 @@
   cursor: pointer;
   transition: border-color 0.15s, transform 0.12s;
   position: relative;
+  aspect-ratio: 1 / 1;
 }
 .card:hover {
   border-color: rgba(255,20,147,0.35);
@@ -173,11 +174,11 @@
 }
 
 .cardThumb {
-  height: 86px;
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
   overflow: hidden;
   background: rgba(255,255,255,0.03);
 }
@@ -229,17 +230,24 @@
 }
 
 .cardBody {
-  padding: 9px 10px 8px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px 10px 8px;
+  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
+  z-index: 2;
 }
 
 .cardTitle {
   color: #fff;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
 }
 
 .editInput {
