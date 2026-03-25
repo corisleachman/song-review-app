@@ -156,17 +156,17 @@ export default function VersionPage() {
       normalize: true,
     });
 
-    ws.on('ready', () => {
-      setDuration(ws.getDuration());
+    ws.on('ready', (duration) => {
+      setDuration(duration);
       setIsReady(true);
     });
 
-    ws.on('audioprocess', () => {
-      setCurrentTime(ws.getCurrentTime());
+    ws.on('timeupdate', (currentTime) => {
+      setCurrentTime(currentTime);
     });
 
-    ws.on('seek', () => {
-      setCurrentTime(ws.getCurrentTime());
+    ws.on('seeking', (currentTime) => {
+      setCurrentTime(currentTime);
     });
 
     ws.on('play', () => setIsPlaying(true));
@@ -174,8 +174,8 @@ export default function VersionPage() {
     ws.on('finish', () => setIsPlaying(false));
 
     // Click on waveform → capture timestamp for new thread
-    ws.on('interaction', () => {
-      setClickedTime(ws.getCurrentTime());
+    ws.on('interaction', (newTime) => {
+      setClickedTime(newTime);
     });
 
     ws.load(url);
