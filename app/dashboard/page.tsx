@@ -329,9 +329,15 @@ function DashboardContent() {
                     <div className={styles.cardMeta}>
                       <span>
                         {song.latestVersionNumber
-                          ? `${song.latestVersionNumber} version${song.latestVersionNumber !== 1 ? 's' : ''}`
-                          : 'No audio yet'}
+                          ? `v${song.latestVersionNumber}`
+                          : 'No audio'}
                       </span>
+                      {song.commentCount > 0 && (
+                        <>
+                          <span style={{opacity:0.3}}>·</span>
+                          <span>{song.commentCount} comment{song.commentCount !== 1 ? 's' : ''}</span>
+                        </>
+                      )}
                       {/* Hover icon buttons */}
                       <div className={styles.cardActions}>
                         {/* Pencil — rename */}

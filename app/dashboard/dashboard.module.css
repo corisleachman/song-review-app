@@ -494,7 +494,7 @@
   .body { display: block; }
 
   .songsPanel {
-    padding: 16px;
+    padding: 12px 16px;
     border-right: none;
   }
 
@@ -504,29 +504,80 @@
 
   .songsGrid {
     grid-template-columns: 1fr;
-    gap: 0;
+    gap: 6px;
   }
 
+  /* List row layout on mobile */
   .card {
     display: flex;
     flex-direction: row;
-    border-radius: 8px;
-    margin-bottom: 8px;
+    align-items: center;
+    aspect-ratio: unset;
+    height: 56px;
+    border-radius: 10px;
+    gap: 0;
   }
 
+  /* Square thumbnail, fixed size */
   .cardThumb {
+    position: relative;
     width: 56px;
-    height: auto;
-    min-height: 64px;
+    height: 56px;
+    min-width: 56px;
     flex-shrink: 0;
-    border-radius: 0;
+    border-radius: 8px 0 0 8px;
+    inset: unset;
   }
 
-  .cardActions { opacity: 1; }
+  /* Hide the overlay title on mobile — we show cardBody inline */
+  .cardBody {
+    position: relative;
+    bottom: unset;
+    left: unset;
+    right: unset;
+    flex: 1;
+    min-width: 0;
+    padding: 0 10px;
+    background: none;
+  }
+
+  .cardTitle {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 2px;
+    text-shadow: none;
+  }
+
+  .cardMeta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.45);
+    flex-wrap: nowrap;
+  }
+
+  /* Always show action icons on mobile, right-aligned */
+  .cardActions {
+    opacity: 1;
+    position: relative;
+    top: unset;
+    right: unset;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-right: 8px;
+    flex-shrink: 0;
+  }
+
+  /* Hide overlay badges — info is in cardMeta text */
+  .versionBadge { display: none; }
+  .commentBadge { display: none; }
 
   .cardGhost {
     flex-direction: row;
-    min-height: 52px;
+    height: 56px;
+    aspect-ratio: unset;
   }
 }
 
