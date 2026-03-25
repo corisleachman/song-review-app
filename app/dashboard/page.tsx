@@ -11,6 +11,7 @@ const supabase = createClient();
 interface Song {
   id: string;
   title: string;
+  cover_art_url?: string | null;
   latestVersionId: string | null;
   latestVersionNumber: number | null;
   commentCount: number;
@@ -35,11 +36,22 @@ function DashboardContent() {
   const [loading, setLoading] = useState(true);
   const [mobileTab, setMobileTab] = useState<'songs' | 'actions'>('songs');
   const [actionFilter, setActionFilter] = useState<'all' | 'pending' | 'done'>('all');
+
+  // New song modal
   const [showNewModal, setShowNewModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
-  const [newFile, setNewFile] = useState<File | null>(null);
   const [creating, setCreating] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Inline rename
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+
+  // Delete confirm
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Cover art uploads
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const coverUploadTargetId = useRef<string | null>(null);
 
   useEffect(() => {
     if (!identity) { router.push('/identify'); return; }
@@ -55,7 +67,7 @@ function DashboardContent() {
   async function loadSongs() {
     const { data: songsData } = await supabase
       .from('songs')
-      .select('id, title')
+      .select('id, title, cover_art_url')
       .order('created_at', { ascending: false });
 
     if (!songsData) return;
@@ -84,6 +96,7 @@ function DashboardContent() {
       return {
         id: song.id,
         title: song.title,
+        cover_art_url: song.cover_art_url ?? null,
         latestVersionId: latest?.id ?? null,
         latestVersionNumber: latest?.version_number ?? null,
         commentCount,
@@ -122,32 +135,53 @@ function DashboardContent() {
       const res = await fetch('/api/songs/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: newTitle.trim(),
-          fileName: newFile?.name ?? null,
-          fileSize: newFile?.size ?? null,
-        }),
+        body: JSON.stringify({ title: newTitle.trim() }),
       });
-      const { songId, versionId, uploadUrl } = await res.json();
-      if (newFile && uploadUrl) {
-        await fetch(uploadUrl, { method: 'PUT', body: newFile, headers: { 'Content-Type': newFile.type } });
-      }
+      const { songId } = await res.json();
       setShowNewModal(false);
       setNewTitle('');
-      setNewFile(null);
-      if (versionId) {
-        router.push(`/songs/${songId}/versions/${versionId}`);
-      } else {
-        loadSongs();
-      }
+      await loadSongs();
+      // Navigate to song page (no version yet)
+      router.push(`/songs/${songId}`);
     } finally {
       setCreating(false);
     }
   }
 
-  function handleCardClick(song: Song) {
-    if (!song.latestVersionId) return;
-    router.push(`/songs/${song.id}/versions/${song.latestVersionId}`);
+  async function commitRename(id: string) {
+    const trimmed = editTitle.trim();
+    if (trimmed) {
+      await supabase.from('songs').update({ title: trimmed }).eq('id', id);
+      setSongs(prev => prev.map(s => s.id === id ? { ...s, title: trimmed } : s));
+    }
+    setEditingId(null);
+  }
+
+  async function deleteSong(id: string) {
+    await fetch(`/api/songs/${id}`, { method: 'DELETE' });
+    setSongs(prev => prev.filter(s => s.id !== id));
+    setDeletingId(null);
+  }
+
+  async function uploadCoverArt(file: File, songId: string) {
+    const ext = file.name.split('.').pop();
+    const path = `covers/${songId}.${ext}`;
+    const { error } = await supabase.storage.from('song-images').upload(path, file, { upsert: true });
+    if (error) return;
+    const { data: urlData } = supabase.storage.from('song-images').getPublicUrl(path);
+    const url = urlData.publicUrl;
+    await supabase.from('songs').update({ cover_art_url: url }).eq('id', songId);
+    setSongs(prev => prev.map(s => s.id === songId ? { ...s, cover_art_url: url } : s));
+  }
+
+  function handleCardClick(e: React.MouseEvent, song: Song) {
+    // Don't navigate if clicking an action button or if renaming
+    if ((e.target as HTMLElement).closest('button') || editingId === song.id) return;
+    if (song.latestVersionId) {
+      router.push(`/songs/${song.id}/versions/${song.latestVersionId}`);
+    } else {
+      router.push(`/songs/${song.id}`);
+    }
   }
 
   function formatTime(seconds: number) {
@@ -164,7 +198,6 @@ function DashboardContent() {
 
   const pendingCount = actions.filter(a => a.status === 'pending').length;
 
-  // Group actions by song title
   const actionsBySong: Record<string, Action[]> = {};
   for (const a of filteredActions) {
     const key = a.songTitle ?? 'Unknown';
@@ -233,15 +266,24 @@ function DashboardContent() {
                 <div
                   key={song.id}
                   className={styles.card}
-                  onClick={() => handleCardClick(song)}
-                  style={{ cursor: song.latestVersionId ? 'pointer' : 'default' }}
+                  onClick={e => handleCardClick(e, song)}
                 >
+                  {/* Thumbnail */}
                   <div className={styles.cardThumb}>
-                    <div className={styles.thumbPlaceholder}>
-                      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                        <path d="M9 3v8M6 8l3 3 3-3M4 13.5h10" stroke="rgba(255,20,147,0.6)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
+                    {song.cover_art_url ? (
+                      <img
+                        src={song.cover_art_url}
+                        alt={song.title}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                      />
+                    ) : (
+                      <div className={styles.thumbPlaceholder}>
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                          <circle cx="9" cy="9" r="5" stroke="rgba(255,20,147,0.4)" strokeWidth="1.4"/>
+                          <circle cx="9" cy="9" r="2" fill="rgba(255,20,147,0.4)"/>
+                        </svg>
+                      </div>
+                    )}
                     {song.latestVersionNumber != null && (
                       <span className={styles.versionBadge}>v{song.latestVersionNumber}</span>
                     )}
@@ -254,10 +296,77 @@ function DashboardContent() {
                       </span>
                     )}
                   </div>
+
+                  {/* Card body */}
                   <div className={styles.cardBody}>
-                    <div className={styles.cardTitle}>{song.title}</div>
+                    {editingId === song.id ? (
+                      <input
+                        className={styles.editInput}
+                        value={editTitle}
+                        autoFocus
+                        onChange={e => setEditTitle(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') commitRename(song.id);
+                          if (e.key === 'Escape') setEditingId(null);
+                        }}
+                        onBlur={() => commitRename(song.id)}
+                        onClick={e => e.stopPropagation()}
+                      />
+                    ) : (
+                      <div className={styles.cardTitle}>{song.title}</div>
+                    )}
                     <div className={styles.cardMeta}>
-                      <span>{song.latestVersionNumber ? `${song.latestVersionNumber} version${song.latestVersionNumber !== 1 ? 's' : ''}` : 'No audio yet'}</span>
+                      <span>
+                        {song.latestVersionNumber
+                          ? `${song.latestVersionNumber} version${song.latestVersionNumber !== 1 ? 's' : ''}`
+                          : 'No audio yet'}
+                      </span>
+                      {/* Hover icon buttons */}
+                      <div className={styles.cardActions}>
+                        {/* Pencil — rename */}
+                        <button
+                          className={styles.iconBtn}
+                          title="Rename"
+                          onClick={e => {
+                            e.stopPropagation();
+                            setEditingId(song.id);
+                            setEditTitle(song.title);
+                          }}
+                        >
+                          <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                            <path d="M7.5 1.5l2 2-6 6H1.5v-2l6-6z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+                        {/* Image — cover art */}
+                        <button
+                          className={styles.iconBtn}
+                          title="Upload cover art"
+                          onClick={e => {
+                            e.stopPropagation();
+                            coverUploadTargetId.current = song.id;
+                            coverInputRef.current?.click();
+                          }}
+                        >
+                          <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                            <rect x="1" y="2" width="9" height="7" rx="1" stroke="currentColor" strokeWidth="1"/>
+                            <circle cx="3.5" cy="4.5" r="1" fill="currentColor"/>
+                            <path d="M1 8l3-3 2 2 2-2 2 3" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+                        {/* Trash — delete */}
+                        <button
+                          className={styles.iconBtn}
+                          title="Delete"
+                          onClick={e => {
+                            e.stopPropagation();
+                            setDeletingId(song.id);
+                          }}
+                        >
+                          <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                            <path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -339,22 +448,8 @@ function DashboardContent() {
               onKeyDown={e => { if (e.key === 'Enter') createSong(); if (e.key === 'Escape') setShowNewModal(false); }}
               autoFocus
             />
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="audio/*"
-              style={{ display: 'none' }}
-              onChange={e => setNewFile(e.target.files?.[0] ?? null)}
-            />
-            <button
-              className={styles.modalInput}
-              style={{ cursor: 'pointer', textAlign: 'left', color: newFile ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.25)', marginBottom: 16 }}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {newFile ? newFile.name : 'Attach audio file (optional)'}
-            </button>
             <div className={styles.modalActions}>
-              <button className={styles.modalCancel} onClick={() => { setShowNewModal(false); setNewTitle(''); setNewFile(null); }}>
+              <button className={styles.modalCancel} onClick={() => { setShowNewModal(false); setNewTitle(''); }}>
                 Cancel
               </button>
               <button className={styles.modalConfirm} onClick={createSong} disabled={creating || !newTitle.trim()}>
@@ -364,6 +459,44 @@ function DashboardContent() {
           </div>
         </div>
       )}
+
+      {/* Delete confirm modal */}
+      {deletingId && (
+        <div className={styles.modalOverlay} onClick={e => { if (e.target === e.currentTarget) setDeletingId(null); }}>
+          <div className={styles.modal}>
+            <div className={styles.modalTitle}>Delete song?</div>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 20 }}>
+              This will permanently delete the song, all versions, comments, and actions. This cannot be undone.
+            </p>
+            <div className={styles.modalActions}>
+              <button className={styles.modalCancel} onClick={() => setDeletingId(null)}>
+                Cancel
+              </button>
+              <button
+                className={styles.modalConfirm}
+                style={{ background: '#e53e3e' }}
+                onClick={() => deleteSong(deletingId)}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden cover art file input */}
+      <input
+        ref={coverInputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={e => {
+          const file = e.target.files?.[0];
+          const id = coverUploadTargetId.current;
+          if (file && id) uploadCoverArt(file, id);
+          e.target.value = '';
+        }}
+      />
     </div>
   );
 }
