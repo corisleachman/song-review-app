@@ -326,3 +326,9 @@
   .threadsSection { padding: 16px; }
   .title { font-size: 1.1rem; }
 }
+
+.waveError {
+  font-size: 0.8rem;
+  color: #ff6b6b;
+  margin-left: 8px;
+}
