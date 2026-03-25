@@ -71,6 +71,7 @@ export default function VersionPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [waveErr, setWaveErr] = useState<string | null>(null);
   const [pendingTimestamp, setPendingTimestamp] = useState<number | null>(null);
   const [newComment, setNewComment] = useState('');
   const [posting, setPosting] = useState(false);
@@ -156,6 +157,14 @@ export default function VersionPage() {
     const WaveSurfer = (await import('wavesurfer.js')).default;
     if (!container.isConnected) return;
 
+    // Create a native <audio> element and pass it to WaveSurfer.
+    // This bypasses WaveSurfer's internal fetch entirely — which fixes mobile
+    // where signed URLs or CORS can silently block the internal fetch.
+    const audio = new Audio();
+    audio.crossOrigin = 'anonymous';
+    audio.preload = 'metadata';
+    audio.src = url;
+
     const ws = WaveSurfer.create({
       container,
       waveColor: 'rgba(255,255,255,0.15)',
@@ -168,14 +177,19 @@ export default function VersionPage() {
       barRadius: 2,
       interact: true,
       normalize: true,
+      media: audio,
     });
 
-    ws.on('ready', (dur: number) => { setDuration(dur); setIsReady(true); });
+    ws.on('ready', (dur: number) => { setWaveErr(null); setDuration(dur); setIsReady(true); });
     ws.on('timeupdate', (t: number) => setCurrentTime(t));
     ws.on('seeking', (t: number) => setCurrentTime(t));
     ws.on('play', () => setIsPlaying(true));
     ws.on('pause', () => setIsPlaying(false));
     ws.on('finish', () => setIsPlaying(false));
+    ws.on('error', (e: Error) => {
+      console.error('WaveSurfer error:', e);
+      setWaveErr(e?.message || String(e));
+    });
 
     ws.on('click', (relX: number) => {
       const ts = relX * ws.getDuration();
@@ -196,7 +210,8 @@ export default function VersionPage() {
       });
     });
 
-    ws.load(url);
+    // Audio src already set on the media element — no need to pass url again
+    ws.load(audio.src);
     wavesurferRef.current = ws;
   }, []);
 
@@ -332,7 +347,8 @@ export default function VersionPage() {
           <span className={styles.timeDisplay}>
             {formatTimestamp(Math.floor(currentTime))} / {formatTimestamp(Math.floor(duration))}
           </span>
-          {!isReady && audioUrl && <span className={styles.loadingWave}>Loading waveform…</span>}
+          {!isReady && audioUrl && !waveErr && <span className={styles.loadingWave}>Loading waveform…</span>}
+          {waveErr && <span className={styles.waveErrMsg}>⚠ {waveErr}</span>}
         </div>
 
         <div className={styles.waveformWrap}>
