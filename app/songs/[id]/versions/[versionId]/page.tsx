@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState, Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
-import { getAuth, getIdentity, formatTimestamp } from '@/lib/auth';
-import WaveSurfer from 'wavesurfer.js';
+import { getIdentity } from '@/lib/auth';
 import styles from './version.module.css';
+
+const supabase = createClient();
 
 interface Comment {
   id: string;
@@ -18,8 +19,16 @@ interface Thread {
   id: string;
   timestamp_seconds: number;
   created_by: string;
-  created_at: string;
   comments: Comment[];
+}
+
+interface Action {
+  id: string;
+  description: string;
+  status: string;
+  suggested_by: string;
+  comment_id?: string;
+  timestamp_seconds?: number;
 }
 
 interface Version {
@@ -28,6 +37,7 @@ interface Version {
   label: string | null;
   file_path: string;
   file_name: string;
+  created_by: string;
 }
 
 interface Song {
@@ -37,530 +47,467 @@ interface Song {
 
 const MARKER_COLORS = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#ffa07a', '#98d8c8', '#f7dc6f', '#bb8fce'];
 
+function formatTime(seconds: number) {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
 function VersionContent() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
   const songId = params.id as string;
   const versionId = params.versionId as string;
-  const focusThreadId = searchParams.get('thread');
 
-  const identity = getIdentity();
-  const waveformRef = useRef<HTMLDivElement>(null);
-  const wavesurferRef = useRef<WaveSurfer | null>(null);
-  const markersRef = useRef<HTMLDivElement>(null);
-
+  const [identity, setIdentity] = useState('');
   const [song, setSong] = useState<Song | null>(null);
-  const [version, setVersion] = useState<Version | null>(null);
-  const [allVersions, setAllVersions] = useState<Version[]>([]);
+  const [versions, setVersions] = useState<Version[]>([]);
+  const [currentVersion, setCurrentVersion] = useState<Version | null>(null);
   const [threads, setThreads] = useState<Thread[]>([]);
-  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [audioUrl, setAudioUrl] = useState<string>('');
-  const [creatingThread, setCreatingThread] = useState(false);
-  const [threadTimestamp, setThreadTimestamp] = useState<number | null>(null);
-  const [threadCommentText, setThreadCommentText] = useState('');
+  const [actions, setActions] = useState<Action[]>([]);
+  const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
-  const [error, setError] = useState('');
+  const [sending, setSending] = useState(false);
+  const [pendingTimestamp, setPendingTimestamp] = useState<number | null>(null);
+  const [pendingComment, setPendingComment] = useState('');
   const [isPlaying, setIsPlaying] = useState(false);
-  const [waveformDuration, setWaveformDuration] = useState(0);
-  const [markedActions, setMarkedActions] = useState<Set<string>>(new Set());
-  const [showActionModal, setShowActionModal] = useState<string | null>(null);
-  const [actionText, setActionText] = useState('');
-  const [hoveredMarkerId, setHoveredMarkerId] = useState<string | null>(null);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [audioUrl, setAudioUrl] = useState('');
+  const [uploadingVersion, setUploadingVersion] = useState(false);
+
+  const waveformRef = useRef<HTMLDivElement>(null);
+  const wavesurferRef = useRef<any>(null);
+  const audioUploadRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const replyInputRef = useRef<HTMLInputElement>(null);
+  const inlineInputRef = useRef<HTMLInputElement>(null);
+
+  const activeThread = threads.find(t => t.id === activeThreadId) ?? null;
 
   useEffect(() => {
-    if (!getAuth() || !identity) {
-      router.push('/?redirectTo=' + encodeURIComponent(window.location.pathname));
-      return;
-    }
+    const id = getIdentity();
+    if (!id) { router.push('/identify'); return; }
+    setIdentity(id);
     loadData();
-  }, [router, identity, songId, versionId]);
+  }, [versionId]);
 
-  const loadData = async () => {
-    try {
-      const supabase = createClient();
+  useEffect(() => {
+    const threadParam = searchParams.get('threadId');
+    if (threadParam) setActiveThreadId(threadParam);
+  }, [searchParams, threads]);
 
-      const { data: songData, error: songError } = await supabase
-        .from('songs')
-        .select('id, title')
-        .eq('id', songId)
-        .single();
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [activeThread?.comments?.length]);
 
-      if (songError) throw songError;
-      setSong(songData);
-
-      const { data: versionData, error: versionError } = await supabase
-        .from('song_versions')
-        .select('*')
-        .eq('id', versionId)
-        .single();
-
-      if (versionError) throw versionError;
-      setVersion(versionData);
-
-      // Fetch all versions for this song
-      const { data: allVersionsData, error: allVersionsError } = await supabase
-        .from('song_versions')
-        .select('*')
-        .eq('song_id', songId)
-        .order('version_number', { ascending: false });
-
-      if (allVersionsError) throw allVersionsError;
-      setAllVersions(allVersionsData || []);
-
-      const { data: urlData } = supabase.storage.from('song-files').getPublicUrl(versionData.file_path);
-      setAudioUrl(urlData.publicUrl);
-
-      const { data: threadsData, error: threadsError } = await supabase
-        .from('comment_threads')
-        .select(`
-          id,
-          timestamp_seconds,
-          created_by,
-          created_at,
-          comments(id, author, body, created_at)
-        `)
-        .eq('song_version_id', versionId)
-        .order('timestamp_seconds', { ascending: true });
-
-      if (threadsError) throw threadsError;
-      setThreads(threadsData || []);
-
-      if (focusThreadId && threadsData) {
-        const thread = threadsData.find((t) => t.id === focusThreadId);
-        if (thread) {
-          setSelectedThreadId(focusThreadId);
-          setTimeout(() => {
-            if (wavesurferRef.current) {
-              const duration = wavesurferRef.current.getDuration();
-              if (duration > 0) {
-                wavesurferRef.current.seekTo(thread.timestamp_seconds / duration);
-              }
-            }
-          }, 500);
-        }
-      }
-    } catch (err) {
-      console.error('Error loading data:', err);
-      setError('Failed to load version');
-    } finally {
-      setLoading(false);
+  async function loadData() {
+    const [songRes, versionsRes] = await Promise.all([
+      supabase.from('songs').select('id, title').eq('id', songId).single(),
+      supabase.from('song_versions').select('*').eq('song_id', songId).order('version_number', { ascending: false }),
+    ]);
+    setSong(songRes.data);
+    setVersions(versionsRes.data ?? []);
+    const ver = versionsRes.data?.find((v: Version) => v.id === versionId) ?? null;
+    setCurrentVersion(ver);
+    if (ver) {
+      const { data: urlData } = await supabase.storage.from('song-files').createSignedUrl(ver.file_path, 3600);
+      if (urlData?.signedUrl) setAudioUrl(urlData.signedUrl);
     }
-  };
+    await loadThreads();
+    await loadActions();
+  }
+
+  async function loadThreads() {
+    const { data } = await supabase
+      .from('comment_threads')
+      .select('*, comments(*)')
+      .eq('song_version_id', versionId)
+      .order('timestamp_seconds', { ascending: true });
+    setThreads(data?.map((t: any) => ({ ...t, comments: t.comments ?? [] })) ?? []);
+  }
+
+  async function loadActions() {
+    const { data } = await supabase
+      .from('actions')
+      .select('*')
+      .eq('song_id', songId)
+      .order('created_at', { ascending: false });
+    setActions(data ?? []);
+  }
 
   useEffect(() => {
     if (!audioUrl || !waveformRef.current) return;
-
-    const ws = WaveSurfer.create({
-      container: waveformRef.current,
-      waveColor: '#e0e7ff',
-      progressColor: '#3b82f6',
-      url: audioUrl,
-      height: 100,
-      cursorWidth: 2,
-      cursorColor: '#3b82f6',
-    });
-
-    ws.on('ready', () => {
-      const duration = ws.getDuration();
-      setWaveformDuration(duration);
-      renderMarkers();
-    });
-
-    ws.on('play', () => setIsPlaying(true));
-    ws.on('pause', () => setIsPlaying(false));
-
-    ws.on('click', (relativeX) => {
-      const duration = ws.getDuration();
-      const clickedTime = relativeX * duration;
-      const roundedSeconds = Math.round(clickedTime);
-
-      const existingThread = threads.find((t) => Math.abs(t.timestamp_seconds - roundedSeconds) < 1);
-
-      if (existingThread) {
-        setSelectedThreadId(existingThread.id);
-        setCreatingThread(false);
-      } else {
-        setCreatingThread(true);
-        setThreadTimestamp(roundedSeconds);
-        setThreadCommentText('');
-      }
-    });
-
-    wavesurferRef.current = ws;
-
-    return () => {
-      ws.destroy();
-    };
-  }, [audioUrl, threads]);
-
-  const renderMarkers = () => {
-    if (!markersRef.current || !threads.length || waveformDuration === 0) return;
-
-    markersRef.current.innerHTML = '';
-
-    threads.forEach((thread, index) => {
-      const percent = (thread.timestamp_seconds / waveformDuration) * 100;
-      
-      const marker = document.createElement('button');
-      marker.className = styles.marker;
-      marker.style.left = `${percent}%`;
-      marker.style.background = MARKER_COLORS[index % MARKER_COLORS.length];
-      
-      const commentCount = thread.comments?.length || 0;
-      marker.innerHTML = `
-        <span style="font-size: 14px; font-weight: 600;">●</span>
-      `;
-      
-      marker.title = `${formatTimestamp(thread.timestamp_seconds)} • ${commentCount} comment${commentCount !== 1 ? 's' : ''}`;
-      
-      marker.addEventListener('click', (e) => {
-        e.stopPropagation();
-        setSelectedThreadId(thread.id);
-        if (wavesurferRef.current) {
-          wavesurferRef.current.seekTo(thread.timestamp_seconds / wavesurferRef.current.getDuration());
-        }
+    let ws: any;
+    import('wavesurfer.js').then(({ default: WaveSurfer }) => {
+      if (wavesurferRef.current) wavesurferRef.current.destroy();
+      ws = WaveSurfer.create({
+        container: waveformRef.current!,
+        waveColor: 'rgba(255,255,255,0.15)',
+        progressColor: 'rgba(255,20,147,0.7)',
+        cursorColor: '#ff1493',
+        cursorWidth: 1.5,
+        height: 80,
+        barWidth: 2.5,
+        barGap: 1.5,
+        barRadius: 1,
+        interact: true,
       });
-
-      marker.addEventListener('mouseenter', () => setHoveredMarkerId(thread.id));
-      marker.addEventListener('mouseleave', () => setHoveredMarkerId(null));
-
-      markersRef.current?.appendChild(marker);
+      ws.load(audioUrl);
+      ws.on('ready', () => setDuration(ws.getDuration()));
+      ws.on('audioprocess', () => setCurrentTime(ws.getCurrentTime()));
+      ws.on('play', () => setIsPlaying(true));
+      ws.on('pause', () => setIsPlaying(false));
+      ws.on('seek', () => setCurrentTime(ws.getCurrentTime()));
+      wavesurferRef.current = ws;
     });
-  };
+    return () => { ws?.destroy(); };
+  }, [audioUrl]);
 
-  useEffect(() => {
-    renderMarkers();
-  }, [threads, waveformDuration]);
+  function handleWaveformClick(e: React.MouseEvent<HTMLDivElement>) {
+    if (!waveformRef.current || !wavesurferRef.current) return;
+    const rect = waveformRef.current.getBoundingClientRect();
+    const ratio = (e.clientX - rect.left) / rect.width;
+    const ts = ratio * duration;
+    wavesurferRef.current.seekTo(ratio);
+    setPendingTimestamp(ts);
+    setPendingComment('');
+    setActiveThreadId(null);
+    setTimeout(() => inlineInputRef.current?.focus(), 50);
+  }
 
-  const handleCreateThread = async () => {
-    if (!threadCommentText.trim() || threadTimestamp === null) return;
-
-    try {
-      const response = await fetch('/api/threads/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          versionId,
-          songId,
-          timestamp: threadTimestamp,
-          author: identity,
-          commentText: threadCommentText,
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to create thread');
-      }
-
-      setThreadCommentText('');
-      setCreatingThread(false);
-      setThreadTimestamp(null);
-      loadData();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error creating thread');
+  function handleMarkerClick(thread: Thread, e: React.MouseEvent) {
+    e.stopPropagation();
+    setActiveThreadId(thread.id);
+    setPendingTimestamp(null);
+    if (wavesurferRef.current && duration > 0) {
+      wavesurferRef.current.seekTo(thread.timestamp_seconds / duration);
     }
-  };
+  }
 
-  const handleReply = async (threadId: string) => {
-    if (!replyText.trim()) return;
+  async function submitNewThread() {
+    if (!pendingComment.trim() || pendingTimestamp === null) return;
+    setSending(true);
+    const res = await fetch('/api/threads/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ versionId, timestampSeconds: pendingTimestamp, createdBy: identity, initialComment: pendingComment }),
+    });
+    const data = await res.json();
+    setSending(false);
+    setPendingTimestamp(null);
+    setPendingComment('');
+    await loadThreads();
+    if (data.threadId) setActiveThreadId(data.threadId);
+  }
 
-    try {
-      const response = await fetch('/api/threads/reply', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          threadId,
-          author: identity,
-          text: replyText,
-          songId,
-          versionId,
-        }),
-      });
+  async function submitReply() {
+    if (!replyText.trim() || !activeThreadId) return;
+    setSending(true);
+    await fetch('/api/threads/reply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ threadId: activeThreadId, author: identity, body: replyText, versionId }),
+    });
+    setSending(false);
+    setReplyText('');
+    await loadThreads();
+  }
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to post reply');
-      }
+  async function markAsAction(comment: Comment) {
+    await fetch('/api/actions/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        songId,
+        commentId: comment.id,
+        description: comment.body,
+        suggestedBy: identity,
+        timestampSeconds: activeThread?.timestamp_seconds,
+      }),
+    });
+    await loadActions();
+  }
 
-      setReplyText('');
-      loadData();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error posting reply');
-    }
-  };
+  async function toggleAction(action: Action) {
+    const newStatus = action.status === 'completed' ? 'pending' : 'completed';
+    await supabase.from('actions').update({ status: newStatus }).eq('id', action.id);
+    loadActions();
+  }
 
-  const handleMarkAsAction = async (commentId: string, commentBody: string) => {
-    try {
-      const description = actionText.trim() || commentBody;
+  async function uploadNewVersion(file: File) {
+    setUploadingVersion(true);
+    const res = await fetch('/api/versions/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ songId, fileName: file.name, fileSize: file.size, createdBy: identity }),
+    });
+    const { uploadUrl, versionId: newVerId } = await res.json();
+    await fetch(uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } });
+    setUploadingVersion(false);
+    router.push(`/songs/${songId}/versions/${newVerId}`);
+  }
 
-      const response = await fetch('/api/actions/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          commentId,
-          songId,
-          description,
-          suggestedBy: identity,
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to mark as action');
-      }
-
-      setMarkedActions(prev => new Set([...Array.from(prev), commentId]));
-      setShowActionModal(null);
-      setActionText('');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error marking as action');
-    }
-  };
-
-  const getMarkerColor = (index: number) => MARKER_COLORS[index % MARKER_COLORS.length];
-
-  if (loading) return <div className={styles.container}><div className={styles.loading}>Loading...</div></div>;
-  if (!song || !version) return <div className={styles.error}>Not found</div>;
-
-  const selectedThread = selectedThreadId ? threads.find((t) => t.id === selectedThreadId) : null;
+  const pendingCount = actions.filter(a => a.status === 'pending').length;
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
+    <div className={styles.page}>
+      {/* Header */}
+      <header className={styles.header}>
         <div className={styles.headerLeft}>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className={styles.homeIcon}
-            title="Back to Dashboard"
-          >
-            🏠
+          <button className={styles.backBtn} onClick={() => router.push('/dashboard')}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M9 11L5 7l4-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Songs
           </button>
-          <div>
-            <h1 className={styles.songTitle}>{song.title}</h1>
-            <p className={styles.versionLabel}>
-              Version {version.version_number}
-              {version.label && ` • ${version.label}`}
-            </p>
-          </div>
+          <span className={styles.songTitle}>{song?.title ?? '…'}</span>
+          {currentVersion && <span className={styles.versionBadge}>v{currentVersion.version_number}</span>}
         </div>
         <div className={styles.headerRight}>
-          {allVersions && allVersions.length > 1 && (
+          {versions.length > 1 && (
             <select
+              className={styles.versionSelect}
               value={versionId}
-              onChange={(e) => {
-                const newVersionId = e.target.value;
-                router.push(`/songs/${songId}/versions/${newVersionId}`);
-              }}
-              className={styles.versionPicker}
+              onChange={e => router.push(`/songs/${songId}/versions/${e.target.value}`)}
             >
-              {allVersions
-                .sort((a, b) => b.version_number - a.version_number)
-                .map(v => (
-                  <option key={v.id} value={v.id}>
-                    Version {v.version_number}{v.label ? ` - ${v.label}` : ''}
-                  </option>
-                ))}
+              {versions.map(v => (
+                <option key={v.id} value={v.id}>
+                  v{v.version_number}{v.label ? ` — ${v.label}` : ''}
+                </option>
+              ))}
             </select>
           )}
-          <p className={styles.user}>
-            <span className={styles.userBadge}>{identity?.[0]}</span>
-            {identity}
-          </p>
+          <button
+            className={styles.uploadBtn}
+            onClick={() => audioUploadRef.current?.click()}
+            disabled={uploadingVersion}
+          >
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+              <path d="M6.5 9V4M4 6.5l2.5-2.5 2.5 2.5M2 10.5h9" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            {uploadingVersion ? 'Uploading…' : 'Upload new version'}
+          </button>
+          <div
+            className={styles.avatar}
+            style={{
+              background: identity === 'Coris' ? 'rgba(255,20,147,0.2)' : 'rgba(0,212,255,0.2)',
+              color: identity === 'Coris' ? '#ff1493' : '#00d4ff',
+            }}
+          >
+            {identity?.[0]}
+          </div>
         </div>
+      </header>
+
+      {/* Player */}
+      <div className={styles.playerArea}>
+        <div className={styles.playerControls}>
+          <button className={styles.playBtn} onClick={() => wavesurferRef.current?.playPause()}>
+            {isPlaying
+              ? <svg width="14" height="14" viewBox="0 0 14 14" fill="white"><rect x="2" y="1" width="4" height="12" rx="1"/><rect x="8" y="1" width="4" height="12" rx="1"/></svg>
+              : <svg width="14" height="14" viewBox="0 0 14 14" fill="white"><path d="M3 1.5l10 5.5-10 5.5z"/></svg>
+            }
+          </button>
+          <span className={styles.time}>{formatTime(currentTime)}</span>
+          <span className={styles.timeSep}>/</span>
+          <span className={styles.timeDur}>{formatTime(duration)}</span>
+        </div>
+
+        <div className={styles.waveformWrap} onClick={handleWaveformClick}>
+          <div ref={waveformRef} className={styles.waveform} />
+          {threads.map((thread, i) => (
+            <div
+              key={thread.id}
+              className={`${styles.marker} ${activeThreadId === thread.id ? styles.markerActive : ''}`}
+              style={{ left: `${(thread.timestamp_seconds / (duration || 1)) * 100}%` }}
+              onClick={e => handleMarkerClick(thread, e)}
+            >
+              <div className={styles.markerDot} style={{ background: MARKER_COLORS[i % MARKER_COLORS.length] }} />
+              <div className={styles.markerLine} style={{ background: MARKER_COLORS[i % MARKER_COLORS.length] }} />
+            </div>
+          ))}
+        </div>
+
+        <p className={styles.waveformHint}>click anywhere on the waveform to leave a comment</p>
+
+        {/* Inline comment bar — appears below waveform on click */}
+        {pendingTimestamp !== null && (
+          <div className={styles.inlineCommentBar}>
+            <span className={styles.inlineTimestamp}>{formatTime(pendingTimestamp)}</span>
+            <input
+              ref={inlineInputRef}
+              className={styles.inlineInput}
+              placeholder="Add a comment at this point…"
+              value={pendingComment}
+              onChange={e => setPendingComment(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') submitNewThread();
+                if (e.key === 'Escape') setPendingTimestamp(null);
+              }}
+            />
+            <button className={styles.sendBtn} onClick={submitNewThread} disabled={sending || !pendingComment.trim()}>
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                <path d="M2 6.5h9M7 3l4.5 3.5L7 10" stroke="white" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            <button className={styles.cancelInline} onClick={() => setPendingTimestamp(null)}>✕</button>
+          </div>
+        )}
       </div>
 
-      <div className={styles.mainContent}>
-        <div className={styles.playerPanel}>
-          <div className={styles.playerControls}>
-            <button
-              onClick={() => wavesurferRef.current?.playPause()}
-              className={styles.playButton}
-            >
-              {isPlaying ? '⏸' : '▶'}
-            </button>
-            <p className={styles.instruction}>Click the waveform to add a comment</p>
+      {/* Main body — actions left, comments right */}
+      <div className={styles.mainBody}>
+        {/* Actions panel */}
+        <div className={styles.actionsCol}>
+          <div className={styles.colHeader}>
+            <span className={styles.colLabel}>Actions</span>
+            {pendingCount > 0 && <span className={styles.pendingBadge}>{pendingCount} pending</span>}
           </div>
-
-          <div className={styles.waveformContainer}>
-            <div ref={waveformRef} className={styles.waveform} />
-            <div ref={markersRef} className={styles.markerTrack} />
+          <div className={styles.actionsList}>
+            {actions.length === 0 && (
+              <p className={styles.emptyHint}>Mark comments as actions to track them here</p>
+            )}
+            {actions.map(action => (
+              <div key={action.id} className={styles.actionItem}>
+                <button
+                  className={`${styles.actionCheck} ${action.status === 'completed' ? styles.actionDone : ''}`}
+                  onClick={() => toggleAction(action)}
+                >
+                  {action.status === 'completed' && (
+                    <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                      <path d="M1.5 4l2 2 3-3" stroke="white" strokeWidth="1.2" strokeLinecap="round"/>
+                    </svg>
+                  )}
+                </button>
+                <div className={styles.actionContent}>
+                  <div className={`${styles.actionText} ${action.status === 'completed' ? styles.actionTextDone : ''}`}>
+                    {action.description}
+                  </div>
+                  {action.timestamp_seconds != null && (
+                    <div className={styles.actionTs}>@ {formatTime(action.timestamp_seconds)}</div>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
-
-          {hoveredMarkerId && (
-            <div className={styles.markerTooltip}>
-              {threads.find(t => t.id === hoveredMarkerId) && (
-                <>
-                  <p className={styles.tooltipTime}>
-                    {formatTimestamp(threads.find(t => t.id === hoveredMarkerId)!.timestamp_seconds)}
-                  </p>
-                  <p className={styles.tooltipCount}>
-                    {threads.find(t => t.id === hoveredMarkerId)!.comments.length} comment
-                    {threads.find(t => t.id === hoveredMarkerId)!.comments.length !== 1 ? 's' : ''}
-                  </p>
-                </>
-              )}
-            </div>
-          )}
         </div>
 
-        <div className={styles.commentsPanel}>
-          {creatingThread && threadTimestamp !== null ? (
-            <div className={styles.threadCard}>
-              <div className={styles.threadTime}>
-                <span className={styles.timeBadge}>{formatTimestamp(threadTimestamp)}</span>
-                <h3>New Comment</h3>
+        {/* Comments panel */}
+        <div className={styles.commentsCol}>
+          <div className={styles.colHeader}>
+            {activeThread ? (
+              <div className={styles.threadHeader}>
+                <div
+                  className={styles.threadDot}
+                  style={{ background: MARKER_COLORS[threads.findIndex(t => t.id === activeThreadId) % MARKER_COLORS.length] }}
+                />
+                <span className={styles.threadTime}>@ {formatTime(activeThread.timestamp_seconds)}</span>
+                <button className={styles.backToList} onClick={() => setActiveThreadId(null)}>All threads</button>
               </div>
-              <textarea
-                value={threadCommentText}
-                onChange={(e) => setThreadCommentText(e.target.value)}
-                placeholder="What's on your mind..."
-                autoFocus
-                className={styles.textarea}
-              />
-              {error && <p className={styles.error}>{error}</p>}
-              <div className={styles.actions}>
-                <button onClick={handleCreateThread} disabled={!threadCommentText.trim()} className={styles.submitButton}>
-                  Post Comment
-                </button>
-                <button
-                  onClick={() => {
-                    setCreatingThread(false);
-                    setThreadTimestamp(null);
-                    setThreadCommentText('');
-                    setError('');
-                  }}
-                  className={styles.cancelButton}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : selectedThread ? (
-            <div className={styles.threadCard}>
-              <div className={styles.threadTime}>
-                <span className={styles.timeBadge}>{formatTimestamp(selectedThread.timestamp_seconds)}</span>
-                <h3>Comments</h3>
-              </div>
+            ) : (
+              <span className={styles.colLabel}>Comments</span>
+            )}
+            {threads.length > 0 && !activeThread && (
+              <span className={styles.threadCount}>{threads.length} thread{threads.length !== 1 ? 's' : ''}</span>
+            )}
+          </div>
 
-              <div className={styles.messagesContainer}>
-                {selectedThread.comments && selectedThread.comments.length > 0 ? (
-                  selectedThread.comments.map((comment, idx) => (
-                    <div key={comment.id} className={styles.messageCard}>
-                      <div className={styles.messageHeader}>
-                        <div className={styles.avatarSection}>
-                          <div
-                            className={styles.avatar}
-                            style={{
-                              background:
-                                ['#3b82f6', '#a855f7', '#06b6d4', '#ec4899', '#f59e0b', '#10b981'][
-                                  idx % 6
-                                ],
-                            }}
-                          >
-                            {comment.author[0]}
-                          </div>
-                          <div>
-                            <strong className={styles.author}>{comment.author}</strong>
-                            <span className={styles.timestamp}>{new Date(comment.created_at).toLocaleString()}</span>
-                          </div>
-                        </div>
+          {/* No threads yet */}
+          {!activeThread && threads.length === 0 && (
+            <div className={styles.emptyComments}>
+              <p>No comments yet.</p>
+              <p>Click anywhere on the waveform to start a thread.</p>
+            </div>
+          )}
+
+          {/* Thread list */}
+          {!activeThread && threads.length > 0 && (
+            <div className={styles.threadList}>
+              {threads.map((thread, i) => (
+                <div key={thread.id} className={styles.threadListItem} onClick={() => setActiveThreadId(thread.id)}>
+                  <div className={styles.threadListDot} style={{ background: MARKER_COLORS[i % MARKER_COLORS.length] }} />
+                  <div className={styles.threadListInfo}>
+                    <div className={styles.threadListTime}>@ {formatTime(thread.timestamp_seconds)}</div>
+                    <div className={styles.threadListPreview}>
+                      {thread.comments[0]?.body?.substring(0, 60)}{(thread.comments[0]?.body?.length ?? 0) > 60 ? '…' : ''}
+                    </div>
+                  </div>
+                  <div className={styles.threadListCount}>{thread.comments.length}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Active thread — iMessage style */}
+          {activeThread && (
+            <>
+              <div className={styles.messages}>
+                {activeThread.comments.map(comment => {
+                  const isMe = comment.author === identity;
+                  const isActioned = actions.some(a => a.comment_id === comment.id);
+                  return (
+                    <div key={comment.id} className={`${styles.msgGroup} ${isMe ? styles.msgMe : styles.msgThem}`}>
+                      {!isMe && <div className={styles.msgAuthor}>{comment.author}</div>}
+                      <div className={`${styles.bubble} ${isMe ? styles.bubbleMe : styles.bubbleThem}`}>
+                        {comment.body}
                       </div>
-                      <p className={styles.messageBody}>{comment.body}</p>
-                      {!markedActions.has(comment.id) && (
-                        <button
-                          onClick={() => {
-                            setShowActionModal(comment.id);
-                            setActionText(comment.body);
-                          }}
-                          className={styles.actionButton}
-                        >
-                          📌 Mark as Action
+                      {isActioned ? (
+                        <div className={styles.actionedPill}>
+                          <svg width="9" height="9" viewBox="0 0 9 9" fill="none">
+                            <path d="M1.5 4.5l2 2 4-4" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/>
+                          </svg>
+                          Action added
+                        </div>
+                      ) : (
+                        <button className={styles.markActionBtn} onClick={() => markAsAction(comment)}>
+                          <svg width="9" height="9" viewBox="0 0 9 9" fill="none">
+                            <path d="M1 4.5h7M4.5 1v7" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/>
+                          </svg>
+                          Mark as action
                         </button>
                       )}
-                      {markedActions.has(comment.id) && <div className={styles.actionBadge}>✓ Action</div>}
                     </div>
-                  ))
-                ) : (
-                  <p className={styles.empty}>No comments yet</p>
-                )}
+                  );
+                })}
+                <div ref={messagesEndRef} />
               </div>
 
-              <div className={styles.replyForm}>
-                <textarea
+              <div className={styles.replyBar}>
+                <input
+                  ref={replyInputRef}
+                  className={styles.replyInput}
+                  placeholder="Reply…"
                   value={replyText}
-                  onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="Reply..."
-                  className={styles.textarea}
+                  onChange={e => setReplyText(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') submitReply(); }}
                 />
-                <button onClick={() => handleReply(selectedThread.id)} disabled={!replyText.trim()} className={styles.submitButton}>
-                  Reply
+                <button className={styles.sendBtn} onClick={submitReply} disabled={sending || !replyText.trim()}>
+                  <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                    <path d="M2 6.5h9M7 3l4.5 3.5L7 10" stroke="white" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
                 </button>
               </div>
-            </div>
-          ) : threads.length > 0 ? (
-            <div className={styles.threadsList}>
-              <h3 className={styles.panelTitle}>Comments ({threads.length})</h3>
-              <div className={styles.threadsGrid}>
-                {threads.map((thread, index) => (
-                  <button
-                    key={thread.id}
-                    onClick={() => {
-                      setSelectedThreadId(thread.id);
-                      if (wavesurferRef.current) {
-                        wavesurferRef.current.seekTo(thread.timestamp_seconds / wavesurferRef.current.getDuration());
-                      }
-                    }}
-                    className={styles.threadPreview}
-                  >
-                    <div
-                      className={styles.threadDot}
-                      style={{ background: getMarkerColor(index) }}
-                    />
-                    <div className={styles.threadInfo}>
-                      <span className={styles.threadTime}>{formatTimestamp(thread.timestamp_seconds)}</span>
-                      <p className={styles.preview}>
-                        {thread.comments?.[0]?.body.substring(0, 50)}...
-                      </p>
-                    </div>
-                    <span className={styles.count}>{thread.comments?.length || 0}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className={styles.empty}>
-              <p>No comments yet. Click the waveform to add one.</p>
-            </div>
+            </>
           )}
         </div>
       </div>
 
-      {showActionModal && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalBox}>
-            <h3>Mark as Action</h3>
-            <textarea value={actionText} onChange={(e) => setActionText(e.target.value)} className={styles.textarea} />
-            <div className={styles.actions}>
-              <button onClick={() => handleMarkAsAction(showActionModal, actionText)} className={styles.submitButton}>
-                Mark as Action
-              </button>
-              <button onClick={() => setShowActionModal(null)} className={styles.cancelButton}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <input
+        ref={audioUploadRef}
+        type="file"
+        accept="audio/*"
+        style={{ display: 'none' }}
+        onChange={e => { const f = e.target.files?.[0]; if (f) uploadNewVersion(f); }}
+      />
     </div>
   );
 }
 
 export default function VersionPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div style={{ color: 'white', padding: '2rem' }}>Loading…</div>}>
       <VersionContent />
     </Suspense>
   );

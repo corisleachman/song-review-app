@@ -3,7 +3,7 @@ import { supabaseServer } from '@/lib/supabaseServer';
 
 export async function POST(req: NextRequest) {
   try {
-    const { commentId, songId, description, suggestedBy } = await req.json();
+    const { commentId, songId, description, suggestedBy, timestampSeconds } = await req.json();
 
     if (!commentId || !songId || !description) {
       return NextResponse.json(
@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
           description,
           suggested_by: suggestedBy,
           status: 'pending',
+          ...(timestampSeconds != null && { timestamp_seconds: timestampSeconds }),
         },
       ])
       .select()
