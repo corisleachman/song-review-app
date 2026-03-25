@@ -141,14 +141,12 @@ export default function VersionPage() {
   }
 
   async function loadActions() {
-    // Only load actions whose linked comment belongs to a thread on THIS version
-    const { data } = await supabase
-      .from('actions')
-      .select('*, comment_threads!inner(song_version_id)')
-      .eq('song_id', songId)
-      .eq('comment_threads.song_version_id', versionId)
-      .order('created_at', { ascending: false });
-    setActions(data || []);
+    // Fetch via API route which does a proper server-side join by version
+    const res = await fetch(`/api/actions/by-song/${songId}?versionId=${versionId}`);
+    if (res.ok) {
+      const { actions: data } = await res.json();
+      setActions(data || []);
+    }
   }
 
   // Deep link: open thread from email. Re-runs when isReady/duration change
