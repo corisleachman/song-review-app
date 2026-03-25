@@ -125,24 +125,28 @@ export default function VersionPage() {
   }
 
   async function loadActions() {
+    // Only load actions whose linked comment belongs to a thread on THIS version
     const { data } = await supabase
       .from('actions')
-      .select('*')
+      .select('*, comment_threads!inner(song_version_id)')
       .eq('song_id', songId)
+      .eq('comment_threads.song_version_id', versionId)
       .order('created_at', { ascending: false });
     setActions(data || []);
   }
 
+  // Deep link: open thread from email. Re-runs when isReady/duration change
+  // so the seek fires even if waveform loads after threads.
   useEffect(() => {
     const threadId = searchParams.get('thread') || searchParams.get('threadId');
-    if (threadId && threads.length > 0) {
-      setSelectedThreadId(threadId);
-      const t = threads.find(t => t.id === threadId);
-      if (t && wavesurferRef.current && isReady && duration > 0) {
-        wavesurferRef.current.seekTo(t.timestamp_seconds / duration);
-      }
+    if (!threadId || threads.length === 0) return;
+    setSelectedThreadId(threadId);
+    const t = threads.find(x => x.id === threadId);
+    if (!t) return;
+    if (wavesurferRef.current && isReady && duration > 0) {
+      wavesurferRef.current.seekTo(t.timestamp_seconds / duration);
     }
-  }, [searchParams, threads, isReady]);
+  }, [searchParams, threads, isReady, duration]);
 
   const initWaveSurfer = useCallback(async (container: HTMLDivElement, url: string) => {
     if (wavesurferRef.current) {
@@ -422,11 +426,12 @@ export default function VersionPage() {
               </div>
               <div className={styles.bubbleList}>
                 {selectedThread.comments?.map(c => (
-                  <div key={c.id} className={styles.bubbleWrap}>
-                    <span className={styles.bubbleAuthor}>{c.author}</span>
+                  <div key={c.id} className={`${styles.bubbleWrap} ${c.author === identity ? styles.bubbleWrapOwn : styles.bubbleWrapOther}`}>
+                    {!c.author || c.author !== identity && <span className={styles.bubbleAuthor}>{c.author}</span>}
                     <div className={`${styles.bubble} ${c.author === identity ? styles.bubbleOwn : styles.bubbleOther}`}>
                       {c.body}
                     </div>
+                    {c.author === identity && <span className={styles.bubbleAuthor}>{c.author}</span>}
                     {!markedCommentIds.has(c.id) && (
                       <button className={styles.markActionBtn} onClick={() => { setActionModalCommentId(c.id); setActionText(c.body); }}>
                         + Mark as action
