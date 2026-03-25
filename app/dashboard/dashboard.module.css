@@ -290,6 +290,8 @@
   border: 1px solid var(--color-border);
   transition: all var(--transition-base);
   min-height: 80px;
+  flex-wrap: nowrap;
+  overflow: hidden;
 }
 
 .songCard:hover {
@@ -659,7 +661,8 @@
 .filterButton.active {
   background: var(--color-primary);
   border-color: var(--color-primary);
-  color: white;
+  color: #000000;
+  font-weight: 700;
 }
 
 .actionsList {
