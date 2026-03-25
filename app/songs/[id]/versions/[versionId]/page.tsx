@@ -138,12 +138,13 @@ function VersionContent() {
   }
 
   useEffect(() => {
-    if (!audioUrl || !waveformRef.current) return;
+    if (!audioUrl) return;
     let ws: any;
     import('wavesurfer.js').then(({ default: WaveSurfer }) => {
+      if (!waveformRef.current) return;
       if (wavesurferRef.current) wavesurferRef.current.destroy();
       ws = WaveSurfer.create({
-        container: waveformRef.current!,
+        container: waveformRef.current,
         waveColor: 'rgba(255,255,255,0.15)',
         progressColor: 'rgba(255,20,147,0.7)',
         cursorColor: '#ff1493',
@@ -316,7 +317,7 @@ function VersionContent() {
         </div>
 
         <div className={styles.waveformWrap} onClick={handleWaveformClick}>
-          <div ref={waveformRef} className={styles.waveform} />
+          <div key={audioUrl} ref={waveformRef} className={styles.waveform} style={{ height: '80px' }} />
           {threads.map((thread, i) => (
             <div
               key={thread.id}
