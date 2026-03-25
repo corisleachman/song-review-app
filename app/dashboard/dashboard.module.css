@@ -521,3 +521,8 @@
     min-height: 52px;
   }
 }
+
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

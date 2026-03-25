@@ -12,6 +12,7 @@ interface Song {
   id: string;
   title: string;
   image_url?: string | null;
+  imageUploading?: boolean;
   latestVersionId: string | null;
   latestVersionNumber: number | null;
   commentCount: number;
@@ -164,14 +165,20 @@ function DashboardContent() {
   }
 
   async function uploadCoverArt(file: File, songId: string) {
-    const ext = file.name.split('.').pop();
-    const path = `covers/${songId}.${ext}`;
-    const { error } = await supabase.storage.from('song-images').upload(path, file, { upsert: true });
-    if (error) return;
-    const { data: urlData } = supabase.storage.from('song-images').getPublicUrl(path);
-    const url = urlData.publicUrl;
-    await supabase.from('songs').update({ image_url: url }).eq('id', songId);
-    setSongs(prev => prev.map(s => s.id === songId ? { ...s, image_url: url } : s));
+    // Mark uploading state on the card
+    setSongs(prev => prev.map(s => s.id === songId ? { ...s, imageUploading: true } : s));
+    try {
+      const formData = new FormData();
+      formData.append('songId', songId);
+      formData.append('file', file);
+      const res = await fetch('/api/songs/upload-image', { method: 'POST', body: formData });
+      if (!res.ok) { console.error('Image upload failed', await res.text()); return; }
+      const { imageUrl } = await res.json();
+      setSongs(prev => prev.map(s => s.id === songId ? { ...s, image_url: imageUrl, imageUploading: false } : s));
+    } catch (e) {
+      console.error('Image upload error:', e);
+      setSongs(prev => prev.map(s => s.id === songId ? { ...s, imageUploading: false } : s));
+    }
   }
 
   function handleCardClick(e: React.MouseEvent, song: Song) {
@@ -270,7 +277,11 @@ function DashboardContent() {
                 >
                   {/* Thumbnail */}
                   <div className={styles.cardThumb}>
-                    {song.image_url ? (
+                    {song.imageUploading ? (
+                      <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(13,9,20,0.7)',borderRadius:8}}>
+                        <div style={{width:18,height:18,border:'2px solid #ff1493',borderTopColor:'transparent',borderRadius:'50%',animation:'spin 0.7s linear infinite'}} />
+                      </div>
+                    ) : song.image_url ? (
                       <img
                         src={song.image_url}
                         alt={song.title}

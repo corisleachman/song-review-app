@@ -309,7 +309,7 @@ export default function VersionPage() {
               ))}
             </select>
           )}
-          <button className={styles.uploadBtn} onClick={() => router.push(`/songs/${songId}`)}>
+          <button className={styles.uploadBtn} onClick={() => router.push(`/songs/${songId}/upload`)}>
             ↑ Upload new version
           </button>
           <div className={styles.avatar}>{identity?.[0]?.toUpperCase()}</div>
