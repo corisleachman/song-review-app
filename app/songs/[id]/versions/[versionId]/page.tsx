@@ -31,6 +31,15 @@ interface Action {
   created_at: string;
 }
 
+interface Task {
+  id: string;
+  song_id: string;
+  description: string;
+  status: 'pending' | 'completed';
+  sort_order: number;
+  created_at: string;
+}
+
 interface Version {
   id: string;
   version_number: number;
@@ -79,6 +88,12 @@ export default function VersionPage() {
   const [actionModalCommentId, setActionModalCommentId] = useState<string | null>(null);
   const [actionText, setActionText] = useState('');
   const [markedCommentIds, setMarkedCommentIds] = useState<Set<string>>(new Set());
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [newTaskText, setNewTaskText] = useState('');
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editingTaskText, setEditingTaskText] = useState('');
+  const [dragOverTaskId, setDragOverTaskId] = useState<string | null>(null);
+  const dragTaskId = useRef<string | null>(null);
 
   const supabase = createClient();
 
@@ -110,7 +125,7 @@ export default function VersionPage() {
           setAudioUrl(pub.publicUrl);
         }
       }
-      await Promise.all([loadThreads(), loadActions()]);
+      await Promise.all([loadThreads(), loadActions(), loadTasks()]);
     } finally {
       setLoading(false);
     }
@@ -234,6 +249,80 @@ export default function VersionPage() {
       }
     };
   }, [audioUrl, initWaveSurfer]);
+
+  async function loadTasks() {
+    const { data } = await supabase
+      .from('song_tasks')
+      .select('*')
+      .eq('song_id', songId)
+      .order('sort_order', { ascending: true });
+    setTasks(data || []);
+  }
+
+  async function addTask() {
+    if (!newTaskText.trim()) return;
+    const res = await fetch('/api/tasks/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ songId, description: newTaskText.trim() }),
+    });
+    if (res.ok) { setNewTaskText(''); await loadTasks(); }
+  }
+
+  async function toggleTask(task: Task) {
+    const next = task.status === 'pending' ? 'completed' : 'pending';
+    await fetch(`/api/tasks/${task.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: next }),
+    });
+    await loadTasks();
+  }
+
+  async function deleteTask(taskId: string) {
+    await fetch(`/api/tasks/${taskId}`, { method: 'DELETE' });
+    await loadTasks();
+  }
+
+  async function saveTaskEdit(taskId: string) {
+    if (!editingTaskText.trim()) return;
+    await fetch(`/api/tasks/${taskId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ description: editingTaskText.trim() }),
+    });
+    setEditingTaskId(null);
+    await loadTasks();
+  }
+
+  function handleTaskDragStart(taskId: string) {
+    dragTaskId.current = taskId;
+  }
+
+  function handleTaskDragOver(e: React.DragEvent, overId: string) {
+    e.preventDefault();
+    setDragOverTaskId(overId);
+  }
+
+  async function handleTaskDrop(droppedOnId: string) {
+    const fromId = dragTaskId.current;
+    if (!fromId || fromId === droppedOnId) { setDragOverTaskId(null); return; }
+    const pending = tasks.filter(t => t.status === 'pending');
+    const fromIdx = pending.findIndex(t => t.id === fromId);
+    const toIdx = pending.findIndex(t => t.id === droppedOnId);
+    if (fromIdx === -1 || toIdx === -1) { setDragOverTaskId(null); return; }
+    const reordered = [...pending];
+    const [moved] = reordered.splice(fromIdx, 1);
+    reordered.splice(toIdx, 0, moved);
+    setTasks([...reordered, ...tasks.filter(t => t.status === 'completed')]);
+    setDragOverTaskId(null);
+    dragTaskId.current = null;
+    await fetch('/api/tasks/reorder', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderedIds: reordered.map(t => t.id) }),
+    });
+  }
 
   const toggleAction = async (action: Action) => {
     const newStatus = action.status === 'completed' ? 'pending' : 'completed';
@@ -392,7 +481,7 @@ export default function VersionPage() {
         )}
       </div>
 
-      {/* Two-column body */}
+      {/* Three-column body */}
       <div className={styles.body}>
 
         {/* Left: Actions */}
@@ -495,6 +584,102 @@ export default function VersionPage() {
             </>
           )}
         </div>
+        {/* Right: Song Admin */}
+        <div className={styles.adminPanel}>
+          <div className={styles.adminPanelHeader}>
+            <span className={styles.adminPanelTitle}>SONG ADMIN</span>
+            {tasks.filter(t => t.status === 'pending').length > 0 && (
+              <span className={styles.adminCount}>{tasks.filter(t => t.status === 'pending').length}</span>
+            )}
+          </div>
+
+          {/* Add task input */}
+          <div className={styles.addTaskRow}>
+            <input
+              className={styles.addTaskInput}
+              placeholder="Add a task…"
+              value={newTaskText}
+              onChange={e => setNewTaskText(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') addTask(); }}
+            />
+            <button className={styles.addTaskBtn} onClick={addTask} disabled={!newTaskText.trim()}>
+              +
+            </button>
+          </div>
+
+          {/* Pending tasks */}
+          <div className={styles.taskList}>
+            {tasks.filter(t => t.status === 'pending').length === 0 && (
+              <p className={styles.taskEmpty}>No tasks yet.</p>
+            )}
+            {tasks.filter(t => t.status === 'pending').map(task => (
+              <div
+                key={task.id}
+                className={`${styles.taskRow} ${dragOverTaskId === task.id ? styles.taskRowDragOver : ''}`}
+                draggable
+                onDragStart={() => handleTaskDragStart(task.id)}
+                onDragOver={e => handleTaskDragOver(e, task.id)}
+                onDrop={() => handleTaskDrop(task.id)}
+                onDragLeave={() => setDragOverTaskId(null)}
+              >
+                <span className={styles.taskDragHandle}>⠿</span>
+                <button className={styles.taskCircle} onClick={() => toggleTask(task)} title="Mark complete" />
+                {editingTaskId === task.id ? (
+                  <input
+                    className={styles.taskEditInput}
+                    value={editingTaskText}
+                    autoFocus
+                    onChange={e => setEditingTaskText(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') saveTaskEdit(task.id);
+                      if (e.key === 'Escape') setEditingTaskId(null);
+                    }}
+                    onBlur={() => saveTaskEdit(task.id)}
+                  />
+                ) : (
+                  <span
+                    className={styles.taskDesc}
+                    onDoubleClick={() => { setEditingTaskId(task.id); setEditingTaskText(task.description); }}
+                    title="Double-click to edit"
+                  >
+                    {task.description}
+                  </span>
+                )}
+                <button className={styles.taskDeleteBtn} onClick={() => deleteTask(task.id)} title="Delete">
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                    <path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Completed tasks */}
+          {tasks.filter(t => t.status === 'completed').length > 0 && (
+            <div className={styles.completedSection}>
+              <p className={styles.completedHeading}>
+                COMPLETED <span className={styles.completedCount}>{tasks.filter(t => t.status === 'completed').length}</span>
+              </p>
+              {tasks.filter(t => t.status === 'completed').map(task => (
+                <div key={task.id} className={`${styles.taskRow} ${styles.taskRowDone}`}>
+                  <span className={styles.taskDragHandle} style={{ opacity: 0 }}>⠿</span>
+                  <button className={`${styles.taskCircle} ${styles.taskCircleDone}`} onClick={() => toggleTask(task)} title="Mark pending">
+                    <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                      <path d="M1 4l2.5 2.5L7 1.5" stroke="white" strokeWidth="1.4" strokeLinecap="round"/>
+                    </svg>
+                  </button>
+                  <span className={`${styles.taskDesc} ${styles.taskDescDone}`}>{task.description}</span>
+                  <button className={styles.taskDeleteBtn} onClick={() => deleteTask(task.id)} title="Delete">
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                      <path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
       </div>
 
       {/* Action modal */}
