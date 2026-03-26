@@ -16,179 +16,200 @@
   background: #0d0914;
 }
 
-/* ── Top bar ────────────────────────────────────────────────── */
-.topBar {
+/* ── Hero ───────────────────────────────────────────────────── */
+.hero {
+  position: relative;
+  background-color: #1a0f2a;
+  background-size: cover;
+  background-position: center;
+}
+.heroOverlay {
+  position: relative;
+  backdrop-filter: blur(60px) brightness(0.45) saturate(1.4);
+  -webkit-backdrop-filter: blur(60px) brightness(0.45) saturate(1.4);
+  background: linear-gradient(160deg, rgba(13,9,20,0.6) 0%, rgba(13,9,20,0.3) 50%, rgba(13,9,20,0.75) 100%);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Nav row */
+.heroNav {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  padding: 16px 28px;
   gap: 12px;
-  padding: 14px 24px;
-  border-bottom: 1px solid #1e1630;
-  flex-wrap: wrap;
 }
-.songsBtn {
-  background: transparent;
-  border: 1px solid #333;
-  color: #aaa;
-  padding: 5px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.82rem;
-  white-space: nowrap;
-}
-.songsBtn:hover { border-color: #ff1493; color: #fff; }
-
-.songTitle {
-  font-size: 1.2rem;
-  font-weight: 700;
-  margin: 0;
-}
-.versionBadge {
-  background: #a855f7;
-  color: #fff;
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 20px;
-}
-.topBarRight {
+.heroNavRight {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-left: auto;
 }
+
+/* Main content: left info + right artwork */
+.heroContent {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding: 8px 28px 28px;
+}
+.heroLeft {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.heroMeta { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.heroBadge {
+  background: rgba(255,20,147,0.2);
+  border: 1px solid rgba(255,20,147,0.35);
+  color: #ff1493;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+.heroTitle {
+  font-size: 2.8rem;
+  font-weight: 800;
+  line-height: 1.05;
+  margin: 0 0 6px;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+.heroArtist {
+  font-size: 1rem;
+  color: rgba(255,255,255,0.5);
+  margin: 0 0 24px;
+  font-weight: 400;
+}
+.heroControls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.heroPlayBtn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.15s, opacity 0.15s;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+.heroPlayBtn svg { fill: #000; }
+.heroPlayBtn:hover { transform: scale(1.06); }
+.heroPlayBtn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+.heroTime {
+  font-size: 1rem;
+  color: rgba(255,255,255,0.7);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+.heroTimeSep { color: rgba(255,255,255,0.3); margin: 0 3px; }
+
+/* Artwork */
+.heroArtwork {
+  width: 220px;
+  height: 220px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+}
+.heroArtworkImg { width: 100%; height: 100%; object-fit: cover; display: block; }
+.heroArtworkPlaceholder {
+  width: 100%;
+  height: 100%;
+  background: rgba(255,255,255,0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.heroArtworkUpload {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 14px;
+  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 55%);
+  opacity: 0;
+  transition: opacity 0.2s;
+  cursor: pointer;
+}
+.heroArtwork:hover .heroArtworkUpload { opacity: 1; }
+.heroArtworkUpload span {
+  background: rgba(255,255,255,0.92);
+  color: #000;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 5px 14px;
+  border-radius: 20px;
+}
+
+/* Waveform strip at bottom of hero */
+.heroWaveform {
+  padding: 0 28px 24px;
+}
+
+/* Shared controls that appear in hero */
+.songsBtn {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.8);
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.songsBtn:hover { background: rgba(255,255,255,0.18); color: #fff; }
+
 .versionSelect {
-  background: #1a1030;
-  border: 1px solid #333;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
   color: #fff;
   padding: 6px 12px;
   border-radius: 8px;
   cursor: pointer;
   font-size: 0.82rem;
+  font-family: inherit;
 }
 .uploadBtn {
-  background: transparent;
-  border: 1px solid #444;
-  color: #ccc;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.8);
   padding: 6px 14px;
   border-radius: 8px;
   cursor: pointer;
   font-size: 0.82rem;
+  font-family: inherit;
   white-space: nowrap;
 }
-.uploadBtn:hover { border-color: #ff1493; color: #fff; }
+.uploadBtn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
 .avatar {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #a855f7;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.85rem;
-  flex-shrink: 0;
-}
-
-/* ── Player ─────────────────────────────────────────────────── */
-.playerSection {
-  padding: 20px 24px 12px;
-  border-bottom: 1px solid #1e1630;
-}
-.playerRow {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 14px;
-}
-.playBtn {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  border: none;
   background: linear-gradient(135deg, #ff1493, #a855f7);
-  color: #fff;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
   flex-shrink: 0;
-  transition: opacity 0.2s;
-}
-.playBtn:disabled { opacity: 0.4; cursor: not-allowed; }
-.playBtn:not(:disabled):hover { opacity: 0.85; }
-.timeDisplay { font-size: 0.88rem; color: #aaa; font-variant-numeric: tabular-nums; }
-.loadingWave { font-size: 0.78rem; color: #a855f7; animation: pulse 1.2s ease-in-out infinite; }
-.waveErrMsg { font-size: 0.78rem; color: #ff6b6b; margin-left: 8px; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-
-.waveformWrap {
-  position: relative;
-  width: 100%;
-}
-.waveform {
-  width: 100%;
-  height: 96px;
-  min-height: 96px;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #140d20;
-  cursor: crosshair;
-}
-.markers {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 100%;
-  pointer-events: none;
-}
-.marker {
-  position: absolute;
-  top: 8px;
-  transform: translateX(-50%);
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 2px solid #0d0914;
-  cursor: pointer;
-  padding: 0;
-  pointer-events: all;
-  transition: transform 0.15s;
-  z-index: 2;
-}
-.marker:hover, .markerActive { transform: translateX(-50%) scale(1.4); }
-
-.waveHint {
-  font-size: 0.75rem;
-  color: #555;
-  text-align: center;
-  margin: 8px 0 0;
-}
-
-/* Inline form */
-.inlineForm {
-  margin-top: 14px;
-  background: #1a1030;
-  border: 1px solid #ff1493;
-  border-radius: 12px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.inlineFormTime { font-size: 0.8rem; color: #ff1493; font-weight: 600; }
-.inlineTextarea {
-  background: #0d0914;
-  border: 1px solid #333;
   color: #fff;
-  border-radius: 8px;
-  padding: 10px;
-  font-size: 0.9rem;
-  resize: vertical;
-  font-family: inherit;
 }
-.inlineTextarea:focus { outline: none; border-color: #ff1493; }
-.inlineFormActions { display: flex; gap: 8px; justify-content: flex-end; }
 
 /* ── Three-column body ──────────────────────────────────────── */
 .body {
@@ -623,10 +644,18 @@
 /* ── Mobile ─────────────────────────────────────────────────── */
 @media (max-width: 700px) {
   .body { grid-template-columns: 1fr; }
+  .heroTitle { font-size: 1.6rem; }
+  .heroArtwork { width: 110px; height: 110px; }
+  .heroContent { gap: 16px; padding: 8px 16px 20px; align-items: flex-start; }
+  .heroNav { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
+  .heroNavRight { flex-wrap: wrap; gap: 6px; }
+  .heroWaveform { padding: 0 16px 16px; }
+  .heroPlayBtn { width: 44px; height: 44px; }
+  .heroArtist { margin-bottom: 16px; }
   .actionsPanel { border-right: none; border-bottom: 1px solid #1e1630; }
   .adminPanel { border-left: none; border-top: 1px solid #1e1630; }
-  .topBar { padding: 12px 16px; gap: 8px; }
-  .playerSection { padding: 16px; }
-  .songTitle { font-size: 1rem; }
-  .topBarRight { flex-wrap: wrap; }
+
+
+
+
 }

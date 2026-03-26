@@ -52,6 +52,7 @@ interface Version {
 interface Song {
   id: string;
   title: string;
+  image_url: string | null;
 }
 
 const MARKER_COLORS = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#ffa07a', '#98d8c8', '#f7dc6f', '#bb8fce'];
@@ -108,7 +109,7 @@ export default function VersionPage() {
     setLoading(true);
     try {
       const [songRes, versionRes, versionsRes] = await Promise.all([
-        supabase.from('songs').select('id, title').eq('id', songId).single(),
+        supabase.from('songs').select('id, title, image_url').eq('id', songId).single(),
         supabase.from('song_versions').select('*').eq('id', versionId).single(),
         supabase.from('song_versions').select('*').eq('song_id', songId).order('version_number', { ascending: true }),
       ]);
@@ -395,88 +396,160 @@ export default function VersionPage() {
   return (
     <div className={styles.page}>
 
-      {/* Top bar */}
-      <div className={styles.topBar}>
-        <button className={styles.songsBtn} onClick={() => router.push('/dashboard')}>Songs</button>
-        <h1 className={styles.songTitle}>{song?.title}</h1>
-        {version && <span className={styles.versionBadge}>v{version.version_number}</span>}
-        <div className={styles.topBarRight}>
-          {versions.length > 0 && (
-            <select
-              className={styles.versionSelect}
-              value={versionId}
-              onChange={e => router.push(`/songs/${songId}/versions/${e.target.value}`)}
-            >
-              {versions.map(v => (
-                <option key={v.id} value={v.id}>
-                  v{v.version_number}{v.label ? ` — ${v.label}` : ''}
-                </option>
-              ))}
-            </select>
-          )}
-          <button className={styles.uploadBtn} onClick={() => router.push(`/songs/${songId}/upload`)}>
-            ↑ Upload new version
-          </button>
-          <div className={styles.avatar}>{identity?.[0]?.toUpperCase()}</div>
-        </div>
-      </div>
+      {/* ── Hero ── */}
+      <div
+        className={styles.hero}
+        style={song?.image_url ? {
+          backgroundImage: `url(${song.image_url})`,
+        } : undefined}
+      >
+        {/* Gradient overlay so text is always readable */}
+        <div className={styles.heroOverlay}>
 
-      {/* Player */}
-      <div className={styles.playerSection}>
-        <div className={styles.playerRow}>
-          <button className={styles.playBtn} onClick={() => wavesurferRef.current?.playPause()} disabled={!isReady}>
-            {isPlaying
-              ? <svg width="14" height="14" viewBox="0 0 14 14" fill="white"><rect x="2" y="1" width="4" height="12" rx="1"/><rect x="8" y="1" width="4" height="12" rx="1"/></svg>
-              : <svg width="14" height="14" viewBox="0 0 14 14" fill="white"><path d="M3 1.5l10 5.5-10 5.5z"/></svg>
-            }
-          </button>
-          <span className={styles.timeDisplay}>
-            {formatTimestamp(Math.floor(currentTime))} / {formatTimestamp(Math.floor(duration))}
-          </span>
-          {!isReady && audioUrl && !waveErr && <span className={styles.loadingWave}>Loading waveform…</span>}
-          {waveErr && <span className={styles.waveErrMsg}>⚠ {waveErr}</span>}
-        </div>
-
-        <div className={styles.waveformWrap}>
-          <div ref={waveformRef} className={styles.waveform} style={{ height: 96, minHeight: 96 }} />
-          {isReady && duration > 0 && (
-            <div className={styles.markers}>
-              {threads.map((thread, i) => (
-                <button
-                  key={thread.id}
-                  className={`${styles.marker} ${selectedThreadId === thread.id ? styles.markerActive : ''}`}
-                  style={{ left: `${(thread.timestamp_seconds / duration) * 100}%`, background: MARKER_COLORS[i % MARKER_COLORS.length] }}
-                  onClick={() => seekToThread(thread)}
-                  title={formatTimestamp(thread.timestamp_seconds)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        <p className={styles.waveHint}>click anywhere on the waveform to leave a comment</p>
-
-        {pendingTimestamp !== null && (
-          <div className={styles.inlineForm}>
-            <span className={styles.inlineFormTime}>💬 Comment at {formatTimestamp(Math.floor(pendingTimestamp))}</span>
-            <textarea
-              className={styles.inlineTextarea}
-              placeholder="What's happening here?"
-              value={newComment}
-              onChange={e => setNewComment(e.target.value)}
-              rows={2}
-              autoFocus
-              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitThread(); } }}
-            />
-            <div className={styles.inlineFormActions}>
-              <button className={styles.cancelBtn} onClick={() => { setPendingTimestamp(null); pendingTimestampRef.current = null; }}>Cancel</button>
-              <button className={styles.postBtn} onClick={submitThread} disabled={!newComment.trim() || posting}>
-                {posting ? 'Posting…' : 'Post'}
+          {/* Nav row */}
+          <div className={styles.heroNav}>
+            <button className={styles.songsBtn} onClick={() => router.push('/dashboard')}>← Songs</button>
+            <div className={styles.heroNavRight}>
+              {versions.length > 0 && (
+                <select
+                  className={styles.versionSelect}
+                  value={versionId}
+                  onChange={e => router.push(`/songs/${songId}/versions/${e.target.value}`)}
+                >
+                  {versions.map(v => (
+                    <option key={v.id} value={v.id}>
+                      v{v.version_number}{v.label ? ` — ${v.label}` : ''}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <button className={styles.uploadBtn} onClick={() => router.push(`/songs/${songId}/upload`)}>
+                ↑ Upload new version
               </button>
+              <div className={styles.avatar}>{identity?.[0]?.toUpperCase()}</div>
             </div>
           </div>
-        )}
-      </div>
+
+          {/* Main hero content: info left, artwork right */}
+          <div className={styles.heroContent}>
+
+            {/* Left: title + play controls */}
+            <div className={styles.heroLeft}>
+              <div className={styles.heroMeta}>
+                {version && (
+                  <span className={styles.heroBadge}>
+                    v{version.version_number}{version.label ? ` — ${version.label}` : ''}
+                  </span>
+                )}
+              </div>
+              <h1 className={styles.heroTitle}>{song?.title}</h1>
+              <p className={styles.heroArtist}>Polite Rebels</p>
+
+              <div className={styles.heroControls}>
+                <button
+                  className={styles.heroPlayBtn}
+                  onClick={() => wavesurferRef.current?.playPause()}
+                  disabled={!isReady}
+                >
+                  {isPlaying
+                    ? <svg width="20" height="20" viewBox="0 0 20 20" fill="white"><rect x="3" y="2" width="5" height="16" rx="1.5"/><rect x="12" y="2" width="5" height="16" rx="1.5"/></svg>
+                    : <svg width="20" height="20" viewBox="0 0 20 20" fill="white"><path d="M4 2l14 8-14 8z"/></svg>
+                  }
+                </button>
+                <span className={styles.heroTime}>
+                  {formatTimestamp(Math.floor(currentTime))}
+                  <span className={styles.heroTimeSep}> / </span>
+                  {formatTimestamp(Math.floor(duration))}
+                </span>
+                {!isReady && audioUrl && !waveErr && <span className={styles.loadingWave}>Loading…</span>}
+                {waveErr && <span className={styles.waveErrMsg}>⚠ {waveErr}</span>}
+              </div>
+            </div>
+
+            {/* Right: artwork */}
+            <div className={styles.heroArtwork}>
+              {song?.image_url ? (
+                <img
+                  src={song.image_url}
+                  alt={song.title}
+                  className={styles.heroArtworkImg}
+                />
+              ) : (
+                <div className={styles.heroArtworkPlaceholder}>
+                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                    <circle cx="24" cy="24" r="12" stroke="rgba(255,255,255,0.2)" strokeWidth="2"/>
+                    <circle cx="24" cy="24" r="4" fill="rgba(255,255,255,0.2)"/>
+                  </svg>
+                </div>
+              )}
+              {/* Upload cover art overlay */}
+              <label className={styles.heroArtworkUpload} title="Upload cover art">
+                <input
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={async e => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const fd = new FormData();
+                    fd.append('songId', songId);
+                    fd.append('file', file);
+                    const res = await fetch('/api/songs/upload-image', { method: 'POST', body: fd });
+                    if (res.ok) {
+                      const { imageUrl } = await res.json();
+                      setSong(prev => prev ? { ...prev, image_url: imageUrl } : prev);
+                    }
+                  }}
+                />
+                <span>Replace image</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Waveform — full width at bottom of hero */}
+          <div className={styles.heroWaveform}>
+            <div className={styles.waveformWrap}>
+              <div ref={waveformRef} className={styles.waveform} style={{ height: 80, minHeight: 80 }} />
+              {isReady && duration > 0 && (
+                <div className={styles.markers}>
+                  {threads.map((thread, i) => (
+                    <button
+                      key={thread.id}
+                      className={`${styles.marker} ${selectedThreadId === thread.id ? styles.markerActive : ''}`}
+                      style={{ left: `${(thread.timestamp_seconds / duration) * 100}%`, background: MARKER_COLORS[i % MARKER_COLORS.length] }}
+                      onClick={() => seekToThread(thread)}
+                      title={formatTimestamp(thread.timestamp_seconds)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+            <p className={styles.waveHint}>click anywhere on the waveform to leave a comment</p>
+          </div>
+
+          {pendingTimestamp !== null && (
+            <div className={styles.inlineForm} style={{margin: '0 28px 20px'}}>
+              <span className={styles.inlineFormTime}>💬 Comment at {formatTimestamp(Math.floor(pendingTimestamp))}</span>
+              <textarea
+                className={styles.inlineTextarea}
+                placeholder="What's happening here?"
+                value={newComment}
+                onChange={e => setNewComment(e.target.value)}
+                rows={2}
+                autoFocus
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitThread(); } }}
+              />
+              <div className={styles.inlineFormActions}>
+                <button className={styles.cancelBtn} onClick={() => { setPendingTimestamp(null); pendingTimestampRef.current = null; }}>Cancel</button>
+                <button className={styles.postBtn} onClick={submitThread} disabled={!newComment.trim() || posting}>
+                  {posting ? 'Posting…' : 'Post'}
+                </button>
+              </div>
+            </div>
+          )}
+
+        </div>{/* /heroOverlay */}
+      </div>{/* /hero */}
 
       {/* Three-column body */}
       <div className={styles.body}>
