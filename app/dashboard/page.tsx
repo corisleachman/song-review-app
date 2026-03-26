@@ -15,6 +15,7 @@ interface Song {
   imageUploading?: boolean;
   latestVersionId: string | null;
   latestVersionNumber: number | null;
+  latestVersionLabel: string | null;
   commentCount: number;
 }
 
@@ -76,7 +77,7 @@ function DashboardContent() {
 
     const { data: versionsData } = await supabase
       .from('song_versions')
-      .select('id, song_id, version_number')
+      .select('id, song_id, version_number, label')
       .order('version_number', { ascending: false });
 
     const { data: threadsData } = await supabase
@@ -101,6 +102,7 @@ function DashboardContent() {
         image_url: song.image_url ?? null,
         latestVersionId: latest?.id ?? null,
         latestVersionNumber: latest?.version_number ?? null,
+        latestVersionLabel: latest?.label ?? null,
         commentCount,
       };
     });
@@ -353,9 +355,11 @@ function DashboardContent() {
                     )}
                     <div className={styles.cardMeta}>
                       <span>
-                        {song.latestVersionNumber
-                          ? `v${song.latestVersionNumber}`
-                          : 'No audio'}
+                        {song.latestVersionLabel
+                          ? song.latestVersionLabel
+                          : song.latestVersionNumber
+                            ? `v${song.latestVersionNumber}`
+                            : 'No audio'}
                       </span>
                       {song.commentCount > 0 && (
                         <>
