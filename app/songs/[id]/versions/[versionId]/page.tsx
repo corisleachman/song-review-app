@@ -83,6 +83,7 @@ export default function VersionPage() {
   const [duration, setDuration] = useState(0);
   const [waveErr, setWaveErr] = useState<string | null>(null);
   const [pendingTimestamp, setPendingTimestamp] = useState<number | null>(null);
+  const [clickXPercent, setClickXPercent] = useState<number>(0);
   const [newComment, setNewComment] = useState('');
   const [posting, setPosting] = useState(false);
   const [replyText, setReplyText] = useState('');
@@ -181,9 +182,9 @@ export default function VersionPage() {
 
     const ws = WaveSurfer.create({
       container,
-      waveColor: 'rgba(255,255,255,0.15)',
-      progressColor: 'rgba(255,20,147,0.8)',
-      cursorColor: '#00d4ff',
+      waveColor: 'rgba(255,20,147,0.25)',
+      progressColor: '#ff1493',
+      cursorColor: 'rgba(255,255,255,0.6)',
       cursorWidth: 1,
       height: 96,
       barWidth: 2,
@@ -217,6 +218,7 @@ export default function VersionPage() {
         } else {
           pendingTimestampRef.current = ts;
           setPendingTimestamp(ts);
+          setClickXPercent(relX * 100);
           setNewComment('');
           setSelectedThreadId(null);
         }
@@ -481,28 +483,35 @@ export default function VersionPage() {
                     ))}
                   </div>
                 )}
-              </div>
-              <p className={styles.waveHint}>click anywhere on the waveform to leave a comment</p>
-              {pendingTimestamp !== null && (
-                <div className={styles.inlineForm}>
-                  <span className={styles.inlineFormTime}>💬 Comment at {formatTimestamp(Math.floor(pendingTimestamp))}</span>
-                  <textarea
-                    className={styles.inlineTextarea}
-                    placeholder="What's happening here?"
-                    value={newComment}
-                    onChange={e => setNewComment(e.target.value)}
-                    rows={2}
-                    autoFocus
-                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitThread(); } }}
-                  />
-                  <div className={styles.inlineFormActions}>
-                    <button className={styles.cancelBtn} onClick={() => { setPendingTimestamp(null); pendingTimestampRef.current = null; }}>Cancel</button>
-                    <button className={styles.postBtn} onClick={submitThread} disabled={!newComment.trim() || posting}>
-                      {posting ? 'Posting…' : 'Post'}
-                    </button>
+                {/* Floating comment box — positioned over the waveform at click point */}
+                {pendingTimestamp !== null && (
+                  <div
+                    className={styles.floatingCommentBox}
+                    style={{
+                      left: `clamp(0px, calc(${clickXPercent}% - 200px), calc(100% - 400px))`,
+                    }}
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <span className={styles.inlineFormTime}>@ {formatTimestamp(Math.floor(pendingTimestamp))}</span>
+                    <textarea
+                      className={styles.inlineTextarea}
+                      placeholder="What's happening here?"
+                      value={newComment}
+                      onChange={e => setNewComment(e.target.value)}
+                      rows={2}
+                      autoFocus
+                      onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitThread(); } }}
+                    />
+                    <div className={styles.inlineFormActions}>
+                      <button className={styles.cancelBtn} onClick={() => { setPendingTimestamp(null); pendingTimestampRef.current = null; setClickXPercent(0); }}>Cancel</button>
+                      <button className={styles.postBtn} onClick={submitThread} disabled={!newComment.trim() || posting}>
+                        {posting ? 'Posting…' : 'Post'}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
+              {!pendingTimestamp && <p className={styles.waveHint}>click anywhere on the waveform to leave a comment</p>}
             </div>
           </div>{/* /heroLeft */}
 
