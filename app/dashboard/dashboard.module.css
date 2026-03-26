@@ -575,9 +575,14 @@
   display: flex !important;
   align-items: center !important;
   align-self: center !important;
-  gap: 4px !important;
+  margin-left: auto !important;
+  gap: 6px !important;
   padding-right: 10px !important;
   flex-shrink: 0 !important;
+}
+.songsGridList .iconBtn {
+  width: 44px !important;
+  height: 44px !important;
 }
 .songsGridList .versionBadge { display: none !important; }
 .songsGridList .commentBadge { display: none !important; }
