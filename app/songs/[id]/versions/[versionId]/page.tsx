@@ -66,6 +66,8 @@ export default function VersionPage() {
 
   const waveformRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<any>(null);
+  const hoverCanvasRef = useRef<HTMLCanvasElement>(null);
+  const hoverXRef = useRef<number>(-1);
   const pendingTimestampRef = useRef<number | null>(null);
 
   const [identity, setIdentity] = useState('');
@@ -182,9 +184,9 @@ export default function VersionPage() {
 
     const ws = WaveSurfer.create({
       container,
-      waveColor: 'rgba(255,20,147,0.25)',
+      waveColor: 'rgba(255,255,255,0.2)',
       progressColor: '#ff1493',
-      cursorColor: 'rgba(255,255,255,0.6)',
+      cursorColor: 'rgba(255,255,255,0.5)',
       cursorWidth: 1,
       height: 96,
       barWidth: 2,
@@ -230,6 +232,28 @@ export default function VersionPage() {
     ws.load(audio.src);
     wavesurferRef.current = ws;
   }, []);
+
+  // Draw hover overlay on canvas: dimmed pink between playhead and mouse
+  const drawHoverOverlay = () => {
+    const canvas = hoverCanvasRef.current;
+    const ws = wavesurferRef.current;
+    if (!canvas || !ws) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    const hx = hoverXRef.current;
+    if (hx < 0) return;
+    const dur = ws.getDuration();
+    if (!dur) return;
+    const playedX = (ws.getCurrentTime() / dur) * w;
+    const mouseX = hx * w;
+    if (mouseX > playedX) {
+      ctx.fillStyle = 'rgba(255,20,147,0.3)';
+      ctx.fillRect(playedX, 0, mouseX - playedX, h);
+    }
+  };
 
   useEffect(() => {
     if (!audioUrl) return;
@@ -468,8 +492,27 @@ export default function VersionPage() {
               </div>
               {/* Waveform at bottom of left column — stops at artwork edge */}
             <div className={styles.heroWaveform}>
-              <div className={styles.waveformWrap}>
+              <div
+                className={styles.waveformWrap}
+                onMouseMove={e => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  hoverXRef.current = (e.clientX - rect.left) / rect.width;
+                  drawHoverOverlay();
+                }}
+                onMouseLeave={() => {
+                  hoverXRef.current = -1;
+                  const canvas = hoverCanvasRef.current;
+                  if (canvas) canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
+                }}
+              >
                 <div ref={waveformRef} className={styles.waveform} style={{ height: 80, minHeight: 80 }} />
+                <canvas
+                  ref={hoverCanvasRef}
+                  className={styles.hoverCanvas}
+                  width={1200}
+                  height={80}
+                  style={{ pointerEvents: 'none' }}
+                />
                 {isReady && duration > 0 && (
                   <div className={styles.markers}>
                     {threads.map((thread, i) => (
