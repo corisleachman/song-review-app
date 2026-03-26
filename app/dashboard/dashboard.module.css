@@ -526,20 +526,20 @@
 /* List view — same compact rows as mobile but on desktop */
 .songsGridList {
   grid-template-columns: 1fr !important;
-  gap: 6px !important;
+  gap: 10px !important;
 }
 .songsGridList .card {
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
   aspect-ratio: unset !important;
-  height: 60px !important;
+  height: 70px !important;
 }
 .songsGridList .cardThumb {
   position: relative !important;
-  width: 60px !important;
-  height: 60px !important;
-  min-width: 60px !important;
+  width: 70px !important;
+  height: 70px !important;
+  min-width: 70px !important;
   flex-shrink: 0 !important;
   border-radius: 8px 0 0 8px !important;
   inset: unset !important;
@@ -562,6 +562,7 @@
 .songsGridList .cardMeta {
   display: flex !important;
   align-items: center !important;
+  justify-content: flex-start !important;
   gap: 8px !important;
   font-size: 12px !important;
   color: rgba(255,255,255,0.45) !important;
