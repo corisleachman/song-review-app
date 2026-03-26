@@ -357,12 +357,15 @@
 .actionGroup { margin-bottom: 18px; }
 
 .groupLabel {
-  color: rgba(255,255,255,0.2);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
   margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .actionRow {
@@ -487,6 +490,97 @@
 .modalConfirm:hover { opacity: 0.85; }
 .modalConfirm:disabled { opacity: 0.4; cursor: not-allowed; }
 
+/* ── View toggle ─────────────────────────────────────────────── */
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.viewToggle {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 7px;
+  padding: 3px;
+}
+.viewBtn {
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.3);
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s, color 0.12s;
+}
+.viewBtn:hover { color: rgba(255,255,255,0.7); }
+.viewBtnActive {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+}
+
+/* List view — same compact rows as mobile but on desktop */
+.songsGridList {
+  grid-template-columns: 1fr !important;
+  gap: 6px !important;
+}
+.songsGridList .card {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  aspect-ratio: unset !important;
+  height: 60px !important;
+}
+.songsGridList .cardThumb {
+  position: relative !important;
+  width: 60px !important;
+  height: 60px !important;
+  min-width: 60px !important;
+  flex-shrink: 0 !important;
+  border-radius: 8px 0 0 8px !important;
+  inset: unset !important;
+}
+.songsGridList .cardBody {
+  position: relative !important;
+  bottom: unset !important;
+  left: unset !important;
+  right: unset !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+  padding: 0 12px !important;
+  background: none !important;
+}
+.songsGridList .cardTitle {
+  font-size: 14px !important;
+  text-shadow: none !important;
+  margin-bottom: 2px !important;
+}
+.songsGridList .cardMeta {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 12px !important;
+  color: rgba(255,255,255,0.45) !important;
+}
+.songsGridList .cardActions {
+  opacity: 1 !important;
+  position: relative !important;
+  top: unset !important;
+  right: unset !important;
+  display: flex !important;
+  align-items: center !important;
+  align-self: center !important;
+  gap: 4px !important;
+  padding-right: 10px !important;
+  flex-shrink: 0 !important;
+}
+.songsGridList .versionBadge { display: none !important; }
+.songsGridList .commentBadge { display: none !important; }
+
 /* Mobile */
 @media (max-width: 768px) {
   .mobileTabs { display: flex; }
@@ -500,7 +594,22 @@
 
   .actionsPanel { padding: 16px; }
 
+  /* Mobile actions — larger fonts */
+  .groupLabel {
+    font-size: 15px;
+  }
+  .actionText {
+    font-size: 14px;
+  }
+  .actionTimestamp {
+    font-size: 12px;
+  }
+  .filterBtn {
+    font-size: 12px;
+  }
+
   .hideMobile { display: none; }
+  .viewToggle { display: none; }
 
   .songsGrid {
     grid-template-columns: 1fr;
