@@ -168,12 +168,18 @@
   position: relative;
   width: 100%;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: visible;  /* allow floating comment box to escape */
   background: rgba(0,0,0,0.25);
+}
+/* Hover: brighten the unplayed portion */
+.waveformWrap:hover wave canvas {
+  filter: brightness(1.6);
 }
 .waveform {
   width: 100%;
   cursor: crosshair;
+  border-radius: 8px;
+  overflow: hidden;
 }
 .markers {
   position: absolute;
@@ -228,6 +234,32 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+/* Floating comment box — overlays the waveform at click point */
+.floatingCommentBox {
+  position: absolute;
+  bottom: calc(100% + 10px);  /* sits ABOVE the waveform */
+  width: 400px;
+  background: #1a1030;
+  border: 1px solid rgba(255,20,147,0.5);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 50;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  /* Small arrow pointing down to the waveform */
+}
+.floatingCommentBox::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: rgba(255,20,147,0.5);
 }
 .inlineFormTime {
   font-size: 0.78rem;
