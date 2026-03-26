@@ -49,15 +49,16 @@
 /* Main content: left info + right artwork */
 .heroContent {
   display: flex;
-  align-items: center;
-  gap: 32px;
-  padding: 8px 28px 28px;
+  align-items: stretch;
+  gap: 28px;
+  padding: 8px 28px 0;
 }
 .heroLeft {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
+  padding-bottom: 24px;
 }
 .heroMeta { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .heroBadge {
@@ -115,13 +116,14 @@
 
 /* Artwork */
 .heroArtwork {
-  width: 220px;
-  height: 220px;
+  width: 330px;
+  height: 330px;
   flex-shrink: 0;
   border-radius: 12px;
   overflow: hidden;
   position: relative;
   box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+  align-self: flex-end;
 }
 .heroArtworkImg { width: 100%; height: 100%; object-fit: cover; display: block; }
 .heroArtworkPlaceholder {
@@ -154,10 +156,128 @@
   border-radius: 20px;
 }
 
-/* Waveform strip at bottom of hero */
+/* Waveform — inside heroLeft, naturally stops at artwork edge */
 .heroWaveform {
-  padding: 0 28px 24px;
+  margin-top: auto;
+  padding-top: 20px;
 }
+
+
+/* ── Waveform ───────────────────────────────────────────────── */
+.waveformWrap {
+  position: relative;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(0,0,0,0.25);
+}
+.waveform {
+  width: 100%;
+  cursor: crosshair;
+}
+.markers {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+.marker {
+  position: absolute;
+  top: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid rgba(13,9,20,0.6);
+  cursor: pointer;
+  padding: 0;
+  pointer-events: all;
+  transition: transform 0.15s;
+  z-index: 2;
+}
+.marker:hover { transform: translateX(-50%) translateY(-50%) scale(1.4); }
+.markerActive {
+  transform: translateX(-50%) translateY(-50%) scale(1.4);
+  box-shadow: 0 0 8px rgba(255,255,255,0.4);
+}
+
+.waveHint {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.35);
+  margin: 6px 0 0;
+  text-align: left;
+}
+
+.loadingWave {
+  font-size: 0.78rem;
+  color: #a855f7;
+  animation: pulseWave 1.2s ease-in-out infinite;
+}
+@keyframes pulseWave { 0%,100%{opacity:1} 50%{opacity:0.35} }
+.waveErrMsg { font-size: 0.78rem; color: #ff6b6b; }
+
+/* ── Inline comment form ────────────────────────────────────── */
+.inlineForm {
+  margin-top: 12px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,20,147,0.4);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.inlineFormTime {
+  font-size: 0.78rem;
+  color: #ff1493;
+  font-weight: 600;
+}
+.inlineTextarea {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 7px;
+  color: #fff;
+  font-size: 0.9rem;
+  font-family: inherit;
+  padding: 8px 10px;
+  resize: vertical;
+  width: 100%;
+  box-sizing: border-box;
+}
+.inlineTextarea:focus { outline: none; border-color: rgba(255,20,147,0.5); }
+.inlineTextarea::placeholder { color: rgba(255,255,255,0.3); }
+.inlineFormActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.cancelBtn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.6);
+  padding: 6px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-family: inherit;
+}
+.cancelBtn:hover { border-color: rgba(255,255,255,0.4); color: #fff; }
+.postBtn {
+  background: linear-gradient(135deg, #ff1493, #a855f7);
+  border: none;
+  color: #fff;
+  padding: 6px 18px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  transition: opacity 0.15s;
+}
+.postBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+.postBtn:not(:disabled):hover { opacity: 0.85; }
 
 /* Shared controls that appear in hero */
 .songsBtn {
@@ -645,7 +765,7 @@
 @media (max-width: 700px) {
   .body { grid-template-columns: 1fr; }
   .heroTitle { font-size: 1.6rem; }
-  .heroArtwork { width: 110px; height: 110px; }
+  .heroArtwork { width: 120px; height: 120px; align-self: flex-start; }
   .heroContent { gap: 16px; padding: 8px 16px 20px; align-items: flex-start; }
   .heroNav { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
   .heroNavRight { flex-wrap: wrap; gap: 6px; }
