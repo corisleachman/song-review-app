@@ -464,7 +464,47 @@ export default function VersionPage() {
                 {!isReady && audioUrl && !waveErr && <span className={styles.loadingWave}>Loading…</span>}
                 {waveErr && <span className={styles.waveErrMsg}>⚠ {waveErr}</span>}
               </div>
+              {/* Waveform at bottom of left column — stops at artwork edge */}
+            <div className={styles.heroWaveform}>
+              <div className={styles.waveformWrap}>
+                <div ref={waveformRef} className={styles.waveform} style={{ height: 80, minHeight: 80 }} />
+                {isReady && duration > 0 && (
+                  <div className={styles.markers}>
+                    {threads.map((thread, i) => (
+                      <button
+                        key={thread.id}
+                        className={`${styles.marker} ${selectedThreadId === thread.id ? styles.markerActive : ''}`}
+                        style={{ left: `${(thread.timestamp_seconds / duration) * 100}%`, background: MARKER_COLORS[i % MARKER_COLORS.length] }}
+                        onClick={() => seekToThread(thread)}
+                        title={formatTimestamp(thread.timestamp_seconds)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+              <p className={styles.waveHint}>click anywhere on the waveform to leave a comment</p>
+              {pendingTimestamp !== null && (
+                <div className={styles.inlineForm}>
+                  <span className={styles.inlineFormTime}>💬 Comment at {formatTimestamp(Math.floor(pendingTimestamp))}</span>
+                  <textarea
+                    className={styles.inlineTextarea}
+                    placeholder="What's happening here?"
+                    value={newComment}
+                    onChange={e => setNewComment(e.target.value)}
+                    rows={2}
+                    autoFocus
+                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitThread(); } }}
+                  />
+                  <div className={styles.inlineFormActions}>
+                    <button className={styles.cancelBtn} onClick={() => { setPendingTimestamp(null); pendingTimestampRef.current = null; }}>Cancel</button>
+                    <button className={styles.postBtn} onClick={submitThread} disabled={!newComment.trim() || posting}>
+                      {posting ? 'Posting…' : 'Post'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
+          </div>{/* /heroLeft */}
 
             {/* Right: artwork */}
             <div className={styles.heroArtwork}>
@@ -505,48 +545,6 @@ export default function VersionPage() {
               </label>
             </div>
           </div>
-
-          {/* Waveform — full width at bottom of hero */}
-          <div className={styles.heroWaveform}>
-            <div className={styles.waveformWrap}>
-              <div ref={waveformRef} className={styles.waveform} style={{ height: 80, minHeight: 80 }} />
-              {isReady && duration > 0 && (
-                <div className={styles.markers}>
-                  {threads.map((thread, i) => (
-                    <button
-                      key={thread.id}
-                      className={`${styles.marker} ${selectedThreadId === thread.id ? styles.markerActive : ''}`}
-                      style={{ left: `${(thread.timestamp_seconds / duration) * 100}%`, background: MARKER_COLORS[i % MARKER_COLORS.length] }}
-                      onClick={() => seekToThread(thread)}
-                      title={formatTimestamp(thread.timestamp_seconds)}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-            <p className={styles.waveHint}>click anywhere on the waveform to leave a comment</p>
-          </div>
-
-          {pendingTimestamp !== null && (
-            <div className={styles.inlineForm} style={{margin: '0 28px 20px'}}>
-              <span className={styles.inlineFormTime}>💬 Comment at {formatTimestamp(Math.floor(pendingTimestamp))}</span>
-              <textarea
-                className={styles.inlineTextarea}
-                placeholder="What's happening here?"
-                value={newComment}
-                onChange={e => setNewComment(e.target.value)}
-                rows={2}
-                autoFocus
-                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitThread(); } }}
-              />
-              <div className={styles.inlineFormActions}>
-                <button className={styles.cancelBtn} onClick={() => { setPendingTimestamp(null); pendingTimestampRef.current = null; }}>Cancel</button>
-                <button className={styles.postBtn} onClick={submitThread} disabled={!newComment.trim() || posting}>
-                  {posting ? 'Posting…' : 'Post'}
-                </button>
-              </div>
-            </div>
-          )}
 
         </div>{/* /heroOverlay */}
       </div>{/* /hero */}
