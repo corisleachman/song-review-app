@@ -459,140 +459,135 @@ export default function VersionPage() {
           {/* Main hero content */}
           <div className={styles.heroContent}>
 
-            {/* Row 1: title info + artwork side by side */}
-            <div className={styles.heroTitleRow}>
+            {/* Left: title, controls, waveform */}
+            <div className={styles.heroLeft}>
+              <div className={styles.heroMeta}>
+                {version && (
+                  <span className={styles.heroBadge}>
+                    v{version.version_number}{version.label ? ` — ${version.label}` : ''}
+                  </span>
+                )}
+              </div>
+              <h1 className={styles.heroTitle}>{song?.title}</h1>
+              <p className={styles.heroArtist}>Polite Rebels</p>
+              <div className={styles.heroControls}>
+                <button
+                  className={styles.heroPlayBtn}
+                  onClick={() => wavesurferRef.current?.playPause()}
+                  disabled={!isReady}
+                >
+                  {isPlaying
+                    ? <svg width="20" height="20" viewBox="0 0 20 20" fill="white"><rect x="3" y="2" width="5" height="16" rx="1.5"/><rect x="12" y="2" width="5" height="16" rx="1.5"/></svg>
+                    : <svg width="20" height="20" viewBox="0 0 20 20" fill="white"><path d="M4 2l14 8-14 8z"/></svg>
+                  }
+                </button>
+                <span className={styles.heroTime}>
+                  {formatTimestamp(Math.floor(currentTime))}
+                  <span className={styles.heroTimeSep}> / </span>
+                  {formatTimestamp(Math.floor(duration))}
+                </span>
+                {!isReady && audioUrl && !waveErr && <span className={styles.loadingWave}>Loading…</span>}
+                {waveErr && <span className={styles.waveErrMsg}>⚠ {waveErr}</span>}
+              </div>
 
-              {/* Left: badge, title, artist, play controls */}
-              <div className={styles.heroLeft}>
-                <div className={styles.heroMeta}>
-                  {version && (
-                    <span className={styles.heroBadge}>
-                      v{version.version_number}{version.label ? ` — ${version.label}` : ''}
-                    </span>
+              {/* Waveform — inside heroLeft so it stops at artwork edge on desktop */}
+              <div className={styles.heroWaveform}>
+                <div
+                  className={styles.waveformWrap}
+                  onMouseMove={e => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    hoverXRef.current = (e.clientX - rect.left) / rect.width;
+                    drawHoverOverlay();
+                  }}
+                  onMouseLeave={() => {
+                    hoverXRef.current = -1;
+                    const canvas = hoverCanvasRef.current;
+                    if (canvas) canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
+                  }}
+                >
+                  <div ref={waveformRef} className={styles.waveform} style={{ height: 80, minHeight: 80 }} />
+                  <canvas
+                    ref={hoverCanvasRef}
+                    className={styles.hoverCanvas}
+                    width={1200}
+                    height={80}
+                    style={{ pointerEvents: 'none' }}
+                  />
+                  {isReady && duration > 0 && (
+                    <div className={styles.markers}>
+                      {threads.map((thread, i) => (
+                        <button
+                          key={thread.id}
+                          className={`${styles.marker} ${selectedThreadId === thread.id ? styles.markerActive : ''}`}
+                          style={{ left: `${(thread.timestamp_seconds / duration) * 100}%`, background: MARKER_COLORS[i % MARKER_COLORS.length] }}
+                          onClick={() => seekToThread(thread)}
+                          title={formatTimestamp(thread.timestamp_seconds)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {pendingTimestamp !== null && (
+                    <div
+                      className={styles.floatingCommentBox}
+                      style={{ left: `clamp(0px, calc(${clickXPercent}% - 200px), calc(100% - 400px))` }}
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <span className={styles.inlineFormTime}>@ {formatTimestamp(Math.floor(pendingTimestamp))}</span>
+                      <textarea
+                        className={styles.inlineTextarea}
+                        placeholder="What's happening here?"
+                        value={newComment}
+                        onChange={e => setNewComment(e.target.value)}
+                        rows={2}
+                        autoFocus
+                        onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitThread(); } }}
+                      />
+                      <div className={styles.inlineFormActions}>
+                        <button className={styles.cancelBtn} onClick={() => { setPendingTimestamp(null); pendingTimestampRef.current = null; setClickXPercent(0); }}>Cancel</button>
+                        <button className={styles.postBtn} onClick={submitThread} disabled={!newComment.trim() || posting}>
+                          {posting ? 'Posting…' : 'Post'}
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </div>
-                <h1 className={styles.heroTitle}>{song?.title}</h1>
-                <p className={styles.heroArtist}>Polite Rebels</p>
-                <div className={styles.heroControls}>
-                  <button
-                    className={styles.heroPlayBtn}
-                    onClick={() => wavesurferRef.current?.playPause()}
-                    disabled={!isReady}
-                  >
-                    {isPlaying
-                      ? <svg width="20" height="20" viewBox="0 0 20 20" fill="white"><rect x="3" y="2" width="5" height="16" rx="1.5"/><rect x="12" y="2" width="5" height="16" rx="1.5"/></svg>
-                      : <svg width="20" height="20" viewBox="0 0 20 20" fill="white"><path d="M4 2l14 8-14 8z"/></svg>
-                    }
-                  </button>
-                  <span className={styles.heroTime}>
-                    {formatTimestamp(Math.floor(currentTime))}
-                    <span className={styles.heroTimeSep}> / </span>
-                    {formatTimestamp(Math.floor(duration))}
-                  </span>
-                  {!isReady && audioUrl && !waveErr && <span className={styles.loadingWave}>Loading…</span>}
-                  {waveErr && <span className={styles.waveErrMsg}>⚠ {waveErr}</span>}
+                {!pendingTimestamp && <p className={styles.waveHint}>click anywhere on the waveform to leave a comment</p>}
+              </div>
+            </div>{/* /heroLeft */}
+
+            {/* Right: artwork */}
+            <div className={styles.heroArtwork}>
+              {song?.image_url ? (
+                <img src={song.image_url} alt={song.title} className={styles.heroArtworkImg} />
+              ) : (
+                <div className={styles.heroArtworkPlaceholder}>
+                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                    <circle cx="24" cy="24" r="12" stroke="rgba(255,255,255,0.2)" strokeWidth="2"/>
+                    <circle cx="24" cy="24" r="4" fill="rgba(255,255,255,0.2)"/>
+                  </svg>
                 </div>
-              </div>
-
-              {/* Right: artwork */}
-              <div className={styles.heroArtwork}>
-                {song?.image_url ? (
-                  <img src={song.image_url} alt={song.title} className={styles.heroArtworkImg} />
-                ) : (
-                  <div className={styles.heroArtworkPlaceholder}>
-                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                      <circle cx="24" cy="24" r="12" stroke="rgba(255,255,255,0.2)" strokeWidth="2"/>
-                      <circle cx="24" cy="24" r="4" fill="rgba(255,255,255,0.2)"/>
-                    </svg>
-                  </div>
-                )}
-                <label className={styles.heroArtworkUpload} title="Upload cover art">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    style={{ display: 'none' }}
-                    onChange={async e => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      const fd = new FormData();
-                      fd.append('songId', songId);
-                      fd.append('file', file);
-                      const res = await fetch('/api/songs/upload-image', { method: 'POST', body: fd });
-                      if (res.ok) {
-                        const { imageUrl } = await res.json();
-                        setSong(prev => prev ? { ...prev, image_url: imageUrl } : prev);
-                      }
-                    }}
-                  />
-                  <span>Replace image</span>
-                </label>
-              </div>
-
-            </div>{/* /heroTitleRow */}
-
-            {/* Row 2: waveform — full width on both desktop and mobile */}
-            <div className={styles.heroWaveform}>
-              <div
-                className={styles.waveformWrap}
-                onMouseMove={e => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  hoverXRef.current = (e.clientX - rect.left) / rect.width;
-                  drawHoverOverlay();
-                }}
-                onMouseLeave={() => {
-                  hoverXRef.current = -1;
-                  const canvas = hoverCanvasRef.current;
-                  if (canvas) canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
-                }}
-              >
-                <div ref={waveformRef} className={styles.waveform} style={{ height: 80, minHeight: 80 }} />
-                <canvas
-                  ref={hoverCanvasRef}
-                  className={styles.hoverCanvas}
-                  width={1200}
-                  height={80}
-                  style={{ pointerEvents: 'none' }}
+              )}
+              <label className={styles.heroArtworkUpload} title="Upload cover art">
+                <input
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={async e => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const fd = new FormData();
+                    fd.append('songId', songId);
+                    fd.append('file', file);
+                    const res = await fetch('/api/songs/upload-image', { method: 'POST', body: fd });
+                    if (res.ok) {
+                      const { imageUrl } = await res.json();
+                      setSong(prev => prev ? { ...prev, image_url: imageUrl } : prev);
+                    }
+                  }}
                 />
-                {isReady && duration > 0 && (
-                  <div className={styles.markers}>
-                    {threads.map((thread, i) => (
-                      <button
-                        key={thread.id}
-                        className={`${styles.marker} ${selectedThreadId === thread.id ? styles.markerActive : ''}`}
-                        style={{ left: `${(thread.timestamp_seconds / duration) * 100}%`, background: MARKER_COLORS[i % MARKER_COLORS.length] }}
-                        onClick={() => seekToThread(thread)}
-                        title={formatTimestamp(thread.timestamp_seconds)}
-                      />
-                    ))}
-                  </div>
-                )}
-                {pendingTimestamp !== null && (
-                  <div
-                    className={styles.floatingCommentBox}
-                    style={{ left: `clamp(0px, calc(${clickXPercent}% - 200px), calc(100% - 400px))` }}
-                    onClick={e => e.stopPropagation()}
-                  >
-                    <span className={styles.inlineFormTime}>@ {formatTimestamp(Math.floor(pendingTimestamp))}</span>
-                    <textarea
-                      className={styles.inlineTextarea}
-                      placeholder="What's happening here?"
-                      value={newComment}
-                      onChange={e => setNewComment(e.target.value)}
-                      rows={2}
-                      autoFocus
-                      onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitThread(); } }}
-                    />
-                    <div className={styles.inlineFormActions}>
-                      <button className={styles.cancelBtn} onClick={() => { setPendingTimestamp(null); pendingTimestampRef.current = null; setClickXPercent(0); }}>Cancel</button>
-                      <button className={styles.postBtn} onClick={submitThread} disabled={!newComment.trim() || posting}>
-                        {posting ? 'Posting…' : 'Post'}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-              {!pendingTimestamp && <p className={styles.waveHint}>click anywhere on the waveform to leave a comment</p>}
-            </div>{/* /heroWaveform */}
+                <span>Replace image</span>
+              </label>
+            </div>
 
           </div>{/* /heroContent */}
 

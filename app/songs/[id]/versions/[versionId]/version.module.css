@@ -54,10 +54,7 @@
   gap: 28px;
   padding: 8px 28px 0;
 }
-/* heroTitleRow is transparent on desktop — just a passthrough */
-.heroTitleRow {
-  display: contents;
-}
+/* heroTitleRow removed — heroLeft and heroArtwork are direct children */
 .heroLeft {
   flex: 1;
   min-width: 0;
@@ -161,7 +158,7 @@
   border-radius: 20px;
 }
 
-/* Waveform — bottom of heroLeft, stops at artwork edge on desktop */
+/* Waveform — inside heroLeft, margin-top:auto pushes it to bottom */
 .heroWaveform {
   margin-top: auto;
   padding-top: 20px;
@@ -809,12 +806,11 @@
 @media (max-width: 700px) {
   .body { grid-template-columns: 1fr; }
   .heroTitle { font-size: 1.6rem; }
-  /* Mobile: stack vertically — title+artwork row, then waveform full width */
-  .heroContent { flex-direction: column !important; padding: 0 16px 0; gap: 0; }
-  .heroTitleRow { display: flex !important; align-items: flex-start; gap: 14px; }
-  .heroLeft { padding-bottom: 0; flex: 1; }
-  .heroArtwork { width: 90px !important; height: 90px !important; align-self: flex-start; flex-shrink: 0; margin-top: 4px; }
-  .heroWaveform { padding: 12px 0 16px; margin-top: 0 !important; width: 100%; }
+  /* Mobile: heroContent switches to column — artwork moves below title */
+  .heroContent { flex-direction: column !important; padding: 0 16px 0; gap: 16px; }
+  .heroLeft { padding-bottom: 0; }
+  .heroArtwork { width: 120px !important; height: 120px !important; align-self: flex-start; }
+  .heroWaveform { margin-top: 0 !important; padding-top: 4px; padding-bottom: 16px; }
   .heroTitle { font-size: 1.5rem; }
   .heroArtist { margin-bottom: 14px; font-size: 0.9rem; }
   .heroPlayBtn { width: 40px; height: 40px; }
