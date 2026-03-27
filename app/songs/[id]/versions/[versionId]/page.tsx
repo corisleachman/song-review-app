@@ -87,6 +87,7 @@ export default function VersionPage() {
   const [pendingTimestamp, setPendingTimestamp] = useState<number | null>(null);
   const [clickXPercent, setClickXPercent] = useState<number>(0);
   const [editingLabel, setEditingLabel] = useState(false);
+  const [showVersionModal, setShowVersionModal] = useState(false);
   const [labelDraft, setLabelDraft] = useState('');
   const [newComment, setNewComment] = useState('');
   const [posting, setPosting] = useState(false);
@@ -455,17 +456,9 @@ export default function VersionPage() {
             <button className={styles.songsBtn} onClick={() => router.push('/dashboard')}>← Songs</button>
             <div className={styles.heroNavRight}>
               {versions.length > 0 && (
-                <select
-                  className={styles.versionSelect}
-                  value={versionId}
-                  onChange={e => router.push(`/songs/${songId}/versions/${e.target.value}`)}
-                >
-                  {versions.map(v => (
-                    <option key={v.id} value={v.id}>
-                      {v.label || `v${v.version_number}`}
-                    </option>
-                  ))}
-                </select>
+                <button className={styles.changeVersionBtn} onClick={() => setShowVersionModal(true)}>
+                  Change Version
+                </button>
               )}
               <button className={styles.uploadBtn} onClick={() => router.push(`/songs/${songId}/upload`)}>
                 ↑ Upload new version
@@ -528,8 +521,46 @@ export default function VersionPage() {
                 {waveErr && <span className={styles.waveErrMsg}>⚠ {waveErr}</span>}
               </div>
 
-              {/* Waveform — inside heroLeft so it stops at artwork edge on desktop */}
-              <div className={styles.heroWaveform}>
+            </div>{/* /heroLeft */}
+
+            {/* Right: artwork */}
+            <div className={styles.heroArtwork}>
+              {song?.image_url ? (
+                <img src={song.image_url} alt={song.title} className={styles.heroArtworkImg} />
+              ) : (
+                <div className={styles.heroArtworkPlaceholder}>
+                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                    <circle cx="24" cy="24" r="12" stroke="rgba(255,255,255,0.2)" strokeWidth="2"/>
+                    <circle cx="24" cy="24" r="4" fill="rgba(255,255,255,0.2)"/>
+                  </svg>
+                </div>
+              )}
+              <label className={styles.heroArtworkUpload} title="Upload cover art">
+                <input
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={async e => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const fd = new FormData();
+                    fd.append('songId', songId);
+                    fd.append('file', file);
+                    const res = await fetch('/api/songs/upload-image', { method: 'POST', body: fd });
+                    if (res.ok) {
+                      const { imageUrl } = await res.json();
+                      setSong(prev => prev ? { ...prev, image_url: imageUrl } : prev);
+                    }
+                  }}
+                />
+                <span>Replace image</span>
+              </label>
+            </div>
+
+
+
+            {/* Waveform — direct child of heroContent, full width below on mobile */}
+            <div className={styles.heroWaveform}>
                 <div
                   className={styles.waveformWrap}
                   onMouseMove={e => {
@@ -590,41 +621,6 @@ export default function VersionPage() {
                   )}
                 </div>
                 {!pendingTimestamp && <p className={styles.waveHint}>click anywhere on the waveform to leave a comment</p>}
-              </div>
-            </div>{/* /heroLeft */}
-
-            {/* Right: artwork */}
-            <div className={styles.heroArtwork}>
-              {song?.image_url ? (
-                <img src={song.image_url} alt={song.title} className={styles.heroArtworkImg} />
-              ) : (
-                <div className={styles.heroArtworkPlaceholder}>
-                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                    <circle cx="24" cy="24" r="12" stroke="rgba(255,255,255,0.2)" strokeWidth="2"/>
-                    <circle cx="24" cy="24" r="4" fill="rgba(255,255,255,0.2)"/>
-                  </svg>
-                </div>
-              )}
-              <label className={styles.heroArtworkUpload} title="Upload cover art">
-                <input
-                  type="file"
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  onChange={async e => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    const fd = new FormData();
-                    fd.append('songId', songId);
-                    fd.append('file', file);
-                    const res = await fetch('/api/songs/upload-image', { method: 'POST', body: fd });
-                    if (res.ok) {
-                      const { imageUrl } = await res.json();
-                      setSong(prev => prev ? { ...prev, image_url: imageUrl } : prev);
-                    }
-                  }}
-                />
-                <span>Replace image</span>
-              </label>
             </div>
 
           </div>{/* /heroContent */}
@@ -842,6 +838,35 @@ export default function VersionPage() {
             <div className={styles.modalActions}>
               <button className={styles.cancelBtn} onClick={() => setActionModalCommentId(null)}>Cancel</button>
               <button className={styles.postBtn} onClick={submitAction} disabled={!actionText.trim()}>Save Action</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Version picker modal */}
+      {showVersionModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowVersionModal(false)}>
+          <div className={styles.versionModal} onClick={e => e.stopPropagation()}>
+            <div className={styles.versionModalHeader}>
+              <h3 className={styles.versionModalTitle}>Choose version</h3>
+              <button className={styles.versionModalClose} onClick={() => setShowVersionModal(false)}>✕</button>
+            </div>
+            <div className={styles.versionModalList}>
+              {versions.map(v => (
+                <button
+                  key={v.id}
+                  className={`${styles.versionModalItem} ${v.id === versionId ? styles.versionModalItemActive : ''}`}
+                  onClick={() => { setShowVersionModal(false); router.push(`/songs/${songId}/versions/${v.id}`); }}
+                >
+                  <span className={styles.versionModalLabel}>{v.label || `v${v.version_number}`}</span>
+                  <span className={styles.versionModalMeta}>
+                    {v.created_by} · v{v.version_number}
+                  </span>
+                  {v.id === versionId && (
+                    <span className={styles.versionModalTick}>✓</span>
+                  )}
+                </button>
+              ))}
             </div>
           </div>
         </div>

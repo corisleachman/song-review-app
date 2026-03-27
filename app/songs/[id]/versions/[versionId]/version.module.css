@@ -49,18 +49,20 @@
 /* Main content: left info + right artwork */
 .heroContent {
   display: flex;
-  flex-direction: row;    /* desktop: left column + artwork side by side */
-  align-items: stretch;
-  gap: 28px;
-  padding: 8px 28px 0 28px;  /* equal left/right padding */
+  flex-direction: row;
+  flex-wrap: wrap;          /* allows heroWaveform to wrap to its own full-width row */
+  align-items: flex-start;
+  gap: 0;
+  padding: 8px 28px 0 28px;
 }
 /* heroTitleRow removed — heroLeft and heroArtwork are direct children */
 .heroLeft {
   flex: 1;
-  min-width: 0;
+  min-width: 200px;
   display: flex;
   flex-direction: column;
   padding-bottom: 0;
+  padding-right: 28px;  /* gap between left col and artwork */
 }
 .heroMeta { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .heroBadge {
@@ -149,7 +151,7 @@
   position: relative;
   box-shadow: 0 16px 48px rgba(0,0,0,0.6);
   align-self: flex-start;
-  margin-bottom: 28px;  /* same spacing below artwork as to its right */
+  margin-bottom: 0;
 }
 .heroArtworkImg { width: 100%; height: 100%; object-fit: cover; display: block; }
 .heroArtworkPlaceholder {
@@ -182,10 +184,11 @@
   border-radius: 20px;
 }
 
-/* Waveform — inside heroLeft, margin-top:auto pushes it to bottom */
+/* Waveform — full width row, wraps below heroLeft+heroArtwork */
 .heroWaveform {
-  margin-top: auto;
-  padding-top: 20px;
+  flex-basis: 100%;       /* forces it to its own row */
+  width: 100%;
+  padding-top: 16px;
   padding-bottom: 24px;
 }
 
@@ -370,8 +373,22 @@
   font-family: inherit;
 }
 .uploadBtn {
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.15);
+  background: transparent;
+  border: 1px solid #ff1493;
+  color: #ff1493;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.uploadBtn:hover { background: rgba(255,20,147,0.12); }
+
+.changeVersionBtn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
   color: rgba(255,255,255,0.8);
   padding: 6px 14px;
   border-radius: 8px;
@@ -379,8 +396,9 @@
   font-size: 0.82rem;
   font-family: inherit;
   white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
 }
-.uploadBtn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+.changeVersionBtn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.35); color: #fff; }
 
 .avatar {
   width: 32px;
@@ -830,38 +848,27 @@
 @media (max-width: 700px) {
   .body { grid-template-columns: 1fr; }
   .heroTitle { font-size: 1.6rem; }
-  /* Mobile hero: 2-col grid so heroLeft+heroArtwork share top row,
-     heroWaveform spans full width as its own row below */
+  /* Mobile: flex row wraps naturally — heroLeft + heroArtwork top row,
+     heroWaveform (flex-basis:100%) wraps to full-width row below */
   .heroContent {
-    display: grid !important;
-    grid-template-columns: 1fr 120px !important;
-    grid-template-rows: auto auto !important;
-    gap: 0 16px !important;
     padding: 0 16px 0 !important;
+    gap: 0 !important;
   }
-  /* heroLeft: top-left cell, column layout */
   .heroLeft {
-    grid-column: 1 !important;
-    grid-row: 1 !important;
-    padding-bottom: 0 !important;
-    margin-bottom: 0 !important;
+    padding-right: 14px !important;
+    min-width: 0 !important;
   }
-  /* heroArtwork: top-right cell */
   .heroArtwork {
-    grid-column: 2 !important;
-    grid-row: 1 !important;
-    width: 120px !important;
-    height: 120px !important;
+    width: 110px !important;
+    height: 110px !important;
     margin-bottom: 0 !important;
-    align-self: start !important;
+    align-self: flex-start !important;
     order: unset !important;
+    flex-shrink: 0 !important;
   }
-  /* heroWaveform: spans both columns, full width below */
+  /* heroWaveform already has flex-basis:100% so it wraps to its own row */
   .heroWaveform {
-    grid-column: 1 / -1 !important;
-    grid-row: 2 !important;
-    margin-top: 12px !important;
-    padding-top: 0 !important;
+    padding-top: 12px !important;
     padding-bottom: 16px !important;
   }
   .heroTitle { font-size: 1.4rem; }
@@ -900,4 +907,70 @@
 
 
 
+}
+
+/* ── Version picker modal ───────────────────────────────────── */
+.versionModal {
+  background: #1a1030;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  width: 340px;
+  max-width: 90vw;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+}
+.versionModalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.versionModalTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0;
+  color: #fff;
+}
+.versionModalClose {
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.4);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
+}
+.versionModalClose:hover { color: #fff; background: rgba(255,255,255,0.08); }
+.versionModalList { padding: 8px; }
+.versionModalItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+}
+.versionModalItem:hover { background: rgba(255,255,255,0.06); }
+.versionModalItemActive { background: rgba(255,20,147,0.1) !important; }
+.versionModalLabel {
+  flex: 1;
+  font-size: 0.9rem;
+  color: #fff;
+  font-weight: 500;
+}
+.versionModalMeta {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.4);
+}
+.versionModalTick {
+  color: #ff1493;
+  font-size: 0.85rem;
+  font-weight: 700;
 }
