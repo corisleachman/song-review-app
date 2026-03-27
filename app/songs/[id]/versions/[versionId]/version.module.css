@@ -48,21 +48,27 @@
 
 /* Main content: left info + right artwork */
 .heroContent {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;          /* allows heroWaveform to wrap to its own full-width row */
-  align-items: flex-start;
-  gap: 0;
+  display: grid;
+  /*
+    Named grid — two columns, two rows:
+      "left  art"   <- title/controls | artwork
+      "wave  art"   <- waveform       | artwork (art spans both rows)
+    This is the ONLY layout definition for desktop.
+    Mobile overrides it below with a different template.
+  */
+  grid-template-columns: 1fr 330px;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "left art"
+    "wave art";
+  gap: 0 28px;
   padding: 8px 28px 0 28px;
 }
-/* heroTitleRow removed — heroLeft and heroArtwork are direct children */
 .heroLeft {
-  flex: 1;
-  min-width: 200px;
+  grid-area: left;
   display: flex;
   flex-direction: column;
-  padding-bottom: 0;
-  padding-right: 28px;  /* gap between left col and artwork */
+  min-width: 0;
 }
 .heroMeta { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .heroBadge {
@@ -143,15 +149,15 @@
 
 /* Artwork */
 .heroArtwork {
+  grid-area: art;
   width: 330px;
   height: 330px;
-  flex-shrink: 0;
   border-radius: 12px;
   overflow: hidden;
   position: relative;
   box-shadow: 0 16px 48px rgba(0,0,0,0.6);
-  align-self: flex-start;
-  margin-bottom: 0;
+  align-self: start;
+  margin-bottom: 28px;
 }
 .heroArtworkImg { width: 100%; height: 100%; object-fit: cover; display: block; }
 .heroArtworkPlaceholder {
@@ -184,10 +190,10 @@
   border-radius: 20px;
 }
 
-/* Waveform — full width row, wraps below heroLeft+heroArtwork */
+/* Waveform — "wave" grid area, below heroLeft, left of artwork */
 .heroWaveform {
-  flex-basis: 100%;       /* forces it to its own row */
-  width: 100%;
+  grid-area: wave;
+  min-width: 0;
   padding-top: 16px;
   padding-bottom: 24px;
 }
@@ -848,25 +854,23 @@
 @media (max-width: 700px) {
   .body { grid-template-columns: 1fr; }
   .heroTitle { font-size: 1.6rem; }
-  /* Mobile: flex row wraps naturally — heroLeft + heroArtwork top row,
-     heroWaveform (flex-basis:100%) wraps to full-width row below */
+  /* Mobile: named grid — artwork top-right, title top-left, waveform full width */
   .heroContent {
+    grid-template-columns: 1fr 110px !important;
+    grid-template-rows: auto auto !important;
+    grid-template-areas:
+      "left art"
+      "wave wave" !important;
+    gap: 0 14px !important;
     padding: 0 16px 0 !important;
-    gap: 0 !important;
   }
-  .heroLeft {
-    padding-right: 14px !important;
-    min-width: 0 !important;
-  }
+  /* heroLeft, heroArtwork, heroWaveform keep their grid-area names —
+     only the template changes, so each snaps into the right cell automatically */
   .heroArtwork {
     width: 110px !important;
     height: 110px !important;
     margin-bottom: 0 !important;
-    align-self: flex-start !important;
-    order: unset !important;
-    flex-shrink: 0 !important;
   }
-  /* heroWaveform already has flex-basis:100% so it wraps to its own row */
   .heroWaveform {
     padding-top: 12px !important;
     padding-bottom: 16px !important;
@@ -876,7 +880,7 @@
   .heroPlayBtn { width: 44px; height: 44px; }
   .heroTime { font-size: 0.88rem; }
   /* Nav: hot pink filled buttons on mobile */
-  .heroNav { padding: 10px 16px; gap: 8px; flex-wrap: nowrap; }
+  .heroNav { padding: 10px 16px 20px; gap: 8px; flex-wrap: nowrap; }
   .heroNavRight { gap: 6px; flex-wrap: nowrap; }
   .songsBtn {
     background: #ff1493 !important;
