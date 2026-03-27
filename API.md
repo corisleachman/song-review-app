@@ -1,110 +1,219 @@
 # API Reference — Song Review App
 
-All routes are Next.js API routes under `app/api/`.
-
----
+All routes live under `app/api/`.
 
 ## Auth
 
 ### `POST /api/auth/verify-password`
-**Body:** `{ password: string }`  
-**Returns:** `{ success: true }` or 401
 
----
+**Body**
+```json
+{ "password": "string" }
+```
+
+**Returns**
+- `200` with `{ "success": true }`
+- `401` on invalid password
 
 ## Songs
 
 ### `POST /api/songs/create`
-**Body:** `{ title: string }`  
-**Returns:** `{ song: { id, title, ... } }`
+
+**Body**
+```json
+{ "title": "string" }
+```
+
+**Returns**
+```json
+{ "songId": "uuid" }
+```
 
 ### `POST /api/songs/upload-image`
-**Body:** FormData — `songId`, `file`  
-**Returns:** `{ imageUrl: string }` (public URL)  
-**Note:** Uses service role key server-side. Updates `songs.image_url`.
+
+Multipart upload for song artwork.
+
+**FormData**
+- `songId`
+- `file`
+
+**Returns**
+```json
+{ "imageUrl": "https://..." }
+```
 
 ### `DELETE /api/songs/[songId]`
-Deletes song and cascades to versions, threads, comments, actions, tasks.
 
----
+Deletes the song and related versions, threads, comments, actions, and tasks.
 
 ## Versions
 
 ### `POST /api/versions/create`
-**Body:** `{ songId, label?, fileName, fileSize, createdBy }`  
-**Returns:** `{ version: {...}, uploadUrl: string }` (signed upload URL, PUT to it directly)
+
+Creates the DB record and signed upload URL for direct storage upload.
+
+**Body**
+```json
+{
+  "songId": "uuid",
+  "fileName": "mix-v2.wav",
+  "fileSize": 123456,
+  "createdBy": "Coris",
+  "label": "Rough mix"
+}
+```
+
+**Returns**
+```json
+{
+  "versionId": "uuid",
+  "uploadUrl": "https://...",
+  "filePath": "songs/.../v2/..."
+}
+```
 
 ### `PATCH /api/versions/[versionId]`
-**Body:** `{ label: string | null }`  
-**Returns:** `{ version: {...} }`  
-Used by inline version label editing (double-click badge in hero).
 
----
+**Body**
+```json
+{ "label": "string or null" }
+```
 
-## Threads & Comments
+## Threads
 
 ### `POST /api/threads/create`
-**Body:** `{ versionId, songId, timestamp, author, commentText }`  
-**Note:** `timestamp` is Math.round()'d to INTEGER before insert.  
-**Returns:** `{ threadId: string }`  
-Also triggers email notification to the other user.
+
+**Body**
+```json
+{
+  "versionId": "uuid",
+  "songId": "uuid",
+  "timestamp": 65,
+  "author": "Al",
+  "commentText": "The vocal here needs more space"
+}
+```
+
+Notes:
+- timestamps should be rounded before insert because the thread table stores integer seconds
+- this route also triggers email notification to the other collaborator
+
+**Returns**
+```json
+{ "threadId": "uuid" }
+```
 
 ### `POST /api/threads/reply`
-**Body:** `{ threadId, songId, text, author }`  
-**Returns:** `{ comment: {...} }`
 
----
+**Body**
+```json
+{
+  "threadId": "uuid",
+  "songId": "uuid",
+  "versionId": "uuid",
+  "author": "Coris",
+  "text": "Agreed"
+}
+```
+
+**Returns**
+```json
+{ "commentId": "uuid" }
+```
 
 ## Actions
 
 ### `POST /api/actions/create`
-**Body:** `{ songId, commentId?, description, suggestedBy }`  
-**Returns:** `{ action: {...} }`
+
+**Body**
+```json
+{
+  "commentId": "uuid",
+  "songId": "uuid",
+  "description": "Add plate reverb to chorus",
+  "suggestedBy": "Al",
+  "timestampSeconds": 65,
+  "status": "approved"
+}
+```
+
+Notes:
+- `status` is optional and defaults to `pending`
+- `timestampSeconds` is optional and rounded before storage when present
 
 ### `GET /api/actions/by-song/[songId]?versionId=[id]`
-Returns actions for a song. Filters by versionId in JS (Supabase JS can't filter on joined columns).  
-**Returns:** `{ actions: [...] }`
+
+Returns song actions. Some filtering still happens in JS due to Supabase joined-column limitations.
 
 ### `PATCH /api/actions/[actionId]`
-**Body:** `{ status: 'pending' | 'approved' | 'completed' }`  
-**Returns:** `{ action: {...} }`
 
----
+**Body**
+```json
+{
+  "status": "completed",
+  "description": "Tighten the second harmony in verse 2"
+}
+```
 
-## Tasks (Song Admin)
+Notes:
+- send either field or both
+- valid statuses are `pending`, `approved`, `completed`
+
+## Tasks
 
 ### `POST /api/tasks/create`
-**Body:** `{ songId, description }`  
-**Returns:** `{ task: {...} }`
+
+**Body**
+```json
+{ "songId": "uuid", "description": "Check final master levels" }
+```
 
 ### `PATCH /api/tasks/[taskId]`
-**Body:** `{ description?, status? }`  
-**Returns:** `{ task: {...} }`
+
+**Body**
+```json
+{ "description": "optional", "status": "optional" }
+```
 
 ### `DELETE /api/tasks/[taskId]`
-**Returns:** `{ success: true }`
+
+**Returns**
+```json
+{ "success": true }
+```
 
 ### `PATCH /api/tasks/reorder`
-**Body:** `{ orderedIds: string[] }` — array of task IDs in new order  
-Updates `sort_order` on each task.
 
----
+**Body**
+```json
+{ "orderedIds": ["task-1", "task-2", "task-3"] }
+```
 
 ## Settings
 
-### `GET /api/settings?identity=Coris|Al`
-Returns colour theme for user.  
-**Returns:** `{ settings: { primary_color, accent_color, background_color } | null }`
+### `GET /api/settings`
+
+Reads current-user theme settings from the identity cookie.
+
+**Returns**
+- saved color settings for the active identity
+- or default colors if that user has not saved any yet
 
 ### `POST /api/settings`
-**Body:** `{ identity, primary_color, accent_color, background_color }`  
-Upserts settings for user.
 
----
+Saves theme settings for the current cookie identity.
+
+**Body**
+```json
+{
+  "primary_color": "#ff1493",
+  "accent_color": "#a855f7",
+  "background_color": "#0d0914"
+}
+```
 
 ## Email
 
 ### `POST /api/email/notify-thread`
-Called automatically by `threads/create` and `threads/reply`.  
-Sends email to the OTHER user (not the author).  
-**Body:** `{ songId, versionId, threadId, author, songTitle, versionLabel, timestamp, commentExcerpt }`
+
+Internal route used by thread creation and replies to notify the other collaborator.

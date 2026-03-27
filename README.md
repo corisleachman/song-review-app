@@ -1,73 +1,65 @@
 # Song Review App
 
-A collaborative music review app for Coris and Al (Polite Rebels). Upload song versions, leave timestamped waveform comments, track action items, and review music together.
+A private two-person music review app for Coris and Al of Polite Rebels. Upload versions, comment directly on the waveform, turn comments into actions, and keep song-specific admin tasks in one place.
 
 **Live:** https://song-review-app.vercel.app  
 **GitHub:** https://github.com/corisleachman/song-review-app
 
----
-
 ## Stack
 
-- **Next.js 14** + TypeScript + CSS Modules
-- **Supabase** — PostgreSQL database + file storage
-- **WaveSurfer.js v7** — interactive audio waveform
-- **Resend** — email notifications
-- **Vercel** — hosting (auto-deploy on push to `main`)
+- Next.js 14 + TypeScript + CSS Modules
+- Supabase for Postgres and file storage
+- WaveSurfer.js v7 for waveform playback
+- Resend for thread email notifications
+- Vercel for hosting and deploys
 
----
+## Current Product Highlights
 
-## Features
-
-- Password-protected login (`further_forever`), identity picker (Coris / Al)
-- Song library with cover art, grid and list view, delete
-- Upload audio versions with labels; version picker modal
-- Waveform player with 3-state colour (grey / hover pink / played hot pink)
-- Click waveform → floating comment box at click point
-- Timestamped comment threads (iMessage-style bubbles)
-- Reply threads, email notifications, deep-link sharing
-- Action items (created from comments, tracked on dashboard)
-- Per-song task list with drag-and-drop reorder
-- Per-user colour themes
-- Responsive — desktop (3-column) and mobile (tabbed)
-
----
+- Password gate plus identity picker for Coris and Al
+- Dashboard with song grid/list views and per-song cover art
+- First-version upload page for brand new songs
+- In-player upload flow for new versions with file validation, progress, and clearer errors
+- Version page with richer metadata, version picker modal, and inline version label editing
+- Timestamped waveform threads with replies, deep links, `Jump to time`, `Copy timestamp`, and `Copy link`
+- Three-state actions: `pending`, `approved`, `completed`
+- Lightweight action editing modal and action creation from comments
+- Song Admin panel with per-song tasks, completion, deletion, and drag reorder
+- Mobile-specific layout improvements for the hero and lower-column order
+- Playback cleanup on navigation so audio does not continue after leaving a version page
 
 ## Quick Start
 
 ```bash
 npm install
 cp .env.local.example .env.local
-# Fill in Supabase + Resend keys
 npm run dev
 ```
 
-Open http://localhost:3000, password: `further_forever`
-
----
+Open `http://localhost:3000` and fill in the local environment values before testing.
 
 ## Environment Variables
 
-```
-NEXT_PUBLIC_SUPABASE_URL=https://xouiiaknskivrjvapdma.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_i7F041QP5ThRwpPS1FMH6w_lF4B0Opp
-SUPABASE_SERVICE_ROLE_KEY=sb_secret_1D_yVORe591IB3zcNACSAQ_lDMOJrW1
-SHARED_PASSWORD=further_forever
-CORIS_EMAIL=corisleachman@googlemail.com
-AL_EMAIL=furthertcb@gmail.com
-RESEND_API_KEY=re_PcJq6dm4_HQAFqdmJS7u9nQ1BsLnLcYry
-NEXT_PUBLIC_APP_URL=https://song-review-app.vercel.app
-```
+Use placeholders locally and keep real values in Vercel / local env files only.
 
----
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+SHARED_PASSWORD=
+CORIS_EMAIL=
+AL_EMAIL=
+RESEND_API_KEY=
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
 
 ## Documentation
 
 | File | Purpose |
 |---|---|
-| [CONTEXT_HANDOFF.md](./CONTEXT_HANDOFF.md) | Full context for AI development sessions |
-| [DATABASE.md](./DATABASE.md) | Schema, SQL, relationships |
-| [API.md](./API.md) | All API endpoints |
-| [FEATURES.md](./FEATURES.md) | User flows |
-| [DEPLOYMENT.md](./DEPLOYMENT.md) | Deployment guide |
-| [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) | Common issues |
+| [CONTEXT_HANDOFF.md](./CONTEXT_HANDOFF.md) | Up-to-date project context for future sessions |
+| [DATABASE.md](./DATABASE.md) | Schema and database notes |
+| [API.md](./API.md) | Current API routes and payloads |
+| [FEATURES.md](./FEATURES.md) | Current user-facing flows |
+| [TESTING.md](./TESTING.md) | Manual QA checklist |
+| [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) | Known integration and layout gotchas |
+| [DEPLOYMENT.md](./DEPLOYMENT.md) | Deployment notes |

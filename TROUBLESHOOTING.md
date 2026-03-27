@@ -1,70 +1,78 @@
 # Troubleshooting — Song Review App
 
----
+## Hero Layout
 
-## Hero Layout (Player Page) — MOST IMPORTANT
+The version page hero in [`app/songs/[id]/versions/[versionId]/version.module.css`](./app/songs/[id]/versions/[versionId]/version.module.css) is still driven by named CSS grid.
 
-The hero section (`/songs/[id]/versions/[versionId]`) uses a **named CSS grid** in `version.module.css`. This was the resolution after many broken iterations.
+Do not:
+- replace it with flex-wrap shortcuts
+- move hero blocks around in JSX to force ordering
+- treat mobile and desktop as the same structure
 
-**Do not:**
-- Change `display: flex` + `flex-wrap` on `.heroContent`
-- Use `order`, `display: contents`, or `align-self` tricks to move elements
-- Move `.heroWaveform` in or out of `.heroLeft` in the JSX
+Check both breakpoints when touching:
+- top nav row
+- action row
+- version badge / title / art alignment
+- waveform placement
 
-**The layout is a named grid:**
-```
-Desktop: "left art" / "wave art"   (1fr | 330px)
-Mobile:  "left art" / "wave wave"  (1fr | 110px)
-```
-Each child has a fixed `grid-area` name. Only `grid-template-areas` and `grid-template-columns` change between breakpoints.
+## Mobile-Specific Layout
 
----
+Mobile intentionally differs from desktop:
+- Row 1: back button and avatar
+- Row 2: change version and upload version
+- below waveform: conversation threads, then actions, then song admin
 
-## WaveSurfer v7 Specifics
+If mobile starts feeling crowded, inspect spacing and row structure first before changing component order.
 
-- Event names differ from v6: use `seeking` not `seek`, `timeupdate` not `audioprocess`
-- Load audio via `new Audio()` element passed as `media:` option — fixes mobile CORS issues with signed URLs
-- `getDuration()` and click handlers return floats — always `Math.round()` before storing to `timestamp_seconds` (INTEGER column)
-- "signal is aborted without reason" error is non-critical — appears when audio load is cancelled mid-stream
+## WaveSurfer
 
----
+Current integration notes:
+- WaveSurfer v7 event names differ from v6
+- timestamp values from waveform interaction should be rounded before saving to integer DB columns
+- load races and aborted loads are now guarded in the player page
+- if abort-like errors return, inspect duplicate loads, teardown order, or stale async handlers first
+
+If the waveform fails to appear:
+- confirm the container is mounted
+- confirm the signed audio URL is valid
+- check that only one active load path is being used
+
+## Audio Keeps Playing After Navigation
+
+The version page should pause and reset audio on:
+- route change back to songs
+- component teardown
+- version switch
+
+If audio overlaps across pages, inspect the cleanup logic in [`app/songs/[id]/versions/[versionId]/page.tsx`](./app/songs/[id]/versions/[versionId]/page.tsx).
 
 ## Supabase
 
-### Joined column filtering silently fails
-```js
-// WRONG — returns all rows, silently ignores the filter
-.from('actions').select('*, comments(...)').eq('comments.thread_id', id)
+### Joined-column filtering
 
-// RIGHT — fetch all, filter in JS
-const all = await supabase.from('actions').select('*, comments(...)')
-const filtered = all.filter(a => a.comments?.thread_id === id)
-```
+Some joined-column filters still do not work reliably in the Supabase client. When action filtering looks wrong, fetch the broader set and filter in JS.
 
-### Image upload fails
-Image uploads must go through `/api/songs/upload-image` (server-side, service role key).  
-Client-side upload with anon key will fail with permission error.
+### Image uploads
 
-### RLS errors
-All tables have RLS enabled but with allow-all policies. If you see "row-level security" errors, check the policy in Supabase dashboard.
+Cover art uploads must go through the server route:
+- `/api/songs/upload-image`
 
----
+Direct client upload with the anon key is not the supported path here.
 
-## Vercel Build Failures
+### RLS
 
-1. Get the full deployment ID from Vercel dashboard (starts with `dpl_`)
-2. Use `Vercel:get_deployment_build_logs` with that ID + team ID `team_z9MLYFXhcAfyoZfq63V6NDri`
-3. Build logs give exact file path + line number for TypeScript errors
-4. Always run `npx tsc --noEmit` locally first — catches errors before they reach Vercel
+If you see row-level security errors unexpectedly, check Supabase policies first.
 
----
+## Runtime Errors
 
-## Common Runtime Errors
-
-| Error | Cause | Fix |
+| Error | Likely cause | First check |
 |---|---|---|
-| `timestamp_seconds` constraint | Inserting float into INTEGER column | `Math.round()` the timestamp |
-| Waveform not rendering | WaveSurfer container unmounted before init | Check `container.isConnected` guard in useCallback |
-| Email not sending | Resend API key or wrong email address | Check Resend dashboard logs |
-| "signal aborted" | Audio load cancelled | Non-critical — suppress or add mounted check in error handler |
-| Actions not filtered by version | Supabase joined column filter silently fails | Filter in JS after fetch |
+| `AbortError: signal is aborted without reason` | stale or canceled waveform load | version page load / teardown flow |
+| Waveform not rendering | unmounted container or invalid URL | player init guard and signed URL |
+| Action list looks wrong | joined-column filter issue | JS-side filtering |
+| Audio keeps playing after leaving page | cleanup did not run as expected | player teardown logic |
+| Upload fails immediately | invalid file type / size or expired signed URL | upload modal error and request timing |
+
+## Local Setup
+
+If the app fails at boot with `supabaseUrl is required`, create a local `.env.local` and fill in the required env vars before running `npm run dev`.
