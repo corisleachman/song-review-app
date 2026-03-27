@@ -18,7 +18,7 @@ A private two-person music review app for Coris and Al of Polite Rebels. Upload 
 - Password gate plus identity picker for Coris and Al
 - Dashboard with song grid/list views and per-song cover art
 - First-version upload page for brand new songs
-- In-player upload flow for new versions with file validation, progress, and clearer errors
+- In-player upload flow for new versions with file validation, progress, clearer errors, and optional version notes
 - Version page with richer metadata, version picker modal, and inline version label editing
 - Timestamped waveform threads with replies, deep links, `Jump to time`, `Copy timestamp`, and `Copy link`
 - Three-state actions: `pending`, `approved`, `completed`

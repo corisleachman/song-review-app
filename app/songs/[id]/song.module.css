@@ -160,6 +160,24 @@
 .labelInput:focus { border-color: rgba(255,20,147,0.4); }
 .labelInput::placeholder { color: rgba(255,255,255,0.2); }
 .labelInput:disabled { opacity: 0.5; }
+.notesInput {
+  background: rgba(255,255,255,0.05);
+  border: 0.5px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 13px;
+  font-family: inherit;
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+  width: 100%;
+  resize: vertical;
+  min-height: 84px;
+}
+.notesInput:focus { border-color: rgba(255,20,147,0.4); }
+.notesInput::placeholder { color: rgba(255,255,255,0.2); }
+.notesInput:disabled { opacity: 0.5; }
 
 .uploadHelp {
   margin: -6px 0 0;
@@ -240,6 +258,7 @@
     word-break: break-word;
   }
   .labelInput,
+  .notesInput,
   .uploadBtn {
     min-height: 44px;
   }

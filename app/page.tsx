@@ -36,7 +36,7 @@ function LoginContent() {
         <div className={styles.card}>
           <div className={styles.header}>
             <h1 className={styles.title}>🎵 Song Review</h1>
-            <p className={styles.subtitle}>Collaborate on music with Coris & Al</p>
+            <p className={styles.subtitle}>Musings of The Ramble Brothers</p>
           </div>
 
           <form onSubmit={handleSubmit} className={styles.form}>

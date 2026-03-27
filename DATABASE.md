@@ -21,6 +21,7 @@ id              UUID PRIMARY KEY DEFAULT gen_random_uuid()
 song_id         UUID NOT NULL REFERENCES songs(id) ON DELETE CASCADE
 version_number  INTEGER NOT NULL
 label           TEXT                      -- nullable; user-editable display name
+notes           TEXT                      -- nullable; short upload context / changelog note
 file_path       TEXT NOT NULL             -- path in song-files bucket
 file_name       TEXT NOT NULL
 created_by      TEXT CHECK (created_by IN ('Coris', 'Al'))
@@ -102,3 +103,9 @@ Both buckets must be **public** (no auth required to read).
 3. RLS is enabled but policies allow all access (internal two-person app).
 
 4. Image uploads must use the service role key (via server-side API route `/api/songs/upload-image`) — the anon key lacks write permission.
+
+5. Existing projects need this one-time schema update for version notes:
+
+```sql
+ALTER TABLE song_versions ADD COLUMN IF NOT EXISTS notes TEXT;
+```

@@ -38,6 +38,7 @@ export default function SongUploadPage() {
   const [dragging, setDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [label, setLabel] = useState('');
+  const [notes, setNotes] = useState('');
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
@@ -107,6 +108,7 @@ export default function SongUploadPage() {
           fileSize: file.size,
           createdBy: identity,
           label: label.trim() || null,
+          notes: notes.trim() || null,
         }),
       });
       const data = await res.json();
@@ -200,7 +202,16 @@ export default function SongUploadPage() {
             disabled={uploading}
           />
 
-          <p className={styles.uploadHelp}>Supported: MP3, WAV, M4A, FLAC, OGG. Files under 200 MB work best.</p>
+          <textarea
+            className={styles.notesInput}
+            placeholder='Version notes (optional, e.g. "New vocal comp and brighter snare")'
+            value={notes}
+            onChange={e => setNotes(e.target.value)}
+            rows={3}
+            disabled={uploading}
+          />
+
+          <p className={styles.uploadHelp}>Supported: MP3, WAV, M4A, FLAC, OGG. Files under 200 MB work best. Notes are optional and meant to be short.</p>
 
           {uploading && (
             <div>

@@ -6,10 +6,18 @@ export async function PATCH(
   { params }: { params: { versionId: string } }
 ) {
   try {
-    const { label } = await req.json();
+    const { label, notes } = await req.json();
+    const updates: { label: string | null; notes?: string | null } = {
+      label: label ?? null,
+    };
+
+    if (notes !== undefined) {
+      updates.notes = notes?.trim() ? notes.trim() : null;
+    }
+
     const { data, error } = await supabaseServer
       .from('song_versions')
-      .update({ label: label ?? null })
+      .update(updates)
       .eq('id', params.versionId)
       .select()
       .single();

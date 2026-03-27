@@ -13,32 +13,51 @@ interface Song {
   title: string;
   image_url?: string | null;
   imageUploading?: boolean;
+  created_at?: string;
   latestVersionId: string | null;
   latestVersionNumber: number | null;
   latestVersionLabel: string | null;
+  latestVersionCreatedAt: string | null;
   commentCount: number;
+  latestActivityAt: string | null;
+  hasNewActivity: boolean;
 }
 
 interface Action {
   id: string;
   description: string;
-  status: string;
+  status: 'pending' | 'approved' | 'completed';
   suggested_by: string;
   timestamp_seconds?: number;
   song_id: string;
   songTitle?: string;
 }
 
+function getNextActionStatus(status: Action['status']) {
+  if (status === 'pending') return 'approved';
+  if (status === 'approved') return 'completed';
+  return 'pending';
+}
+
+function getSongSeenStorageKey(identity: 'Coris' | 'Al') {
+  return `song-review-song-seen:${identity}`;
+}
+
+function getComparableTime(value?: string | null) {
+  return value ? new Date(value).getTime() : 0;
+}
+
 function DashboardContent() {
   const router = useRouter();
-  const identity = getIdentity();
+  const [identity, setIdentity] = useState<'Coris' | 'Al' | null>(null);
 
   const [songs, setSongs] = useState<Song[]>([]);
   const [actions, setActions] = useState<Action[]>([]);
   const [loading, setLoading] = useState(true);
   const [mobileTab, setMobileTab] = useState<'songs' | 'actions'>('songs');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [actionFilter, setActionFilter] = useState<'all' | 'pending' | 'done'>('all');
+  const [actionFilter, setActionFilter] = useState<'all' | Action['status']>('all');
+  const [songSort, setSongSort] = useState<'activity' | 'upload' | 'title'>('activity');
 
   // New song modal
   const [showNewModal, setShowNewModal] = useState(false);
@@ -57,36 +76,48 @@ function DashboardContent() {
   const coverUploadTargetId = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!identity) { router.push('/identify'); return; }
-    loadAll();
-  }, []);
+    const currentIdentity = getIdentity();
+    if (!currentIdentity) { router.push('/identify'); return; }
+    setIdentity(currentIdentity);
+    loadAll(currentIdentity);
+  }, [router]);
 
-  async function loadAll() {
+  async function loadAll(currentIdentity: 'Coris' | 'Al' | null = identity) {
     setLoading(true);
-    await Promise.all([loadSongs(), loadActions()]);
+    await Promise.all([loadSongs(currentIdentity), loadActions()]);
     setLoading(false);
   }
 
-  async function loadSongs() {
+  async function loadSongs(currentIdentity: 'Coris' | 'Al' | null = identity) {
     const { data: songsData } = await supabase
       .from('songs')
-      .select('id, title, image_url')
+      .select('id, title, image_url, created_at')
       .order('created_at', { ascending: false });
 
     if (!songsData) return;
 
     const { data: versionsData } = await supabase
       .from('song_versions')
-      .select('id, song_id, version_number, label')
+      .select('id, song_id, version_number, label, created_at')
       .order('version_number', { ascending: false });
 
     const { data: threadsData } = await supabase
       .from('comment_threads')
-      .select('id, song_version_id');
+      .select('id, song_version_id, created_at, updated_at');
 
     const { data: commentsData } = await supabase
       .from('comments')
       .select('id, thread_id');
+
+    const { data: actionsActivityData } = await supabase
+      .from('actions')
+      .select('song_id, created_at, updated_at');
+
+    const seenMap = typeof window !== 'undefined' && currentIdentity
+      ? JSON.parse(window.localStorage.getItem(getSongSeenStorageKey(currentIdentity)) || '{}') as Record<string, string>
+      : {};
+    const nextSeenMap = { ...seenMap };
+    let seededSeenMap = false;
 
     const assembled: Song[] = songsData.map(song => {
       const songVersions = (versionsData ?? []).filter(v => v.song_id === song.id);
@@ -96,16 +127,44 @@ function DashboardContent() {
         .filter(t => versionIds.includes(t.song_version_id))
         .map(t => t.id);
       const commentCount = (commentsData ?? []).filter(c => threadIds.includes(c.thread_id)).length;
+      const songThreadActivity = (threadsData ?? [])
+        .filter(t => versionIds.includes(t.song_version_id))
+        .map(t => t.updated_at || t.created_at);
+      const songActionActivity = (actionsActivityData ?? [])
+        .filter(a => a.song_id === song.id)
+        .map(a => a.updated_at || a.created_at);
+      const latestActivityAt = [song.created_at, ...songVersions.map(v => v.created_at), ...songThreadActivity, ...songActionActivity]
+        .filter(Boolean)
+        .sort()
+        .at(-1) ?? null;
+
+      if (currentIdentity && latestActivityAt && !nextSeenMap[song.id]) {
+        nextSeenMap[song.id] = latestActivityAt;
+        seededSeenMap = true;
+      }
+
       return {
         id: song.id,
         title: song.title,
         image_url: song.image_url ?? null,
+        created_at: song.created_at,
         latestVersionId: latest?.id ?? null,
         latestVersionNumber: latest?.version_number ?? null,
         latestVersionLabel: latest?.label ?? null,
+        latestVersionCreatedAt: latest?.created_at ?? null,
         commentCount,
+        latestActivityAt,
+        hasNewActivity: Boolean(
+          latestActivityAt &&
+          nextSeenMap[song.id] &&
+          new Date(latestActivityAt).getTime() > new Date(nextSeenMap[song.id]).getTime()
+        ),
       };
     });
+
+    if (currentIdentity && seededSeenMap && typeof window !== 'undefined') {
+      window.localStorage.setItem(getSongSeenStorageKey(currentIdentity), JSON.stringify(nextSeenMap));
+    }
 
     setSongs(assembled);
   }
@@ -127,7 +186,7 @@ function DashboardContent() {
   }
 
   async function toggleAction(action: Action) {
-    const newStatus = action.status === 'completed' ? 'pending' : 'completed';
+    const newStatus = getNextActionStatus(action.status);
     await supabase.from('actions').update({ status: newStatus }).eq('id', action.id);
     loadActions();
   }
@@ -187,6 +246,14 @@ function DashboardContent() {
   function handleCardClick(e: React.MouseEvent, song: Song) {
     // Don't navigate if clicking an action button or if renaming
     if ((e.target as HTMLElement).closest('button') || editingId === song.id) return;
+    if (identity && typeof window !== 'undefined') {
+      const seenMap = JSON.parse(window.localStorage.getItem(getSongSeenStorageKey(identity)) || '{}') as Record<string, string>;
+      window.localStorage.setItem(
+        getSongSeenStorageKey(identity),
+        JSON.stringify({ ...seenMap, [song.id]: new Date().toISOString() })
+      );
+      setSongs(prev => prev.map(item => item.id === song.id ? { ...item, hasNewActivity: false } : item));
+    }
     if (song.latestVersionId) {
       router.push(`/songs/${song.id}/versions/${song.latestVersionId}`);
     } else {
@@ -201,19 +268,96 @@ function DashboardContent() {
   }
 
   const filteredActions = actions.filter(a => {
-    if (actionFilter === 'pending') return a.status === 'pending';
-    if (actionFilter === 'done') return a.status === 'completed';
-    return true;
+    if (actionFilter === 'all') return true;
+    return a.status === actionFilter;
   });
 
-  const pendingCount = actions.filter(a => a.status === 'pending').length;
+  const actionCounts = actions.reduce<Record<Action['status'], number>>((acc, action) => {
+    acc[action.status] += 1;
+    return acc;
+  }, { pending: 0, approved: 0, completed: 0 });
 
-  const actionsBySong: Record<string, Action[]> = {};
-  for (const a of filteredActions) {
-    const key = a.songTitle ?? 'Unknown';
-    if (!actionsBySong[key]) actionsBySong[key] = [];
-    actionsBySong[key].push(a);
-  }
+  const activeActionCount = actions.filter(a => a.status !== 'completed').length;
+  const emptyActionMessage = actionFilter === 'all'
+    ? 'No actions yet. Mark a comment as an action when something needs following up.'
+    : `No ${actionFilter} actions right now`;
+
+  const sortedActionGroups = Object.entries(filteredActions.reduce<Record<string, Action[]>>((acc, action) => {
+    const key = action.songTitle ?? 'Unknown';
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(action);
+    return acc;
+  }, {})).sort(([left], [right]) => left.localeCompare(right));
+
+  const actionFilterOptions: Array<{ value: 'all' | Action['status']; label: string; count: number }> = [
+    { value: 'all', label: 'All', count: actions.length },
+    { value: 'pending', label: 'Pending', count: actionCounts.pending },
+    { value: 'approved', label: 'Approved', count: actionCounts.approved },
+    { value: 'completed', label: 'Completed', count: actionCounts.completed },
+  ];
+
+  const getActionToggleClass = (status: Action['status']) => {
+    if (status === 'approved') return styles.actionToggleApproved;
+    if (status === 'completed') return styles.actionToggleDone;
+    return '';
+  };
+
+  const getActionStatusClass = (status: Action['status']) => {
+    if (status === 'approved') return styles.actionStatusApproved;
+    if (status === 'completed') return styles.actionStatusDone;
+    return styles.actionStatusPending;
+  };
+
+  const getActionStatusLabel = (status: Action['status']) => {
+    if (status === 'completed') return 'Completed';
+    if (status === 'approved') return 'Approved';
+    return 'Pending';
+  };
+
+  const getActionToggleTitle = (status: Action['status']) => {
+    if (status === 'pending') return 'Mark as approved';
+    if (status === 'approved') return 'Mark as completed';
+    return 'Move back to pending';
+  };
+
+  const renderActionGlyph = (status: Action['status']) => {
+    if (status === 'completed') {
+      return (
+        <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+          <path d="M1.5 4l2 2 3-3" stroke="white" strokeWidth="1.1" strokeLinecap="round"/>
+        </svg>
+      );
+    }
+
+    if (status === 'approved') {
+      return <span className={styles.actionApprovedDot} />;
+    }
+
+    return null;
+  };
+
+  const hasSongs = songs.length > 0;
+  const songEmptyMessage = 'Start with one upload and the review flow will build from there.';
+
+  const sortedSongs = [...songs].sort((left, right) => {
+    if (songSort === 'title') {
+      return left.title.localeCompare(right.title);
+    }
+
+    if (songSort === 'upload') {
+      const uploadDiff = getComparableTime(right.latestVersionCreatedAt) - getComparableTime(left.latestVersionCreatedAt);
+      if (uploadDiff !== 0) return uploadDiff;
+      return left.title.localeCompare(right.title);
+    }
+
+    if (left.hasNewActivity !== right.hasNewActivity) {
+      return left.hasNewActivity ? -1 : 1;
+    }
+
+    const activityDiff = getComparableTime(right.latestActivityAt) - getComparableTime(left.latestActivityAt);
+    if (activityDiff !== 0) return activityDiff;
+    return left.title.localeCompare(right.title);
+  });
 
   return (
     <div className={styles.page}>
@@ -229,11 +373,19 @@ function DashboardContent() {
           <div
             className={styles.avatar}
             style={{
-              background: identity === 'Coris' ? 'rgba(255,20,147,0.2)' : 'rgba(0,212,255,0.2)',
-              color: identity === 'Coris' ? '#ff1493' : '#00d4ff',
+              background: identity === 'Coris'
+                ? 'rgba(255,20,147,0.2)'
+                : identity === 'Al'
+                  ? 'rgba(0,212,255,0.2)'
+                  : 'rgba(255,255,255,0.08)',
+              color: identity === 'Coris'
+                ? '#ff1493'
+                : identity === 'Al'
+                  ? '#00d4ff'
+                  : 'rgba(255,255,255,0.45)',
             }}
           >
-            {identity?.[0]}
+            {identity?.[0] ?? ''}
           </div>
         </div>
       </header>
@@ -251,7 +403,7 @@ function DashboardContent() {
           onClick={() => setMobileTab('actions')}
         >
           Actions
-          {pendingCount > 0 && <span className={styles.tabBadge}>{pendingCount}</span>}
+          {activeActionCount > 0 && <span className={styles.tabBadge}>{activeActionCount}</span>}
         </button>
       </div>
 
@@ -261,6 +413,21 @@ function DashboardContent() {
           <div className={styles.panelHeader}>
             <span className={styles.panelLabel}>Songs</span>
             <div className={styles.headerRight}>
+              <div className={styles.sortControl}>
+                <label className={styles.sortLabel} htmlFor="song-sort">
+                  Sort
+                </label>
+                <select
+                  id="song-sort"
+                  className={styles.sortSelect}
+                  value={songSort}
+                  onChange={e => setSongSort(e.target.value as 'activity' | 'upload' | 'title')}
+                >
+                  <option value="activity">Recent activity</option>
+                  <option value="upload">Latest upload</option>
+                  <option value="title">Title</option>
+                </select>
+              </div>
               {/* View toggle — desktop only */}
               <div className={styles.viewToggle}>
                 <button
@@ -300,10 +467,10 @@ function DashboardContent() {
           </div>
 
           {loading ? (
-            <p className={styles.emptyState}>Loading…</p>
-          ) : (
+            <p className={styles.emptyState}>Loading your songs and actions…</p>
+          ) : hasSongs ? (
             <div className={`${styles.songsGrid} ${viewMode === 'list' ? styles.songsGridList : ''}`}>
-              {songs.map(song => (
+              {sortedSongs.map(song => (
                 <div
                   key={song.id}
                   className={styles.card}
@@ -331,6 +498,9 @@ function DashboardContent() {
                     )}
                     {song.latestVersionNumber != null && (
                       <span className={styles.versionBadge}>v{song.latestVersionNumber}</span>
+                    )}
+                    {song.hasNewActivity && (
+                      <span className={styles.activityBadge}>New</span>
                     )}
 
                   </div>
@@ -426,6 +596,14 @@ function DashboardContent() {
                 Add song
               </div>
             </div>
+          ) : (
+            <div className={styles.emptyStateCard}>
+              <div className={styles.emptyStateTitle}>No songs yet</div>
+              <p className={styles.emptyStateText}>{songEmptyMessage}</p>
+              <button className={styles.emptyStateAction} onClick={() => setShowNewModal(true)}>
+                Create your first song
+              </button>
+            </div>
           )}
         </div>
 
@@ -436,42 +614,45 @@ function DashboardContent() {
           </div>
 
           <div className={styles.filterRow}>
-            {(['all', 'pending', 'done'] as const).map(f => (
+            {actionFilterOptions.map(option => (
               <button
-                key={f}
-                className={`${styles.filterPill} ${actionFilter === f ? styles.filterPillActive : ''}`}
-                onClick={() => setActionFilter(f)}
+                key={option.value}
+                className={`${styles.filterPill} ${actionFilter === option.value ? styles.filterPillActive : ''}`}
+                onClick={() => setActionFilter(option.value)}
               >
-                {f === 'all' ? 'All' : f === 'pending' ? 'Pending' : 'Done'}
+                {option.label}
+                <span className={styles.filterCount}>{option.count}</span>
               </button>
             ))}
           </div>
 
           {filteredActions.length === 0 ? (
-            <p className={styles.emptyState}>No actions yet</p>
+            <p className={styles.emptyState}>{emptyActionMessage}</p>
           ) : (
-            Object.entries(actionsBySong).map(([songTitle, songActions]) => (
+            sortedActionGroups.map(([songTitle, songActions]) => (
               <div key={songTitle} className={styles.actionGroup}>
                 <div className={styles.groupLabel}>{songTitle}</div>
                 {songActions.map(action => (
                   <div key={action.id} className={styles.actionRow}>
                     <button
-                      className={`${styles.actionToggle} ${action.status === 'completed' ? styles.actionToggleDone : ''}`}
+                      className={`${styles.actionToggle} ${getActionToggleClass(action.status)}`}
                       onClick={() => toggleAction(action)}
+                      title={getActionToggleTitle(action.status)}
                     >
-                      {action.status === 'completed' && (
-                        <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-                          <path d="M1.5 4l2 2 3-3" stroke="white" strokeWidth="1.1" strokeLinecap="round"/>
-                        </svg>
-                      )}
+                      {renderActionGlyph(action.status)}
                     </button>
                     <div className={styles.actionContent}>
                       <div className={`${styles.actionText} ${action.status === 'completed' ? styles.actionTextDone : ''}`}>
                         {action.description}
                       </div>
-                      {action.timestamp_seconds != null && (
-                        <div className={styles.actionTimestamp}>@ {formatTime(action.timestamp_seconds)}</div>
-                      )}
+                      <div className={styles.actionMeta}>
+                        <span className={`${styles.actionStatus} ${getActionStatusClass(action.status)}`}>
+                          {getActionStatusLabel(action.status)}
+                        </span>
+                        {action.timestamp_seconds != null && (
+                          <div className={styles.actionTimestamp}>@ {formatTime(action.timestamp_seconds)}</div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -549,7 +730,7 @@ function DashboardContent() {
 
 export default function Dashboard() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div className={styles.loadingView}>Loading your dashboard…</div>}>
       <DashboardContent />
     </Suspense>
   );
