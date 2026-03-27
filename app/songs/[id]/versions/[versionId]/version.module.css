@@ -52,7 +52,7 @@
   flex-direction: row;    /* desktop: left column + artwork side by side */
   align-items: stretch;
   gap: 28px;
-  padding: 8px 28px 0;
+  padding: 8px 28px 0 28px;  /* equal left/right padding */
 }
 /* heroTitleRow removed — heroLeft and heroArtwork are direct children */
 .heroLeft {
@@ -71,6 +71,29 @@
   font-weight: 600;
   padding: 3px 10px;
   border-radius: 20px;
+  cursor: default;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+}
+.heroBadge:hover .heroBadgeEdit { opacity: 1; }
+.heroBadgeEdit {
+  opacity: 0;
+  font-size: 0.65rem;
+  transition: opacity 0.15s;
+}
+.heroBadgeInput {
+  background: rgba(255,20,147,0.15);
+  border: 1px solid #ff1493;
+  color: #ff1493;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  outline: none;
+  font-family: inherit;
+  min-width: 120px;
 }
 .heroTitle {
   font-size: 2.8rem;
@@ -126,6 +149,7 @@
   position: relative;
   box-shadow: 0 16px 48px rgba(0,0,0,0.6);
   align-self: flex-start;
+  margin-bottom: 28px;  /* same spacing below artwork as to its right */
 }
 .heroArtworkImg { width: 100%; height: 100%; object-fit: cover; display: block; }
 .heroArtworkPlaceholder {
@@ -806,11 +830,26 @@
 @media (max-width: 700px) {
   .body { grid-template-columns: 1fr; }
   .heroTitle { font-size: 1.6rem; }
-  /* Mobile: heroContent switches to column — artwork moves below title */
-  .heroContent { flex-direction: column !important; padding: 0 16px 0; gap: 16px; }
-  .heroLeft { padding-bottom: 0; }
-  .heroArtwork { width: 120px !important; height: 120px !important; align-self: flex-start; }
-  .heroWaveform { margin-top: 0 !important; padding-top: 4px; padding-bottom: 16px; }
+  /* Mobile: column layout. Use order to control visual position:
+     artwork top-right (order:-1), title below it, waveform at bottom */
+  .heroContent {
+    flex-direction: column !important;
+    padding: 0 16px 0;
+    gap: 0;
+  }
+  /* heroLeft wraps title + controls + waveform — stays in natural order */
+  .heroLeft { padding-bottom: 0; position: relative; }
+  /* Artwork: visually first (top), right-aligned */
+  .heroArtwork {
+    order: -1 !important;
+    width: 110px !important;
+    height: 110px !important;
+    align-self: flex-end !important;
+    margin-bottom: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+  /* Waveform stays at bottom of heroLeft naturally */
+  .heroWaveform { margin-top: 16px !important; padding-top: 0; padding-bottom: 16px; }
   .heroTitle { font-size: 1.5rem; }
   .heroArtist { margin-bottom: 14px; font-size: 0.9rem; }
   .heroPlayBtn { width: 40px; height: 40px; }

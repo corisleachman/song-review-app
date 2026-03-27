@@ -86,6 +86,8 @@ export default function VersionPage() {
   const [waveErr, setWaveErr] = useState<string | null>(null);
   const [pendingTimestamp, setPendingTimestamp] = useState<number | null>(null);
   const [clickXPercent, setClickXPercent] = useState<number>(0);
+  const [editingLabel, setEditingLabel] = useState(false);
+  const [labelDraft, setLabelDraft] = useState('');
   const [newComment, setNewComment] = useState('');
   const [posting, setPosting] = useState(false);
   const [replyText, setReplyText] = useState('');
@@ -404,6 +406,22 @@ export default function VersionPage() {
     await loadActions();
   };
 
+  const saveLabelEdit = async () => {
+    if (!version) return;
+    setEditingLabel(false);
+    const trimmed = labelDraft.trim();
+    if (trimmed === (version.label ?? '')) return; // no change
+    await fetch(`/api/versions/${version.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ label: trimmed || null }),
+    });
+    setVersion(prev => prev ? { ...prev, label: trimmed || null } : prev);
+    // Refresh versions list for dropdown
+    const { data } = await supabase.from('song_versions').select('*').eq('song_id', songId).order('version_number', { ascending: true });
+    setVersions(data || []);
+  };
+
   const seekToThread = (thread: Thread) => {
     setSelectedThreadId(thread.id);
     setPendingTimestamp(null);
@@ -444,7 +462,7 @@ export default function VersionPage() {
                 >
                   {versions.map(v => (
                     <option key={v.id} value={v.id}>
-                      v{v.version_number}{v.label ? ` — ${v.label}` : ''}
+                      {v.label || `v${v.version_number}`}
                     </option>
                   ))}
                 </select>
@@ -463,9 +481,29 @@ export default function VersionPage() {
             <div className={styles.heroLeft}>
               <div className={styles.heroMeta}>
                 {version && (
-                  <span className={styles.heroBadge}>
-                    v{version.version_number}{version.label ? ` — ${version.label}` : ''}
-                  </span>
+                  editingLabel ? (
+                    <input
+                      className={styles.heroBadgeInput}
+                      value={labelDraft}
+                      autoFocus
+                      placeholder={`v${version.version_number}`}
+                      onChange={e => setLabelDraft(e.target.value)}
+                      onBlur={saveLabelEdit}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') saveLabelEdit();
+                        if (e.key === 'Escape') setEditingLabel(false);
+                      }}
+                    />
+                  ) : (
+                    <span
+                      className={styles.heroBadge}
+                      title="Double-click to rename"
+                      onDoubleClick={() => { setLabelDraft(version.label ?? ''); setEditingLabel(true); }}
+                    >
+                      {version.label || `v${version.version_number}`}
+                      <span className={styles.heroBadgeEdit}>✎</span>
+                    </span>
+                  )
                 )}
               </div>
               <h1 className={styles.heroTitle}>{song?.title}</h1>
