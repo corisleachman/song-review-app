@@ -1,299 +1,245 @@
-# Song Review App - Context Handoff
+# Song Review App — Context Handoff
 
-**Project:** Song Review App (collaborative music review platform)  
-**Live:** https://song-review-app.vercel.app  
-**GitHub:** https://github.com/corisleachman/song-review-app
-
-## Quick Summary
-
-A web app for Coris and Al to upload song versions and leave timestamped feedback. Built with Next.js 14, Supabase, WaveSurfer.js, and deployed on Vercel.
-
-**Current Status:** ✅ Fully functional and deployed  
-**Last Updated:** March 25, 2026
+**Last updated:** March 2026  
+**Live app:** https://song-review-app.vercel.app  
+**GitHub:** https://github.com/corisleachman/song-review-app  
+**Latest commit:** `15edf57`
 
 ---
 
-## Key Features
+## What This App Is
 
-✅ Password-protected authentication  
-✅ Song upload with version management  
-✅ Waveform player with click-to-comment  
-✅ Timestamped comment threads  
-✅ Email notifications via Resend  
-✅ Action tracking (pending/approved/completed)  
-✅ Song cover art upload  
-✅ Per-user color customization  
-✅ Mobile responsive with tab interface  
-✅ Deep link sharing for comment threads  
-
----
-
-## Tech Stack
-
-- **Frontend:** Next.js 14, React 18, TypeScript, CSS Modules
-- **Backend:** Supabase (PostgreSQL) + Next.js API routes
-- **Audio:** WaveSurfer.js v7
-- **Email:** Resend
-- **Deployment:** Vercel (auto-deploy on git push)
-- **Storage:** Supabase Storage (S3-compatible)
+A two-person collaborative music review web app for **Coris** and **Al** (band: Polite Rebels). Features: upload song versions, leave timestamped waveform comments, reply in threads, track action items, manage per-song tasks, and review together.
 
 ---
 
 ## Credentials & Keys
 
-**Shared Password:** `further_forever`
-
-**Users:** Coris & Al (identity-based)
-- Coris Email: `corisleachman@googlemail.com`
-- Al Email: `furthertcb@gmail.com`
-
-**Supabase Project:** https://app.supabase.com (link to xouiiaknskivrjvapdma)
-
-**GitHub:** https://github.com/corisleachman/song-review-app
-
----
-
-## Documentation
-
-All comprehensive docs are in GitHub repository:
-
-1. **[README.md](https://github.com/corisleachman/song-review-app/blob/main/README.md)** - Project overview, setup, features
-2. **[DATABASE.md](https://github.com/corisleachman/song-review-app/blob/main/DATABASE.md)** - Full schema, relationships, setup SQL
-3. **[API.md](https://github.com/corisleachman/song-review-app/blob/main/API.md)** - All endpoint documentation with examples
-4. **[FEATURES.md](https://github.com/corisleachman/song-review-app/blob/main/FEATURES.md)** - User flows, feature descriptions, workflows
-5. **[TROUBLESHOOTING.md](https://github.com/corisleachman/song-review-app/blob/main/TROUBLESHOOTING.md)** - Common issues and solutions
-6. **[DEPLOYMENT.md](https://github.com/corisleachman/song-review-app/blob/main/DEPLOYMENT.md)** - Setup and deployment guide
+| Thing | Value |
+|---|---|
+| Shared app password | `further_forever` |
+| Coris email | `corisleachman@googlemail.com` |
+| Al email | `furthertcb@gmail.com` |
+| Supabase URL | `https://xouiiaknskivrjvapdma.supabase.co` |
+| Supabase anon key | `sb_publishable_i7F041QP5ThRwpPS1FMH6w_lF4B0Opp` |
+| Supabase service role | `sb_secret_1D_yVORe591IB3zcNACSAQ_lDMOJrW1` |
+| Resend API key | `re_PcJq6dm4_HQAFqdmJS7u9nQ1BsLnLcYry` |
+| App URL | `https://song-review-app.vercel.app` |
+| Vercel project ID | `prj_jtfnI15tcAVvYwbEJwlQCpDORfYV` |
+| Vercel team ID | `team_z9MLYFXhcAfyoZfq63V6NDri` |
+| GitHub token | `ghp_REDACTED_see_Vercel_env_or_ask_Coris` |
+| GitHub repo | `https://github.com/corisleachman/song-review-app` |
 
 ---
 
-## Project Structure
+## Tech Stack
+
+- **Frontend:** Next.js 14, TypeScript, CSS Modules
+- **Audio:** WaveSurfer.js v7 (note: v7 API differs from v6 — event names changed)
+- **Database:** Supabase (PostgreSQL)
+- **Storage:** Supabase Storage (buckets: `song-files`, `song-images`, both public)
+- **Email:** Resend
+- **Deployment:** Vercel (auto-deploy on push to `main`)
+
+---
+
+## Repo & Working Environment
+
+- Repo cloned at `/home/claude/repo`
+- GitHub token is configured in the remote URL — `git push origin main` works directly
+- Always run `npx tsc --noEmit` from `/home/claude/repo` before every commit
+- Vercel MCP tools available for checking deployment logs
+- Project ID and Team ID required for every Vercel API call (see above)
+
+---
+
+## Database Tables
+
+| Table | Purpose |
+|---|---|
+| `songs` | Song catalogue — id, title, image_url, created_at, updated_at |
+| `song_versions` | Audio versions — id, song_id, version_number (INT), label (TEXT nullable), file_path, file_name, created_by, created_at, updated_at |
+| `comment_threads` | Timestamped positions — id, song_version_id, timestamp_seconds (INTEGER — must use Math.round()), created_by, created_at, updated_at |
+| `comments` | Replies — id, thread_id, author, body, created_at |
+| `actions` | Action items — id, song_id, comment_id (nullable), description, suggested_by, status (pending/approved/completed), created_at, updated_at |
+| `settings` | Per-user colour theme — id, user_identity (Coris/Al, UNIQUE), primary_color, accent_color, background_color |
+| `song_tasks` | Per-song task list — id, song_id, description, status (pending/completed), sort_order, created_at |
+
+**Critical:** `comment_threads.timestamp_seconds` is INTEGER. WaveSurfer passes floats. Always `Math.round()` before inserting.
+
+**Critical:** Supabase JS client cannot filter on joined table columns with `.eq()`. Filter in JS after fetching.
+
+---
+
+## App Routes
+
+### Pages
+| Route | Purpose |
+|---|---|
+| `/` | Password gate |
+| `/identify` | Choose identity (Coris or Al) |
+| `/dashboard` | Song grid/list + actions panel |
+| `/songs/[id]` | Redirects to latest version |
+| `/songs/[id]/versions/[versionId]` | Main player page |
+| `/songs/[id]/upload` | Upload new version (dedicated page — no redirect flash) |
+| `/settings` | Colour theme customisation |
+
+### API Routes
+| Route | Method | Purpose |
+|---|---|---|
+| `/api/auth/verify-password` | POST | Verify shared password |
+| `/api/songs/create` | POST | Create song |
+| `/api/songs/upload-image` | POST | Upload cover art (server-side, service role key) |
+| `/api/songs/[songId]` | DELETE | Delete song + cascade |
+| `/api/versions/create` | POST | Create version + signed upload URL |
+| `/api/versions/[versionId]` | PATCH | Update version label |
+| `/api/threads/create` | POST | Create comment thread |
+| `/api/threads/reply` | POST | Reply to thread |
+| `/api/actions/create` | POST | Create action item |
+| `/api/actions/by-song/[songId]` | GET | Get actions (filter by versionId in JS) |
+| `/api/actions/[actionId]` | PATCH | Update action status |
+| `/api/tasks/create` | POST | Create song task |
+| `/api/tasks/[taskId]` | PATCH/DELETE | Update/delete task |
+| `/api/tasks/reorder` | PATCH | Reorder tasks (drag-and-drop) |
+| `/api/settings` | GET/POST | Per-user colour settings |
+| `/api/email/notify-thread` | POST | Send email notification |
+
+---
+
+## Key Source Files
 
 ```
 app/
-├── api/                          # All API endpoints
-├── dashboard/                    # Main dashboard (songs + actions)
-├── songs/[id]/                   # Song detail page
-├── songs/[id]/versions/[vid]/    # Waveform player
-├── identify/                     # Identity picker (Coris/Al)
-├── settings/                     # Color customization
-├── layout.tsx                    # Root layout
-├── page.tsx                      # Login page
+├── dashboard/
+│   ├── page.tsx                          — Dashboard (songs grid/list + actions)
+│   └── dashboard.module.css
+├── songs/[id]/
+│   ├── page.tsx                          — Redirects to latest version
+│   ├── upload/page.tsx                   — Upload new version page
+│   └── versions/[versionId]/
+│       ├── page.tsx                      — Main player page (most complex file)
+│       └── version.module.css            — Player styles
+├── settings/
+│   ├── page.tsx
+│   └── settings.module.css
+└── api/                                  — All API routes (see table above)
 
 lib/
-├── auth.ts                       # Cookie-based auth
-├── supabase.ts                   # Client Supabase
-├── supabaseServer.ts             # Server Supabase (service role)
-├── useProtectedRoute.ts          # Route protection hook
-└── avatar.ts                     # User utilities
-
-styles/
-└── globals.css                   # Design tokens & CSS variables
+├── supabase.ts                           — Client Supabase
+├── supabaseServer.ts                     — Server Supabase (service role)
+├── auth.ts                               — Cookie-based session
+└── avatar.ts                             — User utilities
 ```
 
 ---
 
-## Database Schema (6 Tables)
+## Hero Player Layout — CRITICAL — READ BEFORE TOUCHING
 
-| Table | Purpose |
-|-------|---------|
-| `songs` | Song catalog with optional cover art |
-| `song_versions` | Audio file versions with metadata |
-| `comment_threads` | Timestamped comment locations on waveform |
-| `comments` | Individual replies within threads |
-| `actions` | Workflow items (pending/approved/completed) |
-| `settings` | Per-user color preferences |
+The player page hero section (`/songs/[id]/versions/[versionId]`) went through many iterations. The layout is now solved permanently using **named CSS grid areas**. Do not revert to flex-based approaches.
 
-See [DATABASE.md](https://github.com/corisleachman/song-review-app/blob/main/DATABASE.md) for full schema with relationships.
+### JSX structure (three direct children of `.heroContent`):
+1. `.heroLeft` — badge, title, artist, play controls
+2. `.heroArtwork` — cover art image / placeholder
+3. `.heroWaveform` — waveform, markers, floating comment box
 
----
+### CSS grid (in `version.module.css`):
 
-## Environment Variables (Vercel)
-
-```
-NEXT_PUBLIC_SUPABASE_URL=https://xouiiaknskivrjvapdma.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_i7F041QP5ThRwpPS1FMH6w_lF4B0Opp
-SUPABASE_SERVICE_ROLE_KEY=sb_secret_1D_yVORe591IB3zcNACSAQ_lDMOJrW1
-SHARED_PASSWORD=further_forever
-CORIS_EMAIL=corisleachman@googlemail.com
-AL_EMAIL=furthertcb@gmail.com
-RESEND_API_KEY=re_PcJq6dm4_HQAFqdmJS7u9nQ1BsLnLcYry
-NEXT_PUBLIC_APP_URL=https://song-review-app.vercel.app
-```
-
----
-
-## API Endpoints (Summary)
-
-**Auth:**
-- `POST /api/auth/verify-password`
-
-**Songs:**
-- `POST /api/songs/create`
-- `POST /api/songs/upload-image`
-- `DELETE /api/songs/[songId]`
-
-**Versions:**
-- `POST /api/versions/create`
-
-**Threads:**
-- `POST /api/threads/create`
-- `POST /api/threads/reply`
-
-**Actions:**
-- `POST /api/actions/create`
-- `GET /api/actions/by-song/[songId]`
-- `PATCH /api/actions/[actionId]`
-
-**Settings:**
-- `GET /api/settings`
-- `POST /api/settings`
-
-See [API.md](https://github.com/corisleachman/song-review-app/blob/main/API.md) for full endpoint documentation.
-
----
-
-## Design System
-
-**Colors** (Pulse-inspired deep purple aesthetic):
-- Primary: `#ff1493` (Hot Pink) - customizable per user
-- Secondary: `#00d4ff` (Cyan)
-- Accent: `#a855f7` (Purple) - customizable per user
-- Background: `#0d0914` (Deep Dark) - customizable per user
-
-**Fonts:**
-- Display: Outfit (700-800)
-- Body: DM Sans (400-600)
-
-**Spacing:** 4px → 48px scale  
-**Border Radius:** 8px → 24px  
-
----
-
-## Mobile Experience
-
-**Desktop (768px+):**
-- Two-column layout: Songs (left) + Actions (right)
-- Full waveform player
-- All features visible side-by-side
-
-**Mobile (<768px):**
-- Tabbed interface: Songs | Actions
-- Single-column layout
-- One panel at a time
-- Full functionality on both tabs
-
----
-
-## Recent Work
-
-**Latest commit:** `5ff5984` - Comprehensive documentation suite
-
-**Recent features completed:**
-- ✅ Mobile tab interface (Songs/Actions tabs)
-- ✅ Fixed desktop view (both panels visible)
-- ✅ Mobile keyboard support for password
-- ✅ Song card layout fixes (icons inside row)
-- ✅ Filter button contrast fixes
-- ✅ Song creation redirect fix (undefined → correct songId)
-- ✅ Complete documentation
-
----
-
-## Known Limitations & Future Ideas
-
-**Current:**
-- Simple shared password (2-person only)
-- No user accounts (identity-based)
-- No permissions system
-- No pagination on long comment threads
-
-**Ideas for enhancement:**
-- User accounts with passwords
-- Role-based access (viewer, editor, owner)
-- Comment pagination
-- Thread sorting/filtering
-- Undo/revision history
-- Collaboration on single version
-- Waveform annotations (markers with text)
-- Batch upload (multiple versions)
-
----
-
-## Common Tasks
-
-### Add a Feature
-1. Create branch: `git checkout -b feat/your-feature`
-2. Make changes, test locally: `npm run dev`
-3. Commit: `git commit -m "feat: description"`
-4. Push: `git push origin feat/your-feature`
-5. Vercel auto-deploys on push to main
-
-### Deploy
-- Push to main → Vercel auto-builds → live in 1-2 minutes
-- Check status: https://vercel.com/corisleachman/song-review-app
-
-### Test Locally
-```bash
-npm install
-npm run dev
-# Open http://localhost:3000
+**Desktop** (default):
+```css
+.heroContent {
+  display: grid;
+  grid-template-columns: 1fr 330px;
+  grid-template-areas:
+    "left art"
+    "wave art";   /* artwork spans both rows */
+  gap: 0 28px;
+  padding: 8px 28px 0 28px;
+}
+.heroLeft    { grid-area: left; }
+.heroArtwork { grid-area: art;  width: 330px; height: 330px; align-self: start; margin-bottom: 28px; }
+.heroWaveform { grid-area: wave; }
 ```
 
-### Debug Database
-- Supabase Console: https://app.supabase.com
-- Run SQL queries, inspect data
-- Check tables, storage, backups
+**Mobile** (`@media (max-width: 700px)`):
+```css
+.heroContent {
+  grid-template-columns: 1fr 110px;
+  grid-template-areas:
+    "left art"
+    "wave wave";  /* wave spans full width */
+  gap: 0 14px;
+}
+.heroArtwork { width: 110px; height: 110px; }
+```
+
+**The only thing that changes between breakpoints is `grid-template-areas` and `grid-template-columns`. The `grid-area` values on each child never change. Never use flex-wrap, order, display:contents, or move heroWaveform in the JSX.**
 
 ---
 
-## Useful Links
+## Other Completed Features
 
-| Link | Purpose |
-|------|---------|
-| https://song-review-app.vercel.app | Live app |
-| https://github.com/corisleachman/song-review-app | GitHub repo |
-| https://app.supabase.com | Supabase console |
-| https://vercel.com/corisleachman/song-review-app | Vercel dashboard |
-| https://resend.com/dashboard | Email logs |
+### Dashboard list view (desktop)
+- Toggle between grid and list view (icons in header)
+- List view: 70px thumbnail, 10px row gap, version label shown (not v#), comment count left-aligned, icons 44px right-aligned via `position:absolute; right:10px; top:50%; transform:translateY(-50%)`
+
+### Waveform (3-state colour)
+- Grey: WaveSurfer `waveColor: rgba(255,255,255,0.2)`
+- Played (hot pink): WaveSurfer `progressColor: #ff1493`
+- Hovered (dimmed pink): transparent `<canvas>` overlay (`hoverCanvasRef`) drawn on `mousemove`, fills between playhead and mouse position
+
+### Floating comment box
+- `position: absolute; bottom: calc(100% + 10px)` — floats above waveform at click point
+- 400px wide, positioned with `clamp()` to stay within bounds
+- WaveSurfer click handler stores `relX * 100` as `clickXPercent` for positioning
+
+### Inline version label editing
+- Double-click the version badge (pink pill in hero)
+- Input appears in-place, saves via `PATCH /api/versions/[versionId]`
+- Empty string clears label, falls back to `v#` display
+
+### Version picker modal
+- "Change Version" button in nav opens a modal listing all versions
+- Current version highlighted with pink tick ✓
+- Replaces the old `<select>` dropdown
+
+### Song Admin panel
+- 3rd column on desktop player page
+- Per-song tasks: add, double-click edit, drag-and-drop reorder, tick-to-complete, delete
+- Backed by `song_tasks` Supabase table
+
+### Mobile nav (player page)
+- "← Songs" → hot pink filled button
+- "Change Version" → ghost button
+- "Upload new version" → pink outline (transparent bg, #ff1493 border)
+- 20px bottom padding below nav bar
 
 ---
 
-## When Asking Questions
+## Known Issues / Gotchas
 
-To help me understand context, please share:
-
-1. **What are you trying to do?**
-   - Add feature, fix bug, deploy, etc.
-
-2. **What did you try?**
-   - Code changes, commands run, etc.
-
-3. **What happened?**
-   - Error message, unexpected behavior, etc.
-
-4. **What reference docs?**
-   - Point to relevant DATABASE.md, API.md, etc.
+- **WaveSurfer v7:** Use `seeking`, `timeupdate`, `interaction` events (not v6 names). Load audio via `new Audio()` passed as `media:` option.
+- **"signal is aborted without reason":** Non-critical, appears when audio load is cancelled during version switch.
+- **Supabase joined column filtering:** `.eq()` on joined columns silently fails — filter in JS after fetch.
+- **Image upload:** Must use server-side API route with service role key. Client-side fails with anon key.
 
 ---
 
-## Version Info
+## Working Patterns
 
-- **App Version:** 1.0.0
-- **Next.js:** 14
-- **Node:** 18+
-- **Database:** Supabase (PostgreSQL)
-- **Last Updated:** March 2026
+- Workflow: code → `npx tsc --noEmit` → `git commit` → `git push origin main` → auto-deploys in ~1 min
+- Vercel build failures: `Vercel:get_deployment_build_logs` with full `dpl_` deployment ID
+- Runtime errors: `Vercel:get_runtime_logs` with `level: ['error'], since: '30m'`
+- Coris tests on real devices and reports precisely what is wrong visually
 
 ---
 
-**Ready to help!** Feel free to ask about:
-- Adding new features
-- Fixing bugs
-- Deploying changes
-- Understanding the codebase
-- Mobile/UX improvements
-- Database queries
-- API changes
-- Documentation updates
+## Design Tokens
 
-Just let me know what you're working on! 🎵
+| Token | Value |
+|---|---|
+| Hot Pink | `#ff1493` |
+| Cyan | `#00d4ff` |
+| Purple | `#a855f7` |
+| Background | `#0d0914` |
+| Display font | Outfit 700-800 |
+| Body font | DM Sans 400-600 |
