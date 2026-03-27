@@ -7,6 +7,26 @@ import { getIdentity } from '@/lib/auth';
 import styles from './song.module.css';
 
 const supabase = createClient();
+const MAX_AUDIO_SIZE_BYTES = 200 * 1024 * 1024;
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function validateAudioFile(file: File) {
+  const isAudio = file.type.startsWith('audio/') || /\.(mp3|wav|m4a|aac|flac|ogg)$/i.test(file.name);
+
+  if (!isAudio) {
+    return 'Choose an audio file such as MP3, WAV, M4A, FLAC, or OGG.';
+  }
+
+  if (file.size > MAX_AUDIO_SIZE_BYTES) {
+    return 'That file is too large for the current upload flow. Try a file under 200 MB.';
+  }
+
+  return null;
+}
 
 export default function SongUploadPage() {
   const router = useRouter();
@@ -50,7 +70,25 @@ export default function SongUploadPage() {
     e.preventDefault();
     setDragging(false);
     const f = e.dataTransfer.files[0];
-    if (f && f.type.startsWith('audio/')) setFile(f);
+    if (!f) return;
+    const validationError = validateAudioFile(f);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+    setError('');
+    setFile(f);
+  }
+
+  function handleFileSelected(f?: File) {
+    if (!f) return;
+    const validationError = validateAudioFile(f);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+    setError('');
+    setFile(f);
   }
 
   async function handleUpload() {
@@ -71,7 +109,11 @@ export default function SongUploadPage() {
           label: label.trim() || null,
         }),
       });
-      const { versionId, uploadUrl } = await res.json();
+      const data = await res.json();
+
+      if (!res.ok || !data.uploadUrl || !data.versionId) {
+        throw new Error(data.error || 'Could not start the upload.');
+      }
 
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -80,14 +122,14 @@ export default function SongUploadPage() {
         });
         xhr.addEventListener('load', () => (xhr.status < 300 ? resolve() : reject(new Error('Upload failed'))));
         xhr.addEventListener('error', () => reject(new Error('Upload failed')));
-        xhr.open('PUT', uploadUrl);
+        xhr.open('PUT', data.uploadUrl);
         xhr.setRequestHeader('Content-Type', file.type || 'audio/mpeg');
         xhr.send(file);
       });
 
-      router.push(`/songs/${songId}/versions/${versionId}`);
-    } catch {
-      setError('Upload failed. Please try again.');
+      router.push(`/songs/${songId}/versions/${data.versionId}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Upload failed. Please try again.');
       setUploading(false);
     }
   }
@@ -123,10 +165,10 @@ export default function SongUploadPage() {
                   <circle cx="11" cy="11" r="8.5" stroke="#1d9e75" strokeWidth="1.4"/>
                 </svg>
                 <span className={styles.fileName}>{file.name}</span>
-                <span className={styles.fileSize}>{(file.size / 1024 / 1024).toFixed(1)} MB</span>
+                <span className={styles.fileSize}>{formatFileSize(file.size)}</span>
                 <button
                   className={styles.removeFile}
-                  onClick={e => { e.stopPropagation(); setFile(null); setProgress(0); }}
+                  onClick={e => { e.stopPropagation(); setFile(null); setProgress(0); setError(''); }}
                 >
                   ✕
                 </button>
@@ -145,9 +187,9 @@ export default function SongUploadPage() {
           <input
             ref={fileInputRef}
             type="file"
-            accept="audio/*"
+            accept="audio/*,.mp3,.wav,.m4a,.aac,.flac,.ogg"
             style={{ display: 'none' }}
-            onChange={e => { const f = e.target.files?.[0]; if (f) setFile(f); }}
+            onChange={e => { handleFileSelected(e.target.files?.[0]); }}
           />
 
           <input
@@ -158,12 +200,14 @@ export default function SongUploadPage() {
             disabled={uploading}
           />
 
+          <p className={styles.uploadHelp}>Supported: MP3, WAV, M4A, FLAC, OGG. Files under 200 MB work best.</p>
+
           {uploading && (
             <div>
               <div className={styles.progressWrap}>
                 <div className={styles.progressBar} style={{ width: `${progress}%` }} />
               </div>
-              <span className={styles.progressLabel}>{progress}%</span>
+              <span className={styles.progressLabel}>{progress}% uploaded to song-files...</span>
             </div>
           )}
 

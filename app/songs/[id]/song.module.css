@@ -161,6 +161,14 @@
 .labelInput::placeholder { color: rgba(255,255,255,0.2); }
 .labelInput:disabled { opacity: 0.5; }
 
+.uploadHelp {
+  margin: -6px 0 0;
+  font-size: 12px;
+  color: rgba(255,255,255,0.35);
+  text-align: center;
+  line-height: 1.5;
+}
+
 .progressWrap {
   height: 4px;
   background: rgba(255,255,255,0.06);
@@ -204,5 +212,38 @@
 .uploadBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 @media (max-width: 768px) {
+  .header {
+    padding: 12px 16px;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .songTitle {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .body { padding: 24px 16px; align-items: flex-start; }
+  .uploadCard { gap: 14px; }
+  .uploadTitle { font-size: 18px; }
+  .uploadSub { margin-top: -4px; }
+  .dropZone {
+    padding: 28px 18px;
+    min-height: 168px;
+  }
+  .fileInfo {
+    justify-content: flex-start;
+  }
+  .fileName {
+    max-width: 100%;
+    white-space: normal;
+    word-break: break-word;
+  }
+  .labelInput,
+  .uploadBtn {
+    min-height: 44px;
+  }
+  .uploadHelp {
+    font-size: 11px;
+  }
 }

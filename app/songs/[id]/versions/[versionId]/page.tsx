@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase';
 import { getIdentity, formatTimestamp } from '@/lib/auth';
 import styles from './version.module.css';
 
+const MAX_AUDIO_SIZE_BYTES = 200 * 1024 * 1024;
+
 interface Comment {
   id: string;
   author: string;
@@ -47,6 +49,7 @@ interface Version {
   file_path: string;
   file_name: string;
   created_by: string;
+  created_at?: string;
 }
 
 interface Song {
@@ -57,6 +60,46 @@ interface Song {
 
 const MARKER_COLORS = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#ffa07a', '#98d8c8', '#f7dc6f', '#bb8fce'];
 
+function formatVersionDate(value?: string) {
+  if (!value) return null;
+
+  return new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(value));
+}
+
+function formatThreadPreview(text?: string) {
+  if (!text) return 'No text yet';
+  return text.length > 68 ? `${text.slice(0, 68)}…` : text;
+}
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function validateAudioFile(file: File) {
+  const isAudio = file.type.startsWith('audio/') || /\.(mp3|wav|m4a|aac|flac|ogg)$/i.test(file.name);
+
+  if (!isAudio) {
+    return 'Choose an audio file such as MP3, WAV, M4A, FLAC, or OGG.';
+  }
+
+  if (file.size > MAX_AUDIO_SIZE_BYTES) {
+    return 'That file is too large for the current upload flow. Try a file under 200 MB.';
+  }
+
+  return null;
+}
+
+function getNextActionStatus(status: Action['status']) {
+  if (status === 'pending') return 'approved';
+  if (status === 'approved') return 'completed';
+  return 'pending';
+}
+
 export default function VersionPage() {
   const params = useParams();
   const router = useRouter();
@@ -66,9 +109,12 @@ export default function VersionPage() {
 
   const waveformRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<any>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const waveLoadIdRef = useRef(0);
   const hoverCanvasRef = useRef<HTMLCanvasElement>(null);
   const hoverXRef = useRef<number>(-1);
   const pendingTimestampRef = useRef<number | null>(null);
+  const versionFileInputRef = useRef<HTMLInputElement>(null);
 
   const [identity, setIdentity] = useState('');
   const [song, setSong] = useState<Song | null>(null);
@@ -93,13 +139,23 @@ export default function VersionPage() {
   const [posting, setPosting] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [actionModalCommentId, setActionModalCommentId] = useState<string | null>(null);
+  const [editingActionId, setEditingActionId] = useState<string | null>(null);
   const [actionText, setActionText] = useState('');
+  const [actionStatus, setActionStatus] = useState<'pending' | 'approved' | 'completed'>('pending');
   // markedCommentIds derived from loaded actions — no separate state needed
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTaskText, setNewTaskText] = useState('');
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingTaskText, setEditingTaskText] = useState('');
   const [dragOverTaskId, setDragOverTaskId] = useState<string | null>(null);
+  const [threadLinkCopied, setThreadLinkCopied] = useState(false);
+  const [timestampCopied, setTimestampCopied] = useState(false);
+  const [showUploadVersionModal, setShowUploadVersionModal] = useState(false);
+  const [pendingVersionFile, setPendingVersionFile] = useState<File | null>(null);
+  const [newVersionLabel, setNewVersionLabel] = useState('');
+  const [versionUploadProgress, setVersionUploadProgress] = useState(0);
+  const [versionUploadError, setVersionUploadError] = useState('');
+  const [uploadingVersion, setUploadingVersion] = useState(false);
   const dragTaskId = useRef<string | null>(null);
 
   const supabase = createClient();
@@ -170,12 +226,23 @@ export default function VersionPage() {
   }, [searchParams, threads, isReady, duration]);
 
   const initWaveSurfer = useCallback(async (container: HTMLDivElement, url: string) => {
+    const loadId = ++waveLoadIdRef.current;
+
     if (wavesurferRef.current) {
       try { wavesurferRef.current.destroy(); } catch {}
       wavesurferRef.current = null;
     }
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+        audioRef.current.removeAttribute('src');
+        audioRef.current.load();
+      } catch {}
+      audioRef.current = null;
+    }
+
     const WaveSurfer = (await import('wavesurfer.js')).default;
-    if (!container.isConnected) return;
+    if (!container.isConnected || loadId !== waveLoadIdRef.current) return;
 
     // Create a native <audio> element and pass it to WaveSurfer.
     // This bypasses WaveSurfer's internal fetch entirely — which fixes mobile
@@ -184,6 +251,7 @@ export default function VersionPage() {
     audio.crossOrigin = 'anonymous';
     audio.preload = 'metadata';
     audio.src = url;
+    audioRef.current = audio;
 
     const ws = WaveSurfer.create({
       container,
@@ -200,15 +268,22 @@ export default function VersionPage() {
       media: audio,
     });
 
-    ws.on('ready', (dur: number) => { setWaveErr(null); setDuration(dur); setIsReady(true); });
+    ws.on('ready', (dur: number) => {
+      if (loadId !== waveLoadIdRef.current) return;
+      setWaveErr(null);
+      setDuration(dur);
+      setIsReady(true);
+    });
     ws.on('timeupdate', (t: number) => setCurrentTime(t));
     ws.on('seeking', (t: number) => setCurrentTime(t));
     ws.on('play', () => setIsPlaying(true));
     ws.on('pause', () => setIsPlaying(false));
     ws.on('finish', () => setIsPlaying(false));
     ws.on('error', (e: Error) => {
+      const message = e?.message || String(e);
+      if (loadId !== waveLoadIdRef.current || message.toLowerCase().includes('aborted')) return;
       console.error('WaveSurfer error:', e);
-      setWaveErr(e?.message || String(e));
+      setWaveErr(message);
     });
 
     ws.on('click', (relX: number) => {
@@ -231,9 +306,27 @@ export default function VersionPage() {
       });
     });
 
-    // Audio src already set on the media element — no need to pass url again
-    ws.load(audio.src);
+    // Catch aborted/stale loads so teardown races do not surface as runtime errors.
+    void ws.load(audio.src).catch((error: Error) => {
+      const message = error?.message || String(error);
+      if (loadId !== waveLoadIdRef.current || message.toLowerCase().includes('aborted')) return;
+      console.error('WaveSurfer load error:', error);
+      setWaveErr(message);
+    });
     wavesurferRef.current = ws;
+  }, []);
+
+  const stopPlayback = useCallback(() => {
+    if (wavesurferRef.current) {
+      try { wavesurferRef.current.pause(); } catch {}
+    }
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      } catch {}
+    }
+    setIsPlaying(false);
   }, []);
 
   // Draw hover overlay on canvas: dimmed pink between playhead and mouse
@@ -261,6 +354,8 @@ export default function VersionPage() {
   useEffect(() => {
     if (!audioUrl) return;
     setIsReady(false);
+    setWaveErr(null);
+    setDuration(0);
     let attempts = 0;
     const tryInit = () => {
       if (waveformRef.current) {
@@ -271,12 +366,21 @@ export default function VersionPage() {
     };
     tryInit();
     return () => {
+      waveLoadIdRef.current += 1;
+      stopPlayback();
       if (wavesurferRef.current) {
         try { wavesurferRef.current.destroy(); } catch {}
         wavesurferRef.current = null;
       }
+      if (audioRef.current) {
+        try {
+          audioRef.current.removeAttribute('src');
+          audioRef.current.load();
+        } catch {}
+        audioRef.current = null;
+      }
     };
-  }, [audioUrl, initWaveSurfer]);
+  }, [audioUrl, initWaveSurfer, stopPlayback]);
 
   async function loadTasks() {
     const { data } = await supabase
@@ -353,7 +457,7 @@ export default function VersionPage() {
   }
 
   const toggleAction = async (action: Action) => {
-    const newStatus = action.status === 'completed' ? 'pending' : 'completed';
+    const newStatus = getNextActionStatus(action.status);
     await fetch(`/api/actions/${action.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -396,14 +500,32 @@ export default function VersionPage() {
   };
 
   const submitAction = async () => {
-    if (!actionModalCommentId || !actionText.trim()) return;
-    await fetch('/api/actions/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ commentId: actionModalCommentId, songId, description: actionText.trim(), suggestedBy: identity }),
-    });
+    if (!actionText.trim()) return;
+
+    if (editingActionId) {
+      await fetch(`/api/actions/${editingActionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: actionText.trim(), status: actionStatus }),
+      });
+    } else if (actionModalCommentId) {
+      await fetch('/api/actions/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          commentId: actionModalCommentId,
+          songId,
+          description: actionText.trim(),
+          suggestedBy: identity,
+          status: actionStatus,
+        }),
+      });
+    }
+
     setActionModalCommentId(null);
+    setEditingActionId(null);
     setActionText('');
+    setActionStatus('pending');
     await loadActions();
   };
 
@@ -432,11 +554,117 @@ export default function VersionPage() {
     }
   };
 
+  async function copyThreadLink(threadId: string) {
+    if (typeof window === 'undefined') return;
+
+    const url = new URL(window.location.href);
+    url.searchParams.set('threadId', threadId);
+
+    try {
+      await navigator.clipboard.writeText(url.toString());
+      setThreadLinkCopied(true);
+      window.setTimeout(() => setThreadLinkCopied(false), 1800);
+    } catch (error) {
+      console.error('Failed to copy thread link:', error);
+    }
+  }
+
+  async function copyThreadTimestamp(timestampSeconds: number) {
+    try {
+      await navigator.clipboard.writeText(formatTimestamp(Math.floor(timestampSeconds)));
+      setTimestampCopied(true);
+      window.setTimeout(() => setTimestampCopied(false), 1800);
+    } catch (error) {
+      console.error('Failed to copy timestamp:', error);
+    }
+  }
+
+  function handleVersionFilePicked(file?: File) {
+    if (!file) return;
+
+    const validationError = validateAudioFile(file);
+    if (validationError) {
+      setVersionUploadError(validationError);
+      setPendingVersionFile(null);
+      setShowUploadVersionModal(true);
+      return;
+    }
+
+    setPendingVersionFile(file);
+    setVersionUploadError('');
+    setVersionUploadProgress(0);
+    setNewVersionLabel('');
+    setShowUploadVersionModal(true);
+  }
+
+  async function uploadNewVersion() {
+    if (!pendingVersionFile || !identity) return;
+
+    setUploadingVersion(true);
+    setVersionUploadError('');
+    setVersionUploadProgress(0);
+
+    try {
+      const res = await fetch('/api/versions/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          songId,
+          fileName: pendingVersionFile.name,
+          fileSize: pendingVersionFile.size,
+          createdBy: identity,
+          label: newVersionLabel.trim() || null,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.uploadUrl || !data.versionId) {
+        throw new Error(data.error || 'Could not start the upload.');
+      }
+
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.upload.addEventListener('progress', event => {
+          if (event.lengthComputable) {
+            setVersionUploadProgress(Math.round((event.loaded / event.total) * 100));
+          }
+        });
+        xhr.addEventListener('load', () => (xhr.status < 300 ? resolve() : reject(new Error('Upload failed'))));
+        xhr.addEventListener('error', () => reject(new Error('Upload failed')));
+        xhr.open('PUT', data.uploadUrl);
+        xhr.setRequestHeader('Content-Type', pendingVersionFile.type || 'audio/mpeg');
+        xhr.send(pendingVersionFile);
+      });
+
+      setShowUploadVersionModal(false);
+      setPendingVersionFile(null);
+      setNewVersionLabel('');
+      router.push(`/songs/${songId}/versions/${data.versionId}`);
+    } catch (error) {
+      setVersionUploadError(error instanceof Error ? error.message : 'Upload failed. Please try again.');
+    } finally {
+      setUploadingVersion(false);
+    }
+  }
+
+  function openEditAction(action: Action) {
+    setEditingActionId(action.id);
+    setActionModalCommentId(action.comment_id);
+    setActionText(action.description);
+    setActionStatus(action.status as 'pending' | 'approved' | 'completed');
+  }
+
   if (loading) return <div className={styles.loading}>Loading…</div>;
 
   const selectedThread = threads.find(t => t.id === selectedThreadId) ?? null;
   const pendingActions = actions.filter(a => a.status !== 'completed');
   const completedActions = actions.filter(a => a.status === 'completed');
+  const versionMeta = [
+    version?.created_by ? `Uploaded by ${version.created_by}` : null,
+    version?.created_at ? formatVersionDate(version.created_at) : null,
+    duration > 0 ? formatTimestamp(Math.floor(duration)) : null,
+  ].filter(Boolean);
 
   return (
     <div className={styles.page}>
@@ -453,18 +681,21 @@ export default function VersionPage() {
 
           {/* Nav row */}
           <div className={styles.heroNav}>
-            <button className={styles.songsBtn} onClick={() => router.push('/dashboard')}>← Songs</button>
+            <button className={styles.songsBtn} onClick={() => { stopPlayback(); router.push('/dashboard'); }}>← Songs</button>
             <div className={styles.heroNavRight}>
-              {versions.length > 0 && (
-                <button className={styles.changeVersionBtn} onClick={() => setShowVersionModal(true)}>
-                  Change Version
-                </button>
-              )}
-              <button className={styles.uploadBtn} onClick={() => router.push(`/songs/${songId}/upload`)}>
-                ↑ Upload new version
-              </button>
               <div className={styles.avatar}>{identity?.[0]?.toUpperCase()}</div>
             </div>
+          </div>
+
+          <div className={styles.heroActionRow}>
+            {versions.length > 0 && (
+              <button className={styles.changeVersionBtn} onClick={() => setShowVersionModal(true)}>
+                Change Version
+              </button>
+            )}
+            <button className={styles.uploadBtn} onClick={() => versionFileInputRef.current?.click()}>
+              ↑ Upload new version
+            </button>
           </div>
 
           {/* Main hero content */}
@@ -501,6 +732,13 @@ export default function VersionPage() {
               </div>
               <h1 className={styles.heroTitle}>{song?.title}</h1>
               <p className={styles.heroArtist}>Polite Rebels</p>
+              {versionMeta.length > 0 && (
+                <div className={styles.heroVersionMeta}>
+                  {versionMeta.map((item, index) => (
+                    <span key={`${item}-${index}`}>{item}</span>
+                  ))}
+                </div>
+              )}
               <div className={styles.heroControls}>
                 <button
                   className={styles.heroPlayBtn}
@@ -641,12 +879,18 @@ export default function VersionPage() {
           {[...pendingActions, ...completedActions].map(action => (
             <div key={action.id} className={`${styles.actionItem} ${action.status === 'completed' ? styles.actionDone : ''}`}>
               <button
-                className={`${styles.actionToggle} ${action.status === 'completed' ? styles.actionToggleDone : ''}`}
+                className={`${styles.actionToggle} ${action.status === 'completed' ? styles.actionToggleDone : action.status === 'approved' ? styles.actionToggleApproved : ''}`}
                 onClick={() => toggleAction(action)}
+                title={`Cycle status (${action.status})`}
               >
                 {action.status === 'completed' && (
                   <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                     <path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                )}
+                {action.status === 'approved' && (
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                    <path d="M2 5h6" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
                   </svg>
                 )}
               </button>
@@ -660,6 +904,14 @@ export default function VersionPage() {
                     <> · <span className={styles.actionTimestamp}>@ {formatTimestamp(action.timestamp_seconds)}</span></>
                   )}
                 </span>
+                <div className={styles.actionControls}>
+                  <span className={`${styles.actionStatusPill} ${action.status === 'approved' ? styles.actionStatusApproved : action.status === 'completed' ? styles.actionStatusCompleted : ''}`}>
+                    {action.status}
+                  </span>
+                  <button className={styles.actionEditBtn} onClick={() => openEditAction(action)}>
+                    Edit
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -670,8 +922,26 @@ export default function VersionPage() {
           {selectedThread ? (
             <>
               <div className={styles.threadsPanelHeader}>
-                <div className={styles.threadMarkerDot} style={{ background: MARKER_COLORS[threads.findIndex(t => t.id === selectedThread.id) % MARKER_COLORS.length] }} />
-                <span className={styles.threadTimestamp}>@ {formatTimestamp(selectedThread.timestamp_seconds)}</span>
+                <div className={styles.threadHeaderInfo}>
+                  <div className={styles.threadMarkerDot} style={{ background: MARKER_COLORS[threads.findIndex(t => t.id === selectedThread.id) % MARKER_COLORS.length] }} />
+                  <div className={styles.threadHeaderMeta}>
+                    <span className={styles.threadTimestamp}>@ {formatTimestamp(selectedThread.timestamp_seconds)}</span>
+                    <span className={styles.threadHeaderCount}>
+                      {selectedThread.comments.length} message{selectedThread.comments.length !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                </div>
+                <div className={styles.threadHeaderActions}>
+                  <button className={styles.threadActionBtn} onClick={() => seekToThread(selectedThread)}>
+                    Jump to time
+                  </button>
+                  <button className={styles.threadActionBtn} onClick={() => copyThreadTimestamp(selectedThread.timestamp_seconds)}>
+                    {timestampCopied ? 'Copied time' : 'Copy timestamp'}
+                  </button>
+                  <button className={styles.threadActionBtn} onClick={() => copyThreadLink(selectedThread.id)}>
+                    {threadLinkCopied ? 'Copied link' : 'Copy link'}
+                  </button>
+                </div>
                 <button className={styles.threadsDropdown} onClick={() => setSelectedThreadId(null)}>
                   {threads.length} thread{threads.length !== 1 ? 's' : ''} ▾
                 </button>
@@ -685,7 +955,12 @@ export default function VersionPage() {
                     </div>
                     {c.author === identity && <span className={styles.bubbleAuthor}>{c.author}</span>}
                     {!actions.some(a => a.comment_id === c.id) && (
-                      <button className={styles.markActionBtn} onClick={() => { setActionModalCommentId(c.id); setActionText(c.body); }}>
+                      <button className={styles.markActionBtn} onClick={() => {
+                        setActionModalCommentId(c.id);
+                        setEditingActionId(null);
+                        setActionText(c.body);
+                        setActionStatus('pending');
+                      }}>
                         + Mark as action
                       </button>
                     )}
@@ -721,8 +996,20 @@ export default function VersionPage() {
                     {threads.map((t, i) => (
                       <button key={t.id} className={styles.threadIndexItem} onClick={() => seekToThread(t)}>
                         <div className={styles.threadIndexDot} style={{ background: MARKER_COLORS[i % MARKER_COLORS.length] }} />
-                        <span className={styles.threadIndexTime}>@ {formatTimestamp(t.timestamp_seconds)}</span>
-                        <span className={styles.threadIndexPreview}>{t.comments?.[0]?.body?.slice(0, 50) || '…'}</span>
+                        <div className={styles.threadIndexBody}>
+                          <div className={styles.threadIndexTop}>
+                            <span className={styles.threadIndexTime}>@ {formatTimestamp(t.timestamp_seconds)}</span>
+                            <span className={styles.threadIndexCount}>
+                              {t.comments?.length || 0} message{(t.comments?.length || 0) !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                          <span className={styles.threadIndexPreview}>
+                            {formatThreadPreview(t.comments?.[0]?.body)}
+                          </span>
+                          <span className={styles.threadIndexMeta}>
+                            Last reply by {t.comments?.[t.comments.length - 1]?.author || t.created_by}
+                          </span>
+                        </div>
                       </button>
                     ))}
                   </div>
@@ -830,14 +1117,71 @@ export default function VersionPage() {
       </div>
 
       {/* Action modal */}
-      {actionModalCommentId && (
-        <div className={styles.modalOverlay} onClick={() => setActionModalCommentId(null)}>
+      {(actionModalCommentId || editingActionId) && (
+        <div className={styles.modalOverlay} onClick={() => { setActionModalCommentId(null); setEditingActionId(null); }}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <h3 className={styles.modalTitle}>Mark as Action</h3>
+            <h3 className={styles.modalTitle}>{editingActionId ? 'Edit Action' : 'Mark as Action'}</h3>
             <textarea className={styles.modalTextarea} value={actionText} onChange={e => setActionText(e.target.value)} rows={3} />
+            <div className={styles.actionStateRow}>
+              {(['pending', 'approved', 'completed'] as const).map(status => (
+                <button
+                  key={status}
+                  className={`${styles.actionStateBtn} ${actionStatus === status ? styles.actionStateBtnActive : ''}`}
+                  onClick={() => setActionStatus(status)}
+                >
+                  {status}
+                </button>
+              ))}
+            </div>
             <div className={styles.modalActions}>
-              <button className={styles.cancelBtn} onClick={() => setActionModalCommentId(null)}>Cancel</button>
-              <button className={styles.postBtn} onClick={submitAction} disabled={!actionText.trim()}>Save Action</button>
+              <button className={styles.cancelBtn} onClick={() => { setActionModalCommentId(null); setEditingActionId(null); }}>Cancel</button>
+              <button className={styles.postBtn} onClick={submitAction} disabled={!actionText.trim()}>
+                {editingActionId ? 'Save changes' : 'Save Action'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showUploadVersionModal && (
+        <div className={styles.modalOverlay} onClick={() => { if (!uploadingVersion) setShowUploadVersionModal(false); }}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>Upload New Version</h3>
+            {pendingVersionFile ? (
+              <div className={styles.uploadMetaCard}>
+                <strong>{pendingVersionFile.name}</strong>
+                <span>{formatFileSize(pendingVersionFile.size)}</span>
+              </div>
+            ) : (
+              <div className={styles.uploadMetaCard}>
+                <strong>No file selected</strong>
+                <span>Choose an MP3, WAV, M4A, FLAC, or OGG file.</span>
+              </div>
+            )}
+            <input
+              className={styles.modalInput}
+              placeholder='Version label (optional, e.g. "Mix notes applied")'
+              value={newVersionLabel}
+              onChange={e => setNewVersionLabel(e.target.value)}
+              disabled={uploadingVersion}
+            />
+            <p className={styles.uploadHelp}>Uploads under 200 MB work best in the current flow.</p>
+            {uploadingVersion && (
+              <div>
+                <div className={styles.progressWrap}>
+                  <div className={styles.progressBar} style={{ width: `${versionUploadProgress}%` }} />
+                </div>
+                <span className={styles.progressLabel}>{versionUploadProgress}% uploaded to song-files...</span>
+              </div>
+            )}
+            {versionUploadError && <div className={styles.errorMsg}>{versionUploadError}</div>}
+            <div className={styles.modalActions}>
+              <button className={styles.cancelBtn} onClick={() => setShowUploadVersionModal(false)} disabled={uploadingVersion}>
+                Cancel
+              </button>
+              <button className={styles.postBtn} onClick={uploadNewVersion} disabled={!pendingVersionFile || uploadingVersion}>
+                {uploadingVersion ? 'Uploading…' : 'Upload version'}
+              </button>
             </div>
           </div>
         </div>
@@ -871,6 +1215,17 @@ export default function VersionPage() {
           </div>
         </div>
       )}
+
+      <input
+        ref={versionFileInputRef}
+        type="file"
+        accept="audio/*,.mp3,.wav,.m4a,.aac,.flac,.ogg"
+        style={{ display: 'none' }}
+        onChange={e => {
+          handleVersionFilePicked(e.target.files?.[0]);
+          e.target.value = '';
+        }}
+      />
     </div>
   );
 }
