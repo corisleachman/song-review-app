@@ -3,7 +3,7 @@ import { supabaseServer } from '@/lib/supabaseServer';
 
 export async function POST(req: NextRequest) {
   try {
-    const { commentId, songId, description, suggestedBy, timestampSeconds } = await req.json();
+    const { commentId, songId, description, suggestedBy, timestampSeconds, status } = await req.json();
 
     if (!commentId || !songId || !description) {
       return NextResponse.json(
@@ -11,6 +11,10 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    const nextStatus = status && ['pending', 'approved', 'completed'].includes(status)
+      ? status
+      : 'pending';
 
     // Create action
     const { data, error } = await supabaseServer
@@ -21,7 +25,7 @@ export async function POST(req: NextRequest) {
           song_id: songId,
           description,
           suggested_by: suggestedBy,
-          status: 'pending',
+          status: nextStatus,
           ...(timestampSeconds != null && { timestamp_seconds: Math.round(timestampSeconds) }),
         },
       ])
