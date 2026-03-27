@@ -830,34 +830,70 @@
 @media (max-width: 700px) {
   .body { grid-template-columns: 1fr; }
   .heroTitle { font-size: 1.6rem; }
-  /* Mobile: column layout. Use order to control visual position:
-     artwork top-right (order:-1), title below it, waveform at bottom */
+  /* Mobile hero: 2-col grid so heroLeft+heroArtwork share top row,
+     heroWaveform spans full width as its own row below */
   .heroContent {
-    flex-direction: column !important;
-    padding: 0 16px 0;
-    gap: 0;
+    display: grid !important;
+    grid-template-columns: 1fr 120px !important;
+    grid-template-rows: auto auto !important;
+    gap: 0 16px !important;
+    padding: 0 16px 0 !important;
   }
-  /* heroLeft wraps title + controls + waveform — stays in natural order */
-  .heroLeft { padding-bottom: 0; position: relative; }
-  /* Artwork: visually first (top), right-aligned */
+  /* heroLeft: top-left cell, column layout */
+  .heroLeft {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+  }
+  /* heroArtwork: top-right cell */
   .heroArtwork {
-    order: -1 !important;
-    width: 110px !important;
-    height: 110px !important;
-    align-self: flex-end !important;
-    margin-bottom: 12px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    width: 120px !important;
+    height: 120px !important;
+    margin-bottom: 0 !important;
+    align-self: start !important;
+    order: unset !important;
   }
-  /* Waveform stays at bottom of heroLeft naturally */
-  .heroWaveform { margin-top: 16px !important; padding-top: 0; padding-bottom: 16px; }
-  .heroTitle { font-size: 1.5rem; }
-  .heroArtist { margin-bottom: 14px; font-size: 0.9rem; }
-  .heroPlayBtn { width: 40px; height: 40px; }
-  .heroTime { font-size: 0.9rem; }
-  .heroNav { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
-  .heroNavRight { flex-wrap: wrap; gap: 6px; }
+  /* heroWaveform: spans both columns, full width below */
+  .heroWaveform {
+    grid-column: 1 / -1 !important;
+    grid-row: 2 !important;
+    margin-top: 12px !important;
+    padding-top: 0 !important;
+    padding-bottom: 16px !important;
+  }
+  .heroTitle { font-size: 1.4rem; }
+  .heroArtist { margin-bottom: 10px; font-size: 0.85rem; }
   .heroPlayBtn { width: 44px; height: 44px; }
-  .heroArtist { margin-bottom: 16px; }
+  .heroTime { font-size: 0.88rem; }
+  /* Nav: hot pink filled buttons on mobile */
+  .heroNav { padding: 10px 16px; gap: 8px; flex-wrap: nowrap; }
+  .heroNavRight { gap: 6px; flex-wrap: nowrap; }
+  .songsBtn {
+    background: #ff1493 !important;
+    border-color: #ff1493 !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    font-size: 0.72rem !important;
+    letter-spacing: 0.04em !important;
+  }
+  .uploadBtn {
+    background: #ff1493 !important;
+    border-color: #ff1493 !important;
+    color: #fff !important;
+    font-weight: 600 !important;
+    font-size: 0.72rem !important;
+    white-space: nowrap !important;
+  }
+  .versionSelect {
+    background: rgba(255,20,147,0.15) !important;
+    border-color: #ff1493 !important;
+    color: #ff1493 !important;
+    font-size: 0.72rem !important;
+  }
   .actionsPanel { border-right: none; border-bottom: 1px solid #1e1630; }
   .adminPanel { border-left: none; border-top: 1px solid #1e1630; }
 
