@@ -112,6 +112,7 @@ Both now:
 - validate audio file type
 - reject files over 200 MB
 - show clearer progress and error feedback
+- support an optional short version note
 
 ### Mobile layout
 

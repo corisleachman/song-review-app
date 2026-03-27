@@ -46,6 +46,7 @@ interface Version {
   id: string;
   version_number: number;
   label: string | null;
+  notes?: string | null;
   file_path: string;
   file_name: string;
   created_by: string;
@@ -111,6 +112,9 @@ export default function VersionPage() {
   const wavesurferRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const waveLoadIdRef = useRef(0);
+  const waveRetryTimerRef = useRef<number | null>(null);
+  const waveLoadTimeoutRef = useRef<number | null>(null);
+  const waveAutoRetryUsedRef = useRef(false);
   const hoverCanvasRef = useRef<HTMLCanvasElement>(null);
   const hoverXRef = useRef<number>(-1);
   const pendingTimestampRef = useRef<number | null>(null);
@@ -130,6 +134,8 @@ export default function VersionPage() {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [waveErr, setWaveErr] = useState<string | null>(null);
+  const [isRetryingWave, setIsRetryingWave] = useState(false);
+  const [waveReloadNonce, setWaveReloadNonce] = useState(0);
   const [pendingTimestamp, setPendingTimestamp] = useState<number | null>(null);
   const [clickXPercent, setClickXPercent] = useState<number>(0);
   const [editingLabel, setEditingLabel] = useState(false);
@@ -153,12 +159,50 @@ export default function VersionPage() {
   const [showUploadVersionModal, setShowUploadVersionModal] = useState(false);
   const [pendingVersionFile, setPendingVersionFile] = useState<File | null>(null);
   const [newVersionLabel, setNewVersionLabel] = useState('');
+  const [newVersionNotes, setNewVersionNotes] = useState('');
   const [versionUploadProgress, setVersionUploadProgress] = useState(0);
   const [versionUploadError, setVersionUploadError] = useState('');
   const [uploadingVersion, setUploadingVersion] = useState(false);
+  const [statusToast, setStatusToast] = useState<string | null>(null);
+  const statusToastTimerRef = useRef<number | null>(null);
   const dragTaskId = useRef<string | null>(null);
 
   const supabase = createClient();
+
+  const clearWaveTimers = useCallback(() => {
+    if (waveRetryTimerRef.current) {
+      window.clearTimeout(waveRetryTimerRef.current);
+      waveRetryTimerRef.current = null;
+    }
+    if (waveLoadTimeoutRef.current) {
+      window.clearTimeout(waveLoadTimeoutRef.current);
+      waveLoadTimeoutRef.current = null;
+    }
+  }, []);
+
+  const retryWaveform = useCallback((mode: 'auto' | 'manual' = 'manual') => {
+    clearWaveTimers();
+    if (mode === 'manual') {
+      waveAutoRetryUsedRef.current = false;
+    }
+    setWaveErr(null);
+    setIsReady(false);
+    setIsRetryingWave(mode === 'auto');
+    setCurrentTime(0);
+    setDuration(0);
+    setWaveReloadNonce(count => count + 1);
+  }, [clearWaveTimers]);
+
+  const showStatusToast = useCallback((message: string) => {
+    if (statusToastTimerRef.current) {
+      window.clearTimeout(statusToastTimerRef.current);
+    }
+    setStatusToast(message);
+    statusToastTimerRef.current = window.setTimeout(() => {
+      setStatusToast(null);
+      statusToastTimerRef.current = null;
+    }, 2200);
+  }, []);
 
   useEffect(() => {
     const id = getIdentity();
@@ -166,6 +210,14 @@ export default function VersionPage() {
     setIdentity(id);
     load();
   }, [songId, versionId]);
+
+  useEffect(() => {
+    return () => {
+      if (statusToastTimerRef.current) {
+        window.clearTimeout(statusToastTimerRef.current);
+      }
+    };
+  }, []);
 
   async function load() {
     setLoading(true);
@@ -227,6 +279,7 @@ export default function VersionPage() {
 
   const initWaveSurfer = useCallback(async (container: HTMLDivElement, url: string) => {
     const loadId = ++waveLoadIdRef.current;
+    clearWaveTimers();
 
     if (wavesurferRef.current) {
       try { wavesurferRef.current.destroy(); } catch {}
@@ -253,6 +306,33 @@ export default function VersionPage() {
     audio.src = url;
     audioRef.current = audio;
 
+    const handleWaveFailure = (message: string) => {
+      if (loadId !== waveLoadIdRef.current) return;
+      clearWaveTimers();
+
+      if (!waveAutoRetryUsedRef.current) {
+        waveAutoRetryUsedRef.current = true;
+        setWaveErr('Waveform load interrupted. Retrying…');
+        setIsRetryingWave(true);
+        waveRetryTimerRef.current = window.setTimeout(() => {
+          if (loadId !== waveLoadIdRef.current) return;
+          retryWaveform('auto');
+        }, 350);
+        return;
+      }
+
+      setIsRetryingWave(false);
+      setWaveErr(message);
+    };
+
+    audio.addEventListener('error', () => {
+      handleWaveFailure('Could not load this audio file. Try again.');
+    });
+
+    waveLoadTimeoutRef.current = window.setTimeout(() => {
+      handleWaveFailure('Waveform took too long to load. Try again.');
+    }, 12000);
+
     const ws = WaveSurfer.create({
       container,
       waveColor: 'rgba(255,255,255,0.2)',
@@ -270,9 +350,11 @@ export default function VersionPage() {
 
     ws.on('ready', (dur: number) => {
       if (loadId !== waveLoadIdRef.current) return;
+      clearWaveTimers();
       setWaveErr(null);
       setDuration(dur);
       setIsReady(true);
+      setIsRetryingWave(false);
     });
     ws.on('timeupdate', (t: number) => setCurrentTime(t));
     ws.on('seeking', (t: number) => setCurrentTime(t));
@@ -283,7 +365,7 @@ export default function VersionPage() {
       const message = e?.message || String(e);
       if (loadId !== waveLoadIdRef.current || message.toLowerCase().includes('aborted')) return;
       console.error('WaveSurfer error:', e);
-      setWaveErr(message);
+      handleWaveFailure(message);
     });
 
     ws.on('click', (relX: number) => {
@@ -311,10 +393,10 @@ export default function VersionPage() {
       const message = error?.message || String(error);
       if (loadId !== waveLoadIdRef.current || message.toLowerCase().includes('aborted')) return;
       console.error('WaveSurfer load error:', error);
-      setWaveErr(message);
+      handleWaveFailure(message);
     });
     wavesurferRef.current = ws;
-  }, []);
+  }, [clearWaveTimers, retryWaveform]);
 
   const stopPlayback = useCallback(() => {
     if (wavesurferRef.current) {
@@ -353,8 +435,10 @@ export default function VersionPage() {
 
   useEffect(() => {
     if (!audioUrl) return;
+    waveAutoRetryUsedRef.current = false;
     setIsReady(false);
     setWaveErr(null);
+    setIsRetryingWave(false);
     setDuration(0);
     let attempts = 0;
     const tryInit = () => {
@@ -366,6 +450,7 @@ export default function VersionPage() {
     };
     tryInit();
     return () => {
+      clearWaveTimers();
       waveLoadIdRef.current += 1;
       stopPlayback();
       if (wavesurferRef.current) {
@@ -380,7 +465,7 @@ export default function VersionPage() {
         audioRef.current = null;
       }
     };
-  }, [audioUrl, initWaveSurfer, stopPlayback]);
+  }, [audioUrl, waveReloadNonce, clearWaveTimers, initWaveSurfer, stopPlayback]);
 
   async function loadTasks() {
     const { data } = await supabase
@@ -398,7 +483,11 @@ export default function VersionPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ songId, description: newTaskText.trim() }),
     });
-    if (res.ok) { setNewTaskText(''); await loadTasks(); }
+    if (res.ok) {
+      setNewTaskText('');
+      await loadTasks();
+      showStatusToast('Task added');
+    }
   }
 
   async function toggleTask(task: Task) {
@@ -409,11 +498,13 @@ export default function VersionPage() {
       body: JSON.stringify({ status: next }),
     });
     await loadTasks();
+    showStatusToast(next === 'completed' ? 'Task completed' : 'Task moved back to pending');
   }
 
   async function deleteTask(taskId: string) {
     await fetch(`/api/tasks/${taskId}`, { method: 'DELETE' });
     await loadTasks();
+    showStatusToast('Task removed');
   }
 
   async function saveTaskEdit(taskId: string) {
@@ -425,6 +516,7 @@ export default function VersionPage() {
     });
     setEditingTaskId(null);
     await loadTasks();
+    showStatusToast('Task updated');
   }
 
   function handleTaskDragStart(taskId: string) {
@@ -464,6 +556,7 @@ export default function VersionPage() {
       body: JSON.stringify({ status: newStatus }),
     });
     await loadActions();
+    showStatusToast(newStatus === 'completed' ? 'Action completed' : newStatus === 'approved' ? 'Action approved' : 'Action moved back to pending');
   };
 
   const submitThread = async () => {
@@ -527,6 +620,7 @@ export default function VersionPage() {
     setActionText('');
     setActionStatus('pending');
     await loadActions();
+    showStatusToast(editingActionId ? 'Action updated' : 'Action saved');
   };
 
   const saveLabelEdit = async () => {
@@ -594,6 +688,7 @@ export default function VersionPage() {
     setVersionUploadError('');
     setVersionUploadProgress(0);
     setNewVersionLabel('');
+    setNewVersionNotes('');
     setShowUploadVersionModal(true);
   }
 
@@ -614,6 +709,7 @@ export default function VersionPage() {
           fileSize: pendingVersionFile.size,
           createdBy: identity,
           label: newVersionLabel.trim() || null,
+          notes: newVersionNotes.trim() || null,
         }),
       });
 
@@ -640,6 +736,8 @@ export default function VersionPage() {
       setShowUploadVersionModal(false);
       setPendingVersionFile(null);
       setNewVersionLabel('');
+      setNewVersionNotes('');
+      showStatusToast('Version uploaded');
       router.push(`/songs/${songId}/versions/${data.versionId}`);
     } catch (error) {
       setVersionUploadError(error instanceof Error ? error.message : 'Upload failed. Please try again.');
@@ -655,7 +753,7 @@ export default function VersionPage() {
     setActionStatus(action.status as 'pending' | 'approved' | 'completed');
   }
 
-  if (loading) return <div className={styles.loading}>Loading…</div>;
+  if (loading) return <div className={styles.loading}>Loading this version…</div>;
 
   const selectedThread = threads.find(t => t.id === selectedThreadId) ?? null;
   const pendingActions = actions.filter(a => a.status !== 'completed');
@@ -665,6 +763,7 @@ export default function VersionPage() {
     version?.created_at ? formatVersionDate(version.created_at) : null,
     duration > 0 ? formatTimestamp(Math.floor(duration)) : null,
   ].filter(Boolean);
+  const versionNotes = version?.notes?.trim() || '';
 
   return (
     <div className={styles.page}>
@@ -739,6 +838,12 @@ export default function VersionPage() {
                   ))}
                 </div>
               )}
+              {versionNotes && (
+                <div className={styles.heroVersionNotes}>
+                  <span className={styles.heroVersionNotesLabel}>Version note</span>
+                  <p className={styles.heroVersionNotesText}>{versionNotes}</p>
+                </div>
+              )}
               <div className={styles.heroControls}>
                 <button
                   className={styles.heroPlayBtn}
@@ -755,8 +860,25 @@ export default function VersionPage() {
                   <span className={styles.heroTimeSep}> / </span>
                   {formatTimestamp(Math.floor(duration))}
                 </span>
-                {!isReady && audioUrl && !waveErr && <span className={styles.loadingWave}>Loading…</span>}
-                {waveErr && <span className={styles.waveErrMsg}>⚠ {waveErr}</span>}
+                {!isReady && audioUrl && !waveErr && (
+                  <span className={styles.loadingWave}>
+                    {isRetryingWave ? 'Retrying…' : 'Loading…'}
+                  </span>
+                )}
+                {waveErr && (
+                  <span className={styles.waveStatus}>
+                    <span className={styles.waveErrMsg}>⚠ {waveErr}</span>
+                    {!isRetryingWave && (
+                      <button
+                        type="button"
+                        className={styles.waveRetryBtn}
+                        onClick={() => retryWaveform('manual')}
+                      >
+                        Retry
+                      </button>
+                    )}
+                  </span>
+                )}
               </div>
 
             </div>{/* /heroLeft */}
@@ -875,7 +997,7 @@ export default function VersionPage() {
             <span className={styles.actionsPanelTitle}>ACTIONS</span>
             <span className={styles.pendingBadge}>{pendingActions.length} pending</span>
           </div>
-          {actions.length === 0 && <p className={styles.empty}>No actions yet</p>}
+          {actions.length === 0 && <p className={styles.empty}>No actions yet. Turn a comment into an action when something needs following up.</p>}
           {[...pendingActions, ...completedActions].map(action => (
             <div key={action.id} className={`${styles.actionItem} ${action.status === 'completed' ? styles.actionDone : ''}`}>
               <button
@@ -990,7 +1112,7 @@ export default function VersionPage() {
                 <span className={styles.threadsPanelTitle}>{threads.length} thread{threads.length !== 1 ? 's' : ''}</span>
               </div>
               {threads.length === 0
-                ? <p className={styles.empty}>No comments yet. Click the waveform to add one.</p>
+                ? <p className={styles.empty}>No comments yet. Click the waveform to start the conversation.</p>
                 : (
                   <div className={styles.threadIndexList}>
                     {threads.map((t, i) => (
@@ -1044,7 +1166,7 @@ export default function VersionPage() {
           {/* Pending tasks */}
           <div className={styles.taskList}>
             {tasks.filter(t => t.status === 'pending').length === 0 && (
-              <p className={styles.taskEmpty}>No tasks yet.</p>
+              <p className={styles.taskEmpty}>No song admin tasks yet. Add one when there is something to chase.</p>
             )}
             {tasks.filter(t => t.status === 'pending').map(task => (
               <div
@@ -1143,6 +1265,8 @@ export default function VersionPage() {
         </div>
       )}
 
+      {statusToast && <div className={styles.statusToast}>{statusToast}</div>}
+
       {showUploadVersionModal && (
         <div className={styles.modalOverlay} onClick={() => { if (!uploadingVersion) setShowUploadVersionModal(false); }}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
@@ -1163,6 +1287,14 @@ export default function VersionPage() {
               placeholder='Version label (optional, e.g. "Mix notes applied")'
               value={newVersionLabel}
               onChange={e => setNewVersionLabel(e.target.value)}
+              disabled={uploadingVersion}
+            />
+            <textarea
+              className={styles.modalTextarea}
+              placeholder='Version notes (optional, e.g. "New vocal comp and tighter bridge")'
+              value={newVersionNotes}
+              onChange={e => setNewVersionNotes(e.target.value)}
+              rows={3}
               disabled={uploadingVersion}
             />
             <p className={styles.uploadHelp}>Uploads under 200 MB work best in the current flow.</p>

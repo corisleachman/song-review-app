@@ -59,7 +59,8 @@ Creates the DB record and signed upload URL for direct storage upload.
   "fileName": "mix-v2.wav",
   "fileSize": 123456,
   "createdBy": "Coris",
-  "label": "Rough mix"
+  "label": "Rough mix",
+  "notes": "New vocal comp and brighter snare"
 }
 ```
 
@@ -76,7 +77,7 @@ Creates the DB record and signed upload URL for direct storage upload.
 
 **Body**
 ```json
-{ "label": "string or null" }
+{ "label": "string or null", "notes": "string or null" }
 ```
 
 ## Threads

@@ -12,6 +12,7 @@ CREATE TABLE song_versions (
   song_id UUID NOT NULL REFERENCES songs(id) ON DELETE CASCADE,
   version_number INTEGER NOT NULL,
   label TEXT,
+  notes TEXT,
   file_path TEXT NOT NULL,
   file_name TEXT NOT NULL,
   created_by TEXT NOT NULL CHECK (created_by IN ('Coris', 'Al')),
@@ -56,6 +57,9 @@ CREATE POLICY "Allow all" ON songs FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all" ON song_versions FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all" ON comment_threads FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all" ON comments FOR ALL USING (true) WITH CHECK (true);
+
+-- Existing projects can add version notes with:
+-- ALTER TABLE song_versions ADD COLUMN IF NOT EXISTS notes TEXT;
 
 -- ─── Song Tasks (added for per-song admin task tracking) ───────────────────
 CREATE TABLE IF NOT EXISTS song_tasks (

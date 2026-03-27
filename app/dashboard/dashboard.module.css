@@ -134,6 +134,39 @@
   text-transform: uppercase;
 }
 
+.sortControl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sortLabel {
+  color: rgba(255,255,255,0.3);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sortSelect {
+  appearance: none;
+  background: rgba(255,255,255,0.05);
+  border: 0.5px solid rgba(255,255,255,0.12);
+  border-radius: 7px;
+  color: rgba(255,255,255,0.82);
+  font-size: 12px;
+  font-family: inherit;
+  padding: 7px 28px 7px 10px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.sortSelect:hover,
+.sortSelect:focus {
+  border-color: rgba(255,255,255,0.24);
+  background: rgba(255,255,255,0.07);
+}
+
 .newBtn {
   display: flex;
   align-items: center;
@@ -148,6 +181,8 @@
   cursor: pointer;
   font-family: inherit;
   transition: opacity 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .newBtn:hover { opacity: 0.85; }
 
@@ -212,6 +247,21 @@
   border-radius: 10px;
   border: 0.5px solid rgba(255,20,147,0.25);
   pointer-events: none;
+}
+
+.activityBadge {
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  background: rgba(0,212,255,0.16);
+  color: #7ee7ff;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  border: 0.5px solid rgba(0,212,255,0.35);
+  pointer-events: none;
+  letter-spacing: 0.02em;
 }
 
 .commentBadge {
@@ -317,10 +367,66 @@
 
 /* Empty state */
 .emptyState {
-  color: rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.38);
   font-size: 12px;
   text-align: center;
-  padding: 24px 0;
+  padding: 28px 0;
+  line-height: 1.6;
+}
+
+.emptyStateCard {
+  margin: 6px 0 0;
+  padding: 28px 22px;
+  border: 0.5px dashed rgba(255,255,255,0.14);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.02);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+}
+
+.emptyStateTitle {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.emptyStateText {
+  margin: 0;
+  max-width: 360px;
+  color: rgba(255,255,255,0.42);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.emptyStateAction {
+  margin-top: 4px;
+  background: rgba(255,20,147,0.12);
+  border: 0.5px solid rgba(255,20,147,0.3);
+  color: var(--primary, #ff1493);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 9px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.emptyStateAction:hover {
+  background: rgba(255,20,147,0.18);
+  border-color: rgba(255,20,147,0.42);
+}
+
+.loadingView {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0d0914;
+  color: rgba(255,255,255,0.42);
+  font-size: 13px;
 }
 
 /* Actions panel */
@@ -352,6 +458,12 @@
   background: rgba(255,20,147,0.1);
   border-color: rgba(255,20,147,0.3);
   color: var(--primary, #ff1493);
+}
+.filterCount {
+  margin-left: 6px;
+  color: inherit;
+  opacity: 0.7;
+  font-variant-numeric: tabular-nums;
 }
 
 .actionGroup { margin-bottom: 18px; }
@@ -390,7 +502,17 @@
   transition: all 0.15s;
 }
 .actionToggle:hover { border-color: rgba(255,255,255,0.4); }
+.actionToggleApproved {
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.65);
+}
 .actionToggleDone { background: #1d9e75; border-color: #1d9e75; }
+.actionApprovedDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #f59e0b;
+}
 
 .actionContent { flex: 1; min-width: 0; }
 
@@ -402,6 +524,35 @@
 .actionTextDone {
   opacity: 0.3;
   text-decoration: line-through;
+}
+.actionMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.actionStatus {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 7px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.actionStatusPending {
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.48);
+}
+.actionStatusApproved {
+  background: rgba(245, 158, 11, 0.14);
+  color: #f6b548;
+}
+.actionStatusDone {
+  background: rgba(29,158,117,0.16);
+  color: #65d6ad;
 }
 
 .actionTimestamp {
@@ -615,6 +766,13 @@
 
   .hideMobile { display: none; }
   .viewToggle { display: none; }
+  .sortControl {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .sortSelect {
+    max-width: 160px;
+  }
 
   .songsGrid {
     grid-template-columns: 1fr;
@@ -693,6 +851,7 @@
 
   /* Hide overlay badges — info is in cardMeta text */
   .versionBadge { display: none; }
+  .activityBadge { display: none; }
   .commentBadge { display: none; }
 
   .cardGhost {

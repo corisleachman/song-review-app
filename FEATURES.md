@@ -48,9 +48,10 @@ Flow:
 1. choose or drag an audio file
 2. validate audio type and max size
 3. optionally add a label
-4. request a signed upload URL from `/api/versions/create`
-5. upload directly to Supabase Storage
-6. route into the newly created version page
+4. optionally add a short version note
+5. request a signed upload URL from `/api/versions/create`
+6. upload directly to Supabase Storage
+7. route into the newly created version page
 
 Current validation:
 - accepts common audio formats such as MP3, WAV, M4A, AAC, FLAC, OGG
@@ -63,6 +64,7 @@ The version page at `/songs/[id]/versions/[versionId]` is the core review experi
 
 Current behaviors:
 - richer version metadata beneath the title
+- optional version note shown under the metadata
 - change-version modal
 - inline version label editing
 - upload-new-version flow without leaving the page
