@@ -523,67 +523,63 @@ function DashboardContent() {
                     ) : (
                       <div className={styles.cardTitle}>{song.title}</div>
                     )}
-                    <div className={styles.cardMeta}>
-                      <span>
-                        {song.latestVersionLabel
-                          ? song.latestVersionLabel
-                          : song.latestVersionNumber
-                            ? `v${song.latestVersionNumber}`
-                            : 'No audio'}
-                      </span>
-                      {song.commentCount > 0 && (
-                        <>
-                          <span style={{opacity:0.3}}>·</span>
-                          <span>{song.commentCount} comment{song.commentCount !== 1 ? 's' : ''}</span>
-                        </>
-                      )}
-                      {/* Hover icon buttons */}
-                      <div className={styles.cardActions}>
-                        {/* Pencil — rename */}
-                        <button
-                          className={styles.iconBtn}
-                          title="Rename"
-                          onClick={e => {
-                            e.stopPropagation();
-                            setEditingId(song.id);
-                            setEditTitle(song.title);
-                          }}
-                        >
-                          <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                            <path d="M7.5 1.5l2 2-6 6H1.5v-2l6-6z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/>
-                          </svg>
-                        </button>
-                        {/* Image — cover art */}
-                        <button
-                          className={styles.iconBtn}
-                          title="Upload cover art"
-                          onClick={e => {
-                            e.stopPropagation();
-                            coverUploadTargetId.current = song.id;
-                            coverInputRef.current?.click();
-                          }}
-                        >
-                          <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                            <rect x="1" y="2" width="9" height="7" rx="1" stroke="currentColor" strokeWidth="1"/>
-                            <circle cx="3.5" cy="4.5" r="1" fill="currentColor"/>
-                            <path d="M1 8l3-3 2 2 2-2 2 3" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/>
-                          </svg>
-                        </button>
-                        {/* Trash — delete */}
-                        <button
-                          className={styles.iconBtn}
-                          title="Delete"
-                          onClick={e => {
-                            e.stopPropagation();
-                            setDeletingId(song.id);
-                          }}
-                        >
-                          <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                            <path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </button>
-                      </div>
+                    <div className={styles.cardActions}>
+                      {/* Pencil — rename */}
+                      <button
+                        className={styles.iconBtn}
+                        title="Rename"
+                        onClick={e => {
+                          e.stopPropagation();
+                          setEditingId(song.id);
+                          setEditTitle(song.title);
+                        }}
+                      >
+                        <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                          <path d="M7.5 1.5l2 2-6 6H1.5v-2l6-6z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                      {/* Image — cover art */}
+                      <button
+                        className={styles.iconBtn}
+                        title="Upload cover art"
+                        onClick={e => {
+                          e.stopPropagation();
+                          coverUploadTargetId.current = song.id;
+                          coverInputRef.current?.click();
+                        }}
+                      >
+                        <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                          <rect x="1" y="2" width="9" height="7" rx="1" stroke="currentColor" strokeWidth="1"/>
+                          <circle cx="3.5" cy="4.5" r="1" fill="currentColor"/>
+                          <path d="M1 8l3-3 2 2 2-2 2 3" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                      {/* Trash — delete */}
+                      <button
+                        className={styles.iconBtn}
+                        title="Delete"
+                        onClick={e => {
+                          e.stopPropagation();
+                          setDeletingId(song.id);
+                        }}
+                      >
+                        <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                          <path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
                     </div>
+                    <div className={styles.cardMetaPrimary}>
+                      {song.latestVersionLabel
+                        ? song.latestVersionLabel
+                        : song.latestVersionNumber
+                          ? `v${song.latestVersionNumber}`
+                          : 'No audio'}
+                    </div>
+                    {song.commentCount > 0 && (
+                      <div className={styles.cardMetaComments}>
+                        {song.commentCount} comment{song.commentCount !== 1 ? 's' : ''}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
