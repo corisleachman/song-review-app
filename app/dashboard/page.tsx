@@ -222,7 +222,7 @@ function DashboardContent() {
         <div className={styles.headerLeft}>
           <div className={styles.logo}>
             <span className={styles.logoDot} />
-            Pulse
+            Polite Rebels
           </div>
         </div>
         <div className={styles.headerRight}>
