@@ -20,7 +20,7 @@ function LoginContent() {
     if (password === 'further_forever') {
       setAuth();
       const redirectTo = searchParams.get('redirectTo') || '/identify';
-      router.push(redirectTo);
+      window.location.assign(redirectTo);
     } else {
       setError('Incorrect password');
       setIsLoading(false);

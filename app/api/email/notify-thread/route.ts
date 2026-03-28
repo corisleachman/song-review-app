@@ -14,6 +14,18 @@ export async function POST(req: NextRequest) {
   try {
     const { threadId, songId, versionId, timestamp, author, commentText, isReply } = await req.json();
 
+    let resolvedVersionId = versionId;
+
+    if (!resolvedVersionId && threadId) {
+      const { data: threadVersionData } = await supabaseServer
+        .from('comment_threads')
+        .select('song_version_id')
+        .eq('id', threadId)
+        .single();
+
+      resolvedVersionId = threadVersionData?.song_version_id ?? null;
+    }
+
     // Get song and version details
     const { data: songData } = await supabaseServer
       .from('songs')
@@ -21,16 +33,19 @@ export async function POST(req: NextRequest) {
       .eq('id', songId)
       .single();
 
-    const { data: versionData } = await supabaseServer
-      .from('song_versions')
-      .select('version_number, label')
-      .eq('id', versionId)
-      .single();
+    const { data: versionData } = resolvedVersionId
+      ? await supabaseServer
+          .from('song_versions')
+          .select('version_number, label')
+          .eq('id', resolvedVersionId)
+          .single()
+      : { data: null };
 
     // Determine recipient (the other person)
     const corisEmail = process.env.CORIS_EMAIL;
     const alEmail = process.env.AL_EMAIL;
-    const recipient = author === 'Coris' ? alEmail : corisEmail;
+    const recipientIdentity = author === 'Coris' ? 'Al' : 'Coris';
+    const recipient = recipientIdentity === 'Al' ? alEmail : corisEmail;
 
     if (!recipient) {
       console.error('Recipient email not configured');
@@ -41,7 +56,10 @@ export async function POST(req: NextRequest) {
       ? `Version ${versionData.version_number} - ${versionData.label}`
       : `Version ${versionData?.version_number}`;
 
-    const deepLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/songs/${songId}/versions/${versionId}?thread=${threadId}`;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const deepLink = resolvedVersionId
+      ? `${baseUrl}/songs/${songId}/versions/${resolvedVersionId}?thread=${threadId}&as=${encodeURIComponent(recipientIdentity)}`
+      : `${baseUrl}/songs/${songId}`;
 
     const subject = isReply
       ? `New reply on ${songData?.title || 'Song'} - ${versionName} at ${formatTimestamp(timestamp)}`

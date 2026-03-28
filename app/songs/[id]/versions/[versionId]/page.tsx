@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
-import { getIdentity, formatTimestamp } from '@/lib/auth';
+import { getIdentity, setIdentity as persistIdentity, formatTimestamp, type Identity } from '@/lib/auth';
 import styles from './version.module.css';
 
 const MAX_AUDIO_SIZE_BYTES = 200 * 1024 * 1024;
@@ -164,7 +164,9 @@ export default function VersionPage() {
   const [versionUploadError, setVersionUploadError] = useState('');
   const [uploadingVersion, setUploadingVersion] = useState(false);
   const [statusToast, setStatusToast] = useState<string | null>(null);
+  const [animatedCommentId, setAnimatedCommentId] = useState<string | null>(null);
   const statusToastTimerRef = useRef<number | null>(null);
+  const commentAnimationTimerRef = useRef<number | null>(null);
   const dragTaskId = useRef<string | null>(null);
 
   const supabase = createClient();
@@ -205,18 +207,68 @@ export default function VersionPage() {
   }, []);
 
   useEffect(() => {
-    const id = getIdentity();
+    const requestedIdentity = searchParams.get('as');
+    const forcedIdentity = requestedIdentity === 'Coris' || requestedIdentity === 'Al'
+      ? requestedIdentity as Identity
+      : null;
+    const id = forcedIdentity ?? getIdentity();
     if (!id) { router.push('/identify'); return; }
+    if (forcedIdentity) {
+      persistIdentity(forcedIdentity);
+    }
     setIdentity(id);
     load();
-  }, [songId, versionId]);
+  }, [songId, versionId, searchParams, router]);
 
   useEffect(() => {
     return () => {
       if (statusToastTimerRef.current) {
         window.clearTimeout(statusToastTimerRef.current);
       }
+      if (commentAnimationTimerRef.current) {
+        window.clearTimeout(commentAnimationTimerRef.current);
+      }
     };
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.code !== 'Space') return;
+      if (window.innerWidth <= 768) return;
+
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (
+          target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable
+        )
+      ) {
+        return;
+      }
+
+      if (!wavesurferRef.current || !isReady || waveErr) return;
+
+      event.preventDefault();
+      wavesurferRef.current.playPause();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isReady, waveErr]);
+
+  const triggerCommentAnimation = useCallback((commentId: string | null) => {
+    if (!commentId) return;
+    if (commentAnimationTimerRef.current) {
+      window.clearTimeout(commentAnimationTimerRef.current);
+    }
+    setAnimatedCommentId(commentId);
+    commentAnimationTimerRef.current = window.setTimeout(() => {
+      setAnimatedCommentId(current => (current === commentId ? null : current));
+      commentAnimationTimerRef.current = null;
+    }, 700);
   }, []);
 
   async function load() {
@@ -570,12 +622,13 @@ export default function VersionPage() {
         body: JSON.stringify({ versionId, songId, timestamp: ts, author: identity, commentText: newComment.trim() }),
       });
       if (res.ok) {
-        const { threadId } = await res.json();
+        const { threadId, commentId } = await res.json();
         setNewComment('');
         setPendingTimestamp(null);
         pendingTimestampRef.current = null;
         await loadThreads();
         setSelectedThreadId(threadId);
+        triggerCommentAnimation(commentId ?? null);
       }
     } finally {
       setPosting(false);
@@ -587,9 +640,14 @@ export default function VersionPage() {
     const res = await fetch('/api/threads/reply', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ threadId, songId, text: replyText.trim(), author: identity }),
+      body: JSON.stringify({ threadId, songId, versionId, text: replyText.trim(), author: identity }),
     });
-    if (res.ok) { setReplyText(''); await loadThreads(); }
+    if (res.ok) {
+      const { commentId } = await res.json();
+      setReplyText('');
+      await loadThreads();
+      triggerCommentAnimation(commentId ?? null);
+    }
   };
 
   const submitAction = async () => {
@@ -958,7 +1016,7 @@ export default function VersionPage() {
                   {pendingTimestamp !== null && (
                     <div
                       className={styles.floatingCommentBox}
-                      style={{ left: `clamp(0px, calc(${clickXPercent}% - 200px), calc(100% - 400px))` }}
+                      style={{ left: `clamp(0px, calc(${clickXPercent}% - var(--comment-box-half-width, 200px)), calc(100% - var(--comment-box-width, 400px)))` }}
                       onClick={e => e.stopPropagation()}
                     >
                       <span className={styles.inlineFormTime}>@ {formatTimestamp(Math.floor(pendingTimestamp))}</span>
@@ -1072,7 +1130,9 @@ export default function VersionPage() {
                 {selectedThread.comments?.map(c => (
                   <div key={c.id} className={`${styles.bubbleWrap} ${c.author === identity ? styles.bubbleWrapOwn : styles.bubbleWrapOther}`}>
                     {!c.author || c.author !== identity && <span className={styles.bubbleAuthor}>{c.author}</span>}
-                    <div className={`${styles.bubble} ${c.author === identity ? styles.bubbleOwn : styles.bubbleOther}`}>
+                    <div
+                      className={`${styles.bubble} ${c.author === identity ? styles.bubbleOwn : styles.bubbleOther} ${animatedCommentId === c.id ? styles.bubbleGentlePop : ''}`}
+                    >
                       {c.body}
                     </div>
                     {c.author === identity && <span className={styles.bubbleAuthor}>{c.author}</span>}

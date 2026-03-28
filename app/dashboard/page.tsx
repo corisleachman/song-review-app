@@ -70,6 +70,8 @@ function DashboardContent() {
 
   // Delete confirm
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletingSongId, setDeletingSongId] = useState<string | null>(null);
+  const [fadingSongIds, setFadingSongIds] = useState<string[]>([]);
 
   // Cover art uploads
   const coverInputRef = useRef<HTMLInputElement>(null);
@@ -221,9 +223,35 @@ function DashboardContent() {
   }
 
   async function deleteSong(id: string) {
-    await fetch(`/api/songs/${id}`, { method: 'DELETE' });
-    setSongs(prev => prev.filter(s => s.id !== id));
-    setDeletingId(null);
+    if (deletingSongId) return;
+
+    setDeletingSongId(id);
+
+    // Give the user immediate feedback in the modal, then start fading the card out.
+    window.setTimeout(() => {
+      setFadingSongIds(prev => prev.includes(id) ? prev : [...prev, id]);
+      setDeletingId(null);
+    }, 500);
+
+    try {
+      const res = await fetch(`/api/songs/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        throw new Error('Delete failed');
+      }
+
+      window.setTimeout(() => {
+        setSongs(prev => prev.filter(s => s.id !== id));
+        setFadingSongIds(prev => prev.filter(songId => songId !== id));
+        setDeletingSongId(current => (current === id ? null : current));
+      }, 950);
+    } catch (error) {
+      console.error('Delete song error:', error);
+      setFadingSongIds(prev => prev.filter(songId => songId !== id));
+      setDeletingSongId(null);
+      setDeletingId(null);
+      await loadSongs();
+      window.alert('That song could not be deleted. Please try again.');
+    }
   }
 
   async function uploadCoverArt(file: File, songId: string) {
@@ -473,7 +501,7 @@ function DashboardContent() {
               {sortedSongs.map(song => (
                 <div
                   key={song.id}
-                  className={styles.card}
+                  className={`${styles.card} ${viewMode === 'list' ? styles.desktopListCard : styles.desktopGridCard} ${fadingSongIds.includes(song.id) ? styles.cardDeleting : ''}`}
                   onClick={e => handleCardClick(e, song)}
                 >
                   {/* Thumbnail */}
@@ -577,7 +605,20 @@ function DashboardContent() {
                     </div>
                     {song.commentCount > 0 && (
                       <div className={styles.cardMetaComments}>
-                        {song.commentCount} comment{song.commentCount !== 1 ? 's' : ''}
+                        <span className={styles.commentCountIcon}>
+                          <span>{song.commentCount}</span>
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                            <path
+                              d="M3 3.5h8a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H6l-2.5 2V9.5H3a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1Z"
+                              stroke="currentColor"
+                              strokeWidth="1.2"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </span>
+                        <span className={styles.commentCountText}>
+                          {song.commentCount} comment{song.commentCount !== 1 ? 's' : ''}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -685,22 +726,23 @@ function DashboardContent() {
 
       {/* Delete confirm modal */}
       {deletingId && (
-        <div className={styles.modalOverlay} onClick={e => { if (e.target === e.currentTarget) setDeletingId(null); }}>
+        <div className={styles.modalOverlay} onClick={e => { if (e.target === e.currentTarget && deletingSongId !== deletingId) setDeletingId(null); }}>
           <div className={styles.modal}>
             <div className={styles.modalTitle}>Delete song?</div>
             <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 20 }}>
               This will permanently delete the song, all versions, comments, and actions. This cannot be undone.
             </p>
             <div className={styles.modalActions}>
-              <button className={styles.modalCancel} onClick={() => setDeletingId(null)}>
+              <button className={styles.modalCancel} onClick={() => setDeletingId(null)} disabled={deletingSongId === deletingId}>
                 Cancel
               </button>
               <button
                 className={styles.modalConfirm}
                 style={{ background: '#e53e3e' }}
                 onClick={() => deleteSong(deletingId)}
+                disabled={deletingSongId === deletingId}
               >
-                Delete
+                {deletingSongId === deletingId ? 'Deleting…' : 'Delete'}
               </button>
             </div>
           </div>
