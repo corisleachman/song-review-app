@@ -59,7 +59,125 @@ interface Song {
   image_url: string | null;
 }
 
+type Rgb = {
+  r: number;
+  g: number;
+  b: number;
+};
+
 const MARKER_COLORS = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#ffa07a', '#98d8c8', '#f7dc6f', '#bb8fce'];
+const DEFAULT_REACTIVE_PRIMARY: Rgb = { r: 255, g: 20, b: 147 };
+const DEFAULT_REACTIVE_SECONDARY: Rgb = { r: 0, g: 212, b: 255 };
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function mixColor(start: Rgb, end: Rgb, amount: number, alpha: number) {
+  const r = Math.round(start.r + (end.r - start.r) * amount);
+  const g = Math.round(start.g + (end.g - start.g) * amount);
+  const b = Math.round(start.b + (end.b - start.b) * amount);
+
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function brighten(color: Rgb, amount: number) {
+  return {
+    r: clamp(Math.round(color.r + (255 - color.r) * amount), 0, 255),
+    g: clamp(Math.round(color.g + (255 - color.g) * amount), 0, 255),
+    b: clamp(Math.round(color.b + (255 - color.b) * amount), 0, 255),
+  };
+}
+
+function darken(color: Rgb, amount: number) {
+  return {
+    r: clamp(Math.round(color.r * (1 - amount)), 0, 255),
+    g: clamp(Math.round(color.g * (1 - amount)), 0, 255),
+    b: clamp(Math.round(color.b * (1 - amount)), 0, 255),
+  };
+}
+
+async function extractPaletteFromImageUrl(url: string) {
+  const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const nextImage = new Image();
+    nextImage.crossOrigin = 'anonymous';
+    nextImage.onload = () => resolve(nextImage);
+    nextImage.onerror = () => reject(new Error('Could not read artwork colors.'));
+    nextImage.src = url;
+  });
+
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+
+  if (!context) {
+    throw new Error('Could not inspect artwork colors.');
+  }
+
+  const sampleWidth = 40;
+  const sampleHeight = 40;
+  canvas.width = sampleWidth;
+  canvas.height = sampleHeight;
+  context.drawImage(image, 0, 0, sampleWidth, sampleHeight);
+
+  const { data } = context.getImageData(0, 0, sampleWidth, sampleHeight);
+
+  let strongR = 0;
+  let strongG = 0;
+  let strongB = 0;
+  let strongWeight = 0;
+  let softR = 0;
+  let softG = 0;
+  let softB = 0;
+  let softWeight = 0;
+
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    const alpha = data[i + 3] / 255;
+
+    if (alpha < 0.5) continue;
+
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const saturation = max === 0 ? 0 : (max - min) / max;
+    const brightness = (r + g + b) / 3 / 255;
+    const vividWeight = saturation * 0.8 + brightness * 0.2 + 0.1;
+    const softWeightSample = (1 - saturation) * 0.35 + brightness * 0.65 + 0.1;
+
+    strongR += r * vividWeight;
+    strongG += g * vividWeight;
+    strongB += b * vividWeight;
+    strongWeight += vividWeight;
+
+    softR += r * softWeightSample;
+    softG += g * softWeightSample;
+    softB += b * softWeightSample;
+    softWeight += softWeightSample;
+  }
+
+  const base = strongWeight
+    ? {
+        r: Math.round(strongR / strongWeight),
+        g: Math.round(strongG / strongWeight),
+        b: Math.round(strongB / strongWeight),
+      }
+    : DEFAULT_REACTIVE_PRIMARY;
+
+  const companionSeed = softWeight
+    ? {
+        r: Math.round(softR / softWeight),
+        g: Math.round(softG / softWeight),
+        b: Math.round(softB / softWeight),
+      }
+    : DEFAULT_REACTIVE_SECONDARY;
+
+  return {
+    primary: brighten(base, 0.08),
+    secondary: brighten(companionSeed, 0.18),
+    shadow: darken(base, 0.42),
+  };
+}
 
 function formatVersionDate(value?: string) {
   if (!value) return null;
@@ -109,6 +227,10 @@ export default function VersionPage() {
   const versionId = params.versionId as string;
 
   const waveformRef = useRef<HTMLDivElement>(null);
+  const waveformWrapRef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const heroOverlayRef = useRef<HTMLDivElement>(null);
+  const heroContentRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const waveLoadIdRef = useRef(0);
@@ -116,9 +238,18 @@ export default function VersionPage() {
   const waveLoadTimeoutRef = useRef<number | null>(null);
   const waveAutoRetryUsedRef = useRef(false);
   const hoverCanvasRef = useRef<HTMLCanvasElement>(null);
+  const desktopReactiveCanvasRef = useRef<HTMLCanvasElement>(null);
+  const mobileReactiveCanvasRef = useRef<HTMLCanvasElement>(null);
+  const mobileReactiveStripRef = useRef<HTMLCanvasElement>(null);
   const hoverXRef = useRef<number>(-1);
   const pendingTimestampRef = useRef<number | null>(null);
   const versionFileInputRef = useRef<HTMLInputElement>(null);
+  const reactiveAudioContextRef = useRef<AudioContext | null>(null);
+  const reactiveAnalyserRef = useRef<AnalyserNode | null>(null);
+  const reactiveSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const reactiveAnimationFrameRef = useRef<number | null>(null);
+  const reactiveRefreshTimeoutRef = useRef<number | null>(null);
+  const reactivePlayingRef = useRef(false);
 
   const [identity, setIdentity] = useState('');
   const [song, setSong] = useState<Song | null>(null);
@@ -165,6 +296,12 @@ export default function VersionPage() {
   const [uploadingVersion, setUploadingVersion] = useState(false);
   const [statusToast, setStatusToast] = useState<string | null>(null);
   const [animatedCommentId, setAnimatedCommentId] = useState<string | null>(null);
+  const [mobileReactiveStripWidth, setMobileReactiveStripWidth] = useState(700);
+  const [reactivePalette, setReactivePalette] = useState(() => ({
+    primary: DEFAULT_REACTIVE_PRIMARY,
+    secondary: DEFAULT_REACTIVE_SECONDARY,
+    shadow: darken(DEFAULT_REACTIVE_PRIMARY, 0.42),
+  }));
   const statusToastTimerRef = useRef<number | null>(null);
   const commentAnimationTimerRef = useRef<number | null>(null);
   const dragTaskId = useRef<string | null>(null);
@@ -180,6 +317,231 @@ export default function VersionPage() {
       window.clearTimeout(waveLoadTimeoutRef.current);
       waveLoadTimeoutRef.current = null;
     }
+  }, []);
+
+  const stopReactiveDrawing = useCallback(() => {
+    if (reactiveAnimationFrameRef.current !== null) {
+      cancelAnimationFrame(reactiveAnimationFrameRef.current);
+      reactiveAnimationFrameRef.current = null;
+    }
+  }, []);
+
+  const clearReactiveRefreshTimeout = useCallback(() => {
+    if (reactiveRefreshTimeoutRef.current !== null) {
+      window.clearTimeout(reactiveRefreshTimeoutRef.current);
+      reactiveRefreshTimeoutRef.current = null;
+    }
+  }, []);
+
+  const getReactiveCanvasEntries = useCallback(() => {
+    return [
+      {
+        canvas: desktopReactiveCanvasRef.current,
+        container: heroOverlayRef.current,
+      },
+      {
+        canvas: mobileReactiveCanvasRef.current,
+        container: heroRef.current,
+      },
+      {
+        canvas: mobileReactiveStripRef.current,
+        container: heroContentRef.current,
+      },
+    ].filter(
+      (entry): entry is { canvas: HTMLCanvasElement; container: HTMLDivElement } =>
+        Boolean(entry.canvas && entry.container)
+    );
+  }, []);
+
+  const drawReactiveIdle = useCallback(() => {
+    for (const { canvas } of getReactiveCanvasEntries()) {
+      const context = canvas.getContext('2d');
+      if (!context) continue;
+
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+
+      context.clearRect(0, 0, width, height);
+
+      const gradient = context.createLinearGradient(0, 0, width, height);
+      gradient.addColorStop(0, mixColor(reactivePalette.primary, reactivePalette.secondary, 0.18, 0.16));
+      gradient.addColorStop(1, mixColor(reactivePalette.primary, reactivePalette.secondary, 0.82, 0.08));
+
+      context.fillStyle = gradient;
+      context.fillRect(0, 0, width, height);
+
+      context.lineWidth = 2;
+      context.strokeStyle = 'rgba(255,255,255,0.12)';
+      context.beginPath();
+
+      const points = 36;
+      for (let i = 0; i < points; i += 1) {
+        const x = (width / (points - 1)) * i;
+        const y = height * 0.5 + Math.sin(i * 0.55) * 8;
+
+        if (i === 0) {
+          context.moveTo(x, y);
+        } else {
+          context.lineTo(x, y);
+        }
+      }
+
+      context.stroke();
+    }
+  }, [getReactiveCanvasEntries, reactivePalette]);
+
+  const resizeReactiveCanvas = useCallback(() => {
+    const ratio = window.devicePixelRatio || 1;
+    for (const { canvas, container } of getReactiveCanvasEntries()) {
+      const { width, height } = container.getBoundingClientRect();
+
+      canvas.width = Math.max(1, Math.floor(width * ratio));
+      canvas.height = Math.max(1, Math.floor(height * ratio));
+
+      const context = canvas.getContext('2d');
+      if (context) {
+        context.setTransform(1, 0, 0, 1, 0, 0);
+        context.scale(ratio, ratio);
+      }
+    }
+
+    if (!reactivePlayingRef.current) {
+      drawReactiveIdle();
+    }
+  }, [drawReactiveIdle, getReactiveCanvasEntries]);
+
+  const queueReactiveCanvasRefresh = useCallback(() => {
+    resizeReactiveCanvas();
+    requestAnimationFrame(() => {
+      resizeReactiveCanvas();
+      requestAnimationFrame(() => {
+        resizeReactiveCanvas();
+      });
+    });
+
+    clearReactiveRefreshTimeout();
+    reactiveRefreshTimeoutRef.current = window.setTimeout(() => {
+      resizeReactiveCanvas();
+      reactiveRefreshTimeoutRef.current = null;
+    }, 140);
+  }, [clearReactiveRefreshTimeout, resizeReactiveCanvas]);
+
+  const startReactiveDrawing = useCallback(() => {
+    const analyser = reactiveAnalyserRef.current;
+
+    if (!analyser) return;
+
+    const timeData = new Uint8Array(analyser.fftSize);
+    const frequencyData = new Uint8Array(analyser.frequencyBinCount);
+
+    const render = () => {
+      const loop = (Math.sin(performance.now() / 2400) + 1) / 2;
+      const accentA = mixColor(reactivePalette.primary, reactivePalette.secondary, loop, 0.24);
+      const accentB = mixColor(reactivePalette.primary, reactivePalette.secondary, 1 - loop, 0.18);
+      const lineColor = mixColor(reactivePalette.primary, reactivePalette.secondary, loop, 0.46);
+      const glowColor = mixColor(reactivePalette.primary, reactivePalette.secondary, 1 - loop, 0.36);
+
+      analyser.getByteTimeDomainData(timeData);
+      analyser.getByteFrequencyData(frequencyData);
+      for (const { canvas } of getReactiveCanvasEntries()) {
+        const context = canvas.getContext('2d');
+        if (!context) continue;
+
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+
+        context.clearRect(0, 0, width, height);
+
+        const wash = context.createLinearGradient(0, 0, width, height);
+        wash.addColorStop(0, accentA);
+        wash.addColorStop(0.5, mixColor(reactivePalette.primary, reactivePalette.secondary, 0.5, 0.12));
+        wash.addColorStop(1, accentB);
+        context.fillStyle = wash;
+        context.fillRect(0, 0, width, height);
+
+        const bars = 72;
+        const barWidth = width / bars;
+        for (let i = 0; i < bars; i += 1) {
+          const sample = frequencyData[Math.min(frequencyData.length - 1, i * 3)] ?? 0;
+          const magnitude = sample / 255;
+          const barHeight = 14 + magnitude * height * 0.4;
+          const x = i * barWidth;
+          const y = height - barHeight;
+          const barGradient = context.createLinearGradient(0, y, 0, height);
+          barGradient.addColorStop(0, mixColor(reactivePalette.primary, reactivePalette.secondary, loop, 0.34));
+          barGradient.addColorStop(1, mixColor(reactivePalette.primary, reactivePalette.secondary, 1 - loop, 0.06));
+
+          context.fillStyle = barGradient;
+          context.fillRect(x, y, Math.max(2, barWidth - 4), barHeight);
+        }
+
+        context.lineCap = 'round';
+        context.lineJoin = 'round';
+        context.lineWidth = 3;
+        context.strokeStyle = lineColor;
+        context.shadowBlur = 34;
+        context.shadowColor = glowColor;
+        context.beginPath();
+
+        const sliceWidth = width / timeData.length;
+        let x = 0;
+
+        for (let i = 0; i < timeData.length; i += 1) {
+          const value = timeData[i] / 128;
+          const y = (value * height) / 2;
+
+          if (i === 0) {
+            context.moveTo(x, y);
+          } else {
+            context.lineTo(x, y);
+          }
+
+          x += sliceWidth;
+        }
+
+        context.stroke();
+        context.shadowBlur = 0;
+      }
+
+      if (reactivePlayingRef.current) {
+        reactiveAnimationFrameRef.current = requestAnimationFrame(render);
+      } else {
+        drawReactiveIdle();
+      }
+    };
+
+    stopReactiveDrawing();
+    reactiveAnimationFrameRef.current = requestAnimationFrame(render);
+  }, [drawReactiveIdle, getReactiveCanvasEntries, reactivePalette, stopReactiveDrawing]);
+
+  const ensureReactiveAudioGraph = useCallback(async (audio: HTMLAudioElement | null) => {
+    if (!audio) return false;
+
+    if (!reactiveAudioContextRef.current) {
+      const AudioContextCtor = window.AudioContext || (window as typeof window & {
+        webkitAudioContext?: typeof AudioContext;
+      }).webkitAudioContext;
+
+      if (!AudioContextCtor) return false;
+
+      reactiveAudioContextRef.current = new AudioContextCtor();
+    }
+
+    if (!reactiveSourceRef.current) {
+      reactiveSourceRef.current = reactiveAudioContextRef.current.createMediaElementSource(audio);
+      reactiveAnalyserRef.current = reactiveAudioContextRef.current.createAnalyser();
+      reactiveAnalyserRef.current.fftSize = 2048;
+      reactiveAnalyserRef.current.smoothingTimeConstant = 0.82;
+
+      reactiveSourceRef.current.connect(reactiveAnalyserRef.current);
+      reactiveAnalyserRef.current.connect(reactiveAudioContextRef.current.destination);
+    }
+
+    if (reactiveAudioContextRef.current.state === 'suspended') {
+      await reactiveAudioContextRef.current.resume();
+    }
+
+    return true;
   }, []);
 
   const retryWaveform = useCallback((mode: 'auto' | 'manual' = 'manual') => {
@@ -219,6 +581,106 @@ export default function VersionPage() {
     setIdentity(id);
     load();
   }, [songId, versionId, searchParams, router]);
+
+  useEffect(() => {
+    resizeReactiveCanvas();
+
+    const handleResize = () => resizeReactiveCanvas();
+    window.addEventListener('resize', handleResize);
+    const observer = typeof ResizeObserver !== 'undefined' && heroOverlayRef.current
+      ? new ResizeObserver(() => resizeReactiveCanvas())
+      : null;
+
+    if (observer && heroOverlayRef.current) {
+      observer.observe(heroOverlayRef.current);
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      observer?.disconnect();
+      stopReactiveDrawing();
+      clearReactiveRefreshTimeout();
+    };
+  }, [clearReactiveRefreshTimeout, resizeReactiveCanvas, stopReactiveDrawing]);
+
+  useEffect(() => {
+    const heroContent = heroContentRef.current;
+
+    if (!heroContent) return;
+
+    const updateWidth = () => {
+      const { width } = heroContent.getBoundingClientRect();
+      setMobileReactiveStripWidth(Math.max(320, Math.round(width)));
+    };
+
+    updateWidth();
+
+    const observer = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(() => updateWidth())
+      : null;
+
+    observer?.observe(heroContent);
+    window.addEventListener('resize', updateWidth);
+
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', updateWidth);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      queueReactiveCanvasRefresh();
+    }
+  }, [loading, queueReactiveCanvasRefresh, song?.image_url, versionId]);
+
+  useEffect(() => {
+    if (!song?.image_url) {
+      setReactivePalette({
+        primary: DEFAULT_REACTIVE_PRIMARY,
+        secondary: DEFAULT_REACTIVE_SECONDARY,
+        shadow: darken(DEFAULT_REACTIVE_PRIMARY, 0.42),
+      });
+      return;
+    }
+
+    let cancelled = false;
+
+    void extractPaletteFromImageUrl(song.image_url)
+      .then(nextPalette => {
+        if (!cancelled) {
+          setReactivePalette(nextPalette);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setReactivePalette({
+            primary: DEFAULT_REACTIVE_PRIMARY,
+            secondary: DEFAULT_REACTIVE_SECONDARY,
+            shadow: darken(DEFAULT_REACTIVE_PRIMARY, 0.42),
+          });
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [song?.image_url]);
+
+  useEffect(() => {
+    if (isPlaying) {
+      void ensureReactiveAudioGraph(audioRef.current).then(ready => {
+        if (ready) {
+          reactivePlayingRef.current = true;
+          startReactiveDrawing();
+        }
+      });
+    } else {
+      reactivePlayingRef.current = false;
+      stopReactiveDrawing();
+      drawReactiveIdle();
+    }
+  }, [drawReactiveIdle, ensureReactiveAudioGraph, isPlaying, startReactiveDrawing, stopReactiveDrawing]);
 
   useEffect(() => {
     return () => {
@@ -357,6 +819,12 @@ export default function VersionPage() {
     audio.preload = 'metadata';
     audio.src = url;
     audioRef.current = audio;
+    reactiveSourceRef.current = null;
+    reactiveAnalyserRef.current = null;
+    if (reactiveAudioContextRef.current) {
+      void reactiveAudioContextRef.current.close();
+      reactiveAudioContextRef.current = null;
+    }
 
     const handleWaveFailure = (message: string) => {
       if (loadId !== waveLoadIdRef.current) return;
@@ -460,8 +928,11 @@ export default function VersionPage() {
         audioRef.current.currentTime = 0;
       } catch {}
     }
+    reactivePlayingRef.current = false;
+    stopReactiveDrawing();
+    drawReactiveIdle();
     setIsPlaying(false);
-  }, []);
+  }, [drawReactiveIdle, stopReactiveDrawing]);
 
   // Draw hover overlay on canvas: dimmed pink between playhead and mouse
   const drawHoverOverlay = () => {
@@ -516,8 +987,16 @@ export default function VersionPage() {
         } catch {}
         audioRef.current = null;
       }
+      reactivePlayingRef.current = false;
+      stopReactiveDrawing();
+      if (reactiveAudioContextRef.current) {
+        void reactiveAudioContextRef.current.close();
+        reactiveAudioContextRef.current = null;
+      }
+      reactiveSourceRef.current = null;
+      reactiveAnalyserRef.current = null;
     };
-  }, [audioUrl, waveReloadNonce, clearWaveTimers, initWaveSurfer, stopPlayback]);
+  }, [audioUrl, waveReloadNonce, clearWaveTimers, initWaveSurfer, stopPlayback, stopReactiveDrawing]);
 
   async function loadTasks() {
     const { data } = await supabase
@@ -828,13 +1307,28 @@ export default function VersionPage() {
 
       {/* ── Hero ── */}
       <div
+        ref={heroRef}
         className={styles.hero}
         style={song?.image_url ? {
           backgroundImage: `url(${song.image_url})`,
         } : undefined}
       >
+        <canvas
+          ref={mobileReactiveCanvasRef}
+          className={styles.heroReactiveCanvasMobile}
+          width={1600}
+          height={560}
+          aria-hidden="true"
+        />
         {/* Gradient overlay so text is always readable */}
-        <div className={styles.heroOverlay}>
+        <div ref={heroOverlayRef} className={styles.heroOverlay}>
+          <canvas
+            ref={desktopReactiveCanvasRef}
+            className={styles.heroReactiveCanvasDesktop}
+            width={1600}
+            height={560}
+            aria-hidden="true"
+          />
 
           {/* Nav row */}
           <div className={styles.heroNav}>
@@ -856,7 +1350,15 @@ export default function VersionPage() {
           </div>
 
           {/* Main hero content */}
-          <div className={styles.heroContent}>
+          <div ref={heroContentRef} className={styles.heroContent}>
+            <canvas
+              ref={mobileReactiveStripRef}
+              className={styles.mobileReactiveStrip}
+              width={1200}
+              height={180}
+              style={{ width: `${mobileReactiveStripWidth}px` }}
+              aria-hidden="true"
+            />
 
             {/* Left: title, controls, waveform */}
             <div className={styles.heroLeft}>
@@ -944,7 +1446,12 @@ export default function VersionPage() {
             {/* Right: artwork */}
             <div className={styles.heroArtwork}>
               {song?.image_url ? (
-                <img src={song.image_url} alt={song.title} className={styles.heroArtworkImg} />
+                <img
+                  src={song.image_url}
+                  alt={song.title}
+                  className={styles.heroArtworkImg}
+                  onLoad={() => queueReactiveCanvasRefresh()}
+                />
               ) : (
                 <div className={styles.heroArtworkPlaceholder}>
                   <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
@@ -980,6 +1487,7 @@ export default function VersionPage() {
             {/* Waveform — direct child of heroContent, full width below on mobile */}
             <div className={styles.heroWaveform}>
                 <div
+                  ref={waveformWrapRef}
                   className={styles.waveformWrap}
                   onMouseMove={e => {
                     const rect = e.currentTarget.getBoundingClientRect();
@@ -1052,7 +1560,10 @@ export default function VersionPage() {
         {/* Left: Actions */}
         <div className={styles.actionsPanel}>
           <div className={styles.actionsPanelHeader}>
-            <span className={styles.actionsPanelTitle}>ACTIONS</span>
+            <div className={styles.sectionHeaderCopy}>
+              <span className={styles.actionsPanelTitle}>ACTIONS</span>
+              <span className={styles.sectionHeaderSubtle}>Changes to make on the song</span>
+            </div>
             <span className={styles.pendingBadge}>{pendingActions.length} pending</span>
           </div>
           {actions.length === 0 && <p className={styles.empty}>No actions yet. Turn a comment into an action when something needs following up.</p>}
@@ -1203,7 +1714,10 @@ export default function VersionPage() {
         {/* Right: Song Admin */}
         <div className={styles.adminPanel}>
           <div className={styles.adminPanelHeader}>
-            <span className={styles.adminPanelTitle}>SONG ADMIN</span>
+            <div className={styles.sectionHeaderCopy}>
+              <span className={styles.adminPanelTitle}>SONG ADMIN</span>
+              <span className={styles.sectionHeaderSubtle}>Practical tasks for this song</span>
+            </div>
             {tasks.filter(t => t.status === 'pending').length > 0 && (
               <span className={styles.adminCount}>{tasks.filter(t => t.status === 'pending').length}</span>
             )}
