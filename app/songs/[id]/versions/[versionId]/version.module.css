@@ -30,6 +30,27 @@
   background: linear-gradient(160deg, rgba(13,9,20,0.6) 0%, rgba(13,9,20,0.3) 50%, rgba(13,9,20,0.75) 100%);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+.heroReactiveCanvasDesktop,
+.heroReactiveCanvasMobile {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.heroReactiveCanvasDesktop {
+  opacity: 0.92;
+  mix-blend-mode: screen;
+}
+
+.heroReactiveCanvasMobile {
+  opacity: 0.92;
+  display: none;
 }
 
 /* Nav row */
@@ -39,6 +60,8 @@
   justify-content: space-between;
   padding: 16px 28px;
   gap: 12px;
+  position: relative;
+  z-index: 1;
 }
 .heroNavRight {
   display: flex;
@@ -50,6 +73,8 @@
   justify-content: flex-end;
   gap: 10px;
   padding: 0 28px 8px;
+  position: relative;
+  z-index: 1;
 }
 
 /* Main content: left info + right artwork */
@@ -69,6 +94,8 @@
     "wave art";
   gap: 0 28px;
   padding: 8px 28px 0 28px;
+  position: relative;
+  z-index: 1;
 }
 .heroLeft {
   grid-area: left;
@@ -243,6 +270,10 @@
   padding-bottom: 24px;
 }
 
+.mobileReactiveStrip {
+  display: none;
+}
+
 
 /* ── Waveform ───────────────────────────────────────────────── */
 .waveformWrap {
@@ -250,7 +281,7 @@
   width: 100%;
   border-radius: 8px;
   overflow: visible;  /* allow floating comment box to escape */
-  background: rgba(0,0,0,0.25);
+  background: rgba(0,0,0,0.24);
 }
 
 .waveform {
@@ -258,6 +289,8 @@
   cursor: crosshair;
   border-radius: 8px;
   overflow: hidden;
+  position: relative;
+  z-index: 1;
 }
 .hoverCanvas {
   position: absolute;
@@ -267,6 +300,7 @@
   height: 100%;
   border-radius: 8px;
   pointer-events: none;
+  z-index: 2;
 }
 .markers {
   position: absolute;
@@ -275,6 +309,7 @@
   right: 0;
   bottom: 0;
   pointer-events: none;
+  z-index: 3;
 }
 .marker {
   position: absolute;
@@ -511,7 +546,18 @@
   padding-bottom: 12px;
   border-bottom: 1px solid #1e1630;
 }
+.sectionHeaderCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
 .actionsPanelTitle { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; color: #888; }
+.sectionHeaderSubtle {
+  font-size: 0.76rem;
+  color: rgba(255,255,255,0.38);
+  line-height: 1.35;
+}
 .pendingBadge { font-size: 0.75rem; color: #888; }
 
 .actionItem {
@@ -1169,6 +1215,30 @@
     gap: 0 14px !important;
     padding: 0 16px 0 !important;
   }
+  .heroReactiveCanvasDesktop {
+    display: none;
+  }
+  .heroReactiveCanvasMobile {
+    display: none;
+  }
+  .mobileReactiveStrip {
+    display: block;
+    position: absolute;
+    left: 0;
+    top: -24px;
+    width: 100%;
+    height: 327px;
+    border-radius: 8px;
+    opacity: 0.5;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .heroLeft,
+  .heroArtwork,
+  .heroWaveform {
+    position: relative;
+    z-index: 1;
+  }
   /* heroLeft, heroArtwork, heroWaveform keep their grid-area names —
      only the template changes, so each snaps into the right cell automatically */
   .heroArtwork {
@@ -1319,6 +1389,33 @@
   }
   .actionControls { gap: 10px; }
   .actionEditBtn { min-height: 28px; }
+  .actionsPanel,
+  .adminPanel {
+    padding-top: 22px;
+    padding-bottom: 22px;
+  }
+  .actionsPanelHeader,
+  .adminPanelHeader {
+    align-items: flex-start;
+    margin-bottom: 18px;
+    padding-top: 2px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .actionsPanelTitle,
+  .adminPanelTitle {
+    color: #fff;
+    font-size: 0.84rem;
+    letter-spacing: 0.06em;
+  }
+  .sectionHeaderSubtle {
+    font-size: 0.74rem;
+    color: rgba(255,255,255,0.42);
+  }
+  .pendingBadge,
+  .adminCount {
+    margin-top: 2px;
+  }
   .modal {
     width: min(92vw, 400px);
     padding: 18px;
