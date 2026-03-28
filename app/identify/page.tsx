@@ -16,7 +16,7 @@ export default function IdentifyPage() {
 
   const handleSelectIdentity = (identity: 'Coris' | 'Al') => {
     setIdentity(identity);
-    router.push('/dashboard');
+    window.location.assign('/dashboard');
   };
 
   return (

@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     if (threadError) throw threadError;
 
     // Create first comment
-    const { error: commentError } = await supabaseServer
+    const { data: commentData, error: commentError } = await supabaseServer
       .from('comments')
       .insert([
         {
@@ -36,7 +36,9 @@ export async function POST(req: NextRequest) {
           author,
           body: commentText,
         },
-      ]);
+      ])
+      .select('id')
+      .single();
 
     if (commentError) throw commentError;
 
@@ -55,7 +57,7 @@ export async function POST(req: NextRequest) {
       }),
     }).catch(err => console.error('Error sending email notification:', err));
 
-    return NextResponse.json({ threadId: threadData.id });
+    return NextResponse.json({ threadId: threadData.id, commentId: commentData.id });
   } catch (error) {
     console.error('Error creating thread:', error);
     return NextResponse.json(
