@@ -91,32 +91,29 @@ function DashboardContent() {
   }
 
   async function loadSongs(currentIdentity: 'Coris' | 'Al' | null = identity) {
-    let songsData: Array<{ id: string; title: string; image_url?: string | null; created_at?: string }> = [];
-    let versionsData: Array<{ id: string; song_id: string; version_number: number; label: string | null; created_at: string | null }> = [];
-    let threadsData: Array<{ id: string; song_version_id: string; created_at: string | null; updated_at: string | null }> = [];
-    let commentsData: Array<{ id: string; thread_id: string }> = [];
-    let actionsActivityData: Array<{ song_id: string; created_at: string | null; updated_at: string | null }> = [];
+    const { data: songsData } = await supabase
+      .from('songs')
+      .select('id, title, image_url, created_at')
+      .order('created_at', { ascending: false });
 
-    try {
-      const res = await fetch('/api/dashboard/songs', { cache: 'no-store' });
-      if (!res.ok) {
-        const body = await res.text();
-        console.error('Dashboard songs API failed:', body);
-        setSongs([]);
-        return;
-      }
+    if (!songsData) return;
 
-      const payload = await res.json();
-      songsData = payload.songs ?? [];
-      versionsData = payload.versions ?? [];
-      threadsData = payload.threads ?? [];
-      commentsData = payload.comments ?? [];
-      actionsActivityData = payload.actionsActivity ?? [];
-    } catch (error) {
-      console.error('Dashboard songs API request failed:', error);
-      setSongs([]);
-      return;
-    }
+    const { data: versionsData } = await supabase
+      .from('song_versions')
+      .select('id, song_id, version_number, label, created_at')
+      .order('version_number', { ascending: false });
+
+    const { data: threadsData } = await supabase
+      .from('comment_threads')
+      .select('id, song_version_id, created_at, updated_at');
+
+    const { data: commentsData } = await supabase
+      .from('comments')
+      .select('id, thread_id');
+
+    const { data: actionsActivityData } = await supabase
+      .from('actions')
+      .select('song_id, created_at, updated_at');
 
     const seenMap = typeof window !== 'undefined' && currentIdentity
       ? JSON.parse(window.localStorage.getItem(getSongSeenStorageKey(currentIdentity)) || '{}') as Record<string, string>

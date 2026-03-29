@@ -2,11 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { supabaseServer } from '@/lib/supabaseServer';
 
-function getResendClient() {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) return null;
-  return new Resend(apiKey);
-}
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 function formatTimestamp(seconds: number): string {
   const mins = Math.floor(seconds / 60);
@@ -16,12 +12,6 @@ function formatTimestamp(seconds: number): string {
 
 export async function POST(req: NextRequest) {
   try {
-    const resend = getResendClient();
-    if (!resend) {
-      console.warn('RESEND_API_KEY is not configured; skipping email notification');
-      return NextResponse.json({ sent: false, skipped: true });
-    }
-
     const { threadId, songId, versionId, timestamp, author, commentText, isReply } = await req.json();
 
     let resolvedVersionId = versionId;
