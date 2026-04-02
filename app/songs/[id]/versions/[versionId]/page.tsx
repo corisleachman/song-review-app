@@ -1060,7 +1060,8 @@ export default function VersionPage() {
       reactiveSourceRef.current = null;
       reactiveAnalyserRef.current = null;
     };
-  }, [audioUrl, waveReloadNonce, clearWaveTimers, initWaveSurfer, stopPlayback, stopReactiveDrawing]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioUrl, waveReloadNonce]);
 
   async function loadTasks() {
     const { data } = await supabase
