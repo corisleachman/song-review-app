@@ -804,23 +804,13 @@ export default function VersionPage() {
     if (audioRef.current) {
       try {
         audioRef.current.pause();
-        audioRef.current.removeAttribute('src');
-        audioRef.current.load();
+        audioRef.current.src = '';
       } catch {}
       audioRef.current = null;
     }
 
     const WaveSurfer = (await import('wavesurfer.js')).default;
     if (!container.isConnected || loadId !== waveLoadIdRef.current) return;
-
-    // Create a native <audio> element and pass it to WaveSurfer.
-    // This bypasses WaveSurfer's internal fetch entirely — which fixes mobile
-    // where signed URLs or CORS can silently block the internal fetch.
-    const audio = new Audio();
-    audio.crossOrigin = 'anonymous';
-    audio.preload = 'metadata';
-    audio.src = url;
-    audioRef.current = audio;
     reactiveSourceRef.current = null;
     reactiveAnalyserRef.current = null;
     if (reactiveAudioContextRef.current) {
@@ -847,10 +837,6 @@ export default function VersionPage() {
       setWaveErr(message);
     };
 
-    audio.addEventListener('error', () => {
-      handleWaveFailure('Could not load this audio file. Try again.');
-    });
-
     waveLoadTimeoutRef.current = window.setTimeout(() => {
       handleWaveFailure('Waveform took too long to load. Try again.');
     }, 12000);
@@ -867,8 +853,12 @@ export default function VersionPage() {
       barRadius: 2,
       interact: true,
       normalize: true,
-      media: audio,
     });
+    // Use WaveSurfer's internally created audio element — no crossOrigin set,
+    // so iOS can hand it to the OS background audio system.
+    // This restores background audio through lock screen and app switching.
+    const audio = ws.getMediaElement() as HTMLAudioElement;
+    audioRef.current = audio;
 
     ws.on('ready', (dur: number) => {
       if (loadId !== waveLoadIdRef.current) return;
@@ -933,7 +923,7 @@ export default function VersionPage() {
     });
 
     // Catch aborted/stale loads so teardown races do not surface as runtime errors.
-    void ws.load(audio.src).catch((error: Error) => {
+    void ws.load(url).catch((error: Error) => {
       const message = error?.message || String(error);
       if (loadId !== waveLoadIdRef.current || message.toLowerCase().includes('aborted')) return;
       console.error('WaveSurfer load error:', error);
