@@ -1002,12 +1002,22 @@ export default function VersionPage() {
 
   useEffect(() => {
     if (!audioUrl) return;
+
+    // Increment load ID immediately — any in-flight init with an old ID
+    // will see the mismatch and abort before creating audio.
+    waveLoadIdRef.current += 1;
     waveAutoRetryUsedRef.current = false;
     setIsReady(false);
     setWaveErr(null);
     setIsRetryingWave(false);
     setDuration(0);
+
+    // Small debounce: React Strict Mode double-invokes effects.
+    // Without this, two inits start ~1ms apart; the second destroys
+    // the first mid-stream, causing the double-audio glitch.
+    let debounceTimer: ReturnType<typeof setTimeout>;
     let attempts = 0;
+
     const tryInit = () => {
       if (waveformRef.current) {
         initWaveSurfer(waveformRef.current, audioUrl);
@@ -1015,10 +1025,13 @@ export default function VersionPage() {
         setTimeout(tryInit, 50);
       }
     };
-    tryInit();
+
+    debounceTimer = setTimeout(tryInit, 80);
+
     return () => {
+      clearTimeout(debounceTimer);
       clearWaveTimers();
-      waveLoadIdRef.current += 1;
+      waveLoadIdRef.current += 1;  // abort any pending initWaveSurfer
       stopPlayback();
       if (wavesurferRef.current) {
         try { wavesurferRef.current.destroy(); } catch {}
@@ -1030,6 +1043,13 @@ export default function VersionPage() {
           audioRef.current.load();
         } catch {}
         audioRef.current = null;
+      }
+      if (analyserAudioRef.current) {
+        try {
+          analyserAudioRef.current.pause();
+          analyserAudioRef.current.src = '';
+        } catch {}
+        analyserAudioRef.current = null;
       }
       reactivePlayingRef.current = false;
       stopReactiveDrawing();
