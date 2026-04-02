@@ -242,6 +242,7 @@ export default function VersionPage() {
   const mobileReactiveCanvasRef = useRef<HTMLCanvasElement>(null);
   const mobileReactiveStripRef = useRef<HTMLCanvasElement>(null);
   const hoverXRef = useRef<number>(-1);
+  const songTitleRef = useRef<string>('');
   const pendingTimestampRef = useRef<number | null>(null);
   const versionFileInputRef = useRef<HTMLInputElement>(null);
   const reactiveAudioContextRef = useRef<AudioContext | null>(null);
@@ -878,8 +879,26 @@ export default function VersionPage() {
     });
     ws.on('timeupdate', (t: number) => setCurrentTime(t));
     ws.on('seeking', (t: number) => setCurrentTime(t));
-    ws.on('play', () => setIsPlaying(true));
-    ws.on('pause', () => setIsPlaying(false));
+    ws.on('play', () => {
+      setIsPlaying(true);
+      // Register Media Session so the OS keeps playing on lock screen / backgrounded
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: songTitleRef.current || 'Song Review',
+          artist: 'Polite Rebels',
+          album: 'Song Review App',
+        });
+        navigator.mediaSession.setActionHandler('play', () => ws.play());
+        navigator.mediaSession.setActionHandler('pause', () => ws.pause());
+        navigator.mediaSession.playbackState = 'playing';
+      }
+    });
+    ws.on('pause', () => {
+      setIsPlaying(false);
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'paused';
+      }
+    });
     ws.on('finish', () => setIsPlaying(false));
     ws.on('error', (e: Error) => {
       const message = e?.message || String(e);
