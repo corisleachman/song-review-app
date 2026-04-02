@@ -1117,7 +1117,9 @@ export default function VersionPage() {
   };
 
   useEffect(() => {
-    if (!audioUrl) return;
+    // Don't attempt init while the page is still loading — the waveform
+    // div doesn't exist in the DOM until loading=false removes the spinner.
+    if (!audioUrl || loading) return;
 
     // Increment load ID immediately — any in-flight init with an old ID
     // will see the mismatch and abort before creating audio.
@@ -1177,7 +1179,7 @@ export default function VersionPage() {
       reactiveAnalyserRef.current = null;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [audioUrl, waveReloadNonce]);
+  }, [audioUrl, waveReloadNonce, loading]);
 
   async function loadTasks() {
     const { data } = await supabase
