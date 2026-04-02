@@ -243,6 +243,7 @@ export default function VersionPage() {
   const mobileReactiveStripRef = useRef<HTMLCanvasElement>(null);
   const hoverXRef = useRef<number>(-1);
   const songTitleRef = useRef<string>('');
+  const songImageRef = useRef<string>('');
   const pendingTimestampRef = useRef<number | null>(null);
   const versionFileInputRef = useRef<HTMLInputElement>(null);
   const reactiveAudioContextRef = useRef<AudioContext | null>(null);
@@ -883,10 +884,14 @@ export default function VersionPage() {
       setIsPlaying(true);
       // Register Media Session so the OS keeps playing on lock screen / backgrounded
       if ('mediaSession' in navigator) {
+        const artwork: MediaImage[] = songImageRef.current
+          ? [{ src: songImageRef.current, sizes: '512x512', type: 'image/jpeg' }]
+          : [];
         navigator.mediaSession.metadata = new MediaMetadata({
           title: songTitleRef.current || 'Song Review',
           artist: 'Polite Rebels',
           album: 'Song Review App',
+          artwork,
         });
         navigator.mediaSession.setActionHandler('play', () => ws.play());
         navigator.mediaSession.setActionHandler('pause', () => ws.pause());
