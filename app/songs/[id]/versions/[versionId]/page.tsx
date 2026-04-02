@@ -815,12 +815,7 @@ export default function VersionPage() {
     // This bypasses WaveSurfer's internal fetch entirely — which fixes mobile
     // where signed URLs or CORS can silently block the internal fetch.
     const audio = new Audio();
-    // Note: crossOrigin NOT set here deliberately.
-    // Setting crossOrigin='anonymous' causes mobile browsers to suspend
-    // audio when the app is backgrounded or the screen locks, because
-    // CORS-mode fetches are tied to page visibility. Without it, the
-    // browser hands the audio element to the OS media system, which
-    // continues playing in the background and on the lock screen.
+    audio.crossOrigin = 'anonymous';
     audio.preload = 'metadata';
     audio.src = url;
     audioRef.current = audio;
