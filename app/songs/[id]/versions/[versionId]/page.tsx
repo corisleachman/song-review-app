@@ -219,6 +219,88 @@ function getNextActionStatus(status: Action['status']) {
   return 'pending';
 }
 
+// Pre-compute frequency + time-domain data from an AudioBuffer using OfflineAudioContext.
+// Returns frames at ~24fps that can be played back in sync with currentTime.
+// No live AudioContext involved — safe for iOS background audio.
+async function precomputeFrequencyFrames(audioBuffer: AudioBuffer) {
+  const fps = 24;
+  const totalFrames = Math.ceil(audioBuffer.duration * fps);
+  const fftSize = 2048;
+  const freqBins = fftSize / 2;
+
+  const freqFrames: Uint8Array[] = [];
+  const timeFrames: Uint8Array[] = [];
+
+  // Process in chunks to avoid blocking the main thread
+  const chunkSize = 60; // frames per chunk
+
+  for (let chunkStart = 0; chunkStart < totalFrames; chunkStart += chunkSize) {
+    const chunkEnd = Math.min(chunkStart + chunkSize, totalFrames);
+    const chunkDuration = (chunkEnd - chunkStart) / fps;
+    const startTime = chunkStart / fps;
+
+    // Render this chunk offline
+    const sampleRate = audioBuffer.sampleRate;
+    const frameSamples = Math.ceil(sampleRate / fps);
+    const chunkSamples = (chunkEnd - chunkStart) * frameSamples;
+
+    try {
+      const offline = new OfflineAudioContext(
+        audioBuffer.numberOfChannels,
+        chunkSamples,
+        sampleRate
+      );
+
+      const source = offline.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(offline.destination);
+      source.start(0, startTime, chunkDuration);
+
+      const rendered = await offline.startRendering();
+      const channelData = rendered.getChannelData(0);
+
+      // Extract per-frame data
+      for (let f = chunkStart; f < chunkEnd; f++) {
+        const frameOffset = (f - chunkStart) * frameSamples;
+        const slice = channelData.slice(frameOffset, frameOffset + fftSize);
+
+        // Time domain: convert float [-1,1] to Uint8 [0,255]
+        const timeFrame = new Uint8Array(fftSize);
+        for (let i = 0; i < fftSize; i++) {
+          timeFrame[i] = Math.round(((slice[i] ?? 0) + 1) * 127.5);
+        }
+        timeFrames.push(timeFrame);
+
+        // Frequency domain: simple DFT magnitude approximation
+        // Split into freqBins frequency buckets
+        const freqFrame = new Uint8Array(freqBins);
+        const bucketSize = Math.floor(fftSize / freqBins);
+        for (let b = 0; b < freqBins; b++) {
+          let energy = 0;
+          for (let s = 0; s < bucketSize; s++) {
+            const sample = slice[b * bucketSize + s] ?? 0;
+            energy += sample * sample;
+          }
+          // RMS energy, scaled to 0-255 with some amplification
+          freqFrame[b] = Math.min(255, Math.round(Math.sqrt(energy / bucketSize) * 600));
+        }
+        freqFrames.push(freqFrame);
+      }
+    } catch {
+      // If OfflineAudioContext fails for this chunk, fill with silence
+      for (let f = chunkStart; f < chunkEnd; f++) {
+        freqFrames.push(new Uint8Array(freqBins));
+        timeFrames.push(new Uint8Array(fftSize).fill(128));
+      }
+    }
+
+    // Yield to main thread between chunks
+    await new Promise(r => setTimeout(r, 0));
+  }
+
+  return { freqFrames, timeFrames, fps };
+}
+
 export default function VersionPage() {
   const params = useParams();
   const router = useRouter();
@@ -233,7 +315,9 @@ export default function VersionPage() {
   const heroContentRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const analyserAudioRef = useRef<HTMLAudioElement | null>(null); // muted clone for Web Audio API
+  const analyserAudioRef = useRef<HTMLAudioElement | null>(null); // points at main audio for Web Audio API
+  // Pre-computed frequency data for mobile reactive animation (avoids live AudioContext)
+  const precomputedFreqRef = useRef<{ freqFrames: Uint8Array[]; timeFrames: Uint8Array[]; fps: number } | null>(null);
   const waveLoadIdRef = useRef(0);
   const waveRetryTimerRef = useRef<number | null>(null);
   const waveLoadTimeoutRef = useRef<number | null>(null);
@@ -431,11 +515,15 @@ export default function VersionPage() {
 
   const startReactiveDrawing = useCallback(() => {
     const analyser = reactiveAnalyserRef.current;
+    const precomputed = precomputedFreqRef.current;
 
-    if (!analyser) return;
+    // Need either a live analyser (desktop) or pre-computed frames (mobile)
+    if (!analyser && !precomputed) return;
 
-    const timeData = new Uint8Array(analyser.fftSize);
-    const frequencyData = new Uint8Array(analyser.frequencyBinCount);
+    const fftSize = analyser ? analyser.fftSize : 2048;
+    const freqBins = analyser ? analyser.frequencyBinCount : 1024;
+    const timeData = new Uint8Array(fftSize);
+    const frequencyData = new Uint8Array(freqBins);
 
     const render = () => {
       const loop = (Math.sin(performance.now() / 2400) + 1) / 2;
@@ -444,8 +532,23 @@ export default function VersionPage() {
       const lineColor = mixColor(reactivePalette.primary, reactivePalette.secondary, loop, 0.46);
       const glowColor = mixColor(reactivePalette.primary, reactivePalette.secondary, 1 - loop, 0.36);
 
-      analyser.getByteTimeDomainData(timeData);
-      analyser.getByteFrequencyData(frequencyData);
+      if (analyser) {
+        // Desktop: read live data from Web Audio API analyser
+        analyser.getByteTimeDomainData(timeData);
+        analyser.getByteFrequencyData(frequencyData);
+      } else if (precomputed) {
+        // Mobile: look up pre-computed frame by current playback time
+        const ws = wavesurferRef.current;
+        const currentTime = ws ? ws.getCurrentTime() : 0;
+        const frameIndex = Math.min(
+          Math.floor(currentTime * precomputed.fps),
+          precomputed.freqFrames.length - 1
+        );
+        const freqFrame = precomputed.freqFrames[frameIndex];
+        const timeFrame = precomputed.timeFrames[frameIndex];
+        if (freqFrame) frequencyData.set(freqFrame.slice(0, freqBins));
+        if (timeFrame) timeData.set(timeFrame.slice(0, fftSize));
+      }
       for (const { canvas } of getReactiveCanvasEntries()) {
         const context = canvas.getContext('2d');
         if (!context) continue;
@@ -679,6 +782,8 @@ export default function VersionPage() {
       const isMobile = typeof navigator !== 'undefined' &&
         /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       if (isMobile) {
+        // Start drawing — startReactiveDrawing will use pre-computed frames
+        // if available, or fall back to the idle animation while they load
         reactivePlayingRef.current = true;
         startReactiveDrawing();
       } else {
@@ -893,6 +998,21 @@ export default function VersionPage() {
       setDuration(dur);
       setIsReady(true);
       setIsRetryingWave(false);
+
+      // On mobile: pre-compute frequency frames from WaveSurfer's decoded AudioBuffer.
+      // This gives us genuine frequency reactivity without a live AudioContext,
+      // so iOS can keep the audio playing in the background.
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        const audioBuffer = ws.getDecodedData();
+        if (audioBuffer) {
+          void precomputeFrequencyFrames(audioBuffer).then(frames => {
+            if (loadId === waveLoadIdRef.current) {
+              precomputedFreqRef.current = frames;
+            }
+          });
+        }
+      }
     });
     ws.on('timeupdate', (t: number) => setCurrentTime(t));
     ws.on('seeking', (t: number) => setCurrentTime(t));
