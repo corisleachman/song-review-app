@@ -233,6 +233,7 @@ export default function VersionPage() {
   const heroContentRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const analyserAudioRef = useRef<HTMLAudioElement | null>(null); // muted clone for Web Audio API
   const waveLoadIdRef = useRef(0);
   const waveRetryTimerRef = useRef<number | null>(null);
   const waveLoadTimeoutRef = useRef<number | null>(null);
@@ -671,7 +672,7 @@ export default function VersionPage() {
 
   useEffect(() => {
     if (isPlaying) {
-      void ensureReactiveAudioGraph(audioRef.current).then(ready => {
+      void ensureReactiveAudioGraph(analyserAudioRef.current).then(ready => {
         if (ready) {
           reactivePlayingRef.current = true;
           startReactiveDrawing();
@@ -807,6 +808,13 @@ export default function VersionPage() {
         audioRef.current.src = '';
       } catch {}
       audioRef.current = null;
+    }
+    if (analyserAudioRef.current) {
+      try {
+        analyserAudioRef.current.pause();
+        analyserAudioRef.current.src = '';
+      } catch {}
+      analyserAudioRef.current = null;
     }
 
     const WaveSurfer = (await import('wavesurfer.js')).default;
