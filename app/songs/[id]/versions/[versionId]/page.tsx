@@ -745,6 +745,8 @@ export default function VersionPage() {
         supabase.from('song_versions').select('*').eq('song_id', songId).order('version_number', { ascending: true }),
       ]);
       setSong(songRes.data);
+      songTitleRef.current = songRes.data?.title ?? '';
+      songImageRef.current = songRes.data?.image_url ?? '';
       setVersion(versionRes.data);
       setVersions(versionsRes.data || []);
 
@@ -867,6 +869,26 @@ export default function VersionPage() {
     // This restores background audio through lock screen and app switching.
     const audio = ws.getMediaElement() as HTMLAudioElement;
     audioRef.current = audio;
+
+    // Muted clone for Web Audio API analyser (crossOrigin required for
+    // createMediaElementSource, but muted so iOS background policy doesn't apply)
+    if (analyserAudioRef.current) {
+      try { analyserAudioRef.current.pause(); analyserAudioRef.current.src = ''; } catch {}
+    }
+    const analyserAudio = new Audio();
+    analyserAudio.crossOrigin = 'anonymous';
+    analyserAudio.preload = 'auto';
+    analyserAudio.muted = true;
+    analyserAudio.src = url;
+    analyserAudioRef.current = analyserAudio;
+
+    // Sync analyser clone with main playback
+    audio.addEventListener('play', () => {
+      analyserAudio.currentTime = audio.currentTime;
+      void analyserAudio.play().catch(() => {});
+    });
+    audio.addEventListener('pause', () => { analyserAudio.pause(); });
+    audio.addEventListener('seeking', () => { analyserAudio.currentTime = audio.currentTime; });
 
     ws.on('ready', (dur: number) => {
       if (loadId !== waveLoadIdRef.current) return;
@@ -1497,6 +1519,7 @@ export default function VersionPage() {
                     if (res.ok) {
                       const { imageUrl } = await res.json();
                       setSong(prev => prev ? { ...prev, image_url: imageUrl } : prev);
+                      songImageRef.current = imageUrl;
                     }
                   }}
                 />
