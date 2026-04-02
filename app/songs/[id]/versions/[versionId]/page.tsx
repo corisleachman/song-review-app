@@ -672,12 +672,23 @@ export default function VersionPage() {
 
   useEffect(() => {
     if (isPlaying) {
-      void ensureReactiveAudioGraph(analyserAudioRef.current).then(ready => {
-        if (ready) {
-          reactivePlayingRef.current = true;
-          startReactiveDrawing();
-        }
-      });
+      // On mobile, skip createMediaElementSource — it hands control of the
+      // audio element to the Web Audio API context, which iOS suspends when
+      // the app is backgrounded, killing playback. Mobile gets the reactive
+      // animation driven by the existing animation loop without FFT data.
+      const isMobile = typeof navigator !== 'undefined' &&
+        /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        reactivePlayingRef.current = true;
+        startReactiveDrawing();
+      } else {
+        void ensureReactiveAudioGraph(analyserAudioRef.current).then(ready => {
+          if (ready) {
+            reactivePlayingRef.current = true;
+            startReactiveDrawing();
+          }
+        });
+      }
     } else {
       reactivePlayingRef.current = false;
       stopReactiveDrawing();
