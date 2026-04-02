@@ -870,25 +870,10 @@ export default function VersionPage() {
     const audio = ws.getMediaElement() as HTMLAudioElement;
     audioRef.current = audio;
 
-    // Muted clone for Web Audio API analyser (crossOrigin required for
-    // createMediaElementSource, but muted so iOS background policy doesn't apply)
-    if (analyserAudioRef.current) {
-      try { analyserAudioRef.current.pause(); analyserAudioRef.current.src = ''; } catch {}
-    }
-    const analyserAudio = new Audio();
-    analyserAudio.crossOrigin = 'anonymous';
-    analyserAudio.preload = 'auto';
-    analyserAudio.muted = true;
-    analyserAudio.src = url;
-    analyserAudioRef.current = analyserAudio;
-
-    // Sync analyser clone with main playback
-    audio.addEventListener('play', () => {
-      analyserAudio.currentTime = audio.currentTime;
-      void analyserAudio.play().catch(() => {});
-    });
-    audio.addEventListener('pause', () => { analyserAudio.pause(); });
-    audio.addEventListener('seeking', () => { analyserAudio.currentTime = audio.currentTime; });
+    // Store the main audio element — used directly by ensureReactiveAudioGraph.
+    // Supabase public bucket URLs include CORS headers (Access-Control-Allow-Origin: *)
+    // so createMediaElementSource works on this element without crossOrigin set.
+    analyserAudioRef.current = audio;
 
     ws.on('ready', (dur: number) => {
       if (loadId !== waveLoadIdRef.current) return;
