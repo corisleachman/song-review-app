@@ -1,4 +1,4 @@
-# Audio Player Fixes — Mobile & Background Playback
+# Audio Player Fixes — Mobile, Background Playback & Performance
 
 **Applies to:** `app/songs/[id]/versions/[versionId]/page.tsx`  
 **Date resolved:** April 2026  
@@ -175,11 +175,24 @@ ws.on('ready', (dur: number) => {
       void precomputeFrequencyFrames(audioBuffer).then(frames => {
         if (loadId === waveLoadIdRef.current) {
           precomputedFreqRef.current = frames;
+          // If playback already started while pre-computation was running,
+          // kick off reactive drawing now that frames are available
+          if (reactivePlayingRef.current) {
+            startReactiveDrawingRef.current?.();
+          }
         }
       });
     }
   }
 });
+```
+
+**Important:** `startReactiveDrawing` is a `useCallback` not in `initWaveSurfer`'s closure. Use a ref to access it:
+
+```tsx
+const startReactiveDrawingRef = useRef<(() => void) | null>(null);
+// After startReactiveDrawing is defined:
+startReactiveDrawingRef.current = startReactiveDrawing;
 ```
 
 ### In the reactive drawing loop
@@ -309,6 +322,122 @@ if ('mediaSession' in navigator) {
 
 ---
 
+## Bug 6 — First song visit hangs with flashing "Loading…" text
+
+**Symptom:** On a fresh page load, navigating to the first song always failed — the waveform showed "Loading…" indefinitely. Reloading the page fixed it. Every subsequent song worked first time without reloading.
+
+**Root cause:** While `loading === true`, the component renders only a spinner — the `<div ref={waveformRef}>` does not exist in the DOM. The `audioUrl` state is set at the same time as `setLoading(false)` in the same async block, but the WaveSurfer init `useEffect` fires on `audioUrl` change before React has re-rendered to remove the spinner. A `tryInit` polling loop retried 20 times over 1 second, never finding `waveformRef.current`, and silently gave up.
+
+On subsequent visits the component rendered faster (assets cached), so the ref was ready before retries exhausted.
+
+**Fix:** Guard the WaveSurfer init effect against the loading state:
+
+```tsx
+useEffect(() => {
+  // Don't attempt init while the page is still loading — the waveform
+  // div doesn't exist in the DOM until loading=false removes the spinner.
+  if (!audioUrl || loading) return;
+
+  // ... rest of init
+}, [audioUrl, waveReloadNonce, loading]);
+```
+
+When `loading` flips to `false`, React re-renders (waveform div appears in DOM), the effect re-runs with `audioUrl` still set, and `initWaveSurfer` finds `waveformRef.current` immediately on the first try.
+
+---
+
+## Bug 7 — Reactive visualisation lost after lazy audio loading was introduced
+
+**Symptom:** After implementing lazy audio loading (Bug 8), the reactive frequency bars stopped animating entirely on mobile.
+
+**Root cause:** Two issues combined:
+
+1. The play button had `disabled={!isReady}` — since `isReady` is only `true` after `ws.load()` completes, and `ws.load()` now only happens on first play press, the button was permanently disabled before being pressed. Users saw a warning flash when tapping it.
+
+2. Pre-computation of frequency frames (needed for mobile reactive bars) is async — takes 2-3 seconds after `ready` fires. But `ws.play()` fires immediately after `ready`, so `isPlaying` became `true` and `startReactiveDrawing()` was called while `precomputedFreqRef.current` was still `null`. The drawing function found neither a live analyser nor pre-computed frames, and returned immediately.
+
+**Fix — Part 1: Button disabled state**
+
+```tsx
+// Before (broken): disabled before audio ever loads
+disabled={!isReady}
+
+// After (correct): only disabled while actively loading after first press
+disabled={audioLoadedRef.current && !isReady}
+```
+
+**Fix — Part 2: Start reactive drawing when pre-computation finishes**
+
+If playback starts before pre-computation finishes, the `.then()` callback kicks off drawing once frames are ready:
+
+```tsx
+void precomputeFrequencyFrames(audioBuffer).then(frames => {
+  if (loadId === waveLoadIdRef.current) {
+    precomputedFreqRef.current = frames;
+    // If already playing, start the reactive animation now
+    if (reactivePlayingRef.current) {
+      startReactiveDrawingRef.current?.();
+    }
+  }
+});
+```
+
+Users may see ~2-3 seconds of idle colour animation at the start of a song on mobile before the frequency-reactive bars kick in. This is expected with lazy loading.
+
+---
+
+## Bug 8 — Excessive Supabase Storage egress from repeated MP3 downloads
+
+**Symptom:** Supabase cached egress exceeded the 5GB free plan quota (6.1GB used in one billing cycle) from just two users testing the app. The entire amount came from `Song-collab` project audio file delivery.
+
+**Root cause:** WaveSurfer called `ws.load(url)` immediately on page initialisation, downloading the full MP3 on every page view regardless of whether the user pressed play. During active testing — loading pages, reviewing comments, checking waveforms — every visit triggered a full MP3 download from Supabase Storage.
+
+**Fix — Lazy audio loading:**
+
+Decouple WaveSurfer initialisation from audio loading. Create the WaveSurfer instance without calling `ws.load()`. Only fetch the audio on the first play button press.
+
+```tsx
+// audioLoadedRef tracks whether ws.load() has been called
+const audioLoadedRef = useRef(false);
+
+// In initWaveSurfer — create WaveSurfer but DO NOT call ws.load()
+const ws = WaveSurfer.create({ container, ...options });
+wavesurferRef.current = ws;
+// ← no ws.load(url) here
+
+// In the play button onClick:
+onClick={() => {
+  const ws = wavesurferRef.current;
+  if (!ws || !audioUrl) return;
+  if (!audioLoadedRef.current) {
+    // First press: load audio then play
+    audioLoadedRef.current = true;
+    void ws.load(audioUrl).catch((err: Error) => {
+      const msg = err?.message || String(err);
+      if (!msg.toLowerCase().includes('aborted')) {
+        setWaveErr(msg || 'Failed to load audio. Please try again.');
+      }
+    });
+    ws.once('ready', () => { void ws.play(); });
+  } else {
+    // Subsequent presses: already loaded, just play/pause
+    ws.playPause();
+  }
+}}
+// Button is only disabled while actively loading after first press:
+disabled={audioLoadedRef.current && !isReady}
+```
+
+Reset `audioLoadedRef` in:
+- The init effect cleanup (version switch resets it)
+- `retryWaveform()` (error retry resets it)
+
+**Expected impact:** ~80-90% reduction in Supabase Storage egress for typical testing sessions where pages are visited without always playing audio.
+
+**Note — future improvement (v2):** Pre-compute waveform peaks at upload time and store as JSON in the `song_versions` table. The waveform shape would then render from stored peak data without downloading the MP3 at all, and audio would only be fetched on play. This is the correct long-term architecture for a consumer-facing product.
+
+---
+
 ## Summary — Architecture Rules
 
 | Rule | Reason |
@@ -317,8 +446,11 @@ if ('mediaSession' in navigator) {
 | Never pass `media:` to WaveSurfer with a manually created `Audio()` | Same reason — use `ws.getMediaElement()` after creation |
 | Never call `createMediaElementSource()` on mobile | Hands element ownership to AudioContext, iOS suspends it |
 | Use `OfflineAudioContext` for frequency pre-computation | Not subject to iOS backgrounding rules, runs to completion |
-| Only `[audioUrl, waveReloadNonce]` in the WaveSurfer init effect deps | Other callbacks cause spurious re-runs → double-audio |
+| Only `[audioUrl, waveReloadNonce, loading]` in WaveSurfer init effect deps | Other callbacks cause spurious re-runs → double-audio |
 | Call `stopPlayback()` on every navigation, never `destroy()` | Pause without destroying preserves background audio state |
+| Don't call `ws.load()` on init — call it on first play press | Prevents full MP3 download on every page view |
+| Guard WaveSurfer init effect with `loading` state | `waveformRef` div not in DOM while loading spinner renders |
+| `disabled={audioLoadedRef.current && !isReady}` on play button | Button must be pressable before audio loads |
 
 ---
 
@@ -333,3 +465,7 @@ if ('mediaSession' in navigator) {
 | `dc5f412` | Skip Web Audio API graph on mobile (interim step) |
 | `ee3232b` | Pre-computed frequency frames — full solution |
 | `6334ce3` | Fix useEffect deps — stop double-audio on play/pause |
+| `62cc6f8` | Fix first-load hang — guard init effect with loading state |
+| `bc9efa0` | Lazy audio loading — only fetch MP3 on first play press |
+| `f121167` | Fix play button disabled before audio loaded |
+| `3903a8d` | Restore reactive visualisation after lazy load |
