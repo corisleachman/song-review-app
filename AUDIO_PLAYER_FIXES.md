@@ -438,6 +438,52 @@ Reset `audioLoadedRef` in:
 
 ---
 
+## Bug 9 — Browser cache not persisting between sessions (signed URL expiry)
+
+**Symptom:** Even with lazy loading in place, returning to a previously played song in a new browser session would re-download the full MP3 from Supabase rather than serving it from cache.
+
+**Root cause:** Signed URLs contain a time-limited token in the URL string and expire after 1 hour. Because browsers cache by URL, each new session generated a new signed URL → new URL string → cache miss → full download again. The lazy loading saving was being completely undone on return visits.
+
+**Fix:** Switch from signed URLs to public URLs for audio file delivery:
+
+```tsx
+// Before (broken caching):
+const { data: signed } = await supabase.storage
+  .from('song-files')
+  .createSignedUrl(versionRes.data.file_path, 3600);
+if (signed?.signedUrl) {
+  setAudioUrl(signed.signedUrl);
+} else {
+  const { data: pub } = supabase.storage
+    .from('song-files')
+    .getPublicUrl(versionRes.data.file_path);
+  setAudioUrl(pub.publicUrl);
+}
+
+// After (permanent, cacheable):
+const { data: pub } = supabase.storage
+  .from('song-files')
+  .getPublicUrl(versionRes.data.file_path);
+setAudioUrl(pub.publicUrl);
+```
+
+**Why this is safe:** Each song version has a unique file path in Supabase Storage (e.g. `songs/[songId]/version-1/track.mp3`, `songs/[songId]/version-2/track-v2.mp3`), so every version has a completely different public URL. There is zero risk of the browser serving the wrong audio from cache — Song A v1, Song A v2, and Song B all have distinct permanent URLs.
+
+**Why public URLs are appropriate here:** The `song-files` bucket is already public. Signed URLs are only necessary when you need to gate access to paid content behind a short-lived token (e.g. a streaming platform where sharing a URL would bypass a paywall). For a private two-person review app — and even for a consumer-facing app where login is required — public URLs are the standard and correct approach.
+
+**Combined effect of Bug 8 + Bug 9 fixes:**
+
+| Scenario | Supabase egress |
+|---|---|
+| Visit song page, don't press play | Zero |
+| Press play — first time ever on this device | One download |
+| Press play again, same session | Zero (browser cache) |
+| Return to same song tomorrow | Zero (browser cache, permanent URL) |
+| Different device, first play | One download |
+| After clearing browser cache | One download |
+
+---
+
 ## Summary — Architecture Rules
 
 | Rule | Reason |
@@ -449,6 +495,7 @@ Reset `audioLoadedRef` in:
 | Only `[audioUrl, waveReloadNonce, loading]` in WaveSurfer init effect deps | Other callbacks cause spurious re-runs → double-audio |
 | Call `stopPlayback()` on every navigation, never `destroy()` | Pause without destroying preserves background audio state |
 | Don't call `ws.load()` on init — call it on first play press | Prevents full MP3 download on every page view |
+| Use public URLs, not signed URLs, for audio delivery | Signed URLs expire hourly — new URL = cache miss = re-download every session |
 | Guard WaveSurfer init effect with `loading` state | `waveformRef` div not in DOM while loading spinner renders |
 | `disabled={audioLoadedRef.current && !isReady}` on play button | Button must be pressable before audio loads |
 
@@ -469,3 +516,4 @@ Reset `audioLoadedRef` in:
 | `bc9efa0` | Lazy audio loading — only fetch MP3 on first play press |
 | `f121167` | Fix play button disabled before audio loaded |
 | `3903a8d` | Restore reactive visualisation after lazy load |
+| `05b666f` | Switch to public URLs — browser cache persists across sessions |
