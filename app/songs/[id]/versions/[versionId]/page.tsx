@@ -338,6 +338,7 @@ export default function VersionPage() {
   const reactiveAnimationFrameRef = useRef<number | null>(null);
   const reactiveRefreshTimeoutRef = useRef<number | null>(null);
   const reactivePlayingRef = useRef(false);
+  const startReactiveDrawingRef = useRef<(() => void) | null>(null);
 
   const [identity, setIdentity] = useState('');
   const [song, setSong] = useState<Song | null>(null);
@@ -620,6 +621,9 @@ export default function VersionPage() {
     stopReactiveDrawing();
     reactiveAnimationFrameRef.current = requestAnimationFrame(render);
   }, [drawReactiveIdle, getReactiveCanvasEntries, reactivePalette, stopReactiveDrawing]);
+
+  // Keep ref in sync so initWaveSurfer can call it without being in deps
+  startReactiveDrawingRef.current = startReactiveDrawing;
 
   const ensureReactiveAudioGraph = useCallback(async (audio: HTMLAudioElement | null) => {
     if (!audio) return false;
@@ -1011,6 +1015,11 @@ export default function VersionPage() {
           void precomputeFrequencyFrames(audioBuffer).then(frames => {
             if (loadId === waveLoadIdRef.current) {
               precomputedFreqRef.current = frames;
+              // If playback already started while pre-computation was running,
+              // kick off reactive drawing now that frames are available
+              if (reactivePlayingRef.current) {
+                startReactiveDrawingRef.current?.();
+              }
             }
           });
         }
