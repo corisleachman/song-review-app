@@ -316,6 +316,7 @@ export default function VersionPage() {
   const wavesurferRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const analyserAudioRef = useRef<HTMLAudioElement | null>(null); // points at main audio for Web Audio API
+  const audioLoadedRef = useRef(false); // true once ws.load() has been called
   // Pre-computed frequency data for mobile reactive animation (avoids live AudioContext)
   const precomputedFreqRef = useRef<{ freqFrames: Uint8Array[]; timeFrames: Uint8Array[]; fps: number } | null>(null);
   const waveLoadIdRef = useRef(0);
@@ -655,6 +656,7 @@ export default function VersionPage() {
     if (mode === 'manual') {
       waveAutoRetryUsedRef.current = false;
     }
+    audioLoadedRef.current = false; // reset so load is triggered on next play press
     setWaveErr(null);
     setIsReady(false);
     setIsRetryingWave(mode === 'auto');
@@ -1068,14 +1070,9 @@ export default function VersionPage() {
       });
     });
 
-    // Catch aborted/stale loads so teardown races do not surface as runtime errors.
-    void ws.load(url).catch((error: Error) => {
-      const message = error?.message || String(error);
-      if (loadId !== waveLoadIdRef.current || message.toLowerCase().includes('aborted')) return;
-      console.error('WaveSurfer load error:', error);
-      handleWaveFailure(message);
-    });
     wavesurferRef.current = ws;
+    // Don't call ws.load() here — audio is loaded lazily on first play press.
+    // This prevents downloading the MP3 on every page view.
   }, [clearWaveTimers, retryWaveform]);
 
   const stopPlayback = useCallback(() => {
@@ -1125,6 +1122,7 @@ export default function VersionPage() {
     // will see the mismatch and abort before creating audio.
     waveLoadIdRef.current += 1;
     waveAutoRetryUsedRef.current = false;
+    audioLoadedRef.current = false;
     setIsReady(false);
     setWaveErr(null);
     setIsRetryingWave(false);
@@ -1150,6 +1148,7 @@ export default function VersionPage() {
       clearTimeout(debounceTimer);
       clearWaveTimers();
       waveLoadIdRef.current += 1;  // abort any pending initWaveSurfer
+      audioLoadedRef.current = false;
       stopPlayback();
       if (wavesurferRef.current) {
         try { wavesurferRef.current.destroy(); } catch {}
@@ -1590,7 +1589,26 @@ export default function VersionPage() {
               <div className={styles.heroControls}>
                 <button
                   className={styles.heroPlayBtn}
-                  onClick={() => wavesurferRef.current?.playPause()}
+                  onClick={() => {
+                    const ws = wavesurferRef.current;
+                    if (!ws || !audioUrl) return;
+                    if (!audioLoadedRef.current) {
+                      // First press — load the audio then play
+                      audioLoadedRef.current = true;
+                      void ws.load(audioUrl).catch((err: Error) => {
+                        const msg = err?.message || String(err);
+                        if (!msg.toLowerCase().includes('aborted')) {
+                          setWaveErr(msg || 'Failed to load audio. Please try again.');
+                        }
+                      });
+                      // WaveSurfer will auto-play once ready if we set this flag,
+                      // but it doesn't have an autoPlay option for load() —
+                      // so listen for ready once and play
+                      ws.once('ready', () => { void ws.play(); });
+                    } else {
+                      ws.playPause();
+                    }
+                  }}
                   disabled={!isReady}
                 >
                   {isPlaying
@@ -1603,7 +1621,7 @@ export default function VersionPage() {
                   <span className={styles.heroTimeSep}> / </span>
                   {formatTimestamp(Math.floor(duration))}
                 </span>
-                {!isReady && audioUrl && !waveErr && (
+                {!isReady && audioUrl && !waveErr && audioLoadedRef.current && (
                   <span className={styles.loadingWave}>
                     {isRetryingWave ? 'Retrying…' : 'Loading…'}
                   </span>
@@ -1730,7 +1748,7 @@ export default function VersionPage() {
                     </div>
                   )}
                 </div>
-                {!pendingTimestamp && <p className={styles.waveHint}>click anywhere on the waveform to leave a comment</p>}
+                {!pendingTimestamp && <p className={styles.waveHint}>{audioLoadedRef.current ? 'click anywhere on the waveform to leave a comment' : 'press play to load audio'}</p>}
             </div>
 
           </div>{/* /heroContent */}
