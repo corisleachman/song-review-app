@@ -873,13 +873,11 @@ export default function VersionPage() {
       setVersions(versionsRes.data || []);
 
       if (versionRes.data?.file_path) {
-        const { data: signed } = await supabase.storage.from('song-files').createSignedUrl(versionRes.data.file_path, 3600);
-        if (signed?.signedUrl) {
-          setAudioUrl(signed.signedUrl);
-        } else {
-          const { data: pub } = supabase.storage.from('song-files').getPublicUrl(versionRes.data.file_path);
-          setAudioUrl(pub.publicUrl);
-        }
+        // Use stable public URL — permanent, cacheable by browser across sessions.
+        // Each version has a unique file path so there's no risk of cache collision.
+        // Signed URLs expire hourly generating a new URL each session, defeating caching.
+        const { data: pub } = supabase.storage.from('song-files').getPublicUrl(versionRes.data.file_path);
+        setAudioUrl(pub.publicUrl);
       }
       await Promise.all([loadThreads(), loadActions(), loadTasks()]);
     } finally {
