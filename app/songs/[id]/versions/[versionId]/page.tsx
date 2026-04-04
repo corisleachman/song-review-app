@@ -1609,7 +1609,7 @@ export default function VersionPage() {
                       ws.playPause();
                     }
                   }}
-                  disabled={!isReady}
+                  disabled={audioLoadedRef.current && !isReady}
                 >
                   {isPlaying
                     ? <svg width="20" height="20" viewBox="0 0 20 20" fill="white"><rect x="3" y="2" width="5" height="16" rx="1.5"/><rect x="12" y="2" width="5" height="16" rx="1.5"/></svg>
