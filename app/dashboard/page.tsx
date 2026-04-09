@@ -91,29 +91,70 @@ function DashboardContent() {
   }
 
   async function loadSongs(currentIdentity: 'Coris' | 'Al' | null = identity) {
-    const { data: songsData } = await supabase
+    let { data: songsData, error: songsError } = await supabase
       .from('songs')
       .select('id, title, image_url, created_at')
       .order('created_at', { ascending: false });
 
-    if (!songsData) return;
+    // V2 bootstrap safety: some fresh databases were initialized without `songs.image_url`.
+    // Fall back to a minimal select so song lists still load while schema catches up.
+    const isMissingImageUrlColumn =
+      songsError?.code === '42703' ||
+      songsError?.message?.toLowerCase().includes('image_url');
 
-    const { data: versionsData } = await supabase
+    if (songsError && isMissingImageUrlColumn) {
+      const fallback = await supabase
+        .from('songs')
+        .select('id, title, created_at')
+        .order('created_at', { ascending: false });
+
+      songsData = (fallback.data ?? []).map(song => ({ ...song, image_url: null }));
+      songsError = fallback.error;
+    }
+
+    if (songsError) {
+      console.error('Dashboard songs query failed:', songsError);
+      setSongs([]);
+      return;
+    }
+
+    if (!songsData) {
+      setSongs([]);
+      return;
+    }
+
+    const { data: versionsData, error: versionsError } = await supabase
       .from('song_versions')
       .select('id, song_id, version_number, label, created_at')
       .order('version_number', { ascending: false });
 
-    const { data: threadsData } = await supabase
+    if (versionsError) {
+      console.error('Dashboard versions query failed:', versionsError);
+    }
+
+    const { data: threadsData, error: threadsError } = await supabase
       .from('comment_threads')
       .select('id, song_version_id, created_at, updated_at');
 
-    const { data: commentsData } = await supabase
+    if (threadsError) {
+      console.error('Dashboard threads query failed:', threadsError);
+    }
+
+    const { data: commentsData, error: commentsError } = await supabase
       .from('comments')
       .select('id, thread_id');
 
-    const { data: actionsActivityData } = await supabase
+    if (commentsError) {
+      console.error('Dashboard comments query failed:', commentsError);
+    }
+
+    const { data: actionsActivityData, error: actionsError } = await supabase
       .from('actions')
       .select('song_id, created_at, updated_at');
+
+    if (actionsError) {
+      console.error('Dashboard actions query failed:', actionsError);
+    }
 
     const seenMap = typeof window !== 'undefined' && currentIdentity
       ? JSON.parse(window.localStorage.getItem(getSongSeenStorageKey(currentIdentity)) || '{}') as Record<string, string>
