@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { supabaseServer } from '@/lib/supabaseServer';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 function formatTimestamp(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
@@ -11,6 +9,7 @@ function formatTimestamp(seconds: number): string {
 }
 
 export async function POST(req: NextRequest) {
+  const resend = new Resend(process.env.RESEND_API_KEY);
   try {
     const { threadId, songId, versionId, timestamp, author, commentText, isReply } = await req.json();
 
