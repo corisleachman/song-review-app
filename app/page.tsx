@@ -35,7 +35,7 @@ function LoginContent() {
       <div className={styles.content}>
         <div className={styles.card}>
           <div className={styles.header}>
-            <h1 className={styles.title}>🎵 Song Review</h1>
+            <h1 className={styles.title}>Rebel HQ</h1>
             <p className={styles.subtitle}>Musings of The Ramble Brothers</p>
           </div>
 

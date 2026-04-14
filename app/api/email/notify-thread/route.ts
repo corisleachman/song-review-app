@@ -74,7 +74,7 @@ Click here to view and reply: ${deepLink}
     `.trim();
 
     const result = await resend.emails.send({
-      from: 'Song Review <onboarding@resend.dev>',
+      from: 'Rebel HQ <onboarding@resend.dev>',
       to: recipient,
       subject,
       text: emailText,
