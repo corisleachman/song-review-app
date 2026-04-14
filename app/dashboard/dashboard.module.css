@@ -126,6 +126,7 @@
 
 .panelHeader {
   display: flex;
+  flex-direction: row-reverse;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 20px;
@@ -909,7 +910,7 @@
   .hideMobile { display: none; }
   .viewToggle { display: none; }
   .panelHeader {
-    flex-direction: column;
+    flex-direction: column-reverse;
     align-items: flex-start;
     gap: 12px;
     margin-bottom: 16px;

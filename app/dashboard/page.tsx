@@ -468,20 +468,6 @@ function DashboardContent() {
         {/* Songs panel */}
         <div className={`${styles.songsPanel} ${mobileTab === 'actions' ? styles.hideMobile : ''}`}>
           <div className={styles.panelHeader}>
-            <div className={styles.stageTabs}>
-              {stageTabs.map(tab => (
-                <button
-                  key={tab.value}
-                  className={`${styles.stageTab} ${stageFilter === tab.value ? styles.stageTabActive : ''}`}
-                  onClick={() => setStageFilter(tab.value)}
-                >
-                  {tab.label}
-                  {stageCounts[tab.value] > 0 && (
-                    <span className={styles.stageTabCount}>{stageCounts[tab.value]}</span>
-                  )}
-                </button>
-              ))}
-            </div>
             <div className={styles.headerRight}>
               <div className={styles.sortControl}>
                 <label className={styles.sortLabel} htmlFor="song-sort">
@@ -533,6 +519,20 @@ function DashboardContent() {
                 </svg>
                 New song
               </button>
+            </div>
+            <div className={styles.stageTabs}>
+              {stageTabs.map(tab => (
+                <button
+                  key={tab.value}
+                  className={`${styles.stageTab} ${stageFilter === tab.value ? styles.stageTabActive : ''}`}
+                  onClick={() => setStageFilter(tab.value)}
+                >
+                  {tab.label}
+                  {stageCounts[tab.value] > 0 && (
+                    <span className={styles.stageTabCount}>{stageCounts[tab.value]}</span>
+                  )}
+                </button>
+              ))}
             </div>
           </div>
 
