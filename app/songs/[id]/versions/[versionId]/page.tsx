@@ -351,6 +351,8 @@ export default function VersionPage() {
   const [loading, setLoading] = useState(true);
   const [isReady, setIsReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isLooping, setIsLooping] = useState(false);
+  const isLoopingRef = useRef(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [waveErr, setWaveErr] = useState<string | null>(null);
@@ -1049,7 +1051,14 @@ export default function VersionPage() {
         navigator.mediaSession.playbackState = 'paused';
       }
     });
-    ws.on('finish', () => setIsPlaying(false));
+    ws.on('finish', () => {
+      if (isLoopingRef.current) {
+        ws.seekTo(0);
+        void ws.play();
+      } else {
+        setIsPlaying(false);
+      }
+    });
     ws.on('error', (e: Error) => {
       const message = e?.message || String(e);
       if (loadId !== waveLoadIdRef.current || message.toLowerCase().includes('aborted')) return;
@@ -1647,6 +1656,23 @@ export default function VersionPage() {
                     )}
                   </span>
                 )}
+                <button
+                  type="button"
+                  className={`${styles.loopBtn} ${isLooping ? styles.loopBtnActive : ''}`}
+                  onClick={() => {
+                    const next = !isLooping;
+                    setIsLooping(next);
+                    isLoopingRef.current = next;
+                  }}
+                  title={isLooping ? 'Loop on' : 'Loop off'}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="17 1 21 5 17 9"/>
+                    <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+                    <polyline points="7 23 3 19 7 15"/>
+                    <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+                  </svg>
+                </button>
               </div>
 
             </div>{/* /heroLeft */}
