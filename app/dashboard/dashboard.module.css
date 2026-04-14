@@ -140,6 +140,48 @@
   text-transform: uppercase;
 }
 
+.stageTabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.stageTab {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: transparent;
+  color: rgba(255,255,255,0.35);
+  font-size: 0.72rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+.stageTab:hover {
+  color: rgba(255,255,255,0.65);
+  border-color: rgba(255,255,255,0.25);
+}
+.stageTabActive {
+  background: rgba(255,20,147,0.15);
+  border-color: rgba(255,20,147,0.4);
+  color: #ff1493;
+}
+.stageTabActive:hover {
+  color: #ff1493;
+  border-color: rgba(255,20,147,0.6);
+}
+.stageTabCount {
+  font-size: 0.65rem;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
 .sortControl {
   display: flex;
   align-items: center;
