@@ -124,12 +124,18 @@
     linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0));
 }
 
+.songsControls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
 .panelHeader {
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
+  justify-content: flex-end;
   gap: 12px;
 }
 
@@ -146,7 +152,6 @@
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
-  margin-bottom: 20px;
 }
 
 .stageTab {
@@ -912,7 +917,6 @@
   .viewToggle { display: none; }
   .panelHeader {
     align-items: center;
-    margin-bottom: 12px;
   }
   .stageTabs {
     flex-wrap: nowrap;
@@ -921,7 +925,6 @@
     scrollbar-width: none;
     width: 100%;
     padding-bottom: 2px;
-    margin-bottom: 16px;
   }
   .stageTabs::-webkit-scrollbar { display: none; }
   .headerRight {

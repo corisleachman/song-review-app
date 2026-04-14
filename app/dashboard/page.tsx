@@ -467,7 +467,7 @@ function DashboardContent() {
       <div className={styles.body}>
         {/* Songs panel */}
         <div className={`${styles.songsPanel} ${mobileTab === 'actions' ? styles.hideMobile : ''}`}>
-          <div className={styles.panelHeader}>
+          <div className={styles.songsControls}>
             <div className={styles.stageTabs}>
               {stageTabs.map(tab => (
                 <button
@@ -482,57 +482,59 @@ function DashboardContent() {
                 </button>
               ))}
             </div>
-            <div className={styles.headerRight}>
-              <div className={styles.sortControl}>
-                <label className={styles.sortLabel} htmlFor="song-sort">
-                  Sort
-                </label>
-                <select
-                  id="song-sort"
-                  className={styles.sortSelect}
-                  value={songSort}
-                  onChange={e => setSongSort(e.target.value as 'activity' | 'upload' | 'title')}
-                >
-                  <option value="activity">Recent activity</option>
-                  <option value="upload">Latest upload</option>
-                  <option value="title">Title</option>
-                </select>
-              </div>
-              {/* View toggle — desktop only */}
-              <div className={styles.viewToggle}>
-                <button
-                  className={`${styles.viewBtn} ${viewMode === 'grid' ? styles.viewBtnActive : ''}`}
-                  onClick={() => setViewMode('grid')}
-                  title="Grid view"
-                >
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/>
-                    <rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/>
-                    <rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/>
-                    <rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/>
+            <div className={styles.panelHeader}>
+              <div className={styles.headerRight}>
+                <div className={styles.sortControl}>
+                  <label className={styles.sortLabel} htmlFor="song-sort">
+                    Sort
+                  </label>
+                  <select
+                    id="song-sort"
+                    className={styles.sortSelect}
+                    value={songSort}
+                    onChange={e => setSongSort(e.target.value as 'activity' | 'upload' | 'title')}
+                  >
+                    <option value="activity">Recent activity</option>
+                    <option value="upload">Latest upload</option>
+                    <option value="title">Title</option>
+                  </select>
+                </div>
+                {/* View toggle — desktop only */}
+                <div className={styles.viewToggle}>
+                  <button
+                    className={`${styles.viewBtn} ${viewMode === 'grid' ? styles.viewBtnActive : ''}`}
+                    onClick={() => setViewMode('grid')}
+                    title="Grid view"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/>
+                      <rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/>
+                      <rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/>
+                      <rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/>
+                    </svg>
+                  </button>
+                  <button
+                    className={`${styles.viewBtn} ${viewMode === 'list' ? styles.viewBtnActive : ''}`}
+                    onClick={() => setViewMode('list')}
+                    title="List view"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <rect x="1" y="1" width="3" height="3" rx="0.5" fill="currentColor"/>
+                      <rect x="6" y="2" width="7" height="1.5" rx="0.75" fill="currentColor"/>
+                      <rect x="1" y="5.75" width="3" height="3" rx="0.5" fill="currentColor"/>
+                      <rect x="6" y="6.75" width="7" height="1.5" rx="0.75" fill="currentColor"/>
+                      <rect x="1" y="10.5" width="3" height="3" rx="0.5" fill="currentColor"/>
+                      <rect x="6" y="11.5" width="7" height="1.5" rx="0.75" fill="currentColor"/>
+                    </svg>
+                  </button>
+                </div>
+                <button className={styles.newBtn} onClick={() => setShowNewModal(true)}>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                   </svg>
-                </button>
-                <button
-                  className={`${styles.viewBtn} ${viewMode === 'list' ? styles.viewBtnActive : ''}`}
-                  onClick={() => setViewMode('list')}
-                  title="List view"
-                >
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <rect x="1" y="1" width="3" height="3" rx="0.5" fill="currentColor"/>
-                    <rect x="6" y="2" width="7" height="1.5" rx="0.75" fill="currentColor"/>
-                    <rect x="1" y="5.75" width="3" height="3" rx="0.5" fill="currentColor"/>
-                    <rect x="6" y="6.75" width="7" height="1.5" rx="0.75" fill="currentColor"/>
-                    <rect x="1" y="10.5" width="3" height="3" rx="0.5" fill="currentColor"/>
-                    <rect x="6" y="11.5" width="7" height="1.5" rx="0.75" fill="currentColor"/>
-                  </svg>
+                  New song
                 </button>
               </div>
-              <button className={styles.newBtn} onClick={() => setShowNewModal(true)}>
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-                New song
-              </button>
             </div>
           </div>
 
