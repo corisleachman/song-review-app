@@ -17,12 +17,23 @@ function LoginContent() {
     setError('');
     setIsLoading(true);
 
-    if (password === 'further_forever') {
-      setAuth();
-      const redirectTo = searchParams.get('redirectTo') || '/identify';
-      window.location.assign(redirectTo);
-    } else {
-      setError('Incorrect password');
+    try {
+      const res = await fetch('/api/auth/verify-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAuth();
+        const redirectTo = searchParams.get('redirectTo') || '/identify';
+        window.location.assign(redirectTo);
+      } else {
+        setError('Incorrect password');
+        setIsLoading(false);
+      }
+    } catch {
+      setError('Something went wrong. Please try again.');
       setIsLoading(false);
     }
   };
