@@ -1,19 +1,9 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { getAuth, setIdentity } from '@/lib/auth';
+import { setIdentity } from '@/lib/auth';
 import styles from './identify.module.css';
 
 export default function IdentifyPage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!getAuth()) {
-      router.push('/');
-    }
-  }, [router]);
-
   const handleSelectIdentity = (identity: 'Coris' | 'Al') => {
     setIdentity(identity);
     window.location.assign('/dashboard');
