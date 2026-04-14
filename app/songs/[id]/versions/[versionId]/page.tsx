@@ -53,10 +53,13 @@ interface Version {
   created_at?: string;
 }
 
+type Stage = 'early_stage' | 'in_production' | 'completed';
+
 interface Song {
   id: string;
   title: string;
   image_url: string | null;
+  stage: Stage | null;
 }
 
 type Rgb = {
@@ -864,7 +867,7 @@ export default function VersionPage() {
     setLoading(true);
     try {
       const [songRes, versionRes, versionsRes] = await Promise.all([
-        supabase.from('songs').select('id, title, image_url').eq('id', songId).single(),
+        supabase.from('songs').select('id, title, image_url, stage').eq('id', songId).single(),
         supabase.from('song_versions').select('*').eq('id', versionId).single(),
         supabase.from('song_versions').select('*').eq('song_id', songId).order('version_number', { ascending: true }),
       ]);
@@ -1561,6 +1564,28 @@ export default function VersionPage() {
             {/* Left: title, controls, waveform */}
             <div className={styles.heroLeft}>
               <div className={styles.heroMeta}>
+                {/* Stage pill — cycles on click */}
+                {song && (
+                  <button
+                    className={`${styles.stagePill} ${styles[`stagePill_${song.stage ?? 'early_stage'}`]}`}
+                    onClick={async () => {
+                      const stages: Stage[] = ['early_stage', 'in_production', 'completed'];
+                      const current = song.stage ?? 'early_stage';
+                      const next = stages[(stages.indexOf(current) + 1) % stages.length];
+                      setSong(prev => prev ? { ...prev, stage: next } : prev);
+                      await fetch(`/api/songs/${songId}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ stage: next }),
+                      });
+                    }}
+                    title="Click to change stage"
+                  >
+                    {(song.stage ?? 'early_stage') === 'early_stage' && 'Early Stage'}
+                    {song.stage === 'in_production' && 'In Production'}
+                    {song.stage === 'completed' && 'Completed'}
+                  </button>
+                )}
                 {version && (
                   editingLabel ? (
                     <input
