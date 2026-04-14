@@ -13,6 +13,7 @@ interface Song {
   title: string;
   image_url?: string | null;
   imageUploading?: boolean;
+  imageError?: string | null;
   created_at?: string;
   latestVersionId: string | null;
   latestVersionNumber: number | null;
@@ -255,19 +256,24 @@ function DashboardContent() {
   }
 
   async function uploadCoverArt(file: File, songId: string) {
-    // Mark uploading state on the card
-    setSongs(prev => prev.map(s => s.id === songId ? { ...s, imageUploading: true } : s));
+    // Clear any previous error and mark uploading
+    setSongs(prev => prev.map(s => s.id === songId ? { ...s, imageUploading: true, imageError: null } : s));
     try {
       const formData = new FormData();
       formData.append('songId', songId);
       formData.append('file', file);
       const res = await fetch('/api/songs/upload-image', { method: 'POST', body: formData });
-      if (!res.ok) { console.error('Image upload failed', await res.text()); return; }
+      if (!res.ok) {
+        const text = await res.text();
+        console.error('Image upload failed', text);
+        setSongs(prev => prev.map(s => s.id === songId ? { ...s, imageUploading: false, imageError: 'Upload failed' } : s));
+        return;
+      }
       const { imageUrl } = await res.json();
-      setSongs(prev => prev.map(s => s.id === songId ? { ...s, image_url: imageUrl, imageUploading: false } : s));
+      setSongs(prev => prev.map(s => s.id === songId ? { ...s, image_url: imageUrl, imageUploading: false, imageError: null } : s));
     } catch (e) {
       console.error('Image upload error:', e);
-      setSongs(prev => prev.map(s => s.id === songId ? { ...s, imageUploading: false } : s));
+      setSongs(prev => prev.map(s => s.id === songId ? { ...s, imageUploading: false, imageError: 'Upload failed' } : s));
     }
   }
 
@@ -509,6 +515,11 @@ function DashboardContent() {
                     {song.imageUploading ? (
                       <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(13,9,20,0.7)',borderRadius:8}}>
                         <div style={{width:18,height:18,border:'2px solid #ff1493',borderTopColor:'transparent',borderRadius:'50%',animation:'spin 0.7s linear infinite'}} />
+                      </div>
+                    ) : song.imageError ? (
+                      <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'rgba(13,9,20,0.85)',borderRadius:8,gap:4}}>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2l6 12H2L8 2z" stroke="#ff6b6b" strokeWidth="1.2" strokeLinejoin="round"/><path d="M8 7v3M8 11.5v.5" stroke="#ff6b6b" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                        <span style={{fontSize:'0.62rem',color:'#ff6b6b',textAlign:'center',lineHeight:1.2}}>Upload failed<br/>tap to retry</span>
                       </div>
                     ) : song.image_url ? (
                       <img
