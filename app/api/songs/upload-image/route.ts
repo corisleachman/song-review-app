@@ -14,25 +14,43 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Upload file to Supabase Storage
-    const fileName = `${songId}-${Date.now()}${file.name.substring(file.name.lastIndexOf('.'))}`;
+    // Derive extension — prefer MIME type, fall back to filename
+    const mimeToExt: Record<string, string> = {
+      'image/jpeg': '.jpg',
+      'image/jpg': '.jpg',
+      'image/png': '.png',
+      'image/gif': '.gif',
+      'image/webp': '.webp',
+      'image/avif': '.avif',
+      'image/heic': '.heic',
+    };
+    const extFromMime = mimeToExt[file.type?.toLowerCase()] ?? null;
+    const extFromName = file.name.includes('.')
+      ? file.name.substring(file.name.lastIndexOf('.')).toLowerCase()
+      : '';
+    const ext = extFromMime ?? extFromName ?? '.jpg';
+
+    // Stable filename — same song always overwrites the same file in storage
+    const fileName = `${songId}${ext}`;
     const fileBuffer = await file.arrayBuffer();
 
-    const { data, error: uploadError } = await supabaseServer.storage
+    const { error: uploadError } = await supabaseServer.storage
       .from('song-images')
       .upload(fileName, fileBuffer, {
-        contentType: file.type,
+        contentType: file.type || 'image/jpeg',
         upsert: true,
       });
 
     if (uploadError) throw uploadError;
 
-    // Get public URL
+    // Get public URL and append cache-buster so browsers show the new image immediately
     const { data: urlData } = supabaseServer.storage
       .from('song-images')
       .getPublicUrl(fileName);
 
-    // Update song with image URL
+    const imageUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+
+    // Update song with image URL (store without cache-buster — we add it fresh each upload)
     const { error: updateError } = await supabaseServer
       .from('songs')
       .update({ image_url: urlData.publicUrl })
@@ -41,7 +59,7 @@ export async function POST(req: NextRequest) {
     if (updateError) throw updateError;
 
     return NextResponse.json(
-      { imageUrl: urlData.publicUrl },
+      { imageUrl },
       { status: 200 }
     );
   } catch (error) {
