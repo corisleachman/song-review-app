@@ -8,6 +8,8 @@ import styles from './dashboard.module.css';
 
 const supabase = createClient();
 
+type Stage = 'early_stage' | 'in_production' | 'completed';
+
 interface Song {
   id: string;
   title: string;
@@ -15,6 +17,7 @@ interface Song {
   imageUploading?: boolean;
   imageError?: string | null;
   created_at?: string;
+  stage: Stage | null;
   latestVersionId: string | null;
   latestVersionNumber: number | null;
   latestVersionLabel: string | null;
@@ -59,6 +62,7 @@ function DashboardContent() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [actionFilter, setActionFilter] = useState<'all' | Action['status']>('all');
   const [songSort, setSongSort] = useState<'activity' | 'upload' | 'title'>('activity');
+  const [stageFilter, setStageFilter] = useState<'all' | Stage>('all');
 
   // New song modal
   const [showNewModal, setShowNewModal] = useState(false);
@@ -94,7 +98,7 @@ function DashboardContent() {
   async function loadSongs(currentIdentity: 'Coris' | 'Al' | null = identity) {
     const { data: songsData } = await supabase
       .from('songs')
-      .select('id, title, image_url, created_at')
+      .select('id, title, image_url, created_at, stage')
       .order('created_at', { ascending: false });
 
     if (!songsData) return;
@@ -151,6 +155,7 @@ function DashboardContent() {
         title: song.title,
         image_url: song.image_url ?? null,
         created_at: song.created_at,
+        stage: (song.stage as Stage) ?? null,
         latestVersionId: latest?.id ?? null,
         latestVersionNumber: latest?.version_number ?? null,
         latestVersionLabel: latest?.label ?? null,
@@ -393,6 +398,24 @@ function DashboardContent() {
     return left.title.localeCompare(right.title);
   });
 
+  const stageCounts: Record<'all' | Stage, number> = {
+    all: songs.length,
+    early_stage: songs.filter(s => (s.stage ?? 'early_stage') === 'early_stage').length,
+    in_production: songs.filter(s => s.stage === 'in_production').length,
+    completed: songs.filter(s => s.stage === 'completed').length,
+  };
+
+  const visibleSongs = stageFilter === 'all'
+    ? sortedSongs
+    : sortedSongs.filter(s => (s.stage ?? 'early_stage') === stageFilter);
+
+  const stageTabs: Array<{ value: 'all' | Stage; label: string }> = [
+    { value: 'all', label: 'All' },
+    { value: 'early_stage', label: 'Early Stage' },
+    { value: 'in_production', label: 'In Production' },
+    { value: 'completed', label: 'Completed' },
+  ];
+
   return (
     <div className={styles.page}>
       {/* Header */}
@@ -445,7 +468,20 @@ function DashboardContent() {
         {/* Songs panel */}
         <div className={`${styles.songsPanel} ${mobileTab === 'actions' ? styles.hideMobile : ''}`}>
           <div className={styles.panelHeader}>
-            <span className={styles.panelLabel}>Songs</span>
+            <div className={styles.stageTabs}>
+              {stageTabs.map(tab => (
+                <button
+                  key={tab.value}
+                  className={`${styles.stageTab} ${stageFilter === tab.value ? styles.stageTabActive : ''}`}
+                  onClick={() => setStageFilter(tab.value)}
+                >
+                  {tab.label}
+                  {stageCounts[tab.value] > 0 && (
+                    <span className={styles.stageTabCount}>{stageCounts[tab.value]}</span>
+                  )}
+                </button>
+              ))}
+            </div>
             <div className={styles.headerRight}>
               <div className={styles.sortControl}>
                 <label className={styles.sortLabel} htmlFor="song-sort">
@@ -502,9 +538,9 @@ function DashboardContent() {
 
           {loading ? (
             <p className={styles.emptyState}>Loading your songs and actions…</p>
-          ) : hasSongs ? (
+          ) : visibleSongs.length > 0 ? (
             <div className={`${styles.songsGrid} ${viewMode === 'list' ? styles.songsGridList : ''}`}>
-              {sortedSongs.map(song => (
+              {visibleSongs.map(song => (
                 <div
                   key={song.id}
                   className={`${styles.card} ${viewMode === 'list' ? styles.desktopListCard : styles.desktopGridCard} ${fadingSongIds.includes(song.id) ? styles.cardDeleting : ''}`}
@@ -646,11 +682,13 @@ function DashboardContent() {
             </div>
           ) : (
             <div className={styles.emptyStateCard}>
-              <div className={styles.emptyStateTitle}>No songs yet</div>
-              <p className={styles.emptyStateText}>{songEmptyMessage}</p>
-              <button className={styles.emptyStateAction} onClick={() => setShowNewModal(true)}>
-                Create your first song
-              </button>
+              <div className={styles.emptyStateTitle}>{stageFilter === 'all' ? 'No songs yet' : 'No songs here'}</div>
+              <p className={styles.emptyStateText}>{stageFilter === 'all' ? songEmptyMessage : 'No songs in this category yet.'}</p>
+              {stageFilter === 'all' && (
+                <button className={styles.emptyStateAction} onClick={() => setShowNewModal(true)}>
+                  Create your first song
+                </button>
+              )}
             </div>
           )}
         </div>
