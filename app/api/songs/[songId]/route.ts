@@ -1,24 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 
+const VALID_STAGES = ['early_stage', 'in_production', 'completed'] as const;
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: { songId: string } }
 ) {
   try {
     const { songId } = params;
-    const { title } = await req.json();
+    const body = await req.json();
 
     if (!songId) {
       return NextResponse.json({ error: 'Song ID is required' }, { status: 400 });
     }
-    if (!title?.trim()) {
-      return NextResponse.json({ error: 'Title is required' }, { status: 400 });
+
+    // Build update payload — accept title and/or stage
+    const updates: Record<string, string> = {};
+    if (body.title !== undefined) {
+      if (!body.title?.trim()) {
+        return NextResponse.json({ error: 'Title is required' }, { status: 400 });
+      }
+      updates.title = body.title.trim();
+    }
+    if (body.stage !== undefined) {
+      if (!VALID_STAGES.includes(body.stage)) {
+        return NextResponse.json({ error: 'Invalid stage value' }, { status: 400 });
+      }
+      updates.stage = body.stage;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
     }
 
     const { data, error } = await supabaseServer
       .from('songs')
-      .update({ title: title.trim() })
+      .update(updates)
       .eq('id', songId)
       .select()
       .single();
