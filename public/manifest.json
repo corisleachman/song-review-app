@@ -1,6 +1,6 @@
 {
-  "name": "Song Review — Polite Rebels",
-  "short_name": "Song Review",
+  "name": "Rebel HQ",
+  "short_name": "Rebel HQ",
   "description": "Collaborative song review for Coris and Al",
   "start_url": "/dashboard",
   "display": "standalone",

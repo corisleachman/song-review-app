@@ -1035,9 +1035,9 @@ export default function VersionPage() {
           ? [{ src: songImageRef.current, sizes: '512x512', type: 'image/jpeg' }]
           : [];
         navigator.mediaSession.metadata = new MediaMetadata({
-          title: songTitleRef.current || 'Song Review',
+          title: songTitleRef.current || 'Rebel HQ',
           artist: 'Polite Rebels',
-          album: 'Song Review App',
+          album: 'Rebel HQ',
           artwork,
         });
         navigator.mediaSession.setActionHandler('play', () => ws.play());

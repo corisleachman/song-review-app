@@ -9,13 +9,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'Song Review',
+  title: 'Rebel HQ',
   description: 'Collaborative song review for Polite Rebels',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Song Review',
+    title: 'Rebel HQ',
   },
 };
 
