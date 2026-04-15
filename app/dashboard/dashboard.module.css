@@ -1111,3 +1111,214 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* ─── Play button overlay on card thumb ─── */
+.thumbPlayBtn {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #ff1493;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 4;
+  box-shadow: 0 2px 10px rgba(255,20,147,0.5);
+  opacity: 0;
+  transform: scale(0.85);
+  transition: opacity 0.15s, transform 0.15s;
+}
+.card:hover .thumbPlayBtn { opacity: 1; transform: scale(1); }
+.thumbPlayBtnActive { opacity: 1 !important; transform: scale(1) !important; }
+
+/* EQ bars — shown when playing, top-left of thumb */
+.eqBars {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+  z-index: 4;
+}
+.eqBar {
+  display: block;
+  width: 3px;
+  border-radius: 1.5px;
+  background: #ff1493;
+  animation: eqBounce 0.7s ease-in-out infinite alternate;
+}
+.eqBar:nth-child(1) { height: 6px; }
+.eqBar:nth-child(2) { height: 12px; }
+.eqBar:nth-child(3) { height: 8px; }
+.eqBar:nth-child(4) { height: 10px; }
+@keyframes eqBounce {
+  from { transform: scaleY(0.35); }
+  to   { transform: scaleY(1); }
+}
+
+/* Mobile/list — play button always visible */
+@media (max-width: 768px) {
+  .thumbPlayBtn {
+    opacity: 1;
+    transform: scale(1);
+    bottom: unset;
+    left: unset;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 34px;
+    height: 34px;
+  }
+  .thumbPlayBtnActive {
+    transform: translate(-50%, -50%) !important;
+  }
+  .eqBars { display: none; }
+}
+
+/* Desktop list view — play button always visible, centred on thumb */
+.desktopListCard .thumbPlayBtn {
+  opacity: 1;
+  transform: translate(-50%, -50%);
+  bottom: unset;
+  left: 50%;
+  top: 50%;
+  width: 28px;
+  height: 28px;
+}
+.desktopListCard .thumbPlayBtnActive {
+  transform: translate(-50%, -50%) !important;
+}
+.desktopListCard .eqBars { display: none; }
+
+/* ─── Mini player ─── */
+.miniPlayer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(13, 9, 20, 0.97);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(255,20,147,0.25);
+  z-index: 60;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.miniPlayerProgress {
+  position: relative;
+  height: 3px;
+  background: rgba(255,255,255,0.08);
+}
+.miniPlayerFill {
+  position: absolute;
+  left: 0; top: 0; height: 100%;
+  background: #ff1493;
+  border-radius: 0;
+  pointer-events: none;
+  transition: width 0.25s linear;
+}
+.miniPlayerScrubber {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+}
+
+.miniPlayerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px 12px;
+  gap: 12px;
+}
+
+.miniPlayerLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+.miniPlayerArt {
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.miniPlayerArtPlaceholder {
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  background: rgba(255,20,147,0.12);
+  flex-shrink: 0;
+}
+.miniPlayerInfo {
+  min-width: 0;
+}
+.miniPlayerTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.miniPlayerMeta {
+  font-size: 10px;
+  color: rgba(255,255,255,0.4);
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+.miniPlayerControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.miniPlayerBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.miniPlayerBtn:hover { color: #fff; }
+.miniPlayerBtn:disabled { opacity: 0.25; cursor: default; }
+.miniPlayerPlayBtn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: #ff1493;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(255,20,147,0.4);
+  transition: transform 0.12s;
+}
+.miniPlayerPlayBtn:hover { transform: scale(1.07); }
+
+/* Push page body up when mini player is visible */
+.pageWithPlayer {
+  padding-bottom: 80px;
+}
