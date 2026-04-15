@@ -298,6 +298,30 @@ function DashboardContent() {
     return data.publicUrl;
   }
 
+  function setMediaSession(song: Song) {
+    if (!('mediaSession' in navigator)) return;
+    const artwork: MediaImage[] = song.image_url
+      ? [{ src: song.image_url, sizes: '512x512', type: 'image/jpeg' }]
+      : [];
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: song.title,
+      artist: 'Polite Rebels',
+      album: 'Rebel HQ',
+      artwork,
+    });
+    navigator.mediaSession.setActionHandler('play', () => {
+      audioRef.current?.play().catch(() => {});
+      setIsPlaying(true);
+    });
+    navigator.mediaSession.setActionHandler('pause', () => {
+      audioRef.current?.pause();
+      setIsPlaying(false);
+    });
+    navigator.mediaSession.setActionHandler('previoustrack', () => skipTrack('prev'));
+    navigator.mediaSession.setActionHandler('nexttrack', () => skipTrack('next'));
+    navigator.mediaSession.playbackState = 'playing';
+  }
+
   function playSong(song: Song, queue: Song[]) {
     if (!song.latestVersionFilePath || !audioRef.current) return;
     queueRef.current = queue;
@@ -307,6 +331,7 @@ function DashboardContent() {
     setIsPlaying(true);
     audioRef.current.src = getAudioUrl(song.latestVersionFilePath);
     audioRef.current.play().catch(() => {});
+    setMediaSession(song);
   }
 
   function handlePlayerEnded() {
@@ -319,10 +344,12 @@ function DashboardContent() {
         setPlayingId(next.id);
         audioRef.current.src = getAudioUrl(next.latestVersionFilePath);
         audioRef.current.play().catch(() => {});
+        setMediaSession(next);
       }
     } else {
       setIsPlaying(false);
       setPlayingId(null);
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
     }
   }
 
@@ -336,6 +363,7 @@ function DashboardContent() {
       setPlayingId(target.id);
       audioRef.current.src = getAudioUrl(target.latestVersionFilePath);
       audioRef.current.play().catch(() => {});
+      setMediaSession(target);
     }
   }
 
@@ -344,9 +372,11 @@ function DashboardContent() {
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
     } else {
       audioRef.current.play().catch(() => {});
       setIsPlaying(true);
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
     }
   }
 
