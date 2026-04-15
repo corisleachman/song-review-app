@@ -1073,6 +1073,77 @@
     gap: 12px;
   }
 
+  /* On mobile, desktopGridCard must behave identically to a plain .card row */
+  .desktopGridCard {
+    aspect-ratio: unset !important;
+    display: flex !important;
+    flex-direction: row !important;
+    height: 76px !important;
+  }
+  .desktopGridCard .cardThumb {
+    position: relative !important;
+    inset: unset !important;
+    width: 76px !important;
+    height: 76px !important;
+    min-width: 76px !important;
+    aspect-ratio: unset !important;
+    flex-shrink: 0 !important;
+    border-radius: 10px 0 0 10px !important;
+  }
+  .desktopGridCard .cardBody {
+    position: relative !important;
+    inset: unset !important;
+    background: none !important;
+    display: block !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+    padding: 10px 138px 12px 14px !important;
+    border-radius: 0 !important;
+    gap: 0 !important;
+  }
+  .desktopGridCard .cardTitle {
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    margin-bottom: 4px !important;
+    margin-top: 5px !important;
+    text-shadow: none !important;
+    max-width: none !important;
+  }
+  .desktopGridCard .cardMetaPrimary {
+    display: block !important;
+    font-size: 13px !important;
+    color: rgba(255,255,255,0.45) !important;
+    max-width: none !important;
+    margin-top: 10px !important;
+  }
+  .desktopGridCard .cardActions {
+    opacity: 1 !important;
+    position: absolute !important;
+    right: 14px !important;
+    top: 12px !important;
+    transform: none !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 6px !important;
+    margin-top: 0 !important;
+    flex-shrink: 0 !important;
+  }
+  .desktopGridCard .iconBtn {
+    width: 24px !important;
+    height: 24px !important;
+  }
+  .desktopGridCard .cardMetaComments {
+    position: absolute !important;
+    right: 14px !important;
+    bottom: 12px !important;
+    display: inline-flex !important;
+  }
+  .desktopGridCard .cardThumb::after { display: none !important; }
+  .desktopGridCard .versionBadge { display: none !important; }
+  .desktopGridCard .activityBadge { display: none !important; }
+
   /* List row layout on mobile */
   .card {
     display: flex;
