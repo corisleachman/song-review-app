@@ -22,6 +22,7 @@ interface Song {
   latestVersionNumber: number | null;
   latestVersionLabel: string | null;
   latestVersionCreatedAt: string | null;
+  latestVersionFilePath: string | null;
   commentCount: number;
   latestActivityAt: string | null;
   hasNewActivity: boolean;
@@ -82,6 +83,15 @@ function DashboardContent() {
   const coverInputRef = useRef<HTMLInputElement>(null);
   const coverUploadTargetId = useRef<string | null>(null);
 
+  // Dashboard audio player
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const queueRef = useRef<Song[]>([]);
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const [queueIndex, setQueueIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [playerCurrentTime, setPlayerCurrentTime] = useState(0);
+  const [playerDuration, setPlayerDuration] = useState(0);
+
   useEffect(() => {
     const currentIdentity = getIdentity();
     if (!currentIdentity) { router.push('/identify'); return; }
@@ -105,7 +115,7 @@ function DashboardContent() {
 
     const { data: versionsData } = await supabase
       .from('song_versions')
-      .select('id, song_id, version_number, label, created_at')
+      .select('id, song_id, version_number, label, created_at, file_path')
       .order('version_number', { ascending: false });
 
     const { data: threadsData } = await supabase
@@ -160,6 +170,7 @@ function DashboardContent() {
         latestVersionNumber: latest?.version_number ?? null,
         latestVersionLabel: latest?.label ?? null,
         latestVersionCreatedAt: latest?.created_at ?? null,
+        latestVersionFilePath: latest?.file_path ?? null,
         commentCount,
         latestActivityAt,
         hasNewActivity: Boolean(
@@ -279,6 +290,63 @@ function DashboardContent() {
     } catch (e) {
       console.error('Image upload error:', e);
       setSongs(prev => prev.map(s => s.id === songId ? { ...s, imageUploading: false, imageError: 'Upload failed' } : s));
+    }
+  }
+
+  function getAudioUrl(filePath: string) {
+    const { data } = supabase.storage.from('song-files').getPublicUrl(filePath);
+    return data.publicUrl;
+  }
+
+  function playSong(song: Song, queue: Song[]) {
+    if (!song.latestVersionFilePath || !audioRef.current) return;
+    queueRef.current = queue;
+    const idx = queue.findIndex(s => s.id === song.id);
+    setQueueIndex(idx >= 0 ? idx : 0);
+    setPlayingId(song.id);
+    setIsPlaying(true);
+    audioRef.current.src = getAudioUrl(song.latestVersionFilePath);
+    audioRef.current.play().catch(() => {});
+  }
+
+  function handlePlayerEnded() {
+    const queue = queueRef.current;
+    const nextIdx = queueIndex + 1;
+    if (nextIdx < queue.length) {
+      const next = queue[nextIdx];
+      if (next.latestVersionFilePath && audioRef.current) {
+        setQueueIndex(nextIdx);
+        setPlayingId(next.id);
+        audioRef.current.src = getAudioUrl(next.latestVersionFilePath);
+        audioRef.current.play().catch(() => {});
+      }
+    } else {
+      setIsPlaying(false);
+      setPlayingId(null);
+    }
+  }
+
+  function skipTrack(direction: 'prev' | 'next') {
+    const queue = queueRef.current;
+    const targetIdx = direction === 'next' ? queueIndex + 1 : queueIndex - 1;
+    if (targetIdx < 0 || targetIdx >= queue.length) return;
+    const target = queue[targetIdx];
+    if (target.latestVersionFilePath && audioRef.current) {
+      setQueueIndex(targetIdx);
+      setPlayingId(target.id);
+      audioRef.current.src = getAudioUrl(target.latestVersionFilePath);
+      audioRef.current.play().catch(() => {});
+    }
+  }
+
+  function togglePlayPause() {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play().catch(() => {});
+      setIsPlaying(true);
     }
   }
 
@@ -417,7 +485,7 @@ function DashboardContent() {
   ];
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${playingId ? styles.pageWithPlayer : ''}`}>
       {/* Header */}
       <header className={styles.header}>
         <div className={styles.headerLeft}>
@@ -573,13 +641,47 @@ function DashboardContent() {
                         </svg>
                       </div>
                     )}
+                    {/* Play button overlay — always visible on mobile/list, hover on desktop grid */}
+                    {song.latestVersionFilePath && (
+                      <button
+                        className={`${styles.thumbPlayBtn} ${playingId === song.id ? styles.thumbPlayBtnActive : ''}`}
+                        onClick={e => {
+                          e.stopPropagation();
+                          if (playingId === song.id) {
+                            togglePlayPause();
+                          } else {
+                            playSong(song, visibleSongs);
+                          }
+                        }}
+                        title={playingId === song.id && isPlaying ? 'Pause' : 'Play'}
+                      >
+                        {playingId === song.id && isPlaying ? (
+                          <svg width="10" height="12" viewBox="0 0 10 12" fill="white">
+                            <rect x="0" y="0" width="3.5" height="12" rx="1"/>
+                            <rect x="6.5" y="0" width="3.5" height="12" rx="1"/>
+                          </svg>
+                        ) : (
+                          <svg width="10" height="12" viewBox="0 0 10 12" fill="white">
+                            <path d="M0 0l10 6-10 6z"/>
+                          </svg>
+                        )}
+                      </button>
+                    )}
+                    {/* EQ bars when playing */}
+                    {playingId === song.id && isPlaying && (
+                      <div className={styles.eqBars}>
+                        <span className={styles.eqBar} style={{animationDelay:'0s'}}/>
+                        <span className={styles.eqBar} style={{animationDelay:'0.15s'}}/>
+                        <span className={styles.eqBar} style={{animationDelay:'0.3s'}}/>
+                        <span className={styles.eqBar} style={{animationDelay:'0.1s'}}/>
+                      </div>
+                    )}
                     {song.latestVersionNumber != null && (
                       <span className={styles.versionBadge}>v{song.latestVersionNumber}</span>
                     )}
                     {song.hasNewActivity && (
                       <span className={styles.activityBadge}>New</span>
                     )}
-
                   </div>
 
                   {/* Card body */}
@@ -813,6 +915,112 @@ function DashboardContent() {
           e.target.value = '';
         }}
       />
+
+      {/* Hidden audio element for dashboard playback */}
+      <audio
+        ref={audioRef}
+        onEnded={handlePlayerEnded}
+        onTimeUpdate={() => setPlayerCurrentTime(audioRef.current?.currentTime ?? 0)}
+        onDurationChange={() => setPlayerDuration(audioRef.current?.duration ?? 0)}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+      />
+
+      {/* Mini player */}
+      {playingId && (() => {
+        const playingSong = queueRef.current.find(s => s.id === playingId);
+        if (!playingSong) return null;
+        const pct = playerDuration > 0 ? (playerCurrentTime / playerDuration) * 100 : 0;
+        const fmtTime = (t: number) => `${Math.floor(t/60)}:${String(Math.floor(t%60)).padStart(2,'0')}`;
+        return (
+          <div className={styles.miniPlayer}>
+            <div className={styles.miniPlayerProgress}>
+              <div className={styles.miniPlayerFill} style={{width:`${pct}%`}} />
+              <input
+                type="range" min={0} max={playerDuration || 100} step={0.1}
+                value={playerCurrentTime}
+                className={styles.miniPlayerScrubber}
+                onChange={e => {
+                  const t = parseFloat(e.target.value);
+                  if (audioRef.current) audioRef.current.currentTime = t;
+                  setPlayerCurrentTime(t);
+                }}
+              />
+            </div>
+            <div className={styles.miniPlayerRow}>
+              {/* Art + info — click to navigate */}
+              <div
+                className={styles.miniPlayerLeft}
+                onClick={() => {
+                  if (playingSong.latestVersionId) {
+                    router.push(`/songs/${playingSong.id}/versions/${playingSong.latestVersionId}`);
+                  } else {
+                    router.push(`/songs/${playingSong.id}`);
+                  }
+                }}
+              >
+                {playingSong.image_url ? (
+                  <img src={playingSong.image_url} alt={playingSong.title} className={styles.miniPlayerArt} />
+                ) : (
+                  <div className={styles.miniPlayerArtPlaceholder} />
+                )}
+                <div className={styles.miniPlayerInfo}>
+                  <div className={styles.miniPlayerTitle}>{playingSong.title}</div>
+                  <div className={styles.miniPlayerMeta}>
+                    {fmtTime(playerCurrentTime)} / {fmtTime(playerDuration)} · {queueIndex + 1} of {queueRef.current.length}
+                  </div>
+                </div>
+              </div>
+              {/* Controls */}
+              <div className={styles.miniPlayerControls}>
+                <button
+                  className={styles.miniPlayerBtn}
+                  onClick={() => skipTrack('prev')}
+                  disabled={queueIndex === 0}
+                  title="Previous"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M12 2L5 8l7 6V2z" fill="currentColor"/>
+                    <rect x="2" y="2" width="2" height="12" rx="1" fill="currentColor"/>
+                  </svg>
+                </button>
+                <button className={styles.miniPlayerPlayBtn} onClick={togglePlayPause} title={isPlaying ? 'Pause' : 'Play'}>
+                  {isPlaying ? (
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="white">
+                      <rect x="1" y="1" width="4.5" height="12" rx="1.5"/>
+                      <rect x="8.5" y="1" width="4.5" height="12" rx="1.5"/>
+                    </svg>
+                  ) : (
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="white">
+                      <path d="M2 1l11 6-11 6z"/>
+                    </svg>
+                  )}
+                </button>
+                <button
+                  className={styles.miniPlayerBtn}
+                  onClick={() => skipTrack('next')}
+                  disabled={queueIndex >= queueRef.current.length - 1}
+                  title="Next"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M4 2l7 6-7 6V2z" fill="currentColor"/>
+                    <rect x="12" y="2" width="2" height="12" rx="1" fill="currentColor"/>
+                  </svg>
+                </button>
+                <button
+                  className={styles.miniPlayerBtn}
+                  onClick={() => { setPlayingId(null); setIsPlaying(false); audioRef.current?.pause(); }}
+                  title="Close"
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
