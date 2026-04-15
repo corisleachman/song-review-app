@@ -4,7 +4,7 @@
   "description": "Collaborative song review for Coris and Al",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#ff1493",
+  "background_color": "#0d0914",
   "theme_color": "#ff1493",
   "orientation": "any",
   "icons": [
