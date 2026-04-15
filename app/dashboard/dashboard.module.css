@@ -274,7 +274,127 @@
   pointer-events: none;
 }
 
-.desktopGridCard {}
+/* ── Desktop grid card: wireframe layout (image + opaque strip below) ── */
+.desktopGridCard {
+  aspect-ratio: unset !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Image fills a square at the top of the card */
+.desktopGridCard .cardThumb {
+  position: relative !important;
+  inset: unset !important;
+  width: 100% !important;
+  aspect-ratio: 1 / 1 !important;
+  height: unset !important;
+  flex-shrink: 0 !important;
+  border-radius: 10px 10px 0 0 !important;
+}
+
+/* Body sits below the image as an opaque strip — not overlaid */
+.desktopGridCard .cardBody {
+  position: relative !important;
+  inset: unset !important;
+  background: rgba(22, 15, 35, 0.95) !important;
+  padding: 10px 12px 10px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  gap: 4px !important;
+  border-radius: 0 0 10px 10px !important;
+}
+
+.desktopGridCard .cardTitle {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-shadow: none !important;
+  margin-bottom: 0 !important;
+  max-width: 100% !important;
+  color: #fff !important;
+}
+
+.desktopGridCard .cardMetaPrimary {
+  font-size: 11px !important;
+  color: rgba(255,255,255,0.4) !important;
+  max-width: 100% !important;
+}
+
+/* Icons sit in a horizontal row at bottom of the strip, always visible */
+.desktopGridCard .cardActions {
+  position: static !important;
+  opacity: 1 !important;
+  transform: none !important;
+  top: unset !important;
+  right: unset !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 4px !important;
+  margin-top: 6px !important;
+  transition: none !important;
+}
+.desktopGridCard:hover .cardActions { opacity: 1 !important; transform: none !important; }
+
+.desktopGridCard .iconBtn {
+  width: 26px !important;
+  height: 26px !important;
+}
+
+/* Comments count moves to sit inline in the strip */
+.desktopGridCard .cardMetaComments {
+  position: static !important;
+  display: inline-flex !important;
+  font-size: 10px !important;
+  color: rgba(255,255,255,0.4) !important;
+  text-shadow: none !important;
+  min-height: 0 !important;
+}
+
+/* Play button: large, centred on artwork */
+.desktopGridCard .thumbPlayBtn {
+  width: 48px !important;
+  height: 48px !important;
+  bottom: unset !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) scale(0.85) !important;
+  opacity: 0 !important;
+  box-shadow: 0 4px 20px rgba(255,20,147,0.6) !important;
+}
+.desktopGridCard:hover .thumbPlayBtn {
+  opacity: 1 !important;
+  transform: translate(-50%, -50%) scale(1) !important;
+}
+.desktopGridCard .thumbPlayBtnActive {
+  opacity: 1 !important;
+  transform: translate(-50%, -50%) scale(1) !important;
+}
+
+/* Subtle dark scrim on image on hover so play button pops */
+.desktopGridCard .cardThumb::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0);
+  transition: background 0.15s;
+  pointer-events: none;
+  z-index: 3;
+}
+.desktopGridCard:hover .cardThumb::after {
+  background: rgba(0,0,0,0.28);
+}
+
+/* EQ bars stay top-left of image */
+.desktopGridCard .eqBars {
+  z-index: 5 !important;
+}
+.desktopGridCard .versionBadge {
+  z-index: 5 !important;
+}
+.desktopGridCard .activityBadge {
+  z-index: 5 !important;
+}
+
 .desktopListCard {}
 
 .cardThumb {
