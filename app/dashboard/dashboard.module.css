@@ -126,7 +126,9 @@
 
 .songsControls {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
   margin-bottom: 20px;
 }
@@ -137,6 +139,7 @@
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .panelLabel {
@@ -151,7 +154,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
 }
 
 .stageTab {
@@ -1035,8 +1039,14 @@
 
   .hideMobile { display: none; }
   .viewToggle { display: none; }
+  .songsControls {
+    flex-direction: column;
+    align-items: flex-start;
+  }
   .panelHeader {
     align-items: center;
+    width: 100%;
+    justify-content: flex-end;
   }
   .stageTabs {
     flex-wrap: nowrap;
