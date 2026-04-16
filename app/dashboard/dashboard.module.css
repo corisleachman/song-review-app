@@ -214,6 +214,10 @@
   aspect-ratio: 1 / 1;
   box-shadow: 0 10px 24px rgba(0,0,0,0.18);
 }
+.cardInfoExpanded {
+  border-color: rgba(255,255,255,0.18);
+  box-shadow: 0 18px 42px rgba(0,0,0,0.32);
+}
 .card:hover {
   border-color: rgba(255,20,147,0.35);
   transform: translateY(-2px);
@@ -321,7 +325,133 @@
   max-width: calc(100% - 86px);
   text-shadow: 0 1px 3px rgba(0,0,0,0.5);
 }
-
+.cardStatusRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.songStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 7px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.songStatusWriting {
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.66);
+}
+.songStatusInProgress {
+  background: rgba(255,20,147,0.15);
+  color: #ff93cb;
+}
+.songStatusMixing {
+  background: rgba(0,212,255,0.14);
+  color: #81eaff;
+}
+.songStatusMastering {
+  background: rgba(245,158,11,0.16);
+  color: #ffd58a;
+}
+.songStatusFinished {
+  background: rgba(29,158,117,0.18);
+  color: #86e6c2;
+}
+.interactivePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 0.5px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.09);
+  color: rgba(255,255,255,0.84);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
+}
+.interactivePill:hover {
+  background: rgba(255,255,255,0.14);
+  border-color: rgba(255,255,255,0.24);
+  color: #fff;
+}
+.interactivePill:focus-visible {
+  outline: 2px solid rgba(255,20,147,0.45);
+  outline-offset: 2px;
+}
+.interactivePillLabel {
+  display: inline-flex;
+  align-items: center;
+}
+.interactivePillIcon {
+  flex-shrink: 0;
+  color: rgba(255,255,255,0.56);
+}
+.interactivePill:hover .interactivePillIcon,
+.interactivePill:focus-visible .interactivePillIcon {
+  color: rgba(255,255,255,0.82);
+}
+.infoPanel {
+  position: relative;
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(10, 11, 17, 0.56);
+  border: 0.5px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  z-index: 3;
+}
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.infoLabel {
+  color: rgba(255,255,255,0.38);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.infoValue {
+  color: rgba(255,255,255,0.88);
+  font-size: 11px;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.infoMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.cardSignalRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-height: 18px;
+  margin-bottom: 6px;
+}
 .editInput {
   width: 100%;
   background: rgba(255,255,255,0.06);
@@ -346,6 +476,30 @@
   white-space: nowrap;
   max-width: calc(100% - 86px);
 }
+.cardStatusControl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+.cardStatusLabel {
+  color: rgba(255,255,255,0.3);
+  font-size: 10px;
+}
+.cardStatusSelect {
+  background: rgba(255,255,255,0.06);
+  border: 0.5px solid rgba(255,255,255,0.12);
+  border-radius: 7px;
+  color: rgba(255,255,255,0.76);
+  font-size: 10px;
+  font-family: inherit;
+  padding: 4px 7px;
+  outline: none;
+  max-width: calc(100% - 50px);
+}
+.cardStatusSelect:focus {
+  border-color: rgba(255,20,147,0.35);
+}
 
 .cardMetaComments {
   position: absolute;
@@ -359,6 +513,48 @@
   white-space: nowrap;
   min-height: 16px;
   text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+}
+.activityFeed {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: calc(100% - 86px);
+}
+.activityItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.activityItemTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.activityItemSummary {
+  color: rgba(255,255,255,0.74);
+  font-size: 10px;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.activityItemTime {
+  flex-shrink: 0;
+  color: rgba(255,255,255,0.34);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.activityItemDetail {
+  color: rgba(255,255,255,0.42);
+  font-size: 10px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .commentCountIcon {
@@ -382,6 +578,7 @@
   gap: 6px;
   opacity: 0;
   transition: opacity 0.15s, transform 0.15s;
+  z-index: 5;
 }
 .card:hover .cardActions {
   opacity: 1;
@@ -406,6 +603,11 @@
   background: rgba(255,20,147,0.18);
   color: #fff;
   transform: translateY(-1px);
+}
+.iconBtnActive {
+  background: rgba(255,20,147,0.22);
+  border-color: rgba(255,20,147,0.42);
+  color: #fff;
 }
 
 /* Ghost card */
@@ -596,6 +798,10 @@
   flex-wrap: wrap;
   margin-top: 4px;
 }
+.actionAssignee {
+  color: rgba(255,255,255,0.42);
+  font-size: 10px;
+}
 .actionStatus {
   display: inline-flex;
   align-items: center;
@@ -750,6 +956,11 @@
   aspect-ratio: unset !important;
   height: 70px !important;
 }
+.desktopListCard.cardInfoExpanded {
+  height: auto !important;
+  min-height: 156px !important;
+  align-items: stretch !important;
+}
 .desktopListCard .cardThumb {
   position: relative !important;
   width: 70px !important;
@@ -770,11 +981,21 @@
   padding: 0 178px 0 20px !important;
   background: none !important;
 }
+.desktopListCard.cardInfoExpanded .cardBody {
+  padding: 14px 178px 14px 20px !important;
+}
 .desktopListCard .cardTitle {
   font-size: 14px !important;
   text-shadow: none !important;
   margin: 0 0 6px !important;
   max-width: none !important;
+}
+.desktopListCard .infoPanel {
+  margin-top: 10px !important;
+  max-width: none !important;
+}
+.desktopListCard .infoGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
 }
 .desktopListCard .cardActions {
   opacity: 1 !important;
@@ -789,13 +1010,15 @@
   gap: 6px !important;
   flex-shrink: 0 !important;
 }
-.desktopListCard .cardMetaPrimary {
-  display: inline-block !important;
-  font-size: 12px !important;
-  color: rgba(255,255,255,0.45) !important;
-  vertical-align: middle !important;
+.desktopListCard .activityFeed {
+  margin-top: 6px !important;
   max-width: none !important;
-  margin-right: 10px !important;
+}
+.desktopListCard .activityItemSummary {
+  font-size: 11px !important;
+}
+.desktopListCard .activityItemDetail {
+  display: none !important;
 }
 .desktopListCard .cardMetaComments {
   position: static !important;
@@ -907,6 +1130,11 @@
     gap: 0;
     box-shadow: none;
   }
+  .cardInfoExpanded {
+    height: auto;
+    min-height: 178px;
+    align-items: stretch;
+  }
 
   /* Square thumbnail, fixed size (+25% = 70px) */
   .cardThumb {
@@ -935,6 +1163,20 @@
     background: none;
     justify-content: unset;
   }
+  .cardInfoExpanded .cardBody,
+  .desktopListCard.cardInfoExpanded .cardBody,
+  .desktopGridCard.cardInfoExpanded .cardBody {
+    padding: 12px 14px 14px 14px;
+  }
+
+  .cardInfoExpanded .cardTitle,
+  .desktopListCard.cardInfoExpanded .cardTitle,
+  .desktopGridCard.cardInfoExpanded .cardTitle,
+  .cardInfoExpanded .cardStatusRow,
+  .desktopListCard.cardInfoExpanded .cardStatusRow,
+  .desktopGridCard.cardInfoExpanded .cardStatusRow {
+    max-width: calc(100% - 124px);
+  }
 
   .cardTitle,
   .desktopListCard .cardTitle,
@@ -956,14 +1198,37 @@
     max-width: none;
   }
 
-  .cardMetaPrimary,
-  .desktopListCard .cardMetaPrimary,
-  .desktopGridCard .cardMetaPrimary {
-    display: block;
-    font-size: 13px;
-    color: rgba(255,255,255,0.45);
-    max-width: none;
-    margin-top: 10px;
+  .interactivePill,
+  .desktopListCard .interactivePill,
+  .desktopGridCard .interactivePill {
+    font-size: 10px;
+    min-height: 26px;
+  }
+
+  .infoPanel,
+  .desktopListCard .infoPanel,
+  .desktopGridCard .infoPanel {
+    margin-top: 8px;
+    padding: 12px;
+  }
+
+  .infoGrid,
+  .desktopListCard .infoGrid,
+  .desktopGridCard .infoGrid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .infoValue,
+  .desktopListCard .infoValue,
+  .desktopGridCard .infoValue {
+    white-space: normal;
+  }
+
+  .activityFeed,
+  .desktopListCard .activityFeed,
+  .desktopGridCard .activityFeed {
+    display: flex;
   }
 
   .cardMetaComments,
@@ -1020,6 +1285,7 @@
     gap: 6px;
     flex-shrink: 0;
     transition: none;
+    z-index: 6;
   }
   .card:hover .cardActions,
   .desktopListCard:hover .cardActions,

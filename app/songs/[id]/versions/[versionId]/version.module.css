@@ -15,6 +15,30 @@
   color: #aaa;
   background: #0d0914;
 }
+.initErrorCard {
+  width: min(480px, calc(100vw - 32px));
+  padding: 24px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  box-shadow: 0 18px 48px rgba(0,0,0,0.28);
+}
+.initErrorTitle {
+  margin: 0 0 10px;
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+.initErrorText {
+  margin: 0;
+  color: rgba(255,255,255,0.72);
+  line-height: 1.5;
+}
+.initErrorActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
 
 /* ── Hero ───────────────────────────────────────────────────── */
 .hero {
@@ -123,6 +147,7 @@
   opacity: 0;
   font-size: 0.65rem;
   transition: opacity 0.15s;
+  cursor: pointer;
 }
 .heroBadgeInput {
   background: rgba(255,20,147,0.15);
@@ -559,6 +584,71 @@
   line-height: 1.35;
 }
 .pendingBadge { font-size: 0.75rem; color: #888; }
+.actionContextCard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+  color: rgba(255,255,255,0.62);
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+.actionContextCard strong {
+  color: #fff;
+  font-size: 0.76rem;
+}
+.actionTabRow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.actionTab {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.62);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.74rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.actionTab:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.16);
+  color: #fff;
+}
+.actionTabActive {
+  background: rgba(255,20,147,0.14);
+  border-color: rgba(255,20,147,0.32);
+  color: #fff;
+}
+.actionFilterRow {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.actionFilterPill {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.54);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+.actionFilterPillActive {
+  background: rgba(255,20,147,0.12);
+  border-color: rgba(255,20,147,0.35);
+  color: #fff;
+}
 
 .actionItem {
   display: flex;
@@ -591,6 +681,24 @@
 .actionDesc { font-size: 0.88rem; line-height: 1.4; }
 .actionDescDone { text-decoration: line-through; color: #666; }
 .actionMeta { font-size: 0.72rem; color: #666; }
+.actionLinkBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.74);
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(255,255,255,0.22);
+  text-underline-offset: 2px;
+}
+.actionLinkBtn:hover {
+  color: #fff;
+  text-decoration-color: rgba(255,20,147,0.52);
+}
 .actionTimestamp { color: #ff6b6b; }
 .actionControls {
   display: flex;
@@ -628,6 +736,28 @@
   padding: 0;
 }
 .actionEditBtn:hover { color: #fff; }
+.actionResolveBtn {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.74);
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 0.68rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+.actionResolveBtn:hover {
+  border-color: rgba(255,20,147,0.35);
+  color: #fff;
+}
+.actionResolvedBadge {
+  font-size: 0.68rem;
+  color: #9ceec7;
+  background: rgba(34,197,94,0.12);
+  border: 1px solid rgba(34,197,94,0.24);
+  border-radius: 999px;
+  padding: 2px 7px;
+}
 
 /* ── Threads panel (right) ──────────────────────────────────── */
 .threadsPanel {

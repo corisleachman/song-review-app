@@ -11,6 +11,7 @@ Supabase (PostgreSQL). Project: `xouiiaknskivrjvapdma`
 id          UUID PRIMARY KEY DEFAULT gen_random_uuid()
 title       TEXT NOT NULL
 image_url   TEXT                          -- public URL to cover art in song-images bucket
+status      TEXT DEFAULT 'in_progress' CHECK (status IN ('writing', 'in_progress', 'mixing', 'mastering', 'finished'))
 created_at  TIMESTAMP DEFAULT now()
 updated_at  TIMESTAMP DEFAULT now()
 ```
@@ -55,7 +56,11 @@ song_id       UUID NOT NULL REFERENCES songs(id) ON DELETE CASCADE
 comment_id    UUID REFERENCES comments(id) ON DELETE SET NULL   -- nullable
 description   TEXT NOT NULL
 suggested_by  TEXT CHECK (suggested_by IN ('Coris', 'Al'))
-status        TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'completed'))
+status        TEXT DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'done'))
+assigned_to_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL
+resolved_in_version_id UUID REFERENCES song_versions(id) ON DELETE SET NULL
+account_id    UUID REFERENCES accounts(id) ON DELETE CASCADE
+created_by_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL
 created_at    TIMESTAMP DEFAULT now()
 updated_at    TIMESTAMP DEFAULT now()
 ```
@@ -104,8 +109,10 @@ Both buckets must be **public** (no auth required to read).
 
 4. Image uploads must use the service role key (via server-side API route `/api/songs/upload-image`) — the anon key lacks write permission.
 
-5. Existing projects need this one-time schema update for version notes:
+5. Existing projects need one-time schema updates for version notes and version-aware action resolution:
 
 ```sql
+ALTER TABLE songs ADD COLUMN IF NOT EXISTS status TEXT;
 ALTER TABLE song_versions ADD COLUMN IF NOT EXISTS notes TEXT;
+ALTER TABLE actions ADD COLUMN IF NOT EXISTS resolved_in_version_id UUID REFERENCES song_versions(id) ON DELETE SET NULL;
 ```

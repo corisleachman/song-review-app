@@ -17,11 +17,12 @@ A private two-person music review app for Coris and Al of Polite Rebels. Upload 
 
 - Password gate plus identity picker for Coris and Al
 - Dashboard with song grid/list views and per-song cover art
+- Dashboard command-centre filters for song stage and attention
 - First-version upload page for brand new songs
 - In-player upload flow for new versions with file validation, progress, clearer errors, and optional version notes
 - Version page with richer metadata, version picker modal, and inline version label editing
 - Timestamped waveform threads with replies, deep links, `Jump to time`, `Copy timestamp`, and `Copy link`
-- Three-state actions: `pending`, `approved`, `completed`
+- Workflow actions with status, ownership, and dashboard visibility
 - Lightweight action editing modal and action creation from comments
 - Song Admin panel with per-song tasks, completion, deletion, and drag reorder
 - Mobile-specific layout improvements for the hero and lower-column order
@@ -46,17 +47,21 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 SHARED_PASSWORD=
-CORIS_EMAIL=
-AL_EMAIL=
 RESEND_API_KEY=
+EMAIL_NOTIFICATIONS_ENABLED=false
+EMAIL_NOTIFICATIONS_FORCE_TO=
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
+
+`EMAIL_NOTIFICATIONS_ENABLED` defaults to `false` outside production and `true` in production if unset. Set `EMAIL_NOTIFICATIONS_FORCE_TO=coris@example.com` to safely reroute comment/reply emails during testing without notifying real collaborators.
 
 ## Documentation
 
 | File | Purpose |
 |---|---|
 | [CONTEXT_HANDOFF.md](./CONTEXT_HANDOFF.md) | Up-to-date project context for future sessions |
+| [IMPLEMENTED_CHANGES_FROM_BASELINE.md](./IMPLEMENTED_CHANGES_FROM_BASELINE.md) | High-level summary of what changed from the original clean install |
+| [UPDATE_LOG.md](./UPDATE_LOG.md) | Ongoing human-readable log of current development changes |
 | [DATABASE.md](./DATABASE.md) | Schema and database notes |
 | [API.md](./API.md) | Current API routes and payloads |
 | [FEATURES.md](./FEATURES.md) | Current user-facing flows |

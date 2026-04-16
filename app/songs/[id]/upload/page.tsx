@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
-import { getIdentity } from '@/lib/auth';
 import styles from '../song.module.css';
 
 const supabase = createClient();
@@ -12,22 +11,31 @@ export default function UploadVersionPage() {
   const router = useRouter();
   const params = useParams();
   const songId = params.id as string;
-  const identity = getIdentity();
 
   const [songTitle, setSongTitle] = useState('');
   const [dragging, setDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [label, setLabel] = useState('');
+  const [notes, setNotes] = useState('');
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!identity) { router.push('/identify'); return; }
-    supabase.from('songs').select('title').eq('id', songId).single()
-      .then(({ data }) => { if (data) setSongTitle(data.title); });
-  }, []);
+    void fetch('/api/auth/bootstrap', { cache: 'no-store' })
+      .then(response => {
+        if (response.status === 401) {
+          router.push(`/?redirectTo=${encodeURIComponent(`/songs/${songId}/upload`)}`);
+          return null;
+        }
+
+        return supabase.from('songs').select('title').eq('id', songId).single();
+      })
+      .then(result => {
+        if (result?.data) setSongTitle(result.data.title);
+      });
+  }, [router, songId]);
 
   // NOTE: no redirect if versions exist — this page is always for uploading a NEW version
 
@@ -39,7 +47,7 @@ export default function UploadVersionPage() {
   }
 
   async function handleUpload() {
-    if (!file || !identity) return;
+    if (!file) return;
     setUploading(true);
     setProgress(0);
     setError('');
@@ -52,8 +60,8 @@ export default function UploadVersionPage() {
           songId,
           fileName: file.name,
           fileSize: file.size,
-          createdBy: identity,
           label: label.trim() || null,
+          notes: notes.trim() || null,
         }),
       });
       if (!res.ok) {
@@ -143,6 +151,15 @@ export default function UploadVersionPage() {
             value={label}
             onChange={e => setLabel(e.target.value)}
             disabled={uploading}
+          />
+
+          <textarea
+            className={styles.notesInput}
+            placeholder='What changed in this version? (optional)'
+            value={notes}
+            onChange={e => setNotes(e.target.value)}
+            disabled={uploading}
+            rows={4}
           />
 
           {uploading && (

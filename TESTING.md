@@ -64,9 +64,33 @@ Use this as the current manual QA checklist after UI or workflow changes.
 
 - [ ] Action can be created from a comment
 - [ ] Initial status can be chosen on creation
-- [ ] Status cycles through `pending`, `approved`, `completed`
+- [ ] Action can be left unassigned or assigned to a collaborator
+- [ ] Status cycles through `open`, `in_progress`, `done`
 - [ ] Editing action description works
 - [ ] Editing action status works
+- [ ] Editing action assignment works
+- [ ] Song page filters work for `all`, `open`, `done`, and `assigned to me`
+- [ ] Dashboard shows assignment when present
+- [ ] Unresolved actions are easy to spot on the version page
+- [ ] Action can be marked `Resolved in this version`
+- [ ] Reopening a resolved action clears the version-resolution link
+
+## Versions
+
+- [ ] Standalone upload page accepts optional version notes
+- [ ] Inline upload flow accepts optional version notes
+- [ ] Version notes show clearly on the version page when present
+- [ ] Version page shows `Resolved in this version` on linked completed actions
+
+## Dashboard Command Centre
+
+- [ ] Each dashboard card shows song status clearly
+- [ ] Song status can be changed from the dashboard
+- [ ] Dashboard filter works for `All songs`
+- [ ] Dashboard filter works for `Needs attention`
+- [ ] Dashboard filter works for each song stage
+- [ ] Needs-attention logic matches unresolved action counts
+- [ ] Existing sorts still work with filters applied
 
 ## Song Admin
 

@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   
   // Public routes (no auth required)
-  const publicRoutes = ['/', '/identify'];
+  const publicRoutes = ['/', '/identify', '/auth/callback'];
   
   // Check if path is public
   if (publicRoutes.includes(pathname)) {
@@ -14,15 +15,22 @@ export function middleware(request: NextRequest) {
   // Check for auth cookie
   const authCookie = request.cookies.get('song_review_auth');
   const identityCookie = request.cookies.get('song_review_identity');
-  
-  // If no auth or identity, redirect to password gate
-  if (!authCookie || !identityCookie) {
-    const loginUrl = new URL('/', request.url);
-    loginUrl.searchParams.set('redirectTo', pathname);
-    return NextResponse.redirect(loginUrl);
+
+  if (authCookie && identityCookie) {
+    return NextResponse.next();
   }
+
+  const response = NextResponse.next();
+  const supabase = createMiddlewareClient({ req: request, res: response });
+  const { data } = await supabase.auth.getSession();
   
-  return NextResponse.next();
+  if (data.session) {
+    return response;
+  }
+
+  const loginUrl = new URL('/', request.url);
+  loginUrl.searchParams.set('redirectTo', pathname);
+  return NextResponse.redirect(loginUrl);
 }
 
 export const config = {
