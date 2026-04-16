@@ -1340,6 +1340,8 @@
   transition: opacity 0.15s, transform 0.15s;
 }
 .card:hover .thumbPlayBtn { opacity: 1; transform: scale(1); }
+/* List card: keep translate locked, never apply scale from card:hover rule */
+.desktopListCard:hover .thumbPlayBtn { transform: translate(-50%, -50%) !important; }
 .thumbPlayBtnActive { opacity: 1 !important; transform: scale(1) !important; }
 
 /* EQ bars — shown when playing, top-left of thumb */
@@ -1391,7 +1393,7 @@
 /* Desktop list view — play button always visible, centred on thumb */
 .desktopListCard .thumbPlayBtn {
   opacity: 1;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) !important;
   bottom: unset;
   left: 50%;
   top: 50%;
@@ -1402,6 +1404,7 @@
 .desktopListCard:hover .thumbPlayBtn {
   filter: brightness(1.15);
   box-shadow: 0 2px 14px rgba(255,20,147,0.7);
+  transform: translate(-50%, -50%) !important;
 }
 .desktopListCard .thumbPlayBtnActive {
   transform: translate(-50%, -50%) !important;
