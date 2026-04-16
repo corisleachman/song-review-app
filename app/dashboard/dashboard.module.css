@@ -272,6 +272,12 @@
   transform: translateY(-2px);
   box-shadow: 0 16px 34px rgba(0,0,0,0.28);
 }
+/* List cards: no lift — border highlight only */
+.desktopListCard:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: rgba(255,20,147,0.3);
+}
 .cardDeleting {
   opacity: 0;
   transform: scale(0.985);
@@ -1391,6 +1397,11 @@
   top: 50%;
   width: 28px;
   height: 28px;
+  transition: filter 0.15s, box-shadow 0.15s;
+}
+.desktopListCard:hover .thumbPlayBtn {
+  filter: brightness(1.15);
+  box-shadow: 0 2px 14px rgba(255,20,147,0.7);
 }
 .desktopListCard .thumbPlayBtnActive {
   transform: translate(-50%, -50%) !important;
