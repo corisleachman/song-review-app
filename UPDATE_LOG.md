@@ -38,6 +38,30 @@ Documentation and project process improvement.
 
 ---
 
+## 2026-04-16 — Database schema documentation sync
+
+### What we were trying to achieve
+
+Make the schema documentation accurately reflect the current app runtime expectations after the Phase 2 workflow, identity, and dashboard work.
+
+### Feature / change being made
+
+Documentation-only schema clarification for songs, actions, and the workspace/auth model.
+
+### Files changed
+
+- [DATABASE.md](/Users/impero/song-review-app/DATABASE.md)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+
+### Notes
+
+- Documented `songs.account_id` and `songs.status`.
+- Documented the expanded `actions` workflow fields and new status values.
+- Added the inferred auth/workspace tables: `auth.users`, `profiles`, `accounts`, and `account_members`.
+- Marked which tables are new versus extended from the original baseline schema.
+
+---
+
 ## Template
 
 Copy this block for future entries:
