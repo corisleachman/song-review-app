@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
 
 export async function POST(req: NextRequest) {
   try {
     const { songId, description } = await req.json();
+    const resolved = await resolveCanonicalIdentity();
+
+    if (!resolved) {
+      return NextResponse.json({ error: 'You must be signed in to create a task.' }, { status: 401 });
+    }
+
     if (!songId || !description?.trim()) {
       return NextResponse.json({ error: 'Missing songId or description' }, { status: 400 });
     }

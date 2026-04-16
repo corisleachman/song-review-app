@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
 
 export async function POST(req: NextRequest) {
   try {
-    const { songId, fileName, fileSize, createdBy, label, notes } = await req.json();
+    const { songId, fileName, fileSize, label, notes } = await req.json();
+    const resolved = await resolveCanonicalIdentity();
 
-    if (!songId || !fileName || !createdBy) {
+    if (!resolved) {
+      return NextResponse.json({ error: 'You must be signed in to upload a version.' }, { status: 401 });
+    }
+
+    if (!songId || !fileName) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -35,7 +41,7 @@ export async function POST(req: NextRequest) {
         notes: notes?.trim() ? notes.trim() : null,
         file_path: filePath,
         file_name: fileName,
-        created_by: createdBy,
+        created_by: resolved.identity.authorName,
       }])
       .select('id')
       .single();

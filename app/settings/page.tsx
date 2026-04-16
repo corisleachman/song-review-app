@@ -2,13 +2,20 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getIdentity } from '@/lib/auth';
+import { useRouter } from 'next/navigation';
 import styles from './settings.module.css';
 
 interface Theme {
   primary_color: string;
   accent_color: string;
   background_color: string;
+}
+
+interface BootstrapPayload {
+  identity: {
+    displayName: string;
+    authorName: string;
+  };
 }
 
 const PRESETS: { [key: string]: Theme } = {
@@ -45,7 +52,8 @@ const PRESETS: { [key: string]: Theme } = {
 };
 
 export default function SettingsPage() {
-  const identity = getIdentity();
+  const router = useRouter();
+  const [identityLabel, setIdentityLabel] = useState<string>('');
   const [theme, setTheme] = useState<Theme>({
     primary_color: '#ff1493',
     accent_color: '#a855f7',
@@ -60,8 +68,25 @@ export default function SettingsPage() {
   useEffect(() => {
     const loadSettings = async () => {
       try {
+        const bootstrapResponse = await fetch('/api/auth/bootstrap', { cache: 'no-store' });
+
+        if (bootstrapResponse.status === 401) {
+          router.push('/?redirectTo=%2Fsettings');
+          return;
+        }
+
+        if (bootstrapResponse.ok) {
+          const bootstrapPayload = await bootstrapResponse.json() as BootstrapPayload;
+          setIdentityLabel(bootstrapPayload.identity.authorName || bootstrapPayload.identity.displayName || '');
+        }
+
         const response = await fetch('/api/settings');
         const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to load settings');
+        }
+
         setTheme(data);
         applyTheme(data);
       } catch (err) {
@@ -72,10 +97,8 @@ export default function SettingsPage() {
       }
     };
 
-    if (identity) {
-      loadSettings();
-    }
-  }, [identity]);
+    void loadSettings();
+  }, [router]);
 
   // Apply theme to CSS variables and update page styling
   const applyTheme = (newTheme: Theme) => {
@@ -278,7 +301,7 @@ export default function SettingsPage() {
 
           <div style={{ marginTop: 'var(--space-2xl)' }}>
             <p style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.3)' }}>
-              Logged in as: <strong>{identity}</strong>
+              Logged in as: <strong>{identityLabel || 'Unknown'}</strong>
             </p>
           </div>
         </div>

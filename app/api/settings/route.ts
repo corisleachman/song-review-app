@@ -1,18 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
-import { getIdentity } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
   try {
-    // Get identity from cookie
-    const cookieHeader = req.headers.get('cookie') || '';
-    const identityMatch = cookieHeader.match(/song_review_identity=([^;]+)/);
-    const identity = identityMatch ? decodeURIComponent(identityMatch[1]) : null;
+    const resolved = await resolveCanonicalIdentity();
 
-    if (!identity || !['Coris', 'Al'].includes(identity)) {
+    if (!resolved) {
       return NextResponse.json(
-        { error: 'Invalid identity' },
-        { status: 400 }
+        { error: 'You must be signed in to load settings.' },
+        { status: 401 }
       );
     }
 
@@ -20,7 +17,7 @@ export async function GET(req: NextRequest) {
     const { data, error } = await supabaseServer
       .from('settings')
       .select('primary_color, accent_color, background_color')
-      .eq('user_identity', identity)
+      .eq('user_identity', resolved.identity.authorName)
       .single();
 
     if (error && error.code !== 'PGRST116') {
@@ -52,16 +49,12 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const { primary_color, accent_color, background_color } = await req.json();
+    const resolved = await resolveCanonicalIdentity();
 
-    // Get identity from cookie
-    const cookieHeader = req.headers.get('cookie') || '';
-    const identityMatch = cookieHeader.match(/song_review_identity=([^;]+)/);
-    const identity = identityMatch ? decodeURIComponent(identityMatch[1]) : null;
-
-    if (!identity || !['Coris', 'Al'].includes(identity)) {
+    if (!resolved) {
       return NextResponse.json(
-        { error: 'Invalid identity' },
-        { status: 400 }
+        { error: 'You must be signed in to save settings.' },
+        { status: 401 }
       );
     }
 
@@ -78,7 +71,7 @@ export async function POST(req: NextRequest) {
       .from('settings')
       .upsert(
         {
-          user_identity: identity,
+          user_identity: resolved.identity.authorName,
           primary_color,
           accent_color,
           background_color,
@@ -93,7 +86,7 @@ export async function POST(req: NextRequest) {
       throw error;
     }
 
-    console.log('Settings saved successfully for', identity);
+    console.log('Settings saved successfully for', resolved.identity.authorName);
     return NextResponse.json(data[0]);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';

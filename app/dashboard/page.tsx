@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
+import { ActionStatus, getActionStatusLabel, getNextActionStatus, isOpenAction } from '@/lib/actionWorkflow';
+import { type AwaitingResponseState, getAwaitingResponseLabel, type SongActivityItem } from '@/lib/collaborationSignals';
+import { SongStatus, SONG_STATUS_VALUES, getSongStatusLabel } from '@/lib/songWorkflow';
 import { createClient } from '@/lib/supabase';
-import { getIdentity } from '@/lib/auth';
 import styles from './dashboard.module.css';
 
 const supabase = createClient();
@@ -14,11 +16,21 @@ interface Song {
   image_url?: string | null;
   imageUploading?: boolean;
   created_at?: string;
+  status: SongStatus;
   latestVersionId: string | null;
   latestVersionNumber: number | null;
   latestVersionLabel: string | null;
   latestVersionCreatedAt: string | null;
   commentCount: number;
+  unresolvedActionCount: number;
+  assignedToMeCount: number;
+  needsAttention: boolean;
+  awaitingResponse: AwaitingResponseState;
+  activeContextVersionId: string | null;
+  assignedContextVersionId: string | null;
+  awaitingThreadId: string | null;
+  awaitingVersionId: string | null;
+  activityFeed: SongActivityItem[];
   latestActivityAt: string | null;
   hasNewActivity: boolean;
 }
@@ -26,38 +38,103 @@ interface Song {
 interface Action {
   id: string;
   description: string;
-  status: 'pending' | 'approved' | 'completed';
+  status: ActionStatus;
   suggested_by: string;
   timestamp_seconds?: number;
   song_id: string;
   songTitle?: string;
+  assigned_to_user_id?: string | null;
+  assigned_to_name?: string | null;
 }
 
-function getNextActionStatus(status: Action['status']) {
-  if (status === 'pending') return 'approved';
-  if (status === 'approved') return 'completed';
-  return 'pending';
+interface BootstrapPayload {
+  identity: {
+    userId: string;
+    email: string | null;
+    profileId: string;
+    displayName: string;
+    authorName: string;
+    workspaceId: string;
+    workspaceName: string;
+    workspaceSlug: string | null;
+    membershipRole: 'owner' | 'member';
+  };
 }
 
-function getSongSeenStorageKey(identity: 'Coris' | 'Al') {
-  return `song-review-song-seen:${identity}`;
+interface DashboardSongsPayload {
+  songs: Array<{
+    id: string;
+    title: string;
+    image_url?: string | null;
+    created_at?: string | null;
+    status: SongStatus;
+    latestVersionId: string | null;
+    latestVersionNumber: number | null;
+    latestVersionLabel: string | null;
+    latestVersionCreatedAt: string | null;
+    commentCount: number;
+    unresolvedActionCount: number;
+    assignedToMeCount: number;
+    needsAttention: boolean;
+    awaitingResponse: AwaitingResponseState;
+    activeContextVersionId: string | null;
+    assignedContextVersionId: string | null;
+    awaitingThreadId: string | null;
+    awaitingVersionId: string | null;
+    activityFeed: SongActivityItem[];
+    latestActivityAt: string | null;
+  }>;
+}
+
+function getSongSeenStorageKey(viewerKey: string) {
+  return `song-review-song-seen:${viewerKey}`;
 }
 
 function getComparableTime(value?: string | null) {
   return value ? new Date(value).getTime() : 0;
 }
 
+function formatActivityTime(value: string | null) {
+  if (!value) return '';
+
+  const date = new Date(value);
+  const now = new Date();
+  const sameDay = date.toDateString() === now.toDateString();
+
+  if (sameDay) {
+    return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  }
+
+  return date.toLocaleDateString([], { day: 'numeric', month: 'short' });
+}
+
+function formatActivityTimestamp(value: string | null) {
+  if (!value) return 'No recent activity';
+
+  const date = new Date(value);
+  return date.toLocaleString([], {
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
 function DashboardContent() {
   const router = useRouter();
-  const [identity, setIdentity] = useState<'Coris' | 'Al' | null>(null);
+  const [identity, setIdentity] = useState<string | null>(null);
+  const [viewerKey, setViewerKey] = useState<string | null>(null);
+  const [bootstrapError, setBootstrapError] = useState<string | null>(null);
 
   const [songs, setSongs] = useState<Song[]>([]);
   const [actions, setActions] = useState<Action[]>([]);
   const [loading, setLoading] = useState(true);
   const [mobileTab, setMobileTab] = useState<'songs' | 'actions'>('songs');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [actionFilter, setActionFilter] = useState<'all' | Action['status']>('all');
+  const [actionFilter, setActionFilter] = useState<'all' | 'open' | 'assigned_to_me' | Action['status']>('all');
+  const [songFilter, setSongFilter] = useState<'all' | 'needs_attention' | 'assigned_to_me' | SongStatus>('all');
   const [songSort, setSongSort] = useState<'activity' | 'upload' | 'title'>('activity');
+  const [expandedSongIds, setExpandedSongIds] = useState<string[]>([]);
 
   // New song modal
   const [showNewModal, setShowNewModal] = useState(false);
@@ -78,42 +155,76 @@ function DashboardContent() {
   const coverUploadTargetId = useRef<string | null>(null);
 
   useEffect(() => {
-    const currentIdentity = getIdentity();
-    if (!currentIdentity) { router.push('/identify'); return; }
-    setIdentity(currentIdentity);
-    loadAll(currentIdentity);
+    let mounted = true;
+
+    async function initializeDashboard() {
+      try {
+        const response = await fetch('/api/auth/bootstrap');
+
+        if (response.ok) {
+          const payload = await response.json() as BootstrapPayload;
+          if (!mounted) return;
+
+          setIdentity(payload.identity.authorName || payload.identity.displayName || 'U');
+          setViewerKey(payload.identity.userId);
+          setBootstrapError(null);
+          await loadAll(payload.identity.userId);
+          return;
+        }
+
+        router.push('/?redirectTo=%2Fdashboard');
+      } catch (error) {
+        console.error('Dashboard bootstrap error:', error);
+        if (!mounted) return;
+
+        setBootstrapError('Could not load your dashboard session.');
+        setLoading(false);
+      }
+    }
+
+    void initializeDashboard();
+
+    return () => {
+      mounted = false;
+    };
   }, [router]);
 
-  async function loadAll(currentIdentity: 'Coris' | 'Al' | null = identity) {
+  useEffect(() => {
+    if (!viewerKey) return;
+
+    const reload = () => {
+      void loadAll(viewerKey);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        reload();
+      }
+    };
+
+    window.addEventListener('focus', reload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', reload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [viewerKey]);
+
+  async function loadAll(currentIdentity: string | null = viewerKey) {
     setLoading(true);
     await Promise.all([loadSongs(currentIdentity), loadActions()]);
     setLoading(false);
   }
 
-  async function loadSongs(currentIdentity: 'Coris' | 'Al' | null = identity) {
-    const { data: songsData } = await supabase
-      .from('songs')
-      .select('id, title, image_url, created_at')
-      .order('created_at', { ascending: false });
+  async function loadSongs(currentIdentity: string | null = viewerKey) {
+    const response = await fetch('/api/dashboard', { cache: 'no-store' });
+    const payload = await response.json().catch(() => null) as DashboardSongsPayload | null;
 
-    if (!songsData) return;
-
-    const { data: versionsData } = await supabase
-      .from('song_versions')
-      .select('id, song_id, version_number, label, created_at')
-      .order('version_number', { ascending: false });
-
-    const { data: threadsData } = await supabase
-      .from('comment_threads')
-      .select('id, song_version_id, created_at, updated_at');
-
-    const { data: commentsData } = await supabase
-      .from('comments')
-      .select('id, thread_id');
-
-    const { data: actionsActivityData } = await supabase
-      .from('actions')
-      .select('song_id, created_at, updated_at');
+    if (!response.ok || !Array.isArray(payload?.songs)) {
+      console.error('Dashboard songs load error:', payload);
+      return;
+    }
 
     const seenMap = typeof window !== 'undefined' && currentIdentity
       ? JSON.parse(window.localStorage.getItem(getSongSeenStorageKey(currentIdentity)) || '{}') as Record<string, string>
@@ -121,24 +232,8 @@ function DashboardContent() {
     const nextSeenMap = { ...seenMap };
     let seededSeenMap = false;
 
-    const assembled: Song[] = songsData.map(song => {
-      const songVersions = (versionsData ?? []).filter(v => v.song_id === song.id);
-      const latest = songVersions[0] ?? null;
-      const versionIds = songVersions.map(v => v.id);
-      const threadIds = (threadsData ?? [])
-        .filter(t => versionIds.includes(t.song_version_id))
-        .map(t => t.id);
-      const commentCount = (commentsData ?? []).filter(c => threadIds.includes(c.thread_id)).length;
-      const songThreadActivity = (threadsData ?? [])
-        .filter(t => versionIds.includes(t.song_version_id))
-        .map(t => t.updated_at || t.created_at);
-      const songActionActivity = (actionsActivityData ?? [])
-        .filter(a => a.song_id === song.id)
-        .map(a => a.updated_at || a.created_at);
-      const latestActivityAt = [song.created_at, ...songVersions.map(v => v.created_at), ...songThreadActivity, ...songActionActivity]
-        .filter(Boolean)
-        .sort()
-        .at(-1) ?? null;
+    const assembled: Song[] = payload.songs.map(song => {
+      const latestActivityAt = song.latestActivityAt ?? null;
 
       if (currentIdentity && latestActivityAt && !nextSeenMap[song.id]) {
         nextSeenMap[song.id] = latestActivityAt;
@@ -150,16 +245,26 @@ function DashboardContent() {
         title: song.title,
         image_url: song.image_url ?? null,
         created_at: song.created_at,
-        latestVersionId: latest?.id ?? null,
-        latestVersionNumber: latest?.version_number ?? null,
-        latestVersionLabel: latest?.label ?? null,
-        latestVersionCreatedAt: latest?.created_at ?? null,
-        commentCount,
-        latestActivityAt,
+        status: song.status,
+        latestVersionId: song.latestVersionId,
+        latestVersionNumber: song.latestVersionNumber,
+        latestVersionLabel: song.latestVersionLabel,
+        latestVersionCreatedAt: song.latestVersionCreatedAt,
+        commentCount: song.commentCount,
+        unresolvedActionCount: song.unresolvedActionCount,
+        assignedToMeCount: song.assignedToMeCount,
+        needsAttention: song.needsAttention,
+        awaitingResponse: song.awaitingResponse,
+        activeContextVersionId: song.activeContextVersionId,
+        assignedContextVersionId: song.assignedContextVersionId,
+        awaitingThreadId: song.awaitingThreadId,
+        awaitingVersionId: song.awaitingVersionId,
+        activityFeed: Array.isArray(song.activityFeed) ? song.activityFeed : [],
+        latestActivityAt: song.latestActivityAt,
         hasNewActivity: Boolean(
-          latestActivityAt &&
+          song.latestActivityAt &&
           nextSeenMap[song.id] &&
-          new Date(latestActivityAt).getTime() > new Date(nextSeenMap[song.id]).getTime()
+          new Date(song.latestActivityAt).getTime() > new Date(nextSeenMap[song.id]).getTime()
         ),
       };
     });
@@ -172,25 +277,25 @@ function DashboardContent() {
   }
 
   async function loadActions() {
-    const { data: actionsData } = await supabase
-      .from('actions')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const response = await fetch('/api/actions', { cache: 'no-store' });
+    const payload = await response.json().catch(() => null);
 
-    const { data: songsData } = await supabase.from('songs').select('id, title');
+    if (!response.ok || !Array.isArray(payload?.actions)) {
+      console.error('Dashboard actions load error:', payload);
+      return;
+    }
 
-    const withTitles = (actionsData ?? []).map(a => ({
-      ...a,
-      songTitle: songsData?.find(s => s.id === a.song_id)?.title ?? 'Unknown',
-    }));
-
-    setActions(withTitles);
+    setActions(payload.actions);
   }
 
   async function toggleAction(action: Action) {
     const newStatus = getNextActionStatus(action.status);
-    await supabase.from('actions').update({ status: newStatus }).eq('id', action.id);
-    loadActions();
+    await fetch(`/api/actions/${action.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    });
+    await loadActions();
   }
 
   async function createSong() {
@@ -202,12 +307,30 @@ function DashboardContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: newTitle.trim() }),
       });
-      const { songId } = await res.json();
+
+      const payload = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        const message = payload && typeof payload.error === 'string'
+          ? payload.error
+          : 'Could not create song. Please try again.';
+        throw new Error(message);
+      }
+
+      if (!payload?.songId || typeof payload.songId !== 'string') {
+        throw new Error('Song creation returned an invalid response.');
+      }
+
+      const { songId } = payload;
+
       setShowNewModal(false);
       setNewTitle('');
       await loadSongs();
       // Navigate to song page (no version yet)
       router.push(`/songs/${songId}`);
+    } catch (error) {
+      console.error('Create song error:', error);
+      window.alert(error instanceof Error ? error.message : 'Could not create song. Please try again.');
     } finally {
       setCreating(false);
     }
@@ -216,8 +339,30 @@ function DashboardContent() {
   async function commitRename(id: string) {
     const trimmed = editTitle.trim();
     if (trimmed) {
-      await supabase.from('songs').update({ title: trimmed }).eq('id', id);
-      setSongs(prev => prev.map(s => s.id === id ? { ...s, title: trimmed } : s));
+      const previousTitle = songs.find(song => song.id === id)?.title ?? '';
+      try {
+        const res = await fetch(`/api/songs/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: trimmed }),
+        });
+
+        const payload = await res.json().catch(() => null);
+
+        if (!res.ok) {
+          throw new Error(
+            payload && typeof payload.error === 'string'
+              ? payload.error
+              : 'Could not rename song.'
+          );
+        }
+
+        setSongs(prev => prev.map(s => s.id === id ? { ...s, title: trimmed } : s));
+      } catch (error) {
+        console.error('Rename song error:', error);
+        setSongs(prev => prev.map(s => s.id === id ? { ...s, title: previousTitle } : s));
+        window.alert(error instanceof Error ? error.message : 'Could not rename song.');
+      }
     }
     setEditingId(null);
   }
@@ -271,22 +416,85 @@ function DashboardContent() {
     }
   }
 
+  async function updateSongStatus(songId: string, status: SongStatus) {
+    const response = await fetch(`/api/songs/${songId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    const payload = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      console.error('Song status update error:', payload);
+      window.alert(
+        payload && typeof payload.error === 'string'
+          ? payload.error
+          : 'Could not update song status.'
+      );
+      return;
+    }
+
+    setSongs(prev => prev.map(song => (
+      song.id === songId
+        ? { ...song, status }
+        : song
+    )));
+  }
+
+  function toggleSongInfo(songId: string) {
+    setExpandedSongIds(prev => (
+      prev.includes(songId)
+        ? prev.filter(id => id !== songId)
+        : [...prev, songId]
+    ));
+  }
+
+  function markSongSeen(songId: string) {
+    if (!viewerKey || typeof window === 'undefined') return;
+
+    const storageKey = getSongSeenStorageKey(viewerKey);
+    const seenMap = JSON.parse(window.localStorage.getItem(storageKey) || '{}') as Record<string, string>;
+    window.localStorage.setItem(
+      storageKey,
+      JSON.stringify({ ...seenMap, [songId]: new Date().toISOString() })
+    );
+  }
+
+  function openSongContext(
+    song: Song,
+    options?: {
+      versionId?: string | null;
+      focus?: 'actions' | 'threads';
+      actionFilter?: 'open' | 'assigned_to_me';
+      actionsTab?: 'this_version' | 'all_versions';
+      threadId?: string | null;
+    }
+  ) {
+    markSongSeen(song.id);
+
+    const targetVersionId = options?.versionId ?? song.latestVersionId;
+    if (!targetVersionId) {
+      router.push(`/songs/${song.id}`);
+      return;
+    }
+
+    const params = new URLSearchParams();
+    if (options?.focus) params.set('focus', options.focus);
+    if (options?.actionFilter) params.set('actionFilter', options.actionFilter);
+    if (options?.actionsTab) params.set('actionsTab', options.actionsTab);
+    if (options?.threadId) params.set('thread', options.threadId);
+
+    const href = params.size > 0
+      ? `/songs/${song.id}/versions/${targetVersionId}?${params.toString()}`
+      : `/songs/${song.id}/versions/${targetVersionId}`;
+
+    router.push(href);
+  }
+
   function handleCardClick(e: React.MouseEvent, song: Song) {
     // Don't navigate if clicking an action button or if renaming
-    if ((e.target as HTMLElement).closest('button') || editingId === song.id) return;
-    if (identity && typeof window !== 'undefined') {
-      const seenMap = JSON.parse(window.localStorage.getItem(getSongSeenStorageKey(identity)) || '{}') as Record<string, string>;
-      window.localStorage.setItem(
-        getSongSeenStorageKey(identity),
-        JSON.stringify({ ...seenMap, [song.id]: new Date().toISOString() })
-      );
-      setSongs(prev => prev.map(item => item.id === song.id ? { ...item, hasNewActivity: false } : item));
-    }
-    if (song.latestVersionId) {
-      router.push(`/songs/${song.id}/versions/${song.latestVersionId}`);
-    } else {
-      router.push(`/songs/${song.id}`);
-    }
+    if ((e.target as HTMLElement).closest('button, select, option, input, label') || editingId === song.id) return;
+    openSongContext(song);
   }
 
   function formatTime(seconds: number) {
@@ -297,18 +505,24 @@ function DashboardContent() {
 
   const filteredActions = actions.filter(a => {
     if (actionFilter === 'all') return true;
+    if (actionFilter === 'open') return isOpenAction(a.status);
+    if (actionFilter === 'assigned_to_me') {
+      return a.assigned_to_user_id === viewerKey && isOpenAction(a.status);
+    }
     return a.status === actionFilter;
   });
 
-  const actionCounts = actions.reduce<Record<Action['status'], number>>((acc, action) => {
+  const actionCounts = actions.reduce<Record<ActionStatus, number>>((acc, action) => {
     acc[action.status] += 1;
     return acc;
-  }, { pending: 0, approved: 0, completed: 0 });
+  }, { open: 0, in_progress: 0, done: 0 });
 
-  const activeActionCount = actions.filter(a => a.status !== 'completed').length;
+  const activeActionCount = actions.filter(a => isOpenAction(a.status)).length;
   const emptyActionMessage = actionFilter === 'all'
     ? 'No actions yet. Mark a comment as an action when something needs following up.'
-    : `No ${actionFilter} actions right now`;
+    : actionFilter === 'assigned_to_me'
+      ? 'Nothing is assigned to you right now.'
+      : `No ${actionFilter.replace('_', ' ')} actions right now`;
 
   const sortedActionGroups = Object.entries(filteredActions.reduce<Record<string, Action[]>>((acc, action) => {
     const key = action.songTitle ?? 'Unknown';
@@ -317,39 +531,39 @@ function DashboardContent() {
     return acc;
   }, {})).sort(([left], [right]) => left.localeCompare(right));
 
-  const actionFilterOptions: Array<{ value: 'all' | Action['status']; label: string; count: number }> = [
+  const myAssignedActionCount = actions.filter(action => (
+    action.assigned_to_user_id === viewerKey &&
+    isOpenAction(action.status)
+  )).length;
+
+  const actionFilterOptions: Array<{ value: 'all' | 'open' | 'assigned_to_me' | Action['status']; label: string; count: number }> = [
     { value: 'all', label: 'All', count: actions.length },
-    { value: 'pending', label: 'Pending', count: actionCounts.pending },
-    { value: 'approved', label: 'Approved', count: actionCounts.approved },
-    { value: 'completed', label: 'Completed', count: actionCounts.completed },
+    { value: 'open', label: 'Open', count: activeActionCount },
+    { value: 'assigned_to_me', label: 'Assigned to me', count: myAssignedActionCount },
+    { value: 'in_progress', label: 'In progress', count: actionCounts.in_progress },
+    { value: 'done', label: 'Done', count: actionCounts.done },
   ];
 
   const getActionToggleClass = (status: Action['status']) => {
-    if (status === 'approved') return styles.actionToggleApproved;
-    if (status === 'completed') return styles.actionToggleDone;
+    if (status === 'in_progress') return styles.actionToggleApproved;
+    if (status === 'done') return styles.actionToggleDone;
     return '';
   };
 
   const getActionStatusClass = (status: Action['status']) => {
-    if (status === 'approved') return styles.actionStatusApproved;
-    if (status === 'completed') return styles.actionStatusDone;
+    if (status === 'in_progress') return styles.actionStatusApproved;
+    if (status === 'done') return styles.actionStatusDone;
     return styles.actionStatusPending;
   };
 
-  const getActionStatusLabel = (status: Action['status']) => {
-    if (status === 'completed') return 'Completed';
-    if (status === 'approved') return 'Approved';
-    return 'Pending';
-  };
-
   const getActionToggleTitle = (status: Action['status']) => {
-    if (status === 'pending') return 'Mark as approved';
-    if (status === 'approved') return 'Mark as completed';
-    return 'Move back to pending';
+    if (status === 'open') return 'Move to in progress';
+    if (status === 'in_progress') return 'Mark done';
+    return 'Reopen action';
   };
 
   const renderActionGlyph = (status: Action['status']) => {
-    if (status === 'completed') {
+    if (status === 'done') {
       return (
         <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
           <path d="M1.5 4l2 2 3-3" stroke="white" strokeWidth="1.1" strokeLinecap="round"/>
@@ -357,7 +571,7 @@ function DashboardContent() {
       );
     }
 
-    if (status === 'approved') {
+    if (status === 'in_progress') {
       return <span className={styles.actionApprovedDot} />;
     }
 
@@ -366,8 +580,14 @@ function DashboardContent() {
 
   const hasSongs = songs.length > 0;
   const songEmptyMessage = 'Start with one upload and the review flow will build from there.';
+  const filteredSongs = songs.filter(song => {
+    if (songFilter === 'all') return true;
+    if (songFilter === 'needs_attention') return song.needsAttention;
+    if (songFilter === 'assigned_to_me') return song.assignedToMeCount > 0;
+    return song.status === songFilter;
+  });
 
-  const sortedSongs = [...songs].sort((left, right) => {
+  const sortedSongs = [...filteredSongs].sort((left, right) => {
     if (songSort === 'title') {
       return left.title.localeCompare(right.title);
     }
@@ -386,6 +606,62 @@ function DashboardContent() {
     if (activityDiff !== 0) return activityDiff;
     return left.title.localeCompare(right.title);
   });
+  const hasFilteredSongs = sortedSongs.length > 0;
+
+  const songStatusCounts = songs.reduce<Record<SongStatus, number>>((acc, song) => {
+    acc[song.status] += 1;
+    return acc;
+  }, {
+    writing: 0,
+    in_progress: 0,
+    mixing: 0,
+    mastering: 0,
+    finished: 0,
+  });
+
+  const songFilterOptions: Array<{ value: 'all' | 'needs_attention' | 'assigned_to_me' | SongStatus; label: string; count: number }> = [
+    { value: 'all', label: 'All songs', count: songs.length },
+    { value: 'needs_attention', label: 'Needs attention', count: songs.filter(song => song.needsAttention).length },
+    { value: 'assigned_to_me', label: 'Assigned to me', count: songs.filter(song => song.assignedToMeCount > 0).length },
+    ...SONG_STATUS_VALUES.map(status => ({
+      value: status,
+      label: getSongStatusLabel(status),
+      count: songStatusCounts[status],
+    })),
+  ];
+
+  const getSongStatusClass = (status: SongStatus) => {
+    if (status === 'finished') return styles.songStatusFinished;
+    if (status === 'mastering') return styles.songStatusMastering;
+    if (status === 'mixing') return styles.songStatusMixing;
+    if (status === 'writing') return styles.songStatusWriting;
+    return styles.songStatusInProgress;
+  };
+
+  const renderInteractivePill = (
+    key: string,
+    label: string,
+    onClick: (event: React.MouseEvent<HTMLButtonElement>) => void
+  ) => (
+    <button
+      key={key}
+      type="button"
+      className={styles.interactivePill}
+      onClick={onClick}
+    >
+      <span className={styles.interactivePillLabel}>{label}</span>
+      <svg
+        className={styles.interactivePillIcon}
+        width="10"
+        height="10"
+        viewBox="0 0 10 10"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path d="M3 2.25 6.25 5 3 7.75" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </button>
+  );
 
   return (
     <div className={styles.page}>
@@ -401,22 +677,20 @@ function DashboardContent() {
           <div
             className={styles.avatar}
             style={{
-              background: identity === 'Coris'
-                ? 'rgba(255,20,147,0.2)'
-                : identity === 'Al'
-                  ? 'rgba(0,212,255,0.2)'
-                  : 'rgba(255,255,255,0.08)',
-              color: identity === 'Coris'
-                ? '#ff1493'
-                : identity === 'Al'
-                  ? '#00d4ff'
-                  : 'rgba(255,255,255,0.45)',
+              background: 'rgba(255,255,255,0.08)',
+              color: 'rgba(255,255,255,0.72)',
             }}
           >
             {identity?.[0] ?? ''}
           </div>
         </div>
       </header>
+
+      {bootstrapError && (
+        <div style={{ margin: '0 24px 12px', padding: '10px 12px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(229, 62, 62, 0.14)', color: '#fecaca', fontSize: 13 }}>
+          {bootstrapError}
+        </div>
+      )}
 
       {/* Mobile tabs */}
       <div className={styles.mobileTabs}>
@@ -494,14 +768,37 @@ function DashboardContent() {
             </div>
           </div>
 
+          <div className={styles.filterRow}>
+            {songFilterOptions.map(option => (
+              <button
+                key={option.value}
+                className={`${styles.filterPill} ${songFilter === option.value ? styles.filterPillActive : ''}`}
+                onClick={() => setSongFilter(option.value)}
+              >
+                {option.label}
+                <span className={styles.filterCount}>{option.count}</span>
+              </button>
+            ))}
+          </div>
+
           {loading ? (
             <p className={styles.emptyState}>Loading your songs and actions…</p>
           ) : hasSongs ? (
+            hasFilteredSongs ? (
             <div className={`${styles.songsGrid} ${viewMode === 'list' ? styles.songsGridList : ''}`}>
-              {sortedSongs.map(song => (
+              {sortedSongs.map(song => {
+                const isInfoOpen = expandedSongIds.includes(song.id);
+                const latestVersionText = song.latestVersionLabel
+                  ? song.latestVersionLabel
+                  : song.latestVersionNumber
+                    ? `Version ${song.latestVersionNumber}`
+                    : 'No audio yet';
+                const activitySummary = song.activityFeed[0] ?? null;
+
+                return (
                 <div
                   key={song.id}
-                  className={`${styles.card} ${viewMode === 'list' ? styles.desktopListCard : styles.desktopGridCard} ${fadingSongIds.includes(song.id) ? styles.cardDeleting : ''}`}
+                  className={`${styles.card} ${viewMode === 'list' ? styles.desktopListCard : styles.desktopGridCard} ${fadingSongIds.includes(song.id) ? styles.cardDeleting : ''} ${isInfoOpen ? styles.cardInfoExpanded : ''}`}
                   onClick={e => handleCardClick(e, song)}
                 >
                   {/* Thumbnail */}
@@ -523,9 +820,6 @@ function DashboardContent() {
                           <circle cx="9" cy="9" r="2" fill="rgba(255,20,147,0.4)"/>
                         </svg>
                       </div>
-                    )}
-                    {song.latestVersionNumber != null && (
-                      <span className={styles.versionBadge}>v{song.latestVersionNumber}</span>
                     )}
                     {song.hasNewActivity && (
                       <span className={styles.activityBadge}>New</span>
@@ -551,7 +845,44 @@ function DashboardContent() {
                     ) : (
                       <div className={styles.cardTitle}>{song.title}</div>
                     )}
+                    <div className={styles.cardStatusRow}>
+                      <span className={`${styles.songStatusBadge} ${getSongStatusClass(song.status)}`}>
+                        {getSongStatusLabel(song.status)}
+                      </span>
+                      {song.needsAttention && (
+                        renderInteractivePill(
+                          `active-actions-${song.id}`,
+                          `${song.unresolvedActionCount} active action${song.unresolvedActionCount !== 1 ? 's' : ''}`,
+                          event => {
+                            event.stopPropagation();
+                            openSongContext(song, {
+                              versionId: song.activeContextVersionId,
+                              focus: 'actions',
+                              actionsTab: 'all_versions',
+                              actionFilter: 'open',
+                            });
+                          }
+                        )
+                      )}
+                    </div>
                     <div className={styles.cardActions}>
+                      <button
+                        className={`${styles.iconBtn} ${isInfoOpen ? styles.iconBtnActive : ''}`}
+                        title={isInfoOpen ? 'Hide info' : 'Show info'}
+                        aria-label={isInfoOpen ? `Hide info for ${song.title}` : `Show info for ${song.title}`}
+                        aria-expanded={isInfoOpen}
+                        aria-controls={`song-info-${song.id}`}
+                        onClick={e => {
+                          e.stopPropagation();
+                          toggleSongInfo(song.id);
+                        }}
+                      >
+                        <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
+                          <circle cx="5.5" cy="5.5" r="4.25" stroke="currentColor" strokeWidth="1" />
+                          <path d="M5.5 4.8v2.6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+                          <circle cx="5.5" cy="3.2" r="0.55" fill="currentColor" />
+                        </svg>
+                      </button>
                       {/* Pencil — rename */}
                       <button
                         className={styles.iconBtn}
@@ -596,34 +927,103 @@ function DashboardContent() {
                         </svg>
                       </button>
                     </div>
-                    <div className={styles.cardMetaPrimary}>
-                      {song.latestVersionLabel
-                        ? song.latestVersionLabel
-                        : song.latestVersionNumber
-                          ? `v${song.latestVersionNumber}`
-                          : 'No audio'}
-                    </div>
-                    {song.commentCount > 0 && (
-                      <div className={styles.cardMetaComments}>
-                        <span className={styles.commentCountIcon}>
-                          <span>{song.commentCount}</span>
-                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                            <path
-                              d="M3 3.5h8a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H6l-2.5 2V9.5H3a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1Z"
-                              stroke="currentColor"
-                              strokeWidth="1.2"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </span>
-                        <span className={styles.commentCountText}>
-                          {song.commentCount} comment{song.commentCount !== 1 ? 's' : ''}
-                        </span>
+                    {isInfoOpen && (
+                      <div
+                        id={`song-info-${song.id}`}
+                        className={styles.infoPanel}
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <div className={styles.infoGrid}>
+                          <div className={styles.infoItem}>
+                            <span className={styles.infoLabel}>Latest version</span>
+                            <span className={styles.infoValue}>{latestVersionText}</span>
+                          </div>
+                          <div className={styles.infoItem}>
+                            <span className={styles.infoLabel}>Last activity</span>
+                            <span className={styles.infoValue}>{formatActivityTimestamp(song.latestActivityAt)}</span>
+                          </div>
+                          <div className={styles.infoItem}>
+                            <span className={styles.infoLabel}>Comments</span>
+                            <span className={styles.infoValue}>{song.commentCount}</span>
+                          </div>
+                          <div className={styles.infoItem}>
+                            <span className={styles.infoLabel}>Open work</span>
+                            <span className={styles.infoValue}>
+                              {song.unresolvedActionCount} active action{song.unresolvedActionCount !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                        </div>
+                        <div className={styles.infoMetaRow}>
+                          {song.assignedToMeCount > 0 && (
+                            renderInteractivePill(
+                              `assigned-${song.id}`,
+                              `${song.assignedToMeCount} assigned to me`,
+                              event => {
+                                event.stopPropagation();
+                                openSongContext(song, {
+                                  versionId: song.assignedContextVersionId,
+                                  focus: 'actions',
+                                  actionsTab: 'all_versions',
+                                  actionFilter: 'assigned_to_me',
+                                });
+                              }
+                            )
+                          )}
+                          {song.awaitingResponse && (
+                            renderInteractivePill(
+                              `awaiting-${song.id}`,
+                              getAwaitingResponseLabel(song.awaitingResponse) ?? 'Awaiting response',
+                              event => {
+                                event.stopPropagation();
+                                openSongContext(song, {
+                                  versionId: song.awaitingVersionId,
+                                  focus: 'threads',
+                                  threadId: song.awaitingThreadId,
+                                });
+                              }
+                            )
+                          )}
+                        </div>
+                        <div className={styles.cardStatusControl}>
+                          <label className={styles.cardStatusLabel} htmlFor={`song-status-${song.id}`}>
+                            Stage
+                          </label>
+                          <select
+                            id={`song-status-${song.id}`}
+                            className={styles.cardStatusSelect}
+                            value={song.status}
+                            onClick={e => e.stopPropagation()}
+                            onChange={e => {
+                              e.stopPropagation();
+                              void updateSongStatus(song.id, e.target.value as SongStatus);
+                            }}
+                          >
+                            {SONG_STATUS_VALUES.map(status => (
+                              <option key={status} value={status}>
+                                {getSongStatusLabel(status)}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        {activitySummary && (
+                          <div className={styles.activityFeed}>
+                            <div className={styles.activityItem}>
+                              <div className={styles.activityItemTop}>
+                                <span className={styles.activityItemSummary}>{activitySummary.summary}</span>
+                                <span className={styles.activityItemTime}>{formatActivityTime(activitySummary.createdAt)}</span>
+                              </div>
+                              {activitySummary.detail && (
+                                <div className={styles.activityItemDetail}>{activitySummary.detail}</div>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
 
               {/* Ghost add card */}
               <div className={styles.cardGhost} onClick={() => setShowNewModal(true)}>
@@ -633,6 +1033,12 @@ function DashboardContent() {
                 Add song
               </div>
             </div>
+            ) : (
+              <div className={styles.emptyStateCard}>
+                <div className={styles.emptyStateTitle}>No songs match this filter</div>
+                <p className={styles.emptyStateText}>Try another status or switch back to all songs.</p>
+              </div>
+            )
           ) : (
             <div className={styles.emptyStateCard}>
               <div className={styles.emptyStateTitle}>No songs yet</div>
@@ -679,13 +1085,16 @@ function DashboardContent() {
                       {renderActionGlyph(action.status)}
                     </button>
                     <div className={styles.actionContent}>
-                      <div className={`${styles.actionText} ${action.status === 'completed' ? styles.actionTextDone : ''}`}>
+                      <div className={`${styles.actionText} ${action.status === 'done' ? styles.actionTextDone : ''}`}>
                         {action.description}
                       </div>
                       <div className={styles.actionMeta}>
                         <span className={`${styles.actionStatus} ${getActionStatusClass(action.status)}`}>
                           {getActionStatusLabel(action.status)}
                         </span>
+                        {action.assigned_to_name && (
+                          <span className={styles.actionAssignee}>Assigned to {action.assigned_to_name}</span>
+                        )}
                         {action.timestamp_seconds != null && (
                           <div className={styles.actionTimestamp}>@ {formatTime(action.timestamp_seconds)}</div>
                         )}

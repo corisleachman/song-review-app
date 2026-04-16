@@ -1,0 +1,65 @@
+# Update Log
+
+Use this file to record meaningful app changes from this point onward.
+
+For each update, document:
+
+- which files were changed
+- what we were trying to achieve
+- which feature we were developing or what change we were making
+
+This is not meant to replace git history. It is a human-readable product/development log.
+
+---
+
+## 2026-04-16 — Baseline change documentation
+
+### What we were trying to achieve
+
+Create one clear Markdown record of how the current app differs from the original clean install, and establish an ongoing documentation habit for future changes.
+
+### Feature / change being made
+
+Documentation and project process improvement.
+
+### Files changed
+
+- [IMPLEMENTED_CHANGES_FROM_BASELINE.md](/Users/impero/song-review-app/IMPLEMENTED_CHANGES_FROM_BASELINE.md)
+- [README.md](/Users/impero/song-review-app/README.md)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [AGENTS.md](/Users/impero/song-review-app/AGENTS.md)
+
+### Notes
+
+- Added a baseline-to-current summary doc.
+- Linked that doc from the main README documentation table.
+- Added this ongoing update log for future development entries.
+- Updated the project agent guidance so future tasks should record file changes, goal, and feature/change intent.
+
+---
+
+## Template
+
+Copy this block for future entries:
+
+```md
+## YYYY-MM-DD — Short change title
+
+### What we were trying to achieve
+
+Short plain-English goal.
+
+### Feature / change being made
+
+Name the feature, fix, cleanup, or improvement.
+
+### Files changed
+
+- /absolute/path/or/repo-relative-path
+- /absolute/path/or/repo-relative-path
+
+### Notes
+
+- Optional implementation notes
+- Optional risks or follow-up
+```

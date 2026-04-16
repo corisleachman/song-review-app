@@ -1,16 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
 
 export async function POST(req: NextRequest) {
   try {
-    const { threadId, author, text, songId, versionId } = await req.json();
+    const { threadId, text, songId, versionId } = await req.json();
+    const resolved = await resolveCanonicalIdentity();
 
-    if (!threadId || !author || !text) {
+    if (!resolved) {
+      return NextResponse.json({ error: 'You must be signed in to reply.' }, { status: 401 });
+    }
+
+    if (!threadId || !text) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
     }
+
+    const author = resolved.identity.authorName;
 
     // Add comment to thread
     const { data: commentData, error: commentError } = await supabaseServer
@@ -52,6 +60,8 @@ export async function POST(req: NextRequest) {
         author,
         commentText: text,
         isReply: true,
+        actorUserId: resolved.identity.userId,
+        workspaceId: resolved.identity.workspaceId,
       }),
     }).catch(err => console.error('Error sending email:', err));
 

@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { ActionStatus, getActionStatusLabel, getActionStatusToast, getNextActionStatus, isOpenAction } from '@/lib/actionWorkflow';
 import { createClient } from '@/lib/supabase';
-import { getIdentity, setIdentity as persistIdentity, formatTimestamp, type Identity } from '@/lib/auth';
+import { formatTimestamp } from '@/lib/auth';
+import { getVersionDisplayLabel } from '@/lib/versionDisplay';
 import styles from './version.module.css';
 
 const MAX_AUDIO_SIZE_BYTES = 200 * 1024 * 1024;
@@ -26,11 +28,30 @@ interface Thread {
 interface Action {
   id: string;
   description: string;
-  status: string;
+  status: ActionStatus;
   suggested_by: string;
   comment_id: string | null;
   timestamp_seconds: number | null;
   created_at: string;
+  song_version_id?: string | null;
+  song_version_label?: string | null;
+  assigned_to_user_id: string | null;
+  assigned_to_name: string | null;
+  resolved_in_version_id: string | null;
+  resolved_in_version_label?: string | null;
+  comments?: {
+    id: string;
+    body: string;
+    author: string;
+    thread_id: string;
+  } | null;
+}
+
+interface WorkspaceMember {
+  userId: string;
+  email: string | null;
+  displayName: string;
+  role: 'owner' | 'admin' | 'member';
 }
 
 interface Task {
@@ -46,6 +67,7 @@ interface Version {
   id: string;
   version_number: number;
   label: string | null;
+  display_name?: string;
   notes?: string | null;
   file_path: string;
   file_name: string;
@@ -59,6 +81,20 @@ interface Song {
   image_url: string | null;
 }
 
+interface BootstrapPayload {
+  identity: {
+    userId: string;
+    email: string | null;
+    profileId: string;
+    displayName: string;
+    authorName: string;
+    workspaceId: string;
+    workspaceName: string;
+    workspaceSlug: string | null;
+    membershipRole: 'owner' | 'member';
+  };
+}
+
 type Rgb = {
   r: number;
   g: number;
@@ -68,6 +104,10 @@ type Rgb = {
 const MARKER_COLORS = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#ffa07a', '#98d8c8', '#f7dc6f', '#bb8fce'];
 const DEFAULT_REACTIVE_PRIMARY: Rgb = { r: 255, g: 20, b: 147 };
 const DEFAULT_REACTIVE_SECONDARY: Rgb = { r: 0, g: 212, b: 255 };
+const INIT_REQUEST_TIMEOUT_MS = 12000;
+const BOOTSTRAP_TIMEOUT_MS = 8000;
+
+type ActionsTab = 'this_version' | 'all_versions';
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
@@ -199,6 +239,60 @@ function formatFileSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function normalizeStoragePath(path: string) {
+  return path.replace(/^\/+/, '').trim();
+}
+
+function sortThreadsByTimestamp(items: Thread[]) {
+  return [...items].sort((a, b) => a.timestamp_seconds - b.timestamp_seconds);
+}
+
+function logVersionInit(event: string, details?: Record<string, unknown>) {
+  const payload = details ? ` ${JSON.stringify(details)}` : '';
+  console.info(`[version-init] ${event}${payload}`);
+}
+
+async function fetchJsonWithTimeout<T>(
+  input: RequestInfo | URL,
+  init: RequestInit,
+  label: string,
+  timeoutMs = INIT_REQUEST_TIMEOUT_MS
+): Promise<T> {
+  const controller = new AbortController();
+  const startedAt = Date.now();
+  const timer = window.setTimeout(() => controller.abort(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs);
+
+  logVersionInit(`${label}:start`, typeof input === 'string' ? { url: input } : undefined);
+
+  try {
+    const response = await fetch(input, { ...init, signal: controller.signal });
+    const payload = await response.json().catch(() => null);
+
+    logVersionInit(`${label}:finish`, {
+      ok: response.ok,
+      status: response.status,
+      elapsedMs: Date.now() - startedAt,
+    });
+
+    if (!response.ok) {
+      const message = payload && typeof payload.error === 'string'
+        ? payload.error
+        : `${label} failed with status ${response.status}`;
+      throw new Error(message);
+    }
+
+    return payload as T;
+  } catch (error) {
+    logVersionInit(`${label}:error`, {
+      elapsedMs: Date.now() - startedAt,
+      message: error instanceof Error ? error.message : String(error),
+    });
+    throw error;
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
 function validateAudioFile(file: File) {
   const isAudio = file.type.startsWith('audio/') || /\.(mp3|wav|m4a|aac|flac|ogg)$/i.test(file.name);
 
@@ -213,12 +307,6 @@ function validateAudioFile(file: File) {
   return null;
 }
 
-function getNextActionStatus(status: Action['status']) {
-  if (status === 'pending') return 'approved';
-  if (status === 'approved') return 'completed';
-  return 'pending';
-}
-
 export default function VersionPage() {
   const params = useParams();
   const router = useRouter();
@@ -231,6 +319,8 @@ export default function VersionPage() {
   const heroRef = useRef<HTMLDivElement>(null);
   const heroOverlayRef = useRef<HTMLDivElement>(null);
   const heroContentRef = useRef<HTMLDivElement>(null);
+  const actionsPanelRef = useRef<HTMLDivElement>(null);
+  const threadsPanelRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const waveLoadIdRef = useRef(0);
@@ -252,14 +342,17 @@ export default function VersionPage() {
   const reactivePlayingRef = useRef(false);
 
   const [identity, setIdentity] = useState('');
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [song, setSong] = useState<Song | null>(null);
   const [version, setVersion] = useState<Version | null>(null);
   const [versions, setVersions] = useState<Version[]>([]);
   const [threads, setThreads] = useState<Thread[]>([]);
   const [actions, setActions] = useState<Action[]>([]);
+  const [workspaceMembers, setWorkspaceMembers] = useState<WorkspaceMember[]>([]);
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initError, setInitError] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -278,7 +371,10 @@ export default function VersionPage() {
   const [actionModalCommentId, setActionModalCommentId] = useState<string | null>(null);
   const [editingActionId, setEditingActionId] = useState<string | null>(null);
   const [actionText, setActionText] = useState('');
-  const [actionStatus, setActionStatus] = useState<'pending' | 'approved' | 'completed'>('pending');
+  const [actionStatus, setActionStatus] = useState<ActionStatus>('open');
+  const [actionAssignedToUserId, setActionAssignedToUserId] = useState('');
+  const [actionsTab, setActionsTab] = useState<ActionsTab>('this_version');
+  const [actionFilter, setActionFilter] = useState<'all' | 'open' | 'done' | 'assigned_to_me'>('all');
   // markedCommentIds derived from loaded actions — no separate state needed
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTaskText, setNewTaskText] = useState('');
@@ -302,6 +398,16 @@ export default function VersionPage() {
     secondary: DEFAULT_REACTIVE_SECONDARY,
     shadow: darken(DEFAULT_REACTIVE_PRIMARY, 0.42),
   }));
+  const [initialLoadNonce, setInitialLoadNonce] = useState(0);
+
+  const shouldUseReactiveAudioGraph = useCallback(() => {
+    if (typeof window === 'undefined') return false;
+
+    const coarsePointer = window.matchMedia?.('(pointer: coarse)').matches ?? false;
+    const touchDevice = navigator.maxTouchPoints > 0;
+
+    return !coarsePointer && !touchDevice && window.innerWidth > 768;
+  }, []);
   const statusToastTimerRef = useRef<number | null>(null);
   const commentAnimationTimerRef = useRef<number | null>(null);
   const dragTaskId = useRef<string | null>(null);
@@ -569,18 +675,61 @@ export default function VersionPage() {
   }, []);
 
   useEffect(() => {
-    const requestedIdentity = searchParams.get('as');
-    const forcedIdentity = requestedIdentity === 'Coris' || requestedIdentity === 'Al'
-      ? requestedIdentity as Identity
-      : null;
-    const id = forcedIdentity ?? getIdentity();
-    if (!id) { router.push('/identify'); return; }
-    if (forcedIdentity) {
-      persistIdentity(forcedIdentity);
+    let mounted = true;
+
+    // In development, React Strict Mode intentionally mounts, cleans up,
+    // and remounts effects once to flush side-effect bugs. That causes this
+    // init sequence to log twice locally, while production runs it once per
+    // actual page load/version change.
+    async function resolveIdentity() {
+      try {
+        logVersionInit('bootstrap:start', { songId, versionId });
+        const payload = await fetchJsonWithTimeout<BootstrapPayload>(
+          '/api/auth/bootstrap',
+          { cache: 'no-store' },
+          'bootstrap',
+          BOOTSTRAP_TIMEOUT_MS
+        );
+
+        if (!mounted) return;
+
+        if (payload?.identity?.authorName) {
+          setIdentity(payload.identity.authorName);
+          setCurrentUserId(payload.identity.userId);
+          logVersionInit('bootstrap:resolved', {
+            authorName: payload.identity.authorName,
+            userId: payload.identity.userId,
+          });
+          void loadWorkspaceMembers().catch(error => {
+            console.error('Workspace members load error:', error);
+            logVersionInit('workspace-members:failed', {
+              message: error instanceof Error ? error.message : String(error),
+            });
+          });
+          return;
+        }
+
+        logVersionInit('bootstrap:missing-identity', { payload });
+        router.push(`/?redirectTo=${encodeURIComponent(`/songs/${songId}/versions/${versionId}`)}`);
+      } catch (error) {
+        console.error('Version page bootstrap error:', error);
+        if (!mounted) return;
+
+        logVersionInit('bootstrap:failed-without-identity', {
+          message: error instanceof Error ? error.message : String(error),
+        });
+        router.push(`/?redirectTo=${encodeURIComponent(`/songs/${songId}/versions/${versionId}`)}`);
+      }
     }
-    setIdentity(id);
-    load();
-  }, [songId, versionId, searchParams, router]);
+
+    logVersionInit('page:init-start', { songId, versionId, initialLoadNonce });
+    void resolveIdentity();
+    void load();
+
+    return () => {
+      mounted = false;
+    };
+  }, [initialLoadNonce, router, songId, versionId]);
 
   useEffect(() => {
     resizeReactiveCanvas();
@@ -669,6 +818,13 @@ export default function VersionPage() {
 
   useEffect(() => {
     if (isPlaying) {
+      if (!shouldUseReactiveAudioGraph()) {
+        reactivePlayingRef.current = false;
+        stopReactiveDrawing();
+        drawReactiveIdle();
+        return;
+      }
+
       void ensureReactiveAudioGraph(audioRef.current).then(ready => {
         if (ready) {
           reactivePlayingRef.current = true;
@@ -680,7 +836,7 @@ export default function VersionPage() {
       stopReactiveDrawing();
       drawReactiveIdle();
     }
-  }, [drawReactiveIdle, ensureReactiveAudioGraph, isPlaying, startReactiveDrawing, stopReactiveDrawing]);
+  }, [drawReactiveIdle, ensureReactiveAudioGraph, isPlaying, shouldUseReactiveAudioGraph, startReactiveDrawing, stopReactiveDrawing]);
 
   useEffect(() => {
     return () => {
@@ -735,47 +891,121 @@ export default function VersionPage() {
 
   async function load() {
     setLoading(true);
+    setInitError(null);
+    let loadErrorMessage: string | null = null;
     try {
-      const [songRes, versionRes, versionsRes] = await Promise.all([
-        supabase.from('songs').select('id, title, image_url').eq('id', songId).single(),
-        supabase.from('song_versions').select('*').eq('id', versionId).single(),
-        supabase.from('song_versions').select('*').eq('song_id', songId).order('version_number', { ascending: true }),
-      ]);
-      setSong(songRes.data);
-      setVersion(versionRes.data);
-      setVersions(versionsRes.data || []);
+      logVersionInit('load:start', { songId, versionId });
 
-      if (versionRes.data?.file_path) {
-        const { data: signed } = await supabase.storage.from('song-files').createSignedUrl(versionRes.data.file_path, 3600);
-        if (signed?.signedUrl) {
-          setAudioUrl(signed.signedUrl);
-        } else {
-          const { data: pub } = supabase.storage.from('song-files').getPublicUrl(versionRes.data.file_path);
-          setAudioUrl(pub.publicUrl);
-        }
+      const [songPayload, versionPayload, versionsPayload] = await Promise.all([
+        fetchJsonWithTimeout<{ song: Song }>(
+          `/api/songs/${songId}`,
+          { cache: 'no-store' },
+          'song'
+        ),
+        fetchJsonWithTimeout<{ version: Version }>(
+          `/api/versions/${versionId}`,
+          { cache: 'no-store' },
+          'version'
+        ),
+        fetchJsonWithTimeout<{ versions: Version[] }>(
+          `/api/songs/${songId}/versions`,
+          { cache: 'no-store' },
+          'versions'
+        ),
+      ]);
+
+      if (!songPayload?.song) {
+        throw new Error('Could not load this song.');
       }
+
+      if (!versionPayload?.version) {
+        throw new Error('Could not load this version.');
+      }
+
+      if (!Array.isArray(versionsPayload?.versions)) {
+        throw new Error('Could not load the version list.');
+      }
+
+      setSong(songPayload.song);
+      setVersion(versionPayload.version);
+      setVersions(versionsPayload.versions);
+
+      if (versionPayload.version?.file_path) {
+        const normalizedFilePath = normalizeStoragePath(versionPayload.version.file_path);
+        const { data: pub } = supabase.storage.from('song-files').getPublicUrl(normalizedFilePath);
+        setAudioUrl(pub.publicUrl);
+        logVersionInit('audio-url:resolved', {
+          filePath: normalizedFilePath,
+          hasUrl: Boolean(pub.publicUrl),
+        });
+      } else {
+        setAudioUrl(null);
+        showStatusToast('This version is missing an audio file path.');
+      }
+
       await Promise.all([loadThreads(), loadActions(), loadTasks()]);
+      setStatusToast(null);
+      logVersionInit('load:success', {
+        songId,
+        versionId,
+        hasAudioUrl: Boolean(versionPayload.version?.file_path),
+      });
+    } catch (error) {
+      console.error('Version page load error:', error);
+      const message = error instanceof Error ? error.message : 'Could not load this version.';
+      loadErrorMessage = message;
+      setInitError(message);
+      showStatusToast(message);
+      logVersionInit('load:failed', { message });
     } finally {
       setLoading(false);
+      logVersionInit('load:complete', {
+        loadingCleared: true,
+        hasInitError: Boolean(loadErrorMessage),
+      });
     }
   }
 
   async function loadThreads() {
-    const { data } = await supabase
-      .from('comment_threads')
-      .select('*, comments(*)')
-      .eq('song_version_id', versionId)
-      .order('timestamp_seconds', { ascending: true });
-    setThreads(data || []);
+    const payload = await fetchJsonWithTimeout<{ threads: Thread[] }>(
+      `/api/versions/${versionId}/threads`,
+      { cache: 'no-store' },
+      'threads'
+    );
+
+    if (!Array.isArray(payload?.threads)) {
+      throw new Error('Could not load comments.');
+    }
+
+    setThreads(payload.threads);
   }
 
   async function loadActions() {
-    // Fetch via API route which does a proper server-side join by version
-    const res = await fetch(`/api/actions/by-song/${songId}?versionId=${versionId}`);
-    if (res.ok) {
-      const { actions: data } = await res.json();
-      setActions(data || []);
+    // Fetch via the canonical server route so the UI never depends on anon
+    // client joins for comment-linked action state.
+    const payload = await fetchJsonWithTimeout<{ actions: Action[] }>(
+      `/api/actions/by-song/${songId}`,
+      { cache: 'no-store' },
+      'actions'
+    );
+    if (!Array.isArray(payload?.actions)) {
+      throw new Error('Could not load actions.');
     }
+    setActions(payload.actions);
+  }
+
+  async function loadWorkspaceMembers() {
+    const payload = await fetchJsonWithTimeout<{ members: WorkspaceMember[] }>(
+      '/api/workspace/members',
+      { cache: 'no-store' },
+      'workspace-members'
+    );
+
+    if (!Array.isArray(payload?.members)) {
+      throw new Error('Could not load workspace members.');
+    }
+
+    setWorkspaceMembers(payload.members);
   }
 
   // Deep link: open thread from email. Re-runs when isReady/duration change
@@ -791,9 +1021,49 @@ export default function VersionPage() {
     }
   }, [searchParams, threads, isReady, duration]);
 
+  useEffect(() => {
+    const requestedActionsTab = searchParams.get('actionsTab');
+    if (requestedActionsTab === 'all_versions' || requestedActionsTab === 'this_version') {
+      setActionsTab(requestedActionsTab);
+      return;
+    }
+
+    setActionsTab('this_version');
+  }, [searchParams, versionId]);
+
+  useEffect(() => {
+    const requestedActionFilter = searchParams.get('actionFilter');
+    if (
+      requestedActionFilter === 'all' ||
+      requestedActionFilter === 'open' ||
+      requestedActionFilter === 'done' ||
+      requestedActionFilter === 'assigned_to_me'
+    ) {
+      setActionFilter(requestedActionFilter);
+    }
+  }, [searchParams, versionId]);
+
+  useEffect(() => {
+    const focus = searchParams.get('focus');
+    if (!focus || loading) return;
+
+    const target = focus === 'actions'
+      ? actionsPanelRef.current
+      : focus === 'threads'
+        ? threadsPanelRef.current
+        : null;
+
+    if (!target) return;
+
+    window.requestAnimationFrame(() => {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, [searchParams, loading, versionId, actions.length, threads.length]);
+
   const initWaveSurfer = useCallback(async (container: HTMLDivElement, url: string) => {
     const loadId = ++waveLoadIdRef.current;
     clearWaveTimers();
+    logVersionInit('wave:init-start', { loadId, hasContainer: container.isConnected, url });
 
     if (wavesurferRef.current) {
       try { wavesurferRef.current.destroy(); } catch {}
@@ -809,7 +1079,10 @@ export default function VersionPage() {
     }
 
     const WaveSurfer = (await import('wavesurfer.js')).default;
-    if (!container.isConnected || loadId !== waveLoadIdRef.current) return;
+    if (!container.isConnected || loadId !== waveLoadIdRef.current) {
+      logVersionInit('wave:init-cancelled', { loadId, containerConnected: container.isConnected });
+      return;
+    }
 
     // Create a native <audio> element and pass it to WaveSurfer.
     // This bypasses WaveSurfer's internal fetch entirely — which fixes mobile
@@ -829,6 +1102,7 @@ export default function VersionPage() {
     const handleWaveFailure = (message: string) => {
       if (loadId !== waveLoadIdRef.current) return;
       clearWaveTimers();
+      logVersionInit('wave:init-failed', { loadId, message });
 
       if (!waveAutoRetryUsedRef.current) {
         waveAutoRetryUsedRef.current = true;
@@ -875,6 +1149,7 @@ export default function VersionPage() {
       setDuration(dur);
       setIsReady(true);
       setIsRetryingWave(false);
+      logVersionInit('wave:ready', { loadId, duration: dur });
     });
     ws.on('timeupdate', (t: number) => setCurrentTime(t));
     ws.on('seeking', (t: number) => setCurrentTime(t));
@@ -966,9 +1241,15 @@ export default function VersionPage() {
     let attempts = 0;
     const tryInit = () => {
       if (waveformRef.current) {
+        logVersionInit('wave:container-ready', { attempts, hasAudioUrl: true });
         initWaveSurfer(waveformRef.current, audioUrl);
       } else if (attempts++ < 20) {
+        logVersionInit('wave:container-wait', { attempts });
         setTimeout(tryInit, 50);
+      } else {
+        const message = 'Waveform container did not mount in time.';
+        setWaveErr(message);
+        logVersionInit('wave:container-timeout', { attempts, message });
       }
     };
     tryInit();
@@ -999,12 +1280,17 @@ export default function VersionPage() {
   }, [audioUrl, waveReloadNonce, clearWaveTimers, initWaveSurfer, stopPlayback, stopReactiveDrawing]);
 
   async function loadTasks() {
-    const { data } = await supabase
-      .from('song_tasks')
-      .select('*')
-      .eq('song_id', songId)
-      .order('sort_order', { ascending: true });
-    setTasks(data || []);
+    const payload = await fetchJsonWithTimeout<{ tasks: Task[] }>(
+      `/api/songs/${songId}/tasks`,
+      { cache: 'no-store' },
+      'tasks'
+    );
+
+    if (!Array.isArray(payload?.tasks)) {
+      throw new Error('Could not load tasks.');
+    }
+
+    setTasks(payload.tasks);
   }
 
   async function addTask() {
@@ -1014,11 +1300,18 @@ export default function VersionPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ songId, description: newTaskText.trim() }),
     });
-    if (res.ok) {
-      setNewTaskText('');
-      await loadTasks();
-      showStatusToast('Task added');
+    const payload = await res.json().catch(() => null);
+    if (!res.ok) {
+      showStatusToast(
+        payload && typeof payload.error === 'string'
+          ? payload.error
+          : 'Could not add task.'
+      );
+      return;
     }
+    setNewTaskText('');
+    await loadTasks();
+    showStatusToast('Task added');
   }
 
   async function toggleTask(task: Task) {
@@ -1084,31 +1377,85 @@ export default function VersionPage() {
     await fetch(`/api/actions/${action.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: newStatus }),
+      body: JSON.stringify({
+        status: newStatus,
+        ...(newStatus !== 'done' ? { resolvedInVersionId: null } : {}),
+      }),
     });
     await loadActions();
-    showStatusToast(newStatus === 'completed' ? 'Action completed' : newStatus === 'approved' ? 'Action approved' : 'Action moved back to pending');
+    showStatusToast(getActionStatusToast(newStatus));
+  };
+
+  const resolveActionInCurrentVersion = async (action: Action) => {
+    const response = await fetch(`/api/actions/${action.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resolvedInVersionId: versionId }),
+    });
+    const payload = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      showStatusToast(
+        payload && typeof payload.error === 'string'
+          ? payload.error
+          : 'Could not mark this action as resolved in this version.'
+      );
+      return;
+    }
+
+    await loadActions();
+    showStatusToast('Action resolved in this version');
   };
 
   const submitThread = async () => {
     const ts = pendingTimestampRef.current;
     if (!newComment.trim() || ts === null) return;
+    if (!identity) {
+      showStatusToast('Could not determine who is posting this comment.');
+      return;
+    }
     setPosting(true);
     try {
       const res = await fetch('/api/threads/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ versionId, songId, timestamp: ts, author: identity, commentText: newComment.trim() }),
+        body: JSON.stringify({ versionId, songId, timestamp: ts, commentText: newComment.trim() }),
       });
-      if (res.ok) {
-        const { threadId, commentId } = await res.json();
-        setNewComment('');
-        setPendingTimestamp(null);
-        pendingTimestampRef.current = null;
-        await loadThreads();
-        setSelectedThreadId(threadId);
-        triggerCommentAnimation(commentId ?? null);
+
+      const payload = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        throw new Error(
+          payload && typeof payload.error === 'string'
+            ? payload.error
+            : 'Could not save comment.'
+        );
       }
+
+      const { threadId, commentId, thread } = payload;
+      setNewComment('');
+      setPendingTimestamp(null);
+      pendingTimestampRef.current = null;
+
+      if (thread && typeof thread === 'object') {
+        setThreads(prev => sortThreadsByTimestamp([
+          ...prev.filter(existing => existing.id !== thread.id),
+          thread as Thread,
+        ]));
+      }
+
+      try {
+        await loadThreads();
+      } catch (reloadError) {
+        console.error('Reload threads error:', reloadError);
+      }
+
+      setSelectedThreadId(threadId);
+      triggerCommentAnimation(commentId ?? null);
+      showStatusToast('Comment posted');
+    } catch (error) {
+      console.error('Create thread error:', error);
+      showStatusToast(error instanceof Error ? error.message : 'Could not save comment.');
     } finally {
       setPosting(false);
     }
@@ -1119,7 +1466,7 @@ export default function VersionPage() {
     const res = await fetch('/api/threads/reply', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ threadId, songId, versionId, text: replyText.trim(), author: identity }),
+      body: JSON.stringify({ threadId, songId, versionId, text: replyText.trim() }),
     });
     if (res.ok) {
       const { commentId } = await res.json();
@@ -1133,47 +1480,100 @@ export default function VersionPage() {
     if (!actionText.trim()) return;
 
     if (editingActionId) {
-      await fetch(`/api/actions/${editingActionId}`, {
+      const response = await fetch(`/api/actions/${editingActionId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description: actionText.trim(), status: actionStatus }),
+        body: JSON.stringify({
+          description: actionText.trim(),
+          status: actionStatus,
+          assignedToUserId: actionAssignedToUserId || null,
+        }),
       });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        showStatusToast(
+          payload && typeof payload.error === 'string'
+            ? payload.error
+            : 'Could not update action.'
+        );
+        return;
+      }
     } else if (actionModalCommentId) {
-      await fetch('/api/actions/create', {
+      const response = await fetch('/api/actions/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           commentId: actionModalCommentId,
           songId,
           description: actionText.trim(),
-          suggestedBy: identity,
           status: actionStatus,
+          assignedToUserId: actionAssignedToUserId || null,
         }),
       });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        showStatusToast(
+          payload && typeof payload.error === 'string'
+            ? payload.error
+            : 'Could not create action.'
+        );
+        return;
+      }
     }
 
     setActionModalCommentId(null);
     setEditingActionId(null);
     setActionText('');
-    setActionStatus('pending');
+    setActionStatus('open');
+    setActionAssignedToUserId('');
     await loadActions();
     showStatusToast(editingActionId ? 'Action updated' : 'Action saved');
   };
 
   const saveLabelEdit = async () => {
     if (!version) return;
-    setEditingLabel(false);
     const trimmed = labelDraft.trim();
-    if (trimmed === (version.label ?? '')) return; // no change
-    await fetch(`/api/versions/${version.id}`, {
+    if (trimmed === (version.label ?? '')) {
+      setEditingLabel(false);
+      return;
+    }
+    const response = await fetch(`/api/versions/${version.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ label: trimmed || null }),
     });
-    setVersion(prev => prev ? { ...prev, label: trimmed || null } : prev);
-    // Refresh versions list for dropdown
-    const { data } = await supabase.from('song_versions').select('*').eq('song_id', songId).order('version_number', { ascending: true });
-    setVersions(data || []);
+    const payload = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      showStatusToast(
+        payload && typeof payload.error === 'string'
+          ? payload.error
+          : 'Could not update version label.'
+      );
+      return;
+    }
+
+    setEditingLabel(false);
+    const updatedVersion = payload?.version && typeof payload.version === 'object'
+      ? payload.version as Version
+      : { ...version, label: trimmed || null };
+
+    setVersion(updatedVersion);
+    setVersions(prev => prev.map(item => (
+      item.id === version.id
+        ? {
+            ...item,
+            label: updatedVersion.label ?? null,
+            display_name: updatedVersion.display_name ?? getVersionDisplayLabel(updatedVersion),
+          }
+        : item
+    )));
+    // Refresh versions list for the switcher
+    const versionsResponse = await fetch(`/api/songs/${songId}/versions`, { cache: 'no-store' });
+    const versionsPayload = await versionsResponse.json().catch(() => null);
+    if (versionsResponse.ok && Array.isArray(versionsPayload?.versions)) {
+      setVersions(versionsPayload.versions);
+    }
   };
 
   const seekToThread = (thread: Thread) => {
@@ -1244,7 +1644,6 @@ export default function VersionPage() {
           songId,
           fileName: pendingVersionFile.name,
           fileSize: pendingVersionFile.size,
-          createdBy: identity,
           label: newVersionLabel.trim() || null,
           notes: newVersionNotes.trim() || null,
         }),
@@ -1287,20 +1686,93 @@ export default function VersionPage() {
     setEditingActionId(action.id);
     setActionModalCommentId(action.comment_id);
     setActionText(action.description);
-    setActionStatus(action.status as 'pending' | 'approved' | 'completed');
+    setActionStatus(action.status);
+    setActionAssignedToUserId(action.assigned_to_user_id ?? '');
   }
 
   if (loading) return <div className={styles.loading}>Loading this version…</div>;
 
+  if (initError) {
+    return (
+      <div className={styles.loading}>
+        <div className={styles.initErrorCard}>
+          <h1 className={styles.initErrorTitle}>This version did not finish loading</h1>
+          <p className={styles.initErrorText}>{initError}</p>
+          <div className={styles.initErrorActions}>
+            <button
+              type="button"
+              className={styles.waveRetryBtn}
+              onClick={() => setInitialLoadNonce(count => count + 1)}
+            >
+              Retry
+            </button>
+            <button
+              type="button"
+              className={styles.songsBtn}
+              onClick={() => router.push('/dashboard')}
+            >
+              Back to songs
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const selectedThread = threads.find(t => t.id === selectedThreadId) ?? null;
-  const pendingActions = actions.filter(a => a.status !== 'completed');
-  const completedActions = actions.filter(a => a.status === 'completed');
+  const thisVersionActions = actions.filter(action => action.song_version_id === versionId);
+  const allVersionActions = actions;
+  const activeActionsForTab = actionsTab === 'all_versions' ? allVersionActions : thisVersionActions;
+  const openActionCount = activeActionsForTab.filter(a => isOpenAction(a.status)).length;
+  const unresolvedActions = activeActionsForTab.filter(action => action.status !== 'done');
+  const resolvedHereActions = activeActionsForTab.filter(action => action.resolved_in_version_id === versionId);
+  const filteredActions = activeActionsForTab.filter(action => {
+    if (actionFilter === 'all') return true;
+    if (actionFilter === 'open') return isOpenAction(action.status);
+    if (actionFilter === 'done') return action.status === 'done';
+    return currentUserId ? action.assigned_to_user_id === currentUserId : false;
+  });
+  const orderedActions = [
+    ...filteredActions.filter(action => action.status !== 'done'),
+    ...filteredActions.filter(action => action.status === 'done'),
+  ];
   const versionMeta = [
     version?.created_by ? `Uploaded by ${version.created_by}` : null,
     version?.created_at ? formatVersionDate(version.created_at) : null,
     duration > 0 ? formatTimestamp(Math.floor(duration)) : null,
   ].filter(Boolean);
   const versionNotes = version?.notes?.trim() || '';
+
+  function openActionSource(action: Action) {
+    const targetVersionId = action.song_version_id ?? versionId;
+    const nextParams = new URLSearchParams();
+    nextParams.set('focus', 'actions');
+    nextParams.set('actionsTab', 'all_versions');
+    nextParams.set('actionFilter', actionFilter);
+    if (action.comments?.thread_id) {
+      nextParams.set('thread', action.comments.thread_id);
+    }
+
+    const targetPath = `/songs/${songId}/versions/${targetVersionId}?${nextParams.toString()}`;
+
+    if (targetVersionId !== versionId) {
+      router.push(targetPath);
+      return;
+    }
+
+    setActionsTab('all_versions');
+    if (action.comments?.thread_id) {
+      const thread = threads.find(item => item.id === action.comments?.thread_id);
+      if (thread) {
+        seekToThread(thread);
+      } else {
+        setSelectedThreadId(action.comments.thread_id);
+      }
+    }
+    window.requestAnimationFrame(() => {
+      actionsPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
 
   return (
     <div className={styles.page}>
@@ -1339,7 +1811,7 @@ export default function VersionPage() {
           </div>
 
           <div className={styles.heroActionRow}>
-            {versions.length > 0 && (
+            {versions.length > 1 && (
               <button className={styles.changeVersionBtn} onClick={() => setShowVersionModal(true)}>
                 Change Version
               </button>
@@ -1383,8 +1855,27 @@ export default function VersionPage() {
                       title="Double-click to rename"
                       onDoubleClick={() => { setLabelDraft(version.label ?? ''); setEditingLabel(true); }}
                     >
-                      {version.label || `v${version.version_number}`}
-                      <span className={styles.heroBadgeEdit}>✎</span>
+                      {version.display_name || getVersionDisplayLabel(version)}
+                      <span
+                        className={styles.heroBadgeEdit}
+                        role="button"
+                        tabIndex={0}
+                        onClick={event => {
+                          event.stopPropagation();
+                          setLabelDraft(version.label ?? '');
+                          setEditingLabel(true);
+                        }}
+                        onKeyDown={event => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            setLabelDraft(version.label ?? '');
+                            setEditingLabel(true);
+                          }
+                        }}
+                      >
+                        ✎
+                      </span>
                     </span>
                   )
                 )}
@@ -1558,47 +2049,141 @@ export default function VersionPage() {
       <div className={styles.body}>
 
         {/* Left: Actions */}
-        <div className={styles.actionsPanel}>
+        <div ref={actionsPanelRef} className={styles.actionsPanel}>
           <div className={styles.actionsPanelHeader}>
             <div className={styles.sectionHeaderCopy}>
               <span className={styles.actionsPanelTitle}>ACTIONS</span>
-              <span className={styles.sectionHeaderSubtle}>Changes to make on the song</span>
+              <span className={styles.sectionHeaderSubtle}>
+                {actionsTab === 'all_versions'
+                  ? 'Actions across the whole song history'
+                  : 'Changes to make on this version'}
+              </span>
             </div>
-            <span className={styles.pendingBadge}>{pendingActions.length} pending</span>
+            <span className={styles.pendingBadge}>{openActionCount} open</span>
+          </div>
+          <div className={styles.actionTabRow}>
+            {[
+              { value: 'this_version', label: `This version (${thisVersionActions.length})` },
+              { value: 'all_versions', label: `All versions (${allVersionActions.length})` },
+            ].map(option => (
+              <button
+                key={option.value}
+                className={`${styles.actionTab} ${actionsTab === option.value ? styles.actionTabActive : ''}`}
+                onClick={() => setActionsTab(option.value as ActionsTab)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          {unresolvedActions.length > 0 && (
+            <div className={styles.actionContextCard}>
+              <strong>{unresolvedActions.length} unresolved</strong>
+              <span>
+                {actionsTab === 'all_versions'
+                  ? 'Open and in-progress actions across the song are the work still waiting for attention.'
+                  : 'Open and in-progress actions are the work still to listen for in this version.'}
+              </span>
+            </div>
+          )}
+          {resolvedHereActions.length > 0 && (
+            <div className={styles.actionContextCard}>
+              <strong>{resolvedHereActions.length} resolved here</strong>
+              <span>These actions have been marked as resolved in the version you are reviewing now.</span>
+            </div>
+          )}
+          <div className={styles.actionFilterRow}>
+            {[
+              { value: 'all', label: 'All' },
+              { value: 'open', label: 'Open' },
+              { value: 'done', label: 'Done' },
+              { value: 'assigned_to_me', label: 'Assigned to me' },
+            ].map(option => (
+              <button
+                key={option.value}
+                className={`${styles.actionFilterPill} ${actionFilter === option.value ? styles.actionFilterPillActive : ''}`}
+                onClick={() => setActionFilter(option.value as 'all' | 'open' | 'done' | 'assigned_to_me')}
+              >
+                {option.label}
+              </button>
+            ))}
           </div>
           {actions.length === 0 && <p className={styles.empty}>No actions yet. Turn a comment into an action when something needs following up.</p>}
-          {[...pendingActions, ...completedActions].map(action => (
-            <div key={action.id} className={`${styles.actionItem} ${action.status === 'completed' ? styles.actionDone : ''}`}>
+          {actions.length > 0 && orderedActions.length === 0 && (
+            <p className={styles.empty}>No actions match this filter right now.</p>
+          )}
+          {orderedActions.map(action => (
+            <div key={action.id} className={`${styles.actionItem} ${action.status === 'done' ? styles.actionDone : ''}`}>
               <button
-                className={`${styles.actionToggle} ${action.status === 'completed' ? styles.actionToggleDone : action.status === 'approved' ? styles.actionToggleApproved : ''}`}
+                className={`${styles.actionToggle} ${action.status === 'done' ? styles.actionToggleDone : action.status === 'in_progress' ? styles.actionToggleApproved : ''}`}
                 onClick={() => toggleAction(action)}
                 title={`Cycle status (${action.status})`}
               >
-                {action.status === 'completed' && (
+                {action.status === 'done' && (
                   <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                     <path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
                   </svg>
                 )}
-                {action.status === 'approved' && (
+                {action.status === 'in_progress' && (
                   <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                     <path d="M2 5h6" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
                   </svg>
                 )}
               </button>
               <div className={styles.actionText}>
-                <span className={`${styles.actionDesc} ${action.status === 'completed' ? styles.actionDescDone : ''}`}>
+                <span className={`${styles.actionDesc} ${action.status === 'done' ? styles.actionDescDone : ''}`}>
                   {action.description}
                 </span>
                 <span className={styles.actionMeta}>
                   {action.suggested_by}
+                  {actionsTab === 'all_versions' && action.song_version_label && (
+                    <>
+                      {' '}·{' '}
+                      <button
+                        type="button"
+                        className={styles.actionLinkBtn}
+                        onClick={() => openActionSource(action)}
+                      >
+                        {action.song_version_label}
+                      </button>
+                    </>
+                  )}
+                  {action.assigned_to_name && (
+                    <> · Assigned to {action.assigned_to_name}</>
+                  )}
+                  {action.resolved_in_version_id === versionId && (
+                    <> · Resolved in this version</>
+                  )}
+                  {action.resolved_in_version_id && action.resolved_in_version_id !== versionId && action.resolved_in_version_label && (
+                    <> · Resolved in {action.resolved_in_version_label}</>
+                  )}
                   {action.timestamp_seconds != null && (
-                    <> · <span className={styles.actionTimestamp}>@ {formatTimestamp(action.timestamp_seconds)}</span></>
+                    <>
+                      {' '}·{' '}
+                      <button
+                        type="button"
+                        className={`${styles.actionLinkBtn} ${styles.actionTimestamp}`}
+                        onClick={() => openActionSource(action)}
+                      >
+                        @ {formatTimestamp(action.timestamp_seconds)}
+                      </button>
+                    </>
+                  )}
+                  {actionsTab === 'all_versions' && !action.song_version_label && action.song_version_id && (
+                    <> · Earlier version</>
                   )}
                 </span>
                 <div className={styles.actionControls}>
-                  <span className={`${styles.actionStatusPill} ${action.status === 'approved' ? styles.actionStatusApproved : action.status === 'completed' ? styles.actionStatusCompleted : ''}`}>
-                    {action.status}
+                  <span className={`${styles.actionStatusPill} ${action.status === 'in_progress' ? styles.actionStatusApproved : action.status === 'done' ? styles.actionStatusCompleted : ''}`}>
+                    {getActionStatusLabel(action.status)}
                   </span>
+                  {action.status !== 'done' && (
+                    <button className={styles.actionResolveBtn} onClick={() => resolveActionInCurrentVersion(action)}>
+                      Resolve in this version
+                    </button>
+                  )}
+                  {action.status === 'done' && action.resolved_in_version_id === versionId && (
+                    <span className={styles.actionResolvedBadge}>Resolved in this version</span>
+                  )}
                   <button className={styles.actionEditBtn} onClick={() => openEditAction(action)}>
                     Edit
                   </button>
@@ -1609,7 +2194,7 @@ export default function VersionPage() {
         </div>
 
         {/* Right: Threads */}
-        <div className={styles.threadsPanel}>
+        <div ref={threadsPanelRef} className={styles.threadsPanel}>
           {selectedThread ? (
             <>
               <div className={styles.threadsPanelHeader}>
@@ -1652,7 +2237,8 @@ export default function VersionPage() {
                         setActionModalCommentId(c.id);
                         setEditingActionId(null);
                         setActionText(c.body);
-                        setActionStatus('pending');
+                        setActionStatus('open');
+                        setActionAssignedToUserId('');
                       }}>
                         + Mark as action
                       </button>
@@ -1818,19 +2404,31 @@ export default function VersionPage() {
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <h3 className={styles.modalTitle}>{editingActionId ? 'Edit Action' : 'Mark as Action'}</h3>
             <textarea className={styles.modalTextarea} value={actionText} onChange={e => setActionText(e.target.value)} rows={3} />
+            <select
+              className={styles.modalInput}
+              value={actionAssignedToUserId}
+              onChange={e => setActionAssignedToUserId(e.target.value)}
+            >
+              <option value="">Unassigned</option>
+              {workspaceMembers.map(member => (
+                <option key={member.userId} value={member.userId}>
+                  {member.displayName}
+                </option>
+              ))}
+            </select>
             <div className={styles.actionStateRow}>
-              {(['pending', 'approved', 'completed'] as const).map(status => (
+              {(['open', 'in_progress', 'done'] as const).map(status => (
                 <button
                   key={status}
                   className={`${styles.actionStateBtn} ${actionStatus === status ? styles.actionStateBtnActive : ''}`}
                   onClick={() => setActionStatus(status)}
                 >
-                  {status}
+                  {getActionStatusLabel(status)}
                 </button>
               ))}
             </div>
             <div className={styles.modalActions}>
-              <button className={styles.cancelBtn} onClick={() => { setActionModalCommentId(null); setEditingActionId(null); }}>Cancel</button>
+              <button className={styles.cancelBtn} onClick={() => { setActionModalCommentId(null); setEditingActionId(null); setActionAssignedToUserId(''); }}>Cancel</button>
               <button className={styles.postBtn} onClick={submitAction} disabled={!actionText.trim()}>
                 {editingActionId ? 'Save changes' : 'Save Action'}
               </button>
@@ -1908,7 +2506,7 @@ export default function VersionPage() {
                   className={`${styles.versionModalItem} ${v.id === versionId ? styles.versionModalItemActive : ''}`}
                   onClick={() => { setShowVersionModal(false); router.push(`/songs/${songId}/versions/${v.id}`); }}
                 >
-                  <span className={styles.versionModalLabel}>{v.label || `v${v.version_number}`}</span>
+                  <span className={styles.versionModalLabel}>{v.display_name || getVersionDisplayLabel(v)}</span>
                   <span className={styles.versionModalMeta}>
                     {v.created_by} · v{v.version_number}
                   </span>

@@ -58,7 +58,6 @@ Creates the DB record and signed upload URL for direct storage upload.
   "songId": "uuid",
   "fileName": "mix-v2.wav",
   "fileSize": 123456,
-  "createdBy": "Coris",
   "label": "Rough mix",
   "notes": "New vocal comp and brighter snare"
 }
@@ -79,6 +78,20 @@ Creates the DB record and signed upload URL for direct storage upload.
 ```json
 { "label": "string or null", "notes": "string or null" }
 ```
+
+### `GET /api/dashboard`
+
+Returns the server-backed dashboard song list with latest version metadata, comment counts, unresolved action counts, and `needsAttention`.
+
+### `PATCH /api/songs/[songId]`
+
+**Body**
+```json
+{ "title": "optional", "status": "optional" }
+```
+
+Notes:
+- valid song statuses are `writing`, `in_progress`, `mixing`, `mastering`, `finished`
 
 ## Threads
 
@@ -132,33 +145,41 @@ Notes:
   "commentId": "uuid",
   "songId": "uuid",
   "description": "Add plate reverb to chorus",
-  "suggestedBy": "Al",
   "timestampSeconds": 65,
-  "status": "approved"
+  "status": "in_progress",
+  "assignedToUserId": "uuid-or-null"
 }
 ```
 
 Notes:
-- `status` is optional and defaults to `pending`
+- `status` is optional and defaults to `open`
 - `timestampSeconds` is optional and rounded before storage when present
+- `assignedToUserId` is optional and may be `null`
 
 ### `GET /api/actions/by-song/[songId]?versionId=[id]`
 
 Returns song actions. Some filtering still happens in JS due to Supabase joined-column limitations.
+
+### `GET /api/workspace/members`
+
+Returns the current workspace collaborators for assignment UIs.
 
 ### `PATCH /api/actions/[actionId]`
 
 **Body**
 ```json
 {
-  "status": "completed",
-  "description": "Tighten the second harmony in verse 2"
+  "status": "done",
+  "description": "Tighten the second harmony in verse 2",
+  "assignedToUserId": "uuid-or-null",
+  "resolvedInVersionId": "uuid-or-null"
 }
 ```
 
 Notes:
 - send either field or both
-- valid statuses are `pending`, `approved`, `completed`
+- valid statuses are `open`, `in_progress`, `done`
+- setting `resolvedInVersionId` also makes the action `done`
 
 ## Tasks
 
