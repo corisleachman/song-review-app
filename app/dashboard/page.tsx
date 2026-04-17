@@ -21,6 +21,7 @@ interface Song {
   latestVersionNumber: number | null;
   latestVersionLabel: string | null;
   latestVersionCreatedAt: string | null;
+  latestVersionFilePath?: string | null;
   commentCount: number;
   unresolvedActionCount: number;
   assignedToMeCount: number;
@@ -72,6 +73,7 @@ interface DashboardSongsPayload {
     latestVersionNumber: number | null;
     latestVersionLabel: string | null;
     latestVersionCreatedAt: string | null;
+    latestVersionFilePath?: string | null;
     commentCount: number;
     unresolvedActionCount: number;
     assignedToMeCount: number;
@@ -84,6 +86,12 @@ interface DashboardSongsPayload {
     activityFeed: SongActivityItem[];
     latestActivityAt: string | null;
   }>;
+}
+
+interface VersionPayload {
+  version?: {
+    file_path?: string | null;
+  } | null;
 }
 
 function getSongSeenStorageKey(viewerKey: string) {
@@ -153,6 +161,15 @@ function DashboardContent() {
   // Cover art uploads
   const coverInputRef = useRef<HTMLInputElement>(null);
   const coverUploadTargetId = useRef<string | null>(null);
+
+  // Dashboard audio player
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const queueRef = useRef<Song[]>([]);
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const [queueIndex, setQueueIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [playerCurrentTime, setPlayerCurrentTime] = useState(0);
+  const [playerDuration, setPlayerDuration] = useState(0);
 
   useEffect(() => {
     let mounted = true;
@@ -250,6 +267,7 @@ function DashboardContent() {
         latestVersionNumber: song.latestVersionNumber,
         latestVersionLabel: song.latestVersionLabel,
         latestVersionCreatedAt: song.latestVersionCreatedAt,
+        latestVersionFilePath: song.latestVersionFilePath ?? null,
         commentCount: song.commentCount,
         unresolvedActionCount: song.unresolvedActionCount,
         assignedToMeCount: song.assignedToMeCount,
@@ -491,6 +509,166 @@ function DashboardContent() {
     router.push(href);
   }
 
+  function getAudioUrl(filePath: string) {
+    const { data } = supabase.storage.from('song-files').getPublicUrl(filePath);
+    return data.publicUrl;
+  }
+
+  function setMediaSession(song: Song) {
+    if (!('mediaSession' in navigator)) return;
+
+    const artwork: MediaImage[] = song.image_url
+      ? [{ src: song.image_url, sizes: '512x512', type: 'image/jpeg' }]
+      : [];
+
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: song.title,
+      artist: 'Polite Rebels',
+      album: 'Song Review',
+      artwork,
+    });
+
+    navigator.mediaSession.setActionHandler('play', () => {
+      audioRef.current?.play().catch(() => {});
+      setIsPlaying(true);
+    });
+    navigator.mediaSession.setActionHandler('pause', () => {
+      audioRef.current?.pause();
+      setIsPlaying(false);
+    });
+    navigator.mediaSession.setActionHandler('previoustrack', () => {
+      void skipTrack('prev');
+    });
+    navigator.mediaSession.setActionHandler('nexttrack', () => {
+      void skipTrack('next');
+    });
+    navigator.mediaSession.playbackState = 'playing';
+  }
+
+  async function resolveLatestVersionFilePath(song: Song) {
+    if (song.latestVersionFilePath) return song.latestVersionFilePath;
+    if (!song.latestVersionId) return null;
+
+    try {
+      const response = await fetch(`/api/versions/${song.latestVersionId}`, { cache: 'no-store' });
+      const payload = await response.json().catch(() => null) as VersionPayload | null;
+
+      if (!response.ok) {
+        console.error('Dashboard version load error:', payload);
+        return null;
+      }
+
+      const filePath = payload?.version?.file_path ?? null;
+      if (!filePath) return null;
+
+      setSongs(prev => prev.map(existing => (
+        existing.id === song.id
+          ? { ...existing, latestVersionFilePath: filePath }
+          : existing
+      )));
+      queueRef.current = queueRef.current.map(existing => (
+        existing.id === song.id
+          ? { ...existing, latestVersionFilePath: filePath }
+          : existing
+      ));
+
+      return filePath;
+    } catch (error) {
+      console.error('Resolve latest version file path error:', error);
+      return null;
+    }
+  }
+
+  async function playSong(song: Song, queue: Song[]) {
+    if (!song.latestVersionId || !audioRef.current) return;
+
+    const filePath = await resolveLatestVersionFilePath(song);
+    if (!filePath || !audioRef.current) return;
+
+    const hydratedQueue = await Promise.all(queue.map(async item => {
+      if (item.id !== song.id || item.latestVersionFilePath) return item;
+
+      const latestVersionFilePath = await resolveLatestVersionFilePath(item);
+      return latestVersionFilePath ? { ...item, latestVersionFilePath } : item;
+    }));
+
+    queueRef.current = hydratedQueue;
+    const hydratedSong = hydratedQueue.find(item => item.id === song.id) ?? { ...song, latestVersionFilePath: filePath };
+    const idx = hydratedQueue.findIndex(item => item.id === song.id);
+
+    setQueueIndex(idx >= 0 ? idx : 0);
+    setPlayingId(song.id);
+    setIsPlaying(true);
+    setPlayerCurrentTime(0);
+    audioRef.current.src = getAudioUrl(filePath);
+    audioRef.current.play().catch(() => {});
+    setMediaSession(hydratedSong);
+  }
+
+  async function handlePlayerEnded() {
+    const queue = queueRef.current;
+    const nextIdx = queueIndex + 1;
+
+    if (nextIdx < queue.length) {
+      const next = queue[nextIdx];
+      const filePath = await resolveLatestVersionFilePath(next);
+
+      if (filePath && audioRef.current) {
+        const hydratedNext = { ...next, latestVersionFilePath: filePath };
+        queueRef.current = queue.map((item, index) => index === nextIdx ? hydratedNext : item);
+        setQueueIndex(nextIdx);
+        setPlayingId(next.id);
+        audioRef.current.src = getAudioUrl(filePath);
+        audioRef.current.play().catch(() => {});
+        setMediaSession(hydratedNext);
+        return;
+      }
+    }
+
+    setIsPlaying(false);
+    setPlayingId(null);
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.playbackState = 'none';
+    }
+  }
+
+  async function skipTrack(direction: 'prev' | 'next') {
+    const queue = queueRef.current;
+    const targetIdx = direction === 'next' ? queueIndex + 1 : queueIndex - 1;
+    if (targetIdx < 0 || targetIdx >= queue.length) return;
+
+    const target = queue[targetIdx];
+    const filePath = await resolveLatestVersionFilePath(target);
+
+    if (filePath && audioRef.current) {
+      const hydratedTarget = { ...target, latestVersionFilePath: filePath };
+      queueRef.current = queue.map((item, index) => index === targetIdx ? hydratedTarget : item);
+      setQueueIndex(targetIdx);
+      setPlayingId(target.id);
+      audioRef.current.src = getAudioUrl(filePath);
+      audioRef.current.play().catch(() => {});
+      setMediaSession(hydratedTarget);
+    }
+  }
+
+  function togglePlayPause() {
+    if (!audioRef.current) return;
+
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'paused';
+      }
+    } else {
+      audioRef.current.play().catch(() => {});
+      setIsPlaying(true);
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'playing';
+      }
+    }
+  }
+
   function handleCardClick(e: React.MouseEvent, song: Song) {
     // Don't navigate if clicking an action button or if renaming
     if ((e.target as HTMLElement).closest('button, select, option, input, label') || editingId === song.id) return;
@@ -664,7 +842,7 @@ function DashboardContent() {
   );
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${playingId ? styles.pageWithPlayer : ''}`}>
       {/* Header */}
       <header className={styles.header}>
         <div className={styles.headerLeft}>
@@ -819,6 +997,40 @@ function DashboardContent() {
                           <circle cx="9" cy="9" r="5" stroke="rgba(255,20,147,0.4)" strokeWidth="1.4"/>
                           <circle cx="9" cy="9" r="2" fill="rgba(255,20,147,0.4)"/>
                         </svg>
+                      </div>
+                    )}
+                    {song.latestVersionId && (
+                      <button
+                        type="button"
+                        className={`${styles.thumbPlayBtn} ${playingId === song.id ? styles.thumbPlayBtnActive : ''}`}
+                        onClick={event => {
+                          event.stopPropagation();
+                          if (playingId === song.id) {
+                            togglePlayPause();
+                          } else {
+                            void playSong(song, sortedSongs);
+                          }
+                        }}
+                        title={playingId === song.id && isPlaying ? 'Pause' : 'Play'}
+                      >
+                        {playingId === song.id && isPlaying ? (
+                          <svg width="10" height="12" viewBox="0 0 10 12" fill="white">
+                            <rect x="0" y="0" width="3.5" height="12" rx="1" />
+                            <rect x="6.5" y="0" width="3.5" height="12" rx="1" />
+                          </svg>
+                        ) : (
+                          <svg width="10" height="12" viewBox="0 0 10 12" fill="white">
+                            <path d="M0 0l10 6-10 6z" />
+                          </svg>
+                        )}
+                      </button>
+                    )}
+                    {playingId === song.id && isPlaying && (
+                      <div className={styles.eqBars}>
+                        <span className={styles.eqBar} style={{ animationDelay: '0s' }} />
+                        <span className={styles.eqBar} style={{ animationDelay: '0.15s' }} />
+                        <span className={styles.eqBar} style={{ animationDelay: '0.3s' }} />
+                        <span className={styles.eqBar} style={{ animationDelay: '0.1s' }} />
                       </div>
                     )}
                     {song.hasNewActivity && (
@@ -1171,6 +1383,134 @@ function DashboardContent() {
           e.target.value = '';
         }}
       />
+
+      <audio
+        ref={audioRef}
+        onEnded={() => {
+          void handlePlayerEnded();
+        }}
+        onTimeUpdate={() => setPlayerCurrentTime(audioRef.current?.currentTime ?? 0)}
+        onDurationChange={() => setPlayerDuration(audioRef.current?.duration ?? 0)}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+      />
+
+      {playingId && (() => {
+        const playingSong = queueRef.current.find(song => song.id === playingId);
+        if (!playingSong) return null;
+
+        const progressPercent = playerDuration > 0 ? (playerCurrentTime / playerDuration) * 100 : 0;
+
+        return (
+          <div className={styles.miniPlayer}>
+            <div className={styles.miniPlayerProgress}>
+              <div className={styles.miniPlayerFill} style={{ width: `${progressPercent}%` }} />
+              <input
+                type="range"
+                min={0}
+                max={playerDuration || 100}
+                step={0.1}
+                value={playerCurrentTime}
+                className={styles.miniPlayerScrubber}
+                onChange={event => {
+                  const nextTime = parseFloat(event.target.value);
+                  if (audioRef.current) {
+                    audioRef.current.currentTime = nextTime;
+                  }
+                  setPlayerCurrentTime(nextTime);
+                }}
+              />
+            </div>
+            <div className={styles.miniPlayerRow}>
+              <div
+                className={styles.miniPlayerLeft}
+                onClick={() => openSongContext(playingSong)}
+              >
+                {playingSong.image_url ? (
+                  <img src={playingSong.image_url} alt={playingSong.title} className={styles.miniPlayerArt} />
+                ) : (
+                  <div className={styles.miniPlayerArtPlaceholder} />
+                )}
+                <div className={styles.miniPlayerInfo}>
+                  <div className={styles.miniPlayerTitle}>{playingSong.title}</div>
+                  <div className={styles.miniPlayerMeta}>
+                    {formatTime(playerCurrentTime)} / {formatTime(playerDuration)} · {queueIndex + 1} of {queueRef.current.length}
+                  </div>
+                </div>
+              </div>
+              <div className={styles.miniPlayerControls}>
+                <button
+                  type="button"
+                  className={styles.miniPlayerBtn}
+                  onClick={() => {
+                    void skipTrack('prev');
+                  }}
+                  disabled={queueIndex === 0}
+                  title="Previous"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M12 2L5 8l7 6V2z" fill="currentColor" />
+                    <rect x="2" y="2" width="2" height="12" rx="1" fill="currentColor" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  className={styles.miniPlayerPlayBtn}
+                  onClick={togglePlayPause}
+                  title={isPlaying ? 'Pause' : 'Play'}
+                >
+                  {isPlaying ? (
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="white">
+                      <rect x="1" y="1" width="4.5" height="12" rx="1.5" />
+                      <rect x="8.5" y="1" width="4.5" height="12" rx="1.5" />
+                    </svg>
+                  ) : (
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="white">
+                      <path d="M2 1l11 6-11 6z" />
+                    </svg>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className={styles.miniPlayerBtn}
+                  onClick={() => {
+                    void skipTrack('next');
+                  }}
+                  disabled={queueIndex >= queueRef.current.length - 1}
+                  title="Next"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M4 2l7 6-7 6V2z" fill="currentColor" />
+                    <rect x="12" y="2" width="2" height="12" rx="1" fill="currentColor" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  className={styles.miniPlayerBtn}
+                  onClick={() => {
+                    setPlayingId(null);
+                    setIsPlaying(false);
+                    setPlayerCurrentTime(0);
+                    setPlayerDuration(0);
+                    audioRef.current?.pause();
+                    if (audioRef.current) {
+                      audioRef.current.src = '';
+                    }
+                    if ('mediaSession' in navigator) {
+                      navigator.mediaSession.playbackState = 'none';
+                    }
+                  }}
+                  title="Close"
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
