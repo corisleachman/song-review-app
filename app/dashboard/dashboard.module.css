@@ -222,6 +222,13 @@
   box-shadow: -3px 0 0 0 #ff1493, 0 10px 24px rgba(0,0,0,0.18);
   border-color: rgba(255,20,147,0.2);
 }
+.desktopGridCard.cardAttention {
+  box-shadow: 0 0 0 2px #ff1493, 0 10px 24px rgba(0,0,0,0.18) !important;
+  border-color: transparent !important;
+}
+.desktopGridCard.cardAttention:hover {
+  box-shadow: 0 0 0 2px #ff1493, 0 16px 34px rgba(0,0,0,0.28) !important;
+}
 .card:hover {
   border-color: rgba(255,20,147,0.35);
   transform: translateY(-2px);
@@ -234,6 +241,10 @@
 }
 
 .desktopGridCard {}
+.desktopGridCard {
+  display: flex !important;
+  flex-direction: column !important;
+}
 .desktopListCard {}
 
 .cardThumb {
@@ -365,6 +376,55 @@
 .songStatusFinished {
   background: rgba(29,158,117,0.18);
   color: #86e6c2;
+}
+.cardStatusPill {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 20px;
+}
+.cardStatusWriting {
+  background: rgba(20,184,166,0.15);
+  color: #5eead4;
+  border: 0.5px solid rgba(20,184,166,0.25);
+}
+.cardStatusInProgress {
+  background: rgba(99,102,241,0.15);
+  color: #a5b4fc;
+  border: 0.5px solid rgba(99,102,241,0.25);
+}
+.cardStatusMixing {
+  background: rgba(99,102,241,0.2);
+  color: #a5b4fc;
+  border: 0.5px solid rgba(99,102,241,0.3);
+}
+.cardStatusMastering {
+  background: rgba(234,179,8,0.15);
+  color: #fcd34d;
+  border: 0.5px solid rgba(234,179,8,0.25);
+}
+.cardStatusFinished {
+  background: rgba(34,197,94,0.15);
+  color: #86efac;
+  border: 0.5px solid rgba(34,197,94,0.25);
+}
+.cardActionPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 20px;
+  background: rgba(255,20,147,0.15);
+  color: #ff69b4;
+  border: 0.5px solid rgba(255,20,147,0.25);
+}
+.cardActionPillDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #ff1493;
 }
 .interactivePill {
   display: inline-flex;
@@ -510,6 +570,17 @@
   gap: 6px;
   margin-top: 12px;
 }
+.cardBodyDivider {
+  height: 1px;
+  background: rgba(255,255,255,0.07);
+  margin: 2px 0;
+}
+.cardMetaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
 .cardStatusLabel {
   color: rgba(255,255,255,0.3);
   font-size: 10px;
@@ -548,6 +619,96 @@
   flex-direction: column;
   gap: 4px;
   max-width: calc(100% - 86px);
+}
+.cardInfoOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  aspect-ratio: 1 / 1;
+  background: rgba(10,5,20,0.88);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-radius: 10px 10px 0 0;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 5;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s;
+}
+.cardInfoOverlayVisible {
+  opacity: 1;
+  pointer-events: all;
+}
+.overlayGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.overlayItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.overlayLabel {
+  font-size: 9px;
+  color: rgba(255,255,255,0.38);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.overlayValue {
+  font-size: 11px;
+  color: rgba(255,255,255,0.9);
+  font-weight: 500;
+}
+.overlayAssignRow {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.overlayPill {
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.7);
+  border: 0.5px solid rgba(255,255,255,0.14);
+}
+.overlayPillMe {
+  background: rgba(255,20,147,0.18);
+  color: #ff69b4;
+  border-color: rgba(255,20,147,0.28);
+}
+.overlayStageRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.overlayStageLabel {
+  font-size: 10px;
+  color: rgba(255,255,255,0.38);
+}
+.overlayStageVal {
+  font-size: 10px;
+  color: rgba(255,255,255,0.82);
+  background: rgba(255,255,255,0.08);
+  padding: 2px 8px;
+  border-radius: 20px;
+  border: 0.5px solid rgba(255,255,255,0.14);
+}
+.overlayActivity {
+  font-size: 10px;
+  color: rgba(255,255,255,0.38);
+  border-top: 1px solid rgba(255,255,255,0.07);
+  padding-top: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: auto;
 }
 .activityItem {
   display: flex;
@@ -1042,6 +1203,70 @@
   width: 26px !important;
   height: 26px !important;
 }
+.desktopGridCard .cardThumb {
+  position: relative !important;
+  inset: unset !important;
+  width: 100% !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 10px 10px 0 0 !important;
+}
+.desktopGridCard .cardBody {
+  position: relative !important;
+  inset: unset !important;
+  background: rgba(22, 15, 35, 0.95) !important;
+  padding: 10px 12px 10px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  justify-content: unset !important;
+  border-radius: 0 0 10px 10px !important;
+}
+.desktopGridCard .cardTitle {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #fff !important;
+  margin-bottom: 0 !important;
+  text-shadow: none !important;
+  max-width: none !important;
+}
+.desktopGridCard .cardStatusRow {
+  gap: 5px !important;
+  margin-bottom: 0 !important;
+}
+.desktopGridCard .cardMetaPrimary {
+  font-size: 10px !important;
+  color: rgba(255,255,255,0.4) !important;
+  max-width: none !important;
+}
+.desktopGridCard .cardMetaComments {
+  position: static !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  color: rgba(255,255,255,0.4) !important;
+  font-size: 10px !important;
+  text-shadow: none !important;
+  min-height: 0 !important;
+}
+.desktopGridCard .cardActions {
+  position: static !important;
+  right: unset !important;
+  top: unset !important;
+  transform: none !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 4px !important;
+  opacity: 1 !important;
+  margin-top: 4px !important;
+}
+.desktopGridCard .iconBtn {
+  width: 26px !important;
+  height: 26px !important;
+}
+.desktopGridCard .cardInfoOverlay {
+  border-radius: 10px 10px 0 0 !important;
+}
 .desktopListCard .versionBadge,
 .desktopListCard .commentBadge,
 .desktopListCard .activityBadge,
@@ -1324,6 +1549,9 @@
     height: auto;
     min-height: 178px;
     align-items: stretch;
+  }
+  .desktopGridCard .cardInfoOverlay {
+    display: none !important;
   }
 
   /* Square thumbnail, fixed size (+25% = 70px) */

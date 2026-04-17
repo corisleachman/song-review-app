@@ -144,6 +144,7 @@ function DashboardContent() {
   const [songSort, setSongSort] = useState<'activity' | 'upload' | 'title'>('activity');
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
   const [sheetSongId, setSheetSongId] = useState<string | null>(null);
+  const [openOverlayId, setOpenOverlayId] = useState<string | null>(null);
 
   // New song modal
   const [showNewModal, setShowNewModal] = useState(false);
@@ -476,7 +477,15 @@ function DashboardContent() {
     return `${song.unresolvedActionCount} action${song.unresolvedActionCount !== 1 ? 's' : ''}`;
   }
 
-  function handleSongInfoClick(event: React.MouseEvent<HTMLButtonElement>, songId: string) {
+  function statusPillClass(status: SongStatus) {
+    if (status === 'writing') return styles.cardStatusWriting;
+    if (status === 'in_progress') return styles.cardStatusInProgress;
+    if (status === 'mixing') return styles.cardStatusMixing;
+    if (status === 'mastering') return styles.cardStatusMastering;
+    return styles.cardStatusFinished;
+  }
+
+  function handleSongInfoClick(event: React.MouseEvent<HTMLButtonElement>, songId: string, isListView: boolean) {
     event.stopPropagation();
 
     if (typeof window !== 'undefined' && window.innerWidth < 768) {
@@ -484,7 +493,12 @@ function DashboardContent() {
       return;
     }
 
-    toggleSongInfo(songId);
+    if (isListView) {
+      toggleSongInfo(songId);
+      return;
+    }
+
+    setOpenOverlayId(prev => (prev === songId ? null : songId));
   }
 
   function markSongSeen(songId: string) {
@@ -999,6 +1013,7 @@ function DashboardContent() {
             <div className={`${styles.songsGrid} ${viewMode === 'list' ? styles.songsGridList : ''}`}>
               {sortedSongs.map(song => {
                 const isInfoOpen = expandedCardId === song.id;
+                const isOverlayOpen = openOverlayId === song.id;
                 const latestVersionText = song.latestVersionLabel
                   ? song.latestVersionLabel
                   : song.latestVersionNumber
@@ -1015,7 +1030,13 @@ function DashboardContent() {
                 <div
                   key={song.id}
                   className={`${styles.card} ${isListView ? styles.desktopListCard : styles.desktopGridCard} ${attentionClass} ${fadingSongIds.includes(song.id) ? styles.cardDeleting : ''} ${isInfoOpen ? styles.cardInfoExpanded : ''}`}
-                  onClick={e => handleCardClick(e, song)}
+                  onClick={e => {
+                    if (!isListView && isOverlayOpen) {
+                      setOpenOverlayId(null);
+                      return;
+                    }
+                    handleCardClick(e, song);
+                  }}
                 >
                   {isListView ? (
                     <>
@@ -1121,7 +1142,7 @@ function DashboardContent() {
                             aria-label={isInfoOpen ? `Hide info for ${song.title}` : `Show info for ${song.title}`}
                             aria-expanded={isInfoOpen}
                             aria-controls={`song-info-${song.id}`}
-                            onClick={e => handleSongInfoClick(e, song.id)}
+                            onClick={e => handleSongInfoClick(e, song.id, true)}
                           >
                             <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
                               <circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" strokeWidth="1.2" />
@@ -1316,6 +1337,53 @@ function DashboardContent() {
                         {song.hasNewActivity && (
                           <span className={styles.activityBadge}>New</span>
                         )}
+                        <div
+                          id={`song-overlay-${song.id}`}
+                          className={`${styles.cardInfoOverlay} ${isOverlayOpen ? styles.cardInfoOverlayVisible : ''}`}
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <div className={styles.overlayGrid}>
+                            <div className={styles.overlayItem}>
+                              <span className={styles.overlayLabel}>Latest version</span>
+                              <span className={styles.overlayValue}>{latestVersionText}</span>
+                            </div>
+                            <div className={styles.overlayItem}>
+                              <span className={styles.overlayLabel}>Last activity</span>
+                              <span className={styles.overlayValue}>{formatActivityTimestamp(song.latestActivityAt)}</span>
+                            </div>
+                            <div className={styles.overlayItem}>
+                              <span className={styles.overlayLabel}>Comments</span>
+                              <span className={styles.overlayValue}>{song.commentCount}</span>
+                            </div>
+                            <div className={styles.overlayItem}>
+                              <span className={styles.overlayLabel}>Open work</span>
+                              <span className={styles.overlayValue}>
+                                {song.unresolvedActionCount > 0 ? `${song.unresolvedActionCount} actions` : 'None'}
+                              </span>
+                            </div>
+                          </div>
+                          {(song.assignedToMeCount > 0 || song.awaitingResponse) && (
+                            <div className={styles.overlayAssignRow}>
+                              {song.assignedToMeCount > 0 && (
+                                <span className={`${styles.overlayPill} ${styles.overlayPillMe}`}>
+                                  {song.assignedToMeCount} assigned to me
+                                </span>
+                              )}
+                              {song.awaitingResponse && (
+                                <span className={styles.overlayPill}>
+                                  {getAwaitingResponseLabel(song.awaitingResponse) ?? 'Awaiting response'}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          <div className={styles.overlayStageRow}>
+                            <span className={styles.overlayStageLabel}>Stage</span>
+                            <span className={styles.overlayStageVal}>{getSongStatusLabel(song.status)}</span>
+                          </div>
+                          {activitySnippet && (
+                            <div className={styles.overlayActivity}>{activitySnippet}</div>
+                          )}
+                        </div>
                       </div>
 
                       <div className={styles.cardBody}>
@@ -1335,34 +1403,35 @@ function DashboardContent() {
                         ) : (
                           <div className={styles.cardTitle}>{song.title}</div>
                         )}
-                        <div className={styles.cardMetaPrimary}>
-                          <span>{getSongStatusLabel(song.status)}</span>
-                          <span className={styles.cardMetaSeparator}>·</span>
-                          <span>{latestVersionTag}</span>
-                          {song.latestVersionLabel && (
-                            <>
-                              <span className={styles.cardMetaSeparator}>·</span>
-                              <span>{song.latestVersionLabel}</span>
-                            </>
-                          )}
+                        <div className={styles.cardStatusRow}>
+                          <span className={`${styles.cardStatusPill} ${statusPillClass(song.status)}`}>
+                            {getSongStatusLabel(song.status)}
+                          </span>
                           {showMetaPill && (
-                            <>
-                              <span className={styles.cardMetaSeparator}>·</span>
-                              <span className={styles.metaPill}>
-                                <span className={styles.metaPillDot} />
-                                {getMetaPillLabel(song)}
-                              </span>
-                            </>
+                            <span className={styles.cardActionPill}>
+                              <span className={styles.cardActionPillDot} />
+                              {getMetaPillLabel(song)}
+                            </span>
                           )}
+                        </div>
+                        <div className={styles.cardBodyDivider} />
+                        <div className={styles.cardMetaRow}>
+                          <span className={styles.cardMetaPrimary}>{song.latestVersionLabel || latestVersionTag}</span>
+                          <span className={styles.cardMetaComments}>
+                            {song.commentCount}
+                            <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden="true">
+                              <path d="M3 3.5h8a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H6l-2.5 2V9.5H3a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1Z" strokeLinejoin="round"/>
+                            </svg>
+                          </span>
                         </div>
                         <div className={styles.cardActions}>
                           <button
-                            className={`${styles.iconBtn} ${styles.iconBtnInfo} ${isInfoOpen ? styles.iconBtnActive : ''}`}
-                            title={isInfoOpen ? 'Hide info' : 'Show info'}
-                            aria-label={isInfoOpen ? `Hide info for ${song.title}` : `Show info for ${song.title}`}
-                            aria-expanded={isInfoOpen}
-                            aria-controls={`song-info-${song.id}`}
-                            onClick={e => handleSongInfoClick(e, song.id)}
+                            className={`${styles.iconBtn} ${styles.iconBtnInfo} ${isOverlayOpen ? styles.iconBtnActive : ''}`}
+                            title={isOverlayOpen ? 'Hide info' : 'Show info'}
+                            aria-label={isOverlayOpen ? `Hide info for ${song.title}` : `Show info for ${song.title}`}
+                            aria-expanded={isOverlayOpen}
+                            aria-controls={`song-overlay-${song.id}`}
+                            onClick={e => handleSongInfoClick(e, song.id, false)}
                           >
                             <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
                               <circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" strokeWidth="1.2" />
@@ -1411,99 +1480,6 @@ function DashboardContent() {
                             </svg>
                           </button>
                         </div>
-                        {isInfoOpen && (
-                          <div
-                            id={`song-info-${song.id}`}
-                            className={styles.infoPanel}
-                            onClick={e => e.stopPropagation()}
-                          >
-                            <div className={styles.infoGrid}>
-                              <div className={styles.infoItem}>
-                                <span className={styles.infoLabel}>Latest version</span>
-                                <span className={styles.infoValue}>{latestVersionText}</span>
-                              </div>
-                              <div className={styles.infoItem}>
-                                <span className={styles.infoLabel}>Last activity</span>
-                                <span className={styles.infoValue}>{formatActivityTimestamp(song.latestActivityAt)}</span>
-                              </div>
-                              <div className={styles.infoItem}>
-                                <span className={styles.infoLabel}>Comments</span>
-                                <span className={styles.infoValue}>{song.commentCount}</span>
-                              </div>
-                              <div className={styles.infoItem}>
-                                <span className={styles.infoLabel}>Open work</span>
-                                <span className={styles.infoValue}>
-                                  {song.unresolvedActionCount > 0 ? `${song.unresolvedActionCount} actions` : 'None'}
-                                </span>
-                              </div>
-                            </div>
-                            <div className={styles.infoMetaRow}>
-                              {song.assignedToMeCount > 0 && (
-                                renderInteractivePill(
-                                  `assigned-${song.id}`,
-                                  `${song.assignedToMeCount} assigned to me`,
-                                  event => {
-                                    event.stopPropagation();
-                                    openSongContext(song, {
-                                      versionId: song.assignedContextVersionId,
-                                      focus: 'actions',
-                                      actionsTab: 'all_versions',
-                                      actionFilter: 'assigned_to_me',
-                                    });
-                                  }
-                                )
-                              )}
-                              {song.awaitingResponse && (
-                                renderInteractivePill(
-                                  `awaiting-${song.id}`,
-                                  getAwaitingResponseLabel(song.awaitingResponse) ?? 'Awaiting response',
-                                  event => {
-                                    event.stopPropagation();
-                                    openSongContext(song, {
-                                      versionId: song.awaitingVersionId,
-                                      focus: 'threads',
-                                      threadId: song.awaitingThreadId,
-                                    });
-                                  }
-                                )
-                              )}
-                            </div>
-                            <div className={styles.cardStatusControl}>
-                              <label className={styles.cardStatusLabel} htmlFor={`song-status-grid-${song.id}`}>
-                                Stage
-                              </label>
-                              <select
-                                id={`song-status-grid-${song.id}`}
-                                className={styles.cardStatusSelect}
-                                value={song.status}
-                                onClick={e => e.stopPropagation()}
-                                onChange={e => {
-                                  e.stopPropagation();
-                                  void updateSongStatus(song.id, e.target.value as SongStatus);
-                                }}
-                              >
-                                {SONG_STATUS_VALUES.map(status => (
-                                  <option key={status} value={status}>
-                                    {getSongStatusLabel(status)}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                            {activitySummary && (
-                              <div className={styles.activityFeed}>
-                                <div className={styles.activityItem}>
-                                  <div className={styles.activityItemTop}>
-                                    <span className={styles.activityItemSummary}>{activitySummary.summary}</span>
-                                    <span className={styles.activityItemTime}>{formatActivityTime(activitySummary.createdAt)}</span>
-                                  </div>
-                                  {activitySummary.detail && (
-                                    <div className={styles.activityItemDetail}>{activitySummary.detail}</div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
                       </div>
                     </>
                   )}
