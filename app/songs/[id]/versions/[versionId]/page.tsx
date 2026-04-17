@@ -2651,7 +2651,7 @@ export default function VersionPage() {
                 <button
                   key={v.id}
                   className={`${styles.versionModalItem} ${v.id === versionId ? styles.versionModalItemActive : ''}`}
-                  onClick={() => { setShowVersionModal(false); router.push(`/songs/${songId}/versions/${v.id}`); }}
+                  onClick={() => { stopPlayback(); setShowVersionModal(false); router.push(`/songs/${songId}/versions/${v.id}`); }}
                 >
                   <span className={styles.versionModalLabel}>{v.display_name || getVersionDisplayLabel(v)}</span>
                   <span className={styles.versionModalMeta}>
