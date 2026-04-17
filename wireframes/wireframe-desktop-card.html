@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireframe — Desktop Card View</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0d0914; color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 24px; border-bottom: 0.5px solid rgba(255,255,255,0.08);
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(13,9,20,0.88); backdrop-filter: blur(18px);
+  }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .header-right { display: flex; align-items: center; gap: 8px; }
+  .logo { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+  .logo-dot { width: 7px; height: 7px; border-radius: 50%; background: #ff1493; }
+  .settings-btn { background: transparent; border: 0.5px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.4); font-size: 12px; padding: 6px 12px; border-radius: 7px; cursor: pointer; font-family: inherit; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: rgba(255,20,147,0.2); border: 1px solid rgba(255,20,147,0.3); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #ff1493; }
+  .view-toggle { display: flex; align-items: center; gap: 2px; background: rgba(255,255,255,0.05); border-radius: 7px; padding: 3px; }
+  .view-btn { width: 26px; height: 26px; border: none; background: transparent; color: rgba(255,255,255,0.3); border-radius: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .view-btn-active { background: rgba(255,255,255,0.1); color: #fff; }
+
+  /* ── Body ── */
+  .body { display: grid; grid-template-columns: minmax(0,1fr) 300px; min-height: calc(100vh - 57px); }
+  .songs-panel { padding: 24px 24px 28px; border-right: 0.5px solid rgba(255,255,255,0.08); overflow-y: auto; background: radial-gradient(circle at top left, rgba(168,85,247,0.06), transparent 32%); }
+  .songs-controls { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+  .stage-tabs { display: flex; align-items: center; gap: 6px; }
+  .stage-tab { padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: rgba(255,255,255,0.35); font-size: 0.72rem; font-weight: 500; font-family: inherit; cursor: pointer; white-space: nowrap; }
+  .stage-tab-active { background: rgba(255,20,147,0.15); border-color: rgba(255,20,147,0.4); color: #ff1493; }
+  .panel-header { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .sort-select { appearance: none; background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.12); border-radius: 7px; color: rgba(255,255,255,0.82); font-size: 12px; font-family: inherit; padding: 7px 28px 7px 10px; cursor: pointer; outline: none; }
+  .new-btn { display: flex; align-items: center; gap: 6px; background: #ff1493; color: #fff; font-size: 12px; font-weight: 500; padding: 8px 14px; border-radius: 10px; border: none; cursor: pointer; font-family: inherit; white-space: nowrap; flex-shrink: 0; }
+
+  /* ── CARD GRID ── */
+  /* Matches .songsGrid: 4 columns, 14px gap */
+  .songs-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+
+  /* ── CARD — .desktopGridCard structure ──
+   * Card is flex-column: artwork square on top, opaque strip below.
+   * This matches the existing .desktopGridCard override in dashboard.module.css.
+   */
+  .card {
+    background: rgba(255,255,255,0.045);
+    border-radius: 14px;
+    border: 0.5px solid rgba(255,255,255,0.09);
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+    transition: border-color 0.15s, transform 0.18s, box-shadow 0.15s;
+  }
+  .card:hover {
+    border-color: rgba(255,20,147,0.35);
+    transform: translateY(-2px);
+    box-shadow: 0 16px 34px rgba(0,0,0,0.28);
+  }
+
+  /*
+   * ATTENTION STATE — ring border instead of left bar (cards are square).
+   * box-shadow: 0 0 0 2px #ff1493
+   * No layout shift. Works with border-radius.
+   * CSS class: .card-attention
+   */
+  .card-attention {
+    box-shadow: 0 0 0 2px #ff1493, 0 10px 24px rgba(0,0,0,0.18);
+    border-color: transparent;
+  }
+  .card-attention:hover {
+    box-shadow: 0 0 0 2px #ff1493, 0 16px 34px rgba(0,0,0,0.28);
+    transform: translateY(-2px);
+  }
+
+  /* ── ARTWORK AREA — square, tap = play ── */
+  .card-thumb {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    border-radius: 10px 10px 0 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  /* Hover scrim — signals tap-to-play */
+  .card-thumb::after {
+    content: ''; position: absolute; inset: 0;
+    background: rgba(0,0,0,0); transition: background 0.15s;
+    pointer-events: none; z-index: 3;
+  }
+  .card:hover .card-thumb::after { background: rgba(0,0,0,0.28); }
+
+  /* Thumb placeholder */
+  .thumb-placeholder {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(255,20,147,0.08);
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* Version badge — top right of artwork */
+  .version-badge {
+    position: absolute; top: 7px; right: 7px; z-index: 4;
+    background: rgba(255,20,147,0.15); color: #ff1493;
+    font-size: 9px; font-weight: 600; padding: 2px 7px;
+    border-radius: 10px; border: 0.5px solid rgba(255,20,147,0.25);
+    pointer-events: none;
+  }
+
+  /* New activity badge — top left of artwork */
+  .activity-badge {
+    position: absolute; top: 7px; left: 7px; z-index: 4;
+    background: rgba(0,212,255,0.16); color: #7ee7ff;
+    font-size: 9px; font-weight: 700; padding: 2px 7px;
+    border-radius: 10px; border: 0.5px solid rgba(0,212,255,0.35);
+    pointer-events: none; letter-spacing: 0.02em;
+  }
+
+  /*
+   * PLAY BUTTON — centred on artwork, appears on hover.
+   * On desktop grid this is hover-revealed (opacity 0 → 1).
+   * Tap artwork = play (not navigating to song page).
+   * Clicking anywhere else on card = navigate to song page.
+   * CSS class: .thumbPlayBtn / .thumbPlayBtnActive (playing state)
+   */
+  .play-btn {
+    position: absolute; left: 50%; top: 50%; z-index: 4;
+    transform: translate(-50%, -50%) scale(0.85);
+    width: 48px; height: 48px; border-radius: 50%;
+    background: #ff1493; border: none;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; opacity: 0;
+    box-shadow: 0 4px 20px rgba(255,20,147,0.6);
+    transition: opacity 0.15s, transform 0.15s;
+  }
+  .card:hover .play-btn { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  .play-btn-active { opacity: 1 !important; transform: translate(-50%, -50%) scale(1) !important; }
+
+  /* EQ bars — top left of artwork, shown when playing */
+  .eq-bars {
+    position: absolute; top: 8px; left: 8px; z-index: 4;
+    display: flex; align-items: flex-end; gap: 2px; height: 14px;
+  }
+  .eq-bar {
+    display: block; width: 3px; border-radius: 1.5px; background: #ff1493;
+    animation: eqBounce 0.7s ease-in-out infinite alternate;
+  }
+  .eq-bar:nth-child(1) { height: 6px; animation-delay: 0s; }
+  .eq-bar:nth-child(2) { height: 12px; animation-delay: 0.15s; }
+  .eq-bar:nth-child(3) { height: 8px; animation-delay: 0.3s; }
+  .eq-bar:nth-child(4) { height: 10px; animation-delay: 0.1s; }
+  @keyframes eqBounce { from { transform: scaleY(0.35); } to { transform: scaleY(1); } }
+
+  /* ── CARD BODY STRIP — opaque, below artwork ──
+   * Matches .desktopGridCard .cardBody overrides.
+   * NOT overlaid on artwork — sits below it.
+   */
+  .card-body {
+    position: relative;
+    background: rgba(22, 15, 35, 0.95);
+    padding: 10px 12px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border-radius: 0 0 10px 10px;
+  }
+
+  .card-title {
+    font-size: 13px; font-weight: 700; color: #fff;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* Status + action pill row */
+  .card-status-row {
+    display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+  }
+  .status-pill {
+    font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 20px;
+  }
+  .status-mixing { background: rgba(99,102,241,0.2); color: #a5b4fc; border: 0.5px solid rgba(99,102,241,0.3); }
+  .status-mastering { background: rgba(234,179,8,0.15); color: #fcd34d; border: 0.5px solid rgba(234,179,8,0.25); }
+  .status-writing { background: rgba(20,184,166,0.15); color: #5eead4; border: 0.5px solid rgba(20,184,166,0.25); }
+  .status-finished { background: rgba(34,197,94,0.15); color: #86efac; border: 0.5px solid rgba(34,197,94,0.25); }
+  .action-pill {
+    font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 20px;
+    background: rgba(255,20,147,0.15); color: #ff69b4;
+    border: 0.5px solid rgba(255,20,147,0.25);
+    display: inline-flex; align-items: center; gap: 3px;
+  }
+  .action-pill-dot { width: 4px; height: 4px; border-radius: 50%; background: #ff1493; }
+
+  /* Divider */
+  .card-divider { height: 1px; background: rgba(255,255,255,0.07); margin: 2px 0; }
+
+  /* Meta row — version label + comment count */
+  .card-meta-row {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-meta-primary { font-size: 10px; color: rgba(255,255,255,0.4); }
+  .card-meta-comments { display: flex; align-items: center; gap: 4px; font-size: 10px; color: rgba(255,255,255,0.4); }
+
+  /*
+   * CARD ACTIONS — 4 icon buttons in a horizontal row.
+   * Matches .desktopGridCard .cardActions overrides:
+   * position: static, flex-direction: row, always visible (opacity:1).
+   * Order: ℹ, rename, image, delete.
+   */
+  .card-actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+  }
+  .icon-btn {
+    width: 26px; height: 26px; border-radius: 7px;
+    background: rgba(16,12,24,0.78); border: 0.5px solid rgba(255,255,255,0.12);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: rgba(255,255,255,0.78);
+    transition: background 0.12s, color 0.12s;
+  }
+  .icon-btn:hover { background: rgba(255,20,147,0.18); color: #fff; }
+  .icon-btn svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 1.2; }
+  /* Info button — attention tint when card has .card-attention */
+  .card-attention .icon-btn-info { border-color: rgba(255,20,147,0.45); color: #ff69b4; }
+
+  /* ── INFO OVERLAY — covers the artwork area only ──
+   * Triggered by tapping ℹ. Title strip + icons below remain always accessible.
+   * Hidden by default. JS adds .info-overlay-visible to show.
+   * CSS class: .cardInfoOverlay / .cardInfoOverlayVisible
+   */
+  .info-overlay {
+    position: absolute;
+    /* Covers thumb only — top:0, height matches thumb aspect ratio */
+    top: 0; left: 0; right: 0;
+    aspect-ratio: 1 / 1;
+    background: rgba(10,5,20,0.88);
+    backdrop-filter: blur(4px);
+    border-radius: 10px 10px 0 0;
+    padding: 14px;
+    display: flex; flex-direction: column; gap: 8px;
+    z-index: 5;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.18s;
+  }
+  .info-overlay-visible { opacity: 1; pointer-events: all; }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .info-item { display: flex; flex-direction: column; gap: 2px; }
+  .info-label { font-size: 9px; color: rgba(255,255,255,0.38); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; }
+  .info-value { font-size: 11px; color: rgba(255,255,255,0.9); font-weight: 500; }
+  .info-assign-row { display: flex; gap: 5px; flex-wrap: wrap; }
+  .info-pill { font-size: 10px; padding: 3px 8px; border-radius: 20px; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); border: 0.5px solid rgba(255,255,255,0.14); }
+  .info-pill-me { background: rgba(255,20,147,0.18); color: #ff69b4; border-color: rgba(255,20,147,0.28); }
+  .info-stage-row { display: flex; align-items: center; gap: 6px; }
+  .info-stage-label { font-size: 10px; color: rgba(255,255,255,0.38); }
+  .info-stage-val { font-size: 10px; color: rgba(255,255,255,0.82); background: rgba(255,255,255,0.08); padding: 2px 8px; border-radius: 20px; border: 0.5px solid rgba(255,255,255,0.14); }
+  .info-activity { font-size: 10px; color: rgba(255,255,255,0.38); border-top: 1px solid rgba(255,255,255,0.07); padding-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: auto; }
+
+  /* Ghost add card */
+  .card-ghost {
+    background: transparent; border-radius: 10px;
+    border: 0.5px dashed rgba(255,255,255,0.1);
+    min-height: 130px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 6px;
+    cursor: pointer; color: rgba(255,255,255,0.2); font-size: 11px;
+    transition: border-color 0.15s, color 0.15s; aspect-ratio: unset;
+  }
+  .card-ghost:hover { border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.4); }
+
+  /* Actions panel */
+  .actions-panel { padding: 24px 20px 28px; background: radial-gradient(circle at top right, rgba(255,20,147,0.05), transparent 30%); }
+  .panel-label { color: rgba(255,255,255,0.3); font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 14px; }
+  .filter-row { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-pill { font-size: 11px; padding: 4px 11px; border-radius: 20px; border: 0.5px solid rgba(255,255,255,0.1); background: transparent; color: rgba(255,255,255,0.35); cursor: pointer; font-family: inherit; }
+  .filter-pill-active { background: rgba(255,20,147,0.1); border-color: rgba(255,20,147,0.3); color: #ff1493; }
+  .action-group { margin-bottom: 18px; }
+  .group-label { color: #fff; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+  .action-row { display: flex; align-items: flex-start; gap: 9px; margin-bottom: 9px; }
+  .action-toggle { width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.18); background: transparent; flex-shrink: 0; margin-top: 2px; }
+  .action-toggle-done { background: #1d9e75; border-color: #1d9e75; }
+  .action-text { font-size: 12px; color: rgba(255,255,255,0.6); line-height: 1.5; }
+  .action-meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+  .action-status { display: inline-flex; align-items: center; border-radius: 999px; padding: 2px 7px; font-size: 10px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; }
+  .status-open { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.48); }
+  .status-in-progress { background: rgba(234,179,8,0.14); color: #f6b548; }
+  .status-done-badge { background: rgba(29,158,117,0.16); color: #65d6ad; }
+
+  /* Notes */
+  .notes { margin: 28px 24px 0; padding: 14px 18px; background: rgba(255,255,255,0.03); border: 0.5px solid rgba(255,255,255,0.09); border-radius: 10px; font-size: 12px; color: rgba(255,255,255,0.5); line-height: 1.7; }
+  .notes strong { color: rgba(255,255,255,0.75); font-weight: 500; }
+  .notes ul { padding-left: 16px; margin-top: 6px; }
+  .notes li { margin-bottom: 3px; }
+  .notes code { background: rgba(255,255,255,0.08); border-radius: 3px; padding: 1px 5px; font-size: 11px; color: #ff69b4; }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <div class="logo"><div class="logo-dot"></div> Polite Rebels</div>
+  </div>
+  <div class="header-right">
+    <div class="view-toggle">
+      <button class="view-btn view-btn-active"><svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="1" y="1" width="5" height="5" rx="1"/><rect x="8" y="1" width="5" height="5" rx="1"/><rect x="1" y="8" width="5" height="5" rx="1"/><rect x="8" y="8" width="5" height="5" rx="1"/></svg></button>
+      <button class="view-btn"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><line x1="1" y1="4" x2="13" y2="4"/><line x1="1" y1="7" x2="13" y2="7"/><line x1="1" y1="10" x2="13" y2="10"/></svg></button>
+    </div>
+    <button class="settings-btn">⚙ Settings</button>
+    <div class="avatar">C</div>
+  </div>
+</header>
+
+<div class="body">
+  <div class="songs-panel">
+    <div class="songs-controls">
+      <div class="stage-tabs">
+        <button class="stage-tab stage-tab-active">All songs <span style="opacity:0.6;font-size:0.65rem;">5</span></button>
+        <button class="stage-tab">Needs attention <span style="opacity:0.6;font-size:0.65rem;">2</span></button>
+        <button class="stage-tab">Assigned to me</button>
+        <button class="stage-tab">Mixing</button>
+        <button class="stage-tab">Mastering</button>
+      </div>
+      <div class="panel-header">
+        <select class="sort-select"><option>Recent activity</option></select>
+        <button class="new-btn"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="1.5"><line x1="5" y1="1" x2="5" y2="9"/><line x1="1" y1="5" x2="9" y2="5"/></svg> New song</button>
+      </div>
+    </div>
+
+    <div class="songs-grid">
+
+      <!-- CARD 1: Default state -->
+      <div class="card" id="card0">
+        <div class="card-thumb" style="background:linear-gradient(135deg,#4c1d95,#7c3aed);">
+          <span class="activity-badge">New</span>
+          <span class="version-badge">v2</span>
+          <button class="play-btn" onclick="event.stopPropagation()">
+            <svg width="12" height="14" viewBox="0 0 10 12" fill="white"><path d="M0 0l10 6-10 6z"/></svg>
+          </button>
+          <!-- Info overlay — hidden by default -->
+          <div class="info-overlay" id="overlay0">
+            <div class="info-grid">
+              <div class="info-item"><span class="info-label">Latest version</span><span class="info-value">Just Us</span></div>
+              <div class="info-item"><span class="info-label">Last activity</span><span class="info-value">31 Mar</span></div>
+              <div class="info-item"><span class="info-label">Comments</span><span class="info-value">11</span></div>
+              <div class="info-item"><span class="info-label">Open work</span><span class="info-value">2 actions</span></div>
+            </div>
+            <div class="info-assign-row">
+              <span class="info-pill info-pill-me">1 assigned to me</span>
+              <span class="info-pill">Awaiting them</span>
+            </div>
+            <div class="info-stage-row"><span class="info-stage-label">Stage</span><span class="info-stage-val">Mixing</span></div>
+            <div class="info-activity">Coris: "love this bit" — 31 Mar, 22:05</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">Rejuvenation</div>
+          <div class="card-status-row">
+            <span class="status-pill status-mixing">Mixing</span>
+            <span class="action-pill"><span class="action-pill-dot"></span>2 actions</span>
+          </div>
+          <div class="card-divider"></div>
+          <div class="card-meta-row">
+            <span class="card-meta-primary">Just Us</span>
+            <span class="card-meta-comments">11 <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M3 3.5h8a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H6l-2.5 2V9.5H3a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1Z" stroke-linejoin="round"/></svg></span>
+          </div>
+          <div class="card-actions">
+            <button class="icon-btn icon-btn-info" title="Info" onclick="toggleOverlay(event,'overlay0')"><svg viewBox="0 0 11 11"><circle cx="5.5" cy="5.5" r="4.5"/><line x1="5.5" y1="5" x2="5.5" y2="8"/><circle cx="5.5" cy="3.2" r="0.6" fill="currentColor" stroke="none"/></svg></button>
+            <button class="icon-btn" title="Rename"><svg viewBox="0 0 11 11"><path d="M7.5 1.5l2 2-6 6H1.5v-2l6-6z" stroke-linejoin="round"/></svg></button>
+            <button class="icon-btn" title="Cover art"><svg viewBox="0 0 11 11"><rect x="1" y="2" width="9" height="7" rx="1"/><circle cx="3.5" cy="4.5" r="1" fill="currentColor" stroke="none"/><path d="M1 8l3-3 2 2 2-2 2 3" stroke-linejoin="round"/></svg></button>
+            <button class="icon-btn" title="Delete"><svg viewBox="0 0 11 11"><path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 2: Attention state + overlay pre-open -->
+      <div class="card card-attention" id="card1">
+        <div class="card-thumb" style="background:linear-gradient(135deg,#7c2d12,#c2410c);">
+          <span class="version-badge">v6</span>
+          <button class="play-btn" onclick="event.stopPropagation()">
+            <svg width="12" height="14" viewBox="0 0 10 12" fill="white"><path d="M0 0l10 6-10 6z"/></svg>
+          </button>
+          <div class="info-overlay info-overlay-visible" id="overlay1">
+            <div class="info-grid">
+              <div class="info-item"><span class="info-label">Latest version</span><span class="info-value">Just Us</span></div>
+              <div class="info-item"><span class="info-label">Last activity</span><span class="info-value">17 Apr, 8:47</span></div>
+              <div class="info-item"><span class="info-label">Comments</span><span class="info-value">7</span></div>
+              <div class="info-item"><span class="info-label">Open work</span><span class="info-value">2 actions</span></div>
+            </div>
+            <div class="info-assign-row">
+              <span class="info-pill info-pill-me">1 assigned to me</span>
+              <span class="info-pill">Awaiting them</span>
+            </div>
+            <div class="info-stage-row"><span class="info-stage-label">Stage</span><span class="info-stage-val">Mastering</span></div>
+            <div class="info-activity">Coris: "this is a new message" — 17 Apr, 8:47</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">Can't Stop Letting Go</div>
+          <div class="card-status-row">
+            <span class="status-pill status-mastering">Mastering</span>
+            <span class="action-pill"><span class="action-pill-dot"></span>1 assigned to me</span>
+          </div>
+          <div class="card-divider"></div>
+          <div class="card-meta-row">
+            <span class="card-meta-primary">Just Us</span>
+            <span class="card-meta-comments">7 <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M3 3.5h8a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H6l-2.5 2V9.5H3a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1Z" stroke-linejoin="round"/></svg></span>
+          </div>
+          <div class="card-actions">
+            <button class="icon-btn icon-btn-info" title="Info" onclick="toggleOverlay(event,'overlay1')"><svg viewBox="0 0 11 11"><circle cx="5.5" cy="5.5" r="4.5"/><line x1="5.5" y1="5" x2="5.5" y2="8"/><circle cx="5.5" cy="3.2" r="0.6" fill="currentColor" stroke="none"/></svg></button>
+            <button class="icon-btn" title="Rename"><svg viewBox="0 0 11 11"><path d="M7.5 1.5l2 2-6 6H1.5v-2l6-6z" stroke-linejoin="round"/></svg></button>
+            <button class="icon-btn" title="Cover art"><svg viewBox="0 0 11 11"><rect x="1" y="2" width="9" height="7" rx="1"/><circle cx="3.5" cy="4.5" r="1" fill="currentColor" stroke="none"/><path d="M1 8l3-3 2 2 2-2 2 3" stroke-linejoin="round"/></svg></button>
+            <button class="icon-btn" title="Delete"><svg viewBox="0 0 11 11"><path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 3: Playing state (EQ bars, active play btn) -->
+      <div class="card" id="card2">
+        <div class="card-thumb" style="background:linear-gradient(135deg,#1e3a5f,#1d4ed8);">
+          <span class="version-badge">v3</span>
+          <div class="eq-bars">
+            <span class="eq-bar"></span><span class="eq-bar"></span>
+            <span class="eq-bar"></span><span class="eq-bar"></span>
+          </div>
+          <button class="play-btn play-btn-active" onclick="event.stopPropagation()">
+            <svg width="10" height="12" viewBox="0 0 10 12" fill="white"><rect x="0" y="0" width="3.5" height="12" rx="1"/><rect x="6.5" y="0" width="3.5" height="12" rx="1"/></svg>
+          </button>
+          <div class="info-overlay" id="overlay2">
+            <div class="info-grid">
+              <div class="info-item"><span class="info-label">Latest version</span><span class="info-value">v3</span></div>
+              <div class="info-item"><span class="info-label">Last activity</span><span class="info-value">16 Apr</span></div>
+              <div class="info-item"><span class="info-label">Comments</span><span class="info-value">5</span></div>
+              <div class="info-item"><span class="info-label">Open work</span><span class="info-value">1 action</span></div>
+            </div>
+            <div class="info-assign-row"><span class="info-pill">Awaiting them</span></div>
+            <div class="info-stage-row"><span class="info-stage-label">Stage</span><span class="info-stage-val">Writing</span></div>
+            <div class="info-activity">Coris: "this is a new message" — 16 Apr</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">Dying Time</div>
+          <div class="card-status-row">
+            <span class="status-pill status-writing">Writing</span>
+            <span class="action-pill"><span class="action-pill-dot"></span>1 action</span>
+          </div>
+          <div class="card-divider"></div>
+          <div class="card-meta-row">
+            <span class="card-meta-primary">v3</span>
+            <span class="card-meta-comments">5 <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M3 3.5h8a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H6l-2.5 2V9.5H3a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1Z" stroke-linejoin="round"/></svg></span>
+          </div>
+          <div class="card-actions">
+            <button class="icon-btn icon-btn-info" title="Info" onclick="toggleOverlay(event,'overlay2')"><svg viewBox="0 0 11 11"><circle cx="5.5" cy="5.5" r="4.5"/><line x1="5.5" y1="5" x2="5.5" y2="8"/><circle cx="5.5" cy="3.2" r="0.6" fill="currentColor" stroke="none"/></svg></button>
+            <button class="icon-btn" title="Rename"><svg viewBox="0 0 11 11"><path d="M7.5 1.5l2 2-6 6H1.5v-2l6-6z" stroke-linejoin="round"/></svg></button>
+            <button class="icon-btn" title="Cover art"><svg viewBox="0 0 11 11"><rect x="1" y="2" width="9" height="7" rx="1"/><circle cx="3.5" cy="4.5" r="1" fill="currentColor" stroke="none"/><path d="M1 8l3-3 2 2 2-2 2 3" stroke-linejoin="round"/></svg></button>
+            <button class="icon-btn" title="Delete"><svg viewBox="0 0 11 11"><path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 4: Finished, no actions -->
+      <div class="card" id="card3">
+        <div class="card-thumb" style="background:linear-gradient(135deg,#064e3b,#059669);">
+          <span class="version-badge">v4</span>
+          <button class="play-btn" onclick="event.stopPropagation()">
+            <svg width="12" height="14" viewBox="0 0 10 12" fill="white"><path d="M0 0l10 6-10 6z"/></svg>
+          </button>
+          <div class="info-overlay" id="overlay3">
+            <div class="info-grid">
+              <div class="info-item"><span class="info-label">Latest version</span><span class="info-value">v4</span></div>
+              <div class="info-item"><span class="info-label">Last activity</span><span class="info-value">12 Mar</span></div>
+              <div class="info-item"><span class="info-label">Comments</span><span class="info-value">3</span></div>
+              <div class="info-item"><span class="info-label">Open work</span><span class="info-value">None</span></div>
+            </div>
+            <div class="info-stage-row"><span class="info-stage-label">Stage</span><span class="info-stage-val">Finished</span></div>
+            <div class="info-activity">Coris: "sounds great" — 12 Mar</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">Fake It</div>
+          <div class="card-status-row">
+            <span class="status-pill status-finished">Finished</span>
+          </div>
+          <div class="card-divider"></div>
+          <div class="card-meta-row">
+            <span class="card-meta-primary">v4</span>
+            <span class="card-meta-comments">3 <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M3 3.5h8a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H6l-2.5 2V9.5H3a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1Z" stroke-linejoin="round"/></svg></span>
+          </div>
+          <div class="card-actions">
+            <button class="icon-btn icon-btn-info" title="Info" onclick="toggleOverlay(event,'overlay3')"><svg viewBox="0 0 11 11"><circle cx="5.5" cy="5.5" r="4.5"/><line x1="5.5" y1="5" x2="5.5" y2="8"/><circle cx="5.5" cy="3.2" r="0.6" fill="currentColor" stroke="none"/></svg></button>
+            <button class="icon-btn" title="Rename"><svg viewBox="0 0 11 11"><path d="M7.5 1.5l2 2-6 6H1.5v-2l6-6z" stroke-linejoin="round"/></svg></button>
+            <button class="icon-btn" title="Cover art"><svg viewBox="0 0 11 11"><rect x="1" y="2" width="9" height="7" rx="1"/><circle cx="3.5" cy="4.5" r="1" fill="currentColor" stroke="none"/><path d="M1 8l3-3 2 2 2-2 2 3" stroke-linejoin="round"/></svg></button>
+            <button class="icon-btn" title="Delete"><svg viewBox="0 0 11 11"><path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ghost add card -->
+      <div class="card-ghost">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Add song
+      </div>
+
+    </div>
+
+    <div class="notes">
+      <strong>Desktop card view — key implementation rules</strong>
+      <ul>
+        <li>Card structure: flex-column. Artwork square on top (<code>.cardThumb</code>), opaque strip below (<code>.cardBody</code>). No overlay on the strip.</li>
+        <li>Tap artwork = play/pause. Tap anywhere else on card = navigate to song page.</li>
+        <li>Info overlay covers <strong>artwork area only</strong> — title strip and icons always accessible below.</li>
+        <li>Overlay: <code>position:absolute</code> inside <code>.cardThumb</code>, <code>aspect-ratio:1/1</code> to match thumb height. Hidden via <code>opacity:0; pointer-events:none</code>. JS adds <code>.cardInfoOverlayVisible</code>.</li>
+        <li>Attention state: <code>box-shadow: 0 0 0 2px #ff1493</code> — ring border, no layout shift.</li>
+        <li>Action pill: in <code>.card-status-row</code> alongside status pill, always visible in strip.</li>
+        <li>Icons: 4 buttons in a static horizontal row (<code>position:static</code>, always visible). Order: ℹ, rename, image, delete.</li>
+        <li>Playing state: EQ bars top-left of artwork, pause icon on play button, play button always visible (not hover-only).</li>
+        <li>Clicking ℹ again closes the overlay (toggle). Clicking outside the overlay also closes it.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Actions panel -->
+  <div class="actions-panel">
+    <div class="panel-label">Actions</div>
+    <div class="filter-row">
+      <button class="filter-pill filter-pill-active">All <span style="opacity:0.6">10</span></button>
+      <button class="filter-pill">Open <span style="opacity:0.6">5</span></button>
+      <button class="filter-pill">Assigned to me <span style="opacity:0.6">2</span></button>
+      <button class="filter-pill">In progress <span style="opacity:0.6">2</span></button>
+      <button class="filter-pill">Done <span style="opacity:0.6">5</span></button>
+    </div>
+    <div class="action-group">
+      <div class="group-label">Can't Stop Letting Go</div>
+      <div class="action-row"><div class="action-toggle action-toggle-done"></div><div><div class="action-text">testing</div><div class="action-meta"><span class="action-status status-done-badge">Done</span><span style="font-size:10px;color:rgba(255,255,255,0.3);">Assigned to Coris</span></div></div></div>
+      <div class="action-row"><div class="action-toggle" style="border-color:rgba(255,20,147,0.5);background:rgba(255,20,147,0.1);"></div><div><div class="action-text">synth jam comment</div><div class="action-meta"><span class="action-status status-in-progress">In progress</span></div></div></div>
+      <div class="action-row"><div class="action-toggle"></div><div><div class="action-text">testing can't stop</div><div class="action-meta"><span class="action-status status-open">Open</span></div></div></div>
+    </div>
+    <div class="action-group">
+      <div class="group-label">Rejuvenation</div>
+      <div class="action-row"><div class="action-toggle action-toggle-done"></div><div><div class="action-text">love this bit</div><div class="action-meta"><span class="action-status status-done-badge">Done</span></div></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Toggle info overlay on artwork.
+  // In React: useState<string|null> for openOverlayId.
+  // Click ℹ → toggle. Click outside overlay → close.
+  function toggleOverlay(e, overlayId) {
+    e.stopPropagation();
+    const overlay = document.getElementById(overlayId);
+    const isOpen = overlay.classList.contains('info-overlay-visible');
+    // Close all overlays first
+    document.querySelectorAll('.info-overlay').forEach(o => o.classList.remove('info-overlay-visible'));
+    if (!isOpen) overlay.classList.add('info-overlay-visible');
+  }
+  // Close overlay when clicking elsewhere on the card
+  document.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('click', () => {
+      card.querySelectorAll('.info-overlay').forEach(o => o.classList.remove('info-overlay-visible'));
+    });
+  });
+</script>
+</body>
+</html>
