@@ -142,7 +142,8 @@ function DashboardContent() {
   const [actionFilter, setActionFilter] = useState<'all' | 'open' | 'assigned_to_me' | Action['status']>('all');
   const [songFilter, setSongFilter] = useState<'all' | 'needs_attention' | 'assigned_to_me' | SongStatus>('all');
   const [songSort, setSongSort] = useState<'activity' | 'upload' | 'title'>('activity');
-  const [expandedSongIds, setExpandedSongIds] = useState<string[]>([]);
+  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
+  const [sheetSongId, setSheetSongId] = useState<string | null>(null);
 
   // New song modal
   const [showNewModal, setShowNewModal] = useState(false);
@@ -460,11 +461,30 @@ function DashboardContent() {
   }
 
   function toggleSongInfo(songId: string) {
-    setExpandedSongIds(prev => (
-      prev.includes(songId)
-        ? prev.filter(id => id !== songId)
-        : [...prev, songId]
-    ));
+    setExpandedCardId(prev => (prev === songId ? null : songId));
+  }
+
+  function songNeedsAttention(song: Song) {
+    return song.assignedToMeCount > 0;
+  }
+
+  function getMetaPillLabel(song: Song) {
+    if (song.assignedToMeCount > 0) {
+      return `${song.assignedToMeCount} assigned to me`;
+    }
+
+    return `${song.unresolvedActionCount} action${song.unresolvedActionCount !== 1 ? 's' : ''}`;
+  }
+
+  function handleSongInfoClick(event: React.MouseEvent<HTMLButtonElement>, songId: string) {
+    event.stopPropagation();
+
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setSheetSongId(prev => (prev === songId ? null : songId));
+      return;
+    }
+
+    toggleSongInfo(songId);
   }
 
   function markSongSeen(songId: string) {
@@ -841,6 +861,19 @@ function DashboardContent() {
     </button>
   );
 
+  const sheetSong = sheetSongId ? songs.find(song => song.id === sheetSongId) ?? null : null;
+  const sheetActivitySummary = sheetSong?.activityFeed[0] ?? null;
+  const sheetActivitySnippet = sheetActivitySummary?.detail ?? sheetActivitySummary?.summary ?? null;
+  const sheetVersionText = sheetSong
+    ? (
+      sheetSong.latestVersionLabel
+        ? sheetSong.latestVersionLabel
+        : sheetSong.latestVersionNumber
+          ? `v${sheetSong.latestVersionNumber}`
+          : 'No audio yet'
+    )
+    : 'No audio yet';
+
   return (
     <div className={`${styles.page} ${playingId ? styles.pageWithPlayer : ''}`}>
       {/* Header */}
@@ -965,212 +998,211 @@ function DashboardContent() {
             hasFilteredSongs ? (
             <div className={`${styles.songsGrid} ${viewMode === 'list' ? styles.songsGridList : ''}`}>
               {sortedSongs.map(song => {
-                const isInfoOpen = expandedSongIds.includes(song.id);
+                const isInfoOpen = expandedCardId === song.id;
                 const latestVersionText = song.latestVersionLabel
                   ? song.latestVersionLabel
                   : song.latestVersionNumber
-                    ? `Version ${song.latestVersionNumber}`
+                    ? `v${song.latestVersionNumber}`
                     : 'No audio yet';
+                const latestVersionTag = song.latestVersionNumber ? `v${song.latestVersionNumber}` : 'No audio yet';
                 const activitySummary = song.activityFeed[0] ?? null;
+                const activitySnippet = activitySummary?.detail ?? activitySummary?.summary ?? null;
+                const showMetaPill = song.unresolvedActionCount > 0;
+                const attentionClass = songNeedsAttention(song) ? styles.cardAttention : '';
+                const isListView = viewMode === 'list';
 
                 return (
                 <div
                   key={song.id}
-                  className={`${styles.card} ${viewMode === 'list' ? styles.desktopListCard : styles.desktopGridCard} ${fadingSongIds.includes(song.id) ? styles.cardDeleting : ''} ${isInfoOpen ? styles.cardInfoExpanded : ''}`}
+                  className={`${styles.card} ${isListView ? styles.desktopListCard : styles.desktopGridCard} ${attentionClass} ${fadingSongIds.includes(song.id) ? styles.cardDeleting : ''} ${isInfoOpen ? styles.cardInfoExpanded : ''}`}
                   onClick={e => handleCardClick(e, song)}
                 >
-                  {/* Thumbnail */}
-                  <div className={styles.cardThumb}>
-                    {song.imageUploading ? (
-                      <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(13,9,20,0.7)',borderRadius:8}}>
-                        <div style={{width:18,height:18,border:'2px solid #ff1493',borderTopColor:'transparent',borderRadius:'50%',animation:'spin 0.7s linear infinite'}} />
-                      </div>
-                    ) : song.image_url ? (
-                      <img
-                        src={song.image_url}
-                        alt={song.title}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                      />
-                    ) : (
-                      <div className={styles.thumbPlaceholder}>
-                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                          <circle cx="9" cy="9" r="5" stroke="rgba(255,20,147,0.4)" strokeWidth="1.4"/>
-                          <circle cx="9" cy="9" r="2" fill="rgba(255,20,147,0.4)"/>
-                        </svg>
-                      </div>
-                    )}
-                    {song.latestVersionId && (
-                      <button
-                        type="button"
-                        className={`${styles.thumbPlayBtn} ${playingId === song.id ? styles.thumbPlayBtnActive : ''}`}
-                        onClick={event => {
-                          event.stopPropagation();
-                          if (playingId === song.id) {
-                            togglePlayPause();
-                          } else {
-                            void playSong(song, sortedSongs);
-                          }
-                        }}
-                        title={playingId === song.id && isPlaying ? 'Pause' : 'Play'}
-                      >
-                        {playingId === song.id && isPlaying ? (
-                          <svg width="10" height="12" viewBox="0 0 10 12" fill="white">
-                            <rect x="0" y="0" width="3.5" height="12" rx="1" />
-                            <rect x="6.5" y="0" width="3.5" height="12" rx="1" />
-                          </svg>
-                        ) : (
-                          <svg width="10" height="12" viewBox="0 0 10 12" fill="white">
-                            <path d="M0 0l10 6-10 6z" />
-                          </svg>
-                        )}
-                      </button>
-                    )}
-                    {playingId === song.id && isPlaying && (
-                      <div className={styles.eqBars}>
-                        <span className={styles.eqBar} style={{ animationDelay: '0s' }} />
-                        <span className={styles.eqBar} style={{ animationDelay: '0.15s' }} />
-                        <span className={styles.eqBar} style={{ animationDelay: '0.3s' }} />
-                        <span className={styles.eqBar} style={{ animationDelay: '0.1s' }} />
-                      </div>
-                    )}
-                    {song.hasNewActivity && (
-                      <span className={styles.activityBadge}>New</span>
-                    )}
+                  {isListView ? (
+                    <>
+                      <div className={styles.desktopListCardRow}>
+                        <div className={styles.cardThumb}>
+                          {song.imageUploading ? (
+                            <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(13,9,20,0.7)',borderRadius:8}}>
+                              <div style={{width:18,height:18,border:'2px solid #ff1493',borderTopColor:'transparent',borderRadius:'50%',animation:'spin 0.7s linear infinite'}} />
+                            </div>
+                          ) : song.image_url ? (
+                            <img
+                              src={song.image_url}
+                              alt={song.title}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                            />
+                          ) : (
+                            <div className={styles.thumbPlaceholder}>
+                              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                                <circle cx="9" cy="9" r="5" stroke="rgba(255,20,147,0.4)" strokeWidth="1.4"/>
+                                <circle cx="9" cy="9" r="2" fill="rgba(255,20,147,0.4)"/>
+                              </svg>
+                            </div>
+                          )}
+                          {song.latestVersionId && (
+                            <button
+                              type="button"
+                              className={`${styles.thumbPlayBtn} ${playingId === song.id ? styles.thumbPlayBtnActive : ''}`}
+                              onClick={event => {
+                                event.stopPropagation();
+                                if (playingId === song.id) {
+                                  togglePlayPause();
+                                } else {
+                                  void playSong(song, sortedSongs);
+                                }
+                              }}
+                              title={playingId === song.id && isPlaying ? 'Pause' : 'Play'}
+                            >
+                              {playingId === song.id && isPlaying ? (
+                                <svg width="10" height="12" viewBox="0 0 10 12" fill="white">
+                                  <rect x="0" y="0" width="3.5" height="12" rx="1" />
+                                  <rect x="6.5" y="0" width="3.5" height="12" rx="1" />
+                                </svg>
+                              ) : (
+                                <svg width="10" height="12" viewBox="0 0 10 12" fill="white">
+                                  <path d="M0 0l10 6-10 6z" />
+                                </svg>
+                              )}
+                            </button>
+                          )}
+                          {playingId === song.id && isPlaying && (
+                            <div className={styles.eqBars}>
+                              <span className={styles.eqBar} style={{ animationDelay: '0s' }} />
+                              <span className={styles.eqBar} style={{ animationDelay: '0.15s' }} />
+                              <span className={styles.eqBar} style={{ animationDelay: '0.3s' }} />
+                              <span className={styles.eqBar} style={{ animationDelay: '0.1s' }} />
+                            </div>
+                          )}
+                        </div>
 
-                  </div>
+                        <div className={styles.cardBody}>
+                          {editingId === song.id ? (
+                            <input
+                              className={styles.editInput}
+                              value={editTitle}
+                              autoFocus
+                              onChange={e => setEditTitle(e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') commitRename(song.id);
+                                if (e.key === 'Escape') setEditingId(null);
+                              }}
+                              onBlur={() => commitRename(song.id)}
+                              onClick={e => e.stopPropagation()}
+                            />
+                          ) : (
+                            <div className={styles.cardTitle}>{song.title}</div>
+                          )}
+                          <div className={styles.cardMetaPrimary}>
+                            <span>{getSongStatusLabel(song.status)}</span>
+                            <span className={styles.cardMetaSeparator}>·</span>
+                            <span>{latestVersionTag}</span>
+                            {song.latestVersionLabel && (
+                              <>
+                                <span className={styles.cardMetaSeparator}>·</span>
+                                <span>{song.latestVersionLabel}</span>
+                              </>
+                            )}
+                            {showMetaPill && (
+                              <>
+                                <span className={styles.cardMetaSeparator}>·</span>
+                                <span className={styles.metaPill}>
+                                  <span className={styles.metaPillDot} />
+                                  {getMetaPillLabel(song)}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
 
-                  {/* Card body */}
-                  <div className={styles.cardBody}>
-                    {editingId === song.id ? (
-                      <input
-                        className={styles.editInput}
-                        value={editTitle}
-                        autoFocus
-                        onChange={e => setEditTitle(e.target.value)}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') commitRename(song.id);
-                          if (e.key === 'Escape') setEditingId(null);
-                        }}
-                        onBlur={() => commitRename(song.id)}
-                        onClick={e => e.stopPropagation()}
-                      />
-                    ) : (
-                      <div className={styles.cardTitle}>{song.title}</div>
-                    )}
-                    <div className={styles.cardStatusRow}>
-                      <span className={`${styles.songStatusBadge} ${getSongStatusClass(song.status)}`}>
-                        {getSongStatusLabel(song.status)}
-                      </span>
-                      {song.needsAttention && (
-                        renderInteractivePill(
-                          `active-actions-${song.id}`,
-                          `${song.unresolvedActionCount} active action${song.unresolvedActionCount !== 1 ? 's' : ''}`,
-                          event => {
-                            event.stopPropagation();
-                            openSongContext(song, {
-                              versionId: song.activeContextVersionId,
-                              focus: 'actions',
-                              actionsTab: 'all_versions',
-                              actionFilter: 'open',
-                            });
-                          }
-                        )
-                      )}
-                    </div>
-                    <div className={styles.cardActions}>
-                      <button
-                        className={`${styles.iconBtn} ${isInfoOpen ? styles.iconBtnActive : ''}`}
-                        title={isInfoOpen ? 'Hide info' : 'Show info'}
-                        aria-label={isInfoOpen ? `Hide info for ${song.title}` : `Show info for ${song.title}`}
-                        aria-expanded={isInfoOpen}
-                        aria-controls={`song-info-${song.id}`}
-                        onClick={e => {
-                          e.stopPropagation();
-                          toggleSongInfo(song.id);
-                        }}
-                      >
-                        <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
-                          <circle cx="5.5" cy="5.5" r="4.25" stroke="currentColor" strokeWidth="1" />
-                          <path d="M5.5 4.8v2.6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-                          <circle cx="5.5" cy="3.2" r="0.55" fill="currentColor" />
-                        </svg>
-                      </button>
-                      {/* Pencil — rename */}
-                      <button
-                        className={styles.iconBtn}
-                        title="Rename"
-                        onClick={e => {
-                          e.stopPropagation();
-                          setEditingId(song.id);
-                          setEditTitle(song.title);
-                        }}
-                      >
-                        <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                          <path d="M7.5 1.5l2 2-6 6H1.5v-2l6-6z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/>
-                        </svg>
-                      </button>
-                      {/* Image — cover art */}
-                      <button
-                        className={styles.iconBtn}
-                        title="Upload cover art"
-                        onClick={e => {
-                          e.stopPropagation();
-                          coverUploadTargetId.current = song.id;
-                          coverInputRef.current?.click();
-                        }}
-                      >
-                        <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                          <rect x="1" y="2" width="9" height="7" rx="1" stroke="currentColor" strokeWidth="1"/>
-                          <circle cx="3.5" cy="4.5" r="1" fill="currentColor"/>
-                          <path d="M1 8l3-3 2 2 2-2 2 3" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/>
-                        </svg>
-                      </button>
-                      {/* Trash — delete */}
-                      <button
-                        className={styles.iconBtn}
-                        title="Delete"
-                        onClick={e => {
-                          e.stopPropagation();
-                          setDeletingId(song.id);
-                        }}
-                      >
-                        <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                          <path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </button>
-                    </div>
-                    {isInfoOpen && (
+                        <div className={styles.cardActions}>
+                          <button
+                            className={`${styles.iconBtn} ${styles.iconBtnInfo} ${isInfoOpen ? styles.iconBtnActive : ''}`}
+                            title={isInfoOpen ? 'Hide info' : 'Show info'}
+                            aria-label={isInfoOpen ? `Hide info for ${song.title}` : `Show info for ${song.title}`}
+                            aria-expanded={isInfoOpen}
+                            aria-controls={`song-info-${song.id}`}
+                            onClick={e => handleSongInfoClick(e, song.id)}
+                          >
+                            <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
+                              <circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" strokeWidth="1.2" />
+                              <path d="M5.5 5v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                              <circle cx="5.5" cy="3.2" r="0.6" fill="currentColor" />
+                            </svg>
+                          </button>
+                          <button
+                            className={styles.iconBtn}
+                            title="Rename"
+                            onClick={e => {
+                              e.stopPropagation();
+                              setEditingId(song.id);
+                              setEditTitle(song.title);
+                            }}
+                          >
+                            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                              <path d="M7.5 1.5l2 2-6 6H1.5v-2l6-6z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/>
+                            </svg>
+                          </button>
+                          <button
+                            className={styles.iconBtn}
+                            title="Upload cover art"
+                            onClick={e => {
+                              e.stopPropagation();
+                              coverUploadTargetId.current = song.id;
+                              coverInputRef.current?.click();
+                            }}
+                          >
+                            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                              <rect x="1" y="2" width="9" height="7" rx="1" stroke="currentColor" strokeWidth="1"/>
+                              <circle cx="3.5" cy="4.5" r="1" fill="currentColor"/>
+                              <path d="M1 8l3-3 2 2 2-2 2 3" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/>
+                            </svg>
+                          </button>
+                          <button
+                            className={styles.iconBtn}
+                            title="Delete"
+                            onClick={e => {
+                              e.stopPropagation();
+                              setDeletingId(song.id);
+                            }}
+                          >
+                            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                              <path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+
                       <div
                         id={`song-info-${song.id}`}
-                        className={styles.infoPanel}
+                        className={`${styles.cardExpandPanel} ${isInfoOpen ? styles.cardExpandVisible : ''}`}
                         onClick={e => e.stopPropagation()}
                       >
-                        <div className={styles.infoGrid}>
-                          <div className={styles.infoItem}>
-                            <span className={styles.infoLabel}>Latest version</span>
-                            <span className={styles.infoValue}>{latestVersionText}</span>
+                        <div className={styles.expandGrid}>
+                          <div className={styles.expandItem}>
+                            <span className={styles.expandLabel}>Latest version</span>
+                            <span className={styles.expandValue}>{latestVersionText}</span>
                           </div>
-                          <div className={styles.infoItem}>
-                            <span className={styles.infoLabel}>Last activity</span>
-                            <span className={styles.infoValue}>{formatActivityTimestamp(song.latestActivityAt)}</span>
+                          <div className={styles.expandItem}>
+                            <span className={styles.expandLabel}>Last activity</span>
+                            <span className={styles.expandValue}>{formatActivityTimestamp(song.latestActivityAt)}</span>
                           </div>
-                          <div className={styles.infoItem}>
-                            <span className={styles.infoLabel}>Comments</span>
-                            <span className={styles.infoValue}>{song.commentCount}</span>
+                          <div className={styles.expandItem}>
+                            <span className={styles.expandLabel}>Comments</span>
+                            <span className={styles.expandValue}>{song.commentCount}</span>
                           </div>
-                          <div className={styles.infoItem}>
-                            <span className={styles.infoLabel}>Open work</span>
-                            <span className={styles.infoValue}>
-                              {song.unresolvedActionCount} active action{song.unresolvedActionCount !== 1 ? 's' : ''}
+                          <div className={styles.expandItem}>
+                            <span className={styles.expandLabel}>Open work</span>
+                            <span className={styles.expandValue}>
+                              {song.unresolvedActionCount > 0 ? `${song.unresolvedActionCount} actions` : 'None'}
                             </span>
                           </div>
                         </div>
-                        <div className={styles.infoMetaRow}>
+                        <div className={styles.expandAssignRow}>
                           {song.assignedToMeCount > 0 && (
-                            renderInteractivePill(
-                              `assigned-${song.id}`,
-                              `${song.assignedToMeCount} assigned to me`,
-                              event => {
+                            <button
+                              type="button"
+                              className={`${styles.expandAssignPill} ${styles.expandAssignPillMe}`}
+                              onClick={event => {
                                 event.stopPropagation();
                                 openSongContext(song, {
                                   versionId: song.assignedContextVersionId,
@@ -1178,61 +1210,303 @@ function DashboardContent() {
                                   actionsTab: 'all_versions',
                                   actionFilter: 'assigned_to_me',
                                 });
-                              }
-                            )
+                              }}
+                            >
+                              {song.assignedToMeCount} assigned to me
+                            </button>
                           )}
                           {song.awaitingResponse && (
-                            renderInteractivePill(
-                              `awaiting-${song.id}`,
-                              getAwaitingResponseLabel(song.awaitingResponse) ?? 'Awaiting response',
-                              event => {
+                            <button
+                              type="button"
+                              className={styles.expandAssignPill}
+                              onClick={event => {
                                 event.stopPropagation();
                                 openSongContext(song, {
                                   versionId: song.awaitingVersionId,
                                   focus: 'threads',
                                   threadId: song.awaitingThreadId,
                                 });
+                              }}
+                            >
+                              {getAwaitingResponseLabel(song.awaitingResponse) ?? 'Awaiting response'}
+                            </button>
+                          )}
+                          <div className={styles.cardStatusControl}>
+                            <label className={styles.cardStatusLabel} htmlFor={`song-status-${song.id}`}>
+                              Stage
+                            </label>
+                            <select
+                              id={`song-status-${song.id}`}
+                              className={styles.cardStatusSelect}
+                              value={song.status}
+                              onClick={e => e.stopPropagation()}
+                              onChange={e => {
+                                e.stopPropagation();
+                                void updateSongStatus(song.id, e.target.value as SongStatus);
+                              }}
+                            >
+                              {SONG_STATUS_VALUES.map(status => (
+                                <option key={status} value={status}>
+                                  {getSongStatusLabel(status)}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                        {activitySnippet && (
+                          <div className={styles.expandActivity}>{activitySnippet}</div>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className={styles.cardThumb}>
+                        {song.imageUploading ? (
+                          <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(13,9,20,0.7)',borderRadius:8}}>
+                            <div style={{width:18,height:18,border:'2px solid #ff1493',borderTopColor:'transparent',borderRadius:'50%',animation:'spin 0.7s linear infinite'}} />
+                          </div>
+                        ) : song.image_url ? (
+                          <img
+                            src={song.image_url}
+                            alt={song.title}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                          />
+                        ) : (
+                          <div className={styles.thumbPlaceholder}>
+                            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                              <circle cx="9" cy="9" r="5" stroke="rgba(255,20,147,0.4)" strokeWidth="1.4"/>
+                              <circle cx="9" cy="9" r="2" fill="rgba(255,20,147,0.4)"/>
+                            </svg>
+                          </div>
+                        )}
+                        {song.latestVersionId && (
+                          <button
+                            type="button"
+                            className={`${styles.thumbPlayBtn} ${playingId === song.id ? styles.thumbPlayBtnActive : ''}`}
+                            onClick={event => {
+                              event.stopPropagation();
+                              if (playingId === song.id) {
+                                togglePlayPause();
+                              } else {
+                                void playSong(song, sortedSongs);
                               }
-                            )
+                            }}
+                            title={playingId === song.id && isPlaying ? 'Pause' : 'Play'}
+                          >
+                            {playingId === song.id && isPlaying ? (
+                              <svg width="10" height="12" viewBox="0 0 10 12" fill="white">
+                                <rect x="0" y="0" width="3.5" height="12" rx="1" />
+                                <rect x="6.5" y="0" width="3.5" height="12" rx="1" />
+                              </svg>
+                            ) : (
+                              <svg width="10" height="12" viewBox="0 0 10 12" fill="white">
+                                <path d="M0 0l10 6-10 6z" />
+                              </svg>
+                            )}
+                          </button>
+                        )}
+                        {playingId === song.id && isPlaying && (
+                          <div className={styles.eqBars}>
+                            <span className={styles.eqBar} style={{ animationDelay: '0s' }} />
+                            <span className={styles.eqBar} style={{ animationDelay: '0.15s' }} />
+                            <span className={styles.eqBar} style={{ animationDelay: '0.3s' }} />
+                            <span className={styles.eqBar} style={{ animationDelay: '0.1s' }} />
+                          </div>
+                        )}
+                        {song.hasNewActivity && (
+                          <span className={styles.activityBadge}>New</span>
+                        )}
+                      </div>
+
+                      <div className={styles.cardBody}>
+                        {editingId === song.id ? (
+                          <input
+                            className={styles.editInput}
+                            value={editTitle}
+                            autoFocus
+                            onChange={e => setEditTitle(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') commitRename(song.id);
+                              if (e.key === 'Escape') setEditingId(null);
+                            }}
+                            onBlur={() => commitRename(song.id)}
+                            onClick={e => e.stopPropagation()}
+                          />
+                        ) : (
+                          <div className={styles.cardTitle}>{song.title}</div>
+                        )}
+                        <div className={styles.cardMetaPrimary}>
+                          <span>{getSongStatusLabel(song.status)}</span>
+                          <span className={styles.cardMetaSeparator}>·</span>
+                          <span>{latestVersionTag}</span>
+                          {song.latestVersionLabel && (
+                            <>
+                              <span className={styles.cardMetaSeparator}>·</span>
+                              <span>{song.latestVersionLabel}</span>
+                            </>
+                          )}
+                          {showMetaPill && (
+                            <>
+                              <span className={styles.cardMetaSeparator}>·</span>
+                              <span className={styles.metaPill}>
+                                <span className={styles.metaPillDot} />
+                                {getMetaPillLabel(song)}
+                              </span>
+                            </>
                           )}
                         </div>
-                        <div className={styles.cardStatusControl}>
-                          <label className={styles.cardStatusLabel} htmlFor={`song-status-${song.id}`}>
-                            Stage
-                          </label>
-                          <select
-                            id={`song-status-${song.id}`}
-                            className={styles.cardStatusSelect}
-                            value={song.status}
-                            onClick={e => e.stopPropagation()}
-                            onChange={e => {
+                        <div className={styles.cardActions}>
+                          <button
+                            className={`${styles.iconBtn} ${styles.iconBtnInfo} ${isInfoOpen ? styles.iconBtnActive : ''}`}
+                            title={isInfoOpen ? 'Hide info' : 'Show info'}
+                            aria-label={isInfoOpen ? `Hide info for ${song.title}` : `Show info for ${song.title}`}
+                            aria-expanded={isInfoOpen}
+                            aria-controls={`song-info-${song.id}`}
+                            onClick={e => handleSongInfoClick(e, song.id)}
+                          >
+                            <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
+                              <circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" strokeWidth="1.2" />
+                              <path d="M5.5 5v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                              <circle cx="5.5" cy="3.2" r="0.6" fill="currentColor" />
+                            </svg>
+                          </button>
+                          <button
+                            className={styles.iconBtn}
+                            title="Rename"
+                            onClick={e => {
                               e.stopPropagation();
-                              void updateSongStatus(song.id, e.target.value as SongStatus);
+                              setEditingId(song.id);
+                              setEditTitle(song.title);
                             }}
                           >
-                            {SONG_STATUS_VALUES.map(status => (
-                              <option key={status} value={status}>
-                                {getSongStatusLabel(status)}
-                              </option>
-                            ))}
-                          </select>
+                            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                              <path d="M7.5 1.5l2 2-6 6H1.5v-2l6-6z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/>
+                            </svg>
+                          </button>
+                          <button
+                            className={styles.iconBtn}
+                            title="Upload cover art"
+                            onClick={e => {
+                              e.stopPropagation();
+                              coverUploadTargetId.current = song.id;
+                              coverInputRef.current?.click();
+                            }}
+                          >
+                            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                              <rect x="1" y="2" width="9" height="7" rx="1" stroke="currentColor" strokeWidth="1"/>
+                              <circle cx="3.5" cy="4.5" r="1" fill="currentColor"/>
+                              <path d="M1 8l3-3 2 2 2-2 2 3" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/>
+                            </svg>
+                          </button>
+                          <button
+                            className={styles.iconBtn}
+                            title="Delete"
+                            onClick={e => {
+                              e.stopPropagation();
+                              setDeletingId(song.id);
+                            }}
+                          >
+                            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                              <path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </button>
                         </div>
-                        {activitySummary && (
-                          <div className={styles.activityFeed}>
-                            <div className={styles.activityItem}>
-                              <div className={styles.activityItemTop}>
-                                <span className={styles.activityItemSummary}>{activitySummary.summary}</span>
-                                <span className={styles.activityItemTime}>{formatActivityTime(activitySummary.createdAt)}</span>
+                        {isInfoOpen && (
+                          <div
+                            id={`song-info-${song.id}`}
+                            className={styles.infoPanel}
+                            onClick={e => e.stopPropagation()}
+                          >
+                            <div className={styles.infoGrid}>
+                              <div className={styles.infoItem}>
+                                <span className={styles.infoLabel}>Latest version</span>
+                                <span className={styles.infoValue}>{latestVersionText}</span>
                               </div>
-                              {activitySummary.detail && (
-                                <div className={styles.activityItemDetail}>{activitySummary.detail}</div>
+                              <div className={styles.infoItem}>
+                                <span className={styles.infoLabel}>Last activity</span>
+                                <span className={styles.infoValue}>{formatActivityTimestamp(song.latestActivityAt)}</span>
+                              </div>
+                              <div className={styles.infoItem}>
+                                <span className={styles.infoLabel}>Comments</span>
+                                <span className={styles.infoValue}>{song.commentCount}</span>
+                              </div>
+                              <div className={styles.infoItem}>
+                                <span className={styles.infoLabel}>Open work</span>
+                                <span className={styles.infoValue}>
+                                  {song.unresolvedActionCount > 0 ? `${song.unresolvedActionCount} actions` : 'None'}
+                                </span>
+                              </div>
+                            </div>
+                            <div className={styles.infoMetaRow}>
+                              {song.assignedToMeCount > 0 && (
+                                renderInteractivePill(
+                                  `assigned-${song.id}`,
+                                  `${song.assignedToMeCount} assigned to me`,
+                                  event => {
+                                    event.stopPropagation();
+                                    openSongContext(song, {
+                                      versionId: song.assignedContextVersionId,
+                                      focus: 'actions',
+                                      actionsTab: 'all_versions',
+                                      actionFilter: 'assigned_to_me',
+                                    });
+                                  }
+                                )
+                              )}
+                              {song.awaitingResponse && (
+                                renderInteractivePill(
+                                  `awaiting-${song.id}`,
+                                  getAwaitingResponseLabel(song.awaitingResponse) ?? 'Awaiting response',
+                                  event => {
+                                    event.stopPropagation();
+                                    openSongContext(song, {
+                                      versionId: song.awaitingVersionId,
+                                      focus: 'threads',
+                                      threadId: song.awaitingThreadId,
+                                    });
+                                  }
+                                )
                               )}
                             </div>
+                            <div className={styles.cardStatusControl}>
+                              <label className={styles.cardStatusLabel} htmlFor={`song-status-grid-${song.id}`}>
+                                Stage
+                              </label>
+                              <select
+                                id={`song-status-grid-${song.id}`}
+                                className={styles.cardStatusSelect}
+                                value={song.status}
+                                onClick={e => e.stopPropagation()}
+                                onChange={e => {
+                                  e.stopPropagation();
+                                  void updateSongStatus(song.id, e.target.value as SongStatus);
+                                }}
+                              >
+                                {SONG_STATUS_VALUES.map(status => (
+                                  <option key={status} value={status}>
+                                    {getSongStatusLabel(status)}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            {activitySummary && (
+                              <div className={styles.activityFeed}>
+                                <div className={styles.activityItem}>
+                                  <div className={styles.activityItemTop}>
+                                    <span className={styles.activityItemSummary}>{activitySummary.summary}</span>
+                                    <span className={styles.activityItemTime}>{formatActivityTime(activitySummary.createdAt)}</span>
+                                  </div>
+                                  {activitySummary.detail && (
+                                    <div className={styles.activityItemDetail}>{activitySummary.detail}</div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
-                    )}
-                  </div>
+                    </>
+                  )}
                 </div>
                 );
               })}
@@ -1383,6 +1657,116 @@ function DashboardContent() {
           e.target.value = '';
         }}
       />
+
+      <div
+        className={`${styles.bsOverlay} ${sheetSongId ? styles.bsOverlayVisible : ''}`}
+        onClick={event => {
+          if (event.target === event.currentTarget) {
+            setSheetSongId(null);
+          }
+        }}
+      >
+        <div className={styles.bottomSheet}>
+          <div className={styles.bsHandle} onClick={() => setSheetSongId(null)}>
+            <div className={styles.bsHandleBar} />
+          </div>
+          {sheetSong && (
+            <>
+              <div className={styles.bsHeader}>
+                <div
+                  className={styles.bsArt}
+                  style={sheetSong.image_url ? undefined : { background: 'rgba(255,20,147,0.12)' }}
+                >
+                  {sheetSong.image_url ? (
+                    <img
+                      src={sheetSong.image_url}
+                      alt={sheetSong.title}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div className={styles.bsArtPlaceholder} />
+                  )}
+                </div>
+                <div>
+                  <p className={styles.bsSongTitle}>{sheetSong.title}</p>
+                  <p className={styles.bsSub}>
+                    {getSongStatusLabel(sheetSong.status)}
+                    {sheetSong.latestVersionNumber ? ` · v${sheetSong.latestVersionNumber}` : ''}
+                    {sheetSong.latestVersionLabel ? ` · ${sheetSong.latestVersionLabel}` : ''}
+                  </p>
+                </div>
+              </div>
+              <div className={styles.bsBody}>
+                <div className={styles.bsGrid}>
+                  <div className={styles.bsItem}>
+                    <span className={styles.bsItemLabel}>Last activity</span>
+                    <span className={styles.bsItemValue}>{formatActivityTimestamp(sheetSong.latestActivityAt)}</span>
+                  </div>
+                  <div className={styles.bsItem}>
+                    <span className={styles.bsItemLabel}>Comments</span>
+                    <span className={styles.bsItemValue}>{sheetSong.commentCount}</span>
+                  </div>
+                  <div className={styles.bsItem}>
+                    <span className={styles.bsItemLabel}>Open work</span>
+                    <span className={styles.bsItemValue}>
+                      {sheetSong.unresolvedActionCount > 0 ? `${sheetSong.unresolvedActionCount} actions` : 'None'}
+                    </span>
+                  </div>
+                  <div className={styles.bsItem}>
+                    <span className={styles.bsItemLabel}>Latest version</span>
+                    <span className={styles.bsItemValue}>{sheetVersionText}</span>
+                  </div>
+                </div>
+                <div className={styles.bsAssignRow}>
+                  {sheetSong.assignedToMeCount > 0 && (
+                    <span className={`${styles.bsPill} ${styles.bsPillMe}`}>
+                      {sheetSong.assignedToMeCount} assigned to me
+                    </span>
+                  )}
+                  {sheetSong.awaitingResponse && (
+                    <span className={styles.bsPill}>
+                      {getAwaitingResponseLabel(sheetSong.awaitingResponse) ?? 'Awaiting response'}
+                    </span>
+                  )}
+                </div>
+                <div className={styles.cardStatusControl}>
+                  <label className={styles.cardStatusLabel} htmlFor="sheet-song-status">
+                    Stage
+                  </label>
+                  <select
+                    id="sheet-song-status"
+                    className={styles.cardStatusSelect}
+                    value={sheetSong.status}
+                    onClick={event => event.stopPropagation()}
+                    onChange={event => {
+                      event.stopPropagation();
+                      void updateSongStatus(sheetSong.id, event.target.value as SongStatus);
+                    }}
+                  >
+                    {SONG_STATUS_VALUES.map(status => (
+                      <option key={status} value={status}>
+                        {getSongStatusLabel(status)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {sheetActivitySnippet && (
+                  <div className={styles.bsActivitySnippet}>{sheetActivitySnippet}</div>
+                )}
+              </div>
+              <button
+                className={styles.bsCta}
+                onClick={() => {
+                  setSheetSongId(null);
+                  openSongContext(sheetSong);
+                }}
+              >
+                Open song →
+              </button>
+            </>
+          )}
+        </div>
+      </div>
 
       <audio
         ref={audioRef}
