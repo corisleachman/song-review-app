@@ -6,550 +6,299 @@
 <title>Wireframe — Desktop List View</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d0914; color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
 
-  body {
-    background: #0d0914;
-    color: #fff;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    min-height: 100vh;
-  }
-
-  /* ── Header ── */
-  .header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 24px;
-    border-bottom: 0.5px solid rgba(255,255,255,0.08);
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    background: rgba(13,9,20,0.88);
-    backdrop-filter: blur(18px);
-  }
+  /* Header */
+  .header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 0.5px solid rgba(255,255,255,0.08); position: sticky; top: 0; z-index: 20; background: rgba(13,9,20,0.88); backdrop-filter: blur(18px); }
   .header-left { display: flex; align-items: center; gap: 16px; }
   .header-right { display: flex; align-items: center; gap: 8px; }
   .logo { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
-  .logo-dot { width: 7px; height: 7px; border-radius: 50%; background: #ff1493; flex-shrink: 0; }
-  .settings-btn {
-    background: transparent;
-    border: 0.5px solid rgba(255,255,255,0.12);
-    color: rgba(255,255,255,0.4);
-    font-size: 12px;
-    padding: 6px 12px;
-    border-radius: 7px;
-    cursor: pointer;
-    font-family: inherit;
-  }
-  .avatar {
-    width: 30px; height: 30px; border-radius: 50%;
-    background: rgba(255,20,147,0.2);
-    border: 1px solid rgba(255,20,147,0.3);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 600; color: #ff1493;
-  }
-  .view-toggle {
-    display: flex; align-items: center; gap: 2px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 7px; padding: 3px;
-  }
-  .view-btn {
-    width: 26px; height: 26px; border: none;
-    background: transparent; color: rgba(255,255,255,0.3);
-    border-radius: 5px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-  }
+  .logo-dot { width: 7px; height: 7px; border-radius: 50%; background: #ff1493; }
+  .settings-btn { background: transparent; border: 0.5px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.4); font-size: 12px; padding: 6px 12px; border-radius: 7px; cursor: pointer; font-family: inherit; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: rgba(255,20,147,0.2); border: 1px solid rgba(255,20,147,0.3); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #ff1493; }
+  .view-toggle { display: flex; align-items: center; gap: 2px; background: rgba(255,255,255,0.05); border-radius: 7px; padding: 3px; }
+  .view-btn { width: 26px; height: 26px; border: none; background: transparent; color: rgba(255,255,255,0.3); border-radius: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
   .view-btn-active { background: rgba(255,255,255,0.1); color: #fff; }
 
-  /* ── Body ── */
-  .body {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 300px;
-    min-height: calc(100vh - 57px);
-  }
-
-  /* ── Songs panel ── */
-  .songs-panel {
-    padding: 24px 24px 28px;
-    border-right: 0.5px solid rgba(255,255,255,0.08);
-    overflow-y: auto;
-  }
-
-  .songs-controls {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-
+  /* Body */
+  .body { display: grid; grid-template-columns: minmax(0,1fr) 300px; min-height: calc(100vh - 57px); }
+  .songs-panel { padding: 24px 24px 28px; border-right: 0.5px solid rgba(255,255,255,0.08); overflow-y: auto; }
+  .songs-controls { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
   .stage-tabs { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
-  .stage-tab {
-    display: flex; align-items: center; gap: 5px;
-    padding: 4px 12px; border-radius: 20px;
-    border: 1px solid rgba(255,255,255,0.1);
-    background: transparent; color: rgba(255,255,255,0.35);
-    font-size: 0.72rem; font-weight: 500; font-family: inherit;
-    cursor: pointer; white-space: nowrap;
-  }
-  .stage-tab-active {
-    background: rgba(255,20,147,0.15);
-    border-color: rgba(255,20,147,0.4);
-    color: #ff1493;
-  }
-
+  .stage-tab { display: flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: rgba(255,255,255,0.35); font-size: 0.72rem; font-weight: 500; font-family: inherit; cursor: pointer; white-space: nowrap; }
+  .stage-tab-active { background: rgba(255,20,147,0.15); border-color: rgba(255,20,147,0.4); color: #ff1493; }
   .panel-header { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-  .sort-select {
-    appearance: none;
-    background: rgba(255,255,255,0.05);
-    border: 0.5px solid rgba(255,255,255,0.12);
-    border-radius: 7px;
-    color: rgba(255,255,255,0.82);
-    font-size: 12px; font-family: inherit;
-    padding: 7px 28px 7px 10px;
-    cursor: pointer; outline: none;
-  }
-  .new-btn {
-    display: flex; align-items: center; gap: 6px;
-    background: #ff1493; color: #fff;
-    font-size: 12px; font-weight: 500;
-    padding: 8px 14px; border-radius: 10px;
-    border: none; cursor: pointer; font-family: inherit;
-    white-space: nowrap; flex-shrink: 0;
-  }
+  .sort-select { appearance: none; background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.12); border-radius: 7px; color: rgba(255,255,255,0.82); font-size: 12px; font-family: inherit; padding: 7px 28px 7px 10px; cursor: pointer; outline: none; }
+  .new-btn { display: flex; align-items: center; gap: 6px; background: #ff1493; color: #fff; font-size: 12px; font-weight: 500; padding: 8px 14px; border-radius: 10px; border: none; cursor: pointer; font-family: inherit; white-space: nowrap; flex-shrink: 0; }
 
-  /* ── LIST GRID ── */
-  .songs-grid-list {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
+  /* List grid */
+  .songs-grid-list { display: grid; grid-template-columns: 1fr; gap: 10px; }
 
-  /* ── LIST CARD ── */
+  /* ── CARD ── */
   .card {
-    background: rgba(255,255,255,0.045);
-    border-radius: 14px;
-    border: 0.5px solid rgba(255,255,255,0.09);
-    overflow: visible;
-    position: relative;
-    box-shadow: 0 10px 24px rgba(0,0,0,0.18);
-    transition: border-color 0.15s;
+    background: rgba(255,255,255,0.045); border-radius: 14px;
+    border: 0.5px solid rgba(255,255,255,0.09); position: relative;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.18); transition: border-color 0.15s;
+    overflow: hidden;
   }
   .card:hover { border-color: rgba(255,20,147,0.3); }
 
-  /* Attention state */
-  .card-attention {
-    border-color: rgba(255,20,147,0.35);
-    box-shadow: -3px 0 0 0 #ff1493, 0 10px 24px rgba(0,0,0,0.18);
-    border-radius: 14px;
-  }
+  /*
+   * ATTENTION STATE — left-edge pink bar via box-shadow.
+   * box-shadow: -3px 0 0 0 #ff1493
+   * No extra DOM element. No layout shift. Works with border-radius.
+   */
+  .card-attention { box-shadow: -3px 0 0 0 #ff1493, 0 10px 24px rgba(0,0,0,0.18); border-color: rgba(255,20,147,0.2); }
 
-  /* Inner row — always fixed height, icons always top-aligned */
-  .card-row {
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
-    height: 70px;
-  }
+  /*
+   * CARD ROW — fixed 70px height always.
+   * Icons are position:absolute top:12px right:14px — they never move.
+   * Expanding adds .card-expand sibling below this row.
+   */
+  .card-row { display: flex; flex-direction: row; align-items: stretch; height: 70px; }
 
-  /* Thumbnail */
+  /* Thumbnail — tap = play */
   .card-thumb {
-    width: 70px;
-    min-width: 70px;
-    height: 70px;
-    border-radius: 8px 0 0 8px;
-    overflow: hidden;
-    position: relative;
-    flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
+    width: 70px; min-width: 70px; height: 70px;
+    border-radius: 8px 0 0 0; overflow: hidden; position: relative;
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center; cursor: pointer;
   }
-  .card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .thumb-placeholder {
-    width: 100%; height: 100%;
-    display: flex; align-items: center; justify-content: center;
-  }
+  .card-thumb::after { content:''; position:absolute; inset:0; background:rgba(0,0,0,0); transition:background 0.15s; pointer-events:none; }
+  .card-thumb:hover::after { background:rgba(0,0,0,0.25); }
   .play-btn {
-    position: absolute;
-    left: 50%; top: 50%;
-    transform: translate(-50%, -50%);
-    width: 28px; height: 28px;
-    border-radius: 50%;
-    background: #ff1493;
-    border: none;
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+    width: 28px; height: 28px; border-radius: 50%; background: #ff1493; border: none;
     display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 2px 10px rgba(255,20,147,0.5);
-    z-index: 2;
+    cursor: pointer; box-shadow: 0 2px 10px rgba(255,20,147,0.5); z-index: 2; pointer-events: none;
   }
 
-  /* Main content — flex:1, padding right to clear the icons */
-  .card-main {
-    flex: 1;
-    min-width: 0;
-    padding: 0 160px 0 16px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 5px;
-  }
-  .card-title {
-    font-size: 14px; font-weight: 600;
-    color: #fff;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .card-pills { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-  .pill {
-    font-size: 10px; font-weight: 500;
-    padding: 2px 8px; border-radius: 20px;
-  }
-  .pill-mixing { background: rgba(99,102,241,0.2); color: #a5b4fc; border: 0.5px solid rgba(99,102,241,0.3); }
-  .pill-mastering { background: rgba(234,179,8,0.15); color: #fcd34d; border: 0.5px solid rgba(234,179,8,0.25); }
-  .pill-writing { background: rgba(20,184,166,0.15); color: #5eead4; border: 0.5px solid rgba(20,184,166,0.25); }
-  .pill-finished { background: rgba(34,197,94,0.15); color: #86efac; border: 0.5px solid rgba(34,197,94,0.25); }
-  .pill-actions {
-    background: rgba(255,20,147,0.15); color: #ff69b4;
-    border: 0.5px solid rgba(255,20,147,0.25);
-    display: flex; align-items: center; gap: 3px;
-  }
-  .pill-dot { width: 5px; height: 5px; border-radius: 50%; background: #ff1493; }
-  .card-meta { font-size: 11px; color: rgba(255,255,255,0.38); }
+  /* Main content — right padding clears 4 icons: 4×26px + 3×6px gap + 14px = ~132px */
+  .card-main { flex:1; min-width:0; padding: 0 148px 0 16px; display:flex; flex-direction:column; justify-content:center; gap:5px; }
+  .card-title { font-size:14px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-  /* Icons — top-aligned, absolutely positioned so they never move */
-  .card-actions {
-    position: absolute;
-    right: 14px;
-    top: 12px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 6px;
-  }
-  .icon-btn {
-    width: 26px; height: 26px;
-    border-radius: 7px;
-    background: rgba(16,12,24,0.78);
-    border: 0.5px solid rgba(255,255,255,0.12);
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; color: rgba(255,255,255,0.78);
-    transition: background 0.12s, color 0.12s;
-  }
-  .icon-btn:hover { background: rgba(255,20,147,0.18); color: #fff; }
-  .icon-btn svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 1.2; }
+  /*
+   * META LINE — stage, version, action pill all inline.
+   * Format: "Mixing · v2 · Just Us · ● 2 actions"
+   * Pill omitted when no actions.
+   */
+  .card-meta { display:flex; align-items:center; gap:6px; font-size:11px; color:rgba(255,255,255,0.38); white-space:nowrap; overflow:hidden; }
+  .card-meta-sep { color:rgba(255,255,255,0.2); }
+  .meta-pill { display:inline-flex; align-items:center; gap:3px; font-size:10px; font-weight:500; padding:1px 7px; border-radius:20px; background:rgba(255,20,147,0.15); color:#ff69b4; border:0.5px solid rgba(255,20,147,0.25); flex-shrink:0; }
+  .meta-pill-dot { width:4px; height:4px; border-radius:50%; background:#ff1493; }
 
-  /* ── EXPANDED SECTION — drops below the row ── */
+  /*
+   * ICONS — position:absolute, top:12px, right:14px.
+   * NEVER inside .card-row flow. Never moves when expand opens.
+   */
+  .card-actions { position:absolute; right:14px; top:12px; display:flex; flex-direction:row; align-items:center; gap:6px; }
+  .icon-btn { width:26px; height:26px; border-radius:7px; background:rgba(16,12,24,0.78); border:0.5px solid rgba(255,255,255,0.12); display:flex; align-items:center; justify-content:center; cursor:pointer; color:rgba(255,255,255,0.78); transition:background 0.12s; }
+  .icon-btn:hover { background:rgba(255,20,147,0.18); color:#fff; }
+  .icon-btn svg { width:11px; height:11px; stroke:currentColor; fill:none; stroke-width:1.2; }
+  /* Info button — attention tint */
+  .card-attention .icon-btn-info { border-color:rgba(255,20,147,0.45); color:#ff69b4; }
+
+  /*
+   * EXPANDED SECTION — sibling to .card-row, not inside it.
+   * Hidden by default (display:none). JS toggles .card-expanded on .card.
+   * When visible, pushes all subsequent rows downward.
+   * Left padding aligns content with card-main text column.
+   */
   .card-expand {
+    display: none;
     border-top: 1px solid rgba(255,255,255,0.06);
     padding: 14px 16px 14px 86px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    flex-direction: column; gap: 10px;
   }
-  .expand-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-  }
-  .expand-item { display: flex; flex-direction: column; gap: 3px; }
-  .expand-label {
-    font-size: 10px; color: rgba(255,255,255,0.35);
-    font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
-  }
-  .expand-value { font-size: 12px; color: rgba(255,255,255,0.88); font-weight: 500; }
-  .expand-assign-row { display: flex; gap: 6px; flex-wrap: wrap; }
-  .assign-pill {
-    font-size: 11px; padding: 3px 10px; border-radius: 20px;
-    background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.65);
-    border: 0.5px solid rgba(255,255,255,0.13);
-  }
-  .assign-pill-me {
-    background: rgba(255,20,147,0.15); color: #ff69b4;
-    border-color: rgba(255,20,147,0.28);
-  }
-  .expand-activity {
-    font-size: 11px; color: rgba(255,255,255,0.35);
-    border-top: 1px solid rgba(255,255,255,0.06);
-    padding-top: 8px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
+  .card-expanded .card-expand { display: flex; }
+  /* Round bottom corners only when expanded */
+  .card-expanded .card-thumb { border-radius: 8px 0 0 0; }
 
-  /* ── Actions panel ── */
-  .actions-panel {
-    padding: 24px 20px 28px;
-    background:
-      radial-gradient(circle at top right, rgba(255,20,147,0.05), transparent 30%);
-  }
-  .panel-label {
-    color: rgba(255,255,255,0.3);
-    font-size: 11px; font-weight: 500;
-    letter-spacing: 0.06em; text-transform: uppercase;
-    margin-bottom: 14px;
-  }
-  .filter-row { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
-  .filter-pill {
-    font-size: 11px; padding: 4px 11px; border-radius: 20px;
-    border: 0.5px solid rgba(255,255,255,0.1);
-    background: transparent; color: rgba(255,255,255,0.35);
-    cursor: pointer; font-family: inherit;
-  }
-  .filter-pill-active {
-    background: rgba(255,20,147,0.1);
-    border-color: rgba(255,20,147,0.3);
-    color: #ff1493;
-  }
-  .action-group { margin-bottom: 18px; }
-  .group-label {
-    color: #fff; font-size: 13px; font-weight: 600;
-    margin-bottom: 8px;
-  }
-  .action-row { display: flex; align-items: flex-start; gap: 9px; margin-bottom: 9px; }
-  .action-toggle {
-    width: 15px; height: 15px; border-radius: 50%;
-    border: 1.5px solid rgba(255,255,255,0.18);
-    background: transparent; flex-shrink: 0; margin-top: 2px;
-  }
-  .action-toggle-done { background: #1d9e75; border-color: #1d9e75; }
-  .action-text { font-size: 12px; color: rgba(255,255,255,0.6); line-height: 1.5; }
-  .action-meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
-  .action-status {
-    display: inline-flex; align-items: center;
-    border-radius: 999px; padding: 2px 7px;
-    font-size: 10px; font-weight: 700;
-    letter-spacing: 0.03em; text-transform: uppercase;
-  }
-  .status-open { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.48); }
-  .status-in-progress { background: rgba(234,179,8,0.14); color: #f6b548; }
-  .status-done { background: rgba(29,158,117,0.16); color: #65d6ad; }
+  .expand-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .expand-item { display:flex; flex-direction:column; gap:3px; }
+  .expand-label { font-size:10px; color:rgba(255,255,255,0.35); font-weight:500; letter-spacing:0.06em; text-transform:uppercase; }
+  .expand-value { font-size:12px; color:rgba(255,255,255,0.88); font-weight:500; }
+  .expand-assign-row { display:flex; gap:6px; flex-wrap:wrap; }
+  .assign-pill { font-size:11px; padding:3px 10px; border-radius:20px; background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.65); border:0.5px solid rgba(255,255,255,0.13); }
+  .assign-pill-me { background:rgba(255,20,147,0.15); color:#ff69b4; border-color:rgba(255,20,147,0.28); }
+  .expand-activity { font-size:11px; color:rgba(255,255,255,0.35); border-top:1px solid rgba(255,255,255,0.06); padding-top:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-  /* ── Annotation ── */
-  .annotation {
-    position: absolute;
-    background: rgba(255,220,0,0.12);
-    border: 1px dashed rgba(255,220,0,0.5);
-    border-radius: 4px;
-    font-size: 10px;
-    color: rgba(255,220,0,0.9);
-    padding: 3px 7px;
-    pointer-events: none;
-    white-space: nowrap;
-    z-index: 10;
-  }
-  .annotation-line {
-    position: absolute;
-    border-top: 1px dashed rgba(255,220,0,0.4);
-    pointer-events: none;
-    z-index: 9;
-  }
+  /* Actions panel */
+  .actions-panel { padding:24px 20px 28px; background: radial-gradient(circle at top right, rgba(255,20,147,0.05), transparent 30%); }
+  .panel-label { color:rgba(255,255,255,0.3); font-size:11px; font-weight:500; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:14px; }
+  .filter-row { display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap; }
+  .filter-pill { font-size:11px; padding:4px 11px; border-radius:20px; border:0.5px solid rgba(255,255,255,0.1); background:transparent; color:rgba(255,255,255,0.35); cursor:pointer; font-family:inherit; }
+  .filter-pill-active { background:rgba(255,20,147,0.1); border-color:rgba(255,20,147,0.3); color:#ff1493; }
+  .action-group { margin-bottom:18px; }
+  .group-label { color:#fff; font-size:13px; font-weight:600; margin-bottom:8px; }
+  .action-row { display:flex; align-items:flex-start; gap:9px; margin-bottom:9px; }
+  .action-toggle { width:15px; height:15px; border-radius:50%; border:1.5px solid rgba(255,255,255,0.18); background:transparent; flex-shrink:0; margin-top:2px; }
+  .action-toggle-done { background:#1d9e75; border-color:#1d9e75; }
+  .action-text { font-size:12px; color:rgba(255,255,255,0.6); line-height:1.5; }
+  .action-meta { display:flex; align-items:center; gap:8px; margin-top:4px; }
+  .action-status { display:inline-flex; align-items:center; border-radius:999px; padding:2px 7px; font-size:10px; font-weight:700; letter-spacing:0.03em; text-transform:uppercase; }
+  .status-open { background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.48); }
+  .status-in-progress { background:rgba(234,179,8,0.14); color:#f6b548; }
+  .status-done { background:rgba(29,158,117,0.16); color:#65d6ad; }
 
-  /* ── Notes box ── */
-  .notes {
-    margin: 28px 24px 0;
-    padding: 14px 18px;
-    background: rgba(255,255,255,0.03);
-    border: 0.5px solid rgba(255,255,255,0.09);
-    border-radius: 10px;
-    font-size: 12px;
-    color: rgba(255,255,255,0.5);
-    line-height: 1.7;
-  }
-  .notes strong { color: rgba(255,255,255,0.75); font-weight: 500; }
-  .notes ul { padding-left: 16px; margin-top: 6px; }
-  .notes li { margin-bottom: 3px; }
+  /* Notes */
+  .notes { margin:28px 24px 0; padding:14px 18px; background:rgba(255,255,255,0.03); border:0.5px solid rgba(255,255,255,0.09); border-radius:10px; font-size:12px; color:rgba(255,255,255,0.5); line-height:1.7; }
+  .notes strong { color:rgba(255,255,255,0.75); font-weight:500; }
+  .notes ul { padding-left:16px; margin-top:6px; }
+  .notes li { margin-bottom:3px; }
+  .notes code { background:rgba(255,255,255,0.08); border-radius:3px; padding:1px 5px; font-size:11px; color:#ff69b4; }
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <header class="header">
   <div class="header-left">
-    <div class="logo">
-      <div class="logo-dot"></div>
-      Polite Rebels
-    </div>
+    <div class="logo"><div class="logo-dot"></div> Polite Rebels</div>
   </div>
   <div class="header-right">
     <div class="view-toggle">
-      <button class="view-btn">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="1" y="1" width="5" height="5" rx="1"/><rect x="8" y="1" width="5" height="5" rx="1"/><rect x="1" y="8" width="5" height="5" rx="1"/><rect x="8" y="8" width="5" height="5" rx="1"/></svg>
-      </button>
-      <button class="view-btn view-btn-active">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><line x1="1" y1="4" x2="13" y2="4"/><line x1="1" y1="7" x2="13" y2="7"/><line x1="1" y1="10" x2="13" y2="10"/></svg>
-      </button>
+      <button class="view-btn"><svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="1" y="1" width="5" height="5" rx="1"/><rect x="8" y="1" width="5" height="5" rx="1"/><rect x="1" y="8" width="5" height="5" rx="1"/><rect x="8" y="8" width="5" height="5" rx="1"/></svg></button>
+      <button class="view-btn view-btn-active"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><line x1="1" y1="4" x2="13" y2="4"/><line x1="1" y1="7" x2="13" y2="7"/><line x1="1" y1="10" x2="13" y2="10"/></svg></button>
     </div>
     <button class="settings-btn">⚙ Settings</button>
     <div class="avatar">C</div>
   </div>
 </header>
 
-<!-- BODY -->
 <div class="body">
-
-  <!-- SONGS PANEL -->
   <div class="songs-panel">
     <div class="songs-controls">
       <div class="stage-tabs">
         <button class="stage-tab stage-tab-active">All songs <span style="opacity:0.6;font-size:0.65rem;">5</span></button>
         <button class="stage-tab">Needs attention <span style="opacity:0.6;font-size:0.65rem;">2</span></button>
         <button class="stage-tab">Assigned to me <span style="opacity:0.6;font-size:0.65rem;">2</span></button>
-        <button class="stage-tab">Mixing <span style="opacity:0.6;font-size:0.65rem;">1</span></button>
-        <button class="stage-tab">Mastering <span style="opacity:0.6;font-size:0.65rem;">1</span></button>
+        <button class="stage-tab">Mixing</button>
+        <button class="stage-tab">Mastering</button>
       </div>
       <div class="panel-header">
         <select class="sort-select"><option>Recent activity</option></select>
-        <button class="new-btn">
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="1.5"><line x1="5" y1="1" x2="5" y2="9"/><line x1="1" y1="5" x2="9" y2="5"/></svg>
-          New song
-        </button>
+        <button class="new-btn"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="1.5"><line x1="5" y1="1" x2="5" y2="9"/><line x1="1" y1="5" x2="9" y2="5"/></svg> New song</button>
       </div>
     </div>
 
-    <!-- LIST -->
     <div class="songs-grid-list">
 
-      <!-- ROW 1 — Default -->
-      <div class="card" style="position:relative;">
+      <!-- ROW 1: default -->
+      <div class="card" id="card0">
         <div class="card-row">
-          <div class="card-thumb" style="background: linear-gradient(135deg,#4c1d95,#7c3aed);">
-            <button class="play-btn">
-              <svg width="8" height="10" viewBox="0 0 8 10" fill="white"><path d="M0 0l8 5-8 5z"/></svg>
-            </button>
+          <div class="card-thumb" style="background:linear-gradient(135deg,#4c1d95,#7c3aed);">
+            <div class="play-btn"><svg width="8" height="10" viewBox="0 0 8 10" fill="white"><path d="M0 0l8 5-8 5z"/></svg></div>
           </div>
           <div class="card-main">
             <div class="card-title">Rejuvenation</div>
-            <div class="card-pills">
-              <span class="pill pill-mixing">Mixing</span>
-              <span class="pill pill-actions"><span class="pill-dot"></span>2 actions</span>
+            <div class="card-meta">
+              <span>Mixing</span><span class="card-meta-sep">·</span><span>v2</span><span class="card-meta-sep">·</span><span>Just Us</span>
+              <span class="card-meta-sep">·</span><span class="meta-pill"><span class="meta-pill-dot"></span>2 actions</span>
             </div>
-            <div class="card-meta">v2 · Just Us · 11 comments · 31 Mar</div>
           </div>
         </div>
         <div class="card-actions">
-          <button class="icon-btn" title="Info">
-            <svg viewBox="0 0 11 11"><circle cx="5.5" cy="5.5" r="4.5"/><line x1="5.5" y1="5" x2="5.5" y2="8.5"/><circle cx="5.5" cy="3.2" r="0.5" fill="currentColor" stroke="none"/></svg>
-          </button>
-          <button class="icon-btn" title="Rename">
-            <svg viewBox="0 0 11 11"><path d="M7.5 1.5l2 2-6 6H1.5v-2l6-6z" stroke-linejoin="round"/></svg>
-          </button>
-          <button class="icon-btn" title="Cover art">
-            <svg viewBox="0 0 11 11"><rect x="1" y="2" width="9" height="7" rx="1"/><circle cx="3.5" cy="4.5" r="1" fill="currentColor" stroke="none"/><path d="M1 8l3-3 2 2 2-2 2 3" stroke-linejoin="round"/></svg>
-          </button>
-          <button class="icon-btn" title="Delete">
-            <svg viewBox="0 0 11 11"><path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
+          <button class="icon-btn icon-btn-info" onclick="toggleExpand('card0')" title="Info"><svg viewBox="0 0 11 11"><circle cx="5.5" cy="5.5" r="4.5"/><line x1="5.5" y1="5" x2="5.5" y2="8"/><circle cx="5.5" cy="3.2" r="0.6" fill="currentColor" stroke="none"/></svg></button>
+          <button class="icon-btn" title="Rename"><svg viewBox="0 0 11 11"><path d="M7.5 1.5l2 2-6 6H1.5v-2l6-6z" stroke-linejoin="round"/></svg></button>
+          <button class="icon-btn" title="Cover art"><svg viewBox="0 0 11 11"><rect x="1" y="2" width="9" height="7" rx="1"/><circle cx="3.5" cy="4.5" r="1" fill="currentColor" stroke="none"/><path d="M1 8l3-3 2 2 2-2 2 3" stroke-linejoin="round"/></svg></button>
+          <button class="icon-btn" title="Delete"><svg viewBox="0 0 11 11"><path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         </div>
-      </div>
-
-      <!-- ROW 2 — Needs attention, EXPANDED -->
-      <div class="card card-attention" style="position:relative;">
-        <div class="card-row">
-          <div class="card-thumb" style="background: linear-gradient(135deg,#7c2d12,#c2410c);">
-            <button class="play-btn">
-              <svg width="8" height="10" viewBox="0 0 8 10" fill="white"><path d="M0 0l8 5-8 5z"/></svg>
-            </button>
-          </div>
-          <div class="card-main">
-            <div class="card-title">Can't Stop Letting Go</div>
-            <div class="card-pills">
-              <span class="pill pill-mastering">Mastering</span>
-              <span class="pill pill-actions"><span class="pill-dot"></span>1 assigned to me</span>
-            </div>
-            <div class="card-meta">v6 · Just Us · 7 comments · 17 Apr</div>
-          </div>
-        </div>
-        <div class="card-actions">
-          <button class="icon-btn" style="border-color:rgba(255,20,147,0.4);color:#ff69b4;" title="Info (active)">
-            <svg viewBox="0 0 11 11"><circle cx="5.5" cy="5.5" r="4.5"/><line x1="5.5" y1="5" x2="5.5" y2="8.5"/><circle cx="5.5" cy="3.2" r="0.5" fill="currentColor" stroke="none"/></svg>
-          </button>
-          <button class="icon-btn" title="Rename">
-            <svg viewBox="0 0 11 11"><path d="M7.5 1.5l2 2-6 6H1.5v-2l6-6z" stroke-linejoin="round"/></svg>
-          </button>
-          <button class="icon-btn" title="Cover art">
-            <svg viewBox="0 0 11 11"><rect x="1" y="2" width="9" height="7" rx="1"/><circle cx="3.5" cy="4.5" r="1" fill="currentColor" stroke="none"/><path d="M1 8l3-3 2 2 2-2 2 3" stroke-linejoin="round"/></svg>
-          </button>
-          <button class="icon-btn" title="Delete">
-            <svg viewBox="0 0 11 11"><path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-        </div>
-        <!-- EXPANDED SECTION — pushes rows below downward, icons stay put -->
         <div class="card-expand">
           <div class="expand-grid">
-            <div class="expand-item">
-              <span class="expand-label">Latest version</span>
-              <span class="expand-value">Just Us</span>
-            </div>
-            <div class="expand-item">
-              <span class="expand-label">Last activity</span>
-              <span class="expand-value">17 Apr, 8:47</span>
-            </div>
-            <div class="expand-item">
-              <span class="expand-label">Comments</span>
-              <span class="expand-value">7</span>
-            </div>
-            <div class="expand-item">
-              <span class="expand-label">Open work</span>
-              <span class="expand-value">2 actions</span>
-            </div>
+            <div class="expand-item"><span class="expand-label">Latest version</span><span class="expand-value">Just Us</span></div>
+            <div class="expand-item"><span class="expand-label">Last activity</span><span class="expand-value">31 Mar, 22:05</span></div>
+            <div class="expand-item"><span class="expand-label">Comments</span><span class="expand-value">11</span></div>
+            <div class="expand-item"><span class="expand-label">Open work</span><span class="expand-value">2 actions</span></div>
           </div>
           <div class="expand-assign-row">
             <span class="assign-pill assign-pill-me">1 assigned to me</span>
             <span class="assign-pill">Awaiting them</span>
-            <span class="assign-pill" style="color:rgba(255,255,255,0.4);font-size:10px;border:none;background:none;padding-left:0;">Stage: Mastering</span>
+            <span style="font-size:10px;color:rgba(255,255,255,0.35);align-self:center;">Stage: Mixing</span>
+          </div>
+          <div class="expand-activity">Coris: "love this bit" — 31 Mar, 22:05</div>
+        </div>
+      </div>
+
+      <!-- ROW 2: attention + pre-expanded -->
+      <div class="card card-attention card-expanded" id="card1">
+        <div class="card-row">
+          <div class="card-thumb" style="background:linear-gradient(135deg,#7c2d12,#c2410c);">
+            <div class="play-btn"><svg width="8" height="10" viewBox="0 0 8 10" fill="white"><path d="M0 0l8 5-8 5z"/></svg></div>
+          </div>
+          <div class="card-main">
+            <div class="card-title">Can't Stop Letting Go</div>
+            <div class="card-meta">
+              <span>Mastering</span><span class="card-meta-sep">·</span><span>v6</span><span class="card-meta-sep">·</span><span>Just Us</span>
+              <span class="card-meta-sep">·</span><span class="meta-pill"><span class="meta-pill-dot"></span>1 assigned to me</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-actions">
+          <button class="icon-btn icon-btn-info" onclick="toggleExpand('card1')" title="Info" style="border-color:rgba(255,20,147,0.45);color:#ff69b4;"><svg viewBox="0 0 11 11"><circle cx="5.5" cy="5.5" r="4.5"/><line x1="5.5" y1="5" x2="5.5" y2="8"/><circle cx="5.5" cy="3.2" r="0.6" fill="currentColor" stroke="none"/></svg></button>
+          <button class="icon-btn" title="Rename"><svg viewBox="0 0 11 11"><path d="M7.5 1.5l2 2-6 6H1.5v-2l6-6z" stroke-linejoin="round"/></svg></button>
+          <button class="icon-btn" title="Cover art"><svg viewBox="0 0 11 11"><rect x="1" y="2" width="9" height="7" rx="1"/><circle cx="3.5" cy="4.5" r="1" fill="currentColor" stroke="none"/><path d="M1 8l3-3 2 2 2-2 2 3" stroke-linejoin="round"/></svg></button>
+          <button class="icon-btn" title="Delete"><svg viewBox="0 0 11 11"><path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
+        <div class="card-expand">
+          <div class="expand-grid">
+            <div class="expand-item"><span class="expand-label">Latest version</span><span class="expand-value">Just Us</span></div>
+            <div class="expand-item"><span class="expand-label">Last activity</span><span class="expand-value">17 Apr, 8:47</span></div>
+            <div class="expand-item"><span class="expand-label">Comments</span><span class="expand-value">7</span></div>
+            <div class="expand-item"><span class="expand-label">Open work</span><span class="expand-value">2 actions</span></div>
+          </div>
+          <div class="expand-assign-row">
+            <span class="assign-pill assign-pill-me">1 assigned to me</span>
+            <span class="assign-pill">Awaiting them</span>
+            <span style="font-size:10px;color:rgba(255,255,255,0.35);align-self:center;">Stage: Mastering</span>
           </div>
           <div class="expand-activity">Coris: "this is a new message" — 17 Apr, 8:47</div>
         </div>
       </div>
 
-      <!-- ROW 3 — Default -->
-      <div class="card" style="position:relative;">
+      <!-- ROW 3: default -->
+      <div class="card" id="card2">
         <div class="card-row">
-          <div class="card-thumb" style="background: linear-gradient(135deg,#064e3b,#059669);">
-            <button class="play-btn">
-              <svg width="8" height="10" viewBox="0 0 8 10" fill="white"><path d="M0 0l8 5-8 5z"/></svg>
-            </button>
+          <div class="card-thumb" style="background:linear-gradient(135deg,#064e3b,#059669);">
+            <div class="play-btn"><svg width="8" height="10" viewBox="0 0 8 10" fill="white"><path d="M0 0l8 5-8 5z"/></svg></div>
           </div>
           <div class="card-main">
             <div class="card-title">Fake It</div>
-            <div class="card-pills">
-              <span class="pill pill-finished">Finished</span>
-            </div>
-            <div class="card-meta">v4 · 3 comments · 12 Mar</div>
+            <div class="card-meta"><span>Finished</span><span class="card-meta-sep">·</span><span>v4</span></div>
           </div>
         </div>
         <div class="card-actions">
-          <button class="icon-btn" title="Info">
-            <svg viewBox="0 0 11 11"><circle cx="5.5" cy="5.5" r="4.5"/><line x1="5.5" y1="5" x2="5.5" y2="8.5"/><circle cx="5.5" cy="3.2" r="0.5" fill="currentColor" stroke="none"/></svg>
-          </button>
-          <button class="icon-btn" title="Rename">
-            <svg viewBox="0 0 11 11"><path d="M7.5 1.5l2 2-6 6H1.5v-2l6-6z" stroke-linejoin="round"/></svg>
-          </button>
-          <button class="icon-btn" title="Cover art">
-            <svg viewBox="0 0 11 11"><rect x="1" y="2" width="9" height="7" rx="1"/><circle cx="3.5" cy="4.5" r="1" fill="currentColor" stroke="none"/><path d="M1 8l3-3 2 2 2-2 2 3" stroke-linejoin="round"/></svg>
-          </button>
-          <button class="icon-btn" title="Delete">
-            <svg viewBox="0 0 11 11"><path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
+          <button class="icon-btn icon-btn-info" onclick="toggleExpand('card2')" title="Info"><svg viewBox="0 0 11 11"><circle cx="5.5" cy="5.5" r="4.5"/><line x1="5.5" y1="5" x2="5.5" y2="8"/><circle cx="5.5" cy="3.2" r="0.6" fill="currentColor" stroke="none"/></svg></button>
+          <button class="icon-btn" title="Rename"><svg viewBox="0 0 11 11"><path d="M7.5 1.5l2 2-6 6H1.5v-2l6-6z" stroke-linejoin="round"/></svg></button>
+          <button class="icon-btn" title="Cover art"><svg viewBox="0 0 11 11"><rect x="1" y="2" width="9" height="7" rx="1"/><circle cx="3.5" cy="4.5" r="1" fill="currentColor" stroke="none"/><path d="M1 8l3-3 2 2 2-2 2 3" stroke-linejoin="round"/></svg></button>
+          <button class="icon-btn" title="Delete"><svg viewBox="0 0 11 11"><path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
+        <div class="card-expand">
+          <div class="expand-grid">
+            <div class="expand-item"><span class="expand-label">Latest version</span><span class="expand-value">v4</span></div>
+            <div class="expand-item"><span class="expand-label">Last activity</span><span class="expand-value">12 Mar</span></div>
+            <div class="expand-item"><span class="expand-label">Comments</span><span class="expand-value">3</span></div>
+            <div class="expand-item"><span class="expand-label">Open work</span><span class="expand-value">None</span></div>
+          </div>
+          <div class="expand-activity">Coris: "sounds great" — 12 Mar</div>
         </div>
       </div>
 
-    </div><!-- end list -->
-
-    <!-- Notes -->
-    <div class="notes">
-      <strong>Desktop list view — design notes</strong>
-      <ul>
-        <li>Icons are <strong>position: absolute, top: 12px</strong> — they never move when the row expands</li>
-        <li>Expanded content uses <strong>card-expand</strong> as a sibling to card-row, not inside it — so it pushes rows below downward</li>
-        <li>Attention state: <strong>left-edge pink bar via box-shadow</strong> (-3px 0 0 0 #ff1493) — no layout impact</li>
-        <li>Play button is always visible on list rows, centred on thumbnail</li>
-        <li>ℹ icon gets a pink tint border when the row has an attention flag</li>
-        <li>Expanded grid shows 4 columns on desktop (version, last activity, comments, open work)</li>
-      </ul>
     </div>
 
-  </div><!-- end songs panel -->
+    <div class="notes">
+      <strong>Desktop list — key implementation rules</strong>
+      <ul>
+        <li>Icons: <code>position:absolute; top:12px; right:14px</code> — never inside row flow, never move</li>
+        <li>Expand: <code>.card-expand</code> is a sibling to <code>.card-row</code>, hidden via <code>display:none</code></li>
+        <li>Toggle: JS adds/removes <code>.card-expanded</code> on <code>.card</code> → CSS shows <code>.card-expand</code></li>
+        <li>In React: <code>useState&lt;string|null&gt;</code> for <code>expandedCardId</code>, conditional class on card div</li>
+        <li>Attention bar: <code>box-shadow:-3px 0 0 0 #ff1493</code> on <code>.card-attention</code></li>
+        <li>Meta line: Stage · version · version label · ● pill (pill omitted if no actions)</li>
+        <li>Expand left padding (<code>86px</code>) aligns with card-main text, not thumbnail</li>
+      </ul>
+    </div>
+  </div>
 
-  <!-- ACTIONS PANEL -->
+  <!-- Actions panel -->
   <div class="actions-panel">
     <div class="panel-label">Actions</div>
     <div class="filter-row">
@@ -563,49 +312,34 @@
       <div class="group-label">Can't Stop Letting Go</div>
       <div class="action-row">
         <div class="action-toggle action-toggle-done"></div>
-        <div>
-          <div class="action-text">testing</div>
-          <div class="action-meta">
-            <span class="action-status status-done">Done</span>
-            <span style="font-size:10px;color:rgba(255,255,255,0.3);">Assigned to Coris</span>
-          </div>
-        </div>
+        <div><div class="action-text">testing</div><div class="action-meta"><span class="action-status status-done">Done</span><span style="font-size:10px;color:rgba(255,255,255,0.3);">Assigned to Coris</span></div></div>
       </div>
       <div class="action-row">
         <div class="action-toggle" style="border-color:rgba(255,20,147,0.5);background:rgba(255,20,147,0.1);"></div>
-        <div>
-          <div class="action-text">synth jam comment</div>
-          <div class="action-meta">
-            <span class="action-status status-in-progress">In progress</span>
-          </div>
-        </div>
+        <div><div class="action-text">synth jam comment</div><div class="action-meta"><span class="action-status status-in-progress">In progress</span></div></div>
       </div>
       <div class="action-row">
         <div class="action-toggle"></div>
-        <div>
-          <div class="action-text">testing can't stop</div>
-          <div class="action-meta">
-            <span class="action-status status-open">Open</span>
-          </div>
-        </div>
+        <div><div class="action-text">testing can't stop</div><div class="action-meta"><span class="action-status status-open">Open</span></div></div>
       </div>
     </div>
     <div class="action-group">
       <div class="group-label">Rejuvenation</div>
       <div class="action-row">
         <div class="action-toggle action-toggle-done"></div>
-        <div>
-          <div class="action-text">love this bit</div>
-          <div class="action-meta">
-            <span class="action-status status-done">Done</span>
-            <span style="font-size:10px;color:rgba(255,255,255,0.3);">Assigned to Coris</span>
-          </div>
-        </div>
+        <div><div class="action-text">love this bit</div><div class="action-meta"><span class="action-status status-done">Done</span></div></div>
       </div>
     </div>
   </div>
+</div>
 
-</div><!-- end body -->
-
+<script>
+  // Toggle expand — adds/removes .card-expanded on the card.
+  // In React this would be: setExpandedId(id === expandedId ? null : id)
+  function toggleExpand(id) {
+    const card = document.getElementById(id);
+    card.classList.toggle('card-expanded');
+  }
+</script>
 </body>
 </html>
