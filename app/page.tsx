@@ -6,6 +6,41 @@ import { setAuth } from '@/lib/auth';
 import { createClient } from '@/lib/supabase';
 import styles from './page.module.css';
 
+function normalizeRedirectTarget(value: string | null) {
+  if (!value) return '/dashboard';
+  if (!value.startsWith('/') || value.startsWith('//')) return '/dashboard';
+  return value;
+}
+
+async function resolvePostLoginRedirect(redirectTo: string) {
+  const normalized = normalizeRedirectTarget(redirectTo);
+
+  if (normalized === '/' || normalized === '/dashboard' || normalized === '/settings' || normalized === '/identify') {
+    return normalized === '/' ? '/dashboard' : normalized;
+  }
+
+  const versionMatch = normalized.match(/^\/songs\/([^/]+)\/versions\/([^/?#]+)/);
+  if (versionMatch) {
+    const [, songId, versionId] = versionMatch;
+
+    try {
+      const response = await fetch(`/api/versions/${versionId}`, { cache: 'no-store' });
+      if (response.ok) return normalized;
+    } catch (error) {
+      console.error('Post-login version redirect validation error:', error);
+    }
+
+    return `/songs/${songId}`;
+  }
+
+  const songMatch = normalized.match(/^\/songs\/([^/?#]+)/);
+  if (songMatch) {
+    return normalized;
+  }
+
+  return '/dashboard';
+}
+
 function LoginContent() {
   const searchParams = useSearchParams();
   const [supabase] = useState(() => createClient());
@@ -20,14 +55,15 @@ function LoginContent() {
   useEffect(() => {
     let mounted = true;
 
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       if (!mounted) return;
       setGoogleSessionActive(Boolean(data.session));
 
-      const redirectTo = searchParams.get('redirectTo') || '/dashboard';
       const arrivedFromGoogleFlow = searchParams.get('google') === 'success';
 
       if (data.session && arrivedFromGoogleFlow) {
+        const redirectTo = await resolvePostLoginRedirect(searchParams.get('redirectTo'));
+        if (!mounted) return;
         window.location.assign(redirectTo);
       }
     });

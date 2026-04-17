@@ -87,6 +87,29 @@ WaveSurfer and audio-engine logic-only port for the version player page.
 
 ---
 
+## 2026-04-17 — Google auth redirect hardening
+
+### What we were trying to achieve
+
+Stop users landing on the app 404 page after returning from Google sign-in when the saved post-login destination is stale or invalid.
+
+### Feature / change being made
+
+Auth return-path resilience for the Google login flow.
+
+### Files changed
+
+- [app/page.tsx](/Users/impero/song-review-app/app/page.tsx)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+
+### Notes
+
+- Added validation and normalization for the post-login `redirectTo` target on the login page.
+- If a stale version route is detected, the app now falls back to the parent song entry route instead of sending the user to a 404.
+- Unknown or malformed redirect targets now fall back to `/dashboard`.
+
+---
+
 ## Template
 
 Copy this block for future entries:
