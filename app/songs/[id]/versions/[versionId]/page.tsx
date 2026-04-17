@@ -307,6 +307,77 @@ function validateAudioFile(file: File) {
   return null;
 }
 
+// Pre-compute frequency + time-domain data from an AudioBuffer using OfflineAudioContext.
+// Returns frames at ~24fps that can be played back in sync with currentTime.
+// No live AudioContext involved — safe for iOS background audio.
+async function precomputeFrequencyFrames(audioBuffer: AudioBuffer) {
+  const fps = 24;
+  const totalFrames = Math.ceil(audioBuffer.duration * fps);
+  const fftSize = 2048;
+  const freqBins = fftSize / 2;
+
+  const freqFrames: Uint8Array[] = [];
+  const timeFrames: Uint8Array[] = [];
+  const chunkSize = 60;
+
+  for (let chunkStart = 0; chunkStart < totalFrames; chunkStart += chunkSize) {
+    const chunkEnd = Math.min(chunkStart + chunkSize, totalFrames);
+    const chunkDuration = (chunkEnd - chunkStart) / fps;
+    const startTime = chunkStart / fps;
+    const sampleRate = audioBuffer.sampleRate;
+    const frameSamples = Math.ceil(sampleRate / fps);
+    const chunkSamples = (chunkEnd - chunkStart) * frameSamples;
+
+    try {
+      const offline = new OfflineAudioContext(
+        audioBuffer.numberOfChannels,
+        chunkSamples,
+        sampleRate
+      );
+
+      const source = offline.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(offline.destination);
+      source.start(0, startTime, chunkDuration);
+
+      const rendered = await offline.startRendering();
+      const channelData = rendered.getChannelData(0);
+
+      for (let f = chunkStart; f < chunkEnd; f++) {
+        const frameOffset = (f - chunkStart) * frameSamples;
+        const slice = channelData.slice(frameOffset, frameOffset + fftSize);
+
+        const timeFrame = new Uint8Array(fftSize);
+        for (let i = 0; i < fftSize; i++) {
+          timeFrame[i] = Math.round(((slice[i] ?? 0) + 1) * 127.5);
+        }
+        timeFrames.push(timeFrame);
+
+        const freqFrame = new Uint8Array(freqBins);
+        const bucketSize = Math.floor(fftSize / freqBins);
+        for (let b = 0; b < freqBins; b++) {
+          let energy = 0;
+          for (let s = 0; s < bucketSize; s++) {
+            const sample = slice[b * bucketSize + s] ?? 0;
+            energy += sample * sample;
+          }
+          freqFrame[b] = Math.min(255, Math.round(Math.sqrt(energy / bucketSize) * 600));
+        }
+        freqFrames.push(freqFrame);
+      }
+    } catch {
+      for (let f = chunkStart; f < chunkEnd; f++) {
+        freqFrames.push(new Uint8Array(freqBins));
+        timeFrames.push(new Uint8Array(fftSize).fill(128));
+      }
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 0));
+  }
+
+  return { freqFrames, timeFrames, fps };
+}
+
 export default function VersionPage() {
   const params = useParams();
   const router = useRouter();
@@ -323,6 +394,9 @@ export default function VersionPage() {
   const threadsPanelRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const analyserAudioRef = useRef<HTMLAudioElement | null>(null);
+  const audioLoadedRef = useRef(false);
+  const precomputedFreqRef = useRef<{ freqFrames: Uint8Array[]; timeFrames: Uint8Array[]; fps: number } | null>(null);
   const waveLoadIdRef = useRef(0);
   const waveRetryTimerRef = useRef<number | null>(null);
   const waveLoadTimeoutRef = useRef<number | null>(null);
@@ -332,6 +406,8 @@ export default function VersionPage() {
   const mobileReactiveCanvasRef = useRef<HTMLCanvasElement>(null);
   const mobileReactiveStripRef = useRef<HTMLCanvasElement>(null);
   const hoverXRef = useRef<number>(-1);
+  const songTitleRef = useRef<string>('');
+  const songImageRef = useRef<string>('');
   const pendingTimestampRef = useRef<number | null>(null);
   const versionFileInputRef = useRef<HTMLInputElement>(null);
   const reactiveAudioContextRef = useRef<AudioContext | null>(null);
@@ -340,6 +416,7 @@ export default function VersionPage() {
   const reactiveAnimationFrameRef = useRef<number | null>(null);
   const reactiveRefreshTimeoutRef = useRef<number | null>(null);
   const reactivePlayingRef = useRef(false);
+  const startReactiveDrawingRef = useRef<(() => void) | null>(null);
 
   const [identity, setIdentity] = useState('');
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -399,15 +476,6 @@ export default function VersionPage() {
     shadow: darken(DEFAULT_REACTIVE_PRIMARY, 0.42),
   }));
   const [initialLoadNonce, setInitialLoadNonce] = useState(0);
-
-  const shouldUseReactiveAudioGraph = useCallback(() => {
-    if (typeof window === 'undefined') return false;
-
-    const coarsePointer = window.matchMedia?.('(pointer: coarse)').matches ?? false;
-    const touchDevice = navigator.maxTouchPoints > 0;
-
-    return !coarsePointer && !touchDevice && window.innerWidth > 768;
-  }, []);
   const statusToastTimerRef = useRef<number | null>(null);
   const commentAnimationTimerRef = useRef<number | null>(null);
   const dragTaskId = useRef<string | null>(null);
@@ -534,11 +602,14 @@ export default function VersionPage() {
 
   const startReactiveDrawing = useCallback(() => {
     const analyser = reactiveAnalyserRef.current;
+    const precomputed = precomputedFreqRef.current;
 
-    if (!analyser) return;
+    if (!analyser && !precomputed) return;
 
-    const timeData = new Uint8Array(analyser.fftSize);
-    const frequencyData = new Uint8Array(analyser.frequencyBinCount);
+    const fftSize = analyser ? analyser.fftSize : 2048;
+    const freqBins = analyser ? analyser.frequencyBinCount : 1024;
+    const timeData = new Uint8Array(fftSize);
+    const frequencyData = new Uint8Array(freqBins);
 
     const render = () => {
       const loop = (Math.sin(performance.now() / 2400) + 1) / 2;
@@ -547,8 +618,21 @@ export default function VersionPage() {
       const lineColor = mixColor(reactivePalette.primary, reactivePalette.secondary, loop, 0.46);
       const glowColor = mixColor(reactivePalette.primary, reactivePalette.secondary, 1 - loop, 0.36);
 
-      analyser.getByteTimeDomainData(timeData);
-      analyser.getByteFrequencyData(frequencyData);
+      if (analyser) {
+        analyser.getByteTimeDomainData(timeData);
+        analyser.getByteFrequencyData(frequencyData);
+      } else if (precomputed) {
+        const ws = wavesurferRef.current;
+        const now = ws ? ws.getCurrentTime() : 0;
+        const frameIndex = Math.min(
+          Math.floor(now * precomputed.fps),
+          precomputed.freqFrames.length - 1
+        );
+        const freqFrame = precomputed.freqFrames[frameIndex];
+        const timeFrame = precomputed.timeFrames[frameIndex];
+        if (freqFrame) frequencyData.set(freqFrame.slice(0, freqBins));
+        if (timeFrame) timeData.set(timeFrame.slice(0, fftSize));
+      }
       for (const { canvas } of getReactiveCanvasEntries()) {
         const context = canvas.getContext('2d');
         if (!context) continue;
@@ -620,6 +704,8 @@ export default function VersionPage() {
     reactiveAnimationFrameRef.current = requestAnimationFrame(render);
   }, [drawReactiveIdle, getReactiveCanvasEntries, reactivePalette, stopReactiveDrawing]);
 
+  startReactiveDrawingRef.current = startReactiveDrawing;
+
   const ensureReactiveAudioGraph = useCallback(async (audio: HTMLAudioElement | null) => {
     if (!audio) return false;
 
@@ -655,6 +741,7 @@ export default function VersionPage() {
     if (mode === 'manual') {
       waveAutoRetryUsedRef.current = false;
     }
+    audioLoadedRef.current = false;
     setWaveErr(null);
     setIsReady(false);
     setIsRetryingWave(mode === 'auto');
@@ -818,25 +905,25 @@ export default function VersionPage() {
 
   useEffect(() => {
     if (isPlaying) {
-      if (!shouldUseReactiveAudioGraph()) {
-        reactivePlayingRef.current = false;
-        stopReactiveDrawing();
-        drawReactiveIdle();
-        return;
+      const isMobile = typeof navigator !== 'undefined' &&
+        /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        reactivePlayingRef.current = true;
+        startReactiveDrawing();
+      } else {
+        void ensureReactiveAudioGraph(analyserAudioRef.current).then(ready => {
+          if (ready) {
+            reactivePlayingRef.current = true;
+            startReactiveDrawing();
+          }
+        });
       }
-
-      void ensureReactiveAudioGraph(audioRef.current).then(ready => {
-        if (ready) {
-          reactivePlayingRef.current = true;
-          startReactiveDrawing();
-        }
-      });
     } else {
       reactivePlayingRef.current = false;
       stopReactiveDrawing();
       drawReactiveIdle();
     }
-  }, [drawReactiveIdle, ensureReactiveAudioGraph, isPlaying, shouldUseReactiveAudioGraph, startReactiveDrawing, stopReactiveDrawing]);
+  }, [drawReactiveIdle, ensureReactiveAudioGraph, isPlaying, startReactiveDrawing, stopReactiveDrawing]);
 
   useEffect(() => {
     return () => {
@@ -927,6 +1014,8 @@ export default function VersionPage() {
       }
 
       setSong(songPayload.song);
+      songTitleRef.current = songPayload.song.title ?? '';
+      songImageRef.current = songPayload.song.image_url ?? '';
       setVersion(versionPayload.version);
       setVersions(versionsPayload.versions);
 
@@ -1077,6 +1166,13 @@ export default function VersionPage() {
       } catch {}
       audioRef.current = null;
     }
+    if (analyserAudioRef.current) {
+      try {
+        analyserAudioRef.current.pause();
+        analyserAudioRef.current.src = '';
+      } catch {}
+      analyserAudioRef.current = null;
+    }
 
     const WaveSurfer = (await import('wavesurfer.js')).default;
     if (!container.isConnected || loadId !== waveLoadIdRef.current) {
@@ -1084,14 +1180,7 @@ export default function VersionPage() {
       return;
     }
 
-    // Create a native <audio> element and pass it to WaveSurfer.
-    // This bypasses WaveSurfer's internal fetch entirely — which fixes mobile
-    // where signed URLs or CORS can silently block the internal fetch.
-    const audio = new Audio();
-    audio.crossOrigin = 'anonymous';
-    audio.preload = 'metadata';
-    audio.src = url;
-    audioRef.current = audio;
+    precomputedFreqRef.current = null;
     reactiveSourceRef.current = null;
     reactiveAnalyserRef.current = null;
     if (reactiveAudioContextRef.current) {
@@ -1119,10 +1208,6 @@ export default function VersionPage() {
       setWaveErr(message);
     };
 
-    audio.addEventListener('error', () => {
-      handleWaveFailure('Could not load this audio file. Try again.');
-    });
-
     waveLoadTimeoutRef.current = window.setTimeout(() => {
       handleWaveFailure('Waveform took too long to load. Try again.');
     }, 12000);
@@ -1139,8 +1224,11 @@ export default function VersionPage() {
       barRadius: 2,
       interact: true,
       normalize: true,
-      media: audio,
     });
+
+    const audio = ws.getMediaElement() as HTMLAudioElement;
+    audioRef.current = audio;
+    analyserAudioRef.current = audio;
 
     ws.on('ready', (dur: number) => {
       if (loadId !== waveLoadIdRef.current) return;
@@ -1150,11 +1238,47 @@ export default function VersionPage() {
       setIsReady(true);
       setIsRetryingWave(false);
       logVersionInit('wave:ready', { loadId, duration: dur });
+
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        const audioBuffer = ws.getDecodedData();
+        if (audioBuffer) {
+          void precomputeFrequencyFrames(audioBuffer).then(frames => {
+            if (loadId === waveLoadIdRef.current) {
+              precomputedFreqRef.current = frames;
+              if (reactivePlayingRef.current) {
+                startReactiveDrawingRef.current?.();
+              }
+            }
+          });
+        }
+      }
     });
     ws.on('timeupdate', (t: number) => setCurrentTime(t));
     ws.on('seeking', (t: number) => setCurrentTime(t));
-    ws.on('play', () => setIsPlaying(true));
-    ws.on('pause', () => setIsPlaying(false));
+    ws.on('play', () => {
+      setIsPlaying(true);
+      if ('mediaSession' in navigator) {
+        const artwork: MediaImage[] = songImageRef.current
+          ? [{ src: songImageRef.current, sizes: '512x512', type: 'image/jpeg' }]
+          : [];
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: songTitleRef.current || 'Rebel HQ',
+          artist: 'Polite Rebels',
+          album: 'Rebel HQ',
+          artwork,
+        });
+        navigator.mediaSession.setActionHandler('play', () => ws.play());
+        navigator.mediaSession.setActionHandler('pause', () => ws.pause());
+        navigator.mediaSession.playbackState = 'playing';
+      }
+    });
+    ws.on('pause', () => {
+      setIsPlaying(false);
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'paused';
+      }
+    });
     ws.on('finish', () => setIsPlaying(false));
     ws.on('error', (e: Error) => {
       const message = e?.message || String(e);
@@ -1183,14 +1307,9 @@ export default function VersionPage() {
       });
     });
 
-    // Catch aborted/stale loads so teardown races do not surface as runtime errors.
-    void ws.load(audio.src).catch((error: Error) => {
-      const message = error?.message || String(error);
-      if (loadId !== waveLoadIdRef.current || message.toLowerCase().includes('aborted')) return;
-      console.error('WaveSurfer load error:', error);
-      handleWaveFailure(message);
-    });
     wavesurferRef.current = ws;
+    // Don't call ws.load() here — audio is loaded lazily on first play press.
+    // This prevents downloading the MP3 on every page view.
   }, [clearWaveTimers, retryWaveform]);
 
   const stopPlayback = useCallback(() => {
@@ -1232,30 +1351,33 @@ export default function VersionPage() {
   };
 
   useEffect(() => {
-    if (!audioUrl) return;
+    if (!audioUrl || loading) return;
+    waveLoadIdRef.current += 1;
     waveAutoRetryUsedRef.current = false;
+    audioLoadedRef.current = false;
     setIsReady(false);
     setWaveErr(null);
     setIsRetryingWave(false);
     setDuration(0);
+
+    let debounceTimer: ReturnType<typeof setTimeout>;
     let attempts = 0;
+
     const tryInit = () => {
       if (waveformRef.current) {
-        logVersionInit('wave:container-ready', { attempts, hasAudioUrl: true });
         initWaveSurfer(waveformRef.current, audioUrl);
       } else if (attempts++ < 20) {
-        logVersionInit('wave:container-wait', { attempts });
         setTimeout(tryInit, 50);
-      } else {
-        const message = 'Waveform container did not mount in time.';
-        setWaveErr(message);
-        logVersionInit('wave:container-timeout', { attempts, message });
       }
     };
-    tryInit();
+
+    debounceTimer = setTimeout(tryInit, 80);
+
     return () => {
+      clearTimeout(debounceTimer);
       clearWaveTimers();
       waveLoadIdRef.current += 1;
+      audioLoadedRef.current = false;
       stopPlayback();
       if (wavesurferRef.current) {
         try { wavesurferRef.current.destroy(); } catch {}
@@ -1268,6 +1390,14 @@ export default function VersionPage() {
         } catch {}
         audioRef.current = null;
       }
+      if (analyserAudioRef.current) {
+        try {
+          analyserAudioRef.current.pause();
+          analyserAudioRef.current.src = '';
+        } catch {}
+        analyserAudioRef.current = null;
+      }
+      precomputedFreqRef.current = null;
       reactivePlayingRef.current = false;
       stopReactiveDrawing();
       if (reactiveAudioContextRef.current) {
@@ -1277,7 +1407,8 @@ export default function VersionPage() {
       reactiveSourceRef.current = null;
       reactiveAnalyserRef.current = null;
     };
-  }, [audioUrl, waveReloadNonce, clearWaveTimers, initWaveSurfer, stopPlayback, stopReactiveDrawing]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioUrl, waveReloadNonce, loading]);
 
   async function loadTasks() {
     const payload = await fetchJsonWithTimeout<{ tasks: Task[] }>(
@@ -1898,8 +2029,23 @@ export default function VersionPage() {
               <div className={styles.heroControls}>
                 <button
                   className={styles.heroPlayBtn}
-                  onClick={() => wavesurferRef.current?.playPause()}
-                  disabled={!isReady}
+                  onClick={() => {
+                    const ws = wavesurferRef.current;
+                    if (!ws || !audioUrl) return;
+                    if (!audioLoadedRef.current) {
+                      audioLoadedRef.current = true;
+                      void ws.load(audioUrl).catch((error: Error) => {
+                        const message = error?.message || String(error);
+                        if (!message.toLowerCase().includes('aborted')) {
+                          setWaveErr(message || 'Failed to load audio. Please try again.');
+                        }
+                      });
+                      ws.once('ready', () => { void ws.play(); });
+                    } else {
+                      ws.playPause();
+                    }
+                  }}
+                  disabled={audioLoadedRef.current && !isReady}
                 >
                   {isPlaying
                     ? <svg width="20" height="20" viewBox="0 0 20 20" fill="white"><rect x="3" y="2" width="5" height="16" rx="1.5"/><rect x="12" y="2" width="5" height="16" rx="1.5"/></svg>
@@ -1911,7 +2057,7 @@ export default function VersionPage() {
                   <span className={styles.heroTimeSep}> / </span>
                   {formatTimestamp(Math.floor(duration))}
                 </span>
-                {!isReady && audioUrl && !waveErr && (
+                {!isReady && audioUrl && !waveErr && audioLoadedRef.current && (
                   <span className={styles.loadingWave}>
                     {isRetryingWave ? 'Retrying…' : 'Loading…'}
                   </span>
@@ -1966,6 +2112,7 @@ export default function VersionPage() {
                     if (res.ok) {
                       const { imageUrl } = await res.json();
                       setSong(prev => prev ? { ...prev, image_url: imageUrl } : prev);
+                      songImageRef.current = imageUrl;
                     }
                   }}
                 />
@@ -2037,7 +2184,7 @@ export default function VersionPage() {
                     </div>
                   )}
                 </div>
-                {!pendingTimestamp && <p className={styles.waveHint}>click anywhere on the waveform to leave a comment</p>}
+                {!pendingTimestamp && <p className={styles.waveHint}>{audioLoadedRef.current ? 'click anywhere on the waveform to leave a comment' : 'press play to load audio'}</p>}
             </div>
 
           </div>{/* /heroContent */}

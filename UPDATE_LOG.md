@@ -62,6 +62,31 @@ Documentation-only schema clarification for songs, actions, and the workspace/au
 
 ---
 
+## 2026-04-17 — Audio engine fixes ported from main
+
+### What we were trying to achieve
+
+Bring the waveform player’s mobile audio, lock-screen playback, and lazy-load behavior from `main` into `clone-clean` without changing layout or broader app architecture.
+
+### Feature / change being made
+
+WaveSurfer and audio-engine logic-only port for the version player page.
+
+### Files changed
+
+- [app/songs/[id]/versions/[versionId]/page.tsx](/Users/impero/song-review-app/app/songs/[id]/versions/[versionId]/page.tsx)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+
+### Notes
+
+- Added lazy audio loading on first play instead of fetching on page view.
+- Restored mobile-safe audio behavior by avoiding the live reactive audio graph on iOS/mobile playback.
+- Reintroduced `OfflineAudioContext`-based mobile frequency precomputation.
+- Reintroduced Media Session metadata and play/pause handlers for lock-screen integration.
+- Added the waveform init `loading` guard and debounce pattern from `main`.
+
+---
+
 ## Template
 
 Copy this block for future entries:
