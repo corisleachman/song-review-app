@@ -218,6 +218,10 @@
   border-color: rgba(255,255,255,0.18);
   box-shadow: 0 18px 42px rgba(0,0,0,0.32);
 }
+.cardAttention {
+  box-shadow: -3px 0 0 0 #ff1493, 0 10px 24px rgba(0,0,0,0.18);
+  border-color: rgba(255,20,147,0.2);
+}
 .card:hover {
   border-color: rgba(255,20,147,0.35);
   transform: translateY(-2px);
@@ -467,14 +471,38 @@
 }
 
 .cardMetaPrimary {
-  display: block;
-  color: rgba(255,255,255,0.4);
-  font-size: 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: rgba(255,255,255,0.42);
+  font-size: 11px;
   min-width: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
   max-width: calc(100% - 86px);
+}
+.cardMetaSeparator {
+  color: rgba(255,255,255,0.2);
+  flex-shrink: 0;
+}
+.metaPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 1px 7px;
+  border-radius: 20px;
+  background: rgba(255,20,147,0.15);
+  color: #ff69b4;
+  border: 0.5px solid rgba(255,20,147,0.25);
+  flex-shrink: 0;
+}
+.metaPillDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #ff1493;
 }
 .cardStatusControl {
   display: flex;
@@ -583,6 +611,11 @@
 .card:hover .cardActions {
   opacity: 1;
   transform: translateY(-50%);
+}
+.iconBtnInfo {}
+.cardAttention .iconBtnInfo {
+  border-color: rgba(255,20,147,0.45) !important;
+  color: #ff69b4 !important;
 }
 
 .iconBtn {
@@ -951,15 +984,17 @@
 }
 .desktopListCard {
   display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  aspect-ratio: unset !important;
-  height: 70px !important;
-}
-.desktopListCard.cardInfoExpanded {
-  height: auto !important;
-  min-height: 156px !important;
+  flex-direction: column !important;
   align-items: stretch !important;
+  aspect-ratio: unset !important;
+  height: auto !important;
+}
+.desktopListCardRow {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  height: 70px;
+  position: relative;
 }
 .desktopListCard .cardThumb {
   position: relative !important;
@@ -967,7 +1002,7 @@
   height: 70px !important;
   min-width: 70px !important;
   flex-shrink: 0 !important;
-  border-radius: 8px 0 0 8px !important;
+  border-radius: 8px 0 0 0 !important;
   inset: unset !important;
 }
 .desktopListCard .cardBody {
@@ -978,11 +1013,13 @@
   display: block !important;
   flex: 1 !important;
   min-width: 0 !important;
-  padding: 0 178px 0 20px !important;
+  padding: 0 148px 0 16px !important;
   background: none !important;
+  justify-content: center !important;
+  gap: 5px !important;
 }
 .desktopListCard.cardInfoExpanded .cardBody {
-  padding: 14px 178px 14px 20px !important;
+  padding: 0 148px 0 16px !important;
 }
 .desktopListCard .cardTitle {
   font-size: 14px !important;
@@ -990,75 +1027,228 @@
   margin: 0 0 6px !important;
   max-width: none !important;
 }
-.desktopListCard .infoPanel {
-  margin-top: 10px !important;
-  max-width: none !important;
-}
-.desktopListCard .infoGrid {
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-}
 .desktopListCard .cardActions {
   opacity: 1 !important;
   position: absolute !important;
-  right: 20px !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
+  right: 14px !important;
+  top: 12px !important;
+  transform: none !important;
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
-  justify-content: flex-end !important;
   gap: 6px !important;
-  flex-shrink: 0 !important;
 }
-.desktopListCard .activityFeed {
-  margin-top: 6px !important;
-  max-width: none !important;
-}
-.desktopListCard .activityItemSummary {
-  font-size: 11px !important;
-}
-.desktopListCard .activityItemDetail {
-  display: none !important;
-}
-.desktopListCard .cardMetaComments {
-  position: static !important;
-  display: inline-block !important;
-  font-size: 12px !important;
-  color: rgba(255,255,255,0.45) !important;
-  vertical-align: middle !important;
-  margin-left: 16px !important;
-  padding-left: 14px !important;
-  position: relative !important;
-  text-shadow: none !important;
-  min-height: 0 !important;
-  line-height: 1.2 !important;
-  top: 1px !important;
-}
-.desktopListCard .cardMetaComments::before {
-  content: "" !important;
-  position: absolute !important;
-  left: 0 !important;
-  top: 50% !important;
-  width: 1px !important;
-  height: 18px !important;
-  background: rgba(255,255,255,0.42) !important;
-  transform: translateY(-50%) !important;
-}
-
-.desktopListCard .commentCountIcon {
-  display: none !important;
-}
-
-.desktopListCard .commentCountText {
-  display: inline !important;
-}
-
 .desktopListCard .iconBtn {
-  width: 44px !important;
-  height: 44px !important;
+  width: 26px !important;
+  height: 26px !important;
 }
-.desktopListCard .versionBadge { display: none !important; }
-.desktopListCard .commentBadge { display: none !important; }
+.desktopListCard .versionBadge,
+.desktopListCard .commentBadge,
+.desktopListCard .activityBadge,
+.desktopListCard .cardMetaComments,
+.desktopListCard .infoPanel {
+  display: none !important;
+}
+.cardExpandPanel {
+  display: none;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding: 14px 16px 14px 86px;
+  flex-direction: column;
+  gap: 10px;
+}
+.cardExpandVisible {
+  display: flex;
+}
+.expandGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.expandItem {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.expandLabel {
+  font-size: 10px;
+  color: rgba(255,255,255,0.35);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.expandValue {
+  font-size: 12px;
+  color: rgba(255,255,255,0.88);
+  font-weight: 500;
+}
+.expandAssignRow {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.expandAssignPill {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.65);
+  border: 0.5px solid rgba(255,255,255,0.13);
+  font-family: inherit;
+  cursor: pointer;
+}
+.expandAssignPillMe {
+  background: rgba(255,20,147,0.15);
+  color: #ff69b4;
+  border-color: rgba(255,20,147,0.28);
+}
+.expandActivity {
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding-top: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bsOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0);
+  transition: background 0.25s;
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+  pointer-events: none;
+}
+.bsOverlayVisible {
+  background: rgba(0,0,0,0.55);
+  pointer-events: all;
+}
+.bottomSheet {
+  width: 100%;
+  background: #1e1330;
+  border-radius: 20px 20px 0 0;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  overflow: hidden;
+  transform: translateY(100%);
+  transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.bsOverlayVisible .bottomSheet {
+  transform: translateY(0);
+}
+.bsHandle {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0 6px;
+  cursor: pointer;
+}
+.bsHandleBar {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.2);
+}
+.bsHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.bsArt {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bsArtPlaceholder {
+  width: 100%;
+  height: 100%;
+}
+.bsSongTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+}
+.bsSub {
+  font-size: 12px;
+  color: rgba(255,255,255,0.42);
+  margin: 2px 0 0;
+}
+.bsBody {
+  padding: 14px 16px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.bsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.bsItem {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.bsItemLabel {
+  font-size: 10px;
+  color: rgba(255,255,255,0.35);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.bsItemValue {
+  font-size: 13px;
+  color: rgba(255,255,255,0.9);
+  font-weight: 500;
+}
+.bsAssignRow {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.bsPill {
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.7);
+  border: 0.5px solid rgba(255,255,255,0.13);
+}
+.bsPillMe {
+  background: rgba(255,20,147,0.18);
+  color: #ff69b4;
+  border-color: rgba(255,20,147,0.28);
+}
+.bsActivitySnippet {
+  font-size: 12px;
+  color: rgba(255,255,255,0.38);
+  border-top: 1px solid rgba(255,255,255,0.07);
+  padding-top: 12px;
+}
+.bsCta {
+  margin: 4px 16px 16px;
+  background: #ff1493;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 12px;
+  width: calc(100% - 32px);
+  cursor: pointer;
+  font-family: inherit;
+  display: block;
+}
 
 /* Mobile */
 @media (max-width: 768px) {
