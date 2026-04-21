@@ -3,384 +3,231 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Upgrade Success — Polite Rebels (Wide)</title>
+<title>Upgrade Success — Wide</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
-
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
-    --pink:    #ff1493;
-    --pink-lo: rgba(255,20,147,0.12);
-    --pink-md: rgba(255,20,147,0.28);
-    --cyan:    #00d4ff;
-    --purple:  #a855f7;
-    --bg:      #0d0914;
-    --surface: #16101f;
-    --surface2:#1e1530;
-    --border:  rgba(255,255,255,0.08);
-    --text:    #fff;
-    --text-2:  rgba(255,255,255,0.55);
-    --text-3:  rgba(255,255,255,0.28);
+    --pink: #ff1493; --pink-lo: rgba(255,20,147,0.12); --pink-md: rgba(255,20,147,0.28);
+    --cyan: #00d4ff; --purple: #a855f7; --bg: #0d0914; --surface: #16101f;
+    --border: rgba(255,255,255,0.08); --text: #fff;
+    --text-2: rgba(255,255,255,0.55); --text-3: rgba(255,255,255,0.28);
     --pro-grad: linear-gradient(135deg, #ff1493 0%, #a855f7 50%, #00d4ff 100%);
-    --font-display: 'Syne', sans-serif;
-    --font-body:    'DM Sans', sans-serif;
+    --font-display: 'Syne', sans-serif; --font-body: 'DM Sans', sans-serif;
   }
-
   body {
-    background: var(--bg);
-    font-family: var(--font-body);
-    color: var(--text);
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    padding: 16px;
+    background: var(--bg); font-family: var(--font-body); color: var(--text);
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    overflow: hidden; padding: 20px;
   }
-
-  /* App backdrop */
   .app-backdrop {
-    position: fixed; inset: 0;
-    background: var(--bg);
-    filter: blur(2px) brightness(0.4);
-    pointer-events: none; z-index: 0;
+    position: fixed; inset: 0; background: var(--bg);
+    filter: blur(2px) brightness(0.4); pointer-events: none; z-index: 0;
     background-image:
-      radial-gradient(ellipse 60% 40% at 20% 50%, rgba(168,85,247,0.14) 0%, transparent 70%),
-      radial-gradient(ellipse 50% 60% at 80% 30%, rgba(255,20,147,0.09) 0%, transparent 70%);
+      radial-gradient(ellipse 60% 40% at 20% 50%, rgba(168,85,247,0.12) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 60% at 80% 30%, rgba(255,20,147,0.08) 0%, transparent 70%);
   }
-
-  /* Overlay */
   .overlay {
-    position: fixed; inset: 0;
-    background: rgba(5,2,12,0.7);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    z-index: 10;
-    display: flex; align-items: center; justify-content: center;
-    padding: 20px;
+    position: fixed; inset: 0; background: rgba(5,2,12,0.72);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    z-index: 10; display: flex; align-items: center; justify-content: center; padding: 24px;
   }
-
-  /* ── MODAL — wide landscape layout ── */
   .modal {
-    position: relative;
-    width: 100%;
-    max-width: 720px;   /* wider */
-    background: var(--surface);
-    border-radius: 20px;
-    border: 1px solid rgba(255,255,255,0.09);
-    overflow: hidden;
-    box-shadow:
-      0 0 0 1px rgba(255,20,147,0.16),
-      0 32px 80px rgba(0,0,0,0.65),
-      0 0 70px rgba(255,20,147,0.06);
+    position: relative; width: 100%; max-width: 720px;
+    background: var(--surface); border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.1); overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(255,20,147,0.18), 0 32px 80px rgba(0,0,0,0.6), 0 0 60px rgba(255,20,147,0.06);
     animation: modalIn 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
-
   @keyframes modalIn {
-    from { opacity: 0; transform: scale(0.94) translateY(10px); }
-    to   { opacity: 1; transform: scale(1)    translateY(0); }
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
   }
-
-  /* Particle canvas */
-  #particles {
-    position: absolute; inset: 0; pointer-events: none;
-    z-index: 0; border-radius: 20px; overflow: hidden;
-  }
-
-  /* Top glow bar */
+  #particles { position: absolute; inset: 0; pointer-events: none; z-index: 0; border-radius: 20px; }
   .modal-glow {
     position: absolute; top: 0; left: 0; right: 0; height: 1px;
-    background: var(--pro-grad);
-    animation: glowPulse 2.4s ease-in-out infinite; z-index: 2;
+    background: var(--pro-grad); animation: glowPulse 2.4s ease-in-out infinite; z-index: 2;
   }
-  @keyframes glowPulse {
-    0%,100% { opacity: 0.65; }
-    50%      { opacity: 1; }
-  }
-
-  /* Close */
+  @keyframes glowPulse { 0%, 100% { opacity: 0.65; } 50% { opacity: 1; } }
   .modal-close {
-    position: absolute; top: 14px; right: 14px; z-index: 10;
+    position: absolute; top: 16px; right: 16px; z-index: 10;
     width: 28px; height: 28px; border-radius: 8px;
-    background: rgba(255,255,255,0.06);
-    border: 0.5px solid rgba(255,255,255,0.1);
-    color: var(--text-2);
-    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.06); border: 0.5px solid rgba(255,255,255,0.1);
+    color: var(--text-2); display: flex; align-items: center; justify-content: center;
     cursor: pointer; transition: background 0.15s, color 0.15s;
-    animation: fadeUp 0.3s ease 0.5s both;
+    animation: fadeIn 0.3s ease 0.5s both;
   }
   .modal-close:hover { background: rgba(255,255,255,0.1); color: var(--text); }
-  .modal-close svg { width: 11px; height: 11px; }
+  .modal-close svg { width: 12px; height: 12px; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-  /* ── TOP SECTION — badge + headline + subline (horizontal split) ── */
+  /* TOP */
   .modal-top {
     position: relative; z-index: 1;
     padding: 32px 36px 24px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 14px;
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center; gap: 14px;
   }
-
-  /* Pro badge */
-  .pro-badge-wrap {
-    animation: badgeIn 0.52s cubic-bezier(0.16,1,0.3,1) 0.1s both;
-  }
+  .pro-badge-wrap { animation: badgeIn 0.5s cubic-bezier(0.16,1,0.3,1) 0.1s both; }
   @keyframes badgeIn {
-    from { opacity: 0; transform: scale(0.72) translateY(4px); }
-    to   { opacity: 1; transform: scale(1)    translateY(0); }
+    from { opacity: 0; transform: scale(0.72) translateY(6px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
   }
   .pro-badge {
     display: inline-flex; align-items: center; gap: 6px;
-    background: var(--pro-grad);
-    border-radius: 100px;
-    padding: 4px 14px 4px 10px;
-    font-family: var(--font-display);
-    font-size: 10px; font-weight: 700;
-    letter-spacing: 0.12em; text-transform: uppercase;
-    color: #fff;
-    box-shadow: 0 0 22px rgba(255,20,147,0.38), 0 0 44px rgba(168,85,247,0.18);
+    background: var(--pro-grad); border-radius: 100px;
+    padding: 5px 14px 5px 10px; font-family: var(--font-display);
+    font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: #fff; box-shadow: 0 0 20px rgba(255,20,147,0.35), 0 0 40px rgba(168,85,247,0.18);
     position: relative; overflow: hidden;
   }
   .pro-badge::after {
-    content: ''; position: absolute; top: 0; left: -100%;
-    width: 55%; height: 100%;
+    content: ''; position: absolute; top: 0; left: -100%; width: 55%; height: 100%;
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
-    animation: shimmer 2s ease-in-out 0.7s infinite;
+    animation: shimmer 2.2s ease-in-out 0.7s infinite;
   }
-  @keyframes shimmer { from { left:-100%; } to { left:200%; } }
-  .pro-badge svg { width: 13px; height: 13px; flex-shrink: 0; }
-
-  /* Headline */
-  .modal-headline {
-    animation: fadeUp 0.44s cubic-bezier(0.16,1,0.3,1) 0.16s both;
-  }
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
+  @keyframes shimmer { from { left: -100%; } to { left: 220%; } }
+  .pro-badge svg { width: 13px; height: 13px; }
+  .modal-headline { animation: fadeUp 0.44s cubic-bezier(0.16,1,0.3,1) 0.18s both; }
   .modal-headline h1 {
-    font-family: var(--font-display);
-    font-size: 26px; font-weight: 800;
-    line-height: 1.18; letter-spacing: -0.02em;
+    font-family: var(--font-display); font-size: 26px; font-weight: 800;
+    line-height: 1.18; letter-spacing: -0.02em; color: #fff;
   }
   .modal-headline h1 em {
-    font-style: normal;
-    background: var(--pro-grad);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    font-style: normal; background: var(--pro-grad);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   }
-  .modal-subline {
-    margin-top: 7px;
-    font-size: 13px; font-weight: 300;
-    color: var(--text-2); line-height: 1.55;
-  }
+  .modal-subline { margin-top: 8px; font-size: 14px; font-weight: 300; color: var(--text-2); line-height: 1.55; }
 
-  /* ── DIVIDER ── */
-  .modal-divider {
-    margin: 0 36px;
-    height: 1px; background: var(--border);
-    position: relative; z-index: 1;
-    animation: fadeUp 0.4s ease 0.24s both;
+  /* FEATURES — 3 col grid */
+  .modal-features-wrap {
+    position: relative; z-index: 1; padding: 0 28px 24px;
+    animation: fadeUp 0.44s cubic-bezier(0.16,1,0.3,1) 0.26s both;
   }
-
-  /* ── FEATURES — 3 columns horizontal ── */
-  .modal-features {
-    position: relative; z-index: 1;
-    padding: 22px 28px 0;
+  .features-label {
+    font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text-3); text-align: center; margin-bottom: 12px;
   }
-  .feature-label {
-    font-size: 9px; font-weight: 500; letter-spacing: 0.12em;
-    text-transform: uppercase; color: var(--text-3);
-    margin-bottom: 12px; text-align: center;
-  }
-  .features-row {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-  }
-
+  .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .feature-card {
-    display: flex; flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 16px;
-    background: rgba(255,255,255,0.025);
-    border: 0.5px solid rgba(255,255,255,0.07);
-    border-radius: 12px;
+    background: rgba(255,255,255,0.03); border: 0.5px solid rgba(255,255,255,0.07);
+    border-radius: 12px; padding: 16px 14px; display: flex; flex-direction: column; gap: 10px;
     transition: border-color 0.2s, background 0.2s;
-    position: relative; overflow: hidden;
   }
-  .feature-card::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: radial-gradient(circle at 0% 0%, rgba(255,20,147,0.07) 0%, transparent 60%);
-    opacity: 0; transition: opacity 0.2s;
-  }
-  .feature-card:hover { border-color: rgba(255,20,147,0.22); background: rgba(255,255,255,0.035); }
-  .feature-card:hover::before { opacity: 1; }
-
-  /* Staggered entrance */
-  .feature-card:nth-child(1) { animation: featureIn 0.38s cubic-bezier(0.16,1,0.3,1) 0.28s both; }
-  .feature-card:nth-child(2) { animation: featureIn 0.38s cubic-bezier(0.16,1,0.3,1) 0.34s both; }
-  .feature-card:nth-child(3) { animation: featureIn 0.38s cubic-bezier(0.16,1,0.3,1) 0.40s both; }
-  @keyframes featureIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
+  .feature-card:nth-child(1) { animation: featureIn 0.38s cubic-bezier(0.16,1,0.3,1) 0.30s both; }
+  .feature-card:nth-child(2) { animation: featureIn 0.38s cubic-bezier(0.16,1,0.3,1) 0.36s both; }
+  .feature-card:nth-child(3) { animation: featureIn 0.38s cubic-bezier(0.16,1,0.3,1) 0.42s both; }
+  @keyframes featureIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .feature-card:hover { border-color: rgba(255,20,147,0.22); background: rgba(255,20,147,0.04); }
+  .feature-card-top { display: flex; align-items: flex-start; justify-content: space-between; }
   .feature-icon {
-    width: 34px; height: 34px; border-radius: 9px;
+    width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    background: var(--pink-lo);
-    border: 0.5px solid var(--pink-md);
-    flex-shrink: 0;
+    background: var(--pink-lo); border: 0.5px solid var(--pink-md);
   }
-  .feature-icon svg { width: 16px; height: 16px; }
-
-  .feature-body { flex: 1; }
-  .feature-title {
-    font-size: 12px; font-weight: 600; color: var(--text);
-    line-height: 1.3; margin-bottom: 3px;
-  }
-  .feature-desc {
-    font-size: 11px; color: var(--text-2);
-    font-weight: 300; line-height: 1.5;
-  }
-
+  .feature-icon svg { width: 15px; height: 15px; }
   .feature-tag {
-    font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
-    color: var(--pink);
-    background: var(--pink-lo);
-    border: 0.5px solid var(--pink-md);
-    padding: 1px 8px; border-radius: 20px;
-    align-self: flex-start;
+    font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--pink); background: var(--pink-lo); border: 0.5px solid var(--pink-md);
+    padding: 2px 7px; border-radius: 20px;
+  }
+  .feature-title { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.3; }
+  .feature-desc { font-size: 11px; color: var(--text-2); font-weight: 300; line-height: 1.5; }
+
+  /* DIVIDER */
+  .modal-divider {
+    margin: 0 28px 22px; height: 1px; background: var(--border);
+    position: relative; z-index: 1; animation: fadeIn 0.3s ease 0.44s both;
   }
 
-  /* ── FOOTER — CTA row ── */
+  /* FOOTER */
   .modal-footer {
-    position: relative; z-index: 1;
-    padding: 20px 28px 26px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
-    animation: fadeUp 0.44s cubic-bezier(0.16,1,0.3,1) 0.44s both;
+    position: relative; z-index: 1; padding: 0 28px 28px;
+    display: flex; flex-direction: column; gap: 10px;
+    animation: fadeUp 0.44s cubic-bezier(0.16,1,0.3,1) 0.48s both;
   }
-
+  .footer-ctas { display: flex; gap: 10px; }
   .btn-primary {
-    flex: 1;
-    padding: 13px 20px;
-    background: var(--pro-grad);
-    border: none; border-radius: 11px;
-    color: #fff;
-    font-family: var(--font-display);
-    font-size: 13px; font-weight: 700;
-    letter-spacing: 0.02em;
-    cursor: pointer; position: relative; overflow: hidden;
+    flex: 1; padding: 13px 20px; background: var(--pro-grad);
+    border: none; border-radius: 11px; color: #fff; font-family: var(--font-display);
+    font-size: 13px; font-weight: 700; letter-spacing: 0.02em; cursor: pointer;
+    position: relative; overflow: hidden;
     transition: transform 0.15s, box-shadow 0.15s;
-    box-shadow: 0 4px 20px rgba(255,20,147,0.32);
-    white-space: nowrap;
+    box-shadow: 0 4px 18px rgba(255,20,147,0.32); white-space: nowrap;
   }
-  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(255,20,147,0.44); }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 26px rgba(255,20,147,0.42); }
   .btn-primary:active { transform: translateY(0); }
   .btn-primary::after {
-    content: ''; position: absolute; top: 0; left: -100%;
-    width: 50%; height: 100%;
+    content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.14), transparent);
     transition: left 0.4s;
   }
   .btn-primary:hover::after { left: 200%; }
-
   .btn-secondary {
-    padding: 13px 18px;
-    background: transparent;
-    border: 0.5px solid rgba(255,255,255,0.12);
-    border-radius: 10px;
-    color: var(--text-2);
-    font-family: var(--font-body);
-    font-size: 13px; font-weight: 400;
-    cursor: pointer; white-space: nowrap;
-    transition: border-color 0.15s, color 0.15s;
+    flex: 1; padding: 13px 20px; background: transparent;
+    border: 0.5px solid rgba(255,255,255,0.12); border-radius: 11px;
+    color: var(--text-2); font-family: var(--font-body); font-size: 13px; font-weight: 400;
+    cursor: pointer; transition: border-color 0.15s, color 0.15s; white-space: nowrap;
   }
   .btn-secondary:hover { border-color: rgba(255,255,255,0.22); color: var(--text); }
+  .billing-note { text-align: center; font-size: 11px; color: var(--text-3); font-weight: 300; }
+  .billing-note a { color: var(--text-2); text-decoration: underline; text-underline-offset: 2px; }
 
-  .footer-note {
-    font-size: 10px; color: var(--text-3); white-space: nowrap;
-  }
-  .footer-note a { color: var(--text-2); text-decoration: underline; text-underline-offset: 2px; }
-
-  /* ── HEADER BAR (simulated) ── */
+  /* Header */
   .demo-header {
     position: fixed; top: 0; left: 0; right: 0; height: 52px;
-    background: rgba(13,9,20,0.92);
-    border-bottom: 0.5px solid rgba(255,255,255,0.07);
+    background: rgba(13,9,20,0.9); border-bottom: 0.5px solid rgba(255,255,255,0.08);
     display: flex; align-items: center; justify-content: space-between;
-    padding: 0 22px; z-index: 5;
-    backdrop-filter: blur(18px);
+    padding: 0 24px; z-index: 5; backdrop-filter: blur(18px);
   }
-  .demo-logo { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-size: 13px; font-weight: 700; }
+  .demo-logo { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-size: 14px; font-weight: 700; }
   .demo-logo-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--pink); }
-
   .plan-badge-pro-wrap {
-    background: rgba(255,20,147,0.1); border: 0.5px solid rgba(255,20,147,0.28);
+    background: rgba(255,20,147,0.1); border: 0.5px solid rgba(255,20,147,0.3);
     border-radius: 100px; padding: 3px 10px 3px 8px;
     display: inline-flex; align-items: center; gap: 5px;
-    box-shadow: 0 0 10px rgba(255,20,147,0.1);
+    box-shadow: 0 0 10px rgba(255,20,147,0.1); margin-left: 10px;
   }
   .plan-badge-pro-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--pink); box-shadow: 0 0 4px var(--pink); }
   .plan-badge-pro-text { font-family: var(--font-display); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; background: var(--pro-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-
-  .demo-avatar { width: 27px; height: 27px; border-radius: 50%; background: rgba(255,20,147,0.15); border: 1px solid rgba(255,20,147,0.3); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 11px; font-weight: 700; color: var(--pink); }
-  .demo-header-left { display: flex; align-items: center; gap: 10px; }
-  .demo-header-right { display: flex; align-items: center; gap: 8px; }
-
-  /* Spec bar */
+  .demo-avatar { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,20,147,0.15); border: 1px solid rgba(255,20,147,0.3); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 11px; font-weight: 700; color: var(--pink); }
   .spec-doc {
     position: fixed; bottom: 0; left: 0; right: 0;
-    background: rgba(10,6,18,0.97);
-    border-top: 0.5px solid rgba(255,255,255,0.07);
-    padding: 10px 28px;
-    font-size: 10px; color: rgba(255,255,255,0.28);
-    z-index: 6; display: flex; gap: 28px; flex-wrap: wrap; align-items: center;
+    background: rgba(10,6,18,0.97); border-top: 0.5px solid rgba(255,255,255,0.07);
+    padding: 10px 28px; font-size: 10px; color: var(--text-3);
+    z-index: 6; display: flex; gap: 24px; flex-wrap: wrap; align-items: center;
+    font-family: var(--font-body);
   }
-  .spec-doc strong { color: rgba(255,255,255,0.5); font-weight: 500; }
-  .spec-key { background: rgba(255,255,255,0.08); border-radius: 3px; padding: 1px 5px; font-size: 9px; color: rgba(255,255,255,0.4); border: 0.5px solid rgba(255,255,255,0.1); }
+  .spec-doc strong { color: var(--text-2); font-weight: 500; }
+  .spec-key { background: rgba(255,255,255,0.08); border-radius: 3px; padding: 1px 5px; font-size: 10px; color: var(--text-2); border: 0.5px solid rgba(255,255,255,0.12); }
 </style>
 </head>
 <body>
 
 <header class="demo-header">
-  <div class="demo-header-left">
+  <div style="display:flex;align-items:center;">
     <div class="demo-logo"><div class="demo-logo-dot"></div> Polite Rebels</div>
     <div class="plan-badge-pro-wrap">
       <div class="plan-badge-pro-dot"></div>
       <span class="plan-badge-pro-text">Pro</span>
     </div>
   </div>
-  <div class="demo-header-right">
-    <div class="demo-avatar">C</div>
-  </div>
+  <div class="demo-avatar">C</div>
 </header>
 
 <div class="app-backdrop"></div>
 
 <div class="overlay">
   <div class="modal" id="modal">
-
     <div class="modal-glow"></div>
     <canvas id="particles"></canvas>
-
     <button class="modal-close" onclick="document.getElementById('modal').style.display='none'">
       <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
         <line x1="1" y1="1" x2="11" y2="11"/><line x1="11" y1="1" x2="1" y2="11"/>
       </svg>
     </button>
 
-    <!-- TOP: badge + headline centred -->
     <div class="modal-top">
       <div class="pro-badge-wrap">
         <div class="pro-badge">
@@ -391,84 +238,77 @@
           Pro Unlocked
         </div>
       </div>
-
       <div class="modal-headline">
         <h1>You're in. <em>Make something great.</em></h1>
         <p class="modal-subline">Your workspace is now on Pro. Everything's ready — no setup needed.</p>
       </div>
     </div>
 
-    <div class="modal-divider"></div>
-
-    <!-- FEATURES: 3 horizontal cards -->
-    <div class="modal-features">
-      <div class="feature-label">What you unlocked</div>
-      <div class="features-row">
+    <div class="modal-features-wrap">
+      <div class="features-label">What you unlocked</div>
+      <div class="features-grid">
 
         <div class="feature-card">
-          <div class="feature-icon">
-            <svg viewBox="0 0 16 16" fill="none" stroke="#ff1493" stroke-width="1.3" stroke-linecap="round">
-              <path d="M8 2C4.69 2 2 4.69 2 8s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6z"/>
-              <path d="M5 8h6M8 5v6"/>
-            </svg>
+          <div class="feature-card-top">
+            <div class="feature-icon">
+              <svg viewBox="0 0 16 16" fill="none" stroke="#ff1493" stroke-width="1.3">
+                <circle cx="8" cy="8" r="6.5"/><path d="M5.5 8h5M8 5.5v5" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="feature-tag">∞</div>
           </div>
-          <div class="feature-body">
-            <div class="feature-title">Unlimited songs</div>
-            <div class="feature-desc">No cap. Add every project, demo, and idea.</div>
-          </div>
-          <div class="feature-tag">∞</div>
+          <div class="feature-title">Unlimited songs</div>
+          <div class="feature-desc">No cap. Add every project, demo, and idea whenever inspiration hits.</div>
         </div>
 
         <div class="feature-card">
-          <div class="feature-icon">
-            <svg viewBox="0 0 16 16" fill="none" stroke="#ff1493" stroke-width="1.3" stroke-linecap="round">
-              <circle cx="6" cy="5.5" r="2.2"/>
-              <circle cx="10.5" cy="5.5" r="2.2"/>
-              <path d="M1.5 14c0-2.5 2-4.5 4.5-4.5M14.5 14c0-2.5-2-4.5-4.5-4.5M8 9.5c2.5 0 4.5 2 4.5 4.5"/>
-            </svg>
+          <div class="feature-card-top">
+            <div class="feature-icon">
+              <svg viewBox="0 0 16 16" fill="none" stroke="#ff1493" stroke-width="1.3">
+                <circle cx="5.5" cy="5" r="2.2"/>
+                <circle cx="10.5" cy="5" r="2.2"/>
+                <path d="M1 14c0-2.5 2-4.5 4.5-4.5M15 14c0-2.5-2-4.5-4.5-4.5M8 9.5c2.5 0 4.5 2 4.5 4.5" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="feature-tag">∞</div>
           </div>
-          <div class="feature-body">
-            <div class="feature-title">Unlimited collaborators</div>
-            <div class="feature-desc">Invite your whole team, producers, or clients.</div>
-          </div>
-          <div class="feature-tag">∞</div>
+          <div class="feature-title">Unlimited collaborators</div>
+          <div class="feature-desc">Invite your whole team, producers, mix engineers, or clients.</div>
         </div>
 
         <div class="feature-card">
-          <div class="feature-icon">
-            <svg viewBox="0 0 16 16" fill="none" stroke="#ff1493" stroke-width="1.3" stroke-linecap="round">
-              <path d="M8 2v8"/>
-              <path d="M5 7l3 3 3-3"/>
-              <path d="M3 12.5h10"/>
-            </svg>
+          <div class="feature-card-top">
+            <div class="feature-icon">
+              <svg viewBox="0 0 16 16" fill="none" stroke="#ff1493" stroke-width="1.3">
+                <path d="M8 2v8M5 7l3 3 3-3" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M2.5 12.5h11" stroke-linecap="round"/>
+              </svg>
+            </div>
           </div>
-          <div class="feature-body">
-            <div class="feature-title">Priority support</div>
-            <div class="feature-desc">Direct line if something needs fixing fast.</div>
-          </div>
+          <div class="feature-title">Priority support</div>
+          <div class="feature-desc">Direct line when something needs fixing fast. We're here.</div>
         </div>
 
       </div>
     </div>
 
-    <!-- FOOTER: CTAs in a row -->
-    <div class="modal-footer">
-      <button class="btn-primary" onclick="void(0)">
-        Continue to your workspace →
-      </button>
-      <button class="btn-secondary" onclick="void(0)">
-        Invite a collaborator
-      </button>
-      <p class="footer-note">Cancel anytime in <a href="#">Billing</a></p>
-    </div>
+    <div class="modal-divider"></div>
 
+    <div class="modal-footer">
+      <div class="footer-ctas">
+        <button class="btn-primary">Continue to your workspace →</button>
+        <button class="btn-secondary">Invite a collaborator</button>
+      </div>
+      <p class="billing-note">Billed monthly. Cancel anytime in <a href="#">Settings → Billing</a>.</p>
+    </div>
   </div>
 </div>
 
 <div class="spec-doc">
-  <span><strong>Modal:</strong> 720px wide · scale(0.94)→1 · 420ms</span>
-  <span><strong>Features:</strong> 3-col grid · stagger 280–400ms</span>
-  <span><strong>Footer:</strong> horizontal row — primary + secondary + billing note</span>
+  <span><strong>Max-width:</strong> 720px — wider than tall</span>
+  <span><strong>Features:</strong> 3-col grid, stagger fadeUp 300–420ms</span>
+  <span><strong>CTAs:</strong> flex row, side by side</span>
+  <span><strong>Particles:</strong> 28 dots, 1.2s drift + fade</span>
   <span><strong>Close:</strong> <span class="spec-key">Esc</span> or ×</span>
 </div>
 
@@ -477,36 +317,23 @@
   const canvas = document.getElementById('particles');
   const modal  = document.getElementById('modal');
   const ctx    = canvas.getContext('2d');
-
-  function resize() {
-    canvas.width  = modal.offsetWidth;
-    canvas.height = modal.offsetHeight;
-  }
-  resize();
-  window.addEventListener('resize', resize);
-
-  const colors = [
-    'rgba(255,20,147,',
-    'rgba(168,85,247,',
-    'rgba(0,212,255,',
-    'rgba(255,100,180,',
-  ];
-
+  function resize() { canvas.width = modal.offsetWidth; canvas.height = modal.offsetHeight; }
+  resize(); window.addEventListener('resize', resize);
+  const colors = ['rgba(255,20,147,','rgba(168,85,247,','rgba(0,212,255,','rgba(255,100,180,'];
   const particles = [];
-  for (let i = 0; i < 32; i++) {
+  for (let i = 0; i < 28; i++) {
     particles.push({
-      x:      Math.random() * canvas.width,
-      y:      canvas.height * 0.5 + Math.random() * canvas.height * 0.35,
-      vx:     (Math.random() - 0.5) * 1.3,
-      vy:     -(Math.random() * 1.9 + 0.5),
-      r:      Math.random() * 2.4 + 0.7,
-      color:  colors[Math.floor(Math.random() * colors.length)],
-      birth:  Math.random() * 280,
-      maxLife: 950 + Math.random() * 380,
-      life:   0,
+      x: Math.random() * canvas.width,
+      y: canvas.height * 0.5 + Math.random() * canvas.height * 0.35,
+      vx: (Math.random() - 0.5) * 1.1,
+      vy: -(Math.random() * 1.6 + 0.5),
+      r: Math.random() * 2.2 + 0.8,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      birth: Math.random() * 280,
+      maxLife: 900 + Math.random() * 400,
+      life: 0,
     });
   }
-
   let startTime = null;
   function draw(ts) {
     if (!startTime) startTime = ts;
@@ -517,32 +344,20 @@
       const age = elapsed - p.birth;
       if (age < 0) { allDead = false; continue; }
       p.life = Math.min(age, p.maxLife);
-      const progress = p.life / p.maxLife;
-      let alpha = progress < 0.15
-        ? progress / 0.15
-        : progress > 0.6
-          ? 1 - (progress - 0.6) / 0.4
-          : 1;
+      const prog = p.life / p.maxLife;
+      let alpha = prog < 0.15 ? prog / 0.15 : prog > 0.6 ? 1 - (prog - 0.6) / 0.4 : 1;
       alpha = Math.max(0, Math.min(1, alpha)) * 0.7;
-      if (p.life < p.maxLife) {
-        allDead = false;
-        p.x += p.vx; p.y += p.vy; p.vy *= 0.994;
-      }
-      if (alpha > 0.004) {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = p.color + alpha + ')';
-        ctx.fill();
+      if (p.life < p.maxLife) { allDead = false; p.x += p.vx; p.y += p.vy; p.vy *= 0.996; }
+      if (alpha > 0.005) {
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.color + alpha + ')'; ctx.fill();
       }
     }
     if (!allDead) requestAnimationFrame(draw);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
-
   setTimeout(() => requestAnimationFrame(draw), 160);
-
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') document.getElementById('modal').style.display = 'none';
-  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') document.getElementById('modal').style.display = 'none'; });
 })();
 </script>
 </body>
