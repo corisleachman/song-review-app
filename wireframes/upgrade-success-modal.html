@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upgrade Success — Polite Rebels</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --pink:    #ff1493;
+    --pink-lo: rgba(255,20,147,0.15);
+    --pink-md: rgba(255,20,147,0.3);
+    --cyan:    #00d4ff;
+    --purple:  #a855f7;
+    --bg:      #0d0914;
+    --surface: #16101f;
+    --surface2:#1e1530;
+    --border:  rgba(255,255,255,0.08);
+    --text:    #fff;
+    --text-2:  rgba(255,255,255,0.55);
+    --text-3:  rgba(255,255,255,0.28);
+    --pro-grad: linear-gradient(135deg, #ff1493 0%, #a855f7 50%, #00d4ff 100%);
+    --font-display: 'Syne', sans-serif;
+    --font-body:    'DM Sans', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    font-family: var(--font-body);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* ── App backdrop — simulates the real dashboard behind the modal ── */
+  .app-backdrop {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    filter: blur(2px) brightness(0.45);
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+      radial-gradient(ellipse 60% 40% at 20% 50%, rgba(168,85,247,0.12) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 60% at 80% 30%, rgba(255,20,147,0.08) 0%, transparent 70%);
+  }
+
+  /* ── Overlay ── */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(5,2,12,0.72);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 10;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+
+  /* ── Modal ── */
+  .modal {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    background: var(--surface);
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.1);
+    overflow: hidden;
+    box-shadow:
+      0 0 0 1px rgba(255,20,147,0.18),
+      0 32px 80px rgba(0,0,0,0.6),
+      0 0 60px rgba(255,20,147,0.07);
+
+    /* Entrance animation */
+    animation: modalIn 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.94) translateY(12px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  /* ── Particle canvas ── */
+  #particles {
+    position: absolute; inset: 0; pointer-events: none; z-index: 0;
+    border-radius: 20px; overflow: hidden;
+  }
+
+  /* ── Glow bar at top of modal ── */
+  .modal-glow {
+    position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: var(--pro-grad);
+    animation: glowPulse 2.4s ease-in-out infinite;
+    z-index: 2;
+  }
+  @keyframes glowPulse {
+    0%, 100% { opacity: 0.7; }
+    50%       { opacity: 1; }
+  }
+
+  /* ── Header section ── */
+  .modal-header {
+    position: relative; z-index: 1;
+    padding: 36px 36px 0;
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center;
+    gap: 16px;
+  }
+
+  /* Pro badge — the crown jewel */
+  .pro-badge-wrap {
+    animation: badgeIn 0.52s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both;
+  }
+  @keyframes badgeIn {
+    from { opacity: 0; transform: scale(0.7) translateY(6px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .pro-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--pro-grad);
+    border-radius: 100px;
+    padding: 5px 14px 5px 10px;
+    font-family: var(--font-display);
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: #fff;
+    box-shadow: 0 0 20px rgba(255,20,147,0.4), 0 0 40px rgba(168,85,247,0.2);
+    position: relative;
+    overflow: hidden;
+  }
+  .pro-badge::after {
+    content: '';
+    position: absolute; top: 0; left: -100%;
+    width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+    animation: shimmer 2s ease-in-out 0.6s infinite;
+  }
+  @keyframes shimmer {
+    from { left: -100%; }
+    to   { left: 200%; }
+  }
+  .pro-badge-icon {
+    width: 14px; height: 14px;
+    opacity: 0.95;
+  }
+
+  /* Headline */
+  .modal-headline {
+    animation: fadeUp 0.44s cubic-bezier(0.16, 1, 0.3, 1) 0.18s both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .modal-headline h1 {
+    font-family: var(--font-display);
+    font-size: 28px; font-weight: 800;
+    line-height: 1.15;
+    color: #fff;
+    letter-spacing: -0.02em;
+  }
+  .modal-headline h1 em {
+    font-style: normal;
+    background: var(--pro-grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .modal-subline {
+    margin-top: 8px;
+    font-size: 14px; font-weight: 300;
+    color: var(--text-2);
+    line-height: 1.55;
+    letter-spacing: 0.01em;
+  }
+
+  /* ── Divider ── */
+  .modal-divider {
+    margin: 28px 36px 0;
+    height: 1px;
+    background: var(--border);
+    position: relative; z-index: 1;
+    animation: fadeUp 0.44s cubic-bezier(0.16, 1, 0.3, 1) 0.26s both;
+  }
+
+  /* ── Feature list ── */
+  .modal-features {
+    position: relative; z-index: 1;
+    padding: 24px 36px 0;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .feature-label {
+    font-size: 10px; font-weight: 500; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text-3);
+    margin-bottom: 4px;
+  }
+  .feature-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.03);
+    border: 0.5px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    transition: border-color 0.2s;
+  }
+  .feature-item:hover { border-color: rgba(255,20,147,0.2); }
+
+  .feature-item:nth-child(2) { animation: featureIn 0.38s cubic-bezier(0.16,1,0.3,1) 0.30s both; }
+  .feature-item:nth-child(3) { animation: featureIn 0.38s cubic-bezier(0.16,1,0.3,1) 0.36s both; }
+  .feature-item:nth-child(4) { animation: featureIn 0.38s cubic-bezier(0.16,1,0.3,1) 0.42s both; }
+  @keyframes featureIn {
+    from { opacity: 0; transform: translateX(-8px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  .feature-icon {
+    width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--pink-lo);
+    border: 0.5px solid var(--pink-md);
+  }
+  .feature-icon svg { width: 15px; height: 15px; }
+  .feature-text { flex: 1; }
+  .feature-title {
+    font-size: 13px; font-weight: 500; color: var(--text);
+    line-height: 1.3;
+  }
+  .feature-desc {
+    font-size: 11px; color: var(--text-2); margin-top: 1px;
+    font-weight: 300;
+  }
+  .feature-tag {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--pink);
+    background: var(--pink-lo);
+    border: 0.5px solid var(--pink-md);
+    padding: 2px 7px; border-radius: 20px;
+  }
+
+  /* ── Footer ── */
+  .modal-footer {
+    position: relative; z-index: 1;
+    padding: 24px 36px 32px;
+    display: flex; flex-direction: column; gap: 10px;
+    animation: fadeUp 0.44s cubic-bezier(0.16, 1, 0.3, 1) 0.48s both;
+  }
+
+  /* Primary CTA */
+  .btn-primary {
+    width: 100%;
+    padding: 14px 24px;
+    background: var(--pro-grad);
+    border: none; border-radius: 12px;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 14px; font-weight: 700;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    position: relative; overflow: hidden;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 20px rgba(255,20,147,0.35);
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 28px rgba(255,20,147,0.45);
+  }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary::after {
+    content: '';
+    position: absolute; top: 0; left: -100%;
+    width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    transition: left 0.4s;
+  }
+  .btn-primary:hover::after { left: 200%; }
+
+  /* Secondary CTA */
+  .btn-secondary {
+    width: 100%;
+    padding: 11px 24px;
+    background: transparent;
+    border: 0.5px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    color: var(--text-2);
+    font-family: var(--font-body);
+    font-size: 13px; font-weight: 400;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .btn-secondary:hover {
+    border-color: rgba(255,255,255,0.22);
+    color: var(--text);
+  }
+
+  /* Billing note */
+  .billing-note {
+    text-align: center;
+    font-size: 11px; color: var(--text-3);
+    font-weight: 300;
+    margin-top: 2px;
+  }
+  .billing-note a { color: var(--text-2); text-decoration: underline; text-underline-offset: 2px; }
+
+  /* Close button */
+  .modal-close {
+    position: absolute; top: 16px; right: 16px; z-index: 3;
+    width: 28px; height: 28px; border-radius: 8px;
+    background: rgba(255,255,255,0.06);
+    border: 0.5px solid rgba(255,255,255,0.1);
+    color: var(--text-2);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background 0.15s, color 0.15s;
+    animation: fadeUp 0.3s ease 0.5s both;
+  }
+  .modal-close:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+  .modal-close svg { width: 12px; height: 12px; }
+
+  /* ──────────────────────────────────────────── */
+  /* PLAN BADGE — persistent header element       */
+  /* ──────────────────────────────────────────── */
+  .demo-header {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 56px;
+    background: rgba(13,9,20,0.9);
+    border-bottom: 0.5px solid rgba(255,255,255,0.08);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px;
+    z-index: 5;
+    backdrop-filter: blur(18px);
+  }
+  .demo-header-left { display: flex; align-items: center; gap: 12px; }
+  .demo-logo { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-size: 14px; font-weight: 700; color: #fff; }
+  .demo-logo-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--pink); }
+
+  /*
+   * PLAN BADGE — persistent indicator
+   *
+   * Free variant: subtle, grey, unobtrusive
+   * Pro variant:  gradient text, slight glow, feels earned
+   *
+   * Sits to the right of the workspace name in the header.
+   * Size: ~60px wide, 22px tall. Never competes with nav.
+   */
+  .plan-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px 3px 8px;
+    border-radius: 100px;
+    font-family: var(--font-display);
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .plan-badge-dot { width: 5px; height: 5px; border-radius: 50%; }
+
+  /* Free */
+  .plan-badge-free {
+    background: rgba(255,255,255,0.05);
+    border: 0.5px solid rgba(255,255,255,0.1);
+    color: var(--text-3);
+  }
+  .plan-badge-free .plan-badge-dot { background: rgba(255,255,255,0.2); }
+
+  /* Pro */
+  .plan-badge-pro {
+    background: rgba(255,20,147,0.1);
+    border: 0.5px solid rgba(255,20,147,0.3);
+    color: transparent;
+    background-clip: text;
+    -webkit-background-clip: text;
+    position: relative;
+  }
+  /* Can't gradient-text AND have a background, so use pseudo + text-shadow trick */
+  .plan-badge-pro-wrap {
+    background: rgba(255,20,147,0.1);
+    border: 0.5px solid rgba(255,20,147,0.3);
+    border-radius: 100px;
+    padding: 3px 10px 3px 8px;
+    display: inline-flex; align-items: center; gap: 5px;
+    box-shadow: 0 0 10px rgba(255,20,147,0.12);
+  }
+  .plan-badge-pro-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--pink); box-shadow: 0 0 4px var(--pink); }
+  .plan-badge-pro-text {
+    font-family: var(--font-display); font-size: 10px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    background: var(--pro-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+
+  .demo-header-right { display: flex; align-items: center; gap: 10px; }
+  .demo-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--pink-lo); border: 1px solid var(--pink-md); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 11px; font-weight: 700; color: var(--pink); }
+
+  /* ── Annotation labels ── */
+  .annotation {
+    position: absolute;
+    font-size: 10px; color: rgba(255,220,50,0.85);
+    background: rgba(255,220,50,0.08); border: 1px dashed rgba(255,220,50,0.35);
+    padding: 2px 8px; border-radius: 4px; white-space: nowrap;
+    pointer-events: none; z-index: 20;
+  }
+
+  /* ── Notes section below modal ── */
+  .spec-doc {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(10,6,18,0.97);
+    border-top: 0.5px solid rgba(255,255,255,0.08);
+    padding: 12px 32px;
+    font-size: 11px; color: var(--text-3);
+    z-index: 6;
+    display: flex; gap: 32px; flex-wrap: wrap;
+  }
+  .spec-doc span { display: flex; gap: 6px; align-items: center; }
+  .spec-doc strong { color: var(--text-2); font-weight: 500; }
+  .spec-key { background: rgba(255,255,255,0.08); border-radius: 4px; padding: 1px 6px; font-size: 10px; color: var(--text-2); border: 0.5px solid rgba(255,255,255,0.12); }
+</style>
+</head>
+<body>
+
+<!-- Simulated app header with plan badge -->
+<header class="demo-header">
+  <div class="demo-header-left">
+    <div class="demo-logo"><div class="demo-logo-dot"></div> Polite Rebels</div>
+    <!-- PLAN BADGE — Pro state -->
+    <div class="plan-badge-pro-wrap">
+      <div class="plan-badge-pro-dot"></div>
+      <span class="plan-badge-pro-text">Pro</span>
+    </div>
+  </div>
+  <div class="demo-header-right">
+    <!-- Free badge example for reference -->
+    <div class="plan-badge plan-badge-free" style="opacity:0.5;" title="Free badge (reference)">
+      <div class="plan-badge-dot"></div>
+      Free
+    </div>
+    <div class="demo-avatar">C</div>
+  </div>
+</header>
+
+<!-- Blurred app backdrop -->
+<div class="app-backdrop"></div>
+
+<!-- Modal overlay -->
+<div class="overlay">
+  <div class="modal" id="modal">
+
+    <!-- Top glow bar -->
+    <div class="modal-glow"></div>
+
+    <!-- Particle canvas -->
+    <canvas id="particles"></canvas>
+
+    <!-- Close button -->
+    <button class="modal-close" onclick="document.getElementById('modal').style.display='none'">
+      <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
+        <line x1="1" y1="1" x2="11" y2="11"/><line x1="11" y1="1" x2="1" y2="11"/>
+      </svg>
+    </button>
+
+    <!-- ── HEADER ── -->
+    <div class="modal-header">
+
+      <div class="pro-badge-wrap">
+        <div class="pro-badge">
+          <!-- Diamond/gem icon -->
+          <svg class="pro-badge-icon" viewBox="0 0 14 14" fill="none">
+            <path d="M7 1L13 5.5L7 13L1 5.5L7 1Z" fill="rgba(255,255,255,0.9)" stroke="rgba(255,255,255,0.4)" stroke-width="0.5"/>
+            <path d="M1 5.5H13M7 1L4 5.5L7 13M7 1L10 5.5L7 13" stroke="rgba(255,255,255,0.4)" stroke-width="0.5"/>
+          </svg>
+          Pro Unlocked
+        </div>
+      </div>
+
+      <div class="modal-headline">
+        <h1>You're in.<br><em>Make something great.</em></h1>
+        <p class="modal-subline">Your workspace is now on Pro. Everything's ready — no setup needed.</p>
+      </div>
+
+    </div>
+
+    <!-- Divider -->
+    <div class="modal-divider"></div>
+
+    <!-- ── FEATURES ── -->
+    <div class="modal-features">
+      <div class="feature-label">What you unlocked</div>
+
+      <div class="feature-item">
+        <div class="feature-icon">
+          <!-- Infinite/songs icon -->
+          <svg viewBox="0 0 15 15" fill="none" stroke="#ff1493" stroke-width="1.3">
+            <path d="M2 7.5C2 4.46 4.46 2 7.5 2S13 4.46 13 7.5 10.54 13 7.5 13" stroke-linecap="round"/>
+            <path d="M5.5 7.5h4M7.5 5.5v4" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="feature-text">
+          <div class="feature-title">Unlimited songs</div>
+          <div class="feature-desc">No cap. Add every project, demo, and idea.</div>
+        </div>
+        <div class="feature-tag">∞</div>
+      </div>
+
+      <div class="feature-item">
+        <div class="feature-icon">
+          <!-- Collaborators icon -->
+          <svg viewBox="0 0 15 15" fill="none" stroke="#ff1493" stroke-width="1.3">
+            <circle cx="5.5" cy="5" r="2.2"/>
+            <circle cx="10" cy="5" r="2.2"/>
+            <path d="M1 13c0-2.2 2-4 4.5-4M14 13c0-2.2-2-4-4.5-4M7.5 9c2.5 0 4.5 1.8 4.5 4" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="feature-text">
+          <div class="feature-title">Unlimited collaborators</div>
+          <div class="feature-desc">Invite your whole team, producers, or clients.</div>
+        </div>
+        <div class="feature-tag">∞</div>
+      </div>
+
+      <div class="feature-item">
+        <div class="feature-icon">
+          <!-- Priority icon -->
+          <svg viewBox="0 0 15 15" fill="none" stroke="#ff1493" stroke-width="1.3">
+            <path d="M7.5 2v7M4.5 6l3 3 3-3" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2.5 11.5h10" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="feature-text">
+          <div class="feature-title">Priority support</div>
+          <div class="feature-desc">Direct line if something needs fixing fast.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── FOOTER ── -->
+    <div class="modal-footer">
+      <button class="btn-primary" onclick="void(0)">
+        Continue to your workspace →
+      </button>
+      <button class="btn-secondary" onclick="void(0)">
+        Invite a collaborator
+      </button>
+      <p class="billing-note">
+        Billed monthly. Cancel anytime in <a href="#">Settings → Billing</a>.
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<!-- Spec bar -->
+<div class="spec-doc">
+  <span><strong>Entrance:</strong> scale(0.94)→1 + translateY(12px)→0, 420ms, cubic-bezier(0.16,1,0.3,1)</span>
+  <span><strong>Particles:</strong> ~28 dots, 1.2s fade-out after modal open</span>
+  <span><strong>Stagger:</strong> badge 120ms → headline 180ms → features 300–420ms → footer 480ms</span>
+  <span><strong>Glow bar:</strong> pulse 2.4s infinite, opacity 0.7→1</span>
+  <span><strong>Pro shimmer:</strong> 2s loop, 600ms delay</span>
+  <span><strong>Close:</strong> <span class="spec-key">Esc</span> or × button</span>
+</div>
+
+<script>
+// ── Particle burst — calm, premium, not confetti ──
+// ~28 small dots that drift upward and fade out over 1.2s
+// Colour palette: pink, purple, cyan — matches the pro gradient
+(function() {
+  const canvas = document.getElementById('particles');
+  const modal  = document.getElementById('modal');
+  const ctx    = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width  = modal.offsetWidth;
+    canvas.height = modal.offsetHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const colors = [
+    'rgba(255,20,147,',
+    'rgba(168,85,247,',
+    'rgba(0,212,255,',
+    'rgba(255,100,180,',
+  ];
+
+  const particles = [];
+  const COUNT = 28;
+
+  for (let i = 0; i < COUNT; i++) {
+    particles.push({
+      x:    Math.random() * canvas.width,
+      y:    canvas.height * 0.55 + Math.random() * canvas.height * 0.3,
+      vx:   (Math.random() - 0.5) * 1.2,
+      vy:   -(Math.random() * 1.8 + 0.6),
+      r:    Math.random() * 2.2 + 0.8,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      alpha: 0,
+      birth: Math.random() * 300, // staggered start (ms)
+      life:  0,
+      maxLife: 900 + Math.random() * 400,
+    });
+  }
+
+  let startTime = null;
+
+  function draw(ts) {
+    if (!startTime) startTime = ts;
+    const elapsed = ts - startTime;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    let allDead = true;
+    for (const p of particles) {
+      const age = elapsed - p.birth;
+      if (age < 0) { allDead = false; continue; }
+      p.life = Math.min(age, p.maxLife);
+      const progress = p.life / p.maxLife;
+
+      // Ease in for first 15%, ease out for last 40%
+      if (progress < 0.15) {
+        p.alpha = progress / 0.15;
+      } else if (progress > 0.6) {
+        p.alpha = 1 - (progress - 0.6) / 0.4;
+      } else {
+        p.alpha = 1;
+      }
+      p.alpha = Math.max(0, Math.min(1, p.alpha)) * 0.72;
+
+      if (p.life < p.maxLife) {
+        allDead = false;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy *= 0.995; // gentle deceleration
+      }
+
+      if (p.alpha > 0.005) {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.color + p.alpha + ')';
+        ctx.fill();
+      }
+    }
+
+    if (!allDead) requestAnimationFrame(draw);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  // Start particles after a short delay (modal entrance settles first)
+  setTimeout(() => requestAnimationFrame(draw), 180);
+
+  // Esc to close
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') document.getElementById('modal').style.display = 'none';
+  });
+})();
+</script>
+</body>
+</html>
