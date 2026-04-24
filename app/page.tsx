@@ -1,12 +1,10 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useState, Suspense } from 'react';
-import { setAuth } from '@/lib/auth';
 import styles from './page.module.css';
 
 function LoginContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -22,10 +20,11 @@ function LoginContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password }),
+        credentials: 'same-origin',
       });
       const data = await res.json();
       if (data.success) {
-        setAuth();
+        // Cookie is now set server-side in the API response — no client setAuth() needed
         const redirectTo = searchParams.get('redirectTo') || '/identify';
         window.location.assign(redirectTo);
       } else {
