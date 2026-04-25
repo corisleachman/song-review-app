@@ -118,6 +118,9 @@ Notes:
 id                 UUID PRIMARY KEY DEFAULT gen_random_uuid()
 name               TEXT NOT NULL
 slug               TEXT
+plan               TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'paid'))
+stripe_customer_id TEXT
+stripe_subscription_id TEXT
 created_by_user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE
 created_at         TIMESTAMP
 updated_at         TIMESTAMP
@@ -126,6 +129,7 @@ updated_at         TIMESTAMP
 Notes:
 - This is the workspace table used throughout the current app.
 - One owner workspace is auto-created during bootstrap if none exists.
+- `stripe_customer_id` and `stripe_subscription_id` are nullable until the workspace upgrades through Stripe Checkout.
 
 ### `account_members` (new table)
 ```sql

@@ -57,3 +57,26 @@ export async function listWorkspaceMembers(workspaceId: string): Promise<Workspa
       return left.displayName.localeCompare(right.displayName);
     });
 }
+
+export async function findWorkspaceMembershipByUserId(workspaceId: string, userId: string) {
+  const { data, error } = await supabaseServer
+    .from('account_members')
+    .select('account_id, user_id, role, joined_at')
+    .eq('account_id', workspaceId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data;
+}
+
+export async function deleteWorkspaceMembershipByUserId(workspaceId: string, userId: string) {
+  const { error } = await supabaseServer
+    .from('account_members')
+    .delete()
+    .eq('account_id', workspaceId)
+    .eq('user_id', userId);
+
+  if (error) throw error;
+}

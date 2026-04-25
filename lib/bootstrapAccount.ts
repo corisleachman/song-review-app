@@ -1,5 +1,7 @@
 import { supabaseServer } from '@/lib/supabaseServer';
 import type { AuthenticatedUser } from '@/lib/currentUser';
+import { normalizeAccountPlan, isMissingPlanColumnError, type AccountPlan } from '@/lib/plans';
+import { findValidActiveWorkspaceMembership, readActiveWorkspaceCookie } from '@/lib/activeWorkspace';
 
 interface ProfileRecord {
   id: string;
@@ -13,6 +15,7 @@ interface WorkspaceRecord {
   id: string;
   name: string;
   slug: string | null;
+  plan: AccountPlan;
   created_by_user_id: string;
   created_at: string;
   updated_at: string;
@@ -37,6 +40,38 @@ function getWorkspaceName(user: AuthenticatedUser) {
   return `${base}'s Workspace`;
 }
 
+async function loadWorkspace(accountId: string): Promise<WorkspaceRecord> {
+  const workspaceWithPlan = await supabaseServer
+    .from('accounts')
+    .select('id, name, slug, plan, created_by_user_id, created_at, updated_at')
+    .eq('id', accountId)
+    .single();
+
+  if (!workspaceWithPlan.error) {
+    return {
+      ...(workspaceWithPlan.data as Omit<WorkspaceRecord, 'plan'> & { plan?: string | null }),
+      plan: normalizeAccountPlan(workspaceWithPlan.data?.plan),
+    };
+  }
+
+  if (!isMissingPlanColumnError(workspaceWithPlan.error)) {
+    throw workspaceWithPlan.error;
+  }
+
+  const workspaceWithoutPlan = await supabaseServer
+    .from('accounts')
+    .select('id, name, slug, created_by_user_id, created_at, updated_at')
+    .eq('id', accountId)
+    .single();
+
+  if (workspaceWithoutPlan.error) throw workspaceWithoutPlan.error;
+
+  return {
+    ...(workspaceWithoutPlan.data as Omit<WorkspaceRecord, 'plan'>),
+    plan: 'free',
+  };
+}
+
 export async function bootstrapAccountForUser(user: AuthenticatedUser): Promise<BootstrapResult> {
   const { data: profile, error: profileError } = await supabaseServer
     .from('profiles')
@@ -54,7 +89,12 @@ export async function bootstrapAccountForUser(user: AuthenticatedUser): Promise<
 
   if (profileError) throw profileError;
 
-  const { data: existingMembership, error: membershipLookupError } = await supabaseServer
+  const activeWorkspaceId = await readActiveWorkspaceCookie();
+  const activeWorkspaceMembership = activeWorkspaceId
+    ? await findValidActiveWorkspaceMembership(user.id, activeWorkspaceId)
+    : null;
+
+  const { data: existingOwnerMembership, error: membershipLookupError } = await supabaseServer
     .from('account_members')
     .select('account_id, user_id, role, joined_at')
     .eq('user_id', user.id)
@@ -65,9 +105,9 @@ export async function bootstrapAccountForUser(user: AuthenticatedUser): Promise<
 
   if (membershipLookupError) throw membershipLookupError;
 
-  let membership = existingMembership as MembershipRecord | null;
+  let membership = (activeWorkspaceMembership ?? existingOwnerMembership) as MembershipRecord | null;
 
-  if (!membership) {
+  if (!membership && !existingOwnerMembership) {
     const { data: account, error: accountError } = await supabaseServer
       .from('accounts')
       .insert([
@@ -97,18 +137,16 @@ export async function bootstrapAccountForUser(user: AuthenticatedUser): Promise<
     membership = createdMembership as MembershipRecord;
   }
 
-  const { data: workspace, error: workspaceError } = await supabaseServer
-    .from('accounts')
-    .select('id, name, slug, created_by_user_id, created_at, updated_at')
-    .eq('id', membership.account_id)
-    .single();
+  if (!membership) {
+    throw new Error('No workspace membership found for authenticated user.');
+  }
 
-  if (workspaceError) throw workspaceError;
+  const workspace = await loadWorkspace(membership.account_id);
 
   return {
     user,
     profile: profile as ProfileRecord,
-    workspace: workspace as WorkspaceRecord,
+    workspace,
     membership,
   };
 }
