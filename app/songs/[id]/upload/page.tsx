@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { getIdentity } from '@/lib/auth';
 import { createClient } from '@/lib/supabase';
 import styles from '../song.module.css';
 
@@ -23,18 +24,38 @@ export default function UploadVersionPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    let mounted = true;
+
     void fetch('/api/auth/bootstrap', { cache: 'no-store' })
       .then(response => {
-        if (response.status === 401) {
-          router.push(`/?redirectTo=${encodeURIComponent(`/songs/${songId}/upload`)}`);
-          return null;
+        if (response.ok) {
+          return supabase.from('songs').select('title').eq('id', songId).single();
         }
 
-        return supabase.from('songs').select('title').eq('id', songId).single();
+        const legacyIdentity = getIdentity();
+        if (legacyIdentity) {
+          return supabase.from('songs').select('title').eq('id', songId).single();
+        }
+
+        router.push(`/?redirectTo=${encodeURIComponent(`/songs/${songId}/upload`)}`);
+        return null;
+      })
+      .catch(() => {
+        const legacyIdentity = getIdentity();
+        if (legacyIdentity) {
+          return supabase.from('songs').select('title').eq('id', songId).single();
+        }
+
+        router.push(`/?redirectTo=${encodeURIComponent(`/songs/${songId}/upload`)}`);
+        return null;
       })
       .then(result => {
-        if (result?.data) setSongTitle(result.data.title);
+        if (mounted && result?.data) setSongTitle(result.data.title);
       });
+
+    return () => {
+      mounted = false;
+    };
   }, [router, songId]);
 
   // NOTE: no redirect if versions exist — this page is always for uploading a NEW version

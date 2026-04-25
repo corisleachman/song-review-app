@@ -6,9 +6,10 @@ export async function middleware(request: NextRequest) {
   
   // Public routes (no auth required)
   const publicRoutes = ['/', '/identify', '/auth/callback'];
+  const isInviteRoute = pathname.startsWith('/invite/');
   
   // Check if path is public
-  if (publicRoutes.includes(pathname)) {
+  if (publicRoutes.includes(pathname) || isInviteRoute) {
     return NextResponse.next();
   }
   

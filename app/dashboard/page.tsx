@@ -4,8 +4,13 @@ import { useEffect, useRef, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { ActionStatus, getActionStatusLabel, getNextActionStatus, isOpenAction } from '@/lib/actionWorkflow';
 import { type AwaitingResponseState, getAwaitingResponseLabel, type SongActivityItem } from '@/lib/collaborationSignals';
+import { type AccountPlan, type PlanLimitType } from '@/lib/plans';
 import { SongStatus, SONG_STATUS_VALUES, getSongStatusLabel } from '@/lib/songWorkflow';
+import { getIdentity } from '@/lib/auth';
 import { createClient } from '@/lib/supabase';
+import AppShell from '@/components/AppShell';
+import UpgradeModal from '@/components/UpgradeModal';
+import UpgradeSuccessModal from '@/components/UpgradeSuccessModal';
 import styles from './dashboard.module.css';
 
 const supabase = createClient();
@@ -59,6 +64,9 @@ interface BootstrapPayload {
     workspaceName: string;
     workspaceSlug: string | null;
     membershipRole: 'owner' | 'member';
+  };
+  workspace: {
+    plan: AccountPlan;
   };
 }
 
@@ -133,6 +141,7 @@ function DashboardContent() {
   const [identity, setIdentity] = useState<string | null>(null);
   const [viewerKey, setViewerKey] = useState<string | null>(null);
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
+  const [workspacePlan, setWorkspacePlan] = useState<AccountPlan | null>(null);
 
   const [songs, setSongs] = useState<Song[]>([]);
   const [actions, setActions] = useState<Action[]>([]);
@@ -159,6 +168,7 @@ function DashboardContent() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deletingSongId, setDeletingSongId] = useState<string | null>(null);
   const [fadingSongIds, setFadingSongIds] = useState<string[]>([]);
+  const [upgradeModalType, setUpgradeModalType] = useState<PlanLimitType | null>(null);
 
   // Cover art uploads
   const coverInputRef = useRef<HTMLInputElement>(null);
@@ -172,6 +182,8 @@ function DashboardContent() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playerCurrentTime, setPlayerCurrentTime] = useState(0);
   const [playerDuration, setPlayerDuration] = useState(0);
+  const [billingError, setBillingError] = useState<string | null>(null);
+  const [showUpgradeSuccessModal, setShowUpgradeSuccessModal] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -186,8 +198,21 @@ function DashboardContent() {
 
           setIdentity(payload.identity.authorName || payload.identity.displayName || 'U');
           setViewerKey(payload.identity.userId);
+          setWorkspacePlan(payload.workspace.plan);
           setBootstrapError(null);
           await loadAll(payload.identity.userId);
+          return;
+        }
+
+        const legacyIdentity = getIdentity();
+        if (!mounted) return;
+
+        if (legacyIdentity) {
+          setIdentity(legacyIdentity);
+          setViewerKey(legacyIdentity);
+          setWorkspacePlan(null);
+          setBootstrapError(null);
+          await loadAll(legacyIdentity);
           return;
         }
 
@@ -195,6 +220,16 @@ function DashboardContent() {
       } catch (error) {
         console.error('Dashboard bootstrap error:', error);
         if (!mounted) return;
+
+        const legacyIdentity = getIdentity();
+        if (legacyIdentity) {
+          setIdentity(legacyIdentity);
+          setViewerKey(legacyIdentity);
+          setWorkspacePlan(null);
+          setBootstrapError(null);
+          await loadAll(legacyIdentity);
+          return;
+        }
 
         setBootstrapError('Could not load your dashboard session.');
         setLoading(false);
@@ -207,6 +242,62 @@ function DashboardContent() {
       mounted = false;
     };
   }, [router]);
+
+  const activationSessionRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const params = new URLSearchParams(window.location.search);
+    const billingState = params.get('billing');
+    const sessionId = params.get('session_id');
+
+    if (billingState !== 'success' || !sessionId) return;
+    if (activationSessionRef.current === sessionId) return;
+
+    activationSessionRef.current = sessionId;
+
+    async function activateBilling() {
+      try {
+        setBillingError(null);
+
+        const response = await fetch('/api/billing/activate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId }),
+        });
+
+        const payload = await response.json().catch(() => null);
+
+        if (!response.ok) {
+          throw new Error(
+            payload && typeof payload.error === 'string'
+              ? payload.error
+              : 'Could not activate the paid plan.'
+          );
+        }
+
+        setWorkspacePlan('paid');
+        setShowUpgradeSuccessModal(true);
+        params.delete('billing');
+        params.delete('session_id');
+        const nextQuery = params.toString();
+        const nextUrl = nextQuery
+          ? `${window.location.pathname}?${nextQuery}`
+          : window.location.pathname;
+        window.history.replaceState({}, '', nextUrl);
+      } catch (activationError) {
+        const message =
+          activationError instanceof Error
+            ? activationError.message
+            : 'Could not activate the paid plan.';
+        console.error('Billing activation client error:', activationError);
+        setBillingError(message);
+      }
+    }
+
+    void activateBilling();
+  }, []);
 
   useEffect(() => {
     if (!viewerKey) return;
@@ -331,6 +422,12 @@ function DashboardContent() {
       const payload = await res.json().catch(() => null);
 
       if (!res.ok) {
+        if (payload?.error === 'PLAN_LIMIT_REACHED' && payload?.limitType === 'songs') {
+          setUpgradeModalType('songs');
+          setShowNewModal(false);
+          setNewTitle('');
+          return;
+        }
         const message = payload && typeof payload.error === 'string'
           ? payload.error
           : 'Could not create song. Please try again.';
@@ -889,7 +986,8 @@ function DashboardContent() {
     : 'No audio yet';
 
   return (
-    <div className={`${styles.page} ${playingId ? styles.pageWithPlayer : ''}`}>
+    <AppShell label={identity || 'User'} plan={workspacePlan}>
+      <div className={`${styles.page} ${playingId ? styles.pageWithPlayer : ''}`}>
       {/* Header */}
       <header className={styles.header}>
         <div className={styles.headerLeft}>
@@ -898,22 +996,17 @@ function DashboardContent() {
             Polite Rebels
           </div>
         </div>
-        <div className={styles.headerRight}>
-          <div
-            className={styles.avatar}
-            style={{
-              background: 'rgba(255,255,255,0.08)',
-              color: 'rgba(255,255,255,0.72)',
-            }}
-          >
-            {identity?.[0] ?? ''}
-          </div>
-        </div>
       </header>
 
       {bootstrapError && (
         <div style={{ margin: '0 24px 12px', padding: '10px 12px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(229, 62, 62, 0.14)', color: '#fecaca', fontSize: 13 }}>
           {bootstrapError}
+        </div>
+      )}
+
+      {billingError && (
+        <div style={{ margin: '0 24px 12px', padding: '10px 12px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(229, 62, 62, 0.14)', color: '#fecaca', fontSize: 13 }}>
+          {billingError}
         </div>
       )}
 
@@ -1403,6 +1496,20 @@ function DashboardContent() {
                         ) : (
                           <div className={styles.cardTitle}>{song.title}</div>
                         )}
+                        <div className={styles.mobileInlineMeta}>
+                          <span>{getSongStatusLabel(song.status)}</span>
+                          <span className={styles.cardMetaSeparator}>·</span>
+                          <span>{latestVersionTag}</span>
+                          {showMetaPill && (
+                            <>
+                              <span className={styles.cardMetaSeparator}>·</span>
+                              <span className={styles.metaPill}>
+                                <span className={styles.metaPillDot} />
+                                {getMetaPillLabel(song)}
+                              </span>
+                            </>
+                          )}
+                        </div>
                         <div className={styles.cardStatusRow}>
                           <span className={`${styles.cardStatusPill} ${statusPillClass(song.status)}`}>
                             {getSongStatusLabel(song.status)}
@@ -1871,7 +1978,21 @@ function DashboardContent() {
           </div>
         );
       })()}
-    </div>
+      <UpgradeModal
+        isOpen={upgradeModalType !== null}
+        type={upgradeModalType ?? 'songs'}
+        onClose={() => setUpgradeModalType(null)}
+      />
+      <UpgradeSuccessModal
+        isOpen={showUpgradeSuccessModal}
+        onClose={() => setShowUpgradeSuccessModal(false)}
+        onPrimaryAction={() => {
+          setShowUpgradeSuccessModal(false);
+          router.push('/settings');
+        }}
+      />
+      </div>
+    </AppShell>
   );
 }
 

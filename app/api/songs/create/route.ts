@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
+import { createPlanLimitPayload, getSongLimit, isMissingPlanColumnError, normalizeAccountPlan } from '@/lib/plans';
+import { logPlanEvent } from '@/lib/planEvents';
 import { DEFAULT_SONG_STATUS } from '@/lib/songWorkflow';
 import { supabaseServer } from '@/lib/supabaseServer';
 
@@ -30,6 +32,42 @@ export async function POST(req: NextRequest) {
 
     if (!resolved) {
       return NextResponse.json({ error: 'You must be signed in to create a song.' }, { status: 401 });
+    }
+
+    const planResult = await supabaseServer
+      .from('accounts')
+      .select('plan')
+      .eq('id', resolved.identity.workspaceId)
+      .single();
+
+    const workspacePlan = !planResult.error
+      ? normalizeAccountPlan(planResult.data?.plan)
+      : isMissingPlanColumnError(planResult.error)
+        ? 'free'
+        : (() => { throw planResult.error; })();
+
+    const songLimit = getSongLimit(workspacePlan);
+
+    if (songLimit !== null) {
+      const songsCountResult = await supabaseServer
+        .from('songs')
+        .select('id', { count: 'exact', head: true })
+        .eq('account_id', resolved.identity.workspaceId);
+
+      if (songsCountResult.error) throw songsCountResult.error;
+
+      const currentSongCount = songsCountResult.count ?? 0;
+
+      if (currentSongCount >= songLimit) {
+        logPlanEvent({
+          event: 'plan_limit_hit',
+          type: 'songs',
+          workspaceId: resolved.identity.workspaceId,
+          userId: resolved.identity.userId,
+        });
+
+        return NextResponse.json(createPlanLimitPayload('songs'), { status: 400 });
+      }
     }
 
     const { data, error } = await supabaseServer

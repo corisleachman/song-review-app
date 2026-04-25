@@ -6,6 +6,8 @@ import { setAuth } from '@/lib/auth';
 import { createClient } from '@/lib/supabase';
 import styles from './page.module.css';
 
+const POST_LOGIN_INVITE_PATH_KEY = 'song_review_post_login_invite_path';
+
 function normalizeRedirectTarget(value: string | null) {
   if (!value) return '/dashboard';
   if (!value.startsWith('/') || value.startsWith('//')) return '/dashboard';
@@ -17,6 +19,11 @@ async function resolvePostLoginRedirect(redirectTo: string) {
 
   if (normalized === '/' || normalized === '/dashboard' || normalized === '/settings' || normalized === '/identify') {
     return normalized === '/' ? '/dashboard' : normalized;
+  }
+
+  const inviteMatch = normalized.match(/^\/invite\/([^/?#]+)/);
+  if (inviteMatch) {
+    return normalized;
   }
 
   const versionMatch = normalized.match(/^\/songs\/([^/]+)\/versions\/([^/?#]+)/);
@@ -55,18 +62,33 @@ function LoginContent() {
   useEffect(() => {
     let mounted = true;
 
-    supabase.auth.getSession().then(async ({ data }) => {
+    const syncSessionAndRedirect = async () => {
+      const { data } = await supabase.auth.getSession();
       if (!mounted) return;
       setGoogleSessionActive(Boolean(data.session));
 
       const arrivedFromGoogleFlow = searchParams.get('google') === 'success';
 
-      if (data.session && arrivedFromGoogleFlow) {
-        const redirectTo = await resolvePostLoginRedirect(searchParams.get('redirectTo'));
+      if (arrivedFromGoogleFlow) {
+        const requestedRedirect = searchParams.get('redirectTo');
+        const storedInvitePath =
+          typeof window !== 'undefined' ? window.sessionStorage.getItem(POST_LOGIN_INVITE_PATH_KEY) : null;
+        const inviteRedirect =
+          storedInvitePath && /^\/invite\/[^/?#]+$/.test(storedInvitePath) ? storedInvitePath : null;
+        const redirectCandidate =
+          inviteRedirect && (!requestedRedirect || requestedRedirect === '/dashboard')
+            ? inviteRedirect
+            : requestedRedirect;
+        const redirectTo = await resolvePostLoginRedirect(redirectCandidate);
         if (!mounted) return;
+        if (typeof window !== 'undefined' && inviteRedirect === redirectTo) {
+          window.sessionStorage.removeItem(POST_LOGIN_INVITE_PATH_KEY);
+        }
         window.location.assign(redirectTo);
       }
-    });
+    };
+
+    void syncSessionAndRedirect();
 
     return () => {
       mounted = false;

@@ -48,12 +48,17 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 SHARED_PASSWORD=
 RESEND_API_KEY=
+STRIPE_SECRET_KEY=
+STRIPE_PRICE_ID=
+STRIPE_WEBHOOK_SECRET=
 EMAIL_NOTIFICATIONS_ENABLED=false
 EMAIL_NOTIFICATIONS_FORCE_TO=
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 `EMAIL_NOTIFICATIONS_ENABLED` defaults to `false` outside production and `true` in production if unset. Set `EMAIL_NOTIFICATIONS_FORCE_TO=coris@example.com` to safely reroute comment/reply emails during testing without notifying real collaborators.
+
+For Stripe webhook testing, point your Stripe endpoint at `/api/stripe/webhook` and configure `STRIPE_WEBHOOK_SECRET` with the signing secret for that endpoint.
 
 ## Documentation
 

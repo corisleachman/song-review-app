@@ -219,20 +219,20 @@
   box-shadow: 0 18px 42px rgba(0,0,0,0.32);
 }
 .cardAttention {
-  box-shadow: -3px 0 0 0 #ff1493, 0 10px 24px rgba(0,0,0,0.18);
+  box-shadow: -1px 0 0 0 #ff1493, 0 1px 2px rgba(0,0,0,0.18);
   border-color: rgba(255,20,147,0.2);
 }
 .desktopGridCard.cardAttention {
-  box-shadow: 0 0 0 2px #ff1493, 0 10px 24px rgba(0,0,0,0.18) !important;
+  box-shadow: 0 0 0 2px #ff1493, 0 1px 2px rgba(0,0,0,0.18) !important;
   border-color: transparent !important;
 }
 .desktopGridCard.cardAttention:hover {
-  box-shadow: 0 0 0 2px #ff1493, 0 16px 34px rgba(0,0,0,0.28) !important;
+  box-shadow: 0 0 0 2px #ff1493, 0 1px 2px rgba(0,0,0,0.18) !important;
+    border-color: rgba(255,20,147,0.35) !important;
+
 }
 .card:hover {
   border-color: rgba(255,20,147,0.35);
-  transform: translateY(-2px);
-  box-shadow: 0 16px 34px rgba(0,0,0,0.28);
 }
 .cardDeleting {
   opacity: 0;
@@ -541,6 +541,11 @@
   white-space: nowrap;
   max-width: calc(100% - 86px);
 }
+
+.mobileInlineMeta {
+  display: none;
+}
+
 .cardMetaSeparator {
   color: rgba(255,255,255,0.2);
   flex-shrink: 0;
@@ -1185,7 +1190,7 @@
 .desktopListCard .cardTitle {
   font-size: 14px !important;
   text-shadow: none !important;
-  margin: 0 0 6px !important;
+  margin: 14px 0 6px !important;
   max-width: none !important;
 }
 .desktopListCard .cardActions {
@@ -1208,7 +1213,12 @@
   inset: unset !important;
   width: 100% !important;
   aspect-ratio: 1 / 1 !important;
+  flex-shrink: 0 !important;
   border-radius: 10px 10px 0 0 !important;
+}
+.desktopGridCard {
+  aspect-ratio: unset !important;
+  height: auto !important;
 }
 .desktopGridCard .cardBody {
   position: relative !important;
@@ -1341,14 +1351,14 @@
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0);
-  transition: background 0.25s;
+  transition: background 0.25s ease;
   z-index: 60;
   display: flex;
   align-items: flex-end;
   pointer-events: none;
 }
 .bsOverlayVisible {
-  background: rgba(0,0,0,0.55);
+  background: rgba(0,0,0,0.75);
   pointer-events: all;
 }
 .bottomSheet {
@@ -1545,6 +1555,17 @@
     gap: 0;
     box-shadow: none;
   }
+  .desktopGridCard {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    aspect-ratio: unset !important;
+    height: 76px !important;
+  }
+  .cardAttention {
+    box-shadow: -3px 0 0 0 #ff1493;
+    border-color: rgba(255, 20, 147, 0.3);
+  }
   .cardInfoExpanded {
     height: auto;
     min-height: 178px;
@@ -1564,6 +1585,15 @@
     border-radius: 10px 0 0 10px;
     inset: unset;
   }
+  .desktopGridCard .cardThumb {
+    position: relative !important;
+    inset: unset !important;
+    width: 76px !important;
+    height: 76px !important;
+    min-width: 76px !important;
+    aspect-ratio: auto !important;
+    border-radius: 10px 0 0 10px !important;
+  }
 
   /* Hide the overlay title on mobile — we show cardBody inline */
   .cardBody,
@@ -1577,9 +1607,18 @@
     display: block;
     flex: 1;
     min-width: 0;
-    padding: 10px 138px 12px 14px;
+    padding: 10px 142px 12px 14px;
     background: none;
     justify-content: unset;
+  }
+  .desktopGridCard .cardBody {
+    display: block !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+    padding: 0px 142px 12px 14px !important;
+    background: none !important;
+    border-radius: 0 !important;
+    gap: 0 !important;
   }
   .cardInfoExpanded .cardBody,
   .desktopListCard.cardInfoExpanded .cardBody,
@@ -1604,7 +1643,10 @@
     margin-bottom: 4px;
     margin-top: 5px;
     text-shadow: none;
-    max-width: none;
+    max-width: calc(100% - 2px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .editInput {
@@ -1664,6 +1706,24 @@
     text-shadow: none;
     margin-left: 0 !important;
   }
+  .mobileInlineMeta,
+  .desktopGridCard .mobileInlineMeta {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 20px;
+    color: rgba(255,255,255,0.46);
+    font-size: 11px;
+    min-width: 0;
+    overflow: visible;
+    white-space: nowrap;
+  }
+  .mobileInlineMeta .metaPill,
+  .desktopGridCard .mobileInlineMeta .metaPill {
+    max-width: none;
+    overflow: visible;
+    white-space: nowrap;
+  }
   .cardMetaComments::before,
   .desktopListCard .cardMetaComments::before,
   .desktopGridCard .cardMetaComments::before {
@@ -1688,22 +1748,28 @@
     display: none !important;
   }
 
+  .desktopGridCard .cardStatusRow,
+  .desktopGridCard .cardBodyDivider,
+  .desktopGridCard .cardMetaRow {
+    display: none;
+  }
+
   .cardActions,
   .desktopListCard .cardActions,
   .desktopGridCard .cardActions {
     opacity: 1;
-    position: absolute;
-    right: 14px;
-    top: 12px;
-    transform: none;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 6px;
-    flex-shrink: 0;
-    transition: none;
-    z-index: 6;
+    position: absolute !important;
+    right: 10px !important;
+    top: 10px !important;
+    transform: none !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 6px !important;
+    flex-shrink: 0 !important;
+    transition: none !important;
+    z-index: 6 !important;
   }
   .card:hover .cardActions,
   .desktopListCard:hover .cardActions,
@@ -1716,6 +1782,17 @@
   .iconBtn {
     width: 24px;
     height: 24px;
+  }
+  .iconBtnInfo,
+  .desktopListCard .iconBtnInfo,
+  .desktopGridCard .iconBtnInfo {
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+  .cardAttention .iconBtnInfo,
+  .desktopListCard.cardAttention .iconBtnInfo,
+  .desktopGridCard.cardAttention .iconBtnInfo {
+    border-color: rgba(255,20,147,0.5) !important;
+    color: #ff69b4 !important;
   }
   .iconBtn svg {
     width: 16px;

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { ActionStatus, getActionStatusLabel, getActionStatusToast, getNextActionStatus, isOpenAction } from '@/lib/actionWorkflow';
 import { createClient } from '@/lib/supabase';
-import { formatTimestamp } from '@/lib/auth';
+import { formatTimestamp, getIdentity } from '@/lib/auth';
 import { getVersionDisplayLabel } from '@/lib/versionDisplay';
 import styles from './version.module.css';
 
@@ -796,11 +796,27 @@ export default function VersionPage() {
           return;
         }
 
+        const legacyIdentity = getIdentity();
+        if (legacyIdentity) {
+          setIdentity(legacyIdentity);
+          setCurrentUserId(null);
+          logVersionInit('bootstrap:fallback-legacy-identity', { legacyIdentity });
+          return;
+        }
+
         logVersionInit('bootstrap:missing-identity', { payload });
         router.push(`/?redirectTo=${encodeURIComponent(`/songs/${songId}/versions/${versionId}`)}`);
       } catch (error) {
         console.error('Version page bootstrap error:', error);
         if (!mounted) return;
+
+        const legacyIdentity = getIdentity();
+        if (legacyIdentity) {
+          setIdentity(legacyIdentity);
+          setCurrentUserId(null);
+          logVersionInit('bootstrap:error-fallback-legacy-identity', { legacyIdentity });
+          return;
+        }
 
         logVersionInit('bootstrap:failed-without-identity', {
           message: error instanceof Error ? error.message : String(error),

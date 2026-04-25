@@ -1,0 +1,16 @@
+.shell {
+  min-height: 100vh;
+  background: #0d0914;
+  color: #fff;
+}
+
+.content {
+  min-height: 100vh;
+  margin-left: 76px;
+}
+
+@media (max-width: 768px) {
+  .content {
+    margin-left: 0;
+  }
+}
