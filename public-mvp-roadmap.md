@@ -1171,3 +1171,15 @@ Note the next follow-up slice.
 - Next follow-up:
   - point a live Stripe webhook endpoint at `/api/stripe/webhook` and verify end-to-end delivery with the real signing secret
   - later decide whether invoice-payment events need to participate in plan sync beyond the current subscription lifecycle coverage
+
+## 2026-04-25 — Production login cleanup
+
+- Slice / change name: Production login cleanup
+- Status: Implemented
+- Exact files changed or audited:
+  - `app/page.tsx`
+- Outcome:
+  - removed the visible legacy password fallback from the login page now that the production path is Google-auth based
+  - kept the Google sign-in return-path behavior unchanged so invite and dashboard redirects continue through the existing callback flow
+- Next follow-up:
+  - configure Supabase Auth URL settings with the production callback URL so Google sign-in no longer returns to localhost

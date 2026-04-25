@@ -2,7 +2,6 @@
 
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
-import { setAuth } from '@/lib/auth';
 import { createClient } from '@/lib/supabase';
 import styles from './page.module.css';
 
@@ -51,9 +50,7 @@ async function resolvePostLoginRedirect(redirectTo: string) {
 function LoginContent() {
   const searchParams = useSearchParams();
   const [supabase] = useState(() => createClient());
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleSessionActive, setGoogleSessionActive] = useState(false);
   const googleStatus = searchParams.get('google');
@@ -116,21 +113,6 @@ function LoginContent() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
-
-    if (password === 'further_forever') {
-      setAuth();
-      const redirectTo = searchParams.get('redirectTo') || '/identify';
-      window.location.assign(redirectTo);
-    } else {
-      setError('Incorrect password');
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className={styles.container}>
       {/* Animated background gradient */}
@@ -154,7 +136,7 @@ function LoginContent() {
 
           <div className={styles.footer}>
             <p className={styles.hint}>
-              Google auth foundation is now available. The legacy password fallback remains below during migration.
+              Sign in with Google to continue.
             </p>
           </div>
 
@@ -172,37 +154,9 @@ function LoginContent() {
 
           {googleSessionActive && googleStatus !== 'success' && (
             <div className={styles.error} style={{ background: 'rgba(16, 185, 129, 0.14)', color: '#86efac', borderColor: 'rgba(16, 185, 129, 0.35)' }}>
-              Google session detected. The legacy password path is still available below while the app transition continues.
+              Google session detected. Continuing to your dashboard.
             </div>
           )}
-
-          <form onSubmit={handleSubmit} className={styles.form}>
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="Enter password to continue..."
-                autoFocus
-                className={styles.input}
-              />
-            </div>
-
-            {error && <div className={styles.error}>{error}</div>}
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={styles.submitButton}
-            >
-              {isLoading ? 'Unlocking...' : 'Continue with Legacy Password'}
-            </button>
-          </form>
-
-          <div className={styles.footer}>
-            <p className={styles.hint}>🔑 A password is required to access this app</p>
-          </div>
         </div>
       </div>
     </div>

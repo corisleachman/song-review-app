@@ -1071,3 +1071,27 @@ Stripe webhook sync for core subscription events plus an owner-only customer por
 - Synced `accounts.plan`, `stripe_customer_id`, and `stripe_subscription_id` from `checkout.session.completed`, `customer.subscription.updated`, and `customer.subscription.deleted`.
 - Added a minimal owner-only billing portal route and wired paid owners in Settings to a `Manage billing` button.
 - Documented the new webhook secret and local endpoint expectation in the README.
+
+---
+
+## 2026-04-25 — Production login cleanup
+
+### What we were trying to achieve
+
+Remove the redundant legacy password fallback from the public production login screen now that the deployed app should use Google sign-in as the primary access path.
+
+### Feature / change being made
+
+Login page cleanup for the production Google-auth flow.
+
+### Files changed
+
+- [app/page.tsx](/Users/impero/song-review-app/app/page.tsx)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+
+### Notes
+
+- Removed the visible password field and legacy password submit button from the login page.
+- Kept the Google sign-in and post-login redirect handling unchanged.
+- Supabase Auth URL configuration still needs the production callback URL so deployed Google auth does not fall back to localhost.
