@@ -647,7 +647,22 @@ function DashboardContent() {
                   onClick={e => handleCardClick(e, song)}
                 >
                   {/* Thumbnail */}
-                  <div className={styles.cardThumb}>
+                  <div
+                    className={styles.cardThumb}
+                    onTouchEnd={e => {
+                      // On mobile: tapping the artwork directly triggers play,
+                      // not navigation. Tapping elsewhere on the card still navigates.
+                      if ((e.target as HTMLElement).closest('button')) return; // let button handle it
+                      e.stopPropagation();
+                      if (song.latestVersionFilePath) {
+                        if (playingId === song.id) {
+                          togglePlayPause();
+                        } else {
+                          playSong(song, visibleSongs);
+                        }
+                      }
+                    }}
+                  >
                     {song.imageUploading ? (
                       <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(13,9,20,0.7)',borderRadius:8}}>
                         <div style={{width:18,height:18,border:'2px solid #ff1493',borderTopColor:'transparent',borderRadius:'50%',animation:'spin 0.7s linear infinite'}} />
