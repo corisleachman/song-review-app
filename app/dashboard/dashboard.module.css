@@ -1159,6 +1159,16 @@
   .desktopGridCard .cardThumb::after { display: none !important; }
   .desktopGridCard .versionBadge { display: none !important; }
   .desktopGridCard .activityBadge { display: none !important; }
+  /* On mobile, grid cards render as list rows — show play button immediately (no hover state) */
+  .desktopGridCard .thumbPlayBtn {
+    opacity: 1 !important;
+    transform: translate(-50%, -50%) !important;
+    bottom: unset !important;
+    left: 50% !important;
+    top: 50% !important;
+    width: 28px !important;
+    height: 28px !important;
+  }
 
   /* List row layout on mobile */
   .card {
