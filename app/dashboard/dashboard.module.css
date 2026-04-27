@@ -360,24 +360,26 @@
   min-height: 0 !important;
 }
 
-/* Play button: large, centred on artwork */
-.desktopGridCard .thumbPlayBtn {
-  width: 48px !important;
-  height: 48px !important;
-  bottom: unset !important;
-  left: 50% !important;
-  top: 50% !important;
-  transform: translate(-50%, -50%) scale(0.85) !important;
-  opacity: 0 !important;
-  box-shadow: 0 4px 20px rgba(255,20,147,0.6) !important;
-}
-.desktopGridCard:hover .thumbPlayBtn {
-  opacity: 1 !important;
-  transform: translate(-50%, -50%) scale(1) !important;
-}
-.desktopGridCard .thumbPlayBtnActive {
-  opacity: 1 !important;
-  transform: translate(-50%, -50%) scale(1) !important;
+/* Play button: large, centred on artwork — desktop grid only */
+@media (min-width: 769px) {
+  .desktopGridCard .thumbPlayBtn {
+    width: 48px !important;
+    height: 48px !important;
+    bottom: unset !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) scale(0.85) !important;
+    opacity: 0 !important;
+    box-shadow: 0 4px 20px rgba(255,20,147,0.6) !important;
+  }
+  .desktopGridCard:hover .thumbPlayBtn {
+    opacity: 1 !important;
+    transform: translate(-50%, -50%) scale(1) !important;
+  }
+  .desktopGridCard .thumbPlayBtnActive {
+    opacity: 1 !important;
+    transform: translate(-50%, -50%) scale(1) !important;
+  }
 }
 
 /* Subtle dark scrim on image on hover so play button pops */
@@ -1407,25 +1409,27 @@
 }
 
 /* Desktop list view — play button always visible, centred on thumb */
-.desktopListCard .thumbPlayBtn {
-  opacity: 1;
-  transform: translate(-50%, -50%) !important;
-  bottom: unset;
-  left: 50%;
-  top: 50%;
-  width: 28px;
-  height: 28px;
-  transition: filter 0.15s, box-shadow 0.15s;
+@media (min-width: 769px) {
+  .desktopListCard .thumbPlayBtn {
+    opacity: 1;
+    transform: translate(-50%, -50%) !important;
+    bottom: unset;
+    left: 50%;
+    top: 50%;
+    width: 28px;
+    height: 28px;
+    transition: filter 0.15s, box-shadow 0.15s;
+  }
+  .desktopListCard:hover .thumbPlayBtn {
+    filter: brightness(1.15);
+    box-shadow: 0 2px 14px rgba(255,20,147,0.7);
+    transform: translate(-50%, -50%) !important;
+  }
+  .desktopListCard .thumbPlayBtnActive {
+    transform: translate(-50%, -50%) !important;
+  }
+  .desktopListCard .eqBars { display: none; }
 }
-.desktopListCard:hover .thumbPlayBtn {
-  filter: brightness(1.15);
-  box-shadow: 0 2px 14px rgba(255,20,147,0.7);
-  transform: translate(-50%, -50%) !important;
-}
-.desktopListCard .thumbPlayBtnActive {
-  transform: translate(-50%, -50%) !important;
-}
-.desktopListCard .eqBars { display: none; }
 
 /* ─── Mini player ─── */
 .miniPlayer {
