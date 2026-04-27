@@ -162,3 +162,16 @@ Escalate or flag clearly if:
 - the issue involves auth/session/account boundaries
 - the issue needs production logs or data you cannot access
 - the safe fix is unclear and multiple architectural options exist
+---
+
+## Key Reference Documents
+
+Before working on any task, read the relevant documents:
+
+| Document | Purpose |
+|----------|---------|
+| [`CHANGELOG.md`](./CHANGELOG.md) | Running log of all UI/UX fixes made on main branch after launch. Read this before building v2 features that touch the same areas. |
+| [`AUDIO_PLAYER_FIXES.md`](./AUDIO_PLAYER_FIXES.md) | Audio player architecture — mobile/iOS rules, WaveSurfer setup, what not to do. Essential before touching the player. |
+| [`CONTEXT_HANDOFF.md`](./CONTEXT_HANDOFF.md) | Full project context, credentials, stack overview. |
+| [`DATABASE.md`](./DATABASE.md) | Schema, relationships, RLS notes. |
+| [`API.md`](./API.md) | All API endpoints with examples. |
