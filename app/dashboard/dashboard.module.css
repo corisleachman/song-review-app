@@ -1159,16 +1159,7 @@
   .desktopGridCard .cardThumb::after { display: none !important; }
   .desktopGridCard .versionBadge { display: none !important; }
   .desktopGridCard .activityBadge { display: none !important; }
-  /* On mobile, grid cards render as list rows — show play button immediately (no hover state) */
-  .desktopGridCard .thumbPlayBtn {
-    opacity: 1 !important;
-    transform: translate(-50%, -50%) !important;
-    bottom: unset !important;
-    left: 50% !important;
-    top: 50% !important;
-    width: 28px !important;
-    height: 28px !important;
-  }
+
 
   /* List row layout on mobile */
   .card {
@@ -1381,23 +1372,38 @@
   to   { transform: scaleY(1); }
 }
 
-/* Mobile/list — play button always visible */
+/* Mobile — hide play button, use artwork tap instead */
 @media (max-width: 768px) {
-  .thumbPlayBtn {
-    opacity: 1;
-    transform: scale(1);
-    bottom: unset;
-    left: unset;
+  .thumbPlayBtn { display: none !important; }
+  .thumbPlayBtnActive { display: none !important; }
+
+  /* Centred EQ overlay on artwork when playing */
+  .eqBars {
+    display: flex;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 34px;
-    height: 34px;
+    width: 45%;
+    height: 45%;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 8%;
+    background: rgba(13, 9, 20, 0.45);
+    border-radius: 8px;
+    padding: 18% 12%;
+    box-sizing: border-box;
   }
-  .thumbPlayBtnActive {
-    transform: translate(-50%, -50%) !important;
+  .eqBar {
+    flex: 1;
+    width: auto;
+    max-width: 14%;
+    border-radius: 2px;
+    height: 100%;
   }
-  .eqBars { display: none; }
+  .eqBar:nth-child(1) { height: 40%; }
+  .eqBar:nth-child(2) { height: 80%; }
+  .eqBar:nth-child(3) { height: 55%; }
+  .eqBar:nth-child(4) { height: 70%; }
 }
 
 /* Desktop list view — play button always visible, centred on thumb */
