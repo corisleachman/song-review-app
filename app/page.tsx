@@ -3,6 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import { useState, Suspense } from 'react';
 import styles from './page.module.css';
+import { setAuth } from '@/lib/auth';
 
 function LoginContent() {
   const searchParams = useSearchParams();
@@ -24,7 +25,8 @@ function LoginContent() {
       });
       const data = await res.json();
       if (data.success) {
-        // Cookie is now set server-side in the API response — no client setAuth() needed
+        // Set auth in localStorage as fallback for iOS Safari cookie restrictions
+        setAuth();
         const redirectTo = searchParams.get('redirectTo') || '/identify';
         window.location.assign(redirectTo);
       } else {
