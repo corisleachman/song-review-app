@@ -8,6 +8,29 @@ For audio player architecture fixes (mobile background audio, WaveSurfer iOS rul
 
 ---
 
+## [2026-04-29] iOS Safari login loop — localStorage not written after password verification
+
+**Commit:** `973be97f`
+**Files:** `app/page.tsx`
+
+### What changed
+`setAuth()` is now called client-side immediately after a successful password API response, before the redirect to `/identify`.
+
+### Root cause
+A previous fix (2026-04-24) moved auth cookie stamping server-side and removed the client-side `setAuth()` call. The server correctly sets the `song_review_auth` cookie, but `getAuth()` in `useProtectedRoute` also checks `localStorage` as a fallback. With `setAuth()` removed, `localStorage` was never written — so on iOS Safari (where cookies can be unreliable across navigation), `getAuth()` returned `false`, the protected route hook fired, and the user was redirected back to login in a loop.
+
+### Before
+Login succeeded (API returned 200), but `localStorage` was never written. On iOS Safari, the cookie did not persist through the redirect, so `getAuth()` returned `false` and caused an infinite login loop.
+
+### After
+`setAuth()` is called after the API responds with `success: true`, ensuring both the server-set cookie and the `localStorage` fallback are populated before navigation.
+
+### Notes for v2
+- `setAuth()` (client-side localStorage write) and the server-side cookie stamp should both happen at login — they serve different failure modes (localStorage = iOS cookie fallback; server cookie = race condition protection)
+- Never remove one without auditing whether the other alone is sufficient across all platforms
+
+---
+
 ## [2026-04-27] Mobile dashboard — one-tap play with EQ overlay, play button removed
 
 **Commits:** `60f0941c`, `2ccd3ac5`, `0320bc3f`, `14fb794c`
