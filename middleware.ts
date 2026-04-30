@@ -8,6 +8,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Song version pages: allow unauthenticated HEAD/GET so OG crawlers
+  // (WhatsApp, iMessage, Slack etc.) can read server-rendered metadata.
+  // The client component still redirects unauthenticated users to login.
+  const isSongVersionPage = /^\/songs\/[^\/]+\/versions\/[^\/]+(\/)?$/.test(pathname);
+  if (isSongVersionPage) {
+    return NextResponse.next();
+  }
+
   const authCookie = request.cookies.get('song_review_auth');
 
   // /identify only needs the auth cookie (identity not chosen yet)
@@ -21,9 +29,9 @@ export function middleware(request: NextRequest) {
   // All other routes need both auth + identity
   const identityCookie = request.cookies.get('song_review_identity');
   if (!authCookie || !identityCookie) {
-    const loginUrl = new URL('/', request.url);
+    const loginUrl = new URL('/');
     loginUrl.searchParams.set('redirectTo', pathname);
-    return NextResponse.redirect(loginUrl);
+    return NextResponse.redirect(new URL(loginUrl.toString(), request.url));
   }
 
   return NextResponse.next();
