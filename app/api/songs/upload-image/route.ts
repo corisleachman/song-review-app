@@ -21,8 +21,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Always store as JPEG after optimisation — consistent format regardless of input
-    const fileName = `${songId}.jpg`;
+    // Use a timestamp in the filename so every upload gets a unique path.
+    // This bypasses the Supabase CDN cache entirely — no stale images served.
+    // Old files accumulate in storage but remain small (JPEGs < 200 KB each).
+    const timestamp = Date.now();
+    const fileName = `${songId}-${timestamp}.jpg`;
 
     // Read uploaded file into a buffer, then resize + compress with Sharp.
     // - Resizes to fit within 1200x1200, preserving aspect ratio (no upscaling)
@@ -31,7 +34,7 @@ export async function POST(req: NextRequest) {
     const rawBuffer = Buffer.from(await file.arrayBuffer());
     const optimisedBuffer = await sharp(rawBuffer)
       .resize(IMAGE_MAX_PX, IMAGE_MAX_PX, {
-        fit: 'inside',      // preserve aspect ratio, no crop
+        fit: 'inside',           // preserve aspect ratio, no crop
         withoutEnlargement: true, // never upscale smaller images
       })
       .jpeg({ quality: IMAGE_QUALITY, mozjpeg: true })
@@ -41,30 +44,26 @@ export async function POST(req: NextRequest) {
       .from('song-images')
       .upload(fileName, optimisedBuffer, {
         contentType: 'image/jpeg',
-        upsert: true,
+        upsert: false, // new unique path each time — no overwrite needed
       });
 
     if (uploadError) throw uploadError;
 
-    // Get public URL and append cache-buster so browsers show the new image immediately
     const { data: urlData } = supabaseServer.storage
       .from('song-images')
       .getPublicUrl(fileName);
 
-    const imageUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+    const imageUrl = urlData.publicUrl;
 
-    // Update song with image URL (store without cache-buster — we add it fresh each upload)
+    // Update song with the new public URL (no cache-buster needed — URL is already unique)
     const { error: updateError } = await supabaseServer
       .from('songs')
-      .update({ image_url: urlData.publicUrl })
+      .update({ image_url: imageUrl })
       .eq('id', songId);
 
     if (updateError) throw updateError;
 
-    return NextResponse.json(
-      { imageUrl },
-      { status: 200 }
-    );
+    return NextResponse.json({ imageUrl }, { status: 200 });
   } catch (error) {
     console.error('Error uploading image:', error);
     return NextResponse.json(
