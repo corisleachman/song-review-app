@@ -16,7 +16,8 @@
     "@supabase/auth-helpers-nextjs": "^0.8.0",
     "wavesurfer.js": "^7.8.0",
     "resend": "^3.0.0",
-    "date-fns": "^2.30.0"
+    "date-fns": "^2.30.0",
+    "sharp": "0.33.5"
   },
   "devDependencies": {
     "typescript": "^5",
