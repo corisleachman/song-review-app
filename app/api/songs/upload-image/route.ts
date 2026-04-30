@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import sharp from 'sharp';
 import { supabaseServer } from '@/lib/supabaseServer';
+
+// Target dimensions and quality for cover art.
+// 1200x1200 JPEG at 85% quality keeps files well under 600 KB (WhatsApp limit)
+// and loads quickly in the app. Square crop suits music artwork.
+const IMAGE_MAX_PX = 1200;
+const IMAGE_QUALITY = 85;
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,30 +21,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Derive extension — prefer MIME type, fall back to filename
-    const mimeToExt: Record<string, string> = {
-      'image/jpeg': '.jpg',
-      'image/jpg': '.jpg',
-      'image/png': '.png',
-      'image/gif': '.gif',
-      'image/webp': '.webp',
-      'image/avif': '.avif',
-      'image/heic': '.heic',
-    };
-    const extFromMime = mimeToExt[file.type?.toLowerCase()] ?? null;
-    const extFromName = file.name.includes('.')
-      ? file.name.substring(file.name.lastIndexOf('.')).toLowerCase()
-      : '';
-    const ext = extFromMime ?? extFromName ?? '.jpg';
+    // Always store as JPEG after optimisation — consistent format regardless of input
+    const fileName = `${songId}.jpg`;
 
-    // Stable filename — same song always overwrites the same file in storage
-    const fileName = `${songId}${ext}`;
-    const fileBuffer = await file.arrayBuffer();
+    // Read uploaded file into a buffer, then resize + compress with Sharp.
+    // - Resizes to fit within 1200x1200, preserving aspect ratio (no upscaling)
+    // - Converts to JPEG at 85% quality
+    // - Strips EXIF/metadata to further reduce file size
+    const rawBuffer = Buffer.from(await file.arrayBuffer());
+    const optimisedBuffer = await sharp(rawBuffer)
+      .resize(IMAGE_MAX_PX, IMAGE_MAX_PX, {
+        fit: 'inside',      // preserve aspect ratio, no crop
+        withoutEnlargement: true, // never upscale smaller images
+      })
+      .jpeg({ quality: IMAGE_QUALITY, mozjpeg: true })
+      .toBuffer();
 
     const { error: uploadError } = await supabaseServer.storage
       .from('song-images')
-      .upload(fileName, fileBuffer, {
-        contentType: file.type || 'image/jpeg',
+      .upload(fileName, optimisedBuffer, {
+        contentType: 'image/jpeg',
         upsert: true,
       });
 
