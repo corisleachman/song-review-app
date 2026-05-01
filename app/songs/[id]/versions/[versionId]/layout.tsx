@@ -2,6 +2,11 @@ import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
 import { supabaseServer } from '@/lib/supabaseServer';
 
+// Never cache this layout — image_url changes on every artwork upload
+// and we need the OG tags to reflect the latest value immediately.
+export const revalidate = 0;
+export const dynamic = 'force-dynamic';
+
 interface Props {
   children: ReactNode;
   params: { id: string; versionId: string };
