@@ -27,11 +27,43 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'You must be signed in to comment.' }, { status: 401 });
     }
 
-    if (!versionId || timestamp === null || !trimmedComment) {
+    if (!versionId || !songId || timestamp == null || !trimmedComment) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
+    }
+
+    const { data: version, error: versionError } = await supabaseServer
+      .from('song_versions')
+      .select('id, song_id')
+      .eq('id', versionId)
+      .maybeSingle();
+
+    if (versionError) throw versionError;
+
+    if (!version) {
+      return NextResponse.json({ error: 'Version not found.' }, { status: 404 });
+    }
+
+    if (version.song_id !== songId) {
+      return NextResponse.json({ error: 'Version does not belong to this song.' }, { status: 400 });
+    }
+
+    const { data: song, error: songError } = await supabaseServer
+      .from('songs')
+      .select('id, account_id')
+      .eq('id', songId)
+      .maybeSingle();
+
+    if (songError) throw songError;
+
+    if (!song) {
+      return NextResponse.json({ error: 'Song not found.' }, { status: 404 });
+    }
+
+    if (!song.account_id || song.account_id !== resolved.identity.workspaceId) {
+      return NextResponse.json({ error: 'You do not have access to this song.' }, { status: 403 });
     }
 
     const author = resolved.identity.authorName;

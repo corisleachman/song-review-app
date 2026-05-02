@@ -85,6 +85,17 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.sectionEyebrow {
+  display: block;
+  margin-bottom: var(--space-sm);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.38);
+}
+
 .explorerHeader h2 {
   font-family: 'Outfit', sans-serif;
   font-size: 24px;
@@ -346,6 +357,74 @@
   padding: var(--space-2xl);
   box-shadow: 0 16px 48px rgba(255, 20, 147, 0.08);
   backdrop-filter: blur(10px);
+}
+
+.workspaceSettingsHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-xl);
+  margin-bottom: var(--space-xl);
+  padding-bottom: var(--space-xl);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.workspaceSettingsHeader h2 {
+  margin: 0 0 var(--space-sm) 0;
+  font-family: 'Outfit', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.workspaceSettingsHeader p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 14px;
+}
+
+.workspaceRoleBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 96px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.permissionsSummary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-lg);
+  margin-bottom: var(--space-2xl);
+}
+
+.permissionCard {
+  padding: var(--space-lg);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.permissionCard h3 {
+  margin: 0 0 var(--space-sm) 0;
+  color: var(--color-text);
+  font-size: 16px;
+}
+
+.permissionCard p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 .planSection {
@@ -659,6 +738,14 @@
   }
 
   .planDetails {
+    grid-template-columns: 1fr;
+  }
+
+  .workspaceSettingsHeader {
+    flex-direction: column;
+  }
+
+  .permissionsSummary {
     grid-template-columns: 1fr;
   }
 

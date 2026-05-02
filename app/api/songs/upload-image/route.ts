@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
 
 export async function POST(req: NextRequest) {
@@ -6,12 +7,33 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const songId = formData.get('songId') as string;
     const file = formData.get('file') as File;
+    const resolved = await resolveCanonicalIdentity();
 
     if (!songId || !file) {
       return NextResponse.json(
         { error: 'Missing songId or file' },
         { status: 400 }
       );
+    }
+
+    if (!resolved) {
+      return NextResponse.json({ error: 'You must be signed in to upload cover art.' }, { status: 401 });
+    }
+
+    const { data: song, error: songError } = await supabaseServer
+      .from('songs')
+      .select('id, account_id')
+      .eq('id', songId)
+      .maybeSingle();
+
+    if (songError) throw songError;
+
+    if (!song) {
+      return NextResponse.json({ error: 'Song not found.' }, { status: 404 });
+    }
+
+    if (!song.account_id || song.account_id !== resolved.identity.workspaceId) {
+      return NextResponse.json({ error: 'You do not have access to this song.' }, { status: 403 });
     }
 
     // Upload file to Supabase Storage

@@ -27,14 +27,19 @@ export async function GET(
 ) {
   try {
     const { songId } = params;
+    const resolved = await resolveCanonicalIdentity();
 
     if (!songId) {
       return NextResponse.json({ error: 'Song ID is required' }, { status: 400 });
     }
 
+    if (!resolved) {
+      return NextResponse.json({ error: 'You must be signed in to view this song.' }, { status: 401 });
+    }
+
     const { data, error } = await supabaseServer
       .from('songs')
-      .select('id, title, image_url, status')
+      .select('id, title, image_url, status, account_id')
       .eq('id', songId)
       .maybeSingle();
 
@@ -44,8 +49,14 @@ export async function GET(
       return NextResponse.json({ error: 'Song not found' }, { status: 404 });
     }
 
+    if (!data.account_id || data.account_id !== resolved.identity.workspaceId) {
+      return NextResponse.json({ error: 'You do not have access to this song.' }, { status: 403 });
+    }
+
+    const { account_id: _accountId, ...song } = data;
+
     return NextResponse.json(
-      { song: data },
+      { song },
       {
         status: 200,
         headers: {
@@ -121,9 +132,37 @@ export async function DELETE(
 ) {
   try {
     const { songId } = params;
+    const resolved = await resolveCanonicalIdentity();
 
     if (!songId) {
       return NextResponse.json({ error: 'Song ID is required' }, { status: 400 });
+    }
+
+    if (!resolved) {
+      return NextResponse.json({ error: 'You must be signed in to delete a song.' }, { status: 401 });
+    }
+
+    const { data: song, error: songLookupError } = await supabaseServer
+      .from('songs')
+      .select('id, account_id')
+      .eq('id', songId)
+      .maybeSingle();
+
+    if (songLookupError) throw songLookupError;
+
+    if (!song) {
+      return NextResponse.json({ error: 'Song not found.' }, { status: 404 });
+    }
+
+    if (!song.account_id || song.account_id !== resolved.identity.workspaceId) {
+      return NextResponse.json({ error: 'You do not have access to this song.' }, { status: 403 });
+    }
+
+    if (resolved.identity.membershipRole !== 'owner') {
+      return NextResponse.json(
+        { error: 'Only the workspace owner can delete songs.' },
+        { status: 403 }
+      );
     }
 
     // Delete actions

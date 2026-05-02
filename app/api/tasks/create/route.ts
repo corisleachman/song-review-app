@@ -15,6 +15,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing songId or description' }, { status: 400 });
     }
 
+    const { data: song, error: songError } = await supabaseServer
+      .from('songs')
+      .select('id, account_id')
+      .eq('id', songId)
+      .maybeSingle();
+
+    if (songError) throw songError;
+
+    if (!song) {
+      return NextResponse.json({ error: 'Song not found.' }, { status: 404 });
+    }
+
+    if (!song.account_id || song.account_id !== resolved.identity.workspaceId) {
+      return NextResponse.json({ error: 'You do not have access to this song.' }, { status: 403 });
+    }
+
     // Get current max sort_order for this song
     const { data: existing } = await supabaseServer
       .from('song_tasks')

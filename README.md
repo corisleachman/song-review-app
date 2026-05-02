@@ -71,6 +71,8 @@ For Stripe webhook testing, point your Stripe endpoint at `/api/stripe/webhook` 
 | [API.md](./API.md) | Current API routes and payloads |
 | [FEATURES.md](./FEATURES.md) | Current user-facing flows |
 | [WORKSPACE_MODEL.md](./WORKSPACE_MODEL.md) | Workspace/account model and multi-workspace user journeys |
+| [PERMISSIONS_MODEL.md](./PERMISSIONS_MODEL.md) | Workspace role permissions, current audit, and recommended hardening order |
+| [SETTINGS_MODEL.md](./SETTINGS_MODEL.md) | User-level vs workspace-level settings model and migration plan |
 | [TESTING.md](./TESTING.md) | Manual QA checklist |
 | [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) | Known integration and layout gotchas |
 | [DEPLOYMENT.md](./DEPLOYMENT.md) | Deployment notes |

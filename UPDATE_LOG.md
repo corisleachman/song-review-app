@@ -1353,3 +1353,192 @@ Workspace-aware empty-state copy on the dashboard.
 - Filtered-empty copy also names the active workspace.
 - No permissions or song-creation behavior changed in this slice.
 - `npx tsc --noEmit` passed.
+
+---
+
+## 2026-05-02 — Workspace permissions model and audit
+
+### What we were trying to achieve
+
+Clarify whether members should be collaborators or read-only reviewers before making permission changes across shared workspaces.
+
+### Feature / change being made
+
+Documentation and code-audit checkpoint for workspace roles and route permissions.
+
+### Files changed
+
+- [PERMISSIONS_MODEL.md](/Users/impero/song-review-app/PERMISSIONS_MODEL.md)
+- [README.md](/Users/impero/song-review-app/README.md)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- Recommended keeping the current `member` role as a collaborator role.
+- Documented a future reviewer/commenter role for read-only or comment-only access.
+- Confirmed owner-only checks already exist for billing, invites, member removal, and plan state.
+- Confirmed members are currently allowed to create songs, upload versions, comment, and update actions.
+- Flagged hardening gaps in destructive song deletion, version creation, thread creation, task routes, song reads, and transitional settings persistence.
+- No app behavior changed in this slice.
+
+---
+
+## 2026-05-02 — Owner-only song deletion hardening
+
+### What we were trying to achieve
+
+Make destructive song deletion respect the active workspace and role model before continuing with broader member collaboration permissions.
+
+### Feature / change being made
+
+Owner-only song deletion enforcement in the API and dashboard UI.
+
+### Files changed
+
+- [app/api/songs/[songId]/route.ts](/Users/impero/song-review-app/app/api/songs/[songId]/route.ts)
+- [app/dashboard/page.tsx](/Users/impero/song-review-app/app/dashboard/page.tsx)
+- [PERMISSIONS_MODEL.md](/Users/impero/song-review-app/PERMISSIONS_MODEL.md)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- Song deletion now requires a signed-in canonical identity.
+- The API verifies the song belongs to the active workspace before deleting related actions, versions, threads, comments, and the song record.
+- Only workspace owners can delete songs.
+- Non-owner members no longer see dashboard delete buttons.
+- `npx tsc --noEmit` passed.
+- Unauthenticated `DELETE /api/songs/test-id` returned `401 Unauthorized`.
+
+---
+
+## 2026-05-02 — Version creation workspace guard
+
+### What we were trying to achieve
+
+Prevent a signed-in user from creating a version or signed upload URL against a song outside their active workspace.
+
+### Feature / change being made
+
+Active-workspace validation for version creation while keeping collaborator uploads allowed.
+
+### Files changed
+
+- [app/api/versions/create/route.ts](/Users/impero/song-review-app/app/api/versions/create/route.ts)
+- [PERMISSIONS_MODEL.md](/Users/impero/song-review-app/PERMISSIONS_MODEL.md)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- Version creation now loads the target song before counting versions or creating a signed upload URL.
+- The route returns `404` if the song does not exist.
+- The route returns `403` if the song belongs to another workspace.
+- Collaborators can still upload versions to songs in their active workspace.
+- `npx tsc --noEmit` passed.
+- Unauthenticated `POST /api/versions/create` returned `401 Unauthorized`.
+
+---
+
+## 2026-05-02 — Phase 1 workspace route hardening
+
+### What we were trying to achieve
+
+Complete the remaining Phase 1 route hardening so authenticated song, version, thread, task, and cover-art routes respect the active workspace boundary.
+
+### Feature / change being made
+
+Canonical workspace checks across the remaining collaboration read/write routes while keeping normal member collaboration allowed.
+
+### Files changed
+
+- [app/api/songs/[songId]/route.ts](/Users/impero/song-review-app/app/api/songs/[songId]/route.ts)
+- [app/api/songs/[songId]/versions/route.ts](/Users/impero/song-review-app/app/api/songs/[songId]/versions/route.ts)
+- [app/api/songs/[songId]/tasks/route.ts](/Users/impero/song-review-app/app/api/songs/[songId]/tasks/route.ts)
+- [app/api/songs/upload-image/route.ts](/Users/impero/song-review-app/app/api/songs/upload-image/route.ts)
+- [app/api/versions/[versionId]/route.ts](/Users/impero/song-review-app/app/api/versions/[versionId]/route.ts)
+- [app/api/versions/[versionId]/threads/route.ts](/Users/impero/song-review-app/app/api/versions/[versionId]/threads/route.ts)
+- [app/api/threads/create/route.ts](/Users/impero/song-review-app/app/api/threads/create/route.ts)
+- [app/api/threads/reply/route.ts](/Users/impero/song-review-app/app/api/threads/reply/route.ts)
+- [app/api/tasks/create/route.ts](/Users/impero/song-review-app/app/api/tasks/create/route.ts)
+- [app/api/tasks/[taskId]/route.ts](/Users/impero/song-review-app/app/api/tasks/[taskId]/route.ts)
+- [app/api/tasks/reorder/route.ts](/Users/impero/song-review-app/app/api/tasks/reorder/route.ts)
+- [PERMISSIONS_MODEL.md](/Users/impero/song-review-app/PERMISSIONS_MODEL.md)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- Song and version detail reads now require a signed-in canonical identity and active-workspace access.
+- Song versions, song tasks, and version threads reads now verify the parent song/version belongs to the active workspace.
+- Thread creation now verifies the version belongs to the submitted song and active workspace before inserting a thread/comment.
+- Thread replies now verify the canonical thread/version/song chain belongs to the active workspace.
+- Task create, update, delete, and reorder routes now verify task/song workspace access.
+- Cover art upload now verifies the target song belongs to the active workspace before uploading and updating the song.
+- Collaborators remain able to create songs, upload versions, comment, manage actions, and manage tasks inside shared workspaces.
+- `npx tsc --noEmit` passed.
+- `git diff --check` passed.
+- Unauthenticated probes returned `401 Unauthorized` for song detail, version detail, version threads, thread creation, task creation, and task reorder routes.
+
+---
+
+## 2026-05-02 — Settings model decision
+
+### What we were trying to achieve
+
+Decide whether settings should belong to the signed-in user or to the active workspace before adding more Settings UI controls.
+
+### Feature / change being made
+
+Documentation and model checkpoint for user-level versus workspace-level settings.
+
+### Files changed
+
+- [SETTINGS_MODEL.md](/Users/impero/song-review-app/SETTINGS_MODEL.md)
+- [README.md](/Users/impero/song-review-app/README.md)
+- [DATABASE.md](/Users/impero/song-review-app/DATABASE.md)
+- [FEATURES.md](/Users/impero/song-review-app/FEATURES.md)
+- [PERMISSIONS_MODEL.md](/Users/impero/song-review-app/PERMISSIONS_MODEL.md)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- Theme colors are now documented as user-level settings.
+- Workspace plan, billing, invites, members, role policy, and future shared branding are documented as workspace-level settings.
+- `/api/settings` is explicitly documented as transitional because it is still keyed by `authorName`.
+- Recommended future route split is `/api/profile/settings` for user preferences and `/api/workspace/settings` for workspace-owned settings.
+- No database schema or app behavior changed in this slice.
+- `npx tsc --noEmit` passed.
+- `git diff --check` passed.
+
+---
+
+## 2026-05-02 — Phase 2 Settings scope UI
+
+### What we were trying to achieve
+
+Start Phase 2 by making the Settings page clearly separate personal preferences from workspace-level administration.
+
+### Feature / change being made
+
+Settings UI copy and layout polish for personal theme, workspace settings, current role, and collaborator permissions.
+
+### Files changed
+
+- [app/settings/page.tsx](/Users/impero/song-review-app/app/settings/page.tsx)
+- [app/settings/settings.module.css](/Users/impero/song-review-app/app/settings/settings.module.css)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- Renamed the color theme area to "Personal theme."
+- Added copy clarifying that theme colors follow the signed-in user across workspaces.
+- Added a workspace settings header with the active workspace name and current role.
+- Added a permission summary for owners and members without adding editable role controls.
+- Updated plan and collaborator section copy to clarify workspace scope.
+- No persistence, schema, route, or permission behavior changed.
+- `npx tsc --noEmit` passed.
+- `git diff --check` passed.

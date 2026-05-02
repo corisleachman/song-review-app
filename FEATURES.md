@@ -18,7 +18,7 @@ This file describes the current user-facing flows in the app as of March 2026.
 - The active identity controls:
   - bubble alignment
   - action attribution
-  - per-user theme settings
+  - transitional per-user theme settings
   - who receives notification emails
 
 ## Dashboard
@@ -137,3 +137,13 @@ The mobile version page deliberately changes layout:
   3. song admin
 
 This should be preserved unless there is a clear UX reason to change it.
+
+## Settings Model
+
+Settings are now treated as two product concepts:
+- personal settings belong to the signed-in user
+- workspace settings belong to the active workspace
+
+The current color theme controls are personal settings. The current plan, billing, invite, and member controls are workspace settings.
+
+The implementation still uses the transitional `/api/settings` route for theme persistence. The target model is documented in [`SETTINGS_MODEL.md`](./SETTINGS_MODEL.md).

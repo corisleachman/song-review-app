@@ -128,6 +128,8 @@ export default function SettingsPage() {
   const [startingCheckout, setStartingCheckout] = useState(false);
   const [openingPortal, setOpeningPortal] = useState(false);
   const [switchingPlan, setSwitchingPlan] = useState<AccountPlan | null>(null);
+  const currentWorkspaceName = workspaceName || 'Current workspace';
+  const currentRoleLabel = membershipRole ? formatRoleLabel(membershipRole) : 'Workspace member';
 
   const applyTheme = (newTheme: Theme) => {
     document.documentElement.style.setProperty('--color-primary', newTheme.primary_color);
@@ -587,7 +589,7 @@ export default function SettingsPage() {
             <Link href="/dashboard" className={styles.backButton}>
               ← Back
             </Link>
-            <h1 className={styles.title}>⚙️ Settings</h1>
+            <h1 className={styles.title}>Settings</h1>
           </div>
         </div>
 
@@ -601,8 +603,9 @@ export default function SettingsPage() {
         <div className={styles.content}>
           <div className={styles.brandExplorer}>
           <div className={styles.explorerHeader}>
-            <h2>Color Theme</h2>
-            <p>Customize your colors. Changes apply live across the app.</p>
+            <span className={styles.sectionEyebrow}>Personal settings</span>
+            <h2>Personal theme</h2>
+            <p>These colors follow you across every workspace.</p>
           </div>
 
           <div className={styles.colorPicker}>
@@ -690,7 +693,7 @@ export default function SettingsPage() {
               className={styles.saveButton}
               disabled={saving}
             >
-              {saving ? 'Saving...' : saved ? '✓ Saved!' : 'Save Theme'}
+              {saving ? 'Saving...' : saved ? 'Saved' : 'Save theme'}
             </button>
             <button
               onClick={handleReset}
@@ -702,15 +705,11 @@ export default function SettingsPage() {
         </div>
 
           <div className={styles.infoPanel}>
-          <h3>ℹ️ How It Works</h3>
+          <h3>Personal scope</h3>
           <ul className={styles.tipsList}>
-            <li>Colors update <strong>live</strong> as you change them</li>
-            <li>See changes immediately on the page</li>
-            <li>Click presets to try different themes</li>
-            <li>Use hex colors or the color picker</li>
-            <li>Click Save to store your theme</li>
-            <li>Your colors persist when you log out</li>
-            <li>Coris and Al each have separate color preferences</li>
+            <li>Theme colors are personal to your sign-in.</li>
+            <li>Switching workspaces keeps your theme with you.</li>
+            <li>Workspace members keep their own theme choices.</li>
           </ul>
 
           <div style={{ marginTop: 'var(--space-2xl)' }}>
@@ -722,11 +721,31 @@ export default function SettingsPage() {
         </div>
 
         <div className={styles.collaboratorSection}>
+        <div className={styles.workspaceSettingsHeader}>
+          <div>
+            <span className={styles.sectionEyebrow}>Workspace settings</span>
+            <h2>{currentWorkspaceName}</h2>
+            <p>These controls affect the active workspace.</p>
+          </div>
+          <span className={styles.workspaceRoleBadge}>{currentRoleLabel}</span>
+        </div>
+
+        <div className={styles.permissionsSummary}>
+          <div className={styles.permissionCard}>
+            <h3>Owners</h3>
+            <p>Manage billing, invites, member removal, plan state, and song deletion.</p>
+          </div>
+          <div className={styles.permissionCard}>
+            <h3>Members</h3>
+            <p>Add songs, upload versions, comment, create actions, and manage tasks.</p>
+          </div>
+        </div>
+
         <div className={styles.planSection}>
           <div className={styles.planHeader}>
             <div>
               <h2>Plan</h2>
-              <p>Current workspace access and collaborator allowance.</p>
+              <p>Billing and limits belong to this workspace.</p>
             </div>
             {workspacePlan === 'free' && isOwner && (
               <button
@@ -830,7 +849,7 @@ export default function SettingsPage() {
         <div className={styles.collaboratorHeader}>
           <div>
             <h2>Collaborators</h2>
-            <p>Invite band members, review pending invites, and manage workspace access.</p>
+            <p>Workspace owners can invite members, review pending invites, and manage access.</p>
           </div>
         </div>
 

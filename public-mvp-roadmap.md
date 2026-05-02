@@ -1374,3 +1374,150 @@ Note the next follow-up slice.
 - Next follow-up:
   - visually verify empty states in a workspace with zero songs
   - then decide whether member users should be allowed to create songs in shared workspaces or whether that should become owner-only
+
+## 2026-05-02 — Workspace permissions model and audit
+
+- Slice / change name: Workspace permissions model and audit
+- Status: Documented
+- Exact files changed or audited:
+  - `PERMISSIONS_MODEL.md`
+  - `README.md`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - documented owner, collaborator/member, and future reviewer/commenter roles
+  - recommended keeping `member` as a collaborative role that can add songs, versions, comments, actions, and tasks
+  - confirmed owner-only controls already exist for billing, invites, member removal, and plan state
+  - identified hardening gaps in destructive song deletion, version creation, thread creation, task routes, song reads, and settings persistence
+  - no app behavior changed
+- Tests run:
+  - not run; documentation/audit-only change
+- Next follow-up:
+  - harden destructive song deletion first
+  - then harden version/thread/task routes while keeping normal collaboration broad
+
+## 2026-05-02 — Owner-only song deletion hardening
+
+- Slice / change name: Owner-only song deletion hardening
+- Status: Implemented
+- Exact files changed or audited:
+  - `app/api/songs/[songId]/route.ts`
+  - `app/dashboard/page.tsx`
+  - `PERMISSIONS_MODEL.md`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - destructive song deletion now requires a signed-in canonical identity
+  - the delete route verifies the song belongs to the active workspace before deleting related records
+  - only workspace owners can delete songs
+  - non-owner members no longer see dashboard song delete controls
+- Tests run:
+  - `npx tsc --noEmit`
+  - unauthenticated `DELETE /api/songs/test-id` returned `401 Unauthorized`
+- Next follow-up:
+  - harden version creation and thread creation with explicit active-workspace checks
+  - then review whether member permissions need a future reviewer/commenter role
+
+## 2026-05-02 — Version creation workspace guard
+
+- Slice / change name: Version creation workspace guard
+- Status: Implemented
+- Exact files changed or audited:
+  - `app/api/versions/create/route.ts`
+  - `PERMISSIONS_MODEL.md`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - version creation now loads the target song before counting versions or creating a signed upload URL
+  - the route returns `404` when the target song does not exist
+  - the route returns `403` when the target song belongs to a different workspace
+  - collaborators can still upload versions to songs in their active workspace
+- Tests run:
+  - `npx tsc --noEmit`
+  - unauthenticated `POST /api/versions/create` returned `401 Unauthorized`
+- Next follow-up:
+  - harden thread creation against cross-workspace version/song ids
+  - then harden task routes with canonical workspace checks
+
+## 2026-05-02 — Phase 1 workspace route hardening
+
+- Slice / change name: Phase 1 workspace route hardening
+- Status: Implemented
+- Exact files changed or audited:
+  - `app/api/songs/[songId]/route.ts`
+  - `app/api/songs/[songId]/versions/route.ts`
+  - `app/api/songs/[songId]/tasks/route.ts`
+  - `app/api/songs/upload-image/route.ts`
+  - `app/api/versions/[versionId]/route.ts`
+  - `app/api/versions/[versionId]/threads/route.ts`
+  - `app/api/threads/create/route.ts`
+  - `app/api/threads/reply/route.ts`
+  - `app/api/tasks/create/route.ts`
+  - `app/api/tasks/[taskId]/route.ts`
+  - `app/api/tasks/reorder/route.ts`
+  - `PERMISSIONS_MODEL.md`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - song and version detail reads now require active-workspace access
+  - song versions, song tasks, and version threads reads now verify their parent resource belongs to the active workspace
+  - thread creation verifies the submitted version belongs to the submitted song and active workspace
+  - thread replies verify the canonical thread/version/song chain before inserting a reply
+  - task create, update, delete, and reorder routes now verify active-workspace access
+  - cover art upload verifies the target song before uploading and updating the song
+  - member/collaborator creation, commenting, uploading, action, and task behavior remains allowed inside shared workspaces
+- Tests run:
+  - `npx tsc --noEmit`
+  - `git diff --check`
+  - unauthenticated probes returned `401 Unauthorized` for song detail, version detail, version threads, thread creation, task creation, and task reorder routes
+- Next follow-up:
+  - decide whether settings are user-level or workspace-level
+  - then move into owner Settings and permissions UI polish
+
+## 2026-05-02 — Settings model decision
+
+- Slice / change name: Settings model decision
+- Status: Documented
+- Exact files changed or audited:
+  - `SETTINGS_MODEL.md`
+  - `README.md`
+  - `DATABASE.md`
+  - `FEATURES.md`
+  - `PERMISSIONS_MODEL.md`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - theme colors are classified as user-level settings
+  - workspace plan, billing, invites, members, future role policy, and future shared branding are classified as workspace-level settings
+  - `/api/settings` is documented as transitional because it is still keyed by `authorName`
+  - future route split is documented as `/api/profile/settings` and `/api/workspace/settings`
+  - no database schema or app behavior changed
+- Tests run:
+  - `npx tsc --noEmit`
+  - `git diff --check`
+- Next follow-up:
+  - update Settings UI copy/structure so personal theme and workspace administration are visually distinct
+  - then migrate personal theme persistence to a user-id keyed route when ready for a schema change
+
+## 2026-05-02 — Phase 2 Settings scope UI
+
+- Slice / change name: Phase 2 Settings scope UI
+- Status: Implemented
+- Exact files changed or audited:
+  - `app/settings/page.tsx`
+  - `app/settings/settings.module.css`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - color theme area is now labeled as personal theme
+  - settings copy explains that theme colors follow the signed-in user across workspaces
+  - workspace settings area now names the active workspace and shows the current role
+  - added a non-editable permissions summary for owners and members
+  - plan and collaborator copy now reads as workspace-scoped
+  - no persistence, schema, route, or permission behavior changed
+- Tests run:
+  - `npx tsc --noEmit`
+  - `git diff --check`
+- Next follow-up:
+  - visually verify Settings on desktop and mobile
+  - then decide whether to migrate personal theme persistence to a user-id keyed route

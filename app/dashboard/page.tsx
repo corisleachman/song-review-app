@@ -897,6 +897,7 @@ function DashboardContent() {
 
   const currentWorkspaceName = workspaceName || 'this workspace';
   const currentWorkspaceRole = membershipRole ? `${membershipRole[0].toUpperCase()}${membershipRole.slice(1)}` : null;
+  const canDeleteSongs = membershipRole === 'owner';
   const hasSongs = songs.length > 0;
   const songEmptyTitle = `No songs in ${currentWorkspaceName} yet`;
   const songEmptyMessage = membershipRole === 'member'
@@ -1295,18 +1296,20 @@ function DashboardContent() {
                               <path d="M1 8l3-3 2 2 2-2 2 3" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/>
                             </svg>
                           </button>
-                          <button
-                            className={styles.iconBtn}
-                            title="Delete"
-                            onClick={e => {
-                              e.stopPropagation();
-                              setDeletingId(song.id);
-                            }}
-                          >
-                            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                              <path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          </button>
+                          {canDeleteSongs && (
+                            <button
+                              className={styles.iconBtn}
+                              title="Delete"
+                              onClick={e => {
+                                e.stopPropagation();
+                                setDeletingId(song.id);
+                              }}
+                            >
+                              <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                                <path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </button>
+                          )}
                         </div>
                       </div>
 
@@ -1598,18 +1601,20 @@ function DashboardContent() {
                               <path d="M1 8l3-3 2 2 2-2 2 3" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/>
                             </svg>
                           </button>
-                          <button
-                            className={styles.iconBtn}
-                            title="Delete"
-                            onClick={e => {
-                              e.stopPropagation();
-                              setDeletingId(song.id);
-                            }}
-                          >
-                            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                              <path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          </button>
+                          {canDeleteSongs && (
+                            <button
+                              className={styles.iconBtn}
+                              title="Delete"
+                              onClick={e => {
+                                e.stopPropagation();
+                                setDeletingId(song.id);
+                              }}
+                            >
+                              <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                                <path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </button>
+                          )}
                         </div>
                       </div>
                     </>

@@ -15,6 +15,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    const { data: song, error: songLookupError } = await supabaseServer
+      .from('songs')
+      .select('id, account_id')
+      .eq('id', songId)
+      .maybeSingle();
+
+    if (songLookupError) throw songLookupError;
+
+    if (!song) {
+      return NextResponse.json({ error: 'Song not found.' }, { status: 404 });
+    }
+
+    if (!song.account_id || song.account_id !== resolved.identity.workspaceId) {
+      return NextResponse.json({ error: 'You do not have access to this song.' }, { status: 403 });
+    }
+
     // Count existing versions to determine next version number
     const { count } = await supabaseServer
       .from('song_versions')

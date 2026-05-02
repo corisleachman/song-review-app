@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
+import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { withVersionDisplayName } from '@/lib/versionDisplay';
 
@@ -28,9 +29,30 @@ export async function GET(
   try {
     noStore();
     const { songId } = params;
+    const resolved = await resolveCanonicalIdentity();
 
     if (!songId) {
       return NextResponse.json({ error: 'Song ID is required' }, { status: 400 });
+    }
+
+    if (!resolved) {
+      return NextResponse.json({ error: 'You must be signed in to view versions.' }, { status: 401 });
+    }
+
+    const { data: song, error: songError } = await supabaseServer
+      .from('songs')
+      .select('id, account_id')
+      .eq('id', songId)
+      .maybeSingle();
+
+    if (songError) throw songError;
+
+    if (!song) {
+      return NextResponse.json({ error: 'Song not found.' }, { status: 404 });
+    }
+
+    if (!song.account_id || song.account_id !== resolved.identity.workspaceId) {
+      return NextResponse.json({ error: 'You do not have access to this song.' }, { status: 403 });
     }
 
     const { data, error } = await supabaseServer

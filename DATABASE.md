@@ -66,7 +66,7 @@ created_at    TIMESTAMP DEFAULT now()
 updated_at    TIMESTAMP DEFAULT now()
 ```
 
-### `settings` (unchanged core table)
+### `settings` (legacy transitional table)
 ```sql
 id               UUID PRIMARY KEY DEFAULT gen_random_uuid()
 user_identity    TEXT UNIQUE CHECK (user_identity IN ('Coris', 'Al'))
@@ -76,6 +76,13 @@ background_color TEXT
 created_at       TIMESTAMP DEFAULT now()
 updated_at       TIMESTAMP DEFAULT now()
 ```
+
+This table is still used by `/api/settings` for theme colors, but it is no longer the desired long-term model for Google-auth multi-workspace users.
+
+Target direction:
+- personal theme settings should be keyed by auth user id
+- workspace settings should be keyed by account/workspace id
+- see [`SETTINGS_MODEL.md`](./SETTINGS_MODEL.md)
 
 ### `song_tasks` (unchanged core table)
 ```sql

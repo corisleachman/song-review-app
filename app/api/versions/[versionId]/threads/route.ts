@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
+import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
 
 export const dynamic = 'force-dynamic';
@@ -27,9 +28,38 @@ export async function GET(
   try {
     noStore();
     const { versionId } = params;
+    const resolved = await resolveCanonicalIdentity();
 
     if (!versionId) {
       return NextResponse.json({ error: 'Version ID is required' }, { status: 400 });
+    }
+
+    if (!resolved) {
+      return NextResponse.json({ error: 'You must be signed in to view comments.' }, { status: 401 });
+    }
+
+    const { data: version, error: versionError } = await supabaseServer
+      .from('song_versions')
+      .select('id, song_id')
+      .eq('id', versionId)
+      .maybeSingle();
+
+    if (versionError) throw versionError;
+
+    if (!version) {
+      return NextResponse.json({ error: 'Version not found.' }, { status: 404 });
+    }
+
+    const { data: song, error: songError } = await supabaseServer
+      .from('songs')
+      .select('id, account_id')
+      .eq('id', version.song_id)
+      .maybeSingle();
+
+    if (songError) throw songError;
+
+    if (!song?.account_id || song.account_id !== resolved.identity.workspaceId) {
+      return NextResponse.json({ error: 'You do not have access to this version.' }, { status: 403 });
     }
 
     const { data, error } = await supabaseServer

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { withVersionDisplayName } from '@/lib/versionDisplay';
 
@@ -19,31 +20,58 @@ function getErrorMessage(error: unknown) {
   return 'Version request failed.';
 }
 
+async function loadVersionWithWorkspace(versionId: string) {
+  const { data: version, error: versionError } = await supabaseServer
+    .from('song_versions')
+    .select('*')
+    .eq('id', versionId)
+    .maybeSingle();
+
+  if (versionError) throw versionError;
+
+  if (!version) {
+    return { version: null, workspaceId: null };
+  }
+
+  const { data: song, error: songError } = await supabaseServer
+    .from('songs')
+    .select('id, account_id')
+    .eq('id', version.song_id)
+    .maybeSingle();
+
+  if (songError) throw songError;
+
+  return { version, workspaceId: song?.account_id ?? null };
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: { versionId: string } }
 ) {
   try {
     const { versionId } = params;
+    const resolved = await resolveCanonicalIdentity();
 
     if (!versionId) {
       return NextResponse.json({ error: 'Version ID is required' }, { status: 400 });
     }
 
-    const { data, error } = await supabaseServer
-      .from('song_versions')
-      .select('*')
-      .eq('id', versionId)
-      .maybeSingle();
+    if (!resolved) {
+      return NextResponse.json({ error: 'You must be signed in to view this version.' }, { status: 401 });
+    }
 
-    if (error) throw error;
+    const { version, workspaceId } = await loadVersionWithWorkspace(versionId);
 
-    if (!data) {
+    if (!version) {
       return NextResponse.json({ error: 'Version not found' }, { status: 404 });
     }
 
+    if (!workspaceId || workspaceId !== resolved.identity.workspaceId) {
+      return NextResponse.json({ error: 'You do not have access to this version.' }, { status: 403 });
+    }
+
     return NextResponse.json(
-      { version: withVersionDisplayName(data) },
+      { version: withVersionDisplayName(version) },
       {
         status: 200,
         headers: {
@@ -63,6 +91,22 @@ export async function PATCH(
 ) {
   try {
     const { label, notes } = await req.json();
+    const resolved = await resolveCanonicalIdentity();
+
+    if (!resolved) {
+      return NextResponse.json({ error: 'You must be signed in to update a version.' }, { status: 401 });
+    }
+
+    const { version, workspaceId } = await loadVersionWithWorkspace(params.versionId);
+
+    if (!version) {
+      return NextResponse.json({ error: 'Version not found' }, { status: 404 });
+    }
+
+    if (!workspaceId || workspaceId !== resolved.identity.workspaceId) {
+      return NextResponse.json({ error: 'You do not have access to this version.' }, { status: 403 });
+    }
+
     const updates: { label: string | null; notes?: string | null } = {
       label: label ?? null,
     };
