@@ -1,0 +1,2626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Song Room — V2 Component Wiki</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet" />
+  <style>
+
+    /* ═══════════════════════════════════════════════
+       DESIGN TOKENS — Song Room V2
+       Merges: Song Room editorial palette + existing
+       app component architecture from globals.css
+    ═══════════════════════════════════════════════ */
+
+    :root {
+      /* ── Core palette (Song Room editorial) ── */
+      --charcoal:       #111111;
+      --off-white:      #F4F0E8;
+      --sand:           #D8CBB8;
+      --acid:           #E6FF3F;
+      --red:            #FF3B30;
+      --blue:           #2D7DFF;
+      --pink:           #FFB6C8;
+      --olive:          #6F735F;
+
+      /* ── Semantic aliases (maps old globals.css vars) ── */
+      --color-primary:           var(--acid);          /* was #ff1493 */
+      --color-secondary:         var(--blue);           /* was #00d4ff */
+      --color-accent:            var(--red);            /* was #a855f7 */
+      --color-text:              var(--off-white);
+      --color-text-secondary:    rgba(244,240,232,0.68);
+      --color-text-tertiary:     rgba(244,240,232,0.38);
+      --color-bg-dark:           rgba(17,17,17,0.92);
+      --color-bg-darkest:        var(--charcoal);
+      --color-glass-light:       rgba(244,240,232,0.07);
+      --color-glass-lighter:     rgba(244,240,232,0.04);
+      --color-glass-medium:      rgba(244,240,232,0.14);
+      --color-border:            rgba(244,240,232,0.16);
+
+      /* ── Ink aliases (for light surfaces) ── */
+      --ink:            var(--charcoal);
+      --ink-soft:       rgba(17,17,17,0.62);
+      --line-dark:      rgba(17,17,17,0.16);
+      --line-light:     rgba(244,240,232,0.16);
+
+      /* ── Spacing (identical to globals) ── */
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 12px;
+      --space-lg: 16px;
+      --space-xl: 24px;
+      --space-2xl: 32px;
+      --space-3xl: 48px;
+
+      /* ── Shadows ── */
+      --shadow-sm:  0 2px 8px  rgba(0,0,0,0.28);
+      --shadow-md:  0 8px 24px rgba(0,0,0,0.36);
+      --shadow-lg:  0 16px 48px rgba(0,0,0,0.46);
+      --shadow-xl:  0 24px 64px rgba(0,0,0,0.56);
+
+      /* ── Border radius ── */
+      --radius-sm: 0px;    /* editorial: sharp corners */
+      --radius-md: 0px;
+      --radius-lg: 0px;
+      --radius-xl: 0px;
+
+      /* ── Transitions (identical to globals) ── */
+      --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ═══════════════════════════════════════════════
+       BASE RESET & TYPOGRAPHY
+    ═══════════════════════════════════════════════ */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--charcoal);
+      color: var(--off-white);
+      font-family: 'DM Sans', -apple-system, sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Grain texture overlay */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.04;
+      z-index: 200;
+      background-image:
+        radial-gradient(circle at 20% 30%, var(--off-white) 0 1px, transparent 1px),
+        radial-gradient(circle at 80% 70%, var(--off-white) 0 1px, transparent 1px);
+      background-size: 18px 18px, 26px 26px;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(244,240,232,0.18); }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(244,240,232,0.32); }
+
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    a {
+      color: var(--acid);
+      text-decoration: none;
+      transition: color var(--transition-fast);
+    }
+
+    a:hover { color: var(--off-white); }
+
+    input, textarea, select, button { font-family: inherit; }
+
+    /* ═══════════════════════════════════════════════
+       WIKI SHELL
+    ═══════════════════════════════════════════════ */
+
+    .wiki-nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(17,17,17,0.94);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--line-light);
+      padding: 0 clamp(20px, 4vw, 56px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      height: 60px;
+      overflow-x: auto;
+    }
+
+    .wiki-brand {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 900;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--acid);
+      white-space: nowrap;
+      flex: 0 0 auto;
+    }
+
+    .wiki-nav-links {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: nowrap;
+    }
+
+    .wiki-nav-links a {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--color-text-secondary);
+      padding: 6px 10px;
+      border: 1px solid transparent;
+      transition: all var(--transition-fast);
+      white-space: nowrap;
+    }
+
+    .wiki-nav-links a:hover {
+      color: var(--off-white);
+      border-color: var(--line-light);
+    }
+
+    .wiki-main {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: clamp(40px, 6vw, 80px) clamp(20px, 4vw, 56px);
+    }
+
+    .wiki-hero {
+      margin-bottom: 80px;
+      border-bottom: 1px solid var(--line-light);
+      padding-bottom: 64px;
+    }
+
+    .wiki-hero-eyebrow {
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--olive);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .wiki-hero-eyebrow::before {
+      content: "";
+      width: 48px;
+      height: 10px;
+      background: var(--acid);
+    }
+
+    .wiki-hero h1 {
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      text-transform: uppercase;
+      font-size: clamp(56px, 9vw, 130px);
+      line-height: 0.84;
+      letter-spacing: -0.06em;
+      margin-bottom: 28px;
+    }
+
+    .wiki-hero p {
+      max-width: 600px;
+      font-size: 18px;
+      color: var(--color-text-secondary);
+      line-height: 1.6;
+    }
+
+    /* Section headers */
+    .section {
+      margin-bottom: 80px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: flex-end;
+      gap: 20px;
+      margin-bottom: 36px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--line-light);
+    }
+
+    .section-number {
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: 72px;
+      line-height: 1;
+      letter-spacing: -0.06em;
+      color: var(--acid);
+      opacity: 0.5;
+    }
+
+    .section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
+    }
+
+    .section-desc {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+    }
+
+    .component-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 28px;
+    }
+
+    .component-label {
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--olive);
+      margin-bottom: 10px;
+    }
+
+    .component-cell {
+      flex: 1 1 auto;
+    }
+
+    /* ═══════════════════════════════════════════════
+       1. COLOUR PALETTE
+    ═══════════════════════════════════════════════ */
+
+    .palette-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 1px;
+      border: 1px solid var(--line-light);
+      background: var(--line-light);
+    }
+
+    .swatch {
+      padding: 24px 14px 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      min-height: 110px;
+      background: var(--charcoal);
+    }
+
+    .swatch-name {
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 2px;
+    }
+
+    .swatch-hex {
+      font-size: 10px;
+      opacity: 0.55;
+      letter-spacing: 0.06em;
+    }
+
+    /* ═══════════════════════════════════════════════
+       2. TYPOGRAPHY
+    ═══════════════════════════════════════════════ */
+
+    .type-display {
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      text-transform: uppercase;
+      font-size: clamp(64px, 10vw, 140px);
+      line-height: 0.84;
+      letter-spacing: -0.07em;
+    }
+
+    .type-display-sm {
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      text-transform: uppercase;
+      font-size: clamp(36px, 6vw, 72px);
+      line-height: 0.88;
+      letter-spacing: -0.05em;
+    }
+
+    .type-heading-1 {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 36px;
+      letter-spacing: -0.03em;
+    }
+
+    .type-heading-2 {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 26px;
+      letter-spacing: -0.02em;
+    }
+
+    .type-heading-3 {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 20px;
+      letter-spacing: -0.01em;
+    }
+
+    .type-body-lg { font-size: 18px; line-height: 1.6; }
+    .type-body    { font-size: 15px; line-height: 1.55; }
+    .type-body-sm { font-size: 13px; line-height: 1.5; color: var(--color-text-secondary); }
+
+    .type-label {
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--olive);
+    }
+
+    .type-mono {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 13px;
+      color: var(--acid);
+      letter-spacing: 0.04em;
+    }
+
+    /* Gradient text — from old globals, adapted */
+    .gradient-text {
+      background: linear-gradient(135deg, var(--acid), var(--blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .type-block {
+      padding: 20px 0;
+      border-bottom: 1px solid var(--line-light);
+    }
+
+    .type-block:last-child { border-bottom: 0; }
+
+    .type-meta {
+      margin-top: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--olive);
+    }
+
+    /* ═══════════════════════════════════════════════
+       3. BUTTONS
+    ═══════════════════════════════════════════════ */
+
+    .btn {
+      border: 1px solid currentColor;
+      background: transparent;
+      color: var(--off-white);
+      padding: 0 22px;
+      height: 48px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: var(--off-white);
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+    }
+
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(0,0,0,0.32); }
+    .btn:hover::after { opacity: 0.07; }
+    .btn:active { transform: translateY(0); }
+
+    /* Primary = acid yellow */
+    .btn-primary {
+      background: var(--acid);
+      color: var(--charcoal);
+      border-color: var(--acid);
+    }
+    .btn-primary:hover { box-shadow: 0 12px 28px rgba(230,255,63,0.28); }
+
+    /* Secondary = charcoal fill */
+    .btn-secondary {
+      background: var(--charcoal);
+      color: var(--off-white);
+      border-color: var(--off-white);
+    }
+
+    /* Ghost */
+    .btn-ghost {
+      background: transparent;
+      color: var(--off-white);
+      border-color: var(--line-light);
+    }
+    .btn-ghost:hover { border-color: var(--off-white); }
+
+    /* Danger */
+    .btn-danger {
+      background: var(--red);
+      color: var(--off-white);
+      border-color: var(--red);
+    }
+    .btn-danger:hover { box-shadow: 0 12px 28px rgba(255,59,48,0.3); }
+
+    /* Blue */
+    .btn-blue {
+      background: var(--blue);
+      color: var(--off-white);
+      border-color: var(--blue);
+    }
+
+    /* Sizes */
+    .btn-sm { height: 36px; padding: 0 14px; font-size: 10px; letter-spacing: 0.14em; }
+    .btn-lg { height: 58px; padding: 0 32px; font-size: 13px; }
+    .btn-full { width: 100%; }
+
+    /* Gradient button (from old globals) */
+    .gradient-button {
+      background: linear-gradient(135deg, var(--acid) 0%, var(--blue) 100%);
+      color: var(--charcoal);
+      border: none;
+      padding: 0 var(--space-xl);
+      height: 48px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(230,255,63,0.22);
+      transition: all var(--transition-fast);
+    }
+    .gradient-button:hover {
+      box-shadow: 0 14px 36px rgba(230,255,63,0.36);
+      transform: translateY(-2px);
+    }
+
+    /* Icon button */
+    .btn-icon {
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line-light);
+      background: transparent;
+      color: var(--off-white);
+      cursor: pointer;
+      font-size: 16px;
+      transition: all var(--transition-fast);
+    }
+    .btn-icon:hover { border-color: var(--off-white); transform: translateY(-2px); }
+
+    /* ═══════════════════════════════════════════════
+       4. FORM INPUTS
+    ═══════════════════════════════════════════════ */
+
+    .field {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .field-label {
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--off-white);
+    }
+
+    .field-input {
+      width: 100%;
+      background: var(--color-glass-lighter);
+      border: 1px solid var(--color-border);
+      color: var(--off-white);
+      padding: 0 var(--space-lg);
+      height: 52px;
+      font-size: 15px;
+      transition: all var(--transition-fast);
+      outline: none;
+    }
+
+    .field-input::placeholder { color: var(--color-text-tertiary); }
+
+    .field-input:focus {
+      border-color: var(--acid);
+      box-shadow: 0 0 0 4px rgba(230,255,63,0.18);
+      background: rgba(244,240,232,0.08);
+    }
+
+    .field-input.error { border-color: var(--red); }
+    .field-input.error:focus { box-shadow: 0 0 0 4px rgba(255,59,48,0.18); }
+    .field-input.success { border-color: #4ade80; }
+
+    textarea.field-input {
+      height: auto;
+      padding: var(--space-md) var(--space-lg);
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    select.field-input { cursor: pointer; }
+
+    .field-hint {
+      font-size: 12px;
+      color: var(--color-text-tertiary);
+    }
+
+    .field-error {
+      font-size: 12px;
+      color: var(--red);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Search input */
+    .field-search-wrap {
+      position: relative;
+    }
+
+    .field-search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--color-text-tertiary);
+      font-size: 14px;
+      pointer-events: none;
+    }
+
+    .field-input-search {
+      padding-left: 40px;
+    }
+
+    /* Checkbox & Radio */
+    .field-check {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+
+    .field-check input[type="checkbox"],
+    .field-check input[type="radio"] {
+      width: 18px;
+      height: 18px;
+      border: 1.5px solid var(--color-border);
+      background: transparent;
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      transition: all var(--transition-fast);
+    }
+
+    .field-check input[type="radio"] { border-radius: 999px; }
+
+    .field-check input:checked {
+      background: var(--acid);
+      border-color: var(--acid);
+    }
+
+    .field-check input[type="checkbox"]:checked::after {
+      content: "✓";
+      font-size: 11px;
+      color: var(--charcoal);
+      font-weight: 900;
+    }
+
+    .field-check input[type="radio"]:checked::after {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--charcoal);
+    }
+
+    .field-check-label {
+      font-size: 14px;
+      color: var(--off-white);
+    }
+
+    /* Toggle */
+    .toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .toggle {
+      width: 46px;
+      height: 26px;
+      background: var(--color-glass-light);
+      border: 1px solid var(--color-border);
+      border-radius: 999px;
+      position: relative;
+      cursor: pointer;
+      transition: background var(--transition-base);
+      flex: 0 0 auto;
+    }
+
+    .toggle.on { background: var(--acid); border-color: var(--acid); }
+
+    .toggle-knob {
+      position: absolute;
+      left: 3px;
+      top: 3px;
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      background: var(--off-white);
+      transition: transform var(--transition-base);
+    }
+
+    .toggle.on .toggle-knob { transform: translateX(20px); background: var(--charcoal); }
+
+    .toggle-label { font-size: 14px; color: var(--off-white); }
+
+    /* ═══════════════════════════════════════════════
+       5. CARDS
+    ═══════════════════════════════════════════════ */
+
+    /* Glass card (from old globals .glass) */
+    .glass {
+      background: var(--color-glass-light);
+      border: 1px solid var(--color-border);
+      backdrop-filter: blur(12px);
+    }
+
+    .card {
+      background: var(--color-glass-light);
+      border: 1px solid var(--color-border);
+      padding: var(--space-xl);
+      transition: border-color var(--transition-fast), transform var(--transition-fast);
+    }
+
+    .card:hover { border-color: rgba(244,240,232,0.36); }
+
+    .card-hover:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* Song card (domain-specific) */
+    .song-card {
+      background: var(--color-glass-light);
+      border: 1px solid var(--color-border);
+      overflow: hidden;
+      transition: all var(--transition-base);
+    }
+
+    .song-card:hover { border-color: rgba(244,240,232,0.34); transform: translateY(-3px); box-shadow: var(--shadow-md); }
+
+    .song-card-thumb {
+      width: 100%;
+      aspect-ratio: 1;
+      background: linear-gradient(135deg, var(--acid) 0 35%, var(--charcoal) 35%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .song-card-thumb-inner {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 40%, rgba(17,17,17,0.8) 100%);
+    }
+
+    .song-card-body { padding: var(--space-lg); }
+
+    .song-card-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: -0.01em;
+      margin-bottom: 4px;
+      color: var(--off-white);
+    }
+
+    .song-card-meta {
+      font-size: 12px;
+      color: var(--color-text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .song-card-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: var(--space-md) var(--space-lg);
+      border-top: 1px solid var(--color-border);
+    }
+
+    /* Version pill */
+    .version-badge {
+      display: inline-flex;
+      align-items: center;
+      height: 24px;
+      padding: 0 8px;
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      border: 1px solid var(--line-light);
+      color: var(--color-text-secondary);
+    }
+
+    .version-badge.acid  { background: var(--acid); color: var(--charcoal); border-color: var(--acid); }
+    .version-badge.red   { background: var(--red);  color: var(--off-white); border-color: var(--red); }
+    .version-badge.blue  { background: var(--blue); color: var(--off-white); border-color: var(--blue); }
+    .version-badge.pink  { background: var(--pink); color: var(--charcoal); border-color: var(--pink); }
+
+    /* Action card */
+    .action-card {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 16px;
+      padding: var(--space-lg);
+      border: 1px solid var(--color-border);
+      background: var(--color-glass-lighter);
+      transition: all var(--transition-fast);
+    }
+
+    .action-card:hover { border-color: rgba(244,240,232,0.3); background: var(--color-glass-light); }
+
+    .action-status-circle {
+      width: 22px;
+      height: 22px;
+      border: 1.5px solid var(--color-border);
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .action-status-circle.done { background: var(--acid); border-color: var(--acid); color: var(--charcoal); font-size: 11px; }
+    .action-status-circle.done::after { content: "✓"; font-weight: 900; }
+
+    .action-desc { font-size: 14px; color: var(--off-white); }
+
+    .action-meta {
+      font-size: 11px;
+      color: var(--color-text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 3px;
+    }
+
+    /* Stage pill */
+    .stage-pill {
+      font-size: 9px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      padding: 6px 10px;
+      background: var(--acid);
+      color: var(--charcoal);
+      white-space: nowrap;
+    }
+
+    .stage-pill.red   { background: var(--red);  color: var(--off-white); }
+    .stage-pill.blue  { background: var(--blue); color: var(--off-white); }
+    .stage-pill.pink  { background: var(--pink); color: var(--charcoal); }
+    .stage-pill.ghost { background: transparent; border: 1px solid var(--line-light); color: var(--color-text-secondary); }
+
+    /* ═══════════════════════════════════════════════
+       6. WAVEFORM PLAYER
+    ═══════════════════════════════════════════════ */
+
+    .player-shell {
+      border: 1px solid var(--color-border);
+      background: var(--color-glass-light);
+      backdrop-filter: blur(14px);
+      overflow: hidden;
+    }
+
+    .player-header {
+      padding: var(--space-lg) var(--space-xl);
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .player-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: -0.01em;
+    }
+
+    .player-meta { font-size: 12px; color: var(--color-text-tertiary); margin-top: 2px; }
+
+    /* Waveform canvas area */
+    .waveform-area {
+      position: relative;
+      height: 120px;
+      background: rgba(244,240,232,0.03);
+      overflow: hidden;
+      cursor: crosshair;
+    }
+
+    .waveform-bars {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 16px 0;
+    }
+
+    .waveform-bar {
+      flex: 1;
+      background: rgba(244,240,232,0.22);
+      border-radius: 1px;
+      min-width: 2px;
+    }
+
+    .waveform-bar.played { background: var(--acid); }
+
+    /* Simulated waveform using clip-path */
+    .waveform-svg {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 70px;
+      transform: translateY(-50%);
+      background: rgba(244,240,232,0.24);
+      clip-path: polygon(0 55%, 2% 38%, 4% 61%, 6% 30%, 9% 74%, 12% 42%, 16% 56%, 19% 18%, 22% 80%, 26% 41%, 29% 63%, 33% 29%, 37% 76%, 42% 36%, 46% 61%, 51% 17%, 55% 84%, 60% 40%, 64% 65%, 69% 29%, 73% 76%, 78% 37%, 82% 61%, 86% 31%, 91% 74%, 95% 43%, 100% 58%, 100% 100%, 0 100%);
+    }
+
+    .waveform-progress {
+      position: absolute;
+      left: 0;
+      width: 40%;
+      top: 50%;
+      height: 70px;
+      transform: translateY(-50%);
+      background: var(--acid);
+      clip-path: polygon(0 55%, 2% 38%, 4% 61%, 6% 30%, 9% 74%, 12% 42%, 16% 56%, 19% 18%, 22% 80%, 26% 41%, 29% 63%, 33% 29%, 37% 76%, 42% 36%, 46% 61%, 51% 17%, 55% 84%, 60% 40%, 64% 65%, 69% 29%, 73% 76%, 78% 37%, 82% 61%, 86% 31%, 91% 74%, 95% 43%, 100% 58%, 100% 100%, 0 100%);
+      opacity: 0.8;
+    }
+
+    .waveform-playhead {
+      position: absolute;
+      left: 40%;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--acid);
+      box-shadow: 0 0 8px rgba(230,255,63,0.6);
+    }
+
+    /* Comment pin on waveform */
+    .wave-pin {
+      position: absolute;
+      top: 8px;
+      font-size: 10px;
+      font-weight: 800;
+      line-height: 1.2;
+      z-index: 4;
+      white-space: nowrap;
+    }
+
+    .wave-pin::after {
+      content: "";
+      display: block;
+      width: 1px;
+      height: 80px;
+      margin: 5px auto 0;
+      background: currentColor;
+      opacity: 0.65;
+    }
+
+    .wpin-acid { left: 22%; color: var(--acid); }
+    .wpin-red  { left: 48%; color: var(--red); }
+    .wpin-blue { left: 72%; color: var(--blue); }
+
+    /* Player controls row */
+    .player-controls {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: var(--space-md) var(--space-xl);
+      border-top: 1px solid var(--color-border);
+    }
+
+    .play-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      background: var(--off-white);
+      color: var(--charcoal);
+      border: none;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      flex: 0 0 auto;
+      transition: all var(--transition-fast);
+    }
+
+    .play-btn:hover { background: var(--acid); transform: scale(1.08); }
+
+    .time-display {
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      color: var(--color-text-secondary);
+      font-family: 'Courier New', monospace;
+    }
+
+    .player-version-select {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ═══════════════════════════════════════════════
+       7. COMMENT THREADS
+    ═══════════════════════════════════════════════ */
+
+    .thread-shell {
+      border: 1px solid var(--color-border);
+      background: var(--color-glass-lighter);
+      overflow: hidden;
+    }
+
+    .thread-header {
+      padding: var(--space-md) var(--space-xl);
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .thread-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      flex: 0 0 auto;
+    }
+
+    .thread-timestamp {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--acid);
+      font-family: 'Courier New', monospace;
+    }
+
+    .thread-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--off-white);
+      margin-left: 4px;
+    }
+
+    .thread-comments {
+      padding: var(--space-lg) var(--space-xl);
+      display: grid;
+      gap: 16px;
+    }
+
+    .comment-bubble {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .comment-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 900;
+      border: 1.5px solid var(--line-light);
+      flex: 0 0 auto;
+    }
+
+    .comment-body-wrap { display: grid; gap: 4px; }
+
+    .comment-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .comment-author {
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--off-white);
+    }
+
+    .comment-time {
+      font-size: 10px;
+      color: var(--color-text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .comment-text {
+      font-size: 14px;
+      color: var(--color-text-secondary);
+      line-height: 1.5;
+    }
+
+    .comment-actions-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .comment-action-link {
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--color-text-tertiary);
+      cursor: pointer;
+      border-bottom: 1px solid transparent;
+      transition: all var(--transition-fast);
+    }
+
+    .comment-action-link:hover { color: var(--acid); border-bottom-color: var(--acid); }
+
+    .thread-reply {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      padding: var(--space-md) var(--space-xl);
+      border-top: 1px solid var(--color-border);
+    }
+
+    .reply-input {
+      background: var(--color-glass-lighter);
+      border: 1px solid var(--color-border);
+      color: var(--off-white);
+      padding: 0 14px;
+      height: 44px;
+      font-size: 14px;
+      outline: none;
+      transition: all var(--transition-fast);
+      flex: 1;
+    }
+
+    .reply-input::placeholder { color: var(--color-text-tertiary); }
+    .reply-input:focus { border-color: var(--acid); box-shadow: 0 0 0 3px rgba(230,255,63,0.14); }
+
+    /* ═══════════════════════════════════════════════
+       8. NAVIGATION
+    ═══════════════════════════════════════════════ */
+
+    .app-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 clamp(20px, 4vw, 48px);
+      height: 64px;
+      background: rgba(17,17,17,0.9);
+      border-bottom: 1px solid var(--color-border);
+      backdrop-filter: blur(20px);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 900;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--off-white);
+    }
+
+    .nav-mark {
+      width: 36px;
+      height: 36px;
+      border: 1.5px solid var(--off-white);
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      position: relative;
+    }
+
+    .nav-mark::after {
+      content: "";
+      position: absolute;
+      width: 1px;
+      height: 20px;
+      background: currentColor;
+      opacity: 0.5;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .nav-link {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--color-text-secondary);
+      padding: 8px 12px;
+      border: 1px solid transparent;
+      transition: all var(--transition-fast);
+    }
+
+    .nav-link:hover, .nav-link.active {
+      color: var(--off-white);
+      border-color: var(--line-light);
+    }
+
+    .nav-link.active { color: var(--acid); }
+
+    .nav-actions { display: flex; align-items: center; gap: 10px; }
+
+    /* Identity chip */
+    .identity-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line-light);
+      padding: 6px 12px 6px 6px;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .identity-chip:hover { border-color: var(--off-white); }
+
+    .identity-avatar {
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .identity-name {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--off-white);
+    }
+
+    /* ═══════════════════════════════════════════════
+       9. TABS
+    ═══════════════════════════════════════════════ */
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1px solid var(--color-border);
+    }
+
+    .tab {
+      padding: 14px;
+      text-align: center;
+      font-family: 'Outfit', sans-serif;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      transition: all var(--transition-fast);
+    }
+
+    .tab.active { background: var(--off-white); color: var(--charcoal); }
+    .tab:not(.active):hover { background: var(--color-glass-light); color: var(--off-white); }
+
+    /* Underline tabs */
+    .tabs-underline {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .tab-ul {
+      padding: 12px 20px;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--color-text-tertiary);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      transition: all var(--transition-fast);
+    }
+
+    .tab-ul.active { color: var(--acid); border-bottom-color: var(--acid); }
+    .tab-ul:hover:not(.active) { color: var(--off-white); }
+
+    /* ═══════════════════════════════════════════════
+       10. BADGES & TAGS
+    ═══════════════════════════════════════════════ */
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      height: 20px;
+      padding: 0 8px;
+      font-size: 9px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      border: 1px solid currentColor;
+    }
+
+    .badge-acid  { color: var(--acid); background: rgba(230,255,63,0.12); }
+    .badge-red   { color: var(--red);  background: rgba(255,59,48,0.12); }
+    .badge-blue  { color: var(--blue); background: rgba(45,125,255,0.12); }
+    .badge-pink  { color: var(--pink); background: rgba(255,182,200,0.12); }
+    .badge-olive { color: var(--sand); background: rgba(216,203,184,0.12); }
+
+    /* Dot indicator */
+    .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+    }
+
+    .dot-acid  { background: var(--acid); box-shadow: 0 0 6px rgba(230,255,63,0.6); }
+    .dot-red   { background: var(--red);  box-shadow: 0 0 6px rgba(255,59,48,0.6); }
+    .dot-blue  { background: var(--blue); box-shadow: 0 0 6px rgba(45,125,255,0.6); }
+    .dot-olive { background: var(--olive); }
+
+    /* Count chip */
+    .count-chip {
+      display: inline-grid;
+      place-items: center;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 5px;
+      background: var(--acid);
+      color: var(--charcoal);
+      font-size: 10px;
+      font-weight: 900;
+      border-radius: 999px;
+    }
+
+    /* ═══════════════════════════════════════════════
+       11. ALERTS & TOASTS
+    ═══════════════════════════════════════════════ */
+
+    .alert {
+      padding: var(--space-md) var(--space-xl);
+      border-left: 3px solid currentColor;
+      background: var(--color-glass-lighter);
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 14px;
+    }
+
+    .alert-icon { font-size: 16px; flex: 0 0 auto; margin-top: 1px; }
+    .alert-body { flex: 1; }
+    .alert-title { font-weight: 700; margin-bottom: 3px; font-size: 14px; }
+    .alert-desc { font-size: 13px; opacity: 0.72; }
+
+    .alert-info    { color: var(--blue); border-color: var(--blue); }
+    .alert-success { color: #4ade80; border-color: #4ade80; }
+    .alert-warning { color: var(--acid); border-color: var(--acid); }
+    .alert-error   { color: var(--red); border-color: var(--red); }
+
+    /* Toast */
+    .toast {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--off-white);
+      color: var(--charcoal);
+      padding: 14px 20px;
+      box-shadow: var(--shadow-xl);
+      font-size: 13px;
+      font-weight: 700;
+      max-width: 320px;
+    }
+
+    .toast-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--acid); flex: 0 0 auto; }
+    .toast-close { margin-left: auto; cursor: pointer; font-size: 16px; opacity: 0.4; }
+    .toast-close:hover { opacity: 1; }
+
+    /* ═══════════════════════════════════════════════
+       12. MODALS & OVERLAYS
+    ═══════════════════════════════════════════════ */
+
+    .modal-overlay {
+      background: rgba(17,17,17,0.82);
+      backdrop-filter: blur(8px);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .modal {
+      background: var(--charcoal);
+      border: 1px solid var(--line-light);
+      width: min(100%, 480px);
+      box-shadow: var(--shadow-xl);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-xl);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .modal-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--line-light);
+      background: transparent;
+      color: var(--off-white);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+      transition: all var(--transition-fast);
+    }
+
+    .modal-close:hover { border-color: var(--off-white); }
+
+    .modal-body { padding: var(--space-xl); }
+
+    .modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: var(--space-lg) var(--space-xl);
+      border-top: 1px solid var(--color-border);
+    }
+
+    /* ═══════════════════════════════════════════════
+       13. LOADING STATES
+    ═══════════════════════════════════════════════ */
+
+    @keyframes pulse-loading {
+      0%, 100% { opacity: 0.5; }
+      50%       { opacity: 1; }
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @keyframes slide-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .loading { animation: pulse-loading 2s ease-in-out infinite; }
+
+    .skeleton {
+      background: linear-gradient(90deg, var(--color-glass-lighter) 0%, var(--color-glass-medium) 50%, var(--color-glass-lighter) 100%);
+      background-size: 200% 100%;
+      animation: skeleton-shimmer 1.6s ease-in-out infinite;
+    }
+
+    @keyframes skeleton-shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .skeleton-text { height: 14px; width: 100%; }
+    .skeleton-title { height: 22px; width: 60%; }
+    .skeleton-thumb { width: 100%; aspect-ratio: 1; }
+
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--color-border);
+      border-top-color: var(--acid);
+      border-radius: 999px;
+      animation: spin 0.7s linear infinite;
+    }
+
+    /* ═══════════════════════════════════════════════
+       14. DIVIDERS & LAYOUT HELPERS
+    ═══════════════════════════════════════════════ */
+
+    .divider {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 12px;
+      color: var(--color-text-tertiary);
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }
+
+    .divider::before, .divider::after {
+      content: "";
+      height: 1px;
+      background: var(--color-border);
+    }
+
+    hr.rule {
+      border: none;
+      border-top: 1px solid var(--color-border);
+      margin: var(--space-xl) 0;
+    }
+
+    hr.rule-acid {
+      border-top-color: var(--acid);
+      opacity: 0.4;
+    }
+
+    /* Eyebrow (section label with accent bar) */
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--olive);
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 40px;
+      height: 8px;
+      background: var(--acid);
+    }
+
+    /* ═══════════════════════════════════════════════
+       15. DASHBOARD LAYOUT GRID
+    ═══════════════════════════════════════════════ */
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--color-border);
+      border: 1px solid var(--color-border);
+    }
+
+    .dashboard-col {
+      background: var(--charcoal);
+      padding: var(--space-xl);
+    }
+
+    .dashboard-col-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-xl);
+      padding-bottom: var(--space-lg);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .dashboard-col-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* ═══════════════════════════════════════════════
+       WIKI — DEMO DISPLAY HELPERS
+    ═══════════════════════════════════════════════ */
+
+    .demo-canvas {
+      background: rgba(244,240,232,0.03);
+      border: 1px solid var(--line-light);
+      padding: clamp(24px, 4vw, 48px);
+    }
+
+    .demo-canvas-dark {
+      background: rgba(17,17,17,0.6);
+      border: 1px solid var(--line-light);
+      padding: clamp(24px, 4vw, 48px);
+    }
+
+    .demo-canvas-light {
+      background: var(--off-white);
+      border: 1px solid var(--line-dark);
+      padding: clamp(24px, 4vw, 48px);
+      color: var(--charcoal);
+    }
+
+    .demo-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .token-row {
+      display: grid;
+      grid-template-columns: 140px 1fr auto;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line-light);
+      font-size: 13px;
+    }
+
+    .token-name { font-family: 'Courier New', monospace; font-size: 12px; color: var(--acid); }
+    .token-value { color: var(--color-text-secondary); }
+    .token-preview { flex: 0 0 auto; }
+
+    .spec-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .spec-table th {
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--olive);
+      border-bottom: 1px solid var(--line-light);
+    }
+
+    .spec-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(244,240,232,0.06);
+      color: var(--color-text-secondary);
+      vertical-align: top;
+    }
+
+    .spec-table td:first-child {
+      font-family: 'Courier New', monospace;
+      color: var(--acid);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    /* ── Wiki animation on load ── */
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .section {
+      animation: fade-up 0.5s ease both;
+    }
+
+    .section:nth-child(1) { animation-delay: 0.05s; }
+    .section:nth-child(2) { animation-delay: 0.10s; }
+    .section:nth-child(3) { animation-delay: 0.15s; }
+    .section:nth-child(4) { animation-delay: 0.20s; }
+    .section:nth-child(5) { animation-delay: 0.25s; }
+    .section:nth-child(6) { animation-delay: 0.30s; }
+    .section:nth-child(7) { animation-delay: 0.35s; }
+
+    /* Responsive */
+    @media (max-width: 700px) {
+      .wiki-nav-links { display: none; }
+      .dashboard-grid { grid-template-columns: 1fr; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- ── STICKY NAV ── -->
+  <nav class="wiki-nav">
+    <span class="wiki-brand">Song Room — V2 Design System</span>
+    <div class="wiki-nav-links">
+      <a href="#palette">Palette</a>
+      <a href="#typography">Typography</a>
+      <a href="#tokens">Tokens</a>
+      <a href="#buttons">Buttons</a>
+      <a href="#inputs">Inputs</a>
+      <a href="#cards">Cards</a>
+      <a href="#player">Player</a>
+      <a href="#comments">Comments</a>
+      <a href="#nav">Nav</a>
+      <a href="#tabs">Tabs</a>
+      <a href="#badges">Badges</a>
+      <a href="#alerts">Alerts</a>
+      <a href="#modals">Modals</a>
+      <a href="#loading">Loading</a>
+      <a href="#layout">Layout</a>
+    </div>
+  </nav>
+
+  <main class="wiki-main">
+
+    <!-- HERO -->
+    <div class="wiki-hero">
+      <div class="wiki-hero-eyebrow">Component Wiki</div>
+      <h1>The Song Room<br />V2 Design System</h1>
+      <p>Every UI component for the consumer-facing rebuild — translated from the existing app's architecture into the Song Room editorial palette. Sharp corners, acid accents, editorial type.</p>
+    </div>
+
+
+    <!-- ══ 1. PALETTE ══ -->
+    <div class="section" id="palette">
+      <div class="section-header">
+        <span class="section-number">01</span>
+        <div>
+          <div class="section-title">Colour Palette</div>
+          <div class="section-desc">Primary design language. Replaces the pink/cyan/purple system from globals.css.</div>
+        </div>
+      </div>
+
+      <div class="palette-grid">
+        <div class="swatch" style="background:#111111; color:#F4F0E8;">
+          <div class="swatch-name">Charcoal</div>
+          <div class="swatch-hex">#111111 — --charcoal</div>
+        </div>
+        <div class="swatch" style="background:#F4F0E8; color:#111111;">
+          <div class="swatch-name">Off White</div>
+          <div class="swatch-hex">#F4F0E8 — --off-white</div>
+        </div>
+        <div class="swatch" style="background:#D8CBB8; color:#111111;">
+          <div class="swatch-name">Sand</div>
+          <div class="swatch-hex">#D8CBB8 — --sand</div>
+        </div>
+        <div class="swatch" style="background:#E6FF3F; color:#111111;">
+          <div class="swatch-name" style="font-weight:900;">ACID ★</div>
+          <div class="swatch-hex">#E6FF3F — --acid — primary</div>
+        </div>
+        <div class="swatch" style="background:#FF3B30; color:#F4F0E8;">
+          <div class="swatch-name">Signal Red</div>
+          <div class="swatch-hex">#FF3B30 — --red — accent</div>
+        </div>
+        <div class="swatch" style="background:#2D7DFF; color:#F4F0E8;">
+          <div class="swatch-name">Electric Blue</div>
+          <div class="swatch-hex">#2D7DFF — --blue — secondary</div>
+        </div>
+        <div class="swatch" style="background:#FFB6C8; color:#111111;">
+          <div class="swatch-name">Washed Pink</div>
+          <div class="swatch-hex">#FFB6C8 — --pink</div>
+        </div>
+        <div class="swatch" style="background:#6F735F; color:#F4F0E8;">
+          <div class="swatch-name">Olive Grey</div>
+          <div class="swatch-hex">#6F735F — --olive</div>
+        </div>
+      </div>
+
+      <br />
+
+      <p style="font-size:12px; color: var(--color-text-tertiary); font-style: italic;">★ Acid yellow is the primary CTA / interactive colour — it replaces <code style="color:var(--acid)">#ff1493</code>. Blue replaces <code style="color:var(--blue)">#00d4ff</code>. Red replaces purple <code style="color:var(--red)">#a855f7</code>.</p>
+    </div>
+
+
+    <!-- ══ 2. TYPOGRAPHY ══ -->
+    <div class="section" id="typography">
+      <div class="section-header">
+        <span class="section-number">02</span>
+        <div>
+          <div class="section-title">Typography</div>
+          <div class="section-desc">Outfit (headings) + DM Sans (body) — identical font pairing to v1. Display type adds Impact for editorial moments.</div>
+        </div>
+      </div>
+
+      <div class="demo-canvas">
+        <div class="type-block">
+          <div class="type-display" style="color:var(--off-white);">Song<br />Room</div>
+          <div class="type-meta">Impact / Haettenschweiler — Display — text-transform: uppercase — used on hero, auth headings</div>
+        </div>
+        <div class="type-block">
+          <div class="type-display-sm" style="color:var(--acid);">Create Together.</div>
+          <div class="type-meta">Impact — Display SM — section headlines</div>
+        </div>
+        <div class="type-block">
+          <div class="type-heading-1">Outfit Heading 1 — 36px / 800</div>
+          <div class="type-meta">Outfit 800 — h1 equivalent</div>
+        </div>
+        <div class="type-block">
+          <div class="type-heading-2">Outfit Heading 2 — 26px / 700</div>
+          <div class="type-meta">Outfit 700 — h2 equivalent</div>
+        </div>
+        <div class="type-block">
+          <div class="type-heading-3">Outfit Heading 3 — 20px / 700</div>
+          <div class="type-meta">Outfit 700 — card titles, section names</div>
+        </div>
+        <div class="type-block">
+          <div class="type-body-lg" style="color:var(--color-text-secondary);">DM Sans body large — 18px / 400. Used for hero subtitles and key descriptive copy. Comfortable reading measure.</div>
+          <div class="type-meta">DM Sans 400 — body-lg</div>
+        </div>
+        <div class="type-block">
+          <div class="type-body" style="color:var(--color-text-secondary);">DM Sans body — 15px / 400. Standard UI copy. Comments, descriptions, panel content.</div>
+          <div class="type-meta">DM Sans 400 — body default</div>
+        </div>
+        <div class="type-block">
+          <div class="type-body-sm">DM Sans small — 13px / 400. Secondary metadata, hints, timestamps.</div>
+          <div class="type-meta">DM Sans 400 — body-sm / secondary</div>
+        </div>
+        <div class="type-block">
+          <div class="type-label">Label — 11px / 900 uppercase · olive</div>
+          <div class="type-meta">Outfit 900 — form labels, eyebrows, tags</div>
+        </div>
+        <div class="type-block">
+          <div class="type-mono">V3 · 1:24.300 · coris@example.com</div>
+          <div class="type-meta">Courier New — monospaced — timestamps, version IDs, code</div>
+        </div>
+        <div class="type-block">
+          <div class="gradient-text" style="font-family:'Outfit',sans-serif; font-weight:800; font-size:32px;">Gradient Heading</div>
+          <div class="type-meta">.gradient-text — acid → blue gradient — used sparingly</div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ══ 3. DESIGN TOKENS ══ -->
+    <div class="section" id="tokens">
+      <div class="section-header">
+        <span class="section-number">03</span>
+        <div>
+          <div class="section-title">Design Tokens</div>
+          <div class="section-desc">CSS variables mapped from globals.css to new palette. Drop-in replacements for v2.</div>
+        </div>
+      </div>
+
+      <table class="spec-table">
+        <thead>
+          <tr>
+            <th>Token</th>
+            <th>Old Value (globals.css)</th>
+            <th>New Value (V2)</th>
+            <th>Preview</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>--color-primary</td><td>#ff1493</td><td>var(--acid) #E6FF3F</td><td><span style="display:inline-block;width:32px;height:16px;background:#E6FF3F;"></span></td></tr>
+          <tr><td>--color-secondary</td><td>#00d4ff</td><td>var(--blue) #2D7DFF</td><td><span style="display:inline-block;width:32px;height:16px;background:#2D7DFF;"></span></td></tr>
+          <tr><td>--color-accent</td><td>#a855f7</td><td>var(--red) #FF3B30</td><td><span style="display:inline-block;width:32px;height:16px;background:#FF3B30;"></span></td></tr>
+          <tr><td>--color-text</td><td>#ffffff</td><td>var(--off-white) #F4F0E8</td><td><span style="display:inline-block;width:32px;height:16px;background:#F4F0E8;border:1px solid rgba(244,240,232,0.2);"></span></td></tr>
+          <tr><td>--color-text-secondary</td><td>rgba(255,255,255,0.7)</td><td>rgba(244,240,232,0.68)</td><td></td></tr>
+          <tr><td>--color-text-tertiary</td><td>rgba(255,255,255,0.4)</td><td>rgba(244,240,232,0.38)</td><td></td></tr>
+          <tr><td>--color-bg-darkest</td><td>#0d0914</td><td>var(--charcoal) #111111</td><td><span style="display:inline-block;width:32px;height:16px;background:#111111;"></span></td></tr>
+          <tr><td>--color-bg-dark</td><td>rgba(8,5,14,0.92)</td><td>rgba(17,17,17,0.92)</td><td></td></tr>
+          <tr><td>--color-glass-light</td><td>rgba(255,255,255,0.08)</td><td>rgba(244,240,232,0.07)</td><td></td></tr>
+          <tr><td>--color-border</td><td>rgba(255,255,255,0.1)</td><td>rgba(244,240,232,0.16)</td><td></td></tr>
+          <tr><td>--radius-sm/md/lg/xl</td><td>6px / 12px / 16px / 24px</td><td>0px (editorial sharp corners)</td><td></td></tr>
+          <tr><td>--space-xs → --space-3xl</td><td>4px → 48px</td><td>Unchanged ✓</td><td></td></tr>
+          <tr><td>--shadow-sm → --shadow-xl</td><td>rgba(0,0,0, .3→.6)</td><td>Unchanged ✓</td><td></td></tr>
+          <tr><td>--transition-fast/base/slow</td><td>150 / 250 / 400ms</td><td>Unchanged ✓</td><td></td></tr>
+        </tbody>
+      </table>
+
+      <br />
+      <p style="font-size:12px; color:var(--color-text-tertiary);">⚠️ Key departure: border-radius is collapsed to 0 throughout V2. The editorial aesthetic demands sharp corners. Individual components can restore small radii (e.g. avatar pills) where functionally required.</p>
+    </div>
+
+
+    <!-- ══ 4. BUTTONS ══ -->
+    <div class="section" id="buttons">
+      <div class="section-header">
+        <span class="section-number">04</span>
+        <div>
+          <div class="section-title">Buttons</div>
+          <div class="section-desc">All button variants including the gradient-button helper from globals.css.</div>
+        </div>
+      </div>
+
+      <div class="demo-canvas">
+        <div class="component-label">Primary (Acid CTA)</div>
+        <div class="demo-row" style="margin-bottom:20px;">
+          <button class="btn btn-primary btn-sm">Small</button>
+          <button class="btn btn-primary">Default</button>
+          <button class="btn btn-primary btn-lg">Large</button>
+        </div>
+
+        <div class="component-label">Secondary</div>
+        <div class="demo-row" style="margin-bottom:20px;">
+          <button class="btn btn-secondary btn-sm">Small</button>
+          <button class="btn btn-secondary">Default</button>
+          <button class="btn btn-secondary btn-lg">Large</button>
+        </div>
+
+        <div class="component-label">Ghost</div>
+        <div class="demo-row" style="margin-bottom:20px;">
+          <button class="btn btn-ghost btn-sm">Small</button>
+          <button class="btn btn-ghost">Default</button>
+          <button class="btn btn-ghost btn-lg">Large</button>
+        </div>
+
+        <div class="component-label">Danger</div>
+        <div class="demo-row" style="margin-bottom:20px;">
+          <button class="btn btn-danger btn-sm">Delete</button>
+          <button class="btn btn-danger">Delete Song</button>
+        </div>
+
+        <div class="component-label">Blue (Secondary Action)</div>
+        <div class="demo-row" style="margin-bottom:20px;">
+          <button class="btn btn-blue btn-sm">Upload</button>
+          <button class="btn btn-blue">Upload Version</button>
+        </div>
+
+        <div class="component-label">Gradient Button (from globals.css)</div>
+        <div class="demo-row" style="margin-bottom:20px;">
+          <button class="gradient-button">Start a Room</button>
+        </div>
+
+        <div class="component-label">Icon Buttons</div>
+        <div class="demo-row" style="margin-bottom:20px;">
+          <button class="btn-icon" title="Edit">✏️</button>
+          <button class="btn-icon" title="Delete">🗑️</button>
+          <button class="btn-icon" title="Image">🖼️</button>
+          <button class="btn-icon" title="Settings">⚙️</button>
+        </div>
+
+        <div class="component-label">Full Width</div>
+        <button class="btn btn-primary btn-full">Create Account</button>
+      </div>
+    </div>
+
+
+    <!-- ══ 5. INPUTS ══ -->
+    <div class="section" id="inputs">
+      <div class="section-header">
+        <span class="section-number">05</span>
+        <div>
+          <div class="section-title">Form Inputs</div>
+          <div class="section-desc">All input types from globals.css base styles, adapted to editorial system.</div>
+        </div>
+      </div>
+
+      <div class="demo-canvas" style="max-width:520px;">
+
+        <div class="field">
+          <label class="field-label">Song Title</label>
+          <input class="field-input" type="text" placeholder="Enter song title..." />
+        </div>
+
+        <div class="field">
+          <label class="field-label">Email</label>
+          <input class="field-input" type="email" placeholder="you@example.com" value="coris@example.com" />
+        </div>
+
+        <div class="field">
+          <label class="field-label">Password</label>
+          <input class="field-input" type="password" placeholder="Create a password" />
+          <span class="field-hint">Minimum 8 characters. You'll use this to log in.</span>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Error State</label>
+          <input class="field-input error" type="text" value="Bad input" />
+          <span class="field-error">⚠ This field is required.</span>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Search</label>
+          <div class="field-search-wrap">
+            <span class="field-search-icon">🔍</span>
+            <input class="field-input field-input-search" type="text" placeholder="Search songs..." />
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Version Label</label>
+          <select class="field-input">
+            <option>V1 — First Draft</option>
+            <option>V2 — Hook Hook</option>
+            <option>V3 — Final Hook</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Notes</label>
+          <textarea class="field-input" rows="3" placeholder="Add a note about this version..."></textarea>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Checkboxes</label>
+          <label class="field-check">
+            <input type="checkbox" checked />
+            <span class="field-check-label">Email me when someone replies</span>
+          </label>
+          <label class="field-check" style="margin-top:10px;">
+            <input type="checkbox" />
+            <span class="field-check-label">Mark this version as final</span>
+          </label>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Radio Buttons</label>
+          <label class="field-check">
+            <input type="radio" name="r" checked />
+            <span class="field-check-label">Coris</span>
+          </label>
+          <label class="field-check" style="margin-top:10px;">
+            <input type="radio" name="r" />
+            <span class="field-check-label">Al</span>
+          </label>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Toggles</label>
+          <div class="toggle-wrap">
+            <div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div>
+            <span class="toggle-label">Email notifications on</span>
+          </div>
+          <div class="toggle-wrap" style="margin-top:10px;">
+            <div class="toggle" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div>
+            <span class="toggle-label">Auto-share new versions</span>
+          </div>
+        </div>
+
+        <div class="divider">or</div>
+
+      </div>
+    </div>
+
+
+    <!-- ══ 6. CARDS ══ -->
+    <div class="section" id="cards">
+      <div class="section-header">
+        <span class="section-number">06</span>
+        <div>
+          <div class="section-title">Cards</div>
+          <div class="section-desc">Song cards, action cards, generic glass cards, version badges.</div>
+        </div>
+      </div>
+
+      <div class="demo-canvas">
+
+        <div class="component-label">Song Cards (4-up grid)</div>
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line-light); margin-bottom:28px;">
+          <div class="song-card">
+            <div class="song-card-thumb" style="background:linear-gradient(135deg,var(--acid) 0 40%,var(--charcoal) 40%);">
+              <div class="song-card-thumb-inner"></div>
+            </div>
+            <div class="song-card-body">
+              <div class="song-card-title">Fading Light</div>
+              <div class="song-card-meta">3 versions</div>
+            </div>
+            <div class="song-card-actions">
+              <span class="version-badge acid">V3</span>
+              <button class="btn-icon" style="width:32px;height:32px;font-size:12px;margin-left:auto;">✏️</button>
+              <button class="btn-icon" style="width:32px;height:32px;font-size:12px;">🗑️</button>
+            </div>
+          </div>
+          <div class="song-card">
+            <div class="song-card-thumb" style="background:linear-gradient(135deg,var(--pink) 0 40%,var(--charcoal) 40%);">
+              <div class="song-card-thumb-inner"></div>
+            </div>
+            <div class="song-card-body">
+              <div class="song-card-title">Satellite Heart</div>
+              <div class="song-card-meta">2 versions</div>
+            </div>
+            <div class="song-card-actions">
+              <span class="version-badge pink">V2</span>
+              <button class="btn-icon" style="width:32px;height:32px;font-size:12px;margin-left:auto;">✏️</button>
+              <button class="btn-icon" style="width:32px;height:32px;font-size:12px;">🗑️</button>
+            </div>
+          </div>
+          <div class="song-card">
+            <div class="song-card-thumb" style="background:linear-gradient(135deg,var(--blue) 0 40%,var(--charcoal) 40%);">
+              <div class="song-card-thumb-inner"></div>
+            </div>
+            <div class="song-card-body">
+              <div class="song-card-title">Better Days</div>
+              <div class="song-card-meta">5 versions</div>
+            </div>
+            <div class="song-card-actions">
+              <span class="version-badge blue">V5</span>
+              <button class="btn-icon" style="width:32px;height:32px;font-size:12px;margin-left:auto;">✏️</button>
+              <button class="btn-icon" style="width:32px;height:32px;font-size:12px;">🗑️</button>
+            </div>
+          </div>
+          <div class="song-card">
+            <div class="song-card-thumb" style="background:linear-gradient(135deg,var(--red) 0 40%,var(--charcoal) 40%);">
+              <div class="song-card-thumb-inner"></div>
+            </div>
+            <div class="song-card-body">
+              <div class="song-card-title">Open Water</div>
+              <div class="song-card-meta">1 version</div>
+            </div>
+            <div class="song-card-actions">
+              <span class="version-badge red">V1</span>
+              <button class="btn-icon" style="width:32px;height:32px;font-size:12px;margin-left:auto;">✏️</button>
+              <button class="btn-icon" style="width:32px;height:32px;font-size:12px;">🗑️</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="component-label">Action Cards</div>
+        <div style="display:grid;gap:1px;background:var(--line-light);margin-bottom:28px;">
+          <div class="action-card">
+            <div class="action-status-circle"></div>
+            <div>
+              <div class="action-desc">Tighten the snare at 1:24 — too loose in the mix</div>
+              <div class="action-meta">Fading Light · suggested by Coris · pending</div>
+            </div>
+            <span class="stage-pill ghost">Pending</span>
+          </div>
+          <div class="action-card">
+            <div class="action-status-circle done"></div>
+            <div>
+              <div class="action-desc">Open up the reverb on the drop</div>
+              <div class="action-meta">Satellite Heart · suggested by Al · completed</div>
+            </div>
+            <span class="stage-pill">Done</span>
+          </div>
+          <div class="action-card">
+            <div class="action-status-circle"></div>
+            <div>
+              <div class="action-desc">Try a filter sweep going into the chorus</div>
+              <div class="action-meta">Better Days · suggested by Coris · pending</div>
+            </div>
+            <span class="stage-pill red">Urgent</span>
+          </div>
+        </div>
+
+        <div class="component-label">Generic Glass Card</div>
+        <div class="card" style="max-width:360px;">
+          <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:16px; margin-bottom:8px;">Card Heading</div>
+          <div style="font-size:14px; color:var(--color-text-secondary); line-height:1.5;">A generic glass card using the .glass helper from globals.css, adapted to the new palette. Use for dashboard panels, info blocks, previews.</div>
+          <div style="margin-top:16px;">
+            <button class="btn btn-primary btn-sm">Action</button>
+          </div>
+        </div>
+
+        <div style="margin-top:24px;">
+          <div class="component-label">Version Badges</div>
+          <div class="demo-row">
+            <span class="version-badge acid">V1</span>
+            <span class="version-badge red">V2</span>
+            <span class="version-badge blue">V3</span>
+            <span class="version-badge pink">V4</span>
+            <span class="version-badge">V5 Draft</span>
+          </div>
+        </div>
+
+        <div style="margin-top:24px;">
+          <div class="component-label">Stage Pills</div>
+          <div class="demo-row">
+            <span class="stage-pill">In production</span>
+            <span class="stage-pill red">Needs revision</span>
+            <span class="stage-pill blue">Mixing</span>
+            <span class="stage-pill pink">Mastering</span>
+            <span class="stage-pill ghost">Draft</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ══ 7. WAVEFORM PLAYER ══ -->
+    <div class="section" id="player">
+      <div class="section-header">
+        <span class="section-number">07</span>
+        <div>
+          <div class="section-title">Waveform Player</div>
+          <div class="section-desc">Shell, waveform area, progress, comment pins, and controls. Wired to WaveSurfer.js v7 in production.</div>
+        </div>
+      </div>
+
+      <div class="demo-canvas">
+        <div class="player-shell">
+          <div class="player-header">
+            <div>
+              <div class="player-title">Fading Light</div>
+              <div class="player-meta">Version 3 · Final Hook · uploaded by Coris</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <span class="version-badge acid">V3</span>
+              <button class="btn btn-ghost btn-sm">Download</button>
+            </div>
+          </div>
+
+          <div class="waveform-area">
+            <div class="waveform-svg"></div>
+            <div class="waveform-progress"></div>
+            <div class="waveform-playhead"></div>
+            <div class="wave-pin wpin-acid">Love this drop<br />1:24</div>
+            <div class="wave-pin wpin-red">Filter sweep<br />1:37</div>
+            <div class="wave-pin wpin-blue">Vocal earlier?<br />2:08</div>
+          </div>
+
+          <div class="player-controls">
+            <button class="play-btn" title="Play">▶</button>
+            <span class="time-display">1:24 / 3:47</span>
+            <div class="player-version-select">
+              <span style="font-size:11px;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.1em;">Version</span>
+              <select class="field-input" style="height:36px;padding:0 10px;font-size:12px;width:auto;">
+                <option>V3 — Final Hook</option>
+                <option>V2 — Hook Hook</option>
+                <option>V1 — First Draft</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ══ 8. COMMENT THREADS ══ -->
+    <div class="section" id="comments">
+      <div class="section-header">
+        <span class="section-number">08</span>
+        <div>
+          <div class="section-title">Comment Threads</div>
+          <div class="section-desc">Thread shell, comment bubbles, reply input, action marking.</div>
+        </div>
+      </div>
+
+      <div class="demo-canvas" style="max-width:560px;">
+        <div class="thread-shell">
+          <div class="thread-header">
+            <div class="thread-dot" style="background:var(--acid);"></div>
+            <span class="thread-timestamp">1:24.300</span>
+            <span class="thread-title">— Bass drop reverb</span>
+          </div>
+          <div class="thread-comments">
+            <div class="comment-bubble">
+              <div class="comment-avatar" style="background:linear-gradient(135deg,var(--pink),var(--sand));color:var(--charcoal);">C</div>
+              <div class="comment-body-wrap">
+                <div class="comment-meta">
+                  <span class="comment-author">Coris</span>
+                  <span class="comment-time">2h ago</span>
+                </div>
+                <div class="comment-text">Love this drop! What if we open up the reverb a bit here? Feels like it could breathe more.</div>
+                <div class="comment-actions-bar">
+                  <span class="comment-action-link">Reply</span>
+                  <span class="comment-action-link">Mark as Action</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="comment-bubble">
+              <div class="comment-avatar" style="background:linear-gradient(135deg,var(--blue),var(--charcoal));color:var(--off-white);">A</div>
+              <div class="comment-body-wrap">
+                <div class="comment-meta">
+                  <span class="comment-author">Al</span>
+                  <span class="comment-time">1h ago</span>
+                </div>
+                <div class="comment-text">Agreed — I'll try a plate reverb at about 2.4s and send you V4.</div>
+                <div class="comment-actions-bar">
+                  <span class="comment-action-link">Reply</span>
+                  <span class="comment-action-link">Mark as Action</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="thread-reply">
+            <input class="reply-input" type="text" placeholder="Reply to thread..." />
+            <button class="btn btn-primary btn-sm">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ══ 9. NAVIGATION ══ -->
+    <div class="section" id="nav">
+      <div class="section-header">
+        <span class="section-number">09</span>
+        <div>
+          <div class="section-title">Navigation</div>
+          <div class="section-desc">App header, nav links, identity chip.</div>
+        </div>
+      </div>
+
+      <div class="demo-canvas" style="padding:0;">
+        <nav class="app-nav">
+          <div class="nav-brand">
+            <div class="nav-mark"><span>TSR</span></div>
+            The Song Room
+          </div>
+          <div class="nav-links">
+            <a class="nav-link active" href="#">Dashboard</a>
+            <a class="nav-link" href="#">Songs</a>
+            <a class="nav-link" href="#">Actions</a>
+            <a class="nav-link" href="#">Settings</a>
+          </div>
+          <div class="nav-actions">
+            <div class="identity-chip">
+              <div class="identity-avatar" style="background:linear-gradient(135deg,var(--pink),var(--sand));color:var(--charcoal);">C</div>
+              <span class="identity-name">Coris</span>
+            </div>
+            <button class="btn btn-ghost btn-sm">⚙️ Settings</button>
+          </div>
+        </nav>
+      </div>
+    </div>
+
+
+    <!-- ══ 10. TABS ══ -->
+    <div class="section" id="tabs">
+      <div class="section-header">
+        <span class="section-number">10</span>
+        <div>
+          <div class="section-title">Tabs</div>
+          <div class="section-desc">Filled tabs (dashboard mobile) and underline tabs (version selector).</div>
+        </div>
+      </div>
+
+      <div class="demo-canvas">
+        <div class="component-label">Filled Tabs (mobile dashboard)</div>
+        <div class="tabs" style="max-width:340px;margin-bottom:28px;">
+          <button class="tab active" onclick="this.parentElement.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));this.classList.add('active')">🎵 Songs</button>
+          <button class="tab" onclick="this.parentElement.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));this.classList.add('active')">📋 Actions</button>
+        </div>
+
+        <div class="component-label">Underline Tabs (version / auth toggle)</div>
+        <div class="tabs-underline" style="margin-bottom:28px;">
+          <button class="tab-ul active" onclick="this.parentElement.querySelectorAll('.tab-ul').forEach(t=>t.classList.remove('active'));this.classList.add('active')">Log in</button>
+          <button class="tab-ul" onclick="this.parentElement.querySelectorAll('.tab-ul').forEach(t=>t.classList.remove('active'));this.classList.add('active')">Sign up</button>
+          <button class="tab-ul" onclick="this.parentElement.querySelectorAll('.tab-ul').forEach(t=>t.classList.remove('active'));this.classList.add('active')">All Versions</button>
+          <button class="tab-ul" onclick="this.parentElement.querySelectorAll('.tab-ul').forEach(t=>t.classList.remove('active'));this.classList.add('active')">Comments</button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ══ 11. BADGES & TAGS ══ -->
+    <div class="section" id="badges">
+      <div class="section-header">
+        <span class="section-number">11</span>
+        <div>
+          <div class="section-title">Badges, Tags & Indicators</div>
+          <div class="section-desc">Status badges, dot indicators, count chips, eyebrow labels.</div>
+        </div>
+      </div>
+
+      <div class="demo-canvas">
+        <div class="component-label">Status Badges</div>
+        <div class="demo-row" style="margin-bottom:20px;">
+          <span class="badge badge-acid">Pending</span>
+          <span class="badge badge-red">Revision needed</span>
+          <span class="badge badge-blue">Mixing</span>
+          <span class="badge badge-pink">Mastering</span>
+          <span class="badge badge-olive">Draft</span>
+        </div>
+
+        <div class="component-label">Dot Indicators</div>
+        <div class="demo-row" style="margin-bottom:20px;align-items:center;">
+          <span class="dot dot-acid"></span>
+          <span style="font-size:13px;color:var(--color-text-secondary);">In production</span>
+          &nbsp;&nbsp;
+          <span class="dot dot-red"></span>
+          <span style="font-size:13px;color:var(--color-text-secondary);">Needs revision</span>
+          &nbsp;&nbsp;
+          <span class="dot dot-blue"></span>
+          <span style="font-size:13px;color:var(--color-text-secondary);">Mixing</span>
+          &nbsp;&nbsp;
+          <span class="dot dot-olive"></span>
+          <span style="font-size:13px;color:var(--color-text-secondary);">Draft</span>
+        </div>
+
+        <div class="component-label">Count Chips</div>
+        <div class="demo-row" style="margin-bottom:20px;">
+          <span class="count-chip">3</span>
+          <span class="count-chip">12</span>
+          <span class="count-chip">99+</span>
+        </div>
+
+        <div class="component-label">Eyebrow Labels</div>
+        <div class="demo-row" style="margin-bottom:20px;">
+          <span class="eyebrow">How it works</span>
+        </div>
+        <div class="demo-row" style="margin-bottom:20px;">
+          <span class="eyebrow" style="color:var(--off-white);">Sign up</span>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ══ 12. ALERTS & TOASTS ══ -->
+    <div class="section" id="alerts">
+      <div class="section-header">
+        <span class="section-number">12</span>
+        <div>
+          <div class="section-title">Alerts & Toasts</div>
+          <div class="section-desc">Inline alerts for form validation, system messages, and toast notifications.</div>
+        </div>
+      </div>
+
+      <div class="demo-canvas">
+        <div class="component-label">Inline Alerts</div>
+        <div style="display:grid;gap:8px;margin-bottom:28px;">
+          <div class="alert alert-info">
+            <span class="alert-icon">ℹ️</span>
+            <div class="alert-body">
+              <div class="alert-title">New version available</div>
+              <div class="alert-desc">Al uploaded V4 — Final Hook 12 minutes ago.</div>
+            </div>
+          </div>
+          <div class="alert alert-success">
+            <span class="alert-icon">✅</span>
+            <div class="alert-body">
+              <div class="alert-title">Upload complete</div>
+              <div class="alert-desc">Version 3 is ready for review.</div>
+            </div>
+          </div>
+          <div class="alert alert-warning">
+            <span class="alert-icon">⚠️</span>
+            <div class="alert-body">
+              <div class="alert-title">Large file size</div>
+              <div class="alert-desc">This file is 48MB. Uploads over 50MB may fail. Consider compressing.</div>
+            </div>
+          </div>
+          <div class="alert alert-error">
+            <span class="alert-icon">❌</span>
+            <div class="alert-body">
+              <div class="alert-title">Upload failed</div>
+              <div class="alert-desc">The file could not be saved. Check your connection and try again.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="component-label">Toast Notifications</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div class="toast">
+            <div class="toast-dot" style="background:var(--acid);"></div>
+            Comment saved successfully
+            <span class="toast-close">×</span>
+          </div>
+          <div class="toast">
+            <div class="toast-dot" style="background:var(--red);"></div>
+            Failed to send email notification
+            <span class="toast-close">×</span>
+          </div>
+          <div class="toast">
+            <div class="toast-dot" style="background:var(--blue);"></div>
+            Al is reviewing your latest version
+            <span class="toast-close">×</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ══ 13. MODALS ══ -->
+    <div class="section" id="modals">
+      <div class="section-header">
+        <span class="section-number">13</span>
+        <div>
+          <div class="section-title">Modals & Overlays</div>
+          <div class="section-desc">Dialog shell used for: new song, upload version, mark as action, delete confirm.</div>
+        </div>
+      </div>
+
+      <div class="demo-canvas">
+        <div class="component-label">Create Song Modal</div>
+        <div class="modal" style="margin-bottom:28px;">
+          <div class="modal-header">
+            <span class="modal-title">New Song</span>
+            <button class="modal-close">×</button>
+          </div>
+          <div class="modal-body">
+            <div class="field">
+              <label class="field-label">Song Title</label>
+              <input class="field-input" type="text" placeholder="e.g. Fading Light" />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-ghost btn-sm">Cancel</button>
+            <button class="btn btn-primary btn-sm">Create Song</button>
+          </div>
+        </div>
+
+        <div class="component-label">Delete Confirm Modal</div>
+        <div class="modal">
+          <div class="modal-header">
+            <span class="modal-title">Delete Song?</span>
+            <button class="modal-close">×</button>
+          </div>
+          <div class="modal-body">
+            <p style="font-size:14px;color:var(--color-text-secondary);line-height:1.6;">This will permanently delete <strong style="color:var(--off-white);">Fading Light</strong> and all its versions, comments, and actions. This cannot be undone.</p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-ghost btn-sm">Cancel</button>
+            <button class="btn btn-danger btn-sm">Delete Song</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ══ 14. LOADING STATES ══ -->
+    <div class="section" id="loading">
+      <div class="section-header">
+        <span class="section-number">14</span>
+        <div>
+          <div class="section-title">Loading States</div>
+          <div class="section-desc">Skeleton screens, spinners, and pulse animations from globals.css .loading class.</div>
+        </div>
+      </div>
+
+      <div class="demo-canvas">
+        <div class="component-label">Skeleton Cards</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line-light);margin-bottom:28px;">
+          <div style="background:var(--charcoal);padding:0;">
+            <div class="skeleton skeleton-thumb"></div>
+            <div style="padding:16px;">
+              <div class="skeleton skeleton-title" style="margin-bottom:8px;"></div>
+              <div class="skeleton skeleton-text" style="width:60%;"></div>
+            </div>
+          </div>
+          <div style="background:var(--charcoal);padding:0;">
+            <div class="skeleton skeleton-thumb"></div>
+            <div style="padding:16px;">
+              <div class="skeleton skeleton-title" style="margin-bottom:8px;width:75%;"></div>
+              <div class="skeleton skeleton-text" style="width:45%;"></div>
+            </div>
+          </div>
+          <div style="background:var(--charcoal);padding:0;">
+            <div class="skeleton skeleton-thumb"></div>
+            <div style="padding:16px;">
+              <div class="skeleton skeleton-title" style="margin-bottom:8px;width:55%;"></div>
+              <div class="skeleton skeleton-text" style="width:70%;"></div>
+            </div>
+          </div>
+          <div style="background:var(--charcoal);padding:0;">
+            <div class="skeleton skeleton-thumb"></div>
+            <div style="padding:16px;">
+              <div class="skeleton skeleton-title" style="margin-bottom:8px;"></div>
+              <div class="skeleton skeleton-text" style="width:50%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="component-label">Spinners</div>
+        <div class="demo-row" style="align-items:center;margin-bottom:20px;gap:24px;">
+          <div class="spinner" style="width:16px;height:16px;border-width:1.5px;"></div>
+          <div class="spinner"></div>
+          <div class="spinner" style="width:40px;height:40px;border-width:3px;"></div>
+          <div class="spinner" style="width:56px;height:56px;border-width:4px;border-top-color:var(--red);"></div>
+        </div>
+
+        <div class="component-label">Pulse Loading (from globals.css .loading)</div>
+        <div class="demo-row">
+          <div class="loading btn btn-primary" style="opacity:0.7;pointer-events:none;">Uploading…</div>
+          <div class="loading" style="font-size:13px;color:var(--color-text-secondary);">Loading waveform…</div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ══ 15. DASHBOARD LAYOUT ══ -->
+    <div class="section" id="layout">
+      <div class="section-header">
+        <span class="section-number">15</span>
+        <div>
+          <div class="section-title">Dashboard Layout</div>
+          <div class="section-desc">Two-column grid: Songs left (wider), Actions right. Borders define columns — no card shadows at grid level.</div>
+        </div>
+      </div>
+
+      <div class="demo-canvas" style="padding:0;">
+        <div class="dashboard-grid">
+          <div class="dashboard-col">
+            <div class="dashboard-col-header">
+              <span class="dashboard-col-title">Songs</span>
+              <button class="btn btn-primary btn-sm">+ New Song</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line-light);">
+              <div class="song-card">
+                <div class="song-card-thumb" style="aspect-ratio:unset;height:80px;background:linear-gradient(135deg,var(--acid) 0 40%,var(--charcoal) 40%);"><div class="song-card-thumb-inner"></div></div>
+                <div class="song-card-body" style="padding:10px 12px;"><div class="song-card-title" style="font-size:13px;">Fading Light</div><div class="song-card-meta">3 versions</div></div>
+                <div class="song-card-actions" style="padding:8px 12px;"><span class="version-badge acid" style="font-size:9px;height:20px;">V3</span></div>
+              </div>
+              <div class="song-card">
+                <div class="song-card-thumb" style="aspect-ratio:unset;height:80px;background:linear-gradient(135deg,var(--pink) 0 40%,var(--charcoal) 40%);"><div class="song-card-thumb-inner"></div></div>
+                <div class="song-card-body" style="padding:10px 12px;"><div class="song-card-title" style="font-size:13px;">Satellite Heart</div><div class="song-card-meta">2 versions</div></div>
+                <div class="song-card-actions" style="padding:8px 12px;"><span class="version-badge pink" style="font-size:9px;height:20px;">V2</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dashboard-col">
+            <div class="dashboard-col-header">
+              <span class="dashboard-col-title">Actions</span>
+              <div style="display:flex;gap:4px;">
+                <button class="btn btn-primary btn-sm">All</button>
+                <button class="btn btn-ghost btn-sm">Pending</button>
+                <button class="btn btn-ghost btn-sm">Done</button>
+              </div>
+            </div>
+            <div style="display:grid;gap:1px;background:var(--line-light);">
+              <div class="action-card" style="padding:12px 14px;">
+                <div class="action-status-circle"></div>
+                <div><div class="action-desc" style="font-size:13px;">Tighten snare at 1:24</div><div class="action-meta">Fading Light</div></div>
+                <span class="badge badge-acid">Pending</span>
+              </div>
+              <div class="action-card" style="padding:12px 14px;">
+                <div class="action-status-circle done"></div>
+                <div><div class="action-desc" style="font-size:13px;">Open reverb on drop</div><div class="action-meta">Satellite Heart</div></div>
+                <span class="badge badge-olive">Done</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="border-top:1px solid var(--line-light);padding-top:40px;margin-top:40px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+      <div>
+        <div style="font-family:'Outfit',sans-serif;font-weight:900;font-size:13px;text-transform:uppercase;letter-spacing:0.1em;color:var(--acid);margin-bottom:4px;">The Song Room — V2 Design System</div>
+        <div style="font-size:12px;color:var(--color-text-tertiary);">Fonts: Outfit + DM Sans · Palette: Charcoal / Off-white / Acid / Sand / Red / Blue / Pink / Olive</div>
+      </div>
+      <div style="font-size:11px;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.1em;">Generated May 2026</div>
+    </div>
+
+  </main>
+
+</body>
+</html>
