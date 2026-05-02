@@ -184,7 +184,7 @@
       border: 1px solid var(--border);
       color: var(--text-mid);
       padding: 7px 14px;
-      border-radius: 8px;
+      border-radius: 0;
       font-size: 0.82rem;
       font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
       letter-spacing: 0.1em;
@@ -236,7 +236,7 @@
       letter-spacing: 0.14em;
       text-transform: uppercase;
       padding: 4px 12px;
-      border-radius: 999px;
+      border-radius: 0;
       border: 1px solid rgba(255,182,200,0.35);
       background: rgba(255,182,200,0.1);
       color: var(--pink);
@@ -277,7 +277,7 @@
       letter-spacing: 0.1em;
       text-transform: uppercase;
       padding: 3px 10px;
-      border-radius: 999px;
+      border-radius: 0;
       border: 1px solid var(--border);
       background: rgba(244,240,232,0.05);
       color: var(--text-soft);
@@ -329,7 +329,7 @@
     .play-btn {
       width: 52px;
       height: 52px;
-      border-radius: 50%;
+      border-radius: 0;
       border: 2px solid var(--off-white);
       background: var(--off-white);
       display: flex;
@@ -357,7 +357,7 @@
     .loop-btn {
       width: 34px;
       height: 34px;
-      border-radius: 50%;
+      border-radius: 0;
       border: 1.5px solid var(--border);
       background: transparent;
       color: var(--text-soft);
@@ -378,7 +378,7 @@
     .waveform-wrap {
       position: relative;
       background: rgba(0,0,0,0.22);
-      border-radius: 6px;
+      border-radius: 0;
       overflow: hidden;
     }
 
@@ -436,7 +436,7 @@
       grid-area: art;
       width: 300px;
       height: 300px;
-      border-radius: 4px;
+      border-radius: 0;
       overflow: hidden;
       position: relative;
       box-shadow: var(--shadow-lg);
@@ -571,7 +571,7 @@
       letter-spacing: 0.12em;
       text-transform: uppercase;
       padding: 2px 8px;
-      border-radius: 999px;
+      border-radius: 0;
       border: 1px solid var(--border);
       color: var(--text-soft);
       background: rgba(244,240,232,0.04);
@@ -633,7 +633,7 @@
       border: 1px solid var(--border);
       color: var(--text-mid);
       padding: 7px 12px;
-      border-radius: 999px;
+      border-radius: 0;
       font-size: 0.74rem;
       font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
       letter-spacing: 0.1em;
@@ -679,31 +679,28 @@
     .bubble {
       max-width: 80%;
       padding: 10px 14px;
-      border-radius: 14px;
+      border-radius: 0;
       font-size: 0.88rem;
       line-height: 1.48;
     }
 
     .bubble.own {
-      /* TSR: charcoal + sand instead of purple gradient */
       background: var(--surface-3);
       border: 1px solid var(--border-mid);
       color: var(--off-white);
-      border-bottom-right-radius: 4px;
     }
 
     .bubble.other {
       background: var(--surface-2);
       border: 1px solid var(--border);
       color: rgba(244,240,232,0.88);
-      border-bottom-left-radius: 4px;
     }
 
     .mark-action-btn {
       background: var(--accent-dim);
       border: 1px solid var(--border-pink);
       color: var(--pink);
-      border-radius: 999px;
+      border-radius: 0;
       padding: 4px 12px;
       font-size: 0.72rem;
       font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
@@ -737,7 +734,7 @@
       background: var(--surface-2);
       border: 1px solid var(--border);
       color: var(--text);
-      border-radius: 999px;
+      border-radius: 0;
       padding: 9px 16px;
       font-size: 0.86rem;
       min-width: 0;
@@ -758,7 +755,7 @@
     .reply-btn {
       width: 34px;
       height: 34px;
-      border-radius: 50%;
+      border-radius: 0;
       border: 1.5px solid var(--border-pink);
       background: var(--accent-dim);
       display: flex;
@@ -790,7 +787,7 @@
       background: var(--accent-dim);
       color: var(--pink);
       padding: 2px 8px;
-      border-radius: 999px;
+      border-radius: 0;
       margin-left: auto;
       border: 1px solid var(--border-pink);
     }
@@ -805,7 +802,7 @@
       flex: 1;
       background: var(--surface-2);
       border: 1px solid var(--border);
-      border-radius: 6px;
+      border-radius: 0;
       padding: 8px 12px;
       color: var(--text);
       font-size: 0.84rem;
@@ -821,7 +818,7 @@
       height: 32px;
       background: var(--off-white);
       border: none;
-      border-radius: 6px;
+      border-radius: 0;
       color: var(--charcoal);
       font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
       font-size: 1.1rem;
@@ -841,7 +838,7 @@
       align-items: center;
       gap: 8px;
       padding: 8px 6px;
-      border-radius: 6px;
+      border-radius: 0;
       border: 1px solid transparent;
       transition: background 120ms, border-color 120ms;
       animation: fade-up 0.3s var(--ease-out) both;
@@ -901,7 +898,7 @@
       padding: 2px;
       display: flex;
       align-items: center;
-      border-radius: 4px;
+      border-radius: 0;
       transition: color 160ms, background 160ms;
       opacity: 0;
     }
@@ -1180,7 +1177,7 @@
         <div class="completed-section">
           <div class="completed-heading">
             Completed
-            <span style="background:rgba(244,240,232,0.06); color:var(--text-soft); padding:1px 7px; border-radius:10px;">1</span>
+            <span style="background:rgba(244,240,232,0.06); color:var(--text-soft); padding:1px 7px; border-radius:0;">1</span>
           </div>
           <div class="task-row">
             <span class="drag-handle">⣿</span>
