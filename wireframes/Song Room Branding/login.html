@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Song Room — Log In</title>
+  <style>
+    :root {
+      --charcoal: #111111;
+      --off-white: #F4F0E8;
+      --sand: #D8CBB8;
+      --acid: #E6FF3F;
+      --red: #FF3B30;
+      --blue: #2D7DFF;
+      --pink: #FFB6C8;
+      --olive: #6F735F;
+      --ink-soft: rgba(17, 17, 17, 0.68);
+      --line-dark: rgba(17, 17, 17, 0.18);
+      --line-light: rgba(244, 240, 232, 0.18);
+      --shadow: 0 30px 80px rgba(0,0,0,0.26);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+
+    body {
+      background: var(--off-white);
+      color: var(--charcoal);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: minmax(320px, 0.72fr) 1fr;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.05;
+      z-index: 100;
+      background-image:
+        radial-gradient(circle at 20% 30%, #111 0 1px, transparent 1px),
+        radial-gradient(circle at 80% 70%, #111 0 1px, transparent 1px);
+      background-size: 18px 18px, 26px 26px;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button, input { font: inherit; }
+
+    /* ── LEFT PANEL ── */
+    .auth-panel {
+      padding: clamp(24px, 5vw, 56px);
+      display: grid;
+      align-content: start;
+      gap: 0;
+      background:
+        linear-gradient(180deg, rgba(216,203,184,0.38), transparent 38%),
+        var(--off-white);
+      border-right: 1px solid var(--line-dark);
+      min-height: 100vh;
+    }
+
+    .brand-lockup {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-weight: 950;
+      letter-spacing: -0.04em;
+      text-transform: uppercase;
+      margin-bottom: clamp(40px, 8vh, 72px);
+    }
+
+    .mark {
+      width: 44px;
+      height: 44px;
+      border: 2px solid currentColor;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      line-height: 1;
+      position: relative;
+      flex: 0 0 auto;
+    }
+
+    .mark::after {
+      content: "";
+      position: absolute;
+      width: 1px;
+      height: 24px;
+      background: currentColor;
+      opacity: 0.55;
+    }
+
+    .brand-name {
+      font-size: 15px;
+      letter-spacing: 0.06em;
+    }
+
+    .auth-card {
+      width: min(100%, 460px);
+    }
+
+    .auth-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1px solid var(--charcoal);
+      margin-bottom: 32px;
+    }
+
+    .auth-tab {
+      padding: 14px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+      cursor: pointer;
+      transition: background 160ms ease, color 160ms ease;
+    }
+
+    .auth-tab.active {
+      background: var(--charcoal);
+      color: var(--off-white);
+    }
+
+    .auth-tab:not(.active):hover {
+      background: rgba(17,17,17,0.06);
+    }
+
+    .auth-heading {
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      text-transform: uppercase;
+      letter-spacing: -0.04em;
+      line-height: 0.88;
+      font-size: clamp(52px, 7vw, 72px);
+      margin: 0 0 12px;
+    }
+
+    .auth-sub {
+      color: var(--ink-soft);
+      font-size: 15px;
+      margin: 0 0 28px;
+      line-height: 1.5;
+    }
+
+    /* Google btn */
+    .btn {
+      border: 1px solid var(--charcoal);
+      background: var(--charcoal);
+      color: var(--off-white);
+      padding: 0 20px;
+      height: 52px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+      width: 100%;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 24px rgba(0,0,0,0.16);
+    }
+
+    .btn-ghost {
+      background: var(--off-white);
+      color: var(--charcoal);
+    }
+
+    .btn-acid {
+      background: var(--acid);
+      color: var(--charcoal);
+      border-color: var(--acid);
+    }
+
+    .google-icon {
+      width: 20px;
+      height: 20px;
+      flex: 0 0 auto;
+    }
+
+    .divider {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 12px;
+      align-items: center;
+      color: var(--ink-soft);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      margin: 22px 0;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: "";
+      height: 1px;
+      background: var(--line-dark);
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .field label {
+      font-size: 11px;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+    }
+
+    .field-row {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .field input {
+      width: 100%;
+      border: 1px solid var(--charcoal);
+      background: transparent;
+      height: 52px;
+      padding: 0 14px;
+      color: var(--charcoal);
+      outline: none;
+      font-size: 15px;
+      transition: box-shadow 160ms ease;
+    }
+
+    .field input::placeholder {
+      color: rgba(17,17,17,0.32);
+    }
+
+    .field input:focus {
+      box-shadow: 0 0 0 4px rgba(230,255,63,0.45);
+    }
+
+    .forgot-link {
+      display: block;
+      text-align: right;
+      font-size: 11px;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--ink-soft);
+      margin-top: -10px;
+      margin-bottom: 22px;
+      border-bottom: 1px solid transparent;
+      transition: border-color 160ms, color 160ms;
+      width: fit-content;
+      margin-left: auto;
+    }
+
+    .forgot-link:hover {
+      border-bottom-color: var(--charcoal);
+      color: var(--charcoal);
+    }
+
+    .auth-note {
+      margin-top: 20px;
+      font-size: 13px;
+      color: var(--ink-soft);
+    }
+
+    .underlined-link {
+      font-weight: 850;
+      border-bottom: 1.5px solid var(--charcoal);
+      padding-bottom: 2px;
+      color: var(--charcoal);
+    }
+
+    /* Trust badges */
+    .trust-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      margin-top: clamp(36px, 6vh, 56px);
+      border: 1px solid var(--line-dark);
+      background: var(--line-dark);
+    }
+
+    .trust-item {
+      background: var(--off-white);
+      padding: 16px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .trust-icon {
+      width: 22px;
+      height: 22px;
+      color: var(--charcoal);
+      opacity: 0.7;
+    }
+
+    .trust-label {
+      font-size: 11px;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .trust-desc {
+      font-size: 11px;
+      color: var(--ink-soft);
+      line-height: 1.4;
+    }
+
+    /* ── RIGHT PANEL ── */
+    .marketing-panel {
+      background: var(--charcoal);
+      color: var(--off-white);
+      padding: clamp(36px, 5vw, 68px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 48px;
+      position: relative;
+      overflow: hidden;
+      min-height: 100vh;
+    }
+
+    .marketing-panel::before {
+      content: "";
+      position: absolute;
+      right: -140px;
+      top: -140px;
+      width: 380px;
+      height: 380px;
+      border-radius: 999px;
+      background: var(--acid);
+      box-shadow: inset 0 0 0 80px rgba(17,17,17,0.08);
+      pointer-events: none;
+    }
+
+    .marketing-panel::after {
+      content: "";
+      position: absolute;
+      left: -100px;
+      bottom: -80px;
+      width: 320px;
+      height: 200px;
+      border: 1px solid rgba(230,255,63,0.55);
+      border-radius: 999px 999px 0 0;
+      background: repeating-radial-gradient(ellipse at bottom, transparent 0 19px, rgba(230,255,63,0.4) 20px 21px);
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .marketing-top {
+      position: relative;
+      z-index: 2;
+    }
+
+    .mktg-heading {
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      text-transform: uppercase;
+      font-size: clamp(52px, 7vw, 100px);
+      line-height: 0.86;
+      letter-spacing: -0.06em;
+      margin: 0 0 28px;
+    }
+
+    .mktg-heading em {
+      font-style: normal;
+      color: var(--acid);
+    }
+
+    .mktg-sub {
+      font-size: clamp(16px, 1.6vw, 20px);
+      color: rgba(244,240,232,0.74);
+      max-width: 480px;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    /* Preview card */
+    .preview-card {
+      position: relative;
+      z-index: 2;
+      border: 1px solid var(--line-light);
+      background: rgba(244,240,232,0.06);
+      padding: 24px;
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+    }
+
+    .track-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: flex-start;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line-light);
+    }
+
+    .track-head h3 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: -0.03em;
+    }
+
+    .track-head p {
+      margin: 4px 0 0;
+      color: rgba(244,240,232,0.48);
+      font-size: 12px;
+    }
+
+    .stage-pill {
+      background: var(--acid);
+      color: var(--charcoal);
+      padding: 7px 10px;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+      font-weight: 950;
+      white-space: nowrap;
+      flex: 0 0 auto;
+    }
+
+    /* Waveform */
+    .big-wave {
+      position: relative;
+      height: 110px;
+      margin-top: 20px;
+      border-bottom: 1px solid var(--line-light);
+      margin-bottom: 0;
+    }
+
+    .big-wave::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 52%;
+      height: 56px;
+      transform: translateY(-50%);
+      background: rgba(244,240,232,0.82);
+      clip-path: polygon(0 55%, 2% 38%, 4% 61%, 6% 30%, 9% 74%, 12% 42%, 16% 56%, 19% 18%, 22% 80%, 26% 41%, 29% 63%, 33% 29%, 37% 76%, 42% 36%, 46% 61%, 51% 17%, 55% 84%, 60% 40%, 64% 65%, 69% 29%, 73% 76%, 78% 37%, 82% 61%, 86% 31%, 91% 74%, 95% 43%, 100% 58%, 100% 100%, 0 100%);
+    }
+
+    /* Progress overlay */
+    .big-wave::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      width: 38%;
+      top: 52%;
+      height: 56px;
+      transform: translateY(-50%);
+      background: var(--acid);
+      clip-path: polygon(0 55%, 2% 38%, 4% 61%, 6% 30%, 9% 74%, 12% 42%, 16% 56%, 19% 18%, 22% 80%, 26% 41%, 29% 63%, 33% 29%, 37% 76%, 42% 36%, 46% 61%, 51% 17%, 55% 84%, 60% 40%, 64% 65%, 69% 29%, 73% 76%, 78% 37%, 82% 61%, 86% 31%, 91% 74%, 95% 43%, 100% 58%, 100% 100%, 0 100%);
+      opacity: 0.72;
+    }
+
+    .wave-pin {
+      position: absolute;
+      top: 10px;
+      font-size: 10px;
+      font-weight: 800;
+      line-height: 1.2;
+      z-index: 2;
+    }
+
+    .wave-pin::after {
+      content: "";
+      display: block;
+      width: 1px;
+      height: 58px;
+      margin: 6px auto 0;
+      background: currentColor;
+      opacity: 0.7;
+    }
+
+    .wp1 { left: 18%; color: var(--acid); }
+    .wp2 { left: 43%; color: var(--red); }
+    .wp3 { left: 72%; color: var(--blue); }
+
+    /* Player controls */
+    .player-controls {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 0 0;
+      border-top: 1px solid var(--line-light);
+      margin-top: 16px;
+    }
+
+    .play-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      background: var(--off-white);
+      color: var(--charcoal);
+      border: none;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      font-size: 13px;
+    }
+
+    .time-display {
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      color: rgba(244,240,232,0.72);
+    }
+
+    .comment-count {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: rgba(244,240,232,0.56);
+    }
+
+    /* Comment bubbles */
+    .comment-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .comment-bubble {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      border: 1.5px solid rgba(244,240,232,0.22);
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      font-weight: 900;
+      flex: 0 0 auto;
+    }
+
+    .bubble-body {
+      border: 1px solid var(--line-light);
+      background: rgba(244,240,232,0.07);
+      padding: 10px 14px;
+    }
+
+    .bubble-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 5px;
+    }
+
+    .bubble-name {
+      font-size: 11px;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .bubble-time {
+      font-size: 10px;
+      color: rgba(244,240,232,0.42);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .bubble-text {
+      font-size: 13px;
+      color: rgba(244,240,232,0.78);
+      line-height: 1.4;
+    }
+
+    /* Testimonial */
+    .testimonial {
+      position: relative;
+      z-index: 2;
+      border-top: 1px solid var(--line-light);
+      padding-top: 24px;
+    }
+
+    .quote-text {
+      font-size: clamp(15px, 1.4vw, 18px);
+      color: rgba(244,240,232,0.76);
+      line-height: 1.5;
+      margin: 0 0 16px;
+      font-style: italic;
+    }
+
+    .quote-text::before {
+      content: "\201C";
+    }
+
+    .quote-text::after {
+      content: "\201D";
+    }
+
+    .quote-attr {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .quote-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--sand), var(--olive));
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      font-weight: 950;
+      color: var(--charcoal);
+      flex: 0 0 auto;
+    }
+
+    .quote-name {
+      font-size: 13px;
+      font-weight: 950;
+      letter-spacing: -0.01em;
+    }
+
+    .quote-role {
+      font-size: 11px;
+      color: rgba(244,240,232,0.48);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 2px;
+    }
+
+    .quote-followers {
+      margin-left: auto;
+      font-size: 11px;
+      color: var(--blue);
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+    }
+
+    /* Tab switch JS */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Responsive */
+    @media (max-width: 780px) {
+      body {
+        grid-template-columns: 1fr;
+      }
+
+      .marketing-panel {
+        display: none;
+      }
+
+      .auth-panel {
+        min-height: 100vh;
+        border-right: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── LEFT: AUTH ── -->
+  <aside class="auth-panel">
+    <div class="auth-card">
+
+      <!-- Brand -->
+      <div class="brand-lockup">
+        <div class="mark">
+          <span>TSR</span>
+        </div>
+        <span class="brand-name">The Song Room</span>
+      </div>
+
+      <!-- Tabs -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchTab('login', this)">Log in</button>
+        <button class="auth-tab" onclick="switchTab('signup', this)">Sign up</button>
+      </div>
+
+      <!-- LOGIN -->
+      <div id="tab-login" class="tab-content active">
+        <h1 class="auth-heading">Welcome<br />back</h1>
+        <p class="auth-sub">Log in and get back to creating, reviewing, and finishing great music.</p>
+
+        <button class="btn btn-ghost" type="button">
+          <svg class="google-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          Continue with Google
+        </button>
+
+        <div class="divider">or</div>
+
+        <div class="field">
+          <label for="login-email">Email</label>
+          <div class="field-row">
+            <input id="login-email" type="email" placeholder="you@example.com" autocomplete="email" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="login-password">Password</label>
+          <div class="field-row">
+            <input id="login-password" type="password" placeholder="Your password" autocomplete="current-password" />
+          </div>
+        </div>
+
+        <a class="forgot-link" href="#">Forgot your password?</a>
+
+        <button class="btn btn-acid" type="button">Log in</button>
+
+        <p class="auth-note">New here? <a class="underlined-link" href="#" onclick="switchTabByLink('signup'); return false;">Create an account</a></p>
+      </div>
+
+      <!-- SIGNUP -->
+      <div id="tab-signup" class="tab-content">
+        <h1 class="auth-heading">Start<br />a room</h1>
+        <p class="auth-sub">Create your first song space and bring every version, comment, and next step into one place.</p>
+
+        <button class="btn btn-ghost" type="button">
+          <svg class="google-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          Continue with Google
+        </button>
+
+        <div class="divider">or</div>
+
+        <div class="field">
+          <label for="signup-email">Email</label>
+          <input id="signup-email" type="email" placeholder="you@example.com" autocomplete="email" />
+        </div>
+
+        <div class="field">
+          <label for="signup-password">Password</label>
+          <input id="signup-password" type="password" placeholder="Create a password" autocomplete="new-password" />
+        </div>
+
+        <button class="btn btn-acid" type="button">Create account</button>
+
+        <p class="auth-note">Already have a room? <a class="underlined-link" href="#" onclick="switchTabByLink('login'); return false;">Log in here</a></p>
+      </div>
+
+      <!-- Trust badges -->
+      <div class="trust-strip">
+        <div class="trust-item">
+          <svg class="trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          <div class="trust-label">Secure sign-in</div>
+          <div class="trust-desc">Your data is encrypted and always protected.</div>
+        </div>
+        <div class="trust-item">
+          <svg class="trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          <div class="trust-label">Collaborate safely</div>
+          <div class="trust-desc">Invite your team and manage access easily.</div>
+        </div>
+        <div class="trust-item">
+          <svg class="trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+            <line x1="1" y1="10" x2="23" y2="10"/>
+          </svg>
+          <div class="trust-label">No card needed</div>
+          <div class="trust-desc">Start free and upgrade when you're ready.</div>
+        </div>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- ── RIGHT: MARKETING ── -->
+  <section class="marketing-panel">
+
+    <div class="marketing-top">
+      <h2 class="mktg-heading">Create<br />together.<br />Keep every<br />version<br /><em>moving.</em></h2>
+      <p class="mktg-sub">The Song Room helps artists and producers collaborate smoothly, stay in sync, and finish more songs.</p>
+    </div>
+
+    <!-- Preview card -->
+    <div class="preview-card">
+      <div class="track-head">
+        <div>
+          <h3>Fading Light</h3>
+          <p>Acoustic / Pop · 3 versions · 12 comments</p>
+        </div>
+        <span class="stage-pill">In production</span>
+      </div>
+
+      <div class="big-wave">
+        <span class="wave-pin wp1">Love this drop<br />1:24</span>
+        <span class="wave-pin wp2">Filter sweep<br />1:37</span>
+        <span class="wave-pin wp3">Vocal earlier?<br />2:08</span>
+      </div>
+
+      <div class="player-controls">
+        <button class="play-btn" aria-label="Play">▶</button>
+        <span class="time-display">1:24 / 3:47</span>
+        <span class="comment-count">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          12
+        </span>
+      </div>
+
+      <div class="comment-list">
+        <div class="comment-bubble">
+          <div class="avatar" style="background:linear-gradient(135deg,var(--pink),var(--sand)); color:var(--charcoal);">L</div>
+          <div class="bubble-body">
+            <div class="bubble-meta">
+              <span class="bubble-name">Lena</span>
+              <span class="bubble-time">2h ago</span>
+            </div>
+            <div class="bubble-text">Love this drop! What if we open up the reverb a bit?</div>
+          </div>
+        </div>
+        <div class="comment-bubble">
+          <div class="avatar" style="background:linear-gradient(135deg,var(--blue),var(--charcoal)); color:var(--off-white);">M</div>
+          <div class="bubble-body">
+            <div class="bubble-meta">
+              <span class="bubble-name">Marco</span>
+              <span class="bubble-time">5h ago</span>
+            </div>
+            <div class="bubble-text">Let's tighten this snare hit.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Testimonial -->
+    <div class="testimonial">
+      <p class="quote-text">The Song Room keeps our creative flow uninterrupted. Feedback is clearer, versions are tidy, and we finish more songs.</p>
+      <div class="quote-attr">
+        <div class="quote-avatar">J</div>
+        <div>
+          <div class="quote-name">Jordan Ellis</div>
+          <div class="quote-role">Producer & Artist</div>
+        </div>
+        <div class="quote-followers">2.1M monthly listeners</div>
+      </div>
+    </div>
+
+  </section>
+
+  <script>
+    function switchTab(name, el) {
+      document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('tab-' + name).classList.add('active');
+    }
+
+    function switchTabByLink(name) {
+      const tabs = document.querySelectorAll('.auth-tab');
+      tabs.forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      tabs[name === 'login' ? 0 : 1].classList.add('active');
+      document.getElementById('tab-' + name).classList.add('active');
+    }
+  </script>
+</body>
+</html>
