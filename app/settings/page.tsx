@@ -818,6 +818,14 @@ export default function SettingsPage() {
               Plan visibility currently requires the new Google sign-in path.
             </p>
           )}
+          {!isOwner && membershipRole === 'member' && (
+            <div className={styles.memberScopeNote}>
+              <strong>Your member access</strong>
+              <span>
+                You can collaborate in this workspace, but billing and plan changes are managed by the workspace owner.
+              </span>
+            </div>
+          )}
           {canTogglePlanForTesting && isOwner && workspacePlan && (
             <div className={styles.planTesting}>
               <div className={styles.planTestingCopy}>
@@ -849,7 +857,11 @@ export default function SettingsPage() {
         <div className={styles.collaboratorHeader}>
           <div>
             <h2>Collaborators</h2>
-            <p>Workspace owners can invite members, review pending invites, and manage access.</p>
+            <p>
+              {isOwner
+                ? 'Workspace owners can invite members, review pending invites, and manage access.'
+                : 'You can see who belongs to this workspace. Invite and removal controls are owner-only.'}
+            </p>
           </div>
         </div>
 
@@ -869,6 +881,14 @@ export default function SettingsPage() {
           <p className={styles.collaboratorMuted}>Loading collaborators...</p>
         ) : (
           <div className={styles.collaboratorGrid}>
+            {!isOwner && (
+              <section className={styles.collaboratorCard}>
+                <h3>What you can do</h3>
+                <p className={styles.collaboratorMuted}>
+                  Members can add songs, upload versions, comment, create actions, and manage song tasks in this workspace.
+                </p>
+              </section>
+            )}
             {isOwner && (
               <section className={styles.collaboratorCard}>
                 <h3>Invite by email</h3>

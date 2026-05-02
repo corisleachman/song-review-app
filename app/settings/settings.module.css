@@ -516,6 +516,27 @@
   flex-wrap: wrap;
 }
 
+.memberScopeNote {
+  margin-top: var(--space-lg);
+  padding: var(--space-lg);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: grid;
+  gap: 6px;
+}
+
+.memberScopeNote strong {
+  color: var(--color-text);
+  font-size: 14px;
+}
+
+.memberScopeNote span {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .collaboratorHeader {
   margin-bottom: var(--space-xl);
 }

@@ -1605,3 +1605,31 @@ Production migration checkpoint and online verification handoff.
 - User confirmed `migrations/20260502_profile_settings_up.sql` was applied in Supabase.
 - Code still needs to be pushed and deployed before online theme save/load can be verified.
 - Next manual verification is saving/loading personal theme settings online as Coris and Cat.
+
+---
+
+## 2026-05-02 — Member Settings view polish
+
+### What we were trying to achieve
+
+Complete Phase 2 step 6 by making the member view in Settings explain what members can do and why owner-only controls are absent.
+
+### Feature / change being made
+
+Member-facing Settings copy and non-editable access summary.
+
+### Files changed
+
+- [app/settings/page.tsx](/Users/impero/song-review-app/app/settings/page.tsx)
+- [app/settings/settings.module.css](/Users/impero/song-review-app/app/settings/settings.module.css)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- Members now see a note that billing and plan changes are managed by the workspace owner.
+- Collaborator section copy now differs for owners and members.
+- Members now see a "What you can do" card explaining they can add songs, upload versions, comment, create actions, and manage song tasks.
+- No route, schema, permission, or persistence behavior changed.
+- `npx tsc --noEmit` passed.
+- `git diff --check` passed.

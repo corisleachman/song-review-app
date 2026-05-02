@@ -1572,3 +1572,25 @@ Note the next follow-up slice.
 - Next follow-up:
   - push user-level profile theme settings code
   - verify online theme save/load as Coris and Cat
+
+## 2026-05-02 — Member Settings view polish
+
+- Slice / change name: Member Settings view polish
+- Status: Implemented
+- Phase position: Phase 2, step 6 of 8
+- Exact files changed or audited:
+  - `app/settings/page.tsx`
+  - `app/settings/settings.module.css`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - member Settings view now explains that billing and plan changes are owner-managed
+  - collaborator section copy now changes between owner and member views
+  - members now see a "What you can do" card for songs, versions, comments, actions, and tasks
+  - no route, schema, permission, or persistence behavior changed
+- Tests run:
+  - `npx tsc --noEmit`
+  - `git diff --check`
+- Next follow-up:
+  - visually verify Cat's member Settings view online
+  - then complete Phase 2 step 7: permissions language final pass
