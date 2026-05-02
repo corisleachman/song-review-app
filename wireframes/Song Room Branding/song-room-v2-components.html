@@ -1854,7 +1854,7 @@
           <tr><td>--color-bg-dark</td><td>rgba(8,5,14,0.92)</td><td>rgba(17,17,17,0.92)</td><td></td></tr>
           <tr><td>--color-glass-light</td><td>rgba(255,255,255,0.08)</td><td>rgba(244,240,232,0.07)</td><td></td></tr>
           <tr><td>--color-border</td><td>rgba(255,255,255,0.1)</td><td>rgba(244,240,232,0.16)</td><td></td></tr>
-          <tr><td>--radius-sm/md/lg/xl</td><td>6px / 12px / 16px / 24px</td><td>0px (editorial sharp corners)</td><td></td></tr>
+          <tr><td>--radius-sm/md/lg/xl</td><td>6px / 12px / 16px / 24px</td><td>0px — sharp corners everywhere</td><td></td></tr>
           <tr><td>--space-xs → --space-3xl</td><td>4px → 48px</td><td>Unchanged ✓</td><td></td></tr>
           <tr><td>--shadow-sm → --shadow-xl</td><td>rgba(0,0,0, .3→.6)</td><td>Unchanged ✓</td><td></td></tr>
           <tr><td>--transition-fast/base/slow</td><td>150 / 250 / 400ms</td><td>Unchanged ✓</td><td></td></tr>
@@ -1862,7 +1862,48 @@
       </table>
 
       <br />
-      <p style="font-size:12px; color:var(--color-text-tertiary);">⚠️ Key departure: border-radius is collapsed to 0 throughout V2. The editorial aesthetic demands sharp corners. Individual components can restore small radii (e.g. avatar pills) where functionally required.</p>
+      <div style="margin-top:24px; border:1px solid rgba(244,240,232,0.14); padding:20px 24px; background:rgba(244,240,232,0.03);">
+        <div style="font-family:Impact,Haettenschweiler,'Arial Narrow Bold',sans-serif; font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:var(--off-white); margin-bottom:14px;">Corner Radius Rule</div>
+        <p style="font-size:13px; color:rgba(244,240,232,0.72); line-height:1.65; margin-bottom:16px;">
+          Border-radius is <strong style="color:var(--off-white);">0 everywhere by default</strong>. The editorial identity of The Song Room depends on this being total — a single rounded exception reads as an oversight, not a decision. This applies to comment bubbles, inputs, buttons, cards, modals, panels, and all containers without exception.
+        </p>
+        <table style="width:100%; border-collapse:collapse; font-size:12px;">
+          <thead>
+            <tr style="border-bottom:1px solid rgba(244,240,232,0.12);">
+              <th style="text-align:left; padding:6px 10px 8px 0; font-family:Impact,Haettenschweiler,'Arial Narrow Bold',sans-serif; letter-spacing:0.12em; text-transform:uppercase; color:var(--off-white); font-weight:400;">Element</th>
+              <th style="text-align:left; padding:6px 10px 8px; font-family:Impact,Haettenschweiler,'Arial Narrow Bold',sans-serif; letter-spacing:0.12em; text-transform:uppercase; color:var(--off-white); font-weight:400;">Radius</th>
+              <th style="text-align:left; padding:6px 0 8px; font-family:Impact,Haettenschweiler,'Arial Narrow Bold',sans-serif; letter-spacing:0.12em; text-transform:uppercase; color:var(--off-white); font-weight:400;">Reason</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid rgba(244,240,232,0.06);">
+              <td style="padding:8px 10px 8px 0; color:rgba(244,240,232,0.72);">Buttons, inputs, cards, modals, panels</td>
+              <td style="padding:8px 10px; color:var(--acid); font-family:'Courier New',monospace;">0</td>
+              <td style="padding:8px 0; color:rgba(244,240,232,0.5);">The rule. No exceptions.</td>
+            </tr>
+            <tr style="border-bottom:1px solid rgba(244,240,232,0.06);">
+              <td style="padding:8px 10px 8px 0; color:rgba(244,240,232,0.72);">Comment bubbles</td>
+              <td style="padding:8px 10px; color:var(--acid); font-family:'Courier New',monospace;">0</td>
+              <td style="padding:8px 0; color:rgba(244,240,232,0.5);">Not a consumer chat app. Rounded bubbles import the wrong associations (iMessage, WhatsApp). Differentiate own/other messages via surface colour and border weight instead.</td>
+            </tr>
+            <tr style="border-bottom:1px solid rgba(244,240,232,0.06);">
+              <td style="padding:8px 10px 8px 0; color:rgba(244,240,232,0.72);">Stage pills, status badges, count chips</td>
+              <td style="padding:8px 10px; color:var(--acid); font-family:'Courier New',monospace;">0</td>
+              <td style="padding:8px 0; color:rgba(244,240,232,0.5);">Inline labels use borders and surface colour for identity — not shape. Sharp badges read as editorial tags, not UI affordances.</td>
+            </tr>
+            <tr style="border-bottom:1px solid rgba(244,240,232,0.06);">
+              <td style="padding:8px 10px 8px 0; color:rgba(244,240,232,0.72);">Avatar initials</td>
+              <td style="padding:8px 10px; color:rgba(244,240,232,0.5); font-family:'Courier New',monospace;">50% (circle)</td>
+              <td style="padding:8px 0; color:rgba(244,240,232,0.5);">Permitted exception. The circle signals "person" — a functional convention that aids identity recognition at a glance. Not decorative.</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 10px 8px 0; color:rgba(244,240,232,0.72);">Waveform marker dots</td>
+              <td style="padding:8px 10px; color:rgba(244,240,232,0.5); font-family:'Courier New',monospace;">50% (circle)</td>
+              <td style="padding:8px 0; color:rgba(244,240,232,0.5);">Permitted exception. Circular markers on a timeline are a spatial convention — they indicate a point, not a region. Squaring them would create confusion with the waveform bar itself.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
 
@@ -2216,7 +2257,7 @@
         <span class="section-number">08</span>
         <div>
           <div class="section-title">Comment Threads</div>
-          <div class="section-desc">Thread shell, comment bubbles, reply input, action marking.</div>
+          <div class="section-desc">Thread shell, comment bubbles, reply input, action marking. Bubbles are sharp-cornered — own/other differentiated by surface colour and border weight, not shape.</div>
         </div>
       </div>
 
