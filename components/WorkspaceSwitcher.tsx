@@ -101,7 +101,7 @@ export default function WorkspaceSwitcher({
   }, [open]);
 
   useEffect(() => {
-    if (!open || loaded || loading) return;
+    if (!open || loaded) return;
 
     let cancelled = false;
 
@@ -135,7 +135,7 @@ export default function WorkspaceSwitcher({
     return () => {
       cancelled = true;
     };
-  }, [loaded, loading, open]);
+  }, [loaded, open]);
 
   async function switchWorkspace(workspaceId: string) {
     try {
