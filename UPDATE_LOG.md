@@ -1661,3 +1661,32 @@ Copy and documentation clarification for member collaboration rights and owner-o
 - No route, schema, permission, or persistence behavior changed.
 - `npx tsc --noEmit` passed.
 - `git diff --check` passed.
+
+---
+
+## 2026-05-02 — Settings layout overflow fix
+
+### What we were trying to achieve
+
+Fix the Settings page appearing oversized inside the app shell and prevent collaborator invite rows from spilling horizontally.
+
+### Feature / change being made
+
+Responsive Settings layout tightening for desktop and mobile QA.
+
+### Files changed
+
+- [app/settings/settings.module.css](/Users/impero/song-review-app/app/settings/settings.module.css)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- Reduced Settings max width from `1400px` to `1240px` so it fits the shell content area better.
+- Reduced page padding, card padding, section gaps, and heading/control sizes.
+- Changed the personal settings grid to use a constrained side panel width.
+- Made collaborator cards auto-fit and invite/member rows wrap instead of forcing horizontal overflow.
+- Long invite/member text can now wrap within the card.
+- No route, schema, permission, or persistence behavior changed.
+- `npx tsc --noEmit` passed.
+- `git diff --check` passed.

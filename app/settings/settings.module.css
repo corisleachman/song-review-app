@@ -2,14 +2,16 @@
 
 .container {
   width: 100%;
+  max-width: 100%;
   min-height: 100vh;
   background: linear-gradient(135deg, #0d0914 0%, #1a0f2e 50%, #0d0914 100%);
-  padding: var(--space-2xl);
+  padding: 24px;
+  overflow-x: hidden;
 }
 
 .header {
-  max-width: 1400px;
-  margin: 0 auto var(--space-3xl);
+  max-width: 1240px;
+  margin: 0 auto var(--space-2xl);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -52,7 +54,7 @@
 
 .header h1 {
   font-family: 'Outfit', sans-serif;
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 800;
   color: var(--color-text);
   margin: 0;
@@ -63,25 +65,25 @@
 }
 
 .content {
-  max-width: 1400px;
+  max-width: 1240px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr 350px;
-  gap: var(--space-2xl);
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  gap: var(--space-xl);
 }
 
 .brandExplorer {
   background: rgba(8, 5, 14, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-xl);
-  padding: var(--space-2xl);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
   box-shadow: 0 16px 48px rgba(255, 20, 147, 0.1);
   backdrop-filter: blur(10px);
 }
 
 .explorerHeader {
-  margin-bottom: var(--space-2xl);
-  padding-bottom: var(--space-2xl);
+  margin-bottom: var(--space-xl);
+  padding-bottom: var(--space-xl);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -98,7 +100,7 @@
 
 .explorerHeader h2 {
   font-family: 'Outfit', sans-serif;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 800;
   color: var(--color-text);
   margin: 0 0 var(--space-md) 0;
@@ -121,7 +123,7 @@
 .pickerRow {
   display: flex;
   align-items: flex-end;
-  gap: var(--space-xl);
+  gap: var(--space-lg);
   margin-bottom: var(--space-xl);
 }
 
@@ -146,8 +148,8 @@
 }
 
 .colorInput {
-  width: 60px;
-  height: 60px;
+  width: 52px;
+  height: 52px;
   border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -247,8 +249,8 @@
 }
 
 .presetsSection {
-  margin: var(--space-2xl) 0;
-  padding: var(--space-2xl) 0;
+  margin: var(--space-xl) 0;
+  padding: var(--space-xl) 0;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -288,8 +290,8 @@
 .actions {
   display: flex;
   gap: var(--space-lg);
-  margin-top: var(--space-2xl);
-  padding-top: var(--space-2xl);
+  margin-top: var(--space-xl);
+  padding-top: var(--space-xl);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -340,7 +342,7 @@
   background: rgba(8, 5, 14, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-lg);
-  padding: var(--space-xl);
+  padding: var(--space-lg);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(10px);
   height: fit-content;
@@ -349,12 +351,12 @@
 }
 
 .collaboratorSection {
-  max-width: 1400px;
-  margin: var(--space-2xl) auto 0;
+  max-width: 1240px;
+  margin: var(--space-xl) auto 0;
   background: rgba(8, 5, 14, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-xl);
-  padding: var(--space-2xl);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
   box-shadow: 0 16px 48px rgba(255, 20, 147, 0.08);
   backdrop-filter: blur(10px);
 }
@@ -372,7 +374,7 @@
 .workspaceSettingsHeader h2 {
   margin: 0 0 var(--space-sm) 0;
   font-family: 'Outfit', sans-serif;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 800;
   color: var(--color-text);
 }
@@ -404,7 +406,7 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-lg);
-  margin-bottom: var(--space-2xl);
+  margin-bottom: var(--space-xl);
 }
 
 .permissionCard {
@@ -428,8 +430,8 @@
 }
 
 .planSection {
-  margin-bottom: var(--space-2xl);
-  padding-bottom: var(--space-2xl);
+  margin-bottom: var(--space-xl);
+  padding-bottom: var(--space-xl);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -444,7 +446,7 @@
 .planHeader h2 {
   margin: 0 0 var(--space-sm) 0;
   font-family: 'Outfit', sans-serif;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 800;
   color: var(--color-text);
 }
@@ -479,7 +481,7 @@
 
 .planStat strong {
   color: var(--color-text);
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .planTesting {
@@ -543,7 +545,7 @@
 
 .collaboratorHeader h2 {
   font-family: 'Outfit', sans-serif;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 800;
   color: var(--color-text);
   margin: 0 0 var(--space-sm) 0;
@@ -557,15 +559,15 @@
 
 .collaboratorGrid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-xl);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: var(--space-lg);
 }
 
 .collaboratorCard {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-lg);
-  padding: var(--space-xl);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
 }
 
 .collaboratorCard h3 {
@@ -617,8 +619,9 @@
 .collaboratorRow {
   display: flex;
   justify-content: space-between;
-  gap: var(--space-lg);
+  gap: var(--space-md);
   align-items: flex-start;
+  flex-wrap: wrap;
   padding: var(--space-md);
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.04);
@@ -628,6 +631,8 @@
 .collaboratorMeta {
   display: grid;
   gap: 4px;
+  min-width: 0;
+  flex: 1 1 180px;
 }
 
 .collaboratorMeta strong {
@@ -639,12 +644,16 @@
   color: rgba(255, 255, 255, 0.5);
   font-size: 13px;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .collaboratorActions {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  flex: 1 1 180px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   flex-shrink: 0;
 }
 
@@ -673,6 +682,7 @@
   font-weight: 700;
   cursor: pointer;
   transition: all var(--transition-base);
+  white-space: nowrap;
 }
 
 .inlineAction:hover {
@@ -742,6 +752,10 @@
 }
 
 @media (max-width: 1024px) {
+  .container {
+    padding: var(--space-lg);
+  }
+
   .header {
     align-items: flex-start;
   }

@@ -1615,3 +1615,26 @@ Note the next follow-up slice.
   - `git diff --check`
 - Next follow-up:
   - complete Phase 2 step 8: desktop/mobile owner/member QA and push
+
+## 2026-05-02 — Settings layout overflow fix
+
+- Slice / change name: Settings layout overflow fix
+- Status: Implemented
+- Phase position: Phase 2, step 8 of 8 QA fix
+- Exact files changed or audited:
+  - `app/settings/settings.module.css`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - reduced Settings page max width, page padding, card padding, section gaps, and heading/control sizes so the page fits the app shell
+  - constrained the personal settings side panel width
+  - made collaborator cards auto-fit across available space
+  - made invite/member rows wrap instead of forcing pending invite actions outside their card
+  - allowed long invite/member text to wrap within the card
+  - no route, schema, permission, or persistence behavior changed
+- Tests run:
+  - `npx tsc --noEmit`
+  - `git diff --check`
+- Next follow-up:
+  - push the fix and visually verify owner/member Settings on desktop and mobile
+  - if the layout passes, close Phase 2 Settings & Permissions UI and move to the next product phase
