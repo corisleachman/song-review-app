@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Song Room — Log In</title>
+  <style>
+    :root {
+      --charcoal:  #111111;
+      --off-white: #F4F0E8;
+      --sand:      #D8CBB8;
+      --pink:      #FFB6C8;
+      --blue:      #2D7DFF;
+      --red:       #FF3B30;
+      --olive:     #6F735F;
+      --line-dark:  rgba(17,17,17,0.15);
+      --line-light: rgba(244,240,232,0.14);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    }
+
+    body {
+      display: grid;
+      grid-template-columns: minmax(320px, 0.68fr) 1fr;
+      min-height: 100vh;
+      background: var(--off-white);
+    }
+
+    /* ── Grain overlay ── */
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 300;
+      opacity: 0.045;
+      background-image:
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 180px 180px;
+    }
+
+    /* ════════════════════════════
+       LEFT PANEL
+    ════════════════════════════ */
+    .auth-panel {
+      background: var(--off-white);
+      border-right: 1px solid var(--line-dark);
+      padding: clamp(32px, 5vw, 56px);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    /* Brand */
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: clamp(48px, 10vh, 88px);
+      animation: fade-up 0.5s ease both;
+    }
+
+    .brand-mark {
+      width: 48px;
+      height: 48px;
+      border: 2px solid var(--charcoal);
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      position: relative;
+      flex: 0 0 auto;
+    }
+
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      width: 1px;
+      height: 26px;
+      background: var(--charcoal);
+      opacity: 0.45;
+    }
+
+    .brand-mark-text {
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: var(--charcoal);
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand-name {
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: 15px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--charcoal);
+    }
+
+    /* Auth card */
+    .auth-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      max-width: 420px;
+    }
+
+    /* Tab strip — login only, no sign up */
+    .auth-tab-strip {
+      border: 2px solid var(--charcoal);
+      margin-bottom: 36px;
+      animation: fade-up 0.5s 0.05s ease both;
+    }
+
+    .auth-tab-active {
+      display: block;
+      padding: 16px;
+      text-align: center;
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: 13px;
+      font-weight: 400;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      background: var(--charcoal);
+      color: var(--off-white);
+    }
+
+    /* Heading */
+    .auth-heading {
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      text-transform: uppercase;
+      font-size: clamp(60px, 9vw, 88px);
+      line-height: 0.84;
+      letter-spacing: -0.03em;
+      color: var(--charcoal);
+      margin-bottom: 18px;
+      animation: fade-up 0.5s 0.1s ease both;
+    }
+
+    .auth-sub {
+      font-family: 'Georgia', serif;
+      font-size: 16px;
+      font-weight: 400;
+      font-style: italic;
+      color: var(--olive);
+      line-height: 1.55;
+      margin-bottom: 36px;
+      letter-spacing: 0;
+      animation: fade-up 0.5s 0.15s ease both;
+    }
+
+    /* Google button */
+    .google-btn {
+      width: 100%;
+      height: 58px;
+      border: 2px solid var(--charcoal);
+      background: var(--off-white);
+      color: var(--charcoal);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: 13px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 160ms ease, color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+      animation: fade-up 0.5s 0.2s ease both;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .google-btn::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: var(--charcoal);
+      transform: translateY(100%);
+      transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .google-btn:hover::before { transform: translateY(0); }
+    .google-btn:hover { color: var(--off-white); transform: translateY(-2px); box-shadow: 0 12px 28px rgba(17,17,17,0.22); }
+
+    .google-btn span { position: relative; z-index: 1; }
+    .google-btn svg { position: relative; z-index: 1; flex: 0 0 auto; }
+
+    /* Trust strip */
+    .trust-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+      border: 1px solid var(--line-dark);
+      margin-top: auto;
+      padding-top: clamp(32px, 6vh, 56px);
+      animation: fade-up 0.5s 0.25s ease both;
+    }
+
+    .trust-item {
+      padding: 16px 12px;
+      border-right: 1px solid var(--line-dark);
+    }
+
+    .trust-item:last-child { border-right: 0; }
+
+    .trust-icon {
+      font-size: 18px;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .trust-label {
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--charcoal);
+      margin-bottom: 3px;
+    }
+
+    .trust-desc {
+      font-family: 'Georgia', serif;
+      font-style: italic;
+      font-size: 11px;
+      color: var(--olive);
+      line-height: 1.4;
+    }
+
+    /* ════════════════════════════
+       RIGHT PANEL
+    ════════════════════════════ */
+    .mktg-panel {
+      background: var(--charcoal);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: clamp(32px, 5vw, 64px);
+      min-height: 100vh;
+    }
+
+    /* Big acid circle — now pink */
+    .mktg-circle {
+      position: absolute;
+      top: -120px;
+      right: -120px;
+      width: clamp(280px, 38vw, 520px);
+      height: clamp(280px, 38vw, 520px);
+      border-radius: 999px;
+      background: var(--pink);
+      animation: circle-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    @keyframes circle-in {
+      from { transform: scale(0.4) translate(40%, -40%); opacity: 0; }
+      to   { transform: scale(1) translate(0, 0); opacity: 1; }
+    }
+
+    /* Concentric rings (bottom left) */
+    .mktg-rings {
+      position: absolute;
+      bottom: -180px;
+      left: -100px;
+      width: 480px;
+      height: 480px;
+      pointer-events: none;
+    }
+
+    .ring {
+      position: absolute;
+      border-radius: 999px;
+      border: 1px solid rgba(255,182,200,0.25);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .ring:nth-child(1) { width: 180px; height: 180px; }
+    .ring:nth-child(2) { width: 280px; height: 280px; opacity: 0.7; }
+    .ring:nth-child(3) { width: 380px; height: 380px; opacity: 0.45; }
+    .ring:nth-child(4) { width: 480px; height: 480px; opacity: 0.25; }
+
+    /* Big headline */
+    .mktg-headline {
+      position: relative;
+      z-index: 2;
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      text-transform: uppercase;
+      font-size: clamp(64px, 9.5vw, 148px);
+      line-height: 0.84;
+      letter-spacing: -0.04em;
+      color: var(--off-white);
+      margin-bottom: 36px;
+      animation: fade-up 0.7s 0.15s cubic-bezier(0.16,1,0.3,1) both;
+    }
+
+    .mktg-headline em {
+      font-style: normal;
+      color: var(--pink);
+      display: block;
+    }
+
+    /* Sub copy */
+    .mktg-sub {
+      position: relative;
+      z-index: 2;
+      font-family: 'Georgia', serif;
+      font-style: italic;
+      font-size: clamp(16px, 1.6vw, 20px);
+      color: rgba(244,240,232,0.62);
+      max-width: 480px;
+      line-height: 1.55;
+      margin-bottom: 0;
+      animation: fade-up 0.7s 0.25s cubic-bezier(0.16,1,0.3,1) both;
+    }
+
+    /* Feature bullets */
+    .mktg-features {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 28px;
+      animation: fade-up 0.7s 0.35s cubic-bezier(0.16,1,0.3,1) both;
+    }
+
+    .mktg-pill {
+      border: 1px solid rgba(255,182,200,0.35);
+      padding: 8px 14px;
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(244,240,232,0.65);
+      transition: border-color 200ms, color 200ms;
+    }
+
+    .mktg-pill:hover { border-color: var(--pink); color: var(--pink); }
+
+    /* ── Animations ── */
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 760px) {
+      body { grid-template-columns: 1fr; }
+      .mktg-panel { display: none; }
+      .auth-panel { min-height: 100svh; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── LEFT ── -->
+  <aside class="auth-panel">
+
+    <div class="brand">
+      <div class="brand-mark">
+        <span class="brand-mark-text">TSR</span>
+      </div>
+      <span class="brand-name">The Song Room</span>
+    </div>
+
+    <div class="auth-card">
+
+      <div class="auth-tab-strip">
+        <span class="auth-tab-active">Log In</span>
+      </div>
+
+      <h1 class="auth-heading">Welcome<br />Back</h1>
+      <p class="auth-sub">Log in and get back to creating, reviewing, and finishing great music.</p>
+
+      <button class="google-btn" type="button">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        <span>Continue with Google</span>
+      </button>
+
+    </div>
+
+    <div class="trust-strip">
+      <div class="trust-item">
+        <span class="trust-icon">🔒</span>
+        <div class="trust-label">Secure</div>
+        <div class="trust-desc">Encrypted and always protected.</div>
+      </div>
+      <div class="trust-item">
+        <span class="trust-icon">👥</span>
+        <div class="trust-label">Collaborate</div>
+        <div class="trust-desc">Invite your team, manage access.</div>
+      </div>
+      <div class="trust-item">
+        <span class="trust-icon">💳</span>
+        <div class="trust-label">Free to start</div>
+        <div class="trust-desc">No card needed to begin.</div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ── RIGHT ── -->
+  <section class="mktg-panel">
+
+    <div class="mktg-circle"></div>
+
+    <div class="mktg-rings">
+      <div class="ring"></div>
+      <div class="ring"></div>
+      <div class="ring"></div>
+      <div class="ring"></div>
+    </div>
+
+    <h2 class="mktg-headline">
+      Create<br />
+      Together.<br />
+      Keep Every<br />
+      Version<br />
+      <em>Moving.</em>
+    </h2>
+
+    <p class="mktg-sub">The Song Room helps artists and producers collaborate smoothly, stay in sync, and finish more songs.</p>
+
+    <div class="mktg-features">
+      <span class="mktg-pill">Version everything</span>
+      <span class="mktg-pill">Timestamped comments</span>
+      <span class="mktg-pill">Keep songs organised</span>
+      <span class="mktg-pill">Action tracking</span>
+    </div>
+
+  </section>
+
+</body>
+</html>
