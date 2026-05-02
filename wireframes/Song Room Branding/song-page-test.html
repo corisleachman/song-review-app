@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rejuvenation — The Song Room</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet" />
+  <style>
+
+    /* ════════════════════════════
+       TSR DESIGN TOKENS
+    ════════════════════════════ */
+    :root {
+      /* Palette */
+      --charcoal:   #111111;
+      --off-white:  #F4F0E8;
+      --sand:       #D8CBB8;
+      --pink:       #FFB6C8;
+      --blue:       #2D7DFF;
+      --olive:      #6F735F;
+      --red:        #FF3B30;
+      --green:      #34d399;
+
+      /* Surfaces */
+      --bg:         #111111;
+      --surface-1:  #1a1515;
+      --surface-2:  #221c1c;
+      --surface-3:  #2e2525;
+
+      /* Borders */
+      --border:     rgba(244,240,232,0.1);
+      --border-mid: rgba(244,240,232,0.18);
+      --border-pink: rgba(255,182,200,0.32);
+
+      /* Type */
+      --text:       #F4F0E8;
+      --text-mid:   rgba(244,240,232,0.62);
+      --text-soft:  rgba(244,240,232,0.38);
+
+      /* Accents */
+      --accent:     #FFB6C8;
+      --accent-dim: rgba(255,182,200,0.14);
+
+      /* Shadows */
+      --shadow-md:  0 8px 24px rgba(0,0,0,0.45);
+      --shadow-lg:  0 16px 48px rgba(0,0,0,0.55);
+
+      /* Easing */
+      --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button { cursor: pointer; font: inherit; }
+    input, textarea { font: inherit; }
+
+    /* Grain overlay */
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 500;
+      opacity: 0.032;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 180px 180px;
+    }
+
+    /* ════════════════════════════
+       PAGE WRAPPER
+    ════════════════════════════ */
+    .page {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ════════════════════════════
+       HERO
+    ════════════════════════════ */
+    .hero {
+      position: relative;
+      background: var(--surface-1);
+      overflow: hidden;
+    }
+
+    /* Cover art blurred into background */
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background-image: url("https://xouiiaknskivrjvapdma.supabase.co/storage/v1/object/public/song-images/f18f249f-90c5-4257-85fd-db7ef216ce1d-1777553828608.jpg");
+      background-size: cover;
+      background-position: center;
+      filter: blur(60px) brightness(0.28) saturate(1.2);
+      transform: scale(1.1);
+    }
+
+    /* Subtle pink tint overlay */
+    .hero-tint {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(160deg,
+        rgba(255,182,200,0.06) 0%,
+        rgba(17,17,17,0.55) 50%,
+        rgba(17,17,17,0.82) 100%);
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 2;
+    }
+
+    /* NAV */
+    .hero-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 28px;
+      gap: 12px;
+    }
+
+    .brand-mark {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .brand-circle {
+      width: 36px;
+      height: 36px;
+      border: 1.5px solid var(--border-mid);
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      position: relative;
+      flex: 0 0 auto;
+    }
+
+    .brand-circle::after {
+      content: "";
+      position: absolute;
+      width: 1px;
+      height: 20px;
+      background: var(--off-white);
+      opacity: 0.35;
+    }
+
+    .brand-circle-text {
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      color: var(--text-mid);
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand-name {
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: 13px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-mid);
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-btn {
+      background: rgba(244,240,232,0.07);
+      border: 1px solid var(--border);
+      color: var(--text-mid);
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition: background 160ms var(--ease-out), border-color 160ms;
+      white-space: nowrap;
+    }
+
+    .nav-btn:hover {
+      background: rgba(244,240,232,0.13);
+      border-color: var(--border-mid);
+      color: var(--text);
+    }
+
+    .nav-btn-accent {
+      background: transparent;
+      border: 1.5px solid var(--border-pink);
+      color: var(--pink);
+    }
+
+    .nav-btn-accent:hover {
+      background: var(--accent-dim);
+      border-color: var(--pink);
+      color: var(--pink);
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--charcoal), var(--olive));
+      border: 1.5px solid var(--border-mid);
+      display: grid;
+      place-items: center;
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      color: var(--sand);
+      flex-shrink: 0;
+    }
+
+    /* STAGE PILL */
+    .stage-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,182,200,0.35);
+      background: rgba(255,182,200,0.1);
+      color: var(--pink);
+    }
+
+    .stage-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--pink);
+    }
+
+    /* HERO CONTENT */
+    .hero-content {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      grid-template-areas: "left art" "wave art";
+      gap: 0 28px;
+      padding: 8px 28px 0;
+    }
+
+    .hero-left {
+      grid-area: left;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hero-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .version-badge {
+      font-size: 0.72rem;
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(244,240,232,0.05);
+      color: var(--text-soft);
+    }
+
+    .hero-title {
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: 3rem;
+      line-height: 0.9;
+      letter-spacing: -0.04em;
+      text-transform: uppercase;
+      color: var(--off-white);
+      margin-bottom: 8px;
+    }
+
+    .hero-artist {
+      font-family: 'Georgia', serif;
+      font-style: italic;
+      font-size: 0.95rem;
+      color: var(--olive);
+      margin-bottom: 20px;
+    }
+
+    .hero-version-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+      color: var(--text-soft);
+      font-size: 0.76rem;
+    }
+
+    .hero-version-meta span { position: relative; }
+    .hero-version-meta span + span::before {
+      content: "·";
+      position: absolute;
+      left: -8px;
+      color: rgba(244,240,232,0.2);
+    }
+
+    /* CONTROLS */
+    .hero-controls {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+
+    .play-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 2px solid var(--off-white);
+      background: var(--off-white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: transform 150ms var(--ease-out), box-shadow 150ms;
+      box-shadow: var(--shadow-md);
+    }
+
+    .play-btn:hover { transform: scale(1.06); box-shadow: 0 8px 28px rgba(0,0,0,0.5); }
+    .play-btn:active { transform: scale(0.97); }
+
+    .play-btn svg { fill: var(--charcoal); }
+
+    .time-display {
+      font-size: 0.95rem;
+      color: var(--text-mid);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.02em;
+    }
+
+    .time-sep { color: var(--text-soft); margin: 0 3px; }
+
+    .loop-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      background: transparent;
+      color: var(--text-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 160ms, border-color 160ms;
+    }
+
+    .loop-btn:hover { color: var(--text-mid); border-color: var(--border-mid); }
+
+    /* WAVEFORM */
+    .hero-waveform {
+      grid-area: wave;
+      padding: 14px 0 24px;
+    }
+
+    .waveform-wrap {
+      position: relative;
+      background: rgba(0,0,0,0.22);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    /* Fake waveform using clip-path */
+    .waveform-bg {
+      height: 80px;
+      background: rgba(244,240,232,0.12);
+      clip-path: polygon(0 52%, 1% 36%, 2% 58%, 3% 28%, 5% 72%, 7% 40%, 9% 55%, 11% 22%, 13% 76%, 15% 44%, 17% 60%, 20% 30%, 23% 74%, 27% 38%, 30% 58%, 34% 20%, 38% 82%, 43% 42%, 47% 62%, 52% 18%, 56% 86%, 61% 42%, 65% 64%, 70% 28%, 74% 74%, 79% 38%, 83% 62%, 87% 30%, 92% 72%, 96% 44%, 100% 56%, 100% 100%, 0 100%);
+      position: relative;
+    }
+
+    /* Progress */
+    .waveform-progress {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 34%;
+      height: 100%;
+      background: var(--pink);
+      opacity: 0.55;
+      clip-path: polygon(0 52%, 1% 36%, 2% 58%, 3% 28%, 5% 72%, 7% 40%, 9% 55%, 11% 22%, 13% 76%, 15% 44%, 17% 60%, 20% 30%, 23% 74%, 27% 38%, 30% 58%, 34% 20%, 38% 82%, 43% 42%, 47% 62%, 52% 18%, 56% 86%, 61% 42%, 65% 64%, 70% 28%, 74% 74%, 79% 38%, 83% 62%, 87% 30%, 92% 72%, 96% 44%, 100% 56%, 100% 100%, 0 100%);
+    }
+
+    /* Thread markers */
+    .waveform-markers {
+      position: absolute;
+      inset: 0;
+    }
+
+    .waveform-marker {
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid rgba(17,11,11,0.6);
+      cursor: pointer;
+      transition: transform 150ms var(--ease-out);
+    }
+
+    .waveform-marker:hover { transform: translate(-50%, -50%) scale(1.5); }
+    .waveform-marker.active { transform: translate(-50%, -50%) scale(1.4); box-shadow: 0 0 8px rgba(244,240,232,0.4); }
+
+    .wave-hint {
+      font-size: 0.72rem;
+      color: var(--text-soft);
+      margin-top: 6px;
+      font-family: 'Georgia', serif;
+      font-style: italic;
+    }
+
+    /* ARTWORK */
+    .hero-artwork {
+      grid-area: art;
+      width: 300px;
+      height: 300px;
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: var(--shadow-lg);
+      align-self: start;
+      margin-bottom: 28px;
+      border: 1px solid var(--border);
+    }
+
+    .hero-artwork img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* ACTION ROW */
+    .hero-action-row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 0 28px 20px;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* ════════════════════════════
+       BODY — THREE COLUMNS
+    ════════════════════════════ */
+    .body {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr 1fr;
+      flex: 1;
+      min-height: 0;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── ACTIONS PANEL (left) ── */
+    .actions-panel {
+      border-right: 1px solid var(--border);
+      padding: 20px 22px;
+      overflow-y: auto;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .panel-title {
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+    }
+
+    .panel-sub {
+      font-family: 'Georgia', serif;
+      font-style: italic;
+      font-size: 0.74rem;
+      color: var(--text-soft);
+      margin-top: 2px;
+    }
+
+    .pending-badge {
+      font-size: 0.72rem;
+      color: var(--text-soft);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Action items */
+    .action-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 11px 0;
+      border-bottom: 1px solid rgba(244,240,232,0.06);
+      animation: fade-up 0.3s var(--ease-out) both;
+    }
+
+    .action-item:nth-child(1) { animation-delay: 0ms; }
+    .action-item:nth-child(2) { animation-delay: 40ms; }
+    .action-item:nth-child(3) { animation-delay: 80ms; }
+
+    .action-toggle {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border-mid);
+      background: transparent;
+      flex-shrink: 0;
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 160ms, background 160ms;
+    }
+
+    .action-toggle:hover { border-color: var(--pink); }
+    .action-toggle.done { background: var(--green); border-color: var(--green); }
+
+    .action-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+
+    .action-desc {
+      font-size: 0.86rem;
+      line-height: 1.42;
+      color: var(--text);
+    }
+
+    .action-meta {
+      font-family: 'Georgia', serif;
+      font-style: italic;
+      font-size: 0.7rem;
+      color: var(--text-soft);
+    }
+
+    .action-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+
+    .status-pill {
+      font-size: 0.66rem;
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--text-soft);
+      background: rgba(244,240,232,0.04);
+    }
+
+    .status-pill.approved {
+      color: #ffd58a;
+      background: rgba(245,174,61,0.1);
+      border-color: rgba(245,174,61,0.26);
+    }
+
+    /* ── THREADS PANEL (centre) ── */
+    .threads-panel {
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .threads-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .thread-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .thread-header-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+    .thread-timestamp {
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: 0.95rem;
+      letter-spacing: 0.04em;
+      color: var(--pink);
+    }
+
+    .thread-count {
+      font-size: 0.7rem;
+      color: var(--text-soft);
+    }
+
+    .thread-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+    }
+
+    .thread-action-btn {
+      background: rgba(244,240,232,0.04);
+      border: 1px solid var(--border);
+      color: var(--text-mid);
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition: background 160ms, border-color 160ms, color 160ms;
+      white-space: nowrap;
+    }
+
+    .thread-action-btn:hover {
+      background: var(--accent-dim);
+      border-color: var(--border-pink);
+      color: var(--off-white);
+    }
+
+    /* Bubble list */
+    .bubble-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .bubble-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .bubble-wrap.own { align-items: flex-end; }
+    .bubble-wrap.other { align-items: flex-start; }
+
+    .bubble-author {
+      font-size: 0.7rem;
+      color: var(--text-soft);
+      padding: 0 4px;
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .bubble {
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-size: 0.88rem;
+      line-height: 1.48;
+    }
+
+    .bubble.own {
+      /* TSR: charcoal + sand instead of purple gradient */
+      background: var(--surface-3);
+      border: 1px solid var(--border-mid);
+      color: var(--off-white);
+      border-bottom-right-radius: 4px;
+    }
+
+    .bubble.other {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: rgba(244,240,232,0.88);
+      border-bottom-left-radius: 4px;
+    }
+
+    .mark-action-btn {
+      background: var(--accent-dim);
+      border: 1px solid var(--border-pink);
+      color: var(--pink);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 0.72rem;
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition: background 160ms;
+    }
+
+    .mark-action-btn:hover { background: rgba(255,182,200,0.22); }
+
+    /* Reply row */
+    .reply-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .reply-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--pink);
+      flex-shrink: 0;
+    }
+
+    .reply-input {
+      flex: 1;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 9px 16px;
+      font-size: 0.86rem;
+      min-width: 0;
+      outline: none;
+      transition: border-color 160ms;
+    }
+
+    .reply-input::placeholder { color: var(--text-soft); }
+    .reply-input:focus { border-color: var(--border-pink); }
+
+    .reply-time {
+      font-size: 0.72rem;
+      color: var(--text-soft);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .reply-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border-pink);
+      background: var(--accent-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 160ms, border-color 160ms, transform 150ms var(--ease-out);
+    }
+
+    .reply-btn:hover { background: rgba(255,182,200,0.22); transform: scale(1.08); }
+    .reply-btn:active { transform: scale(0.96); }
+    .reply-btn svg { stroke: var(--pink); }
+
+    /* ── ADMIN / TASKS PANEL (right) ── */
+    .admin-panel {
+      border-left: 1px solid var(--border);
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .admin-count {
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: 0.66rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      background: var(--accent-dim);
+      color: var(--pink);
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-left: auto;
+      border: 1px solid var(--border-pink);
+    }
+
+    .add-task-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .add-task-input {
+      flex: 1;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: var(--text);
+      font-size: 0.84rem;
+      outline: none;
+      transition: border-color 160ms;
+    }
+
+    .add-task-input::placeholder { color: var(--text-soft); }
+    .add-task-input:focus { border-color: var(--border-pink); }
+
+    .add-task-btn {
+      width: 32px;
+      height: 32px;
+      background: var(--off-white);
+      border: none;
+      border-radius: 6px;
+      color: var(--charcoal);
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: opacity 160ms, transform 150ms var(--ease-out);
+    }
+
+    .add-task-btn:hover { opacity: 0.85; transform: scale(1.04); }
+
+    .task-list { display: flex; flex-direction: column; gap: 3px; }
+
+    .task-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 6px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      transition: background 120ms, border-color 120ms;
+      animation: fade-up 0.3s var(--ease-out) both;
+    }
+
+    .task-row:nth-child(1) { animation-delay: 0ms; }
+    .task-row:nth-child(2) { animation-delay: 50ms; }
+    .task-row:nth-child(3) { animation-delay: 100ms; }
+    .task-row:nth-child(4) { animation-delay: 150ms; }
+
+    .task-row:hover { background: rgba(244,240,232,0.03); }
+
+    .drag-handle {
+      font-size: 0.9rem;
+      color: var(--text-soft);
+      cursor: grab;
+      user-select: none;
+      flex-shrink: 0;
+      line-height: 1;
+      opacity: 0.4;
+    }
+
+    .task-circle {
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border-mid);
+      background: transparent;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      transition: border-color 160ms;
+    }
+
+    .task-circle:hover { border-color: var(--green); }
+    .task-circle.done { background: var(--green); border-color: var(--green); }
+
+    .task-desc {
+      flex: 1;
+      font-size: 0.84rem;
+      color: rgba(244,240,232,0.85);
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    .task-desc.done {
+      text-decoration: line-through;
+      color: var(--text-soft);
+    }
+
+    .task-delete {
+      background: transparent;
+      border: none;
+      color: var(--text-soft);
+      padding: 2px;
+      display: flex;
+      align-items: center;
+      border-radius: 4px;
+      transition: color 160ms, background 160ms;
+      opacity: 0;
+    }
+
+    .task-row:hover .task-delete { opacity: 1; }
+    .task-delete:hover { color: var(--red); background: rgba(255,59,48,0.1); }
+
+    .completed-section {
+      margin-top: 20px;
+      border-top: 1px solid var(--border);
+      padding-top: 14px;
+    }
+
+    .completed-heading {
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: 0.66rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(244,240,232,0.1); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(244,240,232,0.18); }
+
+    /* ── KEYFRAMES ── */
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ══════════════════ HERO ══════════════════ -->
+  <header class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-tint"></div>
+
+    <div class="hero-inner">
+
+      <!-- Nav -->
+      <nav class="hero-nav">
+        <a class="brand-mark" href="#">
+          <div class="brand-circle">
+            <span class="brand-circle-text">TSR</span>
+          </div>
+          <span class="brand-name">The Song Room</span>
+        </a>
+        <div class="nav-right">
+          <button class="nav-btn">← All songs</button>
+          <button class="nav-btn">V3 — Latest</button>
+          <button class="nav-btn nav-btn-accent">+ Upload</button>
+          <div class="avatar">C</div>
+        </div>
+      </nav>
+
+      <!-- Hero content -->
+      <div class="hero-content">
+
+        <div class="hero-left">
+          <div class="hero-meta">
+            <span class="stage-pill">
+              <span class="stage-dot"></span>
+              In production
+            </span>
+            <span class="version-badge">Version 3</span>
+          </div>
+
+          <h1 class="hero-title">Rejuvenation</h1>
+          <p class="hero-artist">Polite Rebels · uploaded by Coris</p>
+
+          <div class="hero-version-meta">
+            <span>3:47</span>
+            <span>Added 2 Apr 2026</span>
+            <span>3 comments</span>
+          </div>
+
+          <div class="hero-controls">
+            <button class="play-btn" aria-label="Play">
+              <svg width="18" height="18" viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg>
+            </button>
+            <div class="time-display">
+              <span>1:24</span>
+              <span class="time-sep">/</span>
+              <span>3:47</span>
+            </div>
+            <button class="loop-btn" aria-label="Loop">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Artwork -->
+        <div class="hero-artwork">
+          <img
+            src="https://xouiiaknskivrjvapdma.supabase.co/storage/v1/object/public/song-images/f18f249f-90c5-4257-85fd-db7ef216ce1d-1777553828608.jpg"
+            alt="Rejuvenation artwork"
+          />
+        </div>
+
+        <!-- Waveform -->
+        <div class="hero-waveform">
+          <div class="waveform-wrap">
+            <div class="waveform-bg">
+              <div class="waveform-progress"></div>
+            </div>
+            <div class="waveform-markers">
+              <button class="waveform-marker active" style="left:34%; background:#FFB6C8;" aria-label="Comment at 1:24"></button>
+              <button class="waveform-marker" style="left:55%; background:#D8CBB8;" aria-label="Comment at 2:04"></button>
+              <button class="waveform-marker" style="left:72%; background:#6F735F;" aria-label="Comment at 2:42"></button>
+            </div>
+          </div>
+          <p class="wave-hint">Click anywhere on the waveform to leave a comment</p>
+        </div>
+
+      </div><!-- /hero-content -->
+
+      <div class="hero-action-row">
+        <!-- intentionally minimal — nav handles primary actions -->
+      </div>
+
+    </div><!-- /hero-inner -->
+  </header>
+
+  <!-- ══════════════════ BODY ══════════════════ -->
+  <main class="body">
+
+    <!-- LEFT: ACTIONS -->
+    <aside class="actions-panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Actions</div>
+          <div class="panel-sub">From this version</div>
+        </div>
+        <span class="pending-badge">2 pending</span>
+      </div>
+
+      <div class="action-item">
+        <button class="action-toggle" aria-label="Toggle"></button>
+        <div class="action-text">
+          <div class="action-desc">Tighten the snare hit at 1:37 — feels slightly late</div>
+          <div class="action-meta">Suggested by Al · 1:37</div>
+          <div class="action-controls">
+            <span class="status-pill">Pending</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-item">
+        <button class="action-toggle" aria-label="Toggle"></button>
+        <div class="action-text">
+          <div class="action-desc">Open up the reverb on the drop — try 2.4s decay</div>
+          <div class="action-meta">Suggested by Coris · 1:24</div>
+          <div class="action-controls">
+            <span class="status-pill approved">Approved</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-item">
+        <button class="action-toggle done" aria-label="Toggle">
+          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M2 6l3 3 5-5"/></svg>
+        </button>
+        <div class="action-text" style="opacity:0.45">
+          <div class="action-desc" style="text-decoration:line-through">Move the vocal entry earlier in verse 2</div>
+          <div class="action-meta">Suggested by Al · 2:08</div>
+          <div class="action-controls">
+            <span class="status-pill">Done</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CENTRE: THREADS -->
+    <section class="threads-panel">
+      <div class="threads-header">
+        <span class="thread-dot" style="background:#FFB6C8;"></span>
+        <div class="thread-header-meta">
+          <span class="thread-timestamp">1:24</span>
+          <span class="thread-count">2 comments</span>
+        </div>
+        <div class="thread-header-actions">
+          <button class="thread-action-btn">Mark action</button>
+          <button class="thread-action-btn">All threads ↓</button>
+        </div>
+      </div>
+
+      <div class="bubble-list">
+
+        <div class="bubble-wrap other" style="animation: fade-up 0.3s cubic-bezier(0.23,1,0.32,1) both;">
+          <span class="bubble-author">Coris</span>
+          <div class="bubble other">Love this drop! What if we open up the reverb a bit? Maybe push the decay to 2.4s and see how it sits.</div>
+          <button class="mark-action-btn" style="margin-top:6px;">Mark as action</button>
+        </div>
+
+        <div class="bubble-wrap own" style="animation: fade-up 0.3s 60ms cubic-bezier(0.23,1,0.32,1) both;">
+          <span class="bubble-author">Al</span>
+          <div class="bubble own">Yes — and maybe layer a short plate under the main verb? Will try a few options and upload V4 later today.</div>
+        </div>
+
+        <div class="bubble-wrap other" style="animation: fade-up 0.3s 120ms cubic-bezier(0.23,1,0.32,1) both;">
+          <span class="bubble-author">Coris</span>
+          <div class="bubble other">Perfect. Also check the sidechain pumping on the pad underneath — might be a touch heavy now.</div>
+          <button class="mark-action-btn" style="margin-top:6px;">Mark as action</button>
+        </div>
+
+      </div>
+
+      <div class="reply-row">
+        <span class="reply-dot"></span>
+        <input class="reply-input" type="text" placeholder="Add a reply…" />
+        <span class="reply-time">1:24</span>
+        <button class="reply-btn" aria-label="Send">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/>
+          </svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- RIGHT: ADMIN / TASKS -->
+    <aside class="admin-panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Session notes</div>
+          <div class="panel-sub">This version</div>
+        </div>
+        <span class="admin-count">4 tasks</span>
+      </div>
+
+      <div class="add-task-row">
+        <input class="add-task-input" type="text" placeholder="Add a task…" />
+        <button class="add-task-btn">+</button>
+      </div>
+
+      <div class="task-list">
+
+        <div class="task-row">
+          <span class="drag-handle">⣿</span>
+          <button class="task-circle" aria-label="Complete"></button>
+          <span class="task-desc">Check reverb tail on drop section</span>
+          <button class="task-delete" aria-label="Delete">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <div class="task-row">
+          <span class="drag-handle">⣿</span>
+          <button class="task-circle" aria-label="Complete"></button>
+          <span class="task-desc">Tighten snare timing at 1:37</span>
+          <button class="task-delete" aria-label="Delete">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <div class="task-row">
+          <span class="drag-handle">⣿</span>
+          <button class="task-circle" aria-label="Complete"></button>
+          <span class="task-desc">Review sidechain pumping on pad</span>
+          <button class="task-delete" aria-label="Delete">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <div class="completed-section">
+          <div class="completed-heading">
+            Completed
+            <span style="background:rgba(244,240,232,0.06); color:var(--text-soft); padding:1px 7px; border-radius:10px;">1</span>
+          </div>
+          <div class="task-row">
+            <span class="drag-handle">⣿</span>
+            <button class="task-circle done" aria-label="Complete">
+              <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M2 6l3 3 5-5"/></svg>
+            </button>
+            <span class="task-desc done">Move vocal entry in verse 2</span>
+            <button class="task-delete" aria-label="Delete">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+  </main>
+
+</div>
+</body>
+</html>
