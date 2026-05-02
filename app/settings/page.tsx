@@ -19,6 +19,7 @@ interface BootstrapPayload {
   identity: {
     displayName: string;
     authorName: string;
+    workspaceName: string;
     membershipRole: 'owner' | 'member';
   };
   workspace: {
@@ -118,6 +119,8 @@ export default function SettingsPage() {
   const [actingMemberId, setActingMemberId] = useState<string | null>(null);
   const [copiedInviteId, setCopiedInviteId] = useState<string | null>(null);
   const [workspacePlan, setWorkspacePlan] = useState<AccountPlan | null>(null);
+  const [workspaceName, setWorkspaceName] = useState<string | null>(null);
+  const [membershipRole, setMembershipRole] = useState<'owner' | 'member' | null>(null);
   const [songCount, setSongCount] = useState<number | null>(null);
   const [upgradeModalType, setUpgradeModalType] = useState<PlanLimitType | null>(null);
   const [billingNotice, setBillingNotice] = useState<string | null>(null);
@@ -204,6 +207,8 @@ export default function SettingsPage() {
           setIdentityLabel(bootstrapPayload.identity.authorName || bootstrapPayload.identity.displayName || '');
           setIsLegacyFallback(false);
           setWorkspacePlan(bootstrapPayload.workspace.plan);
+          setWorkspaceName(bootstrapPayload.identity.workspaceName);
+          setMembershipRole(bootstrapPayload.identity.membershipRole);
           ownerAccess = bootstrapPayload.identity.membershipRole === 'owner';
           setIsOwner(ownerAccess);
         } else {
@@ -212,6 +217,8 @@ export default function SettingsPage() {
             setIdentityLabel(legacyIdentity);
             setIsLegacyFallback(true);
             setWorkspacePlan(null);
+            setWorkspaceName(null);
+            setMembershipRole(null);
             setIsOwner(false);
             usingLegacyFallback = true;
           } else {
@@ -568,7 +575,12 @@ export default function SettingsPage() {
   }
 
   return (
-    <AppShell label={identityLabel || 'User'} plan={workspacePlan}>
+    <AppShell
+      label={identityLabel || 'User'}
+      plan={workspacePlan}
+      workspaceName={workspaceName}
+      membershipRole={membershipRole}
+    >
       <div className={styles.container}>
         <div className={styles.header}>
           <div className={styles.headerLeft}>

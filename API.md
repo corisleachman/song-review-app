@@ -164,6 +164,101 @@ Returns song actions. Some filtering still happens in JS due to Supabase joined-
 
 Returns the current workspace collaborators for assignment UIs.
 
+### `GET /api/workspaces`
+
+Returns the workspaces the signed-in user belongs to for the future workspace switcher.
+
+**Returns**
+```json
+{
+  "currentWorkspaceId": "uuid",
+  "workspaces": [
+    {
+      "id": "uuid",
+      "name": "Coris Leachman's Workspace",
+      "slug": null,
+      "role": "member",
+      "plan": "free",
+      "songCount": 5,
+      "isActive": true,
+      "joinedAt": "2026-04-18T15:23:24.620452+00:00",
+      "createdAt": "2026-04-18T14:46:06.630682+00:00"
+    }
+  ]
+}
+```
+
+Notes:
+- uses the canonical authenticated workspace resolver
+- returns only workspaces where the current user has a membership
+- does not switch workspace; switching is a later route
+
+### `POST /api/workspaces/switch`
+
+Switches the active workspace for the signed-in user.
+
+**Body**
+```json
+{ "workspaceId": "uuid" }
+```
+
+**Returns**
+```json
+{
+  "switched": true,
+  "currentWorkspaceId": "uuid",
+  "workspace": {
+    "id": "uuid",
+    "name": "Cat Leachman's Workspace",
+    "role": "owner",
+    "plan": "free",
+    "songCount": 0,
+    "isActive": true,
+    "joinedAt": "2026-04-18T14:46:06.630682+00:00",
+    "createdAt": "2026-04-18T14:46:06.630682+00:00"
+  },
+  "workspaces": []
+}
+```
+
+Notes:
+- validates that the current user is a member of the requested workspace
+- writes the active workspace cookie server-side
+- clients should reload canonical reads such as `/api/auth/bootstrap` and `/api/dashboard` after switching
+
+### `POST /api/workspaces/create`
+
+Creates a personal workspace owned by the signed-in user, sets it active, and returns the refreshed workspace list.
+
+**Body**
+```json
+{ "name": "Cat Leachman's Workspace" }
+```
+
+**Returns**
+```json
+{
+  "created": true,
+  "currentWorkspaceId": "uuid",
+  "workspace": {
+    "id": "uuid",
+    "name": "Cat Leachman's Workspace",
+    "role": "owner",
+    "plan": "free",
+    "songCount": 0,
+    "isActive": true,
+    "joinedAt": "2026-05-02T12:00:00.000000+00:00",
+    "createdAt": "2026-05-02T12:00:00.000000+00:00"
+  },
+  "workspaces": []
+}
+```
+
+Notes:
+- intended for users who joined someone else's workspace first and do not yet own one
+- returns `409` if the user already owns a workspace
+- writes the active workspace cookie server-side
+
 ### `PATCH /api/actions/[actionId]`
 
 **Body**

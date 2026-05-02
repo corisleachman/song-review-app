@@ -142,6 +142,8 @@ function DashboardContent() {
   const [viewerKey, setViewerKey] = useState<string | null>(null);
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
   const [workspacePlan, setWorkspacePlan] = useState<AccountPlan | null>(null);
+  const [workspaceName, setWorkspaceName] = useState<string | null>(null);
+  const [membershipRole, setMembershipRole] = useState<'owner' | 'member' | null>(null);
 
   const [songs, setSongs] = useState<Song[]>([]);
   const [actions, setActions] = useState<Action[]>([]);
@@ -199,6 +201,8 @@ function DashboardContent() {
           setIdentity(payload.identity.authorName || payload.identity.displayName || 'U');
           setViewerKey(payload.identity.userId);
           setWorkspacePlan(payload.workspace.plan);
+          setWorkspaceName(payload.identity.workspaceName);
+          setMembershipRole(payload.identity.membershipRole);
           setBootstrapError(null);
           await loadAll(payload.identity.userId);
           return;
@@ -211,6 +215,8 @@ function DashboardContent() {
           setIdentity(legacyIdentity);
           setViewerKey(legacyIdentity);
           setWorkspacePlan(null);
+          setWorkspaceName(null);
+          setMembershipRole(null);
           setBootstrapError(null);
           await loadAll(legacyIdentity);
           return;
@@ -226,6 +232,8 @@ function DashboardContent() {
           setIdentity(legacyIdentity);
           setViewerKey(legacyIdentity);
           setWorkspacePlan(null);
+          setWorkspaceName(null);
+          setMembershipRole(null);
           setBootstrapError(null);
           await loadAll(legacyIdentity);
           return;
@@ -887,8 +895,14 @@ function DashboardContent() {
     return null;
   };
 
+  const currentWorkspaceName = workspaceName || 'this workspace';
+  const currentWorkspaceRole = membershipRole ? `${membershipRole[0].toUpperCase()}${membershipRole.slice(1)}` : null;
   const hasSongs = songs.length > 0;
-  const songEmptyMessage = 'Start with one upload and the review flow will build from there.';
+  const songEmptyTitle = `No songs in ${currentWorkspaceName} yet`;
+  const songEmptyMessage = membershipRole === 'member'
+    ? 'This is the active workspace. If you expected a different song library, open the workspace switcher and choose another workspace.'
+    : 'Create the first song here and the review flow will build from this workspace.';
+  const filteredEmptyMessage = `Try another status or switch back to all songs in ${currentWorkspaceName}.`;
   const filteredSongs = songs.filter(song => {
     if (songFilter === 'all') return true;
     if (songFilter === 'needs_attention') return song.needsAttention;
@@ -984,16 +998,26 @@ function DashboardContent() {
           : 'No audio yet'
     )
     : 'No audio yet';
-
   return (
-    <AppShell label={identity || 'User'} plan={workspacePlan}>
+    <AppShell
+      label={identity || 'User'}
+      plan={workspacePlan}
+      workspaceName={workspaceName}
+      membershipRole={membershipRole}
+    >
       <div className={`${styles.page} ${playingId ? styles.pageWithPlayer : ''}`}>
       {/* Header */}
       <header className={styles.header}>
         <div className={styles.headerLeft}>
-          <div className={styles.logo}>
+          <div className={styles.workspaceHeader} aria-label={`Current workspace: ${currentWorkspaceName}`}>
             <span className={styles.logoDot} />
-            Polite Rebels
+            <div className={styles.workspaceHeaderText}>
+              <span className={styles.workspaceEyebrow}>Workspace</span>
+              <span className={styles.workspaceName}>{currentWorkspaceName}</span>
+            </div>
+            {currentWorkspaceRole && (
+              <span className={styles.workspaceRolePill}>{currentWorkspaceRole}</span>
+            )}
           </div>
         </div>
       </header>
@@ -1605,12 +1629,12 @@ function DashboardContent() {
             ) : (
               <div className={styles.emptyStateCard}>
                 <div className={styles.emptyStateTitle}>No songs match this filter</div>
-                <p className={styles.emptyStateText}>Try another status or switch back to all songs.</p>
+                <p className={styles.emptyStateText}>{filteredEmptyMessage}</p>
               </div>
             )
           ) : (
             <div className={styles.emptyStateCard}>
-              <div className={styles.emptyStateTitle}>No songs yet</div>
+              <div className={styles.emptyStateTitle}>{songEmptyTitle}</div>
               <p className={styles.emptyStateText}>{songEmptyMessage}</p>
               <button className={styles.emptyStateAction} onClick={() => setShowNewModal(true)}>
                 Create your first song

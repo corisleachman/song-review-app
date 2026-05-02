@@ -1183,3 +1183,194 @@ Note the next follow-up slice.
   - kept the Google sign-in return-path behavior unchanged so invite and dashboard redirects continue through the existing callback flow
 - Next follow-up:
   - configure Supabase Auth URL settings with the production callback URL so Google sign-in no longer returns to localhost
+
+## 2026-05-01 — Supabase Auth production callback configuration
+
+- Slice / change name: Supabase Auth production callback configuration
+- Status: Configured and production sign-in verified
+- Exact files changed or audited:
+  - `public-mvp-roadmap.md`
+  - `UPDATE_LOG.md`
+- Outcome:
+  - Supabase Auth Site URL is configured to `https://song-review-app-v2.vercel.app`
+  - Supabase Auth Redirect URLs include `http://localhost:3000/auth/callback`
+  - Supabase Auth Redirect URLs include `https://song-review-app-v2.vercel.app/auth/callback`
+  - Supabase Auth Redirect URLs include the current Vercel branch-preview callback URL
+  - production Google sign-in round trip works on `https://song-review-app-v2.vercel.app`
+- Next follow-up:
+  - verify an invite sign-in round trip on the same production domain
+
+## 2026-05-01 — Member workspace dashboard resolution fix
+
+- Slice / change name: Member workspace dashboard resolution fix
+- Status: Implemented
+- Exact files changed or audited:
+  - `lib/bootstrapAccount.ts`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - confirmed a collaborator account can have both an empty personal owner workspace and the intended shared member workspace
+  - bootstrap still honors the active-workspace cookie first
+  - when no active-workspace cookie is present, bootstrap now prefers a collaborative `member` workspace before falling back to a personal `owner` workspace
+- Tests run:
+  - `npx tsc --noEmit`
+- Next follow-up:
+  - deploy the fix and verify `cat.libbie@gmail.com` sees Coris Leachman's songs on the production dashboard
+  - later add an explicit workspace switcher if users need to move between personal and shared workspaces
+
+## 2026-05-02 — Workspace model and user journey spec
+
+- Slice / change name: Workspace model and user journey spec
+- Status: Documented
+- Exact files changed or audited:
+  - `WORKSPACE_MODEL.md`
+  - `README.md`
+  - `public-mvp-roadmap.md`
+  - `UPDATE_LOG.md`
+- Outcome:
+  - documented the distinction between signed-in user identity and workspace/account containers
+  - captured direct-signup, invite-first, create-own-workspace, join-band-later, and returning-user journeys
+  - defined proposed workspace switcher requirements, empty states, billing implications, open questions, and suggested build order
+- Tests run:
+  - not run; documentation-only change
+- Next follow-up:
+  - review the spec for product-language and journey accuracy before deciding the first workspace switcher build slice
+
+## 2026-05-02 — Read-only workspace indicator
+
+- Slice / change name: Read-only workspace indicator
+- Status: Implemented
+- Exact files changed or audited:
+  - `components/AppShell.tsx`
+  - `components/AppShell.module.css`
+  - `components/AppSidebar.tsx`
+  - `components/AppSidebar.module.css`
+  - `app/dashboard/page.tsx`
+  - `app/settings/page.tsx`
+  - `public-mvp-roadmap.md`
+  - `UPDATE_LOG.md`
+- Outcome:
+  - shared authenticated shell can now display the current workspace name and membership role
+  - dashboard and settings pass canonical workspace context from bootstrap into the shell
+  - desktop rail shows a compact read-only workspace indicator
+  - dashboard header now explicitly labels the active workspace and role after visual review showed the rail marker was too subtle
+  - mobile shell shows a sticky workspace strip because the rail is hidden on narrow screens
+- Tests run:
+  - `npx tsc --noEmit`
+  - `curl -I http://localhost:3000/dashboard`
+- Next follow-up:
+  - visually verify the workspace indicator as an owner and as `cat.libbie@gmail.com`
+  - then implement a workspace list/read API as the next switcher slice
+
+## 2026-05-02 — Workspace list API foundation
+
+- Slice / change name: Workspace list API foundation
+- Status: Implemented
+- Exact files changed or audited:
+  - `lib/workspaces.ts`
+  - `app/api/workspaces/route.ts`
+  - `API.md`
+  - `public-mvp-roadmap.md`
+  - `UPDATE_LOG.md`
+- Outcome:
+  - added a canonical read route for the future workspace switcher
+  - `GET /api/workspaces` lists only workspaces where the signed-in user has membership
+  - response includes current workspace id, workspace role, plan, song count, active state, join date, and creation date
+  - route is read-only and does not switch workspaces yet
+- Tests run:
+  - `npx tsc --noEmit`
+  - `curl -i http://localhost:3000/api/workspaces`
+- Next follow-up:
+  - implement the workspace switch mutation route that validates membership and writes the active workspace cookie
+  - then wire the switcher UI to list and switch workspaces
+
+## 2026-05-02 — Workspace switch mutation route
+
+- Slice / change name: Workspace switch mutation route
+- Status: Implemented
+- Exact files changed or audited:
+  - `app/api/workspaces/switch/route.ts`
+  - `API.md`
+  - `public-mvp-roadmap.md`
+  - `UPDATE_LOG.md`
+- Outcome:
+  - added `POST /api/workspaces/switch`
+  - route requires an authenticated user
+  - route validates that the current user belongs to the requested workspace before switching
+  - route writes the existing active workspace cookie and returns the selected workspace plus refreshed workspace list
+- Tests run:
+  - `npx tsc --noEmit`
+  - unauthenticated `curl` checks against `/api/workspaces/switch`
+- Next follow-up:
+  - wire the authenticated shell UI to call `/api/workspaces` and `/api/workspaces/switch`
+  - then visually verify switching as an owner/member user with multiple workspaces
+
+## 2026-05-02 — Shell workspace switcher UI wiring
+
+- Slice / change name: Shell workspace switcher UI wiring
+- Status: Implemented
+- Exact files changed or audited:
+  - `components/WorkspaceSwitcher.tsx`
+  - `components/WorkspaceSwitcher.module.css`
+  - `components/AppShell.tsx`
+  - `components/AppShell.module.css`
+  - `components/AppSidebar.tsx`
+  - `components/AppSidebar.module.css`
+  - `public-mvp-roadmap.md`
+  - `UPDATE_LOG.md`
+- Outcome:
+  - added a reusable client workspace switcher component
+  - desktop rail and mobile shell surfaces now lazy-load the signed-in user's workspaces
+  - switcher calls `POST /api/workspaces/switch` for non-active workspaces
+  - switching reloads the current page so canonical bootstrap and dashboard reads use the selected workspace
+  - workspace creation remains out of scope
+- Tests run:
+  - `npx tsc --noEmit`
+  - unauthenticated `curl` checks against `/api/workspaces` and `/api/workspaces/switch`
+- Next follow-up:
+  - visually verify the switcher with a signed-in owner/member account that has multiple workspaces
+  - add `Create your own workspace` as a separate future slice
+
+## 2026-05-02 — Create-own-workspace switcher action
+
+- Slice / change name: Create-own-workspace switcher action
+- Status: Implemented
+- Exact files changed or audited:
+  - `app/api/workspaces/create/route.ts`
+  - `components/WorkspaceSwitcher.tsx`
+  - `components/WorkspaceSwitcher.module.css`
+  - `components/AppShell.tsx`
+  - `components/AppSidebar.tsx`
+  - `API.md`
+  - `public-mvp-roadmap.md`
+  - `UPDATE_LOG.md`
+- Outcome:
+  - added `POST /api/workspaces/create`
+  - route creates an owned workspace only for authenticated users who do not already own one
+  - switcher shows `Create your own workspace` when the signed-in user has no owner workspace
+  - successful creation sets the new workspace active and reloads the current page
+- Tests run:
+  - `npx tsc --noEmit`
+  - unauthenticated `curl` checks against `/api/workspaces` and `/api/workspaces/create`
+- Next follow-up:
+  - visually verify create-own-workspace using an invite-first member account that does not already own a workspace
+  - add clearer empty-state copy that names the current workspace
+
+## 2026-05-02 — Workspace-aware dashboard empty states
+
+- Slice / change name: Workspace-aware dashboard empty states
+- Status: Implemented
+- Exact files changed or audited:
+  - `app/dashboard/page.tsx`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - empty dashboard state now names the active workspace
+  - member empty state explains that the current workspace is active and points users toward the switcher if they expected another library
+  - filtered-empty state also names the current workspace
+  - permissions and song creation behavior were left unchanged
+- Tests run:
+  - `npx tsc --noEmit`
+- Next follow-up:
+  - visually verify empty states in a workspace with zero songs
+  - then decide whether member users should be allowed to create songs in shared workspaces or whether that should become owner-only

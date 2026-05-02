@@ -1095,3 +1095,261 @@ Login page cleanup for the production Google-auth flow.
 - Removed the visible password field and legacy password submit button from the login page.
 - Kept the Google sign-in and post-login redirect handling unchanged.
 - Supabase Auth URL configuration still needs the production callback URL so deployed Google auth does not fall back to localhost.
+
+---
+
+## 2026-05-01 — Supabase Auth production callback configuration
+
+### What we were trying to achieve
+
+Allow the deployed Google sign-in flow to return to the production Vercel app instead of falling back to localhost.
+
+### Feature / change being made
+
+External Supabase Auth URL configuration checkpoint for the production Google OAuth flow.
+
+### Files changed
+
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+
+### Notes
+
+- Supabase Auth Site URL is configured to `https://song-review-app-v2.vercel.app`.
+- Supabase Auth Redirect URLs include `http://localhost:3000/auth/callback`.
+- Supabase Auth Redirect URLs include `https://song-review-app-v2.vercel.app/auth/callback`.
+- Supabase Auth Redirect URLs include the current Vercel branch-preview callback URL.
+- Production Google sign-in was verified successfully on `https://song-review-app-v2.vercel.app`.
+- Next verification should be an invite sign-in round trip.
+
+---
+
+## 2026-05-01 — Member workspace dashboard resolution fix
+
+### What we were trying to achieve
+
+Ensure invited workspace members land in the shared owner workspace and see the owner-created songs instead of landing in their empty auto-created personal workspace.
+
+### Feature / change being made
+
+Workspace bootstrap selection fix for users who have both a personal owner workspace and a collaborative member workspace.
+
+### Files changed
+
+- [lib/bootstrapAccount.ts](/Users/impero/song-review-app/lib/bootstrapAccount.ts)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+
+### Notes
+
+- Confirmed `cat.libbie@gmail.com` owns an empty personal workspace and is also a member of Coris Leachman's workspace, which currently has songs.
+- Bootstrap still respects the active-workspace cookie when present.
+- When no active-workspace cookie is present, bootstrap now prefers an existing `member` workspace before falling back to an `owner` workspace.
+- `npx tsc --noEmit` passed.
+
+---
+
+## 2026-05-02 — Workspace model and user journey spec
+
+### What we were trying to achieve
+
+Document the product model for signed-in users, workspaces, memberships, workspace switching, and multi-route onboarding before building a switcher UI.
+
+### Feature / change being made
+
+Planning/specification document for the future workspace switcher and multi-workspace UX.
+
+### Files changed
+
+- [WORKSPACE_MODEL.md](/Users/impero/song-review-app/WORKSPACE_MODEL.md)
+- [README.md](/Users/impero/song-review-app/README.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+
+### Notes
+
+- Defined the distinction between user identity and workspace.
+- Captured the two main entry routes: direct signup and invite-first membership.
+- Documented journeys for creating a personal workspace after joining a band workspace, and joining a band after starting solo.
+- Captured workspace switcher requirements, empty states, billing implications, open questions, and suggested build order.
+
+---
+
+## 2026-05-02 — Read-only workspace indicator
+
+### What we were trying to achieve
+
+Make the active workspace visible in the authenticated app shell so users can tell which song library they are currently viewing before full workspace switching is built.
+
+### Feature / change being made
+
+First workspace-switcher build slice: read-only current-workspace and role indicator in the shared shell.
+
+### Files changed
+
+- [components/AppShell.tsx](/Users/impero/song-review-app/components/AppShell.tsx)
+- [components/AppShell.module.css](/Users/impero/song-review-app/components/AppShell.module.css)
+- [components/AppSidebar.tsx](/Users/impero/song-review-app/components/AppSidebar.tsx)
+- [components/AppSidebar.module.css](/Users/impero/song-review-app/components/AppSidebar.module.css)
+- [app/dashboard/page.tsx](/Users/impero/song-review-app/app/dashboard/page.tsx)
+- [app/settings/page.tsx](/Users/impero/song-review-app/app/settings/page.tsx)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+
+### Notes
+
+- Dashboard and Settings now pass canonical workspace name and membership role from `/api/auth/bootstrap` into the shared shell.
+- Desktop rail shows a compact workspace mark with role and a full title tooltip.
+- Mobile authenticated shell shows a sticky workspace strip because the desktop rail is hidden on narrow screens.
+- After visual review, the dashboard header now explicitly labels the active workspace and role so users do not have to interpret the rail marker.
+- This is intentionally read-only; switching and workspace creation remain future slices.
+- `npx tsc --noEmit` passed.
+- `curl -I http://localhost:3000/dashboard` returned the expected unauthenticated `307` redirect.
+
+---
+
+## 2026-05-02 — Workspace list API foundation
+
+### What we were trying to achieve
+
+Create the canonical server-backed read path that a future workspace switcher can use to list every workspace the signed-in user belongs to.
+
+### Feature / change being made
+
+Workspace switcher backend foundation: current-user workspace list API.
+
+### Files changed
+
+- [lib/workspaces.ts](/Users/impero/song-review-app/lib/workspaces.ts)
+- [app/api/workspaces/route.ts](/Users/impero/song-review-app/app/api/workspaces/route.ts)
+- [API.md](/Users/impero/song-review-app/API.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+
+### Notes
+
+- Added `GET /api/workspaces`.
+- The route uses the canonical authenticated identity and returns only workspaces where the current user has a membership.
+- The response includes current workspace id, workspace name, role, plan, song count, active state, join date, and creation date.
+- This route is read-only; switching workspace remains a later slice.
+- `npx tsc --noEmit` passed.
+- `curl -i http://localhost:3000/api/workspaces` returned the expected unauthenticated `401`.
+
+---
+
+## 2026-05-02 — Workspace switch mutation route
+
+### What we were trying to achieve
+
+Add the safe server-side mutation that lets a signed-in user switch the active workspace only when they already belong to that workspace.
+
+### Feature / change being made
+
+Workspace switcher backend foundation: validated active-workspace switch route.
+
+### Files changed
+
+- [app/api/workspaces/switch/route.ts](/Users/impero/song-review-app/app/api/workspaces/switch/route.ts)
+- [API.md](/Users/impero/song-review-app/API.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+
+### Notes
+
+- Added `POST /api/workspaces/switch`.
+- The route requires an authenticated user, validates membership in the requested workspace, and writes the existing active-workspace cookie.
+- The response returns the selected workspace and refreshed workspace list for future UI wiring.
+- Clients should reload canonical reads such as `/api/auth/bootstrap` and `/api/dashboard` after switching.
+- `npx tsc --noEmit` passed.
+- Unauthenticated `curl` checks returned the expected `401`.
+
+---
+
+## 2026-05-02 — Shell workspace switcher UI wiring
+
+### What we were trying to achieve
+
+Make the authenticated shell use the new workspace APIs so a signed-in user can see their available workspaces and switch between them without signing out.
+
+### Feature / change being made
+
+Workspace switcher UI wiring for desktop rail and mobile shell surfaces.
+
+### Files changed
+
+- [components/WorkspaceSwitcher.tsx](/Users/impero/song-review-app/components/WorkspaceSwitcher.tsx)
+- [components/WorkspaceSwitcher.module.css](/Users/impero/song-review-app/components/WorkspaceSwitcher.module.css)
+- [components/AppShell.tsx](/Users/impero/song-review-app/components/AppShell.tsx)
+- [components/AppShell.module.css](/Users/impero/song-review-app/components/AppShell.module.css)
+- [components/AppSidebar.tsx](/Users/impero/song-review-app/components/AppSidebar.tsx)
+- [components/AppSidebar.module.css](/Users/impero/song-review-app/components/AppSidebar.module.css)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+
+### Notes
+
+- Added a reusable client `WorkspaceSwitcher` component.
+- The switcher lazy-loads `GET /api/workspaces` when opened.
+- Non-active workspaces call `POST /api/workspaces/switch`, then reload the current page so canonical bootstrap/dashboard reads use the new active workspace.
+- Desktop rail and mobile shell now use the same switcher logic.
+- Workspace creation remains out of scope for this slice.
+- `npx tsc --noEmit` passed.
+- Unauthenticated `curl` checks against the workspace list/switch APIs returned the expected `401`.
+
+---
+
+## 2026-05-02 — Create-own-workspace switcher action
+
+### What we were trying to achieve
+
+Let an invited member who does not yet own a workspace create a separate personal workspace for their own songs without leaving the switcher.
+
+### Feature / change being made
+
+Workspace creation flow inside the existing workspace switcher.
+
+### Files changed
+
+- [app/api/workspaces/create/route.ts](/Users/impero/song-review-app/app/api/workspaces/create/route.ts)
+- [components/WorkspaceSwitcher.tsx](/Users/impero/song-review-app/components/WorkspaceSwitcher.tsx)
+- [components/WorkspaceSwitcher.module.css](/Users/impero/song-review-app/components/WorkspaceSwitcher.module.css)
+- [components/AppShell.tsx](/Users/impero/song-review-app/components/AppShell.tsx)
+- [components/AppSidebar.tsx](/Users/impero/song-review-app/components/AppSidebar.tsx)
+- [API.md](/Users/impero/song-review-app/API.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+
+### Notes
+
+- Added `POST /api/workspaces/create`.
+- The route creates an owned workspace only for authenticated users who do not already own one.
+- The route creates the owner membership, sets the new workspace active, and returns the refreshed workspace list.
+- The switcher now shows `Create your own workspace` when the loaded workspace list contains no owner workspace.
+- Workspace creation uses an inline form and reloads after success so canonical reads use the new active workspace.
+- `npx tsc --noEmit` passed.
+- Unauthenticated `curl` checks against the workspace list/create APIs returned the expected `401`.
+
+---
+
+## 2026-05-02 — Workspace-aware dashboard empty states
+
+### What we were trying to achieve
+
+Make empty dashboards explain which workspace is empty so users do not mistake the wrong active workspace for missing songs.
+
+### Feature / change being made
+
+Workspace-aware empty-state copy on the dashboard.
+
+### Files changed
+
+- [app/dashboard/page.tsx](/Users/impero/song-review-app/app/dashboard/page.tsx)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- Empty song state now names the active workspace.
+- Member empty state now points users toward the workspace switcher if they expected a different song library.
+- Filtered-empty copy also names the active workspace.
+- No permissions or song-creation behavior changed in this slice.
+- `npx tsc --noEmit` passed.

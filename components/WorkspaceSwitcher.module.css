@@ -1,0 +1,394 @@
+.root {
+  position: relative;
+}
+
+.railRoot {
+  width: 56px;
+  margin-bottom: 20px;
+}
+
+.railButton {
+  width: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.railMark {
+  width: 38px;
+  height: 38px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.94);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1;
+  transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+}
+
+.railButton:hover .railMark,
+.railButton[aria-expanded="true"] .railMark {
+  background: rgba(255, 20, 147, 0.14);
+  border-color: rgba(255, 20, 147, 0.3);
+  transform: translateY(-1px);
+}
+
+.railRole {
+  max-width: 56px;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.panel {
+  background: rgba(20, 15, 30, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
+  color: #fff;
+  z-index: 90;
+}
+
+.railPanel {
+  position: absolute;
+  top: 0;
+  left: 64px;
+  width: 330px;
+  border-radius: 16px;
+  padding: 14px;
+}
+
+.panelHeader {
+  display: grid;
+  gap: 4px;
+  padding: 4px 4px 12px;
+}
+
+.panelHeader strong {
+  min-width: 0;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.94);
+  font-size: 14px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panelEyebrow {
+  color: rgba(255, 255, 255, 0.44);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.workspaceList {
+  display: grid;
+  gap: 8px;
+}
+
+.workspaceOption {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.035);
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+
+.workspaceOption:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.workspaceOption:disabled {
+  cursor: default;
+}
+
+.activeOption {
+  border-color: rgba(255, 20, 147, 0.28);
+  background: rgba(255, 20, 147, 0.1);
+}
+
+.optionMark {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.activeOption .optionMark {
+  background: rgba(255, 20, 147, 0.22);
+  color: #ff8acb;
+}
+
+.optionText {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.optionName {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.optionMeta {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.optionState {
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.stateText,
+.errorText {
+  padding: 12px 4px 4px;
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.errorText {
+  color: #fecaca;
+}
+
+.createSection {
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.createPrompt {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px dashed rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.025);
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.createPrompt:hover {
+  background: rgba(255, 255, 255, 0.055);
+  border-color: rgba(255, 20, 147, 0.28);
+}
+
+.createPlus {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 20, 147, 0.16);
+  color: #ff8acb;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.createPrompt strong,
+.createPrompt small {
+  display: block;
+}
+
+.createPrompt strong {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.createPrompt small {
+  margin-top: 3px;
+  color: rgba(255, 255, 255, 0.46);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.createForm {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.createLabel {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.createInput {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 11px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.18);
+  color: rgba(255, 255, 255, 0.92);
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+.createInput:focus {
+  border-color: rgba(255, 20, 147, 0.38);
+}
+
+.createActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.createSecondary,
+.createPrimary {
+  min-height: 32px;
+  border-radius: 9px;
+  padding: 0 11px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.createSecondary {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.createPrimary {
+  border: 1px solid rgba(255, 20, 147, 0.34);
+  background: rgba(255, 20, 147, 0.2);
+  color: #ffb4dc;
+}
+
+.createSecondary:disabled,
+.createPrimary:disabled,
+.createInput:disabled {
+  cursor: default;
+  opacity: 0.58;
+}
+
+.mobileRoot {
+  display: none;
+}
+
+.mobileButton {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 3px 10px;
+  align-items: center;
+  padding: 10px 18px;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(13, 9, 20, 0.94);
+  color: inherit;
+  text-align: left;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.mobileEyebrow {
+  grid-column: 1 / -1;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.mobileName {
+  min-width: 0;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.94);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobileRole {
+  align-self: center;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.mobilePanel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 10px;
+  left: 10px;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+@media (max-width: 768px) {
+  .mobileRoot {
+    display: block;
+  }
+}

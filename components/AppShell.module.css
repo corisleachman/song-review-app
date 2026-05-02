@@ -9,8 +9,19 @@
   margin-left: 76px;
 }
 
+.mobileWorkspaceBar {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .content {
     margin-left: 0;
+  }
+
+  .mobileWorkspaceBar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: block;
   }
 }

@@ -40,6 +40,13 @@ function getWorkspaceName(user: AuthenticatedUser) {
   return `${base}'s Workspace`;
 }
 
+function chooseDefaultMembership(memberships: MembershipRecord[]) {
+  const memberWorkspace = memberships.find(membership => membership.role === 'member');
+  if (memberWorkspace) return memberWorkspace;
+
+  return memberships.find(membership => membership.role === 'owner') ?? null;
+}
+
 async function loadWorkspace(accountId: string): Promise<WorkspaceRecord> {
   const workspaceWithPlan = await supabaseServer
     .from('accounts')
@@ -94,20 +101,19 @@ export async function bootstrapAccountForUser(user: AuthenticatedUser): Promise<
     ? await findValidActiveWorkspaceMembership(user.id, activeWorkspaceId)
     : null;
 
-  const { data: existingOwnerMembership, error: membershipLookupError } = await supabaseServer
+  const { data: existingMemberships, error: membershipLookupError } = await supabaseServer
     .from('account_members')
     .select('account_id, user_id, role, joined_at')
     .eq('user_id', user.id)
-    .eq('role', 'owner')
     .order('joined_at', { ascending: true })
-    .limit(1)
-    .maybeSingle();
+    .returns<MembershipRecord[]>();
 
   if (membershipLookupError) throw membershipLookupError;
 
-  let membership = (activeWorkspaceMembership ?? existingOwnerMembership) as MembershipRecord | null;
+  let membership = (activeWorkspaceMembership as MembershipRecord | null)
+    ?? chooseDefaultMembership(existingMemberships ?? []);
 
-  if (!membership && !existingOwnerMembership) {
+  if (!membership) {
     const { data: account, error: accountError } = await supabaseServer
       .from('accounts')
       .insert([

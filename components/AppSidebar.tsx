@@ -6,11 +6,14 @@ import { useState } from 'react';
 import { createClient } from '@/lib/supabase';
 import { clearAuth, clearIdentity } from '@/lib/auth';
 import type { AccountPlan } from '@/lib/plans';
+import WorkspaceSwitcher from './WorkspaceSwitcher';
 import styles from './AppSidebar.module.css';
 
 interface AppSidebarProps {
   label?: string;
   plan?: AccountPlan | null;
+  workspaceName?: string | null;
+  membershipRole?: 'owner' | 'member' | null;
 }
 
 type NavItem = {
@@ -22,7 +25,12 @@ type NavItem = {
   disabled?: boolean;
 };
 
-export default function AppSidebar({ label = 'Account', plan = null }: AppSidebarProps) {
+export default function AppSidebar({
+  label = 'Account',
+  plan = null,
+  workspaceName = null,
+  membershipRole = null,
+}: AppSidebarProps) {
   const pathname = usePathname();
   const [supabase] = useState(() => createClient());
   const [signingOut, setSigningOut] = useState(false);
@@ -72,6 +80,15 @@ export default function AppSidebar({ label = 'Account', plan = null }: AppSideba
         <div className={styles.brand} title={label} aria-label={label}>
           <span className={styles.brandMark}>♪</span>
         </div>
+
+        {workspaceName && (
+          <WorkspaceSwitcher
+            userLabel={label}
+            workspaceName={workspaceName}
+            membershipRole={membershipRole}
+            variant="rail"
+          />
+        )}
 
         {plan === 'paid' && (
           <div className={styles.planLockup} aria-label="Paid plan active" title="Paid plan active">
