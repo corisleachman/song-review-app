@@ -737,7 +737,7 @@ export default function SettingsPage() {
           </div>
           <div className={styles.permissionCard}>
             <h3>Members</h3>
-            <p>Add songs, upload versions, comment, create actions, and manage tasks.</p>
+            <p>Add songs, upload versions, comment, create actions, and manage tasks. Song deletion stays owner-only.</p>
           </div>
         </div>
 
@@ -822,7 +822,7 @@ export default function SettingsPage() {
             <div className={styles.memberScopeNote}>
               <strong>Your member access</strong>
               <span>
-                You can collaborate in this workspace, but billing and plan changes are managed by the workspace owner.
+                You can collaborate on songs in this workspace. Billing, invites, member removal, and song deletion are managed by the workspace owner.
               </span>
             </div>
           )}
@@ -885,7 +885,7 @@ export default function SettingsPage() {
               <section className={styles.collaboratorCard}>
                 <h3>What you can do</h3>
                 <p className={styles.collaboratorMuted}>
-                  Members can add songs, upload versions, comment, create actions, and manage song tasks in this workspace.
+                  Members can add songs, upload versions, comment, create actions, and manage song tasks. Owners handle workspace access and song deletion.
                 </p>
               </section>
             )}

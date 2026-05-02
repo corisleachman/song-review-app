@@ -1594,3 +1594,24 @@ Note the next follow-up slice.
 - Next follow-up:
   - visually verify Cat's member Settings view online
   - then complete Phase 2 step 7: permissions language final pass
+
+## 2026-05-02 — Permissions language final pass
+
+- Slice / change name: Permissions language final pass
+- Status: Implemented
+- Phase position: Phase 2, step 7 of 8
+- Exact files changed or audited:
+  - `app/settings/page.tsx`
+  - `PERMISSIONS_MODEL.md`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - Settings copy now consistently says members can add songs, upload versions, comment, create actions, and manage tasks
+  - Settings copy now consistently says song deletion, billing, invites, and member removal are owner-managed
+  - permissions matrix now marks collaborator/member song deletion as `No`
+  - no route, schema, permission, or persistence behavior changed
+- Tests run:
+  - `npx tsc --noEmit`
+  - `git diff --check`
+- Next follow-up:
+  - complete Phase 2 step 8: desktop/mobile owner/member QA and push

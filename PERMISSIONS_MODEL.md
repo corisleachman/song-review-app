@@ -50,13 +50,11 @@ Collaborators should not be able to:
 - change plan state
 - invite or remove members
 - revoke invites
+- delete songs
 - delete the workspace
 
-Open question:
-- should collaborators be allowed to delete songs, or only owners?
-
 Recommendation:
-- start with owner-only song deletion unless we add ownership/creator checks for songs
+- keep song deletion owner-only for the MVP
 - keep non-destructive collaboration broad
 
 ### Reviewer / Commenter
@@ -91,7 +89,7 @@ This should be a future role, not a silent reinterpretation of the existing `mem
 | Create songs | Yes | Yes | No |
 | Rename songs | Yes | Yes | No |
 | Upload cover art | Yes | Yes | No |
-| Delete songs | Yes | Proposed no | No |
+| Delete songs | Yes | No | No |
 | Upload versions | Yes | Yes | No |
 | Edit version labels/notes | Yes | Yes | No |
 | Create comments/replies | Yes | Yes | Yes |

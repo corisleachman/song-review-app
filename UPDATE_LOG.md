@@ -1633,3 +1633,31 @@ Member-facing Settings copy and non-editable access summary.
 - No route, schema, permission, or persistence behavior changed.
 - `npx tsc --noEmit` passed.
 - `git diff --check` passed.
+
+---
+
+## 2026-05-02 — Permissions language final pass
+
+### What we were trying to achieve
+
+Complete Phase 2 step 7 by making owner/member permission language consistent across Settings and the permissions model.
+
+### Feature / change being made
+
+Copy and documentation clarification for member collaboration rights and owner-only destructive/admin controls.
+
+### Files changed
+
+- [app/settings/page.tsx](/Users/impero/song-review-app/app/settings/page.tsx)
+- [PERMISSIONS_MODEL.md](/Users/impero/song-review-app/PERMISSIONS_MODEL.md)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- Settings now explicitly says members can add songs, upload versions, comment, create actions, and manage tasks.
+- Settings now explicitly says song deletion, billing, invites, and member removal are owner-managed.
+- Permissions matrix now marks collaborator/member song deletion as `No` rather than `Proposed no`.
+- No route, schema, permission, or persistence behavior changed.
+- `npx tsc --noEmit` passed.
+- `git diff --check` passed.
