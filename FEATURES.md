@@ -18,7 +18,7 @@ This file describes the current user-facing flows in the app as of March 2026.
 - The active identity controls:
   - bubble alignment
   - action attribution
-  - transitional per-user theme settings
+  - per-user theme settings
   - who receives notification emails
 
 ## Dashboard
@@ -146,4 +146,4 @@ Settings are now treated as two product concepts:
 
 The current color theme controls are personal settings. The current plan, billing, invite, and member controls are workspace settings.
 
-The implementation still uses the transitional `/api/settings` route for theme persistence. The target model is documented in [`SETTINGS_MODEL.md`](./SETTINGS_MODEL.md).
+Theme persistence uses `/api/profile/settings`, keyed by the signed-in user. The legacy `/api/settings` route remains as a compatibility alias.

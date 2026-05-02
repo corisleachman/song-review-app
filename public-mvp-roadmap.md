@@ -1495,6 +1495,7 @@ Note the next follow-up slice.
 - Tests run:
   - `npx tsc --noEmit`
   - `git diff --check`
+  - unauthenticated `GET /api/profile/settings` and `GET /api/settings` returned `401 Unauthorized`
 - Next follow-up:
   - update Settings UI copy/structure so personal theme and workspace administration are visually distinct
   - then migrate personal theme persistence to a user-id keyed route when ready for a schema change
@@ -1521,3 +1522,53 @@ Note the next follow-up slice.
 - Next follow-up:
   - visually verify Settings on desktop and mobile
   - then decide whether to migrate personal theme persistence to a user-id keyed route
+
+## 2026-05-02 — User-level profile theme settings
+
+- Slice / change name: User-level profile theme settings
+- Status: Implemented
+- Exact files changed or audited:
+  - `app/api/profile/settings/route.ts`
+  - `app/api/settings/route.ts`
+  - `app/settings/page.tsx`
+  - `lib/profileThemeSettings.ts`
+  - `migrations/20260502_profile_settings_up.sql`
+  - `migrations/20260502_profile_settings_down.sql`
+  - `API.md`
+  - `DATABASE.md`
+  - `FEATURES.md`
+  - `SETTINGS_MODEL.md`
+  - `PERMISSIONS_MODEL.md`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - added `profile_settings`, keyed by auth user id through `profiles.id`
+  - added `/api/profile/settings` as the canonical personal theme route
+  - updated Settings UI to call `/api/profile/settings`
+  - kept `/api/settings` as a compatibility alias
+  - theme reads fall back to legacy `settings.user_identity` rows while data migrates
+  - theme saves prefer `profile_settings` and fall back to legacy `settings` if the migration is not available yet
+- Tests run:
+  - `npx tsc --noEmit`
+  - `git diff --check`
+- Next follow-up:
+  - apply the `profile_settings` migration in Supabase production
+  - verify theme save/load online as Coris and Cat
+
+## 2026-05-02 — Production profile settings migration checkpoint
+
+- Slice / change name: Production profile settings migration checkpoint
+- Status: Applied in Supabase
+- Phase position: Phase 2, step 4 of 8
+- Exact files changed or audited:
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - user confirmed `migrations/20260502_profile_settings_up.sql` was applied in Supabase
+  - production database should now have `profile_settings`
+  - code push/deploy is still needed before online theme save/load can be verified
+- Tests run:
+  - pending after deploy
+- Next follow-up:
+  - push user-level profile theme settings code
+  - verify online theme save/load as Coris and Cat

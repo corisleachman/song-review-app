@@ -1542,3 +1542,66 @@ Settings UI copy and layout polish for personal theme, workspace settings, curre
 - No persistence, schema, route, or permission behavior changed.
 - `npx tsc --noEmit` passed.
 - `git diff --check` passed.
+
+---
+
+## 2026-05-02 — User-level profile theme settings
+
+### What we were trying to achieve
+
+Move personal theme persistence away from the legacy `authorName` key and onto a stable auth-user keyed model.
+
+### Feature / change being made
+
+User-level profile settings route, database migration, and compatibility fallback for legacy theme settings.
+
+### Files changed
+
+- [app/api/profile/settings/route.ts](/Users/impero/song-review-app/app/api/profile/settings/route.ts)
+- [app/api/settings/route.ts](/Users/impero/song-review-app/app/api/settings/route.ts)
+- [app/settings/page.tsx](/Users/impero/song-review-app/app/settings/page.tsx)
+- [lib/profileThemeSettings.ts](/Users/impero/song-review-app/lib/profileThemeSettings.ts)
+- [migrations/20260502_profile_settings_up.sql](/Users/impero/song-review-app/migrations/20260502_profile_settings_up.sql)
+- [migrations/20260502_profile_settings_down.sql](/Users/impero/song-review-app/migrations/20260502_profile_settings_down.sql)
+- [API.md](/Users/impero/song-review-app/API.md)
+- [DATABASE.md](/Users/impero/song-review-app/DATABASE.md)
+- [FEATURES.md](/Users/impero/song-review-app/FEATURES.md)
+- [SETTINGS_MODEL.md](/Users/impero/song-review-app/SETTINGS_MODEL.md)
+- [PERMISSIONS_MODEL.md](/Users/impero/song-review-app/PERMISSIONS_MODEL.md)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- Added `profile_settings`, keyed by `profiles.id` / auth user id.
+- Added `/api/profile/settings` as the canonical personal theme settings route.
+- Updated the Settings page to call `/api/profile/settings`.
+- Kept `/api/settings` as a compatibility alias.
+- Theme loading falls back to legacy `settings.user_identity` rows when no profile settings row exists or when the migration is not applied yet.
+- Theme saving prefers `profile_settings` and falls back to legacy `settings` if the new table is unavailable.
+- `npx tsc --noEmit` passed.
+- `git diff --check` passed.
+- Unauthenticated `GET /api/profile/settings` and `GET /api/settings` returned `401 Unauthorized`.
+
+---
+
+## 2026-05-02 — Production profile settings migration checkpoint
+
+### What we were trying to achieve
+
+Complete Phase 2 step 4 by confirming the production database has the user-level `profile_settings` table required by `/api/profile/settings`.
+
+### Feature / change being made
+
+Production migration checkpoint and online verification handoff.
+
+### Files changed
+
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- User confirmed `migrations/20260502_profile_settings_up.sql` was applied in Supabase.
+- Code still needs to be pushed and deployed before online theme save/load can be verified.
+- Next manual verification is saving/loading personal theme settings online as Coris and Cat.

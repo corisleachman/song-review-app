@@ -229,7 +229,7 @@ export default function SettingsPage() {
           }
         }
 
-        const response = await fetch('/api/settings');
+        const response = await fetch('/api/profile/settings');
         const data = await response.json();
 
         if (!response.ok) {
@@ -284,7 +284,7 @@ export default function SettingsPage() {
     setError(null);
 
     try {
-      const response = await fetch('/api/settings', {
+      const response = await fetch('/api/profile/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(theme),

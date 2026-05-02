@@ -80,9 +80,25 @@ updated_at       TIMESTAMP DEFAULT now()
 This table is still used by `/api/settings` for theme colors, but it is no longer the desired long-term model for Google-auth multi-workspace users.
 
 Target direction:
-- personal theme settings should be keyed by auth user id
+- personal theme settings are keyed by auth user id in `profile_settings`
 - workspace settings should be keyed by account/workspace id
 - see [`SETTINGS_MODEL.md`](./SETTINGS_MODEL.md)
+
+### `profile_settings` (user-level theme settings)
+```sql
+user_id          UUID PRIMARY KEY REFERENCES profiles(id) ON DELETE CASCADE
+primary_color    TEXT NOT NULL DEFAULT '#ff1493'
+accent_color     TEXT NOT NULL DEFAULT '#a855f7'
+background_color TEXT NOT NULL DEFAULT '#0d0914'
+created_at       TIMESTAMP WITH TIME ZONE DEFAULT now()
+updated_at       TIMESTAMP WITH TIME ZONE DEFAULT now()
+```
+
+Notes:
+- Used by `/api/profile/settings`.
+- Keyed by auth user id through `profiles.id`.
+- `/api/settings` remains a compatibility alias.
+- The route can still fall back to legacy `settings.user_identity` rows while production data migrates.
 
 ### `song_tasks` (unchanged core table)
 ```sql

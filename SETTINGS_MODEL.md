@@ -14,14 +14,20 @@ This prevents a user from changing something in one workspace and being unsure w
 
 ## Current State
 
-`/api/settings` currently stores color theme values in the legacy `settings` table:
+`/api/profile/settings` is now the canonical user-level route for color theme values:
 - `primary_color`
 - `accent_color`
 - `background_color`
 
-The route is authenticated through `resolveCanonicalIdentity()`, but persistence is still keyed by `resolved.identity.authorName`.
+It persists to `profile_settings.user_id`, keyed by `resolved.identity.userId`.
 
-That key is transitional because:
+`/api/settings` remains as a compatibility alias for older callers.
+
+The old `settings.user_identity` table is still used as a fallback when:
+- the `profile_settings` migration has not been applied yet
+- a user does not yet have a `profile_settings` row but has a legacy saved theme
+
+The old key is transitional because:
 - it is display-name-derived, not a stable auth id
 - it was originally built for fixed identities such as `Coris` and `Al`
 - it does not clearly answer whether the setting belongs to the person or the workspace
@@ -49,9 +55,9 @@ Workspace administration settings should be workspace-level and owner-controlled
 
 | Setting or control | Level | Editable by | Current location | Target persistence |
 |---|---|---|---|---|
-| Theme primary color | User | Signed-in user | `/api/settings` via `settings.user_identity` | user profile settings keyed by auth user id |
-| Theme accent color | User | Signed-in user | `/api/settings` via `settings.user_identity` | user profile settings keyed by auth user id |
-| Theme background color | User | Signed-in user | `/api/settings` via `settings.user_identity` | user profile settings keyed by auth user id |
+| Theme primary color | User | Signed-in user | `/api/profile/settings` via `profile_settings.user_id` | Implemented |
+| Theme accent color | User | Signed-in user | `/api/profile/settings` via `profile_settings.user_id` | Implemented |
+| Theme background color | User | Signed-in user | `/api/profile/settings` via `profile_settings.user_id` | Implemented |
 | Display name | User | Signed-in user | `profiles.display_name` | `profiles.display_name` |
 | Email | User | Auth provider | Supabase Auth / `profiles.email` | Supabase Auth / `profiles.email` |
 | Notification preferences | User | Signed-in user | Not implemented | user profile settings keyed by auth user id |
@@ -67,15 +73,14 @@ Workspace administration settings should be workspace-level and owner-controlled
 
 ---
 
-## Recommended Route Shape
+## Route Shape
 
-Keep `/api/settings` as a transitional compatibility route only while the UI still calls it.
-
-Future route split:
 - `/api/profile/settings`
   - user-level preferences
   - keyed by `resolved.identity.userId`
   - editable by the signed-in user
+- `/api/settings`
+  - compatibility alias for `/api/profile/settings`
 - `/api/workspace/settings`
   - workspace-wide settings
   - keyed by `resolved.identity.workspaceId`
@@ -85,12 +90,11 @@ Future route split:
 
 ## Migration Plan
 
-1. Add a user-level settings store keyed by auth user id.
-2. Move theme read/write from `/api/settings` to `/api/profile/settings`.
-3. Keep `/api/settings` as a temporary wrapper or redirecting compatibility route if needed.
-4. Update Settings UI copy so theme is clearly personal.
-5. Add `/api/workspace/settings` only when there is an actual workspace setting to persist, such as workspace name or member permission policy.
-6. Remove legacy `settings.user_identity` usage after production data has migrated.
+1. Apply `migrations/20260502_profile_settings_up.sql` in Supabase production.
+2. Verify saving a theme writes a `profile_settings` row keyed by auth user id.
+3. Keep `/api/settings` as a temporary compatibility route.
+4. Add `/api/workspace/settings` only when there is an actual workspace setting to persist, such as workspace name or member permission policy.
+5. Remove legacy `settings.user_identity` fallback after production data has migrated.
 
 Do not add owner permission controls to `/api/settings`; those belong to workspace-scoped routes.
 

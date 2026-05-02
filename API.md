@@ -308,17 +308,18 @@ Notes:
 
 ## Settings
 
-### `GET /api/settings`
+### `GET /api/profile/settings`
 
-Reads current-user theme settings from the identity cookie.
+Reads personal theme settings for the signed-in user.
 
 **Returns**
-- saved color settings for the active identity
-- or default colors if that user has not saved any yet
+- saved color settings keyed by auth user id
+- legacy color settings as a fallback while data migrates
+- or default colors if the user has not saved any yet
 
-### `POST /api/settings`
+### `POST /api/profile/settings`
 
-Saves theme settings for the current cookie identity.
+Saves personal theme settings for the signed-in user.
 
 **Body**
 ```json
@@ -328,6 +329,18 @@ Saves theme settings for the current cookie identity.
   "background_color": "#0d0914"
 }
 ```
+
+### `GET /api/settings`
+
+Compatibility alias for `GET /api/profile/settings`.
+
+Prefer `/api/profile/settings` for new callers.
+
+### `POST /api/settings`
+
+Compatibility alias for `POST /api/profile/settings`.
+
+Prefer `/api/profile/settings` for new callers.
 
 ## Email
 

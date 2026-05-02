@@ -194,7 +194,9 @@ Collaborators can still create, update, delete, and reorder song tasks inside sh
 
 #### Settings route
 
-`/api/settings` is still transitional and keyed by `authorName`.
+`/api/profile/settings` now stores personal theme settings by auth user id.
+
+`/api/settings` remains as a compatibility alias and can still fall back to legacy `settings.user_identity` rows while production data migrates.
 
 Settings model decision:
 - theme colors are user-level settings
@@ -207,7 +209,7 @@ See `SETTINGS_MODEL.md`.
 
 ## Recommended Next Patch Order
 
-1. Move personal theme persistence from `/api/settings` to a user-id keyed profile settings route.
+1. Apply the `profile_settings` migration in production and verify theme save/load.
 2. Decide whether song rename/cover/status changes remain collaborator-writable long term.
 3. Later add a true reviewer/commenter role if needed.
 
