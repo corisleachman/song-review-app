@@ -1638,3 +1638,25 @@ Note the next follow-up slice.
 - Next follow-up:
   - push the fix and visually verify owner/member Settings on desktop and mobile
   - if the layout passes, close Phase 2 Settings & Permissions UI and move to the next product phase
+
+## 2026-05-03 — Mobile personal theme layout fix
+
+- Slice / change name: Mobile personal theme layout fix
+- Status: Implemented
+- Phase position: Phase 2, step 8 of 8 mobile QA fix
+- Exact files changed or audited:
+  - `app/settings/settings.module.css`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - personal theme color controls now stack vertically on phone-width screens
+  - color text inputs are constrained inside the card instead of extending past the viewport
+  - preset buttons use a mobile-safe grid with a single-column fallback on very narrow screens
+  - Save Theme and Reset controls stack vertically on mobile
+  - no route, schema, permission, or persistence behavior changed
+- Tests run:
+  - `npx tsc --noEmit`
+  - `git diff --check`
+- Next follow-up:
+  - push the fix and visually verify mobile Settings again
+  - if Settings no longer clips horizontally, close Phase 2 Settings & Permissions UI and move to the next product phase

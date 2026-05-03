@@ -1690,3 +1690,31 @@ Responsive Settings layout tightening for desktop and mobile QA.
 - No route, schema, permission, or persistence behavior changed.
 - `npx tsc --noEmit` passed.
 - `git diff --check` passed.
+
+---
+
+## 2026-05-03 — Mobile personal theme layout fix
+
+### What we were trying to achieve
+
+Stop the Settings personalisation section from running off the page and being cut off on mobile.
+
+### Feature / change being made
+
+Phone-specific responsive layout for the personal theme controls.
+
+### Files changed
+
+- [app/settings/settings.module.css](/Users/impero/song-review-app/app/settings/settings.module.css)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- Stacked color controls vertically on phone-width screens instead of keeping the desktop row.
+- Constrained color text inputs to the card width.
+- Changed preset buttons to a mobile-safe grid with a single-column fallback on very narrow screens.
+- Stacked Save Theme and Reset controls vertically on mobile.
+- Kept this as a CSS-only layout fix with no route, schema, permission, or persistence behavior changes.
+- `npx tsc --noEmit` passed.
+- `git diff --check` passed.

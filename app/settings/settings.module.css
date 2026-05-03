@@ -129,6 +129,7 @@
 
 .colorControl {
   flex: 1;
+  min-width: 0;
 }
 
 .colorControl label {
@@ -145,6 +146,7 @@
   display: flex;
   gap: var(--space-md);
   align-items: center;
+  min-width: 0;
 }
 
 .colorInput {
@@ -163,6 +165,8 @@
 
 .textInput {
   flex: 1;
+  min-width: 0;
+  width: 100%;
   padding: var(--space-md) var(--space-lg);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-md);
@@ -711,6 +715,7 @@
   color: rgba(255, 255, 255, 0.5);
   padding: var(--space-md) 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  overflow-wrap: anywhere;
 }
 
 .tipsList li:before {
@@ -800,5 +805,103 @@
   .collaboratorActions {
     width: 100%;
     justify-content: space-between;
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: var(--space-lg);
+  }
+
+  .header {
+    margin-bottom: var(--space-lg);
+  }
+
+  .headerLeft {
+    gap: var(--space-md);
+  }
+
+  .header h1 {
+    font-size: 24px;
+  }
+
+  .brandExplorer,
+  .infoPanel,
+  .collaboratorSection {
+    width: 100%;
+    min-width: 0;
+    padding: var(--space-lg);
+  }
+
+  .explorerHeader,
+  .presetsSection,
+  .actions,
+  .workspaceSettingsHeader,
+  .planSection {
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-lg);
+  }
+
+  .pickerRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-lg);
+  }
+
+  .colorPicker {
+    margin-bottom: var(--space-lg);
+  }
+
+  .colorInputWrapper {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr);
+    width: 100%;
+  }
+
+  .presetGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-md);
+  }
+
+  .presetButton {
+    width: 100%;
+    min-height: 52px;
+    padding: var(--space-md);
+  }
+
+  .actions {
+    flex-direction: column;
+    gap: var(--space-md);
+    margin-top: var(--space-lg);
+  }
+
+  .saveButton,
+  .resetButtonLarge {
+    width: 100%;
+    flex: none;
+  }
+
+  .infoPanel {
+    overflow: hidden;
+  }
+
+  .tipsList li {
+    line-height: 1.5;
+  }
+}
+
+@media (max-width: 380px) {
+  .container {
+    padding: var(--space-md);
+  }
+
+  .brandExplorer,
+  .infoPanel,
+  .collaboratorSection {
+    padding: var(--space-md);
+  }
+
+  .presetGrid {
+    grid-template-columns: 1fr;
   }
 }
