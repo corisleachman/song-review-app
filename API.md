@@ -213,6 +213,39 @@ Notes:
 - requires owner access to the active workspace
 - requires `accounts.image_url`, added by `migrations/20260503_workspace_images_up.sql`
 
+### `GET /api/settings/summary`
+
+Returns the data needed to render Settings with one canonical identity resolution.
+
+**Returns**
+```json
+{
+  "identity": {
+    "displayName": "Coris Leachman",
+    "authorName": "Coris",
+    "workspaceName": "Rebel HQ",
+    "workspaceImageUrl": "https://... or null",
+    "membershipRole": "owner"
+  },
+  "workspace": {
+    "plan": "paid"
+  },
+  "theme": {
+    "primary_color": "#ff1493",
+    "accent_color": "#a855f7",
+    "background_color": "#0d0914"
+  },
+  "members": [],
+  "invites": [],
+  "songCount": 5
+}
+```
+
+Notes:
+- replaces the Settings page's previous chain of bootstrap, profile settings, workspace members, invites, and dashboard calls
+- `invites` is only populated for workspace owners
+- `songCount` is counted directly from `songs`, without loading dashboard activity data
+
 ### `GET /api/workspaces`
 
 Returns the workspaces the signed-in user belongs to for the future workspace switcher.

@@ -1822,3 +1822,34 @@ Owner-managed workspace image upload and workspace switcher image rendering.
 - No song, invite, billing, or member permission behavior changed.
 - `npx tsc --noEmit` passed.
 - `git diff --check` passed.
+
+---
+
+## 2026-05-03 — Settings load performance pass
+
+### What we were trying to achieve
+
+Reduce the Settings page's slow initial load by removing avoidable sequential API calls.
+
+### Feature / change being made
+
+Settings summary route and client load simplification.
+
+### Files changed
+
+- [app/api/settings/summary/route.ts](/Users/impero/song-review-app/app/api/settings/summary/route.ts)
+- [app/settings/page.tsx](/Users/impero/song-review-app/app/settings/page.tsx)
+- [API.md](/Users/impero/song-review-app/API.md)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- Added `GET /api/settings/summary` so Settings resolves canonical identity once.
+- Settings now loads identity, workspace plan/name/image, personal theme, members, owner invites, and song count from one endpoint.
+- Removed the Settings page's full `/api/dashboard` load, which was previously used only to count songs.
+- Song count now uses a direct `songs` count query.
+- Legacy fallback behavior remains in place for legacy sessions.
+- No schema, permission, billing, invite mutation, or song behavior changed.
+- `npx tsc --noEmit` passed.
+- `git diff --check` passed.

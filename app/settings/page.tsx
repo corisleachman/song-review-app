@@ -28,6 +28,13 @@ interface BootstrapPayload {
   };
 }
 
+interface SettingsSummaryPayload extends BootstrapPayload {
+  theme: Theme;
+  members: WorkspaceMember[];
+  invites: WorkspaceInvite[];
+  songCount: number;
+}
+
 interface WorkspaceMember {
   userId: string;
   email: string | null;
@@ -43,10 +50,6 @@ interface WorkspaceInvite {
   status: 'pending' | 'accepted' | 'revoked' | 'expired';
   created_at: string;
   expires_at: string;
-}
-
-interface DashboardSongsPayload {
-  songs?: Array<{ id: string }>;
 }
 
 const PRESETS: { [key: string]: Theme } = {
@@ -92,6 +95,14 @@ function formatDate(value: string) {
 
 function formatRoleLabel(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function getPayloadError(value: unknown) {
+  if (value && typeof value === 'object' && 'error' in value && typeof value.error === 'string') {
+    return value.error;
+  }
+
+  return null;
 }
 
 export default function SettingsPage() {
@@ -145,87 +156,19 @@ export default function SettingsPage() {
     document.documentElement.style.setProperty('--color-bg-darkest', newTheme.background_color);
   };
 
-  const loadCollaborators = async (usingLegacyFallback: boolean, ownerAccess: boolean) => {
-    if (usingLegacyFallback) {
-      setIsOwner(false);
-      setMembers([]);
-      setInvites([]);
-      setCollaboratorError('Collaborator management currently requires the new Google sign-in path.');
-      setCollaboratorLoading(false);
-      return;
-    }
-
-    try {
-      setCollaboratorLoading(true);
-      setCollaboratorError(null);
-
-      const membersResponse = await fetch('/api/workspace/members', { cache: 'no-store' });
-      const dashboardResponse = await fetch('/api/dashboard', { cache: 'no-store' });
-      const invitesResponse = ownerAccess
-        ? await fetch('/api/workspace/invites', { cache: 'no-store' })
-        : null;
-
-      const membersPayload = await membersResponse.json().catch(() => ({ members: [] }));
-      const dashboardPayload = await dashboardResponse.json().catch(() => ({ songs: [] })) as DashboardSongsPayload;
-      const invitesPayload = invitesResponse
-        ? await invitesResponse.json().catch(() => ({ invites: [] }))
-        : { invites: [] };
-
-      if (!membersResponse.ok) {
-        throw new Error(membersPayload.error || 'Could not load collaborators.');
-      }
-
-      if (!dashboardResponse.ok) {
-        throw new Error('Could not load workspace song usage.');
-      }
-
-      setMembers(Array.isArray(membersPayload.members) ? membersPayload.members : []);
-      setSongCount(Array.isArray(dashboardPayload.songs) ? dashboardPayload.songs.length : 0);
-      setIsOwner(ownerAccess);
-      setInvites([]);
-
-      if (!ownerAccess || !invitesResponse) {
-        return;
-      }
-
-      if (!invitesResponse.ok) {
-        throw new Error(invitesPayload.error || 'Could not load invites.');
-      }
-
-      setInvites(Array.isArray(invitesPayload.invites) ? invitesPayload.invites : []);
-    } catch (collaboratorLoadError) {
-      const message =
-        collaboratorLoadError instanceof Error
-          ? collaboratorLoadError.message
-          : 'Could not load collaborators.';
-      console.error('Error loading collaborators:', collaboratorLoadError);
-      setCollaboratorError(message);
-    } finally {
-      setCollaboratorLoading(false);
-    }
-  };
-
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const bootstrapResponse = await fetch('/api/auth/bootstrap', { cache: 'no-store' });
-        let usingLegacyFallback = false;
-        let ownerAccess = false;
+        setCollaboratorLoading(true);
+        setCollaboratorError(null);
 
-        if (bootstrapResponse.ok) {
-          const bootstrapPayload = await bootstrapResponse.json() as BootstrapPayload;
-          setIdentityLabel(bootstrapPayload.identity.authorName || bootstrapPayload.identity.displayName || '');
-          setIsLegacyFallback(false);
-          setWorkspacePlan(bootstrapPayload.workspace.plan);
-          setWorkspaceName(bootstrapPayload.identity.workspaceName);
-          setWorkspaceImageUrl(bootstrapPayload.identity.workspaceImageUrl ?? null);
-          setWorkspaceNameDraft(bootstrapPayload.identity.workspaceName);
-          setMembershipRole(bootstrapPayload.identity.membershipRole);
-          ownerAccess = bootstrapPayload.identity.membershipRole === 'owner';
-          setIsOwner(ownerAccess);
-        } else {
+        const summaryResponse = await fetch('/api/settings/summary', { cache: 'no-store' });
+        const summaryPayload = await summaryResponse.json().catch(() => null) as SettingsSummaryPayload | { error?: string } | null;
+
+        if (!summaryResponse.ok) {
           const legacyIdentity = getIdentity();
-          if (legacyIdentity) {
+
+          if (summaryResponse.status === 401 && legacyIdentity) {
             setIdentityLabel(legacyIdentity);
             setIsLegacyFallback(true);
             setWorkspacePlan(null);
@@ -234,34 +177,44 @@ export default function SettingsPage() {
             setWorkspaceNameDraft('');
             setMembershipRole(null);
             setIsOwner(false);
-            usingLegacyFallback = true;
-          } else {
+            setMembers([]);
+            setInvites([]);
+            setSongCount(null);
+            setCollaboratorError('Collaborator management currently requires the new Google sign-in path.');
+            setError('Settings are only available for the new Google sign-in path right now. Your legacy session can still view this page, but it cannot load or save theme settings yet.');
+            applyTheme(theme);
+            return;
+          }
+
+          if (summaryResponse.status === 401) {
             router.push('/?redirectTo=%2Fsettings');
             return;
           }
+
+          throw new Error(getPayloadError(summaryPayload) || 'Failed to load settings');
         }
 
-        const response = await fetch('/api/profile/settings');
-        const data = await response.json();
+        const summary = summaryPayload as SettingsSummaryPayload;
+        const ownerAccess = summary.identity.membershipRole === 'owner';
 
-        if (!response.ok) {
-          if (response.status === 401 && usingLegacyFallback) {
-            setError('Settings are only available for the new Google sign-in path right now. Your legacy session can still view this page, but it cannot load or save theme settings yet.');
-            applyTheme(theme);
-            await loadCollaborators(true, false);
-            return;
-          }
-          throw new Error(data.error || 'Failed to load settings');
-        }
-
-        setTheme(data);
-        applyTheme(data);
-        await loadCollaborators(usingLegacyFallback, ownerAccess);
+        setIdentityLabel(summary.identity.authorName || summary.identity.displayName || '');
+        setIsLegacyFallback(false);
+        setWorkspacePlan(summary.workspace.plan);
+        setWorkspaceName(summary.identity.workspaceName);
+        setWorkspaceImageUrl(summary.identity.workspaceImageUrl ?? null);
+        setWorkspaceNameDraft(summary.identity.workspaceName);
+        setMembershipRole(summary.identity.membershipRole);
+        setIsOwner(ownerAccess);
+        setTheme(summary.theme);
+        applyTheme(summary.theme);
+        setMembers(Array.isArray(summary.members) ? summary.members : []);
+        setInvites(ownerAccess && Array.isArray(summary.invites) ? summary.invites : []);
+        setSongCount(Number.isFinite(summary.songCount) ? summary.songCount : 0);
       } catch (err) {
         console.error('Error loading settings:', err);
         setError('Failed to load settings');
-        setCollaboratorLoading(false);
       } finally {
+        setCollaboratorLoading(false);
         setLoading(false);
       }
     };

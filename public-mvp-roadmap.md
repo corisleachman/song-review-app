@@ -1749,3 +1749,28 @@ Note the next follow-up slice.
   - apply `migrations/20260503_workspace_images_up.sql` in Supabase before testing image upload online
 - Next follow-up:
   - run checks, push the update, apply the migration in Supabase, then test image upload as owner and image visibility as member
+
+## 2026-05-03 — Settings load performance pass
+
+- Slice / change name: Settings load performance pass
+- Status: Implemented
+- Phase position: Phase 2 closeout performance pass, Settings first
+- Exact files changed or audited:
+  - `app/api/settings/summary/route.ts`
+  - `app/settings/page.tsx`
+  - `API.md`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - Settings now uses one summary endpoint instead of separate bootstrap, profile settings, members, invites, and dashboard calls
+  - canonical identity is resolved once for Settings initial load
+  - song count is read through a direct `songs` count query instead of loading `/api/dashboard`
+  - owner invites still only load for owners
+  - legacy fallback remains available for legacy sessions
+  - no schema, permission, billing, invite mutation, or song behavior changed
+- Tests run:
+  - `npx tsc --noEmit`
+  - `git diff --check`
+- Next follow-up:
+  - verify Settings load time online as owner and member
+  - then do a separate Dashboard performance pass focused on splitting fast song summary from deep activity data
