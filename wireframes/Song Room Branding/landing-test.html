@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Song Room — Create Together</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet" />
+  <style>
+
+    /* ════════════════════════════
+       TSR TOKENS
+    ════════════════════════════ */
+    :root {
+      --charcoal:  #111111;
+      --off-white: #F4F0E8;
+      --sand:      #D8CBB8;
+      --pink:      #FFB6C8;
+      --acid:      #E6FF3F;
+      --blue:      #2D7DFF;
+      --red:       #FF3B30;
+      --olive:     #6F735F;
+
+      --ui-font: 'DM Sans', -apple-system, sans-serif;
+      --display-font: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--ui-font);
+      background: var(--off-white);
+      color: var(--charcoal);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* Grain overlay */
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.04;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+    }
+
+    /* ════════════════════════════
+       NAV
+    ════════════════════════════ */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
+      align-items: center;
+      gap: 0;
+      height: 56px;
+      border-bottom: 1px solid rgba(17,17,17,0.14);
+      background: var(--off-white);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 24px;
+      border-right: 1px solid rgba(17,17,17,0.12);
+      height: 100%;
+    }
+
+    .nav-mark {
+      width: 38px;
+      height: 38px;
+      border: 2px solid var(--charcoal);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-family: var(--display-font);
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      line-height: 1.1;
+      text-align: center;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    /* Horizontal line through circle */
+    .nav-mark::after {
+      content: "";
+      position: absolute;
+      left: 0; right: 0;
+      top: 50%; transform: translateY(-50%);
+      height: 1.5px;
+      background: var(--charcoal);
+    }
+
+    .nav-mark-top { position: relative; z-index: 1; display: block; padding-top: 4px; font-size: 9px; }
+    .nav-mark-bot { position: relative; z-index: 1; display: block; padding-bottom: 3px; font-size: 9px; }
+
+    .nav-brand-name {
+      font-family: var(--display-font);
+      font-size: 15px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 0 32px;
+    }
+
+    .nav-link {
+      font-family: var(--display-font);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--charcoal);
+      text-decoration: none;
+      padding: 0 16px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      opacity: 0.55;
+      transition: opacity 160ms;
+    }
+
+    .nav-link:hover { opacity: 1; }
+
+    .nav-signin {
+      font-family: var(--display-font);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--charcoal);
+      background: none;
+      border: none;
+      padding: 0 24px;
+      height: 56px;
+      cursor: pointer;
+      opacity: 0.65;
+      border-left: 1px solid rgba(17,17,17,0.12);
+    }
+
+    .nav-cta {
+      font-family: var(--display-font);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      background: var(--acid);
+      color: var(--charcoal);
+      border: none;
+      padding: 0 24px;
+      height: 56px;
+      cursor: pointer;
+      border-left: 1px solid rgba(17,17,17,0.12);
+      transition: opacity 160ms;
+      white-space: nowrap;
+    }
+
+    .nav-cta:hover { opacity: 0.88; }
+
+    /* ════════════════════════════
+       HERO
+    ════════════════════════════ */
+    .hero {
+      margin-top: 56px;
+      position: relative;
+      min-height: calc(100vh - 56px);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      overflow: hidden;
+    }
+
+    /* Left — off-white */
+    .hero-left {
+      background: var(--off-white);
+      padding: 72px 48px 72px 56px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* Right — charcoal */
+    .hero-right {
+      background: var(--charcoal);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Crosshair decoration top-right of left panel */
+    .crosshair {
+      position: absolute;
+      top: 48px;
+      right: 40px;
+      width: 20px;
+      height: 20px;
+      opacity: 0.25;
+    }
+
+    .crosshair::before, .crosshair::after {
+      content: "";
+      position: absolute;
+      background: var(--charcoal);
+    }
+
+    .crosshair::before { width: 1px; height: 20px; left: 50%; }
+    .crosshair::after  { width: 20px; height: 1px; top: 50%; }
+
+    .hero-headline {
+      font-family: var(--display-font);
+      font-size: clamp(88px, 13vw, 168px);
+      line-height: 0.84;
+      letter-spacing: -0.04em;
+      text-transform: uppercase;
+      color: var(--charcoal);
+      margin-bottom: 28px;
+      animation: fade-up 0.7s cubic-bezier(0.23,1,0.32,1) both;
+    }
+
+    .hero-sub {
+      font-size: 18px;
+      line-height: 1.5;
+      color: var(--charcoal);
+      opacity: 0.72;
+      max-width: 36ch;
+      margin-bottom: 36px;
+      animation: fade-up 0.7s 0.08s cubic-bezier(0.23,1,0.32,1) both;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 48px;
+      animation: fade-up 0.7s 0.16s cubic-bezier(0.23,1,0.32,1) both;
+    }
+
+    .btn-primary {
+      font-family: var(--display-font);
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      background: var(--acid);
+      color: var(--charcoal);
+      border: 2px solid var(--charcoal);
+      padding: 14px 28px;
+      cursor: pointer;
+      transition: transform 150ms, box-shadow 150ms;
+    }
+
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.18); }
+
+    .btn-text {
+      font-family: var(--display-font);
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: none;
+      border: none;
+      color: var(--charcoal);
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 4px;
+      opacity: 0.7;
+    }
+
+    .social-proof {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      animation: fade-up 0.7s 0.24s cubic-bezier(0.23,1,0.32,1) both;
+    }
+
+    .avatar-stack {
+      display: flex;
+    }
+
+    .avatar-stack-item {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid var(--off-white);
+      overflow: hidden;
+      margin-left: -8px;
+      background: var(--sand);
+      display: grid;
+      place-items: center;
+      font-family: var(--display-font);
+      font-size: 10px;
+      color: var(--charcoal);
+      flex-shrink: 0;
+    }
+
+    .avatar-stack-item:first-child { margin-left: 0; }
+
+    .social-text {
+      font-size: 13px;
+      color: var(--charcoal);
+      opacity: 0.65;
+      line-height: 1.45;
+      max-width: 22ch;
+    }
+
+    /* ── VINYL + PINS scene ── */
+    .vinyl-scene {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Vinyl record */
+    .vinyl {
+      position: absolute;
+      /* Centre slightly left of right panel to overlap split */
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .vinyl-svg {
+      width: clamp(280px, 36vw, 460px);
+      height: clamp(280px, 36vw, 460px);
+      animation: spin 22s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    /* Concentric rings behind vinyl */
+    .vinyl-rings {
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .vinyl-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px dashed rgba(244,240,232,0.15);
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+    }
+
+    /* Version pins */
+    .pin {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: fade-up 0.6s cubic-bezier(0.23,1,0.32,1) both;
+    }
+
+    .pin-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .pin-badge {
+      font-family: var(--display-font);
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      color: var(--charcoal);
+      padding: 6px 12px 6px 10px;
+      border-radius: 50px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pin-wave {
+      width: 80px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .pin-wave-bar {
+      width: 2px;
+      border-radius: 1px;
+      flex-shrink: 0;
+    }
+
+    .pin-time {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      color: rgba(244,240,232,0.55);
+      margin-left: 6px;
+    }
+
+    /* Comment callout bubbles */
+    .callout {
+      position: absolute;
+      background: var(--off-white);
+      border: 1px solid rgba(17,17,17,0.15);
+      padding: 10px 12px;
+      width: 148px;
+      animation: fade-up 0.6s 0.2s cubic-bezier(0.23,1,0.32,1) both;
+    }
+
+    .callout::after {
+      content: "";
+      position: absolute;
+      bottom: -7px;
+      left: 18px;
+      width: 12px;
+      height: 12px;
+      background: var(--off-white);
+      border-right: 1px solid rgba(17,17,17,0.15);
+      border-bottom: 1px solid rgba(17,17,17,0.15);
+      transform: rotate(45deg);
+    }
+
+    .callout.callout-right::after {
+      bottom: auto;
+      top: -7px;
+      left: auto;
+      right: 18px;
+      transform: rotate(-135deg);
+    }
+
+    .callout-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .callout-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      overflow: hidden;
+      flex-shrink: 0;
+      background: var(--sand);
+      display: grid;
+      place-items: center;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .callout-text {
+      font-size: 12px;
+      line-height: 1.4;
+      color: var(--charcoal);
+    }
+
+    .callout-time {
+      font-size: 11px;
+      color: var(--red);
+      font-family: 'Courier New', monospace;
+      margin-top: 3px;
+    }
+
+    /* Brush stroke texture at bottom of hero-right */
+    .brush {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 80px;
+      background: linear-gradient(to top, rgba(17,17,17,0.6), transparent);
+      pointer-events: none;
+    }
+
+    /* ════════════════════════════
+       HOW IT WORKS
+    ════════════════════════════ */
+    .steps-section {
+      background: var(--charcoal);
+      padding: 72px 56px;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 64px;
+      align-items: start;
+    }
+
+    .steps-left {}
+
+    .steps-eyebrow {
+      font-family: var(--display-font);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--acid);
+      margin-bottom: 16px;
+    }
+
+    .steps-headline {
+      font-family: var(--display-font);
+      font-size: clamp(36px, 4vw, 52px);
+      line-height: 0.9;
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
+      color: var(--off-white);
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: rgba(244,240,232,0.1);
+    }
+
+    .step {
+      background: var(--charcoal);
+      padding: 0 32px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .step-number {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-family: var(--display-font);
+      font-size: 18px;
+      color: var(--charcoal);
+      margin: -20px auto 20px;
+      flex-shrink: 0;
+    }
+
+    .step-title {
+      font-family: var(--display-font);
+      font-size: 20px;
+      letter-spacing: -0.02em;
+      text-transform: uppercase;
+      color: var(--off-white);
+      margin-bottom: 10px;
+      line-height: 1;
+    }
+
+    .step-desc {
+      font-size: 13px;
+      line-height: 1.55;
+      color: rgba(244,240,232,0.5);
+    }
+
+    /* ════════════════════════════
+       FEATURE SECTION
+    ════════════════════════════ */
+    .feature-section {
+      background: var(--off-white);
+      padding: 72px 56px;
+      display: grid;
+      grid-template-columns: 280px 1fr 280px;
+      gap: 40px;
+      align-items: start;
+    }
+
+    .feature-left {}
+
+    .feature-globe {
+      font-size: 28px;
+      margin-bottom: 10px;
+      opacity: 0.5;
+    }
+
+    .feature-eyebrow {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--olive);
+      margin-bottom: 16px;
+    }
+
+    .feature-headline {
+      font-family: var(--display-font);
+      font-size: clamp(36px, 3.8vw, 54px);
+      line-height: 0.88;
+      letter-spacing: -0.04em;
+      text-transform: uppercase;
+      color: var(--charcoal);
+      margin-bottom: 20px;
+    }
+
+    .feature-body {
+      font-size: 14px;
+      line-height: 1.65;
+      color: rgba(17,17,17,0.6);
+      max-width: 34ch;
+      margin-bottom: 20px;
+    }
+
+    .feature-link {
+      font-family: var(--display-font);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--charcoal);
+      text-decoration: underline;
+      text-underline-offset: 4px;
+      opacity: 0.65;
+      cursor: pointer;
+    }
+
+    /* Grid decoration */
+    .grid-deco {
+      position: relative;
+      width: 100px;
+      height: 80px;
+      margin: 24px 0;
+      opacity: 0.12;
+    }
+
+    .grid-deco::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(17,17,17,0.8) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(17,17,17,0.8) 1px, transparent 1px);
+      background-size: 12px 12px;
+    }
+
+    /* Version rows */
+    .version-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border: 1px solid rgba(17,17,17,0.15);
+    }
+
+    .version-row {
+      background: var(--charcoal);
+      padding: 14px 18px;
+      display: grid;
+      grid-template-columns: 40px 1fr auto 40px;
+      align-items: center;
+      gap: 14px;
+      border-bottom: 1px solid rgba(244,240,232,0.08);
+      transition: background 160ms;
+    }
+
+    .version-row:last-child { border-bottom: none; }
+    .version-row:hover { background: #1a1515; }
+
+    .vr-badge {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-family: var(--display-font);
+      font-size: 13px;
+      color: var(--charcoal);
+      flex-shrink: 0;
+    }
+
+    .vr-mid {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .vr-wave {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      height: 28px;
+    }
+
+    .vr-wave-bar {
+      width: 3px;
+      border-radius: 1px;
+      flex-shrink: 0;
+    }
+
+    .vr-meta {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .vr-label {
+      font-family: var(--display-font);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(244,240,232,0.5);
+    }
+
+    .vr-date {
+      font-size: 10px;
+      color: rgba(244,240,232,0.35);
+      font-family: 'Courier New', monospace;
+    }
+
+    .vr-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      overflow: hidden;
+      flex-shrink: 0;
+      background: var(--sand);
+      display: grid;
+      place-items: center;
+      font-family: var(--display-font);
+      font-size: 10px;
+    }
+
+    .vr-format {
+      font-family: var(--display-font);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: rgba(244,240,232,0.3);
+    }
+
+    /* Comments panel */
+    .comments-panel {
+      background: var(--off-white);
+      border: 1px solid rgba(17,17,17,0.15);
+      padding: 0;
+    }
+
+    .cp-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(17,17,17,0.1);
+    }
+
+    .cp-header-label {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--olive);
+    }
+
+    .cp-comment {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(17,17,17,0.08);
+    }
+
+    .cp-comment-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    .cp-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: var(--sand);
+      display: grid;
+      place-items: center;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .cp-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--charcoal);
+      flex: 1;
+    }
+
+    .cp-time {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      color: var(--olive);
+    }
+
+    .cp-text {
+      font-size: 12px;
+      line-height: 1.45;
+      color: rgba(17,17,17,0.7);
+      padding-left: 38px;
+      margin-bottom: 4px;
+    }
+
+    .cp-reply {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(17,17,17,0.35);
+      cursor: pointer;
+      padding-left: 38px;
+      display: block;
+    }
+
+    .cp-input-row {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      gap: 10px;
+      border-top: 1px solid rgba(17,17,17,0.1);
+    }
+
+    .cp-input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      font-size: 13px;
+      color: rgba(17,17,17,0.5);
+    }
+
+    .cp-send {
+      width: 28px;
+      height: 28px;
+      background: var(--charcoal);
+      border: none;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+    }
+
+    /* ════════════════════════════
+       LOGO BAR
+    ════════════════════════════ */
+    .logo-bar {
+      background: var(--off-white);
+      border-top: 1px solid rgba(17,17,17,0.12);
+      padding: 28px 56px;
+    }
+
+    .logo-bar-label {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(17,17,17,0.35);
+      margin-bottom: 20px;
+    }
+
+    .logo-bar-logos {
+      display: flex;
+      align-items: center;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+
+    .logo-item {
+      font-family: var(--display-font);
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(17,17,17,0.4);
+      white-space: nowrap;
+    }
+
+    .logo-item.boxed {
+      border: 2px solid rgba(17,17,17,0.3);
+      padding: 4px 8px;
+    }
+
+    /* ════════════════════════════
+       ANIMATIONS
+    ════════════════════════════ */
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- ══ NAV ══ -->
+  <nav>
+    <div class="nav-brand">
+      <div class="nav-mark">
+        <span class="nav-mark-top">T S</span>
+        <span class="nav-mark-bot">R</span>
+      </div>
+      <span class="nav-brand-name">The Song Room</span>
+    </div>
+
+    <div class="nav-links">
+      <a class="nav-link" href="#">Features</a>
+      <a class="nav-link" href="#">Pricing</a>
+      <a class="nav-link" href="#">Community</a>
+      <a class="nav-link" href="#">About</a>
+    </div>
+
+    <button class="nav-signin">Sign In</button>
+    <button class="nav-cta">Start a Room</button>
+  </nav>
+
+  <!-- ══ HERO ══ -->
+  <section class="hero">
+
+    <!-- Left: copy -->
+    <div class="hero-left">
+      <div class="crosshair"></div>
+
+      <h1 class="hero-headline">Create<br />Together</h1>
+
+      <p class="hero-sub">A shared space for songs to evolve from first demo to finished track.</p>
+
+      <div class="hero-actions">
+        <button class="btn-primary">Start a Room</button>
+        <button class="btn-text">See how it works</button>
+      </div>
+
+      <div class="social-proof">
+        <div class="avatar-stack">
+          <div class="avatar-stack-item" style="background:#D8CBB8;">A</div>
+          <div class="avatar-stack-item" style="background:#FFB6C8;">J</div>
+          <div class="avatar-stack-item" style="background:#6F735F; color:#F4F0E8;">K</div>
+          <div class="avatar-stack-item" style="background:#2D7DFF; color:#F4F0E8;">M</div>
+        </div>
+        <p class="social-text">Join 18,742 creators building better songs, together.</p>
+      </div>
+    </div>
+
+    <!-- Right: vinyl scene -->
+    <div class="hero-right">
+
+      <!-- Dashed concentric rings -->
+      <div class="vinyl-rings">
+        <div class="vinyl-ring" style="width:700px;height:700px;"></div>
+        <div class="vinyl-ring" style="width:540px;height:540px;opacity:0.22;"></div>
+        <div class="vinyl-ring" style="width:380px;height:380px;opacity:0.3;"></div>
+      </div>
+
+      <!-- Vinyl record SVG -->
+      <div class="vinyl">
+        <svg class="vinyl-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+          <!-- Outer record body -->
+          <circle cx="200" cy="200" r="195" fill="#0a0a0a"/>
+          <!-- Grooves -->
+          <circle cx="200" cy="200" r="188" fill="none" stroke="#1a1a1a" stroke-width="1"/>
+          <circle cx="200" cy="200" r="176" fill="none" stroke="#1a1a1a" stroke-width="1"/>
+          <circle cx="200" cy="200" r="164" fill="none" stroke="#161616" stroke-width="1"/>
+          <circle cx="200" cy="200" r="152" fill="none" stroke="#1a1a1a" stroke-width="0.8"/>
+          <circle cx="200" cy="200" r="140" fill="none" stroke="#161616" stroke-width="0.8"/>
+          <circle cx="200" cy="200" r="128" fill="none" stroke="#1a1a1a" stroke-width="0.8"/>
+          <circle cx="200" cy="200" r="116" fill="none" stroke="#161616" stroke-width="0.6"/>
+          <circle cx="200" cy="200" r="104" fill="none" stroke="#1a1a1a" stroke-width="0.6"/>
+          <circle cx="200" cy="200" r="92" fill="none" stroke="#161616" stroke-width="0.6"/>
+          <!-- Label area -->
+          <circle cx="200" cy="200" r="80" fill="#E6FF3F"/>
+          <!-- Inner ring on label -->
+          <circle cx="200" cy="200" r="72" fill="none" stroke="rgba(17,17,17,0.15)" stroke-width="1"/>
+          <circle cx="200" cy="200" r="64" fill="none" stroke="rgba(17,17,17,0.1)" stroke-width="1"/>
+          <!-- Centre hole -->
+          <circle cx="200" cy="200" r="8" fill="#0a0a0a"/>
+          <!-- Shine highlight -->
+          <ellipse cx="155" cy="155" rx="30" ry="20" fill="rgba(255,255,255,0.04)" transform="rotate(-30 155 155)"/>
+          <!-- Waveform across record -->
+          <g opacity="0.22" stroke="#F4F0E8" stroke-width="1.5" stroke-linecap="round">
+            <line x1="5"   y1="200" x2="5"   y2="195"/>
+            <line x1="15"  y1="200" x2="15"  y2="188"/>
+            <line x1="25"  y1="200" x2="25"  y2="178"/>
+            <line x1="35"  y1="200" x2="35"  y2="165"/>
+            <line x1="45"  y1="200" x2="45"  y2="155"/>
+            <line x1="55"  y1="200" x2="55"  y2="170"/>
+            <line x1="65"  y1="200" x2="65"  y2="150"/>
+            <line x1="75"  y1="200" x2="75"  y2="162"/>
+            <line x1="85"  y1="200" x2="85"  y2="178"/>
+            <line x1="95"  y1="200" x2="95"  y2="190"/>
+            <line x1="305" y1="200" x2="305" y2="190"/>
+            <line x1="315" y1="200" x2="315" y2="178"/>
+            <line x1="325" y1="200" x2="325" y2="162"/>
+            <line x1="335" y1="200" x2="335" y2="150"/>
+            <line x1="345" y1="200" x2="345" y2="170"/>
+            <line x1="355" y1="200" x2="355" y2="155"/>
+            <line x1="365" y1="200" x2="365" y2="165"/>
+            <line x1="375" y1="200" x2="375" y2="178"/>
+            <line x1="385" y1="200" x2="385" y2="188"/>
+            <line x1="395" y1="200" x2="395" y2="195"/>
+          </g>
+        </svg>
+      </div>
+
+      <!-- V1 pin — top right -->
+      <div class="pin" style="top:14%; right:4%; animation-delay:0.1s;">
+        <span class="pin-dot" style="background:var(--acid);"></span>
+        <div class="pin-badge" style="background:var(--acid);">
+          <span style="font-family:var(--display-font);font-size:13px;">V1</span>
+          <div class="pin-wave" id="wave-v1"></div>
+          <span class="pin-time" style="color:rgba(17,17,17,0.55);">1:24</span>
+        </div>
+      </div>
+
+      <!-- V2 pin — right mid-upper -->
+      <div class="pin" style="top:38%; right:2%; animation-delay:0.2s;">
+        <span class="pin-dot" style="background:var(--red);"></span>
+        <div class="pin-badge" style="background:var(--red); color:var(--off-white);">
+          <span style="font-family:var(--display-font);font-size:13px;">V2</span>
+          <div class="pin-wave" id="wave-v2"></div>
+          <span class="pin-time">2:37</span>
+        </div>
+      </div>
+
+      <!-- V3 pin — right mid-lower -->
+      <div class="pin" style="top:60%; right:2%; animation-delay:0.3s;">
+        <span class="pin-dot" style="background:var(--blue);"></span>
+        <div class="pin-badge" style="background:var(--blue); color:var(--off-white);">
+          <span style="font-family:var(--display-font);font-size:13px;">V3</span>
+          <div class="pin-wave" id="wave-v3"></div>
+          <span class="pin-time">3:58</span>
+        </div>
+      </div>
+
+      <!-- V4 pin — bottom right -->
+      <div class="pin" style="top:78%; right:4%; animation-delay:0.4s;">
+        <span class="pin-dot" style="background:var(--pink);"></span>
+        <div class="pin-badge" style="background:var(--pink); color:var(--charcoal);">
+          <span style="font-family:var(--display-font);font-size:13px;">V4</span>
+          <div class="pin-wave" id="wave-v4"></div>
+          <span class="pin-time" style="color:rgba(17,17,17,0.5);">5:11</span>
+        </div>
+      </div>
+
+      <!-- Callout 1 — top left of scene (Love this bass drop) -->
+      <div class="callout" style="top:16%; left:4%; animation-delay:0.3s;">
+        <div class="callout-head">
+          <div class="callout-avatar" style="background:#D8CBB8;">A</div>
+        </div>
+        <div class="callout-text">Love this bass drop</div>
+        <div class="callout-time">1:24</div>
+      </div>
+
+      <!-- Callout 2 — mid left (Vocal could come in earlier) -->
+      <div class="callout" style="top:52%; left:2%; animation-delay:0.4s;">
+        <div class="callout-head">
+          <div class="callout-avatar" style="background:#2D7DFF; color:#F4F0E8;">J</div>
+        </div>
+        <div class="callout-text">Vocal could come in earlier?</div>
+        <div class="callout-time">2:08</div>
+      </div>
+
+      <!-- Callout 3 — lower mid (Try a filter sweep here) -->
+      <div class="callout" style="bottom:16%; left:28%; animation-delay:0.5s;">
+        <div class="callout-head">
+          <div class="callout-avatar" style="background:#FF3B30; color:#F4F0E8;">K</div>
+        </div>
+        <div class="callout-text">Try a filter sweep here</div>
+        <div class="callout-time">1:37</div>
+      </div>
+
+      <div class="brush"></div>
+    </div>
+
+  </section>
+
+  <!-- ══ HOW IT WORKS ══ -->
+  <section class="steps-section">
+    <div class="steps-left">
+      <div class="steps-eyebrow">How it works</div>
+      <h2 class="steps-headline">Four<br />Simple<br />Steps</h2>
+    </div>
+
+    <div class="steps-grid">
+      <div class="step">
+        <div class="step-number" style="background:var(--acid);">1</div>
+        <div class="step-title">Create a room</div>
+        <div class="step-desc">Start a private space for your track.</div>
+      </div>
+      <div class="step">
+        <div class="step-number" style="background:var(--red); color:var(--off-white);">2</div>
+        <div class="step-title">Invite collaborators</div>
+        <div class="step-desc">Bring in your team. No endless email chains.</div>
+      </div>
+      <div class="step">
+        <div class="step-number" style="background:var(--blue); color:var(--off-white);">3</div>
+        <div class="step-title">Share versions</div>
+        <div class="step-desc">Upload, iterate, and keep every take.</div>
+      </div>
+      <div class="step">
+        <div class="step-number" style="background:var(--pink);">4</div>
+        <div class="step-title">Decide together</div>
+        <div class="step-desc">Comment, compare, and move forward.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ FEATURE SECTION ══ -->
+  <section class="feature-section">
+
+    <!-- Left copy -->
+    <div class="feature-left">
+      <div class="feature-globe">⊕</div>
+      <div class="feature-eyebrow">Built for creators</div>
+      <h2 class="feature-headline">Keep every version, comment, and decision in one room.</h2>
+      <p class="feature-body">Focus on the song, not the file chaos. The Song Room keeps your creative process clear, organised, and collaborative.</p>
+      <div class="grid-deco"></div>
+      <a class="feature-link" href="#">Explore all features</a>
+    </div>
+
+    <!-- Version list -->
+    <div>
+      <div class="version-list">
+        <div class="version-row">
+          <div class="vr-badge" style="background:var(--acid);">V1</div>
+          <div class="vr-mid">
+            <div class="vr-wave" id="vr-wave-1"></div>
+            <div class="vr-meta">
+              <span class="vr-label">Master — V1</span>
+              <span class="vr-date">MAY 10  9:41 AM</span>
+            </div>
+          </div>
+          <div class="vr-avatar" style="background:#D8CBB8;">A</div>
+          <div class="vr-format">WAV</div>
+        </div>
+        <div class="version-row">
+          <div class="vr-badge" style="background:var(--red); color:var(--off-white);">V2</div>
+          <div class="vr-mid">
+            <div class="vr-wave" id="vr-wave-2"></div>
+            <div class="vr-meta">
+              <span class="vr-label">Vocal ideas</span>
+              <span class="vr-date">MAY 10  11:02 AM</span>
+            </div>
+          </div>
+          <div class="vr-avatar" style="background:#FF3B30; color:#F4F0E8;">J</div>
+          <div class="vr-format">WAV</div>
+        </div>
+        <div class="version-row">
+          <div class="vr-badge" style="background:var(--blue); color:var(--off-white);">V3</div>
+          <div class="vr-mid">
+            <div class="vr-wave" id="vr-wave-3"></div>
+            <div class="vr-meta">
+              <span class="vr-label">Chorus build</span>
+              <span class="vr-date">MAY 10  1:15 PM</span>
+            </div>
+          </div>
+          <div class="vr-avatar" style="background:#2D7DFF; color:#F4F0E8;">K</div>
+          <div class="vr-format">WAV</div>
+        </div>
+        <div class="version-row">
+          <div class="vr-badge" style="background:var(--pink);">V4</div>
+          <div class="vr-mid">
+            <div class="vr-wave" id="vr-wave-4"></div>
+            <div class="vr-meta">
+              <span class="vr-label">Final balance</span>
+              <span class="vr-date">MAY 10  3:47 PM</span>
+            </div>
+          </div>
+          <div class="vr-avatar" style="background:#FFB6C8;">M</div>
+          <div class="vr-format">WAV</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comments panel -->
+    <div class="comments-panel">
+      <div class="cp-header">
+        <div class="cp-header-label">Comments</div>
+      </div>
+
+      <div class="cp-comment">
+        <div class="cp-comment-head">
+          <div class="cp-avatar" style="background:#D8CBB8;">A</div>
+          <span class="cp-name">Alex</span>
+          <span class="cp-time">1:24</span>
+        </div>
+        <div class="cp-text">Love this bass drop</div>
+        <span class="cp-reply">Reply</span>
+      </div>
+
+      <div class="cp-comment">
+        <div class="cp-comment-head">
+          <div class="cp-avatar" style="background:#2D7DFF; color:#F4F0E8;">J</div>
+          <span class="cp-name">Jordan</span>
+          <span class="cp-time">2:08</span>
+        </div>
+        <div class="cp-text">Vocal could come in earlier?</div>
+        <span class="cp-reply">Reply</span>
+      </div>
+
+      <div class="cp-comment">
+        <div class="cp-comment-head">
+          <div class="cp-avatar" style="background:#FF3B30; color:#F4F0E8;">K</div>
+          <span class="cp-name">Kai</span>
+          <span class="cp-time">1:37</span>
+        </div>
+        <div class="cp-text">Try a filter sweep here</div>
+        <span class="cp-reply">Reply</span>
+      </div>
+
+      <div class="cp-input-row">
+        <input class="cp-input" type="text" placeholder="Add a comment..." />
+        <button class="cp-send">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M11 1L1 6l4 1.5L7 11l4-10z" fill="#F4F0E8"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ══ LOGO BAR ══ -->
+  <footer class="logo-bar">
+    <div class="logo-bar-label">Trusted by creators at</div>
+    <div class="logo-bar-logos">
+      <span class="logo-item boxed">[PIAS]</span>
+      <span class="logo-item">⊕ EARTH AGENCY</span>
+      <span class="logo-item">MOM+POP</span>
+      <span class="logo-item boxed">⊡ Counter Records</span>
+      <span class="logo-item boxed">EMI</span>
+      <span class="logo-item">Future Classic.</span>
+      <span class="logo-item">etcetc.</span>
+    </div>
+  </footer>
+
+  <script>
+    // ── Generate waveform bars ──
+    function makeWave(id, count, maxH, color, minH) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const pattern = [];
+      for (let i = 0; i < count; i++) {
+        const t = i / (count - 1);
+        const wave = Math.sin(t * Math.PI * 3.2 + 0.4) * 0.5 + 0.5;
+        const rand = 0.4 + Math.random() * 0.6;
+        pattern.push(Math.max(minH, Math.round((wave * rand) * maxH)));
+      }
+      pattern.forEach(h => {
+        const bar = document.createElement('div');
+        bar.className = 'pin-wave-bar';
+        bar.style.cssText = `height:${h}px; background:${color};`;
+        el.appendChild(bar);
+      });
+    }
+
+    // Pin waveforms
+    makeWave('wave-v1', 22, 18, 'rgba(17,17,17,0.7)', 2);
+    makeWave('wave-v2', 22, 18, 'rgba(244,240,232,0.85)', 2);
+    makeWave('wave-v3', 22, 18, 'rgba(244,240,232,0.85)', 2);
+    makeWave('wave-v4', 22, 18, 'rgba(17,17,17,0.65)', 2);
+
+    // Version row waveforms
+    function makeVrWave(id, count, color) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      for (let i = 0; i < count; i++) {
+        const t = i / (count - 1);
+        const h = Math.max(4, Math.round((Math.sin(t * Math.PI * 4 + 0.8) * 0.5 + 0.5) * (0.5 + Math.random() * 0.5) * 26));
+        const bar = document.createElement('div');
+        bar.className = 'vr-wave-bar';
+        bar.style.cssText = `height:${h}px; background:${color};`;
+        el.appendChild(bar);
+      }
+    }
+
+    makeVrWave('vr-wave-1', 48, 'var(--acid)');
+    makeVrWave('vr-wave-2', 48, 'var(--red)');
+    makeVrWave('vr-wave-3', 48, 'var(--blue)');
+    makeVrWave('vr-wave-4', 48, 'var(--pink)');
+  </script>
+
+</body>
+</html>
