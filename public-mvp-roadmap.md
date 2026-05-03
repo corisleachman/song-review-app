@@ -1711,3 +1711,41 @@ Note the next follow-up slice.
 - Next follow-up:
   - push the polish update and visually verify Settings on desktop/mobile as owner and member
   - schedule a focused performance pass for Dashboard and Settings load time
+
+## 2026-05-03 — Workspace image upload and switcher avatars
+
+- Slice / change name: Workspace image upload and switcher avatars
+- Status: Implemented
+- Phase position: Phase 2, step 8 of 8 workspace identity polish
+- Exact files changed or audited:
+  - `app/api/workspace/settings/route.ts`
+  - `app/settings/page.tsx`
+  - `app/settings/settings.module.css`
+  - `components/AppShell.tsx`
+  - `components/AppSidebar.tsx`
+  - `components/WorkspaceSwitcher.tsx`
+  - `components/WorkspaceSwitcher.module.css`
+  - `app/dashboard/page.tsx`
+  - `lib/bootstrapAccount.ts`
+  - `lib/canonicalIdentity.ts`
+  - `lib/workspaces.ts`
+  - `migrations/20260503_workspace_images_up.sql`
+  - `migrations/20260503_workspace_images_down.sql`
+  - `API.md`
+  - `DATABASE.md`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - workspace owners can upload a workspace image from Settings
+  - image uploads use the existing public `song-images` bucket under `workspace-images/`
+  - workspace switcher rail and popup rows show the image when present
+  - initials remain the fallback when no image is set
+  - workspace image reads fall back safely when `accounts.image_url` has not been applied yet
+  - no song, invite, billing, or member permission behavior changed
+- Tests run:
+  - `npx tsc --noEmit`
+  - `git diff --check`
+- Required production step:
+  - apply `migrations/20260503_workspace_images_up.sql` in Supabase before testing image upload online
+- Next follow-up:
+  - run checks, push the update, apply the migration in Supabase, then test image upload as owner and image visibility as member

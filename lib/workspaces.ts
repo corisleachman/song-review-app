@@ -15,6 +15,7 @@ interface WorkspaceMembershipRecord {
 interface WorkspaceAccountRecord {
   id: string;
   name: string;
+  image_url?: string | null;
   slug: string | null;
   plan?: string | null;
   created_by_user_id: string;
@@ -25,6 +26,7 @@ interface WorkspaceAccountRecord {
 export interface UserWorkspaceSummary {
   id: string;
   name: string;
+  imageUrl: string | null;
   slug: string | null;
   role: 'owner' | 'member';
   plan: AccountPlan;
@@ -34,10 +36,31 @@ export interface UserWorkspaceSummary {
   createdAt: string;
 }
 
+function isMissingImageColumnError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+
+  const message = 'message' in error && typeof error.message === 'string'
+    ? error.message.toLowerCase()
+    : '';
+
+  const details = 'details' in error && typeof error.details === 'string'
+    ? error.details.toLowerCase()
+    : '';
+
+  return (
+    message.includes('image_url')
+    && (
+      message.includes('column')
+      || details.includes('column')
+      || message.includes('schema cache')
+    )
+  );
+}
+
 async function listAccounts(accountIds: string[]): Promise<WorkspaceAccountRecord[]> {
   const withPlan = await supabaseServer
     .from('accounts')
-    .select('id, name, slug, plan, created_by_user_id, created_at, updated_at')
+    .select('id, name, image_url, slug, plan, created_by_user_id, created_at, updated_at')
     .in('id', accountIds)
     .returns<WorkspaceAccountRecord[]>();
 
@@ -45,7 +68,24 @@ async function listAccounts(accountIds: string[]): Promise<WorkspaceAccountRecor
     return withPlan.data ?? [];
   }
 
-  if (!isMissingPlanColumnError(withPlan.error)) {
+  if (isMissingImageColumnError(withPlan.error)) {
+    const withoutImage = await supabaseServer
+      .from('accounts')
+      .select('id, name, slug, plan, created_by_user_id, created_at, updated_at')
+      .in('id', accountIds)
+      .returns<Omit<WorkspaceAccountRecord, 'image_url'>[]>();
+
+    if (!withoutImage.error) {
+      return (withoutImage.data ?? []).map(account => ({
+        ...account,
+        image_url: null,
+      }));
+    }
+
+    if (!isMissingPlanColumnError(withoutImage.error)) {
+      throw withoutImage.error;
+    }
+  } else if (!isMissingPlanColumnError(withPlan.error)) {
     throw withPlan.error;
   }
 
@@ -59,6 +99,7 @@ async function listAccounts(accountIds: string[]): Promise<WorkspaceAccountRecor
 
   return (withoutPlan.data ?? []).map(account => ({
     ...account,
+    image_url: null,
     plan: 'free',
   }));
 }
@@ -112,6 +153,7 @@ export async function listUserWorkspaces(userId: string, activeWorkspaceId: stri
       return {
         id: account.id,
         name: account.name,
+        imageUrl: account.image_url ?? null,
         slug: account.slug,
         role: membership.role,
         plan: normalizeAccountPlan(account.plan),

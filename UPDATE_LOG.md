@@ -1778,3 +1778,47 @@ Settings UI polish and owner-only workspace name editing.
 - The slow Dashboard/Settings load report is documented as a later performance investigation, not changed in this UI pass.
 - `npx tsc --noEmit` passed.
 - `git diff --check` passed.
+
+---
+
+## 2026-05-03 — Workspace image upload and switcher avatars
+
+### What we were trying to achieve
+
+Let workspace owners add a visual image alongside the workspace name so members can distinguish workspaces in the switcher.
+
+### Feature / change being made
+
+Owner-managed workspace image upload and workspace switcher image rendering.
+
+### Files changed
+
+- [app/api/workspace/settings/route.ts](/Users/impero/song-review-app/app/api/workspace/settings/route.ts)
+- [app/settings/page.tsx](/Users/impero/song-review-app/app/settings/page.tsx)
+- [app/settings/settings.module.css](/Users/impero/song-review-app/app/settings/settings.module.css)
+- [components/AppShell.tsx](/Users/impero/song-review-app/components/AppShell.tsx)
+- [components/AppSidebar.tsx](/Users/impero/song-review-app/components/AppSidebar.tsx)
+- [components/WorkspaceSwitcher.tsx](/Users/impero/song-review-app/components/WorkspaceSwitcher.tsx)
+- [components/WorkspaceSwitcher.module.css](/Users/impero/song-review-app/components/WorkspaceSwitcher.module.css)
+- [app/dashboard/page.tsx](/Users/impero/song-review-app/app/dashboard/page.tsx)
+- [lib/bootstrapAccount.ts](/Users/impero/song-review-app/lib/bootstrapAccount.ts)
+- [lib/canonicalIdentity.ts](/Users/impero/song-review-app/lib/canonicalIdentity.ts)
+- [lib/workspaces.ts](/Users/impero/song-review-app/lib/workspaces.ts)
+- [migrations/20260503_workspace_images_up.sql](/Users/impero/song-review-app/migrations/20260503_workspace_images_up.sql)
+- [migrations/20260503_workspace_images_down.sql](/Users/impero/song-review-app/migrations/20260503_workspace_images_down.sql)
+- [API.md](/Users/impero/song-review-app/API.md)
+- [DATABASE.md](/Users/impero/song-review-app/DATABASE.md)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- Added `accounts.image_url` migration for workspace images.
+- Added owner-only image upload through `POST /api/workspace/settings`.
+- Workspace images upload to the existing public `song-images` bucket under `workspace-images/`.
+- Bootstrap and workspace list responses now include workspace image URLs, with safe fallbacks if the migration is not applied yet.
+- Workspace switcher rail and popup rows render the image when present and fall back to initials otherwise.
+- Settings now shows an owner-only workspace image uploader beside the existing workspace rename controls.
+- No song, invite, billing, or member permission behavior changed.
+- `npx tsc --noEmit` passed.
+- `git diff --check` passed.

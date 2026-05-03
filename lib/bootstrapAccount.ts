@@ -14,6 +14,7 @@ interface ProfileRecord {
 interface WorkspaceRecord {
   id: string;
   name: string;
+  image_url: string | null;
   slug: string | null;
   plan: AccountPlan;
   created_by_user_id: string;
@@ -47,10 +48,31 @@ function chooseDefaultMembership(memberships: MembershipRecord[]) {
   return memberships.find(membership => membership.role === 'owner') ?? null;
 }
 
+function isMissingImageColumnError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+
+  const message = 'message' in error && typeof error.message === 'string'
+    ? error.message.toLowerCase()
+    : '';
+
+  const details = 'details' in error && typeof error.details === 'string'
+    ? error.details.toLowerCase()
+    : '';
+
+  return (
+    message.includes('image_url')
+    && (
+      message.includes('column')
+      || details.includes('column')
+      || message.includes('schema cache')
+    )
+  );
+}
+
 async function loadWorkspace(accountId: string): Promise<WorkspaceRecord> {
   const workspaceWithPlan = await supabaseServer
     .from('accounts')
-    .select('id, name, slug, plan, created_by_user_id, created_at, updated_at')
+    .select('id, name, image_url, slug, plan, created_by_user_id, created_at, updated_at')
     .eq('id', accountId)
     .single();
 
@@ -61,7 +83,25 @@ async function loadWorkspace(accountId: string): Promise<WorkspaceRecord> {
     };
   }
 
-  if (!isMissingPlanColumnError(workspaceWithPlan.error)) {
+  if (isMissingImageColumnError(workspaceWithPlan.error)) {
+    const workspaceWithoutImage = await supabaseServer
+      .from('accounts')
+      .select('id, name, slug, plan, created_by_user_id, created_at, updated_at')
+      .eq('id', accountId)
+      .single();
+
+    if (!workspaceWithoutImage.error) {
+      return {
+        ...(workspaceWithoutImage.data as Omit<WorkspaceRecord, 'image_url' | 'plan'> & { plan?: string | null }),
+        image_url: null,
+        plan: normalizeAccountPlan(workspaceWithoutImage.data?.plan),
+      };
+    }
+
+    if (!isMissingPlanColumnError(workspaceWithoutImage.error)) {
+      throw workspaceWithoutImage.error;
+    }
+  } else if (!isMissingPlanColumnError(workspaceWithPlan.error)) {
     throw workspaceWithPlan.error;
   }
 
@@ -75,6 +115,7 @@ async function loadWorkspace(accountId: string): Promise<WorkspaceRecord> {
 
   return {
     ...(workspaceWithoutPlan.data as Omit<WorkspaceRecord, 'plan'>),
+    image_url: null,
     plan: 'free',
   };
 }

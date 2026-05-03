@@ -140,6 +140,7 @@ Notes:
 ```sql
 id                 UUID PRIMARY KEY DEFAULT gen_random_uuid()
 name               TEXT NOT NULL
+image_url          TEXT
 slug               TEXT
 plan               TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'paid'))
 stripe_customer_id TEXT
@@ -152,6 +153,7 @@ updated_at         TIMESTAMP
 Notes:
 - This is the workspace table used throughout the current app.
 - One owner workspace is auto-created during bootstrap if none exists.
+- `image_url` stores the optional workspace image shown in the workspace switcher.
 - `stripe_customer_id` and `stripe_subscription_id` are nullable until the workspace upgrades through Stripe Checkout.
 
 ### `account_members` (new table)
@@ -175,7 +177,7 @@ Both buckets must be **public** (no auth required to read).
 | Bucket | Contents | Path pattern |
 |---|---|---|
 | `song-files` | Audio files (mp3, wav, m4a) | `songs/[songId]/version-[n]/[filename]` |
-| `song-images` | Cover art (jpg, png, webp) | `[songId]/[filename]` |
+| `song-images` | Cover art and workspace images (jpg, png, webp) | `[songId]/[filename]`, `workspace-images/[accountId]-[timestamp].[ext]` |
 
 ---
 

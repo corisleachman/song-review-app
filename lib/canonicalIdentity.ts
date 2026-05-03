@@ -9,6 +9,7 @@ export interface CanonicalIdentity {
   authorName: string;
   workspaceId: string;
   workspaceName: string;
+  workspaceImageUrl: string | null;
   workspaceSlug: string | null;
   membershipRole: 'owner' | 'member';
 }
@@ -58,6 +59,7 @@ export function buildCanonicalIdentity(bootstrap: BootstrapResult): CanonicalIde
     authorName: getAuthorName(bootstrap),
     workspaceId: bootstrap.workspace.id,
     workspaceName: bootstrap.workspace.name,
+    workspaceImageUrl: bootstrap.workspace.image_url,
     workspaceSlug: bootstrap.workspace.slug,
     membershipRole: bootstrap.membership.role,
   };

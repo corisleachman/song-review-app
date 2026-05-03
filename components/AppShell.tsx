@@ -9,16 +9,18 @@ interface AppShellProps {
   label?: string;
   plan?: AccountPlan | null;
   workspaceName?: string | null;
+  workspaceImageUrl?: string | null;
   membershipRole?: 'owner' | 'member' | null;
 }
 
-export default function AppShell({ children, label, plan, workspaceName, membershipRole }: AppShellProps) {
+export default function AppShell({ children, label, plan, workspaceName, workspaceImageUrl, membershipRole }: AppShellProps) {
   return (
     <div className={styles.shell}>
       <AppSidebar
         label={label}
         plan={plan}
         workspaceName={workspaceName}
+        workspaceImageUrl={workspaceImageUrl}
         membershipRole={membershipRole}
       />
       <div className={styles.content}>
@@ -27,6 +29,7 @@ export default function AppShell({ children, label, plan, workspaceName, members
             <WorkspaceSwitcher
               userLabel={label}
               workspaceName={workspaceName}
+              workspaceImageUrl={workspaceImageUrl}
               membershipRole={membershipRole}
               variant="mobile"
             />

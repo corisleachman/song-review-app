@@ -13,6 +13,7 @@ interface AppSidebarProps {
   label?: string;
   plan?: AccountPlan | null;
   workspaceName?: string | null;
+  workspaceImageUrl?: string | null;
   membershipRole?: 'owner' | 'member' | null;
 }
 
@@ -29,6 +30,7 @@ export default function AppSidebar({
   label = 'Account',
   plan = null,
   workspaceName = null,
+  workspaceImageUrl = null,
   membershipRole = null,
 }: AppSidebarProps) {
   const pathname = usePathname();
@@ -81,6 +83,7 @@ export default function AppSidebar({
           <WorkspaceSwitcher
             userLabel={label}
             workspaceName={workspaceName}
+            workspaceImageUrl={workspaceImageUrl}
             membershipRole={membershipRole}
             variant="rail"
           />

@@ -62,6 +62,7 @@ interface BootstrapPayload {
     authorName: string;
     workspaceId: string;
     workspaceName: string;
+    workspaceImageUrl: string | null;
     workspaceSlug: string | null;
     membershipRole: 'owner' | 'member';
   };
@@ -143,6 +144,7 @@ function DashboardContent() {
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
   const [workspacePlan, setWorkspacePlan] = useState<AccountPlan | null>(null);
   const [workspaceName, setWorkspaceName] = useState<string | null>(null);
+  const [workspaceImageUrl, setWorkspaceImageUrl] = useState<string | null>(null);
   const [membershipRole, setMembershipRole] = useState<'owner' | 'member' | null>(null);
 
   const [songs, setSongs] = useState<Song[]>([]);
@@ -202,6 +204,7 @@ function DashboardContent() {
           setViewerKey(payload.identity.userId);
           setWorkspacePlan(payload.workspace.plan);
           setWorkspaceName(payload.identity.workspaceName);
+          setWorkspaceImageUrl(payload.identity.workspaceImageUrl ?? null);
           setMembershipRole(payload.identity.membershipRole);
           setBootstrapError(null);
           await loadAll(payload.identity.userId);
@@ -216,6 +219,7 @@ function DashboardContent() {
           setViewerKey(legacyIdentity);
           setWorkspacePlan(null);
           setWorkspaceName(null);
+          setWorkspaceImageUrl(null);
           setMembershipRole(null);
           setBootstrapError(null);
           await loadAll(legacyIdentity);
@@ -233,6 +237,7 @@ function DashboardContent() {
           setViewerKey(legacyIdentity);
           setWorkspacePlan(null);
           setWorkspaceName(null);
+          setWorkspaceImageUrl(null);
           setMembershipRole(null);
           setBootstrapError(null);
           await loadAll(legacyIdentity);
@@ -1004,6 +1009,7 @@ function DashboardContent() {
       label={identity || 'User'}
       plan={workspacePlan}
       workspaceName={workspaceName}
+      workspaceImageUrl={workspaceImageUrl}
       membershipRole={membershipRole}
     >
       <div className={`${styles.page} ${playingId ? styles.pageWithPlayer : ''}`}>

@@ -9,6 +9,7 @@ type WorkspacePlan = 'free' | 'paid';
 interface WorkspaceSummary {
   id: string;
   name: string;
+  imageUrl: string | null;
   slug: string | null;
   role: WorkspaceRole;
   plan: WorkspacePlan;
@@ -21,6 +22,7 @@ interface WorkspaceSummary {
 interface WorkspaceSwitcherProps {
   userLabel?: string | null;
   workspaceName: string;
+  workspaceImageUrl?: string | null;
   membershipRole: WorkspaceRole | null;
   variant: 'rail' | 'mobile';
 }
@@ -62,6 +64,7 @@ function getErrorMessage(error: unknown) {
 export default function WorkspaceSwitcher({
   userLabel = null,
   workspaceName,
+  workspaceImageUrl = null,
   membershipRole,
   variant,
 }: WorkspaceSwitcherProps) {
@@ -223,7 +226,11 @@ export default function WorkspaceSwitcher({
         title={`Current workspace: ${workspaceName}${roleLabel ? ` (${roleLabel})` : ''}`}
       >
         <span className={styles.railMark} aria-hidden="true">
-          {getWorkspaceInitial(workspaceName)}
+          {workspaceImageUrl ? (
+            <img src={workspaceImageUrl} alt="" />
+          ) : (
+            getWorkspaceInitial(workspaceName)
+          )}
         </span>
         {roleLabel && <span className={styles.railRole}>{roleLabel}</span>}
       </button>
@@ -262,7 +269,14 @@ export default function WorkspaceSwitcher({
                   onClick={() => void switchWorkspace(workspace.id)}
                 >
                   <span className={styles.optionMark} aria-hidden="true">
-                    {workspace.isActive ? '✓' : getWorkspaceInitial(workspace.name)}
+                    {workspace.imageUrl ? (
+                      <>
+                        <img src={workspace.imageUrl} alt="" />
+                        {workspace.isActive && <span className={styles.optionCheck}>✓</span>}
+                      </>
+                    ) : (
+                      workspace.isActive ? '✓' : getWorkspaceInitial(workspace.name)
+                    )}
                   </span>
                   <span className={styles.optionText}>
                     <span className={styles.optionName}>{workspace.name}</span>

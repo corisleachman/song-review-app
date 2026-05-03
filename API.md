@@ -188,6 +188,31 @@ Notes:
 - requires owner access to the active workspace
 - trims empty names and stores at most 80 characters
 
+### `POST /api/workspace/settings`
+
+Uploads the active workspace image. The image is stored in the public `song-images` bucket under `workspace-images/`.
+
+**Body**
+
+Multipart form data:
+- `file`: image file, 5MB maximum
+
+**Returns**
+```json
+{
+  "workspace": {
+    "id": "uuid",
+    "name": "Rebel HQ",
+    "imageUrl": "https://..."
+  }
+}
+```
+
+Notes:
+- requires Google sign-in
+- requires owner access to the active workspace
+- requires `accounts.image_url`, added by `migrations/20260503_workspace_images_up.sql`
+
 ### `GET /api/workspaces`
 
 Returns the workspaces the signed-in user belongs to for the future workspace switcher.
@@ -200,6 +225,7 @@ Returns the workspaces the signed-in user belongs to for the future workspace sw
     {
       "id": "uuid",
       "name": "Coris Leachman's Workspace",
+      "imageUrl": "https://... or null",
       "slug": null,
       "role": "member",
       "plan": "free",

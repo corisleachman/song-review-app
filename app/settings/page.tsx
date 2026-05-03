@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getIdentity } from '@/lib/auth';
@@ -20,6 +20,7 @@ interface BootstrapPayload {
     displayName: string;
     authorName: string;
     workspaceName: string;
+    workspaceImageUrl: string | null;
     membershipRole: 'owner' | 'member';
   };
   workspace: {
@@ -120,7 +121,10 @@ export default function SettingsPage() {
   const [copiedInviteId, setCopiedInviteId] = useState<string | null>(null);
   const [workspacePlan, setWorkspacePlan] = useState<AccountPlan | null>(null);
   const [workspaceName, setWorkspaceName] = useState<string | null>(null);
+  const [workspaceImageUrl, setWorkspaceImageUrl] = useState<string | null>(null);
   const [workspaceNameDraft, setWorkspaceNameDraft] = useState('');
+  const workspaceImageInputRef = useRef<HTMLInputElement>(null);
+  const [workspaceImageUploading, setWorkspaceImageUploading] = useState(false);
   const [workspaceSettingsSaving, setWorkspaceSettingsSaving] = useState(false);
   const [workspaceSettingsError, setWorkspaceSettingsError] = useState<string | null>(null);
   const [workspaceSettingsNotice, setWorkspaceSettingsNotice] = useState<string | null>(null);
@@ -214,6 +218,7 @@ export default function SettingsPage() {
           setIsLegacyFallback(false);
           setWorkspacePlan(bootstrapPayload.workspace.plan);
           setWorkspaceName(bootstrapPayload.identity.workspaceName);
+          setWorkspaceImageUrl(bootstrapPayload.identity.workspaceImageUrl ?? null);
           setWorkspaceNameDraft(bootstrapPayload.identity.workspaceName);
           setMembershipRole(bootstrapPayload.identity.membershipRole);
           ownerAccess = bootstrapPayload.identity.membershipRole === 'owner';
@@ -225,6 +230,7 @@ export default function SettingsPage() {
             setIsLegacyFallback(true);
             setWorkspacePlan(null);
             setWorkspaceName(null);
+            setWorkspaceImageUrl(null);
             setWorkspaceNameDraft('');
             setMembershipRole(null);
             setIsOwner(false);
@@ -372,6 +378,65 @@ export default function SettingsPage() {
       setWorkspaceSettingsError(message);
     } finally {
       setWorkspaceSettingsSaving(false);
+    }
+  };
+
+  const handleWorkspaceImageSelected = async (file: File | null | undefined) => {
+    if (!file) return;
+
+    setWorkspaceSettingsError(null);
+    setWorkspaceSettingsNotice(null);
+
+    if (!file.type.startsWith('image/')) {
+      setWorkspaceSettingsError('Workspace image must be an image file.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setWorkspaceSettingsError('Workspace image must be 5MB or smaller.');
+      return;
+    }
+
+    setWorkspaceImageUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/workspace/settings', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          payload && typeof payload.error === 'string'
+            ? payload.error
+            : 'Could not upload workspace image.'
+        );
+      }
+
+      const nextImageUrl =
+        payload?.workspace && typeof payload.workspace.imageUrl === 'string'
+          ? payload.workspace.imageUrl
+          : null;
+
+      setWorkspaceImageUrl(nextImageUrl);
+      setWorkspaceSettingsNotice('Workspace image updated.');
+    } catch (workspaceImageError) {
+      const message =
+        workspaceImageError instanceof Error
+          ? workspaceImageError.message
+          : 'Could not upload workspace image.';
+      console.error('Workspace image upload error:', workspaceImageError);
+      setWorkspaceSettingsError(message);
+    } finally {
+      setWorkspaceImageUploading(false);
+      if (workspaceImageInputRef.current) {
+        workspaceImageInputRef.current.value = '';
+      }
     }
   };
 
@@ -637,6 +702,7 @@ export default function SettingsPage() {
       label={identityLabel || 'User'}
       plan={workspacePlan}
       workspaceName={workspaceName}
+      workspaceImageUrl={workspaceImageUrl}
       membershipRole={membershipRole}
     >
       <div className={styles.container}>
@@ -832,6 +898,45 @@ export default function SettingsPage() {
           {workspaceSettingsNotice && (
             <div className={styles.collaboratorSuccess}>{workspaceSettingsNotice}</div>
           )}
+        </div>
+
+        <div className={styles.workspaceImageSection}>
+          <div>
+            <h3>Workspace image</h3>
+            <p>
+              {isOwner
+                ? 'This image appears in the workspace switcher so members can recognise the band space quickly.'
+                : 'Only the workspace owner can update the workspace image.'}
+            </p>
+          </div>
+          <div className={styles.workspaceImageRow}>
+            <div className={styles.workspaceImagePreview} aria-hidden="true">
+              {workspaceImageUrl ? (
+                <img src={workspaceImageUrl} alt="" />
+              ) : (
+                <span>{currentWorkspaceName.trim()[0]?.toUpperCase() ?? 'W'}</span>
+              )}
+            </div>
+            {isOwner && (
+              <div className={styles.workspaceImageActions}>
+                <input
+                  ref={workspaceImageInputRef}
+                  type="file"
+                  accept="image/*"
+                  className={styles.hiddenFileInput}
+                  onChange={event => void handleWorkspaceImageSelected(event.target.files?.[0])}
+                />
+                <button
+                  type="button"
+                  className={styles.resetButtonLarge}
+                  onClick={() => workspaceImageInputRef.current?.click()}
+                  disabled={workspaceImageUploading}
+                >
+                  {workspaceImageUploading ? 'Uploading...' : workspaceImageUrl ? 'Change image' : 'Upload image'}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className={styles.permissionsSummary}>
