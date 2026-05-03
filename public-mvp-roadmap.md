@@ -1660,3 +1660,23 @@ Note the next follow-up slice.
 - Next follow-up:
   - push the fix and visually verify mobile Settings again
   - if Settings no longer clips horizontally, close Phase 2 Settings & Permissions UI and move to the next product phase
+
+## 2026-05-03 — Mobile collaborator row height fix
+
+- Slice / change name: Mobile collaborator row height fix
+- Status: Implemented
+- Phase position: Phase 2, step 8 of 8 mobile QA fix
+- Exact files changed or audited:
+  - `app/settings/settings.module.css`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - Current members and Pending invites rows now use natural content height on mobile
+  - collaborator row action buttons still wrap inside the row without creating large empty boxes
+  - no route, schema, permission, or persistence behavior changed
+- Tests run:
+  - `npx tsc --noEmit`
+  - `git diff --check`
+- Next follow-up:
+  - push the fix and visually verify mobile Settings collaborator cards again
+  - if Settings no longer clips or creates oversized rows, close Phase 2 Settings & Permissions UI and move to the next product phase

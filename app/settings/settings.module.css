@@ -800,11 +800,17 @@
 
   .collaboratorRow {
     flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .collaboratorMeta,
+  .collaboratorActions {
+    flex: none;
   }
 
   .collaboratorActions {
     width: 100%;
-    justify-content: space-between;
+    justify-content: flex-start;
   }
 }
 

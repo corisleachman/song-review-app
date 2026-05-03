@@ -1718,3 +1718,29 @@ Phone-specific responsive layout for the personal theme controls.
 - Kept this as a CSS-only layout fix with no route, schema, permission, or persistence behavior changes.
 - `npx tsc --noEmit` passed.
 - `git diff --check` passed.
+
+---
+
+## 2026-05-03 — Mobile collaborator row height fix
+
+### What we were trying to achieve
+
+Remove the large empty vertical space inside Current members and Pending invites rows on mobile.
+
+### Feature / change being made
+
+Mobile collaborator row sizing correction.
+
+### Files changed
+
+- [app/settings/settings.module.css](/Users/impero/song-review-app/app/settings/settings.module.css)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- Reset collaborator row child flex sizing on tablet/mobile so rows use natural content height.
+- Kept collaborator actions wrapping inside the row without forcing extra vertical space.
+- Kept this as a CSS-only layout fix with no route, schema, permission, or persistence behavior changes.
+- `npx tsc --noEmit` passed.
+- `git diff --check` passed.
