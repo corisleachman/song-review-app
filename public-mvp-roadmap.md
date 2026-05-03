@@ -1774,3 +1774,26 @@ Note the next follow-up slice.
 - Next follow-up:
   - verify Settings load time online as owner and member
   - then do a separate Dashboard performance pass focused on splitting fast song summary from deep activity data
+
+## 2026-05-03 — Dashboard first-paint performance pass
+
+- Slice / change name: Dashboard first-paint performance pass
+- Status: Implemented
+- Phase position: Phase 2 closeout performance pass, Dashboard
+- Exact files changed or audited:
+  - `app/api/dashboard/summary/route.ts`
+  - `app/dashboard/page.tsx`
+  - `API.md`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - added a fast dashboard summary endpoint for songs and latest-version metadata
+  - Dashboard now renders from summary first and hydrates full activity/action data in the background
+  - full `/api/dashboard` remains the canonical rich data source
+  - no schema, permission, song mutation, comment, action, or billing behavior changed
+- Tests run:
+  - `npx tsc --noEmit`
+  - `git diff --check`
+- Next follow-up:
+  - verify online Dashboard first load as owner and member
+  - if still slow, instrument route timings inside bootstrap, summary, and full dashboard hydration

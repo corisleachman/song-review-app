@@ -335,18 +335,30 @@ function DashboardContent() {
   }, [viewerKey]);
 
   async function loadAll(currentIdentity: string | null = viewerKey) {
-    setLoading(true);
-    await Promise.all([loadSongs(currentIdentity), loadActions()]);
-    setLoading(false);
+    const shouldShowLoading = songs.length === 0;
+    if (shouldShowLoading) setLoading(true);
+
+    const summaryLoaded = await loadSongs(currentIdentity, '/api/dashboard/summary');
+
+    if (!summaryLoaded) {
+      await loadSongs(currentIdentity);
+    }
+
+    if (shouldShowLoading) setLoading(false);
+
+    void Promise.all([
+      loadSongs(currentIdentity),
+      loadActions(),
+    ]);
   }
 
-  async function loadSongs(currentIdentity: string | null = viewerKey) {
-    const response = await fetch('/api/dashboard', { cache: 'no-store' });
+  async function loadSongs(currentIdentity: string | null = viewerKey, endpoint = '/api/dashboard') {
+    const response = await fetch(endpoint, { cache: 'no-store' });
     const payload = await response.json().catch(() => null) as DashboardSongsPayload | null;
 
     if (!response.ok || !Array.isArray(payload?.songs)) {
       console.error('Dashboard songs load error:', payload);
-      return;
+      return false;
     }
 
     const seenMap = typeof window !== 'undefined' && currentIdentity
@@ -398,6 +410,7 @@ function DashboardContent() {
     }
 
     setSongs(assembled);
+    return true;
   }
 
   async function loadActions() {

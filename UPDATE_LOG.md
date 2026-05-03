@@ -1853,3 +1853,33 @@ Settings summary route and client load simplification.
 - No schema, permission, billing, invite mutation, or song behavior changed.
 - `npx tsc --noEmit` passed.
 - `git diff --check` passed.
+
+---
+
+## 2026-05-03 — Dashboard first-paint performance pass
+
+### What we were trying to achieve
+
+Reduce the Dashboard's initial perceived load time without removing rich activity data.
+
+### Feature / change being made
+
+Fast dashboard summary endpoint with background hydration.
+
+### Files changed
+
+- [app/api/dashboard/summary/route.ts](/Users/impero/song-review-app/app/api/dashboard/summary/route.ts)
+- [app/dashboard/page.tsx](/Users/impero/song-review-app/app/dashboard/page.tsx)
+- [API.md](/Users/impero/song-review-app/API.md)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- Added `GET /api/dashboard/summary` for fast song and latest-version metadata.
+- Dashboard now renders from summary first, then hydrates full activity/action data in the background.
+- The full `/api/dashboard` endpoint remains the canonical rich dashboard data source.
+- Existing action sidebar loading remains intact.
+- No schema, permission, song mutation, comment, action, or billing behavior changed.
+- `npx tsc --noEmit` passed.
+- `git diff --check` passed.

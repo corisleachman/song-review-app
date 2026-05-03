@@ -79,9 +79,18 @@ Creates the DB record and signed upload URL for direct storage upload.
 { "label": "string or null", "notes": "string or null" }
 ```
 
+### `GET /api/dashboard/summary`
+
+Returns a fast first-paint dashboard song list for the active workspace.
+
+Notes:
+- loads songs and latest version metadata only
+- richer activity, comments, action counts, and assignment state still come from `GET /api/dashboard`
+- used by the Dashboard page before background hydration
+
 ### `GET /api/dashboard`
 
-Returns the server-backed dashboard song list with latest version metadata, comment counts, unresolved action counts, and `needsAttention`.
+Returns the full server-backed dashboard song list with latest version metadata, comment counts, unresolved action counts, activity summaries, assignment state, and `needsAttention`.
 
 ### `PATCH /api/songs/[songId]`
 
