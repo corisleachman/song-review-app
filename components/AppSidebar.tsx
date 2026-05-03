@@ -49,15 +49,6 @@ export default function AppSidebar({
     }
   };
 
-  const topItems: NavItem[] = [
-    {
-      href: '/dashboard',
-      label: 'Dashboard',
-      icon: '⌂',
-      kind: 'link',
-    },
-  ];
-
   const bottomItems: NavItem[] = [
     {
       href: '/settings',
@@ -77,9 +68,14 @@ export default function AppSidebar({
   return (
     <aside className={styles.rail} aria-label="Authenticated app navigation">
       <div className={styles.inner}>
-        <div className={styles.brand} title={label} aria-label={label}>
-          <span className={styles.brandMark}>♪</span>
-        </div>
+        <Link
+          href="/dashboard"
+          className={`${styles.brand} ${pathname === '/dashboard' ? styles.active : ''}`}
+          title="Dashboard"
+          aria-label="Dashboard"
+        >
+          <span className={styles.brandMark} aria-hidden="true">⌂</span>
+        </Link>
 
         {workspaceName && (
           <WorkspaceSwitcher
@@ -96,24 +92,6 @@ export default function AppSidebar({
             <span className={styles.planCaption}>Paid</span>
           </div>
         )}
-
-        <nav className={styles.navGroup} aria-label="Primary">
-          {topItems.map(item => {
-            const active = item.href ? pathname === item.href : false;
-
-            return (
-              <Link
-                key={item.label}
-                href={item.href!}
-                className={`${styles.navButton} ${active ? styles.active : ''}`}
-                aria-label={item.label}
-                title={item.label}
-              >
-                <span className={styles.icon} aria-hidden="true">{item.icon}</span>
-              </Link>
-            );
-          })}
-        </nav>
 
         <div className={styles.spacer} />
 

@@ -1680,3 +1680,34 @@ Note the next follow-up slice.
 - Next follow-up:
   - push the fix and visually verify mobile Settings collaborator cards again
   - if Settings no longer clips or creates oversized rows, close Phase 2 Settings & Permissions UI and move to the next product phase
+
+## 2026-05-03 — Settings navigation and workspace rename polish
+
+- Slice / change name: Settings navigation and workspace rename polish
+- Status: Implemented
+- Phase position: Phase 2, step 8 of 8 polish follow-up
+- Exact files changed or audited:
+  - `components/AppSidebar.tsx`
+  - `components/AppSidebar.module.css`
+  - `app/settings/page.tsx`
+  - `app/settings/settings.module.css`
+  - `app/api/workspace/settings/route.ts`
+  - `API.md`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - left rail top icon is now the Dashboard/Home control instead of a separate music mark
+  - removed the lower duplicate home nav item from the left rail
+  - Settings back link now has explicit button styling
+  - workspace owners can rename the active workspace from Settings
+  - workspace rename saves to `accounts.name` through owner-only `PATCH /api/workspace/settings`
+  - no schema, billing, invite, or song permission behavior changed
+- Tests run:
+  - `npx tsc --noEmit`
+  - `git diff --check`
+- Later performance investigation:
+  - Dashboard and Settings currently show loading for roughly 5 to 6 seconds in production
+  - investigate whether this is caused by sequential bootstrap/dashboard/settings fetches, uncached server reads, Supabase latency, or duplicated client-side loading paths
+- Next follow-up:
+  - push the polish update and visually verify Settings on desktop/mobile as owner and member
+  - schedule a focused performance pass for Dashboard and Settings load time

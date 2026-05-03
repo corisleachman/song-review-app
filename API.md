@@ -164,6 +164,30 @@ Returns song actions. Some filtering still happens in JS due to Supabase joined-
 
 Returns the current workspace collaborators for assignment UIs.
 
+### `PATCH /api/workspace/settings`
+
+Updates owner-managed settings for the active workspace.
+
+**Body**
+```json
+{ "name": "Rebel HQ" }
+```
+
+**Returns**
+```json
+{
+  "workspace": {
+    "id": "uuid",
+    "name": "Rebel HQ"
+  }
+}
+```
+
+Notes:
+- requires Google sign-in
+- requires owner access to the active workspace
+- trims empty names and stores at most 80 characters
+
 ### `GET /api/workspaces`
 
 Returns the workspaces the signed-in user belongs to for the future workspace switcher.

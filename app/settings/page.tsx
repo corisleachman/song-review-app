@@ -120,6 +120,10 @@ export default function SettingsPage() {
   const [copiedInviteId, setCopiedInviteId] = useState<string | null>(null);
   const [workspacePlan, setWorkspacePlan] = useState<AccountPlan | null>(null);
   const [workspaceName, setWorkspaceName] = useState<string | null>(null);
+  const [workspaceNameDraft, setWorkspaceNameDraft] = useState('');
+  const [workspaceSettingsSaving, setWorkspaceSettingsSaving] = useState(false);
+  const [workspaceSettingsError, setWorkspaceSettingsError] = useState<string | null>(null);
+  const [workspaceSettingsNotice, setWorkspaceSettingsNotice] = useState<string | null>(null);
   const [membershipRole, setMembershipRole] = useState<'owner' | 'member' | null>(null);
   const [songCount, setSongCount] = useState<number | null>(null);
   const [upgradeModalType, setUpgradeModalType] = useState<PlanLimitType | null>(null);
@@ -210,6 +214,7 @@ export default function SettingsPage() {
           setIsLegacyFallback(false);
           setWorkspacePlan(bootstrapPayload.workspace.plan);
           setWorkspaceName(bootstrapPayload.identity.workspaceName);
+          setWorkspaceNameDraft(bootstrapPayload.identity.workspaceName);
           setMembershipRole(bootstrapPayload.identity.membershipRole);
           ownerAccess = bootstrapPayload.identity.membershipRole === 'owner';
           setIsOwner(ownerAccess);
@@ -220,6 +225,7 @@ export default function SettingsPage() {
             setIsLegacyFallback(true);
             setWorkspacePlan(null);
             setWorkspaceName(null);
+            setWorkspaceNameDraft('');
             setMembershipRole(null);
             setIsOwner(false);
             usingLegacyFallback = true;
@@ -317,6 +323,56 @@ export default function SettingsPage() {
 
   const handleReset = () => {
     handlePreset(PRESETS.Pulse);
+  };
+
+  const handleSaveWorkspaceName = async () => {
+    const nextName = workspaceNameDraft.trim();
+
+    setWorkspaceSettingsError(null);
+    setWorkspaceSettingsNotice(null);
+
+    if (!nextName) {
+      setWorkspaceSettingsError('Workspace name is required.');
+      return;
+    }
+
+    setWorkspaceSettingsSaving(true);
+
+    try {
+      const response = await fetch('/api/workspace/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: nextName }),
+      });
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          payload && typeof payload.error === 'string'
+            ? payload.error
+            : 'Could not update workspace name.'
+        );
+      }
+
+      const savedName =
+        payload?.workspace && typeof payload.workspace.name === 'string'
+          ? payload.workspace.name
+          : nextName;
+
+      setWorkspaceName(savedName);
+      setWorkspaceNameDraft(savedName);
+      setWorkspaceSettingsNotice('Workspace name updated.');
+    } catch (workspaceNameError) {
+      const message =
+        workspaceNameError instanceof Error
+          ? workspaceNameError.message
+          : 'Could not update workspace name.';
+      console.error('Workspace name update error:', workspaceNameError);
+      setWorkspaceSettingsError(message);
+    } finally {
+      setWorkspaceSettingsSaving(false);
+    }
   };
 
   const handleSendInvite = async () => {
@@ -728,6 +784,54 @@ export default function SettingsPage() {
             <p>These controls affect the active workspace.</p>
           </div>
           <span className={styles.workspaceRoleBadge}>{currentRoleLabel}</span>
+        </div>
+
+        <div className={styles.workspaceNameSection}>
+          <div>
+            <h3>Workspace name</h3>
+            <p>
+              {isOwner
+                ? 'This is the name members see when they switch into this workspace.'
+                : 'Only the workspace owner can rename this workspace.'}
+            </p>
+          </div>
+          {isOwner ? (
+            <div className={styles.workspaceNameForm}>
+              <input
+                type="text"
+                value={workspaceNameDraft}
+                onChange={event => {
+                  setWorkspaceNameDraft(event.target.value);
+                  setWorkspaceSettingsError(null);
+                  setWorkspaceSettingsNotice(null);
+                }}
+                className={styles.textInput}
+                placeholder="Rebel HQ"
+                maxLength={80}
+                disabled={workspaceSettingsSaving}
+              />
+              <button
+                type="button"
+                className={styles.resetButtonLarge}
+                onClick={() => void handleSaveWorkspaceName()}
+                disabled={
+                  workspaceSettingsSaving ||
+                  !workspaceNameDraft.trim() ||
+                  workspaceNameDraft.trim() === currentWorkspaceName
+                }
+              >
+                {workspaceSettingsSaving ? 'Saving...' : 'Save name'}
+              </button>
+            </div>
+          ) : (
+            <div className={styles.workspaceNameReadOnly}>{currentWorkspaceName}</div>
+          )}
+          {workspaceSettingsError && (
+            <div className={styles.collaboratorMessage}>{workspaceSettingsError}</div>
+          )}
+          {workspaceSettingsNotice && (
+            <div className={styles.collaboratorSuccess}>{workspaceSettingsNotice}</div>
+          )}
         </div>
 
         <div className={styles.permissionsSummary}>

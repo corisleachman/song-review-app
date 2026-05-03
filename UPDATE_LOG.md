@@ -1744,3 +1744,37 @@ Mobile collaborator row sizing correction.
 - Kept this as a CSS-only layout fix with no route, schema, permission, or persistence behavior changes.
 - `npx tsc --noEmit` passed.
 - `git diff --check` passed.
+
+---
+
+## 2026-05-03 — Settings navigation and workspace rename polish
+
+### What we were trying to achieve
+
+Tidy the Settings/navigation UI and let workspace owners rename the active workspace from Settings.
+
+### Feature / change being made
+
+Settings UI polish and owner-only workspace name editing.
+
+### Files changed
+
+- [components/AppSidebar.tsx](/Users/impero/song-review-app/components/AppSidebar.tsx)
+- [components/AppSidebar.module.css](/Users/impero/song-review-app/components/AppSidebar.module.css)
+- [app/settings/page.tsx](/Users/impero/song-review-app/app/settings/page.tsx)
+- [app/settings/settings.module.css](/Users/impero/song-review-app/app/settings/settings.module.css)
+- [app/api/workspace/settings/route.ts](/Users/impero/song-review-app/app/api/workspace/settings/route.ts)
+- [API.md](/Users/impero/song-review-app/API.md)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- The left rail top icon is now the Dashboard/Home control instead of a separate music mark.
+- The lower duplicate home nav item was removed.
+- The Settings back link now uses a styled pill button treatment.
+- Workspace owners can now rename the active workspace from Settings.
+- Workspace rename saves through owner-only `PATCH /api/workspace/settings` to `accounts.name`.
+- The slow Dashboard/Settings load report is documented as a later performance investigation, not changed in this UI pass.
+- `npx tsc --noEmit` passed.
+- `git diff --check` passed.

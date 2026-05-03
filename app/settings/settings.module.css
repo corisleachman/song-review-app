@@ -34,14 +34,16 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
   border-radius: var(--radius-md);
-  background: rgba(8, 5, 14, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: var(--color-text);
   text-decoration: none;
-  font-size: 16px;
+  font-size: 14px;
+  font-weight: 800;
   transition: all var(--transition-base);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
@@ -404,6 +406,42 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+}
+
+.workspaceNameSection {
+  display: grid;
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+  padding-bottom: var(--space-xl);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.workspaceNameSection h3 {
+  margin: 0 0 var(--space-sm) 0;
+  color: var(--color-text);
+  font-size: 18px;
+}
+
+.workspaceNameSection p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.workspaceNameForm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-md);
+  align-items: center;
+}
+
+.workspaceNameReadOnly {
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-md);
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .permissionsSummary {
@@ -785,6 +823,10 @@
     flex-direction: column;
   }
 
+  .workspaceNameForm {
+    grid-template-columns: 1fr;
+  }
+
   .permissionsSummary {
     grid-template-columns: 1fr;
   }
@@ -843,6 +885,7 @@
   .presetsSection,
   .actions,
   .workspaceSettingsHeader,
+  .workspaceNameSection,
   .planSection {
     margin-bottom: var(--space-lg);
     padding-bottom: var(--space-lg);
