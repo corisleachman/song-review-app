@@ -1771,18 +1771,18 @@
         <span class="section-number">02</span>
         <div>
           <div class="section-title">Typography</div>
-          <div class="section-desc">Outfit (headings) + DM Sans (body) — identical font pairing to v1. Display type adds Impact for editorial moments.</div>
+          <div class="section-desc">Outfit (headings) + DM Sans (body) — identical font pairing to v1. Display type adds Impact for editorial moments. Impact is for display scale only — pills, badges and UI labels use DM Sans 600.</div>
         </div>
       </div>
 
       <div class="demo-canvas">
         <div class="type-block">
           <div class="type-display" style="color:var(--off-white);">Song<br />Room</div>
-          <div class="type-meta">Impact / Haettenschweiler — Display — text-transform: uppercase — used on hero, auth headings</div>
+          <div class="type-meta">Impact / Haettenschweiler — Display — text-transform: uppercase — hero headings, auth headings, song titles at display scale</div>
         </div>
         <div class="type-block">
           <div class="type-display-sm" style="color:var(--acid);">Create Together.</div>
-          <div class="type-meta">Impact — Display SM — section headlines</div>
+          <div class="type-meta">Impact — Display SM — section headlines, panel labels, nav items</div>
         </div>
         <div class="type-block">
           <div class="type-heading-1">Outfit Heading 1 — 36px / 800</div>
@@ -1809,8 +1809,8 @@
           <div class="type-meta">DM Sans 400 — body-sm / secondary</div>
         </div>
         <div class="type-block">
-          <div class="type-label">Label — 11px / 900 uppercase · olive</div>
-          <div class="type-meta">Outfit 900 — form labels, eyebrows, tags</div>
+          <div style="font-family:'DM Sans',-apple-system,sans-serif; font-weight:600; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--off-white);">UI Label — DM Sans 600 uppercase</div>
+          <div class="type-meta">DM Sans 600 — pills, badges, status tags, filter chips, count chips — replaces Impact at small UI scale</div>
         </div>
         <div class="type-block">
           <div class="type-mono">V3 · 1:24.300 · coris@example.com</div>
@@ -1820,6 +1820,74 @@
           <div class="gradient-text" style="font-family:'Outfit',sans-serif; font-weight:800; font-size:32px;">Gradient Heading</div>
           <div class="type-meta">.gradient-text — acid → blue gradient — used sparingly</div>
         </div>
+      </div>
+
+      <!-- Font scale rule -->
+      <div style="margin-top:24px; border:1px solid rgba(244,240,232,0.14); padding:20px 24px; background:rgba(244,240,232,0.03);">
+        <div style="font-family:Impact,Haettenschweiler,'Arial Narrow Bold',sans-serif; font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:var(--off-white); margin-bottom:14px;">Display vs. UI Font Rule</div>
+        <p style="font-size:13px; color:rgba(244,240,232,0.68); line-height:1.65; margin-bottom:18px;">
+          Impact is a display typeface — it was designed for large-scale use and degrades at small sizes, reading as dense and aggressive inside confined pill or badge shapes. <strong style="color:var(--off-white);">DM Sans 600 uppercase</strong> takes over for all functional UI labelling below ~14px. This creates a clear hierarchy: Impact for authority, DM Sans for legibility.
+        </p>
+        <table style="width:100%; border-collapse:collapse; font-size:12px;">
+          <thead>
+            <tr style="border-bottom:1px solid rgba(244,240,232,0.12);">
+              <th style="text-align:left; padding:6px 12px 8px 0; font-family:'DM Sans',-apple-system,sans-serif; font-weight:600; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--off-white);">Context</th>
+              <th style="text-align:left; padding:6px 12px 8px; font-family:'DM Sans',-apple-system,sans-serif; font-weight:600; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--off-white);">Font</th>
+              <th style="text-align:left; padding:6px 12px 8px; font-family:'DM Sans',-apple-system,sans-serif; font-weight:600; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--off-white);">Weight</th>
+              <th style="text-align:left; padding:6px 0 8px; font-family:'DM Sans',-apple-system,sans-serif; font-weight:600; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--off-white);">Case</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid rgba(244,240,232,0.06);">
+              <td style="padding:8px 12px 8px 0; color:rgba(244,240,232,0.72);">Hero headings, auth headings</td>
+              <td style="padding:8px 12px; color:var(--acid); font-family:'Courier New',monospace;">Impact</td>
+              <td style="padding:8px 12px; color:rgba(244,240,232,0.5);">—</td>
+              <td style="padding:8px 0; color:rgba(244,240,232,0.5);">Uppercase</td>
+            </tr>
+            <tr style="border-bottom:1px solid rgba(244,240,232,0.06);">
+              <td style="padding:8px 12px 8px 0; color:rgba(244,240,232,0.72);">Section headers, panel labels, nav items</td>
+              <td style="padding:8px 12px; color:var(--acid); font-family:'Courier New',monospace;">Impact</td>
+              <td style="padding:8px 12px; color:rgba(244,240,232,0.5);">—</td>
+              <td style="padding:8px 0; color:rgba(244,240,232,0.5);">Uppercase</td>
+            </tr>
+            <tr style="border-bottom:1px solid rgba(244,240,232,0.06);">
+              <td style="padding:8px 12px 8px 0; color:rgba(244,240,232,0.72);">Song titles (card + hero)</td>
+              <td style="padding:8px 12px; color:var(--acid); font-family:'Courier New',monospace;">Impact</td>
+              <td style="padding:8px 12px; color:rgba(244,240,232,0.5);">—</td>
+              <td style="padding:8px 0; color:rgba(244,240,232,0.5);">Uppercase</td>
+            </tr>
+            <tr style="border-bottom:1px solid rgba(244,240,232,0.06);">
+              <td style="padding:8px 12px 8px 0; color:rgba(244,240,232,0.72);">CTA buttons, primary actions</td>
+              <td style="padding:8px 12px; color:var(--acid); font-family:'Courier New',monospace;">Impact</td>
+              <td style="padding:8px 12px; color:rgba(244,240,232,0.5);">—</td>
+              <td style="padding:8px 0; color:rgba(244,240,232,0.5);">Uppercase</td>
+            </tr>
+            <tr style="border-bottom:1px solid rgba(244,240,232,0.06);">
+              <td style="padding:8px 12px 8px 0; color:rgba(244,240,232,0.72);">Pills, badges, status tags, filter chips, count chips</td>
+              <td style="padding:8px 12px; color:var(--pink); font-family:'Courier New',monospace;">DM Sans</td>
+              <td style="padding:8px 12px; color:rgba(244,240,232,0.5);">600</td>
+              <td style="padding:8px 0; color:rgba(244,240,232,0.5);">Uppercase · ls 0.06–0.08em</td>
+            </tr>
+            <tr style="border-bottom:1px solid rgba(244,240,232,0.06);">
+              <td style="padding:8px 12px 8px 0; color:rgba(244,240,232,0.72);">Secondary UI labels (eyebrows, sort labels, author names)</td>
+              <td style="padding:8px 12px; color:var(--pink); font-family:'Courier New',monospace;">DM Sans</td>
+              <td style="padding:8px 12px; color:rgba(244,240,232,0.5);">600</td>
+              <td style="padding:8px 0; color:rgba(244,240,232,0.5);">Uppercase · ls 0.06–0.1em</td>
+            </tr>
+            <tr style="border-bottom:1px solid rgba(244,240,232,0.06);">
+              <td style="padding:8px 12px 8px 0; color:rgba(244,240,232,0.72);">Body copy, descriptions, comments</td>
+              <td style="padding:8px 12px; color:rgba(244,240,232,0.5); font-family:'Courier New',monospace;">DM Sans</td>
+              <td style="padding:8px 12px; color:rgba(244,240,232,0.5);">400</td>
+              <td style="padding:8px 0; color:rgba(244,240,232,0.5);">Sentence</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 12px 8px 0; color:rgba(244,240,232,0.72);">Timestamps, metadata, version IDs</td>
+              <td style="padding:8px 12px; color:rgba(244,240,232,0.5); font-family:'Courier New',monospace;">Georgia italic</td>
+              <td style="padding:8px 12px; color:rgba(244,240,232,0.5);">italic</td>
+              <td style="padding:8px 0; color:rgba(244,240,232,0.5);">Sentence</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
