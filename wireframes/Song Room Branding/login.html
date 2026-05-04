@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>The Song Room — Log In</title>
   <style>
+    @font-face {
+      font-family: 'Thunder';
+      src: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-BlackLC.otf') format('opentype');
+      font-weight: 900;
+      font-style: normal;
+    }
+
     :root {
       --charcoal: #111111;
       --off-white: #F4F0E8;
@@ -137,12 +144,13 @@
     }
 
     .auth-heading {
-      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-family: 'Thunder', Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
       text-transform: uppercase;
-      letter-spacing: -0.04em;
+      letter-spacing: -0.01em;
       line-height: 0.88;
-      font-size: clamp(52px, 7vw, 72px);
+      font-size: clamp(64px, 8vw, 88px);
       margin: 0 0 12px;
+      font-weight: 900;
     }
 
     .auth-sub {
@@ -371,12 +379,13 @@
     }
 
     .mktg-heading {
-      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-family: 'Thunder', Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
       text-transform: uppercase;
-      font-size: clamp(52px, 7vw, 100px);
-      line-height: 0.86;
-      letter-spacing: -0.06em;
+      font-size: clamp(64px, 7vw, 112px);
+      line-height: 0.88;
+      letter-spacing: -0.01em;
       margin: 0 0 28px;
+      font-weight: 900;
     }
 
     .mktg-heading em {
@@ -457,7 +466,6 @@
       clip-path: polygon(0 55%, 2% 38%, 4% 61%, 6% 30%, 9% 74%, 12% 42%, 16% 56%, 19% 18%, 22% 80%, 26% 41%, 29% 63%, 33% 29%, 37% 76%, 42% 36%, 46% 61%, 51% 17%, 55% 84%, 60% 40%, 64% 65%, 69% 29%, 73% 76%, 78% 37%, 82% 61%, 86% 31%, 91% 74%, 95% 43%, 100% 58%, 100% 100%, 0 100%);
     }
 
-    /* Progress overlay */
     .big-wave::after {
       content: "";
       position: absolute;
@@ -609,13 +617,8 @@
       font-style: italic;
     }
 
-    .quote-text::before {
-      content: "\201C";
-    }
-
-    .quote-text::after {
-      content: "\201D";
-    }
+    .quote-text::before { content: "\201C"; }
+    .quote-text::after { content: "\201D"; }
 
     .quote-attr {
       display: flex;
@@ -659,24 +662,13 @@
       letter-spacing: 0.09em;
     }
 
-    /* Tab switch JS */
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    /* Responsive */
     @media (max-width: 780px) {
-      body {
-        grid-template-columns: 1fr;
-      }
-
-      .marketing-panel {
-        display: none;
-      }
-
-      .auth-panel {
-        min-height: 100vh;
-        border-right: none;
-      }
+      body { grid-template-columns: 1fr; }
+      .marketing-panel { display: none; }
+      .auth-panel { min-height: 100vh; border-right: none; }
     }
   </style>
 </head>
@@ -688,9 +680,7 @@
 
       <!-- Brand -->
       <div class="brand-lockup">
-        <div class="mark">
-          <span>TSR</span>
-        </div>
+        <div class="mark"><span>TSR</span></div>
         <span class="brand-name">The Song Room</span>
       </div>
 
@@ -714,8 +704,6 @@
           </svg>
           Continue with Google
         </button>
-
-
       </div>
 
       <!-- SIGNUP -->
@@ -732,11 +720,7 @@
           </svg>
           Continue with Google
         </button>
-
-        
       </div>
-
-    
 
     </div>
   </aside>
@@ -820,14 +804,6 @@
       document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
       el.classList.add('active');
-      document.getElementById('tab-' + name).classList.add('active');
-    }
-
-    function switchTabByLink(name) {
-      const tabs = document.querySelectorAll('.auth-tab');
-      tabs.forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-      tabs[name === 'login' ? 0 : 1].classList.add('active');
       document.getElementById('tab-' + name).classList.add('active');
     }
   </script>
