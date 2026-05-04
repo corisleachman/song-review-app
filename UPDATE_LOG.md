@@ -1926,3 +1926,32 @@ Member author constraint migration, upload error cleanup, Google avatar display,
 - Invite email delivery was not changed; delivery still depends on Resend/domain configuration and should be verified separately.
 - `npx tsc --noEmit` passed.
 - `git diff --check` passed.
+
+---
+
+## 2026-05-04 — Signed version playback URLs
+
+### What we were trying to achieve
+
+Fix member-uploaded versions opening successfully but failing playback with `Failed to fetch`.
+
+### Feature / change being made
+
+Workspace-checked signed audio URLs for version playback.
+
+### Files changed
+
+- [app/api/versions/[versionId]/route.ts](/Users/impero/song-review-app/app/api/versions/[versionId]/route.ts)
+- [app/songs/[id]/versions/[versionId]/page.tsx](/Users/impero/song-review-app/app/songs/[id]/versions/[versionId]/page.tsx)
+- [API.md](/Users/impero/song-review-app/API.md)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- Version detail now returns a one-hour signed `audioUrl` after validating workspace access.
+- The song/version page now prefers the signed playback URL instead of constructing a public storage URL client-side.
+- Public URL fallback remains in place for compatibility.
+- No upload, comment, action, billing, invite, or schema behavior changed.
+- `npx tsc --noEmit` passed.
+- `git diff --check` passed.

@@ -1835,3 +1835,25 @@ Note the next follow-up slice.
 - Next follow-up:
   - retest member song create, version upload, comment creation, owner delete, invite acceptance modal, and avatar rendering online
   - verify Resend/domain configuration for invite email delivery
+
+## 2026-05-04 — Signed version playback URLs
+
+- Slice / change name: Signed version playback URLs
+- Status: Implemented
+- Phase position: Phase 3 collaboration permissions QA
+- Exact files changed or audited:
+  - `app/api/versions/[versionId]/route.ts`
+  - `app/songs/[id]/versions/[versionId]/page.tsx`
+  - `API.md`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - version detail now returns a signed `audioUrl` after workspace access validation
+  - song/version page now uses the signed playback URL before falling back to public storage URL construction
+  - should fix member-uploaded versions that opened but failed playback with `Failed to fetch`
+  - no upload, comment, action, billing, invite, or schema behavior changed
+- Tests run:
+  - `npx tsc --noEmit`
+  - `git diff --check`
+- Next follow-up:
+  - retest playback on a member-uploaded version online

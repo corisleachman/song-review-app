@@ -44,6 +44,13 @@ async function loadVersionWithWorkspace(versionId: string) {
   return { version, workspaceId: song?.account_id ?? null };
 }
 
+function normalizeStoragePath(value: string | null | undefined) {
+  const trimmed = value?.trim() ?? '';
+  const prefix = 'song-files/';
+
+  return trimmed.startsWith(prefix) ? trimmed.slice(prefix.length) : trimmed;
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: { versionId: string } }
@@ -70,8 +77,20 @@ export async function GET(
       return NextResponse.json({ error: 'You do not have access to this version.' }, { status: 403 });
     }
 
+    let audioUrl: string | null = null;
+
+    if (version.file_path) {
+      const normalizedFilePath = normalizeStoragePath(version.file_path);
+      const { data: signedAudio, error: signedAudioError } = await supabaseServer.storage
+        .from('song-files')
+        .createSignedUrl(normalizedFilePath, 60 * 60);
+
+      if (signedAudioError) throw signedAudioError;
+      audioUrl = signedAudio?.signedUrl ?? null;
+    }
+
     return NextResponse.json(
-      { version: withVersionDisplayName(version) },
+      { version: { ...withVersionDisplayName(version), audioUrl } },
       {
         status: 200,
         headers: {

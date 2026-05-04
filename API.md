@@ -79,6 +79,14 @@ Creates the DB record and signed upload URL for direct storage upload.
 { "label": "string or null", "notes": "string or null" }
 ```
 
+### `GET /api/versions/[versionId]`
+
+Returns a workspace-checked version payload.
+
+Notes:
+- includes a one-hour signed `audioUrl` for playback when `file_path` exists
+- avoids relying on direct public storage URLs for protected audio playback
+
 ### `GET /api/dashboard/summary`
 
 Returns a fast first-paint dashboard song list for the active workspace.

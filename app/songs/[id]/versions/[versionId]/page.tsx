@@ -70,6 +70,7 @@ interface Version {
   display_name?: string;
   notes?: string | null;
   file_path: string;
+  audioUrl?: string | null;
   file_name: string;
   created_by: string;
   created_at?: string;
@@ -1049,7 +1050,13 @@ export default function VersionPage() {
       setVersion(versionPayload.version);
       setVersions(versionsPayload.versions);
 
-      if (versionPayload.version?.file_path) {
+      if (versionPayload.version?.audioUrl) {
+        setAudioUrl(versionPayload.version.audioUrl);
+        logVersionInit('audio-url:resolved', {
+          source: 'signed-version-url',
+          hasUrl: true,
+        });
+      } else if (versionPayload.version?.file_path) {
         const normalizedFilePath = normalizeStoragePath(versionPayload.version.file_path);
         const { data: pub } = supabase.storage.from('song-files').getPublicUrl(normalizedFilePath);
         setAudioUrl(pub.publicUrl);
