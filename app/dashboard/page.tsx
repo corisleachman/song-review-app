@@ -869,6 +869,19 @@ function DashboardContent() {
     }
   }
 
+  function handleArtworkPlayClick(event: React.MouseEvent<HTMLDivElement>, song: Song, queue: Song[]) {
+    if (!song.latestVersionId) return;
+
+    event.stopPropagation();
+
+    if (playingId === song.id) {
+      togglePlayPause();
+      return;
+    }
+
+    void playSong(song, queue);
+  }
+
   function handleCardClick(e: React.MouseEvent, song: Song) {
     // Don't navigate if clicking an action button or if renaming
     if ((e.target as HTMLElement).closest('button, select, option, input, label') || editingId === song.id) return;
@@ -1230,7 +1243,11 @@ function DashboardContent() {
                   {isListView ? (
                     <>
                       <div className={styles.desktopListCardRow}>
-                        <div className={styles.cardThumb}>
+                        <div
+                          className={styles.cardThumb}
+                          onClick={event => handleArtworkPlayClick(event, song, sortedSongs)}
+                          title={song.latestVersionId ? (playingId === song.id && isPlaying ? 'Pause' : 'Play') : undefined}
+                        >
                           {song.imageUploading ? (
                             <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(13,9,20,0.7)',borderRadius:8}}>
                               <div style={{width:18,height:18,border:'2px solid #ff1493',borderTopColor:'transparent',borderRadius:'50%',animation:'spin 0.7s linear infinite'}} />
@@ -1472,7 +1489,11 @@ function DashboardContent() {
                     </>
                   ) : (
                     <>
-                      <div className={styles.cardThumb}>
+                      <div
+                        className={styles.cardThumb}
+                        onClick={event => handleArtworkPlayClick(event, song, sortedSongs)}
+                        title={song.latestVersionId ? (playingId === song.id && isPlaying ? 'Pause' : 'Play') : undefined}
+                      >
                         {song.imageUploading ? (
                           <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(13,9,20,0.7)',borderRadius:8}}>
                             <div style={{width:18,height:18,border:'2px solid #ff1493',borderTopColor:'transparent',borderRadius:'50%',animation:'spin 0.7s linear infinite'}} />
@@ -1556,14 +1577,37 @@ function DashboardContent() {
                           {(song.assignedToMeCount > 0 || song.awaitingResponse) && (
                             <div className={styles.overlayAssignRow}>
                               {song.assignedToMeCount > 0 && (
-                                <span className={`${styles.overlayPill} ${styles.overlayPillMe}`}>
+                                <button
+                                  type="button"
+                                  className={`${styles.overlayPill} ${styles.overlayPillMe}`}
+                                  onClick={event => {
+                                    event.stopPropagation();
+                                    openSongContext(song, {
+                                      versionId: song.assignedContextVersionId,
+                                      focus: 'actions',
+                                      actionsTab: 'all_versions',
+                                      actionFilter: 'assigned_to_me',
+                                    });
+                                  }}
+                                >
                                   {song.assignedToMeCount} assigned to me
-                                </span>
+                                </button>
                               )}
                               {song.awaitingResponse && (
-                                <span className={styles.overlayPill}>
+                                <button
+                                  type="button"
+                                  className={styles.overlayPill}
+                                  onClick={event => {
+                                    event.stopPropagation();
+                                    openSongContext(song, {
+                                      versionId: song.awaitingVersionId,
+                                      focus: 'threads',
+                                      threadId: song.awaitingThreadId,
+                                    });
+                                  }}
+                                >
                                   {getAwaitingResponseLabel(song.awaitingResponse) ?? 'Awaiting response'}
-                                </span>
+                                </button>
                               )}
                             </div>
                           )}

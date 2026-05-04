@@ -1999,3 +1999,26 @@ Note the next follow-up slice.
   - whether notifications should be batched, muted, or scoped to mentions/actions later
 - Next follow-up:
   - verify production email env vars, sender/domain setup, recipient rules, and delivery logs near final QA
+
+## 2026-05-04 — Dashboard artwork playback targets
+
+- Slice / change name: Dashboard artwork playback targets
+- Status: Implemented
+- Phase position: Phase 3 collaboration permissions QA / mobile polish
+- Exact files changed or audited:
+  - `app/dashboard/page.tsx`
+  - `app/dashboard/dashboard.module.css`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - tapping/clicking song artwork now plays or pauses the latest version when audio exists
+  - tapping the rest of the row/card body still opens the song
+  - mobile hides the play button over artwork and shows centered animated EQ bars while playing
+  - desktop grid play buttons are centered over artwork
+  - card info overlay pills that imply action now deep-link to their relevant action/comment contexts
+  - static info surfaces now use default cursor behavior
+- Tests run:
+  - `npx tsc --noEmit`
+  - `git diff --check`
+- Next follow-up:
+  - verify mobile artwork tap versus row navigation, desktop grid play alignment, and pointer states

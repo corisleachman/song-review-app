@@ -2117,3 +2117,32 @@ Lift the mobile bottom sheet above the active mini-player while preserving both 
 - Comment notification email work is queued separately because the route already exists but needs configuration and notification-policy review.
 - `npx tsc --noEmit` passed.
 - `git diff --check` passed.
+
+---
+
+## 2026-05-04 — Dashboard artwork playback targets
+
+### What we were trying to achieve
+
+Bring the main-branch mobile dashboard artwork playback interaction into the clean branch and clarify clickability on dashboard cards.
+
+### Feature / change being made
+
+Artwork-level dashboard playback, mobile EQ artwork treatment, centered desktop grid play buttons, and clickable-only pointer behavior for info overlays.
+
+### Files changed
+
+- [app/dashboard/page.tsx](/Users/impero/song-review-app/app/dashboard/page.tsx)
+- [app/dashboard/dashboard.module.css](/Users/impero/song-review-app/app/dashboard/dashboard.module.css)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- Tapping/clicking song artwork now plays or pauses the latest version and stops row navigation when audio exists.
+- Mobile hides the artwork play button and shows centered animated EQ bars while playing.
+- Desktop grid play buttons are centered over artwork.
+- Desktop overlay pills for assigned work and awaiting response are real buttons that deep-link to the relevant view.
+- Static info overlay and expanded info panels now use default cursor behavior.
+- `npx tsc --noEmit` passed.
+- `git diff --check` passed.
