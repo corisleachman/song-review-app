@@ -117,7 +117,11 @@ export default function InviteActions({ token, inviteEmail }: InviteActionsProps
         return;
       }
 
-      window.location.assign('/dashboard');
+      const workspaceName =
+        payload?.workspace && typeof payload.workspace.name === 'string'
+          ? payload.workspace.name
+          : 'this workspace';
+      window.location.assign(`/dashboard?inviteAccepted=${encodeURIComponent(workspaceName)}`);
     } catch (acceptError) {
       setError(getErrorMessage(acceptError));
       setIsAccepting(false);

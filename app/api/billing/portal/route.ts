@@ -12,6 +12,20 @@ function getErrorMessage(error: unknown) {
   return 'Could not open billing portal.';
 }
 
+function isMissingStripeCustomerError(error: unknown) {
+  if (!error || typeof error !== 'object') return false;
+
+  const message = 'message' in error && typeof error.message === 'string'
+    ? error.message.toLowerCase()
+    : '';
+
+  const code = 'code' in error && typeof error.code === 'string'
+    ? error.code
+    : '';
+
+  return code === 'resource_missing' || message.includes('no such customer');
+}
+
 export async function POST(request: Request) {
   try {
     noStore();
@@ -46,6 +60,29 @@ export async function POST(request: Request) {
 
     const stripe = getStripe();
     const origin = new URL(request.url).origin;
+    try {
+      const customer = await stripe.customers.retrieve(account.stripe_customer_id);
+      if ('deleted' in customer && customer.deleted) {
+        return NextResponse.json(
+          {
+            error: 'The Stripe customer linked to this workspace has been deleted. Billing needs to be reconnected before the portal can open.',
+          },
+          { status: 409 }
+        );
+      }
+    } catch (customerError) {
+      if (isMissingStripeCustomerError(customerError)) {
+        return NextResponse.json(
+          {
+            error: 'The Stripe customer linked to this workspace no longer exists. Billing needs to be reconnected before the portal can open.',
+          },
+          { status: 409 }
+        );
+      }
+
+      throw customerError;
+    }
+
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: account.stripe_customer_id,
       return_url: `${origin}/settings`,

@@ -2,6 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
 
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message) return error.message;
+
+  if (error && typeof error === 'object') {
+    const maybeMessage = 'message' in error && typeof (error as { message?: unknown }).message === 'string'
+      ? (error as { message: string }).message
+      : null;
+    if (maybeMessage) return maybeMessage;
+  }
+
+  return 'Could not upload a version.';
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { songId, fileName, fileSize, label, notes } = await req.json();
@@ -70,6 +83,6 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     console.error('Error creating version:', error);
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
   }
 }

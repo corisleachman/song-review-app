@@ -26,7 +26,7 @@ label           TEXT                      -- nullable; user-editable display nam
 notes           TEXT                      -- nullable; short upload context / changelog note
 file_path       TEXT NOT NULL             -- path in song-files bucket
 file_name       TEXT NOT NULL
-created_by      TEXT CHECK (created_by IN ('Coris', 'Al'))
+created_by      TEXT                      -- display name at upload time
 created_at      TIMESTAMP DEFAULT now()
 updated_at      TIMESTAMP DEFAULT now()
 ```
@@ -36,7 +36,7 @@ updated_at      TIMESTAMP DEFAULT now()
 id                UUID PRIMARY KEY DEFAULT gen_random_uuid()
 song_version_id   UUID NOT NULL REFERENCES song_versions(id) ON DELETE CASCADE
 timestamp_seconds INTEGER NOT NULL        -- IMPORTANT: INTEGER, must Math.round() WaveSurfer float
-created_by        TEXT CHECK (created_by IN ('Coris', 'Al'))
+created_by        TEXT                    -- display name at comment time
 created_at        TIMESTAMP DEFAULT now()
 updated_at        TIMESTAMP DEFAULT now()
 ```
@@ -45,7 +45,7 @@ updated_at        TIMESTAMP DEFAULT now()
 ```sql
 id          UUID PRIMARY KEY DEFAULT gen_random_uuid()
 thread_id   UUID NOT NULL REFERENCES comment_threads(id) ON DELETE CASCADE
-author      TEXT CHECK (author IN ('Coris', 'Al'))
+author      TEXT                          -- display name at comment time
 body        TEXT NOT NULL
 created_at  TIMESTAMP DEFAULT now()
 ```
@@ -56,7 +56,7 @@ id            UUID PRIMARY KEY DEFAULT gen_random_uuid()
 song_id       UUID NOT NULL REFERENCES songs(id) ON DELETE CASCADE
 comment_id    UUID REFERENCES comments(id) ON DELETE SET NULL   -- nullable
 description   TEXT NOT NULL
-suggested_by  TEXT CHECK (suggested_by IN ('Coris', 'Al'))
+suggested_by  TEXT                        -- display name at action creation time
 status        TEXT DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'done'))
 assigned_to_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL
 resolved_in_version_id UUID REFERENCES song_versions(id) ON DELETE SET NULL

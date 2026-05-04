@@ -87,6 +87,7 @@ interface BootstrapPayload {
     email: string | null;
     profileId: string;
     displayName: string;
+    avatarUrl: string | null;
     authorName: string;
     workspaceId: string;
     workspaceName: string;
@@ -135,6 +136,15 @@ function darken(color: Rgb, amount: number) {
     g: clamp(Math.round(color.g * (1 - amount)), 0, 255),
     b: clamp(Math.round(color.b * (1 - amount)), 0, 255),
   };
+}
+
+function getUploadErrorMessage(value: unknown) {
+  if (typeof value === 'string') return value;
+  if (value && typeof value === 'object' && 'message' in value && typeof value.message === 'string') {
+    return value.message;
+  }
+
+  return 'Could not start the upload.';
 }
 
 async function extractPaletteFromImageUrl(url: string) {
@@ -419,6 +429,7 @@ export default function VersionPage() {
   const startReactiveDrawingRef = useRef<(() => void) | null>(null);
 
   const [identity, setIdentity] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [song, setSong] = useState<Song | null>(null);
   const [version, setVersion] = useState<Version | null>(null);
@@ -782,6 +793,7 @@ export default function VersionPage() {
 
         if (payload?.identity?.authorName) {
           setIdentity(payload.identity.authorName);
+          setAvatarUrl(payload.identity.avatarUrl ?? null);
           setCurrentUserId(payload.identity.userId);
           logVersionInit('bootstrap:resolved', {
             authorName: payload.identity.authorName,
@@ -799,6 +811,7 @@ export default function VersionPage() {
         const legacyIdentity = getIdentity();
         if (legacyIdentity) {
           setIdentity(legacyIdentity);
+          setAvatarUrl(null);
           setCurrentUserId(null);
           logVersionInit('bootstrap:fallback-legacy-identity', { legacyIdentity });
           return;
@@ -813,6 +826,7 @@ export default function VersionPage() {
         const legacyIdentity = getIdentity();
         if (legacyIdentity) {
           setIdentity(legacyIdentity);
+          setAvatarUrl(null);
           setCurrentUserId(null);
           logVersionInit('bootstrap:error-fallback-legacy-identity', { legacyIdentity });
           return;
@@ -1799,7 +1813,7 @@ export default function VersionPage() {
       const data = await res.json();
 
       if (!res.ok || !data.uploadUrl || !data.versionId) {
-        throw new Error(data.error || 'Could not start the upload.');
+        throw new Error(getUploadErrorMessage(data.error));
       }
 
       await new Promise<void>((resolve, reject) => {
@@ -1953,7 +1967,13 @@ export default function VersionPage() {
           <div className={styles.heroNav}>
             <button className={styles.songsBtn} onClick={() => { stopPlayback(); router.push('/dashboard'); }}>← Songs</button>
             <div className={styles.heroNavRight}>
-              <div className={styles.avatar}>{identity?.[0]?.toUpperCase()}</div>
+              <div className={styles.avatar} title={identity || 'User'} aria-label={identity || 'User'}>
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="" />
+                ) : (
+                  identity?.[0]?.toUpperCase()
+                )}
+              </div>
             </div>
           </div>
 

@@ -1797,3 +1797,41 @@ Note the next follow-up slice.
 - Next follow-up:
   - verify online Dashboard first load as owner and member
   - if still slow, instrument route timings inside bootstrap, summary, and full dashboard hydration
+
+## 2026-05-04 — Member collaboration QA fixes
+
+- Slice / change name: Member collaboration QA fixes
+- Status: Implemented
+- Phase position: Phase 3 collaboration permissions QA
+- Exact files changed or audited:
+  - `migrations/20260504_relax_author_name_checks_up.sql`
+  - `migrations/20260504_relax_author_name_checks_down.sql`
+  - `DATABASE.md`
+  - `lib/currentUser.ts`
+  - `lib/canonicalIdentity.ts`
+  - `app/api/versions/create/route.ts`
+  - `app/api/billing/portal/route.ts`
+  - `app/dashboard/page.tsx`
+  - `app/dashboard/dashboard.module.css`
+  - `app/invite/[token]/InviteActions.tsx`
+  - `app/songs/[id]/upload/page.tsx`
+  - `app/songs/[id]/versions/[versionId]/page.tsx`
+  - `app/songs/[id]/versions/[versionId]/version.module.css`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - members should no longer be blocked from uploading versions or commenting by legacy `Coris`/`Al` database checks after migration
+  - upload errors now render as readable messages instead of `[object Object]`
+  - Google profile pictures now render in the Dashboard and song/version page user avatar circles
+  - accepting an invite now shows a Dashboard confirmation modal explaining the workspace join
+  - stale Stripe customer errors are handled with clearer billing portal copy
+  - member song deletion remains blocked as intended
+  - invite email delivery still needs separate Resend/domain verification
+- Tests run:
+  - `npx tsc --noEmit`
+  - `git diff --check`
+- Required production step:
+  - apply `migrations/20260504_relax_author_name_checks_up.sql` in Supabase before retesting member uploads/comments online
+- Next follow-up:
+  - retest member song create, version upload, comment creation, owner delete, invite acceptance modal, and avatar rendering online
+  - verify Resend/domain configuration for invite email delivery

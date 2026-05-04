@@ -8,6 +8,15 @@ import styles from '../song.module.css';
 
 const supabase = createClient();
 
+function getUploadErrorMessage(value: unknown, fallback: string) {
+  if (typeof value === 'string') return value;
+  if (value && typeof value === 'object' && 'message' in value && typeof value.message === 'string') {
+    return value.message;
+  }
+
+  return fallback;
+}
+
 export default function UploadVersionPage() {
   const router = useRouter();
   const params = useParams();
@@ -87,7 +96,7 @@ export default function UploadVersionPage() {
       });
       if (!res.ok) {
         const e = await res.json().catch(() => ({}));
-        throw new Error(e.error || `HTTP ${res.status}`);
+        throw new Error(getUploadErrorMessage(e.error, `HTTP ${res.status}`));
       }
       const { versionId, uploadUrl } = await res.json();
 

@@ -59,6 +59,7 @@ interface BootstrapPayload {
     email: string | null;
     profileId: string;
     displayName: string;
+    avatarUrl: string | null;
     authorName: string;
     workspaceId: string;
     workspaceName: string;
@@ -140,6 +141,7 @@ function formatActivityTimestamp(value: string | null) {
 function DashboardContent() {
   const router = useRouter();
   const [identity, setIdentity] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [viewerKey, setViewerKey] = useState<string | null>(null);
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
   const [workspacePlan, setWorkspacePlan] = useState<AccountPlan | null>(null);
@@ -188,6 +190,7 @@ function DashboardContent() {
   const [playerDuration, setPlayerDuration] = useState(0);
   const [billingError, setBillingError] = useState<string | null>(null);
   const [showUpgradeSuccessModal, setShowUpgradeSuccessModal] = useState(false);
+  const [acceptedInviteWorkspaceName, setAcceptedInviteWorkspaceName] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -201,6 +204,7 @@ function DashboardContent() {
           if (!mounted) return;
 
           setIdentity(payload.identity.authorName || payload.identity.displayName || 'U');
+          setAvatarUrl(payload.identity.avatarUrl ?? null);
           setViewerKey(payload.identity.userId);
           setWorkspacePlan(payload.workspace.plan);
           setWorkspaceName(payload.identity.workspaceName);
@@ -216,6 +220,7 @@ function DashboardContent() {
 
         if (legacyIdentity) {
           setIdentity(legacyIdentity);
+          setAvatarUrl(null);
           setViewerKey(legacyIdentity);
           setWorkspacePlan(null);
           setWorkspaceName(null);
@@ -234,6 +239,7 @@ function DashboardContent() {
         const legacyIdentity = getIdentity();
         if (legacyIdentity) {
           setIdentity(legacyIdentity);
+          setAvatarUrl(null);
           setViewerKey(legacyIdentity);
           setWorkspacePlan(null);
           setWorkspaceName(null);
@@ -310,6 +316,22 @@ function DashboardContent() {
     }
 
     void activateBilling();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const params = new URLSearchParams(window.location.search);
+    const acceptedWorkspace = params.get('inviteAccepted');
+    if (!acceptedWorkspace) return;
+
+    setAcceptedInviteWorkspaceName(acceptedWorkspace);
+    params.delete('inviteAccepted');
+    const nextQuery = params.toString();
+    const nextUrl = nextQuery
+      ? `${window.location.pathname}?${nextQuery}`
+      : window.location.pathname;
+    window.history.replaceState({}, '', nextUrl);
   }, []);
 
   useEffect(() => {
@@ -1037,6 +1059,15 @@ function DashboardContent() {
             </div>
             {currentWorkspaceRole && (
               <span className={styles.workspaceRolePill}>{currentWorkspaceRole}</span>
+            )}
+          </div>
+        </div>
+        <div className={styles.headerRight}>
+          <div className={styles.avatar} title={identity || 'User'} aria-label={identity || 'User'}>
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="" />
+            ) : (
+              identity?.[0]?.toUpperCase() || 'U'
             )}
           </div>
         </div>
@@ -1769,6 +1800,22 @@ function DashboardContent() {
                 disabled={deletingSongId === deletingId}
               >
                 {deletingSongId === deletingId ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {acceptedInviteWorkspaceName && (
+        <div className={styles.modalOverlay} onClick={e => { if (e.target === e.currentTarget) setAcceptedInviteWorkspaceName(null); }}>
+          <div className={styles.modal}>
+            <div className={styles.modalTitle}>You joined {acceptedInviteWorkspaceName}</div>
+            <p className={styles.modalCopy}>
+              Congratulations, you are now part of {acceptedInviteWorkspaceName}. You can collaborate with the rest of your band in this workspace.
+            </p>
+            <div className={styles.modalActions}>
+              <button className={styles.modalConfirm} onClick={() => setAcceptedInviteWorkspaceName(null)}>
+                OK
               </button>
             </div>
           </div>

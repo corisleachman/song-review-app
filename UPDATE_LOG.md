@@ -1883,3 +1883,46 @@ Fast dashboard summary endpoint with background hydration.
 - No schema, permission, song mutation, comment, action, or billing behavior changed.
 - `npx tsc --noEmit` passed.
 - `git diff --check` passed.
+
+---
+
+## 2026-05-04 — Member collaboration QA fixes
+
+### What we were trying to achieve
+
+Fix member collaboration failures found during QA and add the requested account-avatar and invite-acceptance polish.
+
+### Feature / change being made
+
+Member author constraint migration, upload error cleanup, Google avatar display, invite acceptance modal, and safer billing portal error handling.
+
+### Files changed
+
+- [migrations/20260504_relax_author_name_checks_up.sql](/Users/impero/song-review-app/migrations/20260504_relax_author_name_checks_up.sql)
+- [migrations/20260504_relax_author_name_checks_down.sql](/Users/impero/song-review-app/migrations/20260504_relax_author_name_checks_down.sql)
+- [DATABASE.md](/Users/impero/song-review-app/DATABASE.md)
+- [lib/currentUser.ts](/Users/impero/song-review-app/lib/currentUser.ts)
+- [lib/canonicalIdentity.ts](/Users/impero/song-review-app/lib/canonicalIdentity.ts)
+- [app/api/versions/create/route.ts](/Users/impero/song-review-app/app/api/versions/create/route.ts)
+- [app/api/billing/portal/route.ts](/Users/impero/song-review-app/app/api/billing/portal/route.ts)
+- [app/dashboard/page.tsx](/Users/impero/song-review-app/app/dashboard/page.tsx)
+- [app/dashboard/dashboard.module.css](/Users/impero/song-review-app/app/dashboard/dashboard.module.css)
+- [app/invite/[token]/InviteActions.tsx](/Users/impero/song-review-app/app/invite/[token]/InviteActions.tsx)
+- [app/songs/[id]/upload/page.tsx](/Users/impero/song-review-app/app/songs/[id]/upload/page.tsx)
+- [app/songs/[id]/versions/[versionId]/page.tsx](/Users/impero/song-review-app/app/songs/[id]/versions/[versionId]/page.tsx)
+- [app/songs/[id]/versions/[versionId]/version.module.css](/Users/impero/song-review-app/app/songs/[id]/versions/[versionId]/version.module.css)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- Added a migration to drop legacy `Coris`/`Al` author-name check constraints from version, thread, comment, action, and legacy settings authored fields.
+- Version upload APIs and UI now convert object-shaped errors into readable messages instead of `[object Object]`.
+- Google profile avatar URLs now flow through canonical identity.
+- Dashboard now shows the signed-in user's avatar in the top-right header.
+- Song/version page avatar now uses the Google profile image when available.
+- Accepting an invite now lands on Dashboard with a confirmation modal explaining the workspace switch.
+- Billing portal now returns a clearer stale Stripe customer error instead of the raw `No such customer` message.
+- Invite email delivery was not changed; delivery still depends on Resend/domain configuration and should be verified separately.
+- `npx tsc --noEmit` passed.
+- `git diff --check` passed.

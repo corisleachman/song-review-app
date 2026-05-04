@@ -5,6 +5,7 @@ export interface AuthenticatedUser {
   id: string;
   email: string | null;
   displayName: string | null;
+  avatarUrl: string | null;
 }
 
 function getDisplayNameFromUser(user: {
@@ -22,6 +23,16 @@ function getDisplayNameFromUser(user: {
   return fallbackEmail || null;
 }
 
+function getAvatarUrlFromUser(user: {
+  user_metadata?: Record<string, unknown> | null;
+}) {
+  const metadata = user.user_metadata ?? {};
+  const avatarUrl = typeof metadata.avatar_url === 'string' ? metadata.avatar_url.trim() : '';
+  const picture = typeof metadata.picture === 'string' ? metadata.picture.trim() : '';
+
+  return avatarUrl || picture || null;
+}
+
 export async function getCurrentAuthenticatedUser(): Promise<AuthenticatedUser | null> {
   const supabase = createRouteHandlerClient({ cookies });
   const { data, error } = await supabase.auth.getUser();
@@ -34,5 +45,6 @@ export async function getCurrentAuthenticatedUser(): Promise<AuthenticatedUser |
     id: data.user.id,
     email: data.user.email ?? null,
     displayName: getDisplayNameFromUser(data.user),
+    avatarUrl: getAvatarUrlFromUser(data.user),
   };
 }

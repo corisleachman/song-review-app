@@ -6,6 +6,7 @@ export interface CanonicalIdentity {
   email: string | null;
   profileId: string;
   displayName: string;
+  avatarUrl: string | null;
   authorName: string;
   workspaceId: string;
   workspaceName: string;
@@ -56,6 +57,7 @@ export function buildCanonicalIdentity(bootstrap: BootstrapResult): CanonicalIde
     email: bootstrap.user.email,
     profileId: bootstrap.profile.id,
     displayName,
+    avatarUrl: bootstrap.user.avatarUrl,
     authorName: getAuthorName(bootstrap),
     workspaceId: bootstrap.workspace.id,
     workspaceName: bootstrap.workspace.name,
