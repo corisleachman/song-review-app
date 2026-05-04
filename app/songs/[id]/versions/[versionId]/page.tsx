@@ -440,6 +440,7 @@ export default function VersionPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const analyserAudioRef = useRef<HTMLAudioElement | null>(null);
   const audioLoadedRef = useRef(false);
+  const nativeAudioRef = useRef<HTMLAudioElement | null>(null);
   const nativeAudioCleanupRef = useRef<(() => void) | null>(null);
   const nativeAudioFallbackRef = useRef(false);
   const precomputedFreqRef = useRef<{ freqFrames: Uint8Array[]; timeFrames: Uint8Array[]; fps: number } | null>(null);
@@ -459,6 +460,7 @@ export default function VersionPage() {
   const reactiveAudioContextRef = useRef<AudioContext | null>(null);
   const reactiveAnalyserRef = useRef<AnalyserNode | null>(null);
   const reactiveSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const reactiveSourceElementRef = useRef<HTMLAudioElement | null>(null);
   const reactiveAnimationFrameRef = useRef<number | null>(null);
   const reactiveRefreshTimeoutRef = useRef<number | null>(null);
   const reactivePlayingRef = useRef(false);
@@ -756,6 +758,16 @@ export default function VersionPage() {
   const ensureReactiveAudioGraph = useCallback(async (audio: HTMLAudioElement | null) => {
     if (!audio) return false;
 
+    if (reactiveSourceElementRef.current && reactiveSourceElementRef.current !== audio) {
+      if (reactiveAudioContextRef.current) {
+        await reactiveAudioContextRef.current.close();
+      }
+      reactiveAudioContextRef.current = null;
+      reactiveSourceRef.current = null;
+      reactiveAnalyserRef.current = null;
+      reactiveSourceElementRef.current = null;
+    }
+
     if (!reactiveAudioContextRef.current) {
       const AudioContextCtor = window.AudioContext || (window as typeof window & {
         webkitAudioContext?: typeof AudioContext;
@@ -768,6 +780,7 @@ export default function VersionPage() {
 
     if (!reactiveSourceRef.current) {
       reactiveSourceRef.current = reactiveAudioContextRef.current.createMediaElementSource(audio);
+      reactiveSourceElementRef.current = audio;
       reactiveAnalyserRef.current = reactiveAudioContextRef.current.createAnalyser();
       reactiveAnalyserRef.current.fftSize = 2048;
       reactiveAnalyserRef.current.smoothingTimeConstant = 0.82;
@@ -861,14 +874,31 @@ export default function VersionPage() {
   }, []);
 
   const playNativeAudioFallback = useCallback(async (url: string, reason: string) => {
-    const audio = audioRef.current;
+    const waveAudio = audioRef.current;
+    let audio = nativeAudioRef.current;
 
     if (!audio) {
-      throw new Error('Audio player is not ready.');
+      audio = new Audio();
+      audio.preload = 'metadata';
+      nativeAudioRef.current = audio;
     }
 
     clearWaveTimers();
+    if (wavesurferRef.current) {
+      try { wavesurferRef.current.pause(); } catch {}
+    }
+    if (waveAudio && waveAudio !== audio) {
+      try {
+        waveAudio.pause();
+        waveAudio.removeAttribute('src');
+        waveAudio.load();
+      } catch {}
+    }
+
     nativeAudioFallbackRef.current = true;
+    audioRef.current = audio;
+    analyserAudioRef.current = audio;
+    attachNativeAudioEvents(audio, waveLoadIdRef.current);
     setIsRetryingWave(false);
     setWaveErr(null);
     setIsReady(true);
@@ -880,7 +910,7 @@ export default function VersionPage() {
     }
 
     await audio.play();
-  }, [clearWaveTimers]);
+  }, [attachNativeAudioEvents, clearWaveTimers]);
 
   useEffect(() => {
     let mounted = true;
@@ -1325,6 +1355,14 @@ export default function VersionPage() {
     nativeAudioCleanupRef.current?.();
     nativeAudioCleanupRef.current = null;
     nativeAudioFallbackRef.current = false;
+    if (nativeAudioRef.current) {
+      try {
+        nativeAudioRef.current.pause();
+        nativeAudioRef.current.removeAttribute('src');
+        nativeAudioRef.current.load();
+      } catch {}
+      nativeAudioRef.current = null;
+    }
     if (audioRef.current) {
       try {
         audioRef.current.pause();
@@ -1349,6 +1387,7 @@ export default function VersionPage() {
 
     precomputedFreqRef.current = null;
     reactiveSourceRef.current = null;
+    reactiveSourceElementRef.current = null;
     reactiveAnalyserRef.current = null;
     if (reactiveAudioContextRef.current) {
       void reactiveAudioContextRef.current.close();
@@ -1500,6 +1539,12 @@ export default function VersionPage() {
         audioRef.current.currentTime = 0;
       } catch {}
     }
+    if (nativeAudioRef.current && nativeAudioRef.current !== audioRef.current) {
+      try {
+        nativeAudioRef.current.pause();
+        nativeAudioRef.current.currentTime = 0;
+      } catch {}
+    }
     reactivePlayingRef.current = false;
     stopReactiveDrawing();
     drawReactiveIdle();
@@ -1564,6 +1609,14 @@ export default function VersionPage() {
       nativeAudioCleanupRef.current?.();
       nativeAudioCleanupRef.current = null;
       nativeAudioFallbackRef.current = false;
+      if (nativeAudioRef.current) {
+        try {
+          nativeAudioRef.current.pause();
+          nativeAudioRef.current.removeAttribute('src');
+          nativeAudioRef.current.load();
+        } catch {}
+        nativeAudioRef.current = null;
+      }
       if (audioRef.current) {
         try {
           audioRef.current.removeAttribute('src');
@@ -1586,6 +1639,7 @@ export default function VersionPage() {
         reactiveAudioContextRef.current = null;
       }
       reactiveSourceRef.current = null;
+      reactiveSourceElementRef.current = null;
       reactiveAnalyserRef.current = null;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps

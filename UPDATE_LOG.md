@@ -2038,3 +2038,29 @@ Fallback from WaveSurfer's fetch/decode path to native browser audio playback wh
 - Native fallback keeps play/pause state, current time, duration, and marker seeking wired.
 - `npx tsc --noEmit` passed.
 - `git diff --check` passed.
+
+---
+
+## 2026-05-04 — Dedicated song page audio fallback
+
+### What we were trying to achieve
+
+Fix the song page fallback appearing to play while producing no audible audio for member accounts.
+
+### Feature / change being made
+
+Use a dedicated native `Audio` element for the song page fallback instead of reusing WaveSurfer's internal media element after WaveSurfer has failed.
+
+### Files changed
+
+- [app/songs/[id]/versions/[versionId]/page.tsx](/Users/impero/song-review-app/app/songs/[id]/versions/[versionId]/page.tsx)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- Native fallback now creates and plays a separate browser audio element, matching the Dashboard playback model more closely.
+- The failed WaveSurfer media element is paused and disconnected before fallback playback starts.
+- Reactive audio analysis now resets if playback switches to a different audio element.
+- `npx tsc --noEmit` passed.
+- `git diff --check` passed.

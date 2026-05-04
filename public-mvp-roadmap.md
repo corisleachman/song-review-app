@@ -1920,3 +1920,22 @@ Note the next follow-up slice.
   - `git diff --check`
 - Next follow-up:
   - deploy and retest song/version page playback as a member
+
+## 2026-05-04 — Dedicated song page audio fallback
+
+- Slice / change name: Dedicated song page audio fallback
+- Status: Implemented
+- Phase position: Phase 3 collaboration permissions QA
+- Exact files changed or audited:
+  - `app/songs/[id]/versions/[versionId]/page.tsx`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - native fallback now plays through a dedicated browser `Audio` element instead of WaveSurfer's failed internal media element
+  - the failed WaveSurfer media element is paused and detached before fallback playback starts
+  - reactive audio analysis resets when the active audio element changes
+- Tests run:
+  - `npx tsc --noEmit`
+  - `git diff --check`
+- Next follow-up:
+  - deploy and retest song/version page playback as a member
