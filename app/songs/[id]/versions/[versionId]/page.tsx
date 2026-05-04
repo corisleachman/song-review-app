@@ -251,10 +251,6 @@ function formatFileSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function normalizeStoragePath(path: string) {
-  return path.replace(/^\/+/, '').trim();
-}
-
 function getMissingAudioMessage() {
   return 'This version was created, but its audio file was not found in storage. Please upload the version again.';
 }
@@ -1102,12 +1098,12 @@ export default function VersionPage() {
           filePath: versionPayload.version.file_path,
         });
       } else if (versionPayload.version?.file_path) {
-        const normalizedFilePath = normalizeStoragePath(versionPayload.version.file_path);
-        const { data: pub } = supabase.storage.from('song-files').getPublicUrl(normalizedFilePath);
-        setAudioUrl(pub.publicUrl);
-        logVersionInit('audio-url:resolved', {
-          filePath: normalizedFilePath,
-          hasUrl: Boolean(pub.publicUrl),
+        const message = 'This version could not prepare a signed audio URL. Please refresh and try again.';
+        setAudioUrl(null);
+        setWaveErr(message);
+        showStatusToast(message);
+        logVersionInit('audio-url:missing-signed-url', {
+          filePath: versionPayload.version.file_path,
         });
       } else {
         setAudioUrl(null);

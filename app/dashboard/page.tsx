@@ -27,6 +27,7 @@ interface Song {
   latestVersionLabel: string | null;
   latestVersionCreatedAt: string | null;
   latestVersionFilePath?: string | null;
+  latestVersionAudioUrl?: string | null;
   commentCount: number;
   unresolvedActionCount: number;
   assignedToMeCount: number;
@@ -101,6 +102,8 @@ interface DashboardSongsPayload {
 interface VersionPayload {
   version?: {
     file_path?: string | null;
+    audioUrl?: string | null;
+    audioMissing?: boolean;
   } | null;
 }
 
@@ -688,11 +691,6 @@ function DashboardContent() {
     router.push(href);
   }
 
-  function getAudioUrl(filePath: string) {
-    const { data } = supabase.storage.from('song-files').getPublicUrl(filePath);
-    return data.publicUrl;
-  }
-
   function setMediaSession(song: Song) {
     if (!('mediaSession' in navigator)) return;
 
@@ -724,8 +722,12 @@ function DashboardContent() {
     navigator.mediaSession.playbackState = 'playing';
   }
 
-  async function resolveLatestVersionFilePath(song: Song) {
-    if (song.latestVersionFilePath) return song.latestVersionFilePath;
+  function getDashboardAudioError() {
+    return 'This audio file could not be prepared for playback. Open the song and try again.';
+  }
+
+  async function resolveLatestVersionAudioUrl(song: Song) {
+    if (song.latestVersionAudioUrl) return song.latestVersionAudioUrl;
     if (!song.latestVersionId) return null;
 
     try {
@@ -737,23 +739,33 @@ function DashboardContent() {
         return null;
       }
 
+      if (payload?.version?.audioMissing) {
+        window.alert('This version was created, but its audio file was not found in storage. Please upload the version again.');
+        return null;
+      }
+
+      const audioUrl = payload?.version?.audioUrl ?? null;
       const filePath = payload?.version?.file_path ?? null;
-      if (!filePath) return null;
+      if (!audioUrl) {
+        window.alert(getDashboardAudioError());
+        return null;
+      }
 
       setSongs(prev => prev.map(existing => (
         existing.id === song.id
-          ? { ...existing, latestVersionFilePath: filePath }
+          ? { ...existing, latestVersionFilePath: filePath, latestVersionAudioUrl: audioUrl }
           : existing
       )));
       queueRef.current = queueRef.current.map(existing => (
         existing.id === song.id
-          ? { ...existing, latestVersionFilePath: filePath }
+          ? { ...existing, latestVersionFilePath: filePath, latestVersionAudioUrl: audioUrl }
           : existing
       ));
 
-      return filePath;
+      return audioUrl;
     } catch (error) {
-      console.error('Resolve latest version file path error:', error);
+      console.error('Resolve latest version audio error:', error);
+      window.alert(getDashboardAudioError());
       return null;
     }
   }
@@ -761,26 +773,29 @@ function DashboardContent() {
   async function playSong(song: Song, queue: Song[]) {
     if (!song.latestVersionId || !audioRef.current) return;
 
-    const filePath = await resolveLatestVersionFilePath(song);
-    if (!filePath || !audioRef.current) return;
+    const audioUrl = await resolveLatestVersionAudioUrl(song);
+    if (!audioUrl || !audioRef.current) return;
 
     const hydratedQueue = await Promise.all(queue.map(async item => {
-      if (item.id !== song.id || item.latestVersionFilePath) return item;
+      if (item.id !== song.id || item.latestVersionAudioUrl) return item;
 
-      const latestVersionFilePath = await resolveLatestVersionFilePath(item);
-      return latestVersionFilePath ? { ...item, latestVersionFilePath } : item;
+      const latestVersionAudioUrl = await resolveLatestVersionAudioUrl(item);
+      return latestVersionAudioUrl ? { ...item, latestVersionAudioUrl } : item;
     }));
 
     queueRef.current = hydratedQueue;
-    const hydratedSong = hydratedQueue.find(item => item.id === song.id) ?? { ...song, latestVersionFilePath: filePath };
+    const hydratedSong = hydratedQueue.find(item => item.id === song.id) ?? { ...song, latestVersionAudioUrl: audioUrl };
     const idx = hydratedQueue.findIndex(item => item.id === song.id);
 
     setQueueIndex(idx >= 0 ? idx : 0);
     setPlayingId(song.id);
     setIsPlaying(true);
     setPlayerCurrentTime(0);
-    audioRef.current.src = getAudioUrl(filePath);
-    audioRef.current.play().catch(() => {});
+    audioRef.current.src = audioUrl;
+    audioRef.current.play().catch(error => {
+      console.error('Dashboard playback error:', error);
+      window.alert(getDashboardAudioError());
+    });
     setMediaSession(hydratedSong);
   }
 
@@ -790,15 +805,18 @@ function DashboardContent() {
 
     if (nextIdx < queue.length) {
       const next = queue[nextIdx];
-      const filePath = await resolveLatestVersionFilePath(next);
+      const audioUrl = await resolveLatestVersionAudioUrl(next);
 
-      if (filePath && audioRef.current) {
-        const hydratedNext = { ...next, latestVersionFilePath: filePath };
+      if (audioUrl && audioRef.current) {
+        const hydratedNext = { ...next, latestVersionAudioUrl: audioUrl };
         queueRef.current = queue.map((item, index) => index === nextIdx ? hydratedNext : item);
         setQueueIndex(nextIdx);
         setPlayingId(next.id);
-        audioRef.current.src = getAudioUrl(filePath);
-        audioRef.current.play().catch(() => {});
+        audioRef.current.src = audioUrl;
+        audioRef.current.play().catch(error => {
+          console.error('Dashboard playback error:', error);
+          window.alert(getDashboardAudioError());
+        });
         setMediaSession(hydratedNext);
         return;
       }
@@ -817,15 +835,18 @@ function DashboardContent() {
     if (targetIdx < 0 || targetIdx >= queue.length) return;
 
     const target = queue[targetIdx];
-    const filePath = await resolveLatestVersionFilePath(target);
+    const audioUrl = await resolveLatestVersionAudioUrl(target);
 
-    if (filePath && audioRef.current) {
-      const hydratedTarget = { ...target, latestVersionFilePath: filePath };
+    if (audioUrl && audioRef.current) {
+      const hydratedTarget = { ...target, latestVersionAudioUrl: audioUrl };
       queueRef.current = queue.map((item, index) => index === targetIdx ? hydratedTarget : item);
       setQueueIndex(targetIdx);
       setPlayingId(target.id);
-      audioRef.current.src = getAudioUrl(filePath);
-      audioRef.current.play().catch(() => {});
+      audioRef.current.src = audioUrl;
+      audioRef.current.play().catch(error => {
+        console.error('Dashboard playback error:', error);
+        window.alert(getDashboardAudioError());
+      });
       setMediaSession(hydratedTarget);
     }
   }

@@ -1880,3 +1880,24 @@ Note the next follow-up slice.
   - `git diff --check`
 - Next follow-up:
   - deploy and retest the existing member-uploaded version, then upload a fresh member version if the old storage object is missing
+
+## 2026-05-04 — Dashboard signed playback
+
+- Slice / change name: Dashboard signed playback
+- Status: Implemented
+- Phase position: Phase 3 collaboration permissions QA
+- Exact files changed or audited:
+  - `app/dashboard/page.tsx`
+  - `app/songs/[id]/versions/[versionId]/page.tsx`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - dashboard playback now resolves the latest version through `/api/versions/[versionId]` and uses the signed `audioUrl`
+  - dashboard playback no longer builds direct public Supabase storage URLs from `file_path`
+  - version detail no longer falls back to public storage URLs when a signed URL is missing
+  - this targets the owner/member mismatch where the owner could play a member upload but the member still saw `Failed to fetch`
+- Tests run:
+  - `npx tsc --noEmit`
+  - `git diff --check`
+- Next follow-up:
+  - deploy and retest dashboard and version-page playback as a member

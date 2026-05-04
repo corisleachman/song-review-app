@@ -1985,3 +1985,30 @@ Storage-object verification for version playback and upload handoff.
 - Existing version rows whose storage object never uploaded will need the audio reuploaded.
 - `npx tsc --noEmit` passed.
 - `git diff --check` passed.
+
+---
+
+## 2026-05-04 — Dashboard signed playback
+
+### What we were trying to achieve
+
+Fix the owner/member playback mismatch where a member-uploaded file could play for the owner but still failed for the member with `Failed to fetch`.
+
+### Feature / change being made
+
+Route Dashboard playback through the same signed, workspace-checked version audio path as the song/version page.
+
+### Files changed
+
+- [app/dashboard/page.tsx](/Users/impero/song-review-app/app/dashboard/page.tsx)
+- [app/songs/[id]/versions/[versionId]/page.tsx](/Users/impero/song-review-app/app/songs/[id]/versions/[versionId]/page.tsx)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- Dashboard playback now fetches `/api/versions/[versionId]` and uses the returned signed `audioUrl`.
+- Dashboard playback no longer builds direct public Supabase storage URLs from `file_path`.
+- The song/version page no longer falls back to public storage URLs when the signed URL is missing.
+- `npx tsc --noEmit` passed.
+- `git diff --check` passed.
