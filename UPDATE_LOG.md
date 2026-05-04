@@ -2064,3 +2064,29 @@ Use a dedicated native `Audio` element for the song page fallback instead of reu
 - Reactive audio analysis now resets if playback switches to a different audio element.
 - `npx tsc --noEmit` passed.
 - `git diff --check` passed.
+
+---
+
+## 2026-05-04 — Keep fallback audio out of analyser path
+
+### What we were trying to achieve
+
+Fix member song-page playback where the timer advanced but no sound was audible and no audio was visualised.
+
+### Feature / change being made
+
+Prevent the native fallback audio element from being routed into the song page reactive Web Audio analyser.
+
+### Files changed
+
+- [app/songs/[id]/versions/[versionId]/page.tsx](/Users/impero/song-review-app/app/songs/[id]/versions/[versionId]/page.tsx)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- Native fallback audio now bypasses `ensureReactiveAudioGraph`.
+- Any existing reactive `AudioContext` is closed before fallback playback starts.
+- This keeps the fallback path closer to the Dashboard's working native audio playback.
+- `npx tsc --noEmit` passed.
+- `git diff --check` passed.

@@ -897,7 +897,14 @@ export default function VersionPage() {
 
     nativeAudioFallbackRef.current = true;
     audioRef.current = audio;
-    analyserAudioRef.current = audio;
+    analyserAudioRef.current = null;
+    if (reactiveAudioContextRef.current) {
+      await reactiveAudioContextRef.current.close();
+    }
+    reactiveAudioContextRef.current = null;
+    reactiveSourceRef.current = null;
+    reactiveSourceElementRef.current = null;
+    reactiveAnalyserRef.current = null;
     attachNativeAudioEvents(audio, waveLoadIdRef.current);
     setIsRetryingWave(false);
     setWaveErr(null);
@@ -1075,6 +1082,12 @@ export default function VersionPage() {
 
   useEffect(() => {
     if (isPlaying) {
+      if (nativeAudioFallbackRef.current) {
+        reactivePlayingRef.current = false;
+        stopReactiveDrawing();
+        return;
+      }
+
       const isMobile = typeof navigator !== 'undefined' &&
         /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       if (isMobile) {

@@ -1939,3 +1939,22 @@ Note the next follow-up slice.
   - `git diff --check`
 - Next follow-up:
   - deploy and retest song/version page playback as a member
+
+## 2026-05-04 — Keep fallback audio out of analyser path
+
+- Slice / change name: Keep fallback audio out of analyser path
+- Status: Implemented
+- Phase position: Phase 3 collaboration permissions QA
+- Exact files changed or audited:
+  - `app/songs/[id]/versions/[versionId]/page.tsx`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - native fallback audio now bypasses the song page reactive Web Audio analyser
+  - existing reactive audio contexts are closed before native fallback playback starts
+  - this targets the state where the timer advances but no sound is audible
+- Tests run:
+  - `npx tsc --noEmit`
+  - `git diff --check`
+- Next follow-up:
+  - deploy and retest new-version song page playback as a member
