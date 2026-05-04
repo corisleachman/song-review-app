@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Song Room — Create Together</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --charcoal: #111111;
+    --offwhite: #F4F0E8;
+    --sand: #D8CBB8;
+    --acid: #E6FF3F;
+    --red: #FF3B30;
+    --blue: #2D7DFF;
+    --pink: #FFB6C8;
+    --olive: #6F735F;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Barlow', sans-serif;
+    background: var(--offwhite);
+    color: var(--charcoal);
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 48px;
+    mix-blend-mode: normal;
+  }
+  nav.dark-bg { background: transparent; }
+  .nav-logo {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 18px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--offwhite);
+  }
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    align-items: center;
+  }
+  .nav-links a {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--offwhite);
+    text-decoration: none;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+  }
+  .nav-links a:hover { opacity: 1; }
+  .nav-cta {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: var(--acid);
+    color: var(--charcoal);
+    padding: 10px 20px;
+    text-decoration: none;
+    opacity: 1 !important;
+  }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    background: var(--charcoal);
+    display: grid;
+    grid-template-rows: 1fr auto;
+    padding: 140px 48px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-noise {
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    opacity: 0.4;
+  }
+  .hero-tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--acid);
+    margin-bottom: 32px;
+  }
+  .hero-headline {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: clamp(96px, 14vw, 200px);
+    line-height: 0.88;
+    text-transform: uppercase;
+    color: var(--offwhite);
+    letter-spacing: -0.01em;
+  }
+  .hero-headline .line-2 {
+    color: var(--acid);
+    display: block;
+  }
+  .hero-sub-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: 64px;
+    gap: 40px;
+  }
+  .hero-body {
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--sand);
+    max-width: 420px;
+    font-weight: 400;
+  }
+  .hero-body strong {
+    color: var(--offwhite);
+    font-weight: 600;
+  }
+  .hero-ctas {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .btn-primary {
+    background: var(--acid);
+    color: var(--charcoal);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 16px 32px;
+    text-decoration: none;
+    display: inline-block;
+    transition: background 0.2s;
+  }
+  .btn-primary:hover { background: #d4ec2a; }
+  .btn-secondary {
+    color: var(--offwhite);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(244,240,232,0.3);
+    padding-bottom: 2px;
+    transition: border-color 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--offwhite); }
+
+  /* VERSION VISUAL */
+  .hero-visual {
+    background: var(--charcoal);
+    padding: 80px 48px;
+    border-top: 1px solid rgba(244,240,232,0.08);
+    position: relative;
+  }
+  .version-strip {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    overflow: hidden;
+  }
+  .version-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--olive);
+    writing-mode: horizontal-tb;
+    margin-right: 24px;
+    flex-shrink: 0;
+  }
+  .version-track {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    overflow: hidden;
+  }
+  .version-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border: 1px solid rgba(244,240,232,0.12);
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .version-pill:hover { border-color: rgba(244,240,232,0.4); }
+  .version-pill.active { border-color: var(--acid); }
+  .version-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--olive);
+    flex-shrink: 0;
+  }
+  .version-pill.active .version-dot { background: var(--acid); }
+  .version-pill-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--olive);
+  }
+  .version-pill.active .version-pill-label { color: var(--acid); }
+  .version-pill-name {
+    font-size: 12px;
+    font-weight: 400;
+    color: rgba(244,240,232,0.5);
+    white-space: nowrap;
+  }
+  .version-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, rgba(244,240,232,0.15), transparent);
+  }
+  /* Waveform */
+  .waveform-row {
+    margin-top: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .waveform-viz {
+    flex: 1;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    overflow: hidden;
+  }
+  .wf-bar {
+    flex-shrink: 0;
+    width: 3px;
+    border-radius: 1px;
+    background: rgba(244,240,232,0.15);
+    transition: background 0.2s;
+  }
+  .wf-bar.played { background: rgba(230,255,63,0.6); }
+  .wf-bar.active { background: var(--acid); }
+  .wf-time {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    color: var(--olive);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+    width: 80px;
+  }
+  .play-btn {
+    width: 44px; height: 44px;
+    border: 1px solid rgba(244,240,232,0.2);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    background: none;
+  }
+  .play-btn:hover { border-color: var(--acid); }
+  .play-btn svg { fill: var(--offwhite); }
+  /* Comment pins */
+  .comment-pins {
+    margin-top: 16px;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    padding-left: calc(60px + 16px);
+  }
+  .pin {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+  }
+  .pin-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    border: 2px solid;
+    flex-shrink: 0;
+  }
+  .pin-label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    writing-mode: horizontal-tb;
+  }
+
+  /* PROBLEM SECTION */
+  .problem {
+    background: var(--charcoal);
+    padding: 120px 48px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: start;
+  }
+  .section-tag {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--olive);
+    margin-bottom: 24px;
+    display: block;
+  }
+  .problem-headline {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: clamp(52px, 6vw, 88px);
+    line-height: 0.9;
+    text-transform: uppercase;
+    color: var(--offwhite);
+  }
+  .problem-headline em {
+    color: var(--red);
+    font-style: normal;
+    display: block;
+  }
+  .problem-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 16px;
+  }
+  .problem-item {
+    padding: 24px 0;
+    border-bottom: 1px solid rgba(244,240,232,0.08);
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
+  .problem-num {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--olive);
+    padding-top: 3px;
+    flex-shrink: 0;
+  }
+  .problem-text {
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--sand);
+    line-height: 1.4;
+  }
+  .problem-text strong {
+    color: var(--offwhite);
+    font-weight: 600;
+  }
+
+  /* SOLUTION SECTION */
+  .solution {
+    background: var(--offwhite);
+    padding: 120px 48px;
+  }
+  .solution-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .solution-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    margin-bottom: 80px;
+    align-items: end;
+  }
+  .solution-headline {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: clamp(64px, 8vw, 120px);
+    line-height: 0.88;
+    text-transform: uppercase;
+    color: var(--charcoal);
+  }
+  .solution-headline .accent { color: var(--blue); }
+  .solution-body {
+    font-size: 17px;
+    line-height: 1.65;
+    color: var(--olive);
+    padding-bottom: 8px;
+  }
+  .solution-body strong { color: var(--charcoal); }
+
+  /* Feature grid */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    background: var(--sand);
+  }
+  .feature-card {
+    background: var(--offwhite);
+    padding: 40px 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .feature-card.dark {
+    background: var(--charcoal);
+  }
+  .feature-card.acid {
+    background: var(--acid);
+  }
+  .feature-icon {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--olive);
+  }
+  .feature-card.dark .feature-icon { color: var(--olive); }
+  .feature-card.acid .feature-icon { color: rgba(17,17,17,0.6); }
+  .feature-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 32px;
+    line-height: 1;
+    text-transform: uppercase;
+    color: var(--charcoal);
+    letter-spacing: -0.01em;
+  }
+  .feature-card.dark .feature-title { color: var(--offwhite); }
+  .feature-card.acid .feature-title { color: var(--charcoal); }
+  .feature-desc {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--olive);
+    font-weight: 400;
+  }
+  .feature-card.dark .feature-desc { color: rgba(244,240,232,0.55); }
+  .feature-card.acid .feature-desc { color: rgba(17,17,17,0.65); }
+
+  /* HOW IT WORKS */
+  .how {
+    background: var(--offwhite);
+    padding: 120px 48px;
+    border-top: 1px solid var(--sand);
+  }
+  .how-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .how-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 64px;
+  }
+  .how-headline {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: clamp(48px, 6vw, 80px);
+    line-height: 0.9;
+    text-transform: uppercase;
+    color: var(--charcoal);
+  }
+  .how-subline {
+    font-size: 15px;
+    color: var(--olive);
+    max-width: 300px;
+    text-align: right;
+    line-height: 1.6;
+  }
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border-left: 1px solid var(--sand);
+  }
+  .step {
+    border-right: 1px solid var(--sand);
+    border-top: 1px solid var(--sand);
+    border-bottom: 1px solid var(--sand);
+    padding: 40px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .step-num {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 64px;
+    line-height: 1;
+    color: var(--sand);
+    letter-spacing: -0.02em;
+  }
+  .step-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--charcoal);
+  }
+  .step-desc {
+    font-size: 14px;
+    color: var(--olive);
+    line-height: 1.65;
+  }
+  .step-tag {
+    margin-top: auto;
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--charcoal);
+    background: var(--acid);
+    padding: 5px 10px;
+    align-self: flex-start;
+  }
+
+  /* SONG PAGE PREVIEW */
+  .app-preview {
+    background: var(--charcoal);
+    padding: 120px 48px;
+  }
+  .app-preview-inner { max-width: 1200px; margin: 0 auto; }
+  .preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 48px;
+  }
+  .preview-headline {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: clamp(48px, 5vw, 72px);
+    line-height: 0.9;
+    text-transform: uppercase;
+    color: var(--offwhite);
+  }
+  .preview-sub {
+    font-size: 14px;
+    color: var(--olive);
+    max-width: 280px;
+    text-align: right;
+    line-height: 1.6;
+  }
+  /* Mock app UI */
+  .mock-app {
+    border: 1px solid rgba(244,240,232,0.1);
+    overflow: hidden;
+  }
+  .mock-topbar {
+    background: #1a1a1a;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(244,240,232,0.08);
+  }
+  .mock-breadcrumb {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--olive);
+    text-transform: uppercase;
+  }
+  .mock-breadcrumb span { color: var(--offwhite); }
+  .mock-stage {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--charcoal);
+    background: var(--acid);
+    padding: 4px 10px;
+  }
+  .mock-body {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+  }
+  .mock-main {
+    padding: 32px 40px;
+    border-right: 1px solid rgba(244,240,232,0.06);
+  }
+  .mock-song-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 52px;
+    line-height: 0.9;
+    text-transform: uppercase;
+    color: var(--offwhite);
+    letter-spacing: -0.01em;
+    margin-bottom: 8px;
+  }
+  .mock-version-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .mock-v-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--charcoal);
+    background: var(--acid);
+    padding: 4px 10px;
+  }
+  .mock-v-name {
+    font-size: 13px;
+    color: var(--olive);
+    letter-spacing: 0.06em;
+  }
+  .mock-waveform {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-bottom: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+  .mock-wf-bar {
+    width: 3px;
+    border-radius: 1px;
+    flex-shrink: 0;
+    background: rgba(244,240,232,0.12);
+  }
+  .mock-wf-bar.p { background: rgba(45,125,255,0.5); }
+  .mock-wf-bar.a { background: var(--blue); }
+  .mock-comment-marker {
+    position: absolute;
+    bottom: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid;
+    transform: translateX(-50%);
+    cursor: pointer;
+  }
+  .mock-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-top: 16px;
+  }
+  .mock-play-btn {
+    width: 36px; height: 36px;
+    border: 1px solid rgba(244,240,232,0.2);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .mock-play-btn svg { fill: var(--offwhite); }
+  .mock-timestamp {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    color: var(--olive);
+    font-variant-numeric: tabular-nums;
+  }
+  /* Version history */
+  .mock-version-history {
+    margin-top: 40px;
+    padding-top: 32px;
+    border-top: 1px solid rgba(244,240,232,0.06);
+  }
+  .mock-vh-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--olive);
+    margin-bottom: 16px;
+  }
+  .mock-vh-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(244,240,232,0.05);
+  }
+  .mock-vh-v {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    color: var(--acid);
+    width: 32px;
+    flex-shrink: 0;
+  }
+  .mock-vh-v.old { color: var(--olive); }
+  .mock-vh-bar {
+    flex: 1;
+    height: 2px;
+    background: rgba(244,240,232,0.08);
+    position: relative;
+    border-radius: 1px;
+  }
+  .mock-vh-fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    border-radius: 1px;
+    background: rgba(244,240,232,0.2);
+  }
+  .mock-vh-fill.current { background: var(--acid); }
+  .mock-vh-name {
+    font-size: 12px;
+    color: rgba(244,240,232,0.4);
+    width: 120px;
+    text-align: right;
+    flex-shrink: 0;
+    font-weight: 400;
+  }
+  .mock-vh-name.current { color: rgba(244,240,232,0.8); }
+  /* Comments panel */
+  .mock-comments {
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .mock-comment-hdr {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--olive);
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .mock-comment-count {
+    font-size: 10px;
+    background: rgba(244,240,232,0.08);
+    color: var(--offwhite);
+    padding: 3px 8px;
+    letter-spacing: 0.05em;
+  }
+  .mock-comment-card {
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(244,240,232,0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .mock-comment-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mock-avatar {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    font-size: 9px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+  .mock-author { font-size: 11px; font-weight: 600; color: var(--offwhite); letter-spacing: 0.05em; }
+  .mock-ts { font-size: 10px; color: var(--olive); letter-spacing: 0.08em; }
+  .mock-ts.blue { color: var(--blue); }
+  .mock-comment-body { font-size: 12px; color: rgba(244,240,232,0.6); line-height: 1.55; font-weight: 400; }
+  .mock-action-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--charcoal);
+    background: var(--red);
+    padding: 3px 8px;
+    align-self: flex-start;
+  }
+
+  /* CTA SECTION */
+  .final-cta {
+    background: var(--acid);
+    padding: 120px 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-bg-text {
+    position: absolute;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 240px;
+    line-height: 1;
+    text-transform: uppercase;
+    color: rgba(17,17,17,0.06);
+    letter-spacing: -0.03em;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .cta-headline {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: clamp(64px, 9vw, 128px);
+    line-height: 0.88;
+    text-transform: uppercase;
+    color: var(--charcoal);
+    position: relative;
+    z-index: 1;
+  }
+  .cta-sub {
+    font-size: 18px;
+    color: rgba(17,17,17,0.65);
+    max-width: 480px;
+    line-height: 1.6;
+    position: relative;
+    z-index: 1;
+  }
+  .cta-sub strong { color: var(--charcoal); }
+  .cta-btn {
+    background: var(--charcoal);
+    color: var(--acid);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 18px 40px;
+    text-decoration: none;
+    position: relative;
+    z-index: 1;
+    transition: background 0.2s;
+  }
+  .cta-btn:hover { background: #1a1a1a; }
+  .cta-note {
+    font-size: 12px;
+    color: rgba(17,17,17,0.5);
+    letter-spacing: 0.06em;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* FOOTER */
+  footer {
+    background: var(--charcoal);
+    padding: 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(244,240,232,0.06);
+  }
+  .footer-logo {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 16px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--offwhite);
+  }
+  .footer-note {
+    font-size: 12px;
+    color: var(--olive);
+    letter-spacing: 0.06em;
+  }
+
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .hero-tag { animation: fadeUp 0.6s ease both; }
+  .hero-headline { animation: fadeUp 0.6s 0.1s ease both; }
+  .hero-sub-row { animation: fadeUp 0.6s 0.25s ease both; }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    nav { padding: 20px 24px; }
+    .hero { padding: 120px 24px 60px; }
+    .hero-sub-row { flex-direction: column; align-items: flex-start; }
+    .problem { grid-template-columns: 1fr; padding: 80px 24px; gap: 48px; }
+    .solution { padding: 80px 24px; }
+    .solution-header { grid-template-columns: 1fr; gap: 40px; }
+    .feature-grid { grid-template-columns: 1fr; }
+    .steps { grid-template-columns: 1fr 1fr; }
+    .how { padding: 80px 24px; }
+    .app-preview { padding: 80px 24px; }
+    .mock-body { grid-template-columns: 1fr; }
+    .mock-comments { border-top: 1px solid rgba(244,240,232,0.06); }
+    .final-cta { padding: 80px 24px; }
+    footer { padding: 32px 24px; flex-direction: column; gap: 16px; text-align: center; }
+    .hero-visual { padding: 48px 24px; }
+    .comment-pins { padding-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">The Song Room</div>
+  <div class="nav-links">
+    <a href="#">How It Works</a>
+    <a href="#">Features</a>
+    <a href="#" class="nav-cta">Request Access</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-noise"></div>
+  <div>
+    <span class="hero-tag">Collaborative Music Review</span>
+    <h1 class="hero-headline">
+      Create<br>
+      <span class="line-2">Together.</span>
+    </h1>
+    <div class="hero-sub-row">
+      <p class="hero-body">
+        A shared space for songs to evolve<br>
+        <strong>from first demo to finished track.</strong><br>
+        Keep every version, comment, and<br>decision in one room.
+      </p>
+      <div class="hero-ctas">
+        <a href="#" class="btn-primary">Request Access</a>
+        <a href="#" class="btn-secondary">See How It Works</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VERSION VISUAL STRIP -->
+<div class="hero-visual">
+  <div class="version-strip">
+    <span class="version-label">Versions</span>
+    <div class="version-track">
+      <div class="version-pill">
+        <div class="version-dot"></div>
+        <span class="version-pill-label">V1</span>
+        <span class="version-pill-name">First Demo</span>
+      </div>
+      <div class="version-line"></div>
+      <div class="version-pill">
+        <div class="version-dot"></div>
+        <span class="version-pill-label">V2</span>
+        <span class="version-pill-name">Rough Mix</span>
+      </div>
+      <div class="version-line"></div>
+      <div class="version-pill">
+        <div class="version-dot"></div>
+        <span class="version-pill-label">V3</span>
+        <span class="version-pill-name">Vocal Revision</span>
+      </div>
+      <div class="version-line"></div>
+      <div class="version-pill active">
+        <div class="version-dot"></div>
+        <span class="version-pill-label">V4</span>
+        <span class="version-pill-name">Final Mix</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="waveform-row">
+    <button class="play-btn">
+      <svg width="14" height="14" viewBox="0 0 14 14"><polygon points="3,1 13,7 3,13"/></svg>
+    </button>
+    <div class="waveform-viz" id="waveViz"></div>
+    <span class="wf-time">1:23 / 3:47</span>
+  </div>
+
+  <div class="comment-pins">
+    <div style="position:relative; width:100%; height:32px; margin-left:0;">
+      <div class="pin" style="position:absolute;left:18%;top:0;align-items:center;">
+        <div class="pin-dot" style="border-color:#2D7DFF;background:rgba(45,125,255,0.2);"></div>
+        <span class="pin-label" style="color:#2D7DFF;font-size:8px;letter-spacing:.1em;">0:32</span>
+      </div>
+      <div class="pin" style="position:absolute;left:37%;top:0;align-items:center;">
+        <div class="pin-dot" style="border-color:#FF3B30;background:rgba(255,59,48,0.2);"></div>
+        <span class="pin-label" style="color:#FF3B30;font-size:8px;letter-spacing:.1em;">1:08</span>
+      </div>
+      <div class="pin" style="position:absolute;left:55%;top:0;align-items:center;">
+        <div class="pin-dot" style="border-color:#FFB6C8;background:rgba(255,182,200,0.2);"></div>
+        <span class="pin-label" style="color:#FFB6C8;font-size:8px;letter-spacing:.1em;">1:44</span>
+      </div>
+      <div class="pin" style="position:absolute;left:72%;top:0;align-items:center;">
+        <div class="pin-dot" style="border-color:#E6FF3F;background:rgba(230,255,63,0.2);"></div>
+        <span class="pin-label" style="color:#E6FF3F;font-size:8px;letter-spacing:.1em;">2:21</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PROBLEM SECTION -->
+<section class="problem">
+  <div>
+    <span class="section-tag">The Problem</span>
+    <h2 class="problem-headline">Songs<br>get <em>lost</em><br>in transit.</h2>
+  </div>
+  <ul class="problem-list">
+    <li class="problem-item">
+      <span class="problem-num">01</span>
+      <p class="problem-text"><strong>Versions scatter.</strong> V1, V2_final, V2_FINAL_actual, V3_USE_THIS. Nobody knows which file is current.</p>
+    </li>
+    <li class="problem-item">
+      <span class="problem-num">02</span>
+      <p class="problem-text"><strong>Feedback gets buried.</strong> Notes sit in voice messages, texts, and email threads. The detail disappears.</p>
+    </li>
+    <li class="problem-item">
+      <span class="problem-num">03</span>
+      <p class="problem-text"><strong>Decisions evaporate.</strong> You know you agreed to change the bridge. Nobody wrote it down. It never happened.</p>
+    </li>
+    <li class="problem-item">
+      <span class="problem-num">04</span>
+      <p class="problem-text"><strong>Moments get missed.</strong> "It was around the chorus" isn't the same as a pin at exactly 1:32.</p>
+    </li>
+  </ul>
+</section>
+
+<!-- SOLUTION -->
+<section class="solution">
+  <div class="solution-inner">
+    <div class="solution-header">
+      <h2 class="solution-headline">One<br><span class="accent">Room.</span><br>Every<br>Version.</h2>
+      <p class="solution-body">
+        The Song Room keeps every version of your track in one place, with <strong>timestamped comments pinned to the exact moment</strong> you mean, a clear record of what was said, what needs doing, and where the song is going.<br><br>
+        Less admin. More music.
+      </p>
+    </div>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <span class="feature-icon">Versioning</span>
+        <h3 class="feature-title">Every Version, Always</h3>
+        <p class="feature-desc">Upload as many versions as you need. V1 through to final. The full story of the song, never overwritten.</p>
+      </div>
+      <div class="feature-card dark">
+        <span class="feature-icon">Comments</span>
+        <h3 class="feature-title">Pinned to the Moment</h3>
+        <p class="feature-desc">Click the waveform at exactly 1:32. Leave your note there. No more "around the middle eight."</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">Actions</span>
+        <h3 class="feature-title">Nothing Gets Lost</h3>
+        <p class="feature-desc">Mark comments as actions. Track what's pending. Know exactly what needs to happen before the next session.</p>
+      </div>
+      <div class="feature-card acid">
+        <span class="feature-icon">Notifications</span>
+        <h3 class="feature-title">Stay In Sync</h3>
+        <p class="feature-desc">Get notified when a new version lands or feedback arrives. Deep links take you straight to the moment.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">Threads</span>
+        <h3 class="feature-title">Full Conversations</h3>
+        <p class="feature-desc">Reply, discuss, resolve. Each moment in the song can hold a full back-and-forth between collaborators.</p>
+      </div>
+      <div class="feature-card dark">
+        <span class="feature-icon">Waveform</span>
+        <h3 class="feature-title">Built for Listening</h3>
+        <p class="feature-desc">The waveform is the interface. Visual, spatial, musical. Comments live where the music lives.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how">
+  <div class="how-inner">
+    <div class="how-header">
+      <h2 class="how-headline">How<br>It Works</h2>
+      <p class="how-subline">Four steps. One room. The full story of every song.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <span class="step-num">01</span>
+        <h3 class="step-title">Upload a Song</h3>
+        <p class="step-desc">Add your track to The Song Room. Give it a title. It lives here now — every version of it, forever.</p>
+        <span class="step-tag">Start Here</span>
+      </div>
+      <div class="step">
+        <span class="step-num">02</span>
+        <h3 class="step-title">Add Versions</h3>
+        <p class="step-desc">Upload a new mix, revision, or take. Each version is numbered and labelled. The full history stays visible.</p>
+      </div>
+      <div class="step">
+        <span class="step-num">03</span>
+        <h3 class="step-title">Comment on Moments</h3>
+        <p class="step-desc">Click the waveform at any point to leave a note. Your collaborator gets a direct link to that exact moment.</p>
+      </div>
+      <div class="step">
+        <span class="step-num">04</span>
+        <h3 class="step-title">Track & Finish</h3>
+        <p class="step-desc">Mark comments as actions. Track what's done. Move through versions until the song is exactly where it needs to be.</p>
+        <span class="step-tag">Done</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- APP PREVIEW -->
+<section class="app-preview">
+  <div class="app-preview-inner">
+    <div class="preview-header">
+      <h2 class="preview-headline">Inside<br>The<br>Room.</h2>
+      <p class="preview-sub">This is what it looks like when a song has a home. Every version, every note, every decision.</p>
+    </div>
+    <div class="mock-app">
+      <div class="mock-topbar">
+        <span class="mock-breadcrumb">All Songs / <span>Interlude</span></span>
+        <span class="mock-stage">In Production</span>
+      </div>
+      <div class="mock-body">
+        <div class="mock-main">
+          <h3 class="mock-song-title">Interlude</h3>
+          <div class="mock-version-row">
+            <span class="mock-v-label">V4</span>
+            <span class="mock-v-name">Final Mix — uploaded 2 days ago</span>
+          </div>
+
+          <div class="mock-waveform" id="mockWave">
+            <div class="mock-comment-marker" style="left:22%;border-color:#2D7DFF;background:rgba(45,125,255,0.15);"></div>
+            <div class="mock-comment-marker" style="left:45%;border-color:#FF3B30;background:rgba(255,59,48,0.15);"></div>
+            <div class="mock-comment-marker" style="left:68%;border-color:#FFB6C8;background:rgba(255,182,200,0.15);"></div>
+          </div>
+
+          <div class="mock-controls">
+            <div class="mock-play-btn">
+              <svg width="12" height="12" viewBox="0 0 14 14"><polygon points="3,1 13,7 3,13" fill="#F4F0E8"/></svg>
+            </div>
+            <span class="mock-timestamp">1:23 / 3:47</span>
+          </div>
+
+          <div class="mock-version-history">
+            <div class="mock-vh-label">Version History</div>
+            <div class="mock-vh-row">
+              <span class="mock-vh-v old">V1</span>
+              <div class="mock-vh-bar"><div class="mock-vh-fill" style="width:100%"></div></div>
+              <span class="mock-vh-name">First Demo</span>
+            </div>
+            <div class="mock-vh-row">
+              <span class="mock-vh-v old">V2</span>
+              <div class="mock-vh-bar"><div class="mock-vh-fill" style="width:100%"></div></div>
+              <span class="mock-vh-name">Rough Mix</span>
+            </div>
+            <div class="mock-vh-row">
+              <span class="mock-vh-v old">V3</span>
+              <div class="mock-vh-bar"><div class="mock-vh-fill" style="width:100%"></div></div>
+              <span class="mock-vh-name">Vocal Revision</span>
+            </div>
+            <div class="mock-vh-row">
+              <span class="mock-vh-v">V4</span>
+              <div class="mock-vh-bar"><div class="mock-vh-fill current" style="width:100%"></div></div>
+              <span class="mock-vh-name current">Final Mix</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mock-comments">
+          <div class="mock-comment-hdr">
+            Comments
+            <span class="mock-comment-count">6 notes</span>
+          </div>
+
+          <div class="mock-comment-card">
+            <div class="mock-comment-meta">
+              <div class="mock-avatar" style="background:#2D7DFF;color:#fff;">C</div>
+              <span class="mock-author">Coris</span>
+              <span class="mock-ts blue">@ 0:32</span>
+            </div>
+            <p class="mock-comment-body">The reverb tail on the synth is too long here — feels like it's bleeding into the next section.</p>
+            <span class="mock-action-tag">⚑ Action Needed</span>
+          </div>
+
+          <div class="mock-comment-card">
+            <div class="mock-comment-meta">
+              <div class="mock-avatar" style="background:#FF3B30;color:#fff;">A</div>
+              <span class="mock-author">Al</span>
+              <span class="mock-ts" style="color:#FF3B30;">@ 1:08</span>
+            </div>
+            <p class="mock-comment-body">Love the vocal texture coming in here. This is the version. Don't change this.</p>
+          </div>
+
+          <div class="mock-comment-card">
+            <div class="mock-comment-meta">
+              <div class="mock-avatar" style="background:#FFB6C8;color:#111;">C</div>
+              <span class="mock-author">Coris</span>
+              <span class="mock-ts" style="color:#FFB6C8;">@ 2:21</span>
+            </div>
+            <p class="mock-comment-body">Can we try pulling the kick back slightly in this section? Feels like it's pushing too hard against the bass.</p>
+            <span class="mock-action-tag">⚑ Action Needed</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final-cta">
+  <div class="cta-bg-text">ROOM</div>
+  <h2 class="cta-headline">Bring Your<br>Songs In.</h2>
+  <p class="cta-sub">
+    <strong>The Song Room is currently invite-only.</strong><br>
+    Built for serious collaborators. Leave your email and we'll let you know when it's ready.
+  </p>
+  <a href="#" class="cta-btn">Request Access</a>
+  <span class="cta-note">No spam. No nonsense. Just the room.</span>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <span class="footer-logo">The Song Room</span>
+  <span class="footer-note">From first demo to finished track.</span>
+</footer>
+
+<script>
+  // Generate waveform bars
+  const waveViz = document.getElementById('waveViz');
+  const numBars = 180;
+  for (let i = 0; i < numBars; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'wf-bar';
+    const progress = i / numBars;
+    const h = 8 + Math.random() * 52 * (0.4 + 0.6 * Math.abs(Math.sin(i * 0.18)));
+    bar.style.height = h + 'px';
+    if (progress < 0.37) bar.classList.add('played');
+    if (progress > 0.34 && progress < 0.40) bar.classList.add('active');
+    waveViz.appendChild(bar);
+  }
+
+  // Generate mock waveform
+  const mockWave = document.getElementById('mockWave');
+  const mockBars = 200;
+  for (let i = 0; i < mockBars; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'mock-wf-bar';
+    const progress = i / mockBars;
+    const h = 6 + Math.random() * 68 * (0.3 + 0.7 * Math.abs(Math.sin(i * 0.22)));
+    bar.style.height = h + 'px';
+    if (progress < 0.36) bar.classList.add('p');
+    if (progress > 0.33 && progress < 0.39) bar.classList.add('a');
+    mockWave.appendChild(bar);
+  }
+</script>
+</body>
+</html>
