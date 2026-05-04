@@ -2090,3 +2090,30 @@ Prevent the native fallback audio element from being routed into the song page r
 - This keeps the fallback path closer to the Dashboard's working native audio playback.
 - `npx tsc --noEmit` passed.
 - `git diff --check` passed.
+
+---
+
+## 2026-05-04 — Mobile dashboard sheet/player spacing
+
+### What we were trying to achieve
+
+Prevent the mini-player from covering the mobile dashboard song info sheet's `Open song` button.
+
+### Feature / change being made
+
+Lift the mobile bottom sheet above the active mini-player while preserving both controls.
+
+### Files changed
+
+- [app/dashboard/page.tsx](/Users/impero/song-review-app/app/dashboard/page.tsx)
+- [app/dashboard/dashboard.module.css](/Users/impero/song-review-app/app/dashboard/dashboard.module.css)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- The dashboard bottom sheet gets an extra class while playback is active.
+- The active sheet now reserves mini-player height so `Open song` remains tappable.
+- Comment notification email work is queued separately because the route already exists but needs configuration and notification-policy review.
+- `npx tsc --noEmit` passed.
+- `git diff --check` passed.

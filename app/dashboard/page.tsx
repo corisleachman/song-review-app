@@ -1865,7 +1865,7 @@ function DashboardContent() {
           }
         }}
       >
-        <div className={styles.bottomSheet}>
+        <div className={`${styles.bottomSheet} ${playingId ? styles.bottomSheetWithPlayer : ''}`}>
           <div className={styles.bsHandle} onClick={() => setSheetSongId(null)}>
             <div className={styles.bsHandleBar} />
           </div>

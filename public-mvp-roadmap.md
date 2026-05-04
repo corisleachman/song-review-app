@@ -1958,3 +1958,44 @@ Note the next follow-up slice.
   - `git diff --check`
 - Next follow-up:
   - deploy and retest new-version song page playback as a member
+
+## 2026-05-04 — Mobile dashboard sheet/player spacing
+
+- Slice / change name: Mobile dashboard sheet/player spacing
+- Status: Implemented
+- Phase position: Phase 3 collaboration permissions QA / mobile polish
+- Exact files changed or audited:
+  - `app/dashboard/page.tsx`
+  - `app/dashboard/dashboard.module.css`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - the mobile song info bottom sheet now sits above the active mini-player
+  - the `Open song` button remains tappable while audio is playing
+  - the mini-player remains visible and usable instead of being dismissed
+- Tests run:
+  - `npx tsc --noEmit`
+  - `git diff --check`
+- Next follow-up:
+  - visually retest mobile dashboard info sheet while a song is playing
+
+## 2026-05-04 — Queued: comment notification policy
+
+- Slice / change name: Comment notification policy and delivery verification
+- Status: Queued
+- Phase position: pre-release notifications / QA
+- Exact files changed or audited:
+  - `app/api/email/notify-thread/route.ts`
+  - `app/api/threads/create/route.ts`
+  - `app/api/threads/reply/route.ts`
+  - `public-mvp-roadmap.md`
+- Current finding:
+  - comment and reply hooks already call `/api/email/notify-thread`
+  - the notify route sends through Resend only when notifications are enabled and `RESEND_API_KEY` is configured
+  - recipients are currently all workspace members except the actor, unless forced recipients are configured
+- Open product decisions:
+  - whether every comment emails every member by default
+  - whether users need per-workspace notification preferences
+  - whether notifications should be batched, muted, or scoped to mentions/actions later
+- Next follow-up:
+  - verify production email env vars, sender/domain setup, recipient rules, and delivery logs near final QA

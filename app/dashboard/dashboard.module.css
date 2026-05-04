@@ -1427,6 +1427,10 @@
   transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+.bottomSheetWithPlayer {
+  margin-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: 0;
+}
 .bsOverlayVisible .bottomSheet {
   transform: translateY(0);
 }
