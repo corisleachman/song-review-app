@@ -1857,3 +1857,26 @@ Note the next follow-up slice.
   - `git diff --check`
 - Next follow-up:
   - retest playback on a member-uploaded version online
+
+## 2026-05-04 — Verify version audio objects
+
+- Slice / change name: Verify version audio objects
+- Status: Implemented
+- Phase position: Phase 3 collaboration permissions QA
+- Exact files changed or audited:
+  - `app/api/versions/[versionId]/route.ts`
+  - `app/songs/[id]/versions/[versionId]/page.tsx`
+  - `app/songs/[id]/upload/page.tsx`
+  - `API.md`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - version detail now checks that the storage object exists before returning a signed playback URL
+  - missing audio objects now return `audioMissing: true` instead of a broken playback URL
+  - both version upload entry points verify the uploaded object before navigating to the version page
+  - existing broken version rows will now show a clear reupload message instead of `Failed to fetch`
+- Tests run:
+  - `npx tsc --noEmit`
+  - `git diff --check`
+- Next follow-up:
+  - deploy and retest the existing member-uploaded version, then upload a fresh member version if the old storage object is missing

@@ -17,6 +17,39 @@ function getUploadErrorMessage(value: unknown, fallback: string) {
   return fallback;
 }
 
+function getMissingAudioMessage() {
+  return 'This version was created, but its audio file was not found in storage. Please upload the version again.';
+}
+
+async function verifyUploadedVersion(versionId: string) {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    if (attempt > 0) {
+      await new Promise(resolve => window.setTimeout(resolve, 450));
+    }
+
+    try {
+      const response = await fetch(`/api/versions/${versionId}`, { cache: 'no-store' });
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(getUploadErrorMessage(payload?.error, `Version verification failed with status ${response.status}`));
+      }
+
+      if (payload?.version?.audioMissing || !payload?.version?.audioUrl) {
+        throw new Error(getMissingAudioMessage());
+      }
+
+      return;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error('Could not verify the uploaded audio file.');
+    }
+  }
+
+  throw lastError ?? new Error('Could not verify the uploaded audio file.');
+}
+
 export default function UploadVersionPage() {
   const router = useRouter();
   const params = useParams();
@@ -111,6 +144,8 @@ export default function UploadVersionPage() {
         xhr.setRequestHeader('Content-Type', file.type || 'audio/mpeg');
         xhr.send(file);
       });
+
+      await verifyUploadedVersion(versionId);
 
       router.push(`/songs/${songId}/versions/${versionId}`);
     } catch (e: any) {

@@ -71,6 +71,7 @@ interface Version {
   notes?: string | null;
   file_path: string;
   audioUrl?: string | null;
+  audioMissing?: boolean;
   file_name: string;
   created_by: string;
   created_at?: string;
@@ -254,6 +255,10 @@ function normalizeStoragePath(path: string) {
   return path.replace(/^\/+/, '').trim();
 }
 
+function getMissingAudioMessage() {
+  return 'This version was created, but its audio file was not found in storage. Please upload the version again.';
+}
+
 function sortThreadsByTimestamp(items: Thread[]) {
   return [...items].sort((a, b) => a.timestamp_seconds - b.timestamp_seconds);
 }
@@ -316,6 +321,38 @@ function validateAudioFile(file: File) {
   }
 
   return null;
+}
+
+async function verifyUploadedVersion(versionIdToVerify: string) {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    if (attempt > 0) {
+      await new Promise(resolve => window.setTimeout(resolve, 450));
+    }
+
+    try {
+      const response = await fetch(`/api/versions/${versionIdToVerify}`, { cache: 'no-store' });
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const message = payload && typeof payload.error === 'string'
+          ? payload.error
+          : `Version verification failed with status ${response.status}`;
+        throw new Error(message);
+      }
+
+      if (payload?.version?.audioMissing || !payload?.version?.audioUrl) {
+        throw new Error(getMissingAudioMessage());
+      }
+
+      return;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error('Could not verify the uploaded audio file.');
+    }
+  }
+
+  throw lastError ?? new Error('Could not verify the uploaded audio file.');
 }
 
 // Pre-compute frequency + time-domain data from an AudioBuffer using OfflineAudioContext.
@@ -1055,6 +1092,14 @@ export default function VersionPage() {
         logVersionInit('audio-url:resolved', {
           source: 'signed-version-url',
           hasUrl: true,
+        });
+      } else if (versionPayload.version?.audioMissing) {
+        const message = getMissingAudioMessage();
+        setAudioUrl(null);
+        setWaveErr(message);
+        showStatusToast(message);
+        logVersionInit('audio-url:missing-object', {
+          filePath: versionPayload.version.file_path,
         });
       } else if (versionPayload.version?.file_path) {
         const normalizedFilePath = normalizeStoragePath(versionPayload.version.file_path);
@@ -1836,6 +1881,8 @@ export default function VersionPage() {
         xhr.setRequestHeader('Content-Type', pendingVersionFile.type || 'audio/mpeg');
         xhr.send(pendingVersionFile);
       });
+
+      await verifyUploadedVersion(data.versionId);
 
       setShowUploadVersionModal(false);
       setPendingVersionFile(null);

@@ -51,6 +51,32 @@ function normalizeStoragePath(value: string | null | undefined) {
   return trimmed.startsWith(prefix) ? trimmed.slice(prefix.length) : trimmed;
 }
 
+function splitStoragePath(path: string) {
+  const parts = path.split('/').filter(Boolean);
+  const fileName = parts.pop() ?? '';
+
+  return {
+    folder: parts.join('/'),
+    fileName,
+  };
+}
+
+async function storageObjectExists(path: string) {
+  const { folder, fileName } = splitStoragePath(path);
+
+  if (!folder || !fileName) {
+    return false;
+  }
+
+  const { data, error } = await supabaseServer.storage
+    .from('song-files')
+    .list(folder, { limit: 100, search: fileName });
+
+  if (error) throw error;
+
+  return (data ?? []).some(item => item.name === fileName);
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: { versionId: string } }
@@ -78,19 +104,26 @@ export async function GET(
     }
 
     let audioUrl: string | null = null;
+    let audioMissing = false;
 
     if (version.file_path) {
       const normalizedFilePath = normalizeStoragePath(version.file_path);
-      const { data: signedAudio, error: signedAudioError } = await supabaseServer.storage
-        .from('song-files')
-        .createSignedUrl(normalizedFilePath, 60 * 60);
+      const hasAudioObject = await storageObjectExists(normalizedFilePath);
 
-      if (signedAudioError) throw signedAudioError;
-      audioUrl = signedAudio?.signedUrl ?? null;
+      if (hasAudioObject) {
+        const { data: signedAudio, error: signedAudioError } = await supabaseServer.storage
+          .from('song-files')
+          .createSignedUrl(normalizedFilePath, 60 * 60);
+
+        if (signedAudioError) throw signedAudioError;
+        audioUrl = signedAudio?.signedUrl ?? null;
+      } else {
+        audioMissing = true;
+      }
     }
 
     return NextResponse.json(
-      { version: { ...withVersionDisplayName(version), audioUrl } },
+      { version: { ...withVersionDisplayName(version), audioUrl, audioMissing } },
       {
         status: 200,
         headers: {

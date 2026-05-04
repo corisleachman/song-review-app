@@ -85,6 +85,7 @@ Returns a workspace-checked version payload.
 
 Notes:
 - includes a one-hour signed `audioUrl` for playback when `file_path` exists
+- returns `audioMissing: true` when the database version exists but the storage object is missing
 - avoids relying on direct public storage URLs for protected audio playback
 
 ### `GET /api/dashboard/summary`

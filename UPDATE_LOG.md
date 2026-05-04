@@ -1955,3 +1955,33 @@ Workspace-checked signed audio URLs for version playback.
 - No upload, comment, action, billing, invite, or schema behavior changed.
 - `npx tsc --noEmit` passed.
 - `git diff --check` passed.
+
+---
+
+## 2026-05-04 — Verify version audio objects
+
+### What we were trying to achieve
+
+Stop member-uploaded versions from landing on a version page that later fails playback with `Failed to fetch`.
+
+### Feature / change being made
+
+Storage-object verification for version playback and upload handoff.
+
+### Files changed
+
+- [app/api/versions/[versionId]/route.ts](/Users/impero/song-review-app/app/api/versions/[versionId]/route.ts)
+- [app/songs/[id]/versions/[versionId]/page.tsx](/Users/impero/song-review-app/app/songs/[id]/versions/[versionId]/page.tsx)
+- [app/songs/[id]/upload/page.tsx](/Users/impero/song-review-app/app/songs/[id]/upload/page.tsx)
+- [API.md](/Users/impero/song-review-app/API.md)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- Version detail now verifies that the audio object exists in the `song-files` bucket before returning a signed playback URL.
+- Missing audio objects now surface as `audioMissing: true` so the UI can show a clear reupload message instead of trying to play a broken URL.
+- Both version upload entry points now verify the uploaded object before navigating to the version page.
+- Existing version rows whose storage object never uploaded will need the audio reuploaded.
+- `npx tsc --noEmit` passed.
+- `git diff --check` passed.
