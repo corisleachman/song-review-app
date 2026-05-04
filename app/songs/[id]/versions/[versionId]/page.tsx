@@ -440,6 +440,8 @@ export default function VersionPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const analyserAudioRef = useRef<HTMLAudioElement | null>(null);
   const audioLoadedRef = useRef(false);
+  const nativeAudioCleanupRef = useRef<(() => void) | null>(null);
+  const nativeAudioFallbackRef = useRef(false);
   const precomputedFreqRef = useRef<{ freqFrames: Uint8Array[]; timeFrames: Uint8Array[]; fps: number } | null>(null);
   const waveLoadIdRef = useRef(0);
   const waveRetryTimerRef = useRef<number | null>(null);
@@ -785,6 +787,7 @@ export default function VersionPage() {
     clearWaveTimers();
     if (mode === 'manual') {
       waveAutoRetryUsedRef.current = false;
+      nativeAudioFallbackRef.current = false;
     }
     audioLoadedRef.current = false;
     setWaveErr(null);
@@ -805,6 +808,79 @@ export default function VersionPage() {
       statusToastTimerRef.current = null;
     }, 2200);
   }, []);
+
+  const attachNativeAudioEvents = useCallback((audio: HTMLAudioElement, loadId: number) => {
+    nativeAudioCleanupRef.current?.();
+
+    const updateDuration = () => {
+      if (loadId !== waveLoadIdRef.current) return;
+      if (Number.isFinite(audio.duration) && audio.duration > 0) {
+        setDuration(audio.duration);
+      }
+    };
+    const updateTime = () => {
+      if (loadId === waveLoadIdRef.current) setCurrentTime(audio.currentTime || 0);
+    };
+    const handlePlay = () => {
+      if (loadId !== waveLoadIdRef.current) return;
+      setIsPlaying(true);
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'playing';
+      }
+    };
+    const handlePause = () => {
+      if (loadId !== waveLoadIdRef.current) return;
+      setIsPlaying(false);
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'paused';
+      }
+    };
+    const handleEnded = () => {
+      if (loadId !== waveLoadIdRef.current) return;
+      setIsPlaying(false);
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'none';
+      }
+    };
+
+    audio.addEventListener('loadedmetadata', updateDuration);
+    audio.addEventListener('durationchange', updateDuration);
+    audio.addEventListener('timeupdate', updateTime);
+    audio.addEventListener('play', handlePlay);
+    audio.addEventListener('pause', handlePause);
+    audio.addEventListener('ended', handleEnded);
+
+    nativeAudioCleanupRef.current = () => {
+      audio.removeEventListener('loadedmetadata', updateDuration);
+      audio.removeEventListener('durationchange', updateDuration);
+      audio.removeEventListener('timeupdate', updateTime);
+      audio.removeEventListener('play', handlePlay);
+      audio.removeEventListener('pause', handlePause);
+      audio.removeEventListener('ended', handleEnded);
+    };
+  }, []);
+
+  const playNativeAudioFallback = useCallback(async (url: string, reason: string) => {
+    const audio = audioRef.current;
+
+    if (!audio) {
+      throw new Error('Audio player is not ready.');
+    }
+
+    clearWaveTimers();
+    nativeAudioFallbackRef.current = true;
+    setIsRetryingWave(false);
+    setWaveErr(null);
+    setIsReady(true);
+    logVersionInit('native-audio:fallback', { reason });
+
+    if (audio.src !== url) {
+      audio.src = url;
+      audio.load();
+    }
+
+    await audio.play();
+  }, [clearWaveTimers]);
 
   useEffect(() => {
     let mounted = true;
@@ -1018,9 +1094,19 @@ export default function VersionPage() {
         return;
       }
 
+      event.preventDefault();
+
+      if (nativeAudioFallbackRef.current && audioRef.current) {
+        if (audioRef.current.paused) {
+          void audioRef.current.play();
+        } else {
+          audioRef.current.pause();
+        }
+        return;
+      }
+
       if (!wavesurferRef.current || !isReady || waveErr) return;
 
-      event.preventDefault();
       wavesurferRef.current.playPause();
     };
 
@@ -1236,6 +1322,9 @@ export default function VersionPage() {
       try { wavesurferRef.current.destroy(); } catch {}
       wavesurferRef.current = null;
     }
+    nativeAudioCleanupRef.current?.();
+    nativeAudioCleanupRef.current = null;
+    nativeAudioFallbackRef.current = false;
     if (audioRef.current) {
       try {
         audioRef.current.pause();
@@ -1307,6 +1396,7 @@ export default function VersionPage() {
     const audio = ws.getMediaElement() as HTMLAudioElement;
     audioRef.current = audio;
     analyserAudioRef.current = audio;
+    attachNativeAudioEvents(audio, loadId);
 
     ws.on('ready', (dur: number) => {
       if (loadId !== waveLoadIdRef.current) return;
@@ -1362,6 +1452,16 @@ export default function VersionPage() {
       const message = e?.message || String(e);
       if (loadId !== waveLoadIdRef.current || message.toLowerCase().includes('aborted')) return;
       console.error('WaveSurfer error:', e);
+      if (message.toLowerCase().includes('failed to fetch')) {
+        void playNativeAudioFallback(url, message).catch(fallbackError => {
+          handleWaveFailure(
+            fallbackError instanceof Error
+              ? fallbackError.message
+              : 'Failed to load audio. Please try again.'
+          );
+        });
+        return;
+      }
       handleWaveFailure(message);
     });
 
@@ -1388,7 +1488,7 @@ export default function VersionPage() {
     wavesurferRef.current = ws;
     // Don't call ws.load() here — audio is loaded lazily on first play press.
     // This prevents downloading the MP3 on every page view.
-  }, [clearWaveTimers, retryWaveform]);
+  }, [attachNativeAudioEvents, clearWaveTimers, playNativeAudioFallback, retryWaveform]);
 
   const stopPlayback = useCallback(() => {
     if (wavesurferRef.current) {
@@ -1461,6 +1561,9 @@ export default function VersionPage() {
         try { wavesurferRef.current.destroy(); } catch {}
         wavesurferRef.current = null;
       }
+      nativeAudioCleanupRef.current?.();
+      nativeAudioCleanupRef.current = null;
+      nativeAudioFallbackRef.current = false;
       if (audioRef.current) {
         try {
           audioRef.current.removeAttribute('src');
@@ -1791,6 +1894,9 @@ export default function VersionPage() {
     pendingTimestampRef.current = null;
     if (wavesurferRef.current && isReady && duration > 0) {
       wavesurferRef.current.seekTo(thread.timestamp_seconds / duration);
+    } else if (nativeAudioFallbackRef.current && audioRef.current && duration > 0) {
+      audioRef.current.currentTime = thread.timestamp_seconds;
+      setCurrentTime(thread.timestamp_seconds);
     }
   };
 
@@ -2117,13 +2223,31 @@ export default function VersionPage() {
                   className={styles.heroPlayBtn}
                   onClick={() => {
                     const ws = wavesurferRef.current;
-                    if (!ws || !audioUrl) return;
+                    const audio = audioRef.current;
+                    if (!audioUrl) return;
+
+                    if (nativeAudioFallbackRef.current && audio) {
+                      if (audio.paused) {
+                        void audio.play();
+                      } else {
+                        audio.pause();
+                      }
+                      return;
+                    }
+
+                    if (!ws) return;
                     if (!audioLoadedRef.current) {
                       audioLoadedRef.current = true;
                       void ws.load(audioUrl).catch((error: Error) => {
                         const message = error?.message || String(error);
                         if (!message.toLowerCase().includes('aborted')) {
-                          setWaveErr(message || 'Failed to load audio. Please try again.');
+                          void playNativeAudioFallback(audioUrl, message || 'WaveSurfer load failed').catch(fallbackError => {
+                            setWaveErr(
+                              fallbackError instanceof Error
+                                ? fallbackError.message
+                                : 'Failed to load audio. Please try again.'
+                            );
+                          });
                         }
                       });
                       ws.once('ready', () => { void ws.play(); });

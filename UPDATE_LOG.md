@@ -2012,3 +2012,29 @@ Route Dashboard playback through the same signed, workspace-checked version audi
 - The song/version page no longer falls back to public storage URLs when the signed URL is missing.
 - `npx tsc --noEmit` passed.
 - `git diff --check` passed.
+
+---
+
+## 2026-05-04 — Song page native playback fallback
+
+### What we were trying to achieve
+
+Fix member playback on the song/version page after Dashboard playback was confirmed working for the same member-uploaded file.
+
+### Feature / change being made
+
+Fallback from WaveSurfer's fetch/decode path to native browser audio playback when a signed URL can play through `<audio>` but WaveSurfer reports `Failed to fetch`.
+
+### Files changed
+
+- [app/songs/[id]/versions/[versionId]/page.tsx](/Users/impero/song-review-app/app/songs/[id]/versions/[versionId]/page.tsx)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- WaveSurfer remains the primary waveform player.
+- If WaveSurfer fails with `Failed to fetch`, the page now starts playback via the underlying browser audio element.
+- Native fallback keeps play/pause state, current time, duration, and marker seeking wired.
+- `npx tsc --noEmit` passed.
+- `git diff --check` passed.

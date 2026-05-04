@@ -1901,3 +1901,22 @@ Note the next follow-up slice.
   - `git diff --check`
 - Next follow-up:
   - deploy and retest dashboard and version-page playback as a member
+
+## 2026-05-04 — Song page native playback fallback
+
+- Slice / change name: Song page native playback fallback
+- Status: Implemented
+- Phase position: Phase 3 collaboration permissions QA
+- Exact files changed or audited:
+  - `app/songs/[id]/versions/[versionId]/page.tsx`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - song/version page keeps WaveSurfer as the primary waveform player
+  - if WaveSurfer fails to fetch/decode a signed URL, playback falls back to the browser audio element that already works on Dashboard
+  - native fallback keeps play/pause, duration, current time, and thread marker seeking functional
+- Tests run:
+  - `npx tsc --noEmit`
+  - `git diff --check`
+- Next follow-up:
+  - deploy and retest song/version page playback as a member
