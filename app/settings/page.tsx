@@ -929,7 +929,7 @@ export default function SettingsPage() {
             <h3>Comment notifications</h3>
             <p>
               {isOwner
-                ? 'Choose who receives an email when a comment is posted in this workspace.'
+                ? 'Choose how email notifications work when comments are posted in this workspace.'
                 : 'The workspace owner controls notification settings.'}
             </p>
           </div>
@@ -942,7 +942,7 @@ export default function SettingsPage() {
                 disabled={notificationModeSaving}
               >
                 <span className={styles.notificationOptionLabel}>Notify everyone</span>
-                <span className={styles.notificationOptionDesc}>All workspace members receive an email when a comment is posted.</span>
+                <span className={styles.notificationOptionDesc}>Every member receives an email whenever anyone posts a comment.</span>
               </button>
               <button
                 type="button"
@@ -950,14 +950,14 @@ export default function SettingsPage() {
                 onClick={() => void handleSaveNotificationMode('owner_only')}
                 disabled={notificationModeSaving}
               >
-                <span className={styles.notificationOptionLabel}>Notify owner only</span>
-                <span className={styles.notificationOptionDesc}>Only the workspace owner receives emails, regardless of who comments.</span>
+                <span className={styles.notificationOptionLabel}>Owner as hub</span>
+                <span className={styles.notificationOptionDesc}>Members&apos; comments notify only the owner. The owner&apos;s replies notify all members. All activity flows through the owner.</span>
               </button>
             </div>
           ) : (
             <p className={styles.collaboratorSubtext}>
               {notificationMode === 'owner_only'
-                ? 'The owner receives emails for all comments in this workspace.'
+                ? 'Notifications are owner-managed. Members\u2019 comments go to the owner; owner replies go to members.'
                 : 'All members receive emails when a comment is posted.'}
             </p>
           )}

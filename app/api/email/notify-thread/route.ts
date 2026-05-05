@@ -185,7 +185,9 @@ async function resolveWorkspaceRecipients(workspaceId: string, actorUserId: stri
   const notificationMode = await resolveNotificationMode(workspaceId);
 
   if (notificationMode === 'owner_only') {
-    // Only send to the workspace owner, not all members
+    // Owner as hub:
+    // - Member comments → notify the owner only
+    // - Owner comments → notify all other members (so they see the reply)
     const { data: ownerMember } = await supabaseServer
       .from('account_members')
       .select('user_id')
@@ -195,10 +197,40 @@ async function resolveWorkspaceRecipients(workspaceId: string, actorUserId: stri
 
     const ownerUserId = ownerMember?.user_id;
 
-    // If the owner is the one commenting, no email needed
-    if (!ownerUserId || ownerUserId === actorUserId) {
-      return [] as WorkspaceRecipient[];
+    const actorIsOwner = ownerUserId && ownerUserId === actorUserId;
+
+    if (actorIsOwner) {
+      // Owner is commenting — notify all non-owner members instead
+      const { data: allMembers } = await supabaseServer
+        .from('account_members')
+        .select('user_id')
+        .eq('account_id', workspaceId)
+        .neq('role', 'owner');
+
+      const memberUserIds = (allMembers ?? [])
+        .map(m => m.user_id)
+        .filter((id): id is string => Boolean(id));
+
+      if (memberUserIds.length === 0) return [] as WorkspaceRecipient[];
+
+      const { data: memberProfiles } = await supabaseServer
+        .from('profiles')
+        .select('id, email, display_name')
+        .in('id', memberUserIds);
+
+      return (memberProfiles ?? [])
+        .filter(p => p.email?.trim())
+        .map(p => ({
+          userId: p.id,
+          email: p.email!.trim(),
+          displayName: p.display_name?.trim()
+            || p.email!.split('@')[0]?.trim()
+            || 'Member',
+        })) satisfies WorkspaceRecipient[];
     }
+
+    // Member is commenting — notify owner only
+    if (!ownerUserId) return [] as WorkspaceRecipient[];
 
     const { data: ownerProfile } = await supabaseServer
       .from('profiles')
