@@ -257,6 +257,12 @@ async function resolveWorkspaceRecipients(workspaceId: string, actorUserId: stri
 
   if (membersError) throw membersError;
 
+  console.log('[notify-thread] all_members debug:', {
+    workspaceId,
+    actorUserId,
+    rawMembers: members,
+  });
+
   const recipientUserIds = Array.from(
     new Set(
       (members ?? [])
@@ -264,6 +270,8 @@ async function resolveWorkspaceRecipients(workspaceId: string, actorUserId: stri
         .filter(userId => userId && userId !== actorUserId)
     )
   );
+
+  console.log('[notify-thread] recipientUserIds after filter:', recipientUserIds);
 
   if (recipientUserIds.length === 0) {
     return [] as WorkspaceRecipient[];
@@ -273,6 +281,8 @@ async function resolveWorkspaceRecipients(workspaceId: string, actorUserId: stri
     .from('profiles')
     .select('id, email, display_name')
     .in('id', recipientUserIds);
+
+  console.log('[notify-thread] profiles resolved:', profiles?.map(p => ({ id: p.id, email: p.email })));
 
   if (profilesError) throw profilesError;
 
