@@ -167,7 +167,57 @@ function notificationsEnabled() {
   return process.env.NODE_ENV === 'production';
 }
 
+type NotificationMode = 'all_members' | 'owner_only';
+
+async function resolveNotificationMode(workspaceId: string): Promise<NotificationMode> {
+  const { data } = await supabaseServer
+    .from('accounts')
+    .select('notification_mode')
+    .eq('id', workspaceId)
+    .single();
+
+  const mode = data?.notification_mode;
+  if (mode === 'owner_only') return 'owner_only';
+  return 'all_members';
+}
+
 async function resolveWorkspaceRecipients(workspaceId: string, actorUserId: string) {
+  const notificationMode = await resolveNotificationMode(workspaceId);
+
+  if (notificationMode === 'owner_only') {
+    // Only send to the workspace owner, not all members
+    const { data: ownerMember } = await supabaseServer
+      .from('account_members')
+      .select('user_id')
+      .eq('account_id', workspaceId)
+      .eq('role', 'owner')
+      .single();
+
+    const ownerUserId = ownerMember?.user_id;
+
+    // If the owner is the one commenting, no email needed
+    if (!ownerUserId || ownerUserId === actorUserId) {
+      return [] as WorkspaceRecipient[];
+    }
+
+    const { data: ownerProfile } = await supabaseServer
+      .from('profiles')
+      .select('id, email, display_name')
+      .eq('id', ownerUserId)
+      .single();
+
+    if (!ownerProfile?.email) return [] as WorkspaceRecipient[];
+
+    return [{
+      userId: ownerUserId,
+      email: ownerProfile.email.trim(),
+      displayName: ownerProfile.display_name?.trim()
+        || ownerProfile.email.split('@')[0]?.trim()
+        || 'Owner',
+    }] satisfies WorkspaceRecipient[];
+  }
+
+  // all_members: everyone in the workspace except the commenter
   const { data: members, error: membersError } = await supabaseServer
     .from('account_members')
     .select('user_id')

@@ -11,12 +11,20 @@ interface ProfileRecord {
   updated_at: string;
 }
 
+type NotificationMode = 'all_members' | 'owner_only';
+
+function normalizeNotificationMode(value: unknown): NotificationMode {
+  if (value === 'owner_only') return 'owner_only';
+  return 'all_members';
+}
+
 interface WorkspaceRecord {
   id: string;
   name: string;
   image_url: string | null;
   slug: string | null;
   plan: AccountPlan;
+  notification_mode: NotificationMode;
   created_by_user_id: string;
   created_at: string;
   updated_at: string;
@@ -72,7 +80,7 @@ function isMissingImageColumnError(error: unknown): boolean {
 async function loadWorkspace(accountId: string): Promise<WorkspaceRecord> {
   const workspaceWithPlan = await supabaseServer
     .from('accounts')
-    .select('id, name, image_url, slug, plan, created_by_user_id, created_at, updated_at')
+    .select('id, name, image_url, slug, plan, notification_mode, created_by_user_id, created_at, updated_at')
     .eq('id', accountId)
     .single();
 
@@ -80,6 +88,7 @@ async function loadWorkspace(accountId: string): Promise<WorkspaceRecord> {
     return {
       ...(workspaceWithPlan.data as Omit<WorkspaceRecord, 'plan'> & { plan?: string | null }),
       plan: normalizeAccountPlan(workspaceWithPlan.data?.plan),
+      notification_mode: normalizeNotificationMode((workspaceWithPlan.data as Record<string, unknown>)?.notification_mode),
     };
   }
 
@@ -95,6 +104,7 @@ async function loadWorkspace(accountId: string): Promise<WorkspaceRecord> {
         ...(workspaceWithoutImage.data as Omit<WorkspaceRecord, 'image_url' | 'plan'> & { plan?: string | null }),
         image_url: null,
         plan: normalizeAccountPlan(workspaceWithoutImage.data?.plan),
+        notification_mode: normalizeNotificationMode((workspaceWithoutImage.data as Record<string, unknown>)?.notification_mode),
       };
     }
 
@@ -117,6 +127,7 @@ async function loadWorkspace(accountId: string): Promise<WorkspaceRecord> {
     ...(workspaceWithoutPlan.data as Omit<WorkspaceRecord, 'plan'>),
     image_url: null,
     plan: 'free',
+    notification_mode: 'all_members',
   };
 }
 

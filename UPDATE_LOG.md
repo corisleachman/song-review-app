@@ -2146,3 +2146,40 @@ Artwork-level dashboard playback, mobile EQ artwork treatment, centered desktop 
 - Static info overlay and expanded info panels now use default cursor behavior.
 - `npx tsc --noEmit` passed.
 - `git diff --check` passed.
+
+---
+
+## 2026-05-05 — Owner-controlled comment notification mode
+
+### What we were trying to achieve
+
+Give workspace owners a simple way to control who receives email notifications when a comment is posted, without building a full per-user preference system or @mention tagging.
+
+### Feature / change being made
+
+Owner-only notification mode toggle in Settings (workspace settings section), backed by a new `accounts.notification_mode` column and notification routing logic in the email notify route.
+
+### Files changed
+
+- [migrations/20260505_notification_mode_up.sql](/Users/impero/song-review-app/migrations/20260505_notification_mode_up.sql)
+- [migrations/20260505_notification_mode_down.sql](/Users/impero/song-review-app/migrations/20260505_notification_mode_down.sql)
+- [lib/bootstrapAccount.ts](/Users/impero/song-review-app/lib/bootstrapAccount.ts)
+- [app/api/settings/summary/route.ts](/Users/impero/song-review-app/app/api/settings/summary/route.ts)
+- [app/api/workspace/settings/route.ts](/Users/impero/song-review-app/app/api/workspace/settings/route.ts)
+- [app/api/email/notify-thread/route.ts](/Users/impero/song-review-app/app/api/email/notify-thread/route.ts)
+- [app/settings/page.tsx](/Users/impero/song-review-app/app/settings/page.tsx)
+- [app/settings/settings.module.css](/Users/impero/song-review-app/app/settings/settings.module.css)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [public-mvp-roadmap.md](/Users/impero/song-review-app/public-mvp-roadmap.md)
+
+### Notes
+
+- Added `accounts.notification_mode` column with values `all_members` (default) or `owner_only`.
+- `all_members`: every workspace member except the commenter receives an email.
+- `owner_only`: only the workspace owner receives an email, regardless of who commented. If the owner is the commenter, no email is sent.
+- The notify route reads `notification_mode` from the workspace before building the recipient list. Fallback is `all_members` if the column is missing (pre-migration environments).
+- `PATCH /api/workspace/settings` now accepts `notification_mode` alongside `name`. At least one field is required.
+- Bootstrap `WorkspaceRecord` now includes `notification_mode` with a safe `all_members` fallback.
+- Settings summary route exposes `notification_mode` alongside plan.
+- Settings UI: owner sees two selectable cards (Notify everyone / Notify owner only). Active mode is highlighted. Members see a read-only description of the current mode.
+- `npx tsc --noEmit` passed.

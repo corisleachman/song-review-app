@@ -48,6 +48,7 @@ export async function GET() {
         identity: resolved.identity,
         workspace: {
           plan: resolved.bootstrap.workspace.plan,
+          notification_mode: resolved.bootstrap.workspace.notification_mode ?? 'all_members',
         },
         theme,
         members,

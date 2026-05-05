@@ -21,6 +21,13 @@ function requireOwner(identity: Awaited<ReturnType<typeof resolveCanonicalIdenti
   return null;
 }
 
+type NotificationMode = 'all_members' | 'owner_only';
+
+function normalizeNotificationMode(input: unknown): NotificationMode | null {
+  if (input === 'all_members' || input === 'owner_only') return input;
+  return null;
+}
+
 function normalizeWorkspaceName(input: unknown) {
   if (typeof input !== 'string') return null;
 
@@ -56,19 +63,24 @@ export async function PATCH(request: NextRequest) {
 
     const body = await request.json().catch(() => null);
     const name = normalizeWorkspaceName(body?.name);
+    const notificationMode = normalizeNotificationMode(body?.notification_mode);
 
-    if (!name) {
+    if (!name && notificationMode === null) {
       return NextResponse.json(
-        { error: 'Workspace name is required.' },
+        { error: 'At least one workspace setting is required.' },
         { status: 400 }
       );
     }
 
+    const updates: Record<string, string> = {};
+    if (name) updates.name = name;
+    if (notificationMode !== null) updates.notification_mode = notificationMode;
+
     const { data, error } = await supabaseServer
       .from('accounts')
-      .update({ name })
+      .update(updates)
       .eq('id', resolved.identity.workspaceId)
-      .select('id, name')
+      .select('id, name, notification_mode')
       .single();
 
     if (error) throw error;

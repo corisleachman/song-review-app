@@ -138,6 +138,8 @@ export default function SettingsPage() {
   const [workspaceImageUploading, setWorkspaceImageUploading] = useState(false);
   const [workspaceSettingsSaving, setWorkspaceSettingsSaving] = useState(false);
   const [workspaceSettingsError, setWorkspaceSettingsError] = useState<string | null>(null);
+  const [notificationMode, setNotificationMode] = useState<'all_members' | 'owner_only'>('all_members');
+  const [notificationModeSaving, setNotificationModeSaving] = useState(false);
   const [workspaceSettingsNotice, setWorkspaceSettingsNotice] = useState<string | null>(null);
   const [membershipRole, setMembershipRole] = useState<'owner' | 'member' | null>(null);
   const [songCount, setSongCount] = useState<number | null>(null);
@@ -172,6 +174,7 @@ export default function SettingsPage() {
             setIdentityLabel(legacyIdentity);
             setIsLegacyFallback(true);
             setWorkspacePlan(null);
+            setNotificationMode('all_members');
             setWorkspaceName(null);
             setWorkspaceImageUrl(null);
             setWorkspaceNameDraft('');
@@ -200,6 +203,7 @@ export default function SettingsPage() {
         setIdentityLabel(summary.identity.authorName || summary.identity.displayName || '');
         setIsLegacyFallback(false);
         setWorkspacePlan(summary.workspace.plan);
+        setNotificationMode(summary.workspace.notification_mode ?? 'all_members');
         setWorkspaceName(summary.identity.workspaceName);
         setWorkspaceImageUrl(summary.identity.workspaceImageUrl ?? null);
         setWorkspaceNameDraft(summary.identity.workspaceName);
@@ -331,6 +335,33 @@ export default function SettingsPage() {
       setWorkspaceSettingsError(message);
     } finally {
       setWorkspaceSettingsSaving(false);
+    }
+  };
+
+  const handleSaveNotificationMode = async (mode: 'all_members' | 'owner_only') => {
+    setNotificationModeSaving(true);
+    setWorkspaceSettingsError(null);
+    setWorkspaceSettingsNotice(null);
+
+    try {
+      const response = await fetch('/api/workspace/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notification_mode: mode }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        setWorkspaceSettingsError((data as { error?: string })?.error || 'Could not save notification setting.');
+        return;
+      }
+
+      setNotificationMode(mode);
+      setWorkspaceSettingsNotice('Notification setting saved.');
+    } catch {
+      setWorkspaceSettingsError('Could not save notification setting.');
+    } finally {
+      setNotificationModeSaving(false);
     }
   };
 
@@ -890,6 +921,45 @@ export default function SettingsPage() {
               </div>
             )}
           </div>
+        </div>
+
+        <div className={styles.notificationSection}>
+          <div>
+            <h3>Comment notifications</h3>
+            <p>
+              {isOwner
+                ? 'Choose who receives an email when a comment is posted in this workspace.'
+                : 'The workspace owner controls notification settings.'}
+            </p>
+          </div>
+          {isOwner ? (
+            <div className={styles.notificationToggle}>
+              <button
+                type="button"
+                className={`${styles.notificationOption} ${notificationMode === 'all_members' ? styles.notificationOptionActive : ''}`}
+                onClick={() => void handleSaveNotificationMode('all_members')}
+                disabled={notificationModeSaving}
+              >
+                <span className={styles.notificationOptionLabel}>Notify everyone</span>
+                <span className={styles.notificationOptionDesc}>All workspace members receive an email when a comment is posted.</span>
+              </button>
+              <button
+                type="button"
+                className={`${styles.notificationOption} ${notificationMode === 'owner_only' ? styles.notificationOptionActive : ''}`}
+                onClick={() => void handleSaveNotificationMode('owner_only')}
+                disabled={notificationModeSaving}
+              >
+                <span className={styles.notificationOptionLabel}>Notify owner only</span>
+                <span className={styles.notificationOptionDesc}>Only the workspace owner receives emails, regardless of who comments.</span>
+              </button>
+            </div>
+          ) : (
+            <p className={styles.collaboratorSubtext}>
+              {notificationMode === 'owner_only'
+                ? 'The owner receives emails for all comments in this workspace.'
+                : 'All members receive emails when a comment is posted.'}
+            </p>
+          )}
         </div>
 
         <div className={styles.permissionsSummary}>

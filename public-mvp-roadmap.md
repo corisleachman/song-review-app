@@ -2022,3 +2022,32 @@ Note the next follow-up slice.
   - `git diff --check`
 - Next follow-up:
   - verify mobile artwork tap versus row navigation, desktop grid play alignment, and pointer states
+
+## 2026-05-05 — Owner-controlled comment notification mode
+
+- Slice / change name: Owner-controlled comment notification mode
+- Status: Implemented — requires Supabase migration `20260505_notification_mode_up.sql` to be applied in production
+- Phase position: Phase 4 Core Collaboration Polish / pre-release notifications
+- Exact files changed or audited:
+  - `migrations/20260505_notification_mode_up.sql`
+  - `migrations/20260505_notification_mode_down.sql`
+  - `lib/bootstrapAccount.ts`
+  - `app/api/settings/summary/route.ts`
+  - `app/api/workspace/settings/route.ts`
+  - `app/api/email/notify-thread/route.ts`
+  - `app/settings/page.tsx`
+  - `app/settings/settings.module.css`
+  - `UPDATE_LOG.md`
+  - `public-mvp-roadmap.md`
+- Outcome:
+  - Workspace owners can choose between two notification modes from Settings
+  - `all_members` (default): every workspace member except the commenter receives an email
+  - `owner_only`: only the workspace owner receives an email; no email sent if the owner is the commenter
+  - Fallback to `all_members` in environments where the migration has not been applied
+  - Members see a read-only description of the current mode in Settings
+- Tests run:
+  - `npx tsc --noEmit`
+- Next follow-up:
+  - Apply `20260505_notification_mode_up.sql` in Supabase production
+  - Deploy and verify notification mode toggle saves and routes emails correctly
+  - Run Phase 3 QA closeout checklist
