@@ -25,6 +25,7 @@ interface BootstrapPayload {
   };
   workspace: {
     plan: AccountPlan;
+    notification_mode?: 'all_members' | 'owner_only';
   };
 }
 
