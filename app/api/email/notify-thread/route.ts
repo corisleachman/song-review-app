@@ -439,16 +439,28 @@ export async function POST(req: NextRequest) {
       isReply: Boolean(isReply),
     });
 
-    const result = await resend.emails.send({
-      from: 'Song Review <onboarding@resend.dev>',
-      to: recipientEmails,
-      subject,
-      text: emailText,
-      html: emailHtml,
-    });
+    // Send one email per recipient — Resend restricts multi-recipient sends on
+    // unverified domains. Once a verified sending domain is configured, this
+    // can be replaced with a single send to the full recipientEmails array.
+    // TODO: replace with single multi-recipient send after domain verification.
+    const sendResults = await Promise.allSettled(
+      recipientEmails.map(email =>
+        resend.emails.send({
+          from: 'Song Review <onboarding@resend.dev>',
+          to: email,
+          subject,
+          text: emailText,
+          html: emailHtml,
+        })
+      )
+    );
 
-    console.log('[notify-thread] Email sent:', {
-      result,
+    const succeeded = sendResults.filter(r => r.status === 'fulfilled').length;
+    const failed = sendResults.filter(r => r.status === 'rejected').length;
+
+    console.log('[notify-thread] Emails sent:', {
+      succeeded,
+      failed,
       actorUserId,
       workspaceId: resolvedWorkspaceId,
       recipients: recipientEmails,
@@ -456,6 +468,8 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json({
       sent: true,
+      succeeded,
+      failed,
       recipients: recipientEmails,
       recipientMode: forcedRecipients.length > 0 ? 'forced' : 'workspace-members',
     });
