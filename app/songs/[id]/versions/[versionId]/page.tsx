@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import { ActionStatus, getActionStatusLabel, getActionStatusToast, getNextActionStatus, isOpenAction } from '@/lib/actionWorkflow';
 import { createClient } from '@/lib/supabase';
 import { formatTimestamp, getIdentity } from '@/lib/auth';
@@ -422,7 +423,7 @@ async function precomputeFrequencyFrames(audioBuffer: AudioBuffer) {
   return { freqFrames, timeFrames, fps };
 }
 
-export default function VersionPage() {
+function VersionPageInner() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -2955,5 +2956,13 @@ export default function VersionPage() {
         }}
       />
     </div>
+  );
+}
+
+export default function VersionPage() {
+  return (
+    <Suspense fallback={null}>
+      <VersionPageInner />
+    </Suspense>
   );
 }
