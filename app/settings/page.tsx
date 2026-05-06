@@ -807,7 +807,7 @@ export default function SettingsPage() {
               Reset to Default
             </button>
           </div>
-        </div>
+          </div>
 
           <div className={styles.infoPanel}>
           <h3>Personal scope</h3>
@@ -825,7 +825,7 @@ export default function SettingsPage() {
         </div>
         </div>
 
-        <div className={styles.collaboratorSection}>
+          <div className={styles.collaboratorSection}>
         <div className={styles.workspaceSettingsHeader}>
           <span className={styles.sectionEyebrow}>Workspace settings — {currentWorkspaceName}</span>
           <span className={styles.workspaceRoleBadge}>{currentRoleLabel}</span>
@@ -968,7 +968,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div className={styles.planSection}>
+          <div className={styles.planSection}>
           <div className={styles.planHeader}>
             <h2>Plan</h2>
             {workspacePlan === 'free' && isOwner && (
