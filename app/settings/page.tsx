@@ -1,5 +1,4 @@
 'use client';
-// settings-redesign-v2
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -8,6 +7,7 @@ import { getIdentity } from '@/lib/auth';
 import AppShell from '@/components/AppShell';
 import UpgradeModal from '@/components/UpgradeModal';
 import { type AccountPlan, FREE_COLLABORATOR_LIMIT, FREE_SONG_LIMIT, getCollaboratorLimitLabel, getSongLimitLabel, type PlanLimitType } from '@/lib/plans';
+import styles from './settings.module.css';
 
 interface Theme {
   primary_color: string;
@@ -674,7 +674,7 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="stg-container">
+      <div className={styles.container}>
         <div style={{ textAlign: 'center', color: 'rgba(255, 255, 255, 0.5)' }}>
           Loading settings...
         </div>
@@ -690,83 +690,85 @@ export default function SettingsPage() {
       workspaceImageUrl={workspaceImageUrl}
       membershipRole={membershipRole}
     >
-      <div className="stg-container">
-        <div className="stg-header">
-          <div className="stg-headerLeft">
-            <Link href="/dashboard" className="stg-backButton">
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <div className={styles.headerLeft}>
+            <Link href="/dashboard" className={styles.backButton}>
               ← Back
             </Link>
-            <h1 className="stg-title">Settings</h1>
+            <h1 className={styles.title}>Settings</h1>
           </div>
         </div>
 
         {error && (
-          <div className="stg-errorBanner">
+          <div className={styles.errorBanner}>
             <span>❌ {error}</span>
             <button onClick={() => setError(null)}>×</button>
           </div>
         )}
 
-        <div className="stg-content">
-          <div className="stg-brandExplorer">
-          <div className="stg-explorerHeader">
-            <span className="stg-sectionEyebrow">Personal theme</span>
+        <div className={styles.content}>
+          <div className={styles.brandExplorer}>
+          <div className={styles.explorerHeader}>
+            <span className={styles.sectionEyebrow}>Personal settings</span>
+            <h2>Personal theme</h2>
+            <p>These colors follow you across every workspace.</p>
           </div>
 
-          <div className="stg-colorPicker">
-            <div className="stg-pickerRow">
-              <div className="stg-colorControl">
-                <label className="stg-label">Primary Color</label>
-                <div className="stg-colorInputWrapper">
+          <div className={styles.colorPicker}>
+            <div className={styles.pickerRow}>
+              <div className={styles.colorControl}>
+                <label className={styles.label}>Primary Color</label>
+                <div className={styles.colorInputWrapper}>
                   <input
                     type="color"
                     value={theme.primary_color}
                     onChange={e => handleColorChange('primary_color', e.target.value)}
-                    className="stg-colorInput"
+                    className={styles.colorInput}
                   />
                   <input
                     type="text"
                     value={theme.primary_color}
                     onChange={e => handleColorChange('primary_color', e.target.value)}
-                    className="stg-textInput"
+                    className={styles.textInput}
                     placeholder="#ff1493"
                   />
                 </div>
               </div>
 
-              <div className="stg-colorControl">
-                <label className="stg-label">Accent Color</label>
-                <div className="stg-colorInputWrapper">
+              <div className={styles.colorControl}>
+                <label className={styles.label}>Accent Color</label>
+                <div className={styles.colorInputWrapper}>
                   <input
                     type="color"
                     value={theme.accent_color}
                     onChange={e => handleColorChange('accent_color', e.target.value)}
-                    className="stg-colorInput"
+                    className={styles.colorInput}
                   />
                   <input
                     type="text"
                     value={theme.accent_color}
                     onChange={e => handleColorChange('accent_color', e.target.value)}
-                    className="stg-textInput"
+                    className={styles.textInput}
                     placeholder="#a855f7"
                   />
                 </div>
               </div>
 
-              <div className="stg-colorControl">
-                <label className="stg-label">Background</label>
-                <div className="stg-colorInputWrapper">
+              <div className={styles.colorControl}>
+                <label className={styles.label}>Background</label>
+                <div className={styles.colorInputWrapper}>
                   <input
                     type="color"
                     value={theme.background_color}
                     onChange={e => handleColorChange('background_color', e.target.value)}
-                    className="stg-colorInput"
+                    className={styles.colorInput}
                   />
                   <input
                     type="text"
                     value={theme.background_color}
                     onChange={e => handleColorChange('background_color', e.target.value)}
-                    className="stg-textInput"
+                    className={styles.textInput}
                     placeholder="#0d0914"
                   />
                 </div>
@@ -774,13 +776,14 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div className="stg-presetsSection">
-            <div className="stg-presetGrid">
+          <div className={styles.presetsSection}>
+            <h3>Quick Presets</h3>
+            <div className={styles.presetGrid}>
               {Object.entries(PRESETS).map(([name, preset]) => (
                 <button
                   key={name}
                   onClick={() => handlePreset(preset)}
-                  className="stg-presetButton"
+                  className={styles.presetButton}
                   style={{
                     background: `linear-gradient(135deg, ${preset.primary_color}, ${preset.accent_color})`,
                   }}
@@ -791,26 +794,26 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div className="stg-actions">
+          <div className={styles.actions}>
             <button
               onClick={handleSave}
-              className="stg-saveButton"
+              className={styles.saveButton}
               disabled={saving}
             >
               {saving ? 'Saving...' : saved ? 'Saved' : 'Save theme'}
             </button>
             <button
               onClick={handleReset}
-              className="stg-resetButtonLarge"
+              className={styles.resetButtonLarge}
             >
               Reset to Default
             </button>
           </div>
-          </div>
+        </div>
 
-          <div className="stg-infoPanel">
+          <div className={styles.infoPanel}>
           <h3>Personal scope</h3>
-          <ul className="stg-tipsList">
+          <ul className={styles.tipsList}>
             <li>Theme colors are personal to your sign-in.</li>
             <li>Switching workspaces keeps your theme with you.</li>
             <li>Workspace members keep their own theme choices.</li>
@@ -824,13 +827,17 @@ export default function SettingsPage() {
         </div>
         </div>
 
-          <div className="stg-collaboratorSection">
-        <div className="stg-workspaceSettingsHeader">
-          <span className="stg-sectionEyebrow">Workspace settings — {currentWorkspaceName}</span>
-          <span className="stg-workspaceRoleBadge">{currentRoleLabel}</span>
+        <div className={styles.collaboratorSection}>
+        <div className={styles.workspaceSettingsHeader}>
+          <div>
+            <span className={styles.sectionEyebrow}>Workspace settings</span>
+            <h2>{currentWorkspaceName}</h2>
+            <p>These controls affect the active workspace.</p>
+          </div>
+          <span className={styles.workspaceRoleBadge}>{currentRoleLabel}</span>
         </div>
 
-        <div className="stg-workspaceNameSection">
+        <div className={styles.workspaceNameSection}>
           <div>
             <h3>Workspace name</h3>
             <p>
@@ -840,7 +847,7 @@ export default function SettingsPage() {
             </p>
           </div>
           {isOwner ? (
-            <div className="stg-workspaceNameForm">
+            <div className={styles.workspaceNameForm}>
               <input
                 type="text"
                 value={workspaceNameDraft}
@@ -849,14 +856,14 @@ export default function SettingsPage() {
                   setWorkspaceSettingsError(null);
                   setWorkspaceSettingsNotice(null);
                 }}
-                className="stg-textInput"
+                className={styles.textInput}
                 placeholder="Rebel HQ"
                 maxLength={80}
                 disabled={workspaceSettingsSaving}
               />
               <button
                 type="button"
-                className="stg-resetButtonLarge"
+                className={styles.resetButtonLarge}
                 onClick={() => void handleSaveWorkspaceName()}
                 disabled={
                   workspaceSettingsSaving ||
@@ -868,17 +875,17 @@ export default function SettingsPage() {
               </button>
             </div>
           ) : (
-            <div className="stg-workspaceNameReadOnly">{currentWorkspaceName}</div>
+            <div className={styles.workspaceNameReadOnly}>{currentWorkspaceName}</div>
           )}
           {workspaceSettingsError && (
-            <div className="stg-collaboratorMessage">{workspaceSettingsError}</div>
+            <div className={styles.collaboratorMessage}>{workspaceSettingsError}</div>
           )}
           {workspaceSettingsNotice && (
-            <div className="stg-collaboratorSuccess">{workspaceSettingsNotice}</div>
+            <div className={styles.collaboratorSuccess}>{workspaceSettingsNotice}</div>
           )}
         </div>
 
-        <div className="stg-workspaceImageSection">
+        <div className={styles.workspaceImageSection}>
           <div>
             <h3>Workspace image</h3>
             <p>
@@ -887,8 +894,8 @@ export default function SettingsPage() {
                 : 'Only the workspace owner can update the workspace image.'}
             </p>
           </div>
-          <div className="stg-workspaceImageRow">
-            <div className="stg-workspaceImagePreview" aria-hidden="true">
+          <div className={styles.workspaceImageRow}>
+            <div className={styles.workspaceImagePreview} aria-hidden="true">
               {workspaceImageUrl ? (
                 <img src={workspaceImageUrl} alt="" />
               ) : (
@@ -896,17 +903,17 @@ export default function SettingsPage() {
               )}
             </div>
             {isOwner && (
-              <div className="stg-workspaceImageActions">
+              <div className={styles.workspaceImageActions}>
                 <input
                   ref={workspaceImageInputRef}
                   type="file"
                   accept="image/*"
-                  className="stg-hiddenFileInput"
+                  className={styles.hiddenFileInput}
                   onChange={event => void handleWorkspaceImageSelected(event.target.files?.[0])}
                 />
                 <button
                   type="button"
-                  className="stg-resetButtonLarge"
+                  className={styles.resetButtonLarge}
                   onClick={() => workspaceImageInputRef.current?.click()}
                   disabled={workspaceImageUploading}
                 >
@@ -917,7 +924,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div className="stg-notificationSection">
+        <div className={styles.notificationSection}>
           <div>
             <h3>Comment notifications</h3>
             <p>
@@ -927,28 +934,28 @@ export default function SettingsPage() {
             </p>
           </div>
           {isOwner ? (
-            <div className="stg-notificationToggle">
+            <div className={styles.notificationToggle}>
               <button
                 type="button"
-                className={`stg-notificationOption ${notificationMode === 'all_members' ? "stg-notificationOptionActive" : ''}`}
+                className={`${styles.notificationOption} ${notificationMode === 'all_members' ? styles.notificationOptionActive : ''}`}
                 onClick={() => void handleSaveNotificationMode('all_members')}
                 disabled={notificationModeSaving}
               >
-                <span className="stg-notificationOptionLabel">Notify everyone</span>
-                <span className="stg-notificationOptionDesc">Every member receives an email whenever anyone posts a comment.</span>
+                <span className={styles.notificationOptionLabel}>Notify everyone</span>
+                <span className={styles.notificationOptionDesc}>Every member receives an email whenever anyone posts a comment.</span>
               </button>
               <button
                 type="button"
-                className={`stg-notificationOption ${notificationMode === 'owner_only' ? "stg-notificationOptionActive" : ''}`}
+                className={`${styles.notificationOption} ${notificationMode === 'owner_only' ? styles.notificationOptionActive : ''}`}
                 onClick={() => void handleSaveNotificationMode('owner_only')}
                 disabled={notificationModeSaving}
               >
-                <span className="stg-notificationOptionLabel">Owner as hub</span>
-                <span className="stg-notificationOptionDesc">Members&apos; comments notify only the owner. The owner&apos;s replies notify all members. All activity flows through the owner.</span>
+                <span className={styles.notificationOptionLabel}>Owner as hub</span>
+                <span className={styles.notificationOptionDesc}>Members&apos; comments notify only the owner. The owner&apos;s replies notify all members. All activity flows through the owner.</span>
               </button>
             </div>
           ) : (
-            <p className="stg-collaboratorSubtext">
+            <p className={styles.collaboratorSubtext}>
               {notificationMode === 'owner_only'
                 ? 'Notifications are owner-managed. Members\u2019 comments go to the owner; owner replies go to members.'
                 : 'All members receive emails when a comment is posted.'}
@@ -956,24 +963,27 @@ export default function SettingsPage() {
           )}
         </div>
 
-        <div className="stg-permissionsSummary">
-          <div className="stg-permissionCard">
+        <div className={styles.permissionsSummary}>
+          <div className={styles.permissionCard}>
             <h3>Owners</h3>
             <p>Manage billing, invites, member removal, plan state, and song deletion.</p>
           </div>
-          <div className="stg-permissionCard">
+          <div className={styles.permissionCard}>
             <h3>Members</h3>
             <p>Add songs, upload versions, comment, create actions, and manage tasks. Song deletion stays owner-only.</p>
           </div>
         </div>
 
-          <div className="stg-planSection">
-          <div className="stg-planHeader">
-            <h2>Plan</h2>
+        <div className={styles.planSection}>
+          <div className={styles.planHeader}>
+            <div>
+              <h2>Plan</h2>
+              <p>Billing and limits belong to this workspace.</p>
+            </div>
             {workspacePlan === 'free' && isOwner && (
               <button
                 type="button"
-                className="stg-resetButtonLarge"
+                className={styles.resetButtonLarge}
                 onClick={() => void handleUpgradeCheckout()}
                 disabled={startingCheckout}
               >
@@ -983,7 +993,7 @@ export default function SettingsPage() {
             {workspacePlan === 'paid' && isOwner && (
               <button
                 type="button"
-                className="stg-resetButtonLarge"
+                className={styles.resetButtonLarge}
                 onClick={() => void handleManageBilling()}
                 disabled={openingPortal}
               >
@@ -992,57 +1002,57 @@ export default function SettingsPage() {
             )}
           </div>
           {billingNotice && (
-            <div className="stg-collaboratorSuccess">
+            <div className={styles.collaboratorSuccess}>
               {billingNotice}
             </div>
           )}
           {billingError && (
-            <div className="stg-collaboratorMessage">
+            <div className={styles.collaboratorMessage}>
               {billingError}
             </div>
           )}
           {workspacePlan ? (
-            <div className="stg-planDetails">
-              <div className="stg-planStat">
+            <div className={styles.planDetails}>
+              <div className={styles.planStat}>
                 <span>Current plan</span>
                 <strong>{workspacePlan === 'paid' ? 'Paid' : 'Free'}</strong>
               </div>
-              <div className="stg-planStat">
+              <div className={styles.planStat}>
                 <span>Collaborator limit</span>
                 <strong>{getCollaboratorLimitLabel(workspacePlan)}</strong>
               </div>
               {workspacePlan === 'free' && (
                 <>
-                  <div className="stg-planStat">
+                  <div className={styles.planStat}>
                     <span>Collaborators used</span>
                     <strong>{`${members.filter(member => member.role !== 'owner').length + invites.filter(invite => invite.status === 'pending').length} of ${FREE_COLLABORATOR_LIMIT} collaborators used`}</strong>
                   </div>
-                  <div className="stg-planStat">
+                  <div className={styles.planStat}>
                     <span>Songs used</span>
                     <strong>{`${songCount ?? 0} of ${FREE_SONG_LIMIT} songs used`}</strong>
                   </div>
                 </>
               )}
               {workspacePlan === 'paid' && (
-                <div className="stg-planStat">
+                <div className={styles.planStat}>
                   <span>Song limit</span>
                   <strong>{getSongLimitLabel(workspacePlan)}</strong>
                 </div>
               )}
               {workspacePlan === 'paid' && (
-                <div className="stg-planStat">
+                <div className={styles.planStat}>
                   <span>Status</span>
                   <strong>You are on the paid plan</strong>
                 </div>
               )}
             </div>
           ) : (
-            <p className="stg-collaboratorMuted">
+            <p className={styles.collaboratorMuted}>
               Plan visibility currently requires the new Google sign-in path.
             </p>
           )}
           {!isOwner && membershipRole === 'member' && (
-            <div className="stg-memberScopeNote">
+            <div className={styles.memberScopeNote}>
               <strong>Your member access</strong>
               <span>
                 You can collaborate on songs in this workspace. Billing, invites, member removal, and song deletion are managed by the workspace owner.
@@ -1050,15 +1060,15 @@ export default function SettingsPage() {
             </div>
           )}
           {canTogglePlanForTesting && isOwner && workspacePlan && (
-            <div className="stg-planTesting">
-              <div className="stg-planTestingCopy">
+            <div className={styles.planTesting}>
+              <div className={styles.planTestingCopy}>
                 <strong>Local testing</strong>
                 <span>Switch between free and paid views without changing the real Stripe subscription.</span>
               </div>
-              <div className="stg-planTestingActions">
+              <div className={styles.planTestingActions}>
                 <button
                   type="button"
-                  className="stg-inlineAction"
+                  className={styles.inlineAction}
                   onClick={() => void handlePlanTestingToggle('free')}
                   disabled={switchingPlan !== null || workspacePlan === 'free'}
                 >
@@ -1066,7 +1076,7 @@ export default function SettingsPage() {
                 </button>
                 <button
                   type="button"
-                  className="stg-inlineAction"
+                  className={styles.inlineAction}
                   onClick={() => void handlePlanTestingToggle('paid')}
                   disabled={switchingPlan !== null || workspacePlan === 'paid'}
                 >
@@ -1077,53 +1087,60 @@ export default function SettingsPage() {
           )}
         </div>
 
-        <div className="stg-collaboratorHeader">
-          <h2>Collaborators</h2>
+        <div className={styles.collaboratorHeader}>
+          <div>
+            <h2>Collaborators</h2>
+            <p>
+              {isOwner
+                ? 'Workspace owners can invite members, review pending invites, and manage access.'
+                : 'You can see who belongs to this workspace. Invite and removal controls are owner-only.'}
+            </p>
+          </div>
         </div>
 
         {collaboratorError && (
-          <div className="stg-collaboratorMessage">
+          <div className={styles.collaboratorMessage}>
             {collaboratorError}
           </div>
         )}
 
         {collaboratorNotice && (
-          <div className="stg-collaboratorSuccess">
+          <div className={styles.collaboratorSuccess}>
             {collaboratorNotice}
           </div>
         )}
 
         {collaboratorLoading ? (
-          <p className="stg-collaboratorMuted">Loading collaborators...</p>
+          <p className={styles.collaboratorMuted}>Loading collaborators...</p>
         ) : (
-          <div className="stg-collaboratorGrid">
+          <div className={styles.collaboratorGrid}>
             {!isOwner && (
-              <section className="stg-collaboratorCard">
+              <section className={styles.collaboratorCard}>
                 <h3>What you can do</h3>
-                <p className="stg-collaboratorMuted">
+                <p className={styles.collaboratorMuted}>
                   Members can add songs, upload versions, comment, create actions, and manage song tasks. Owners handle workspace access and song deletion.
                 </p>
               </section>
             )}
             {isOwner && (
-              <section className="stg-collaboratorCard">
+              <section className={styles.collaboratorCard}>
                 <h3>Invite by email</h3>
-                <p className="stg-collaboratorMuted">
+                <p className={styles.collaboratorMuted}>
                   Send a workspace invite to a new band member.
                 </p>
-                <div className="stg-inviteForm">
+                <div className={styles.inviteForm}>
                   <input
                     type="email"
                     value={inviteEmail}
                     onChange={e => setInviteEmail(e.target.value)}
                     placeholder="bandmate@example.com"
-                    className="stg-textInput"
+                    className={styles.textInput}
                     disabled={sendingInvite}
                   />
                   <button
                     type="button"
                     onClick={handleSendInvite}
-                    className="stg-saveButton"
+                    className={styles.saveButton}
                     disabled={sendingInvite || !inviteEmail.trim()}
                   >
                     {sendingInvite ? 'Sending...' : 'Send invite'}
@@ -1132,24 +1149,24 @@ export default function SettingsPage() {
               </section>
             )}
 
-            <section className="stg-collaboratorCard">
+            <section className={styles.collaboratorCard}>
               <h3>Current members</h3>
-              <div className="stg-collaboratorList">
+              <div className={styles.collaboratorList}>
                 {members.length === 0 ? (
-                  <p className="stg-collaboratorMuted">No workspace members found.</p>
+                  <p className={styles.collaboratorMuted}>No workspace members found.</p>
                 ) : (
                   members.map(member => (
-                    <div key={member.userId} className="stg-collaboratorRow">
-                      <div className="stg-collaboratorMeta">
+                    <div key={member.userId} className={styles.collaboratorRow}>
+                      <div className={styles.collaboratorMeta}>
                         <strong>{member.displayName}</strong>
                         <span>{member.email || 'No email available'}</span>
                       </div>
-                      <div className="stg-collaboratorActions">
-                        <span className="stg-roleBadge">{formatRoleLabel(member.role)}</span>
+                      <div className={styles.collaboratorActions}>
+                        <span className={styles.roleBadge}>{formatRoleLabel(member.role)}</span>
                         {isOwner && member.role !== 'owner' && (
                           <button
                             type="button"
-                            className="stg-inlineAction"
+                            className={styles.inlineAction}
                             onClick={() => handleRemoveMember(member.userId)}
                             disabled={actingMemberId === member.userId}
                           >
@@ -1164,27 +1181,27 @@ export default function SettingsPage() {
             </section>
 
             {isOwner && (
-              <section className="stg-collaboratorCard">
+              <section className={styles.collaboratorCard}>
                 <h3>Pending invites</h3>
-                <div className="stg-collaboratorList">
+                <div className={styles.collaboratorList}>
                   {invites.length === 0 ? (
-                    <p className="stg-collaboratorMuted">No invites yet.</p>
+                    <p className={styles.collaboratorMuted}>No invites yet.</p>
                   ) : (
                     invites.map(invite => (
-                      <div key={invite.id} className="stg-collaboratorRow">
-                        <div className="stg-collaboratorMeta">
+                      <div key={invite.id} className={styles.collaboratorRow}>
+                        <div className={styles.collaboratorMeta}>
                           <strong>{invite.email}</strong>
                           <span>
                             {formatRoleLabel(invite.status)} · Created {formatDate(invite.created_at)} · Expires{' '}
                             {formatDate(invite.expires_at)}
                           </span>
                         </div>
-                        <div className="stg-collaboratorActions">
-                          <span className="stg-roleBadge">{formatRoleLabel(invite.status)}</span>
+                        <div className={styles.collaboratorActions}>
+                          <span className={styles.roleBadge}>{formatRoleLabel(invite.status)}</span>
                           {invite.status === 'pending' && (
                             <button
                               type="button"
-                              className="stg-inlineAction"
+                              className={styles.inlineAction}
                               onClick={() => handleCopyInviteLink(invite.invite_token, invite.id)}
                             >
                               {copiedInviteId === invite.id ? 'Copied' : 'Copy invite link'}
@@ -1193,7 +1210,7 @@ export default function SettingsPage() {
                           {invite.status === 'pending' && (
                             <button
                               type="button"
-                              className="stg-inlineAction"
+                              className={styles.inlineAction}
                               onClick={() => handleRevokeInvite(invite.id)}
                               disabled={actingInviteId === invite.id}
                             >
