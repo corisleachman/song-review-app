@@ -708,7 +708,6 @@ export default function SettingsPage() {
         )}
 
         <div className={styles.content}>
-          <div className={styles.personalThemeRow}>
           <div className={styles.brandExplorer}>
           <div className={styles.explorerHeader}>
             <span className={styles.sectionEyebrow}>Personal theme</span>
@@ -792,34 +791,38 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div className={styles.presetsActions}>
-            <div className={styles.actions}>
-              <button
-                onClick={handleSave}
-                className={styles.saveButton}
-                disabled={saving}
-              >
-                {saving ? 'Saving...' : saved ? 'Saved' : 'Save theme'}
-              </button>
-              <button
-                onClick={handleReset}
-                className={styles.resetButtonLarge}
-              >
-                Reset to Default
-              </button>
-            </div>
+          <div className={styles.actions}>
+            <button
+              onClick={handleSave}
+              className={styles.saveButton}
+              disabled={saving}
+            >
+              {saving ? 'Saving...' : saved ? 'Saved' : 'Save theme'}
+            </button>
+            <button
+              onClick={handleReset}
+              className={styles.resetButtonLarge}
+            >
+              Reset to Default
+            </button>
           </div>
-          </div>
+        </div>
 
           <div className={styles.infoPanel}>
+          <h3>Personal scope</h3>
           <ul className={styles.tipsList}>
             <li>Theme colors are personal to your sign-in.</li>
             <li>Switching workspaces keeps your theme with you.</li>
             <li>Workspace members keep their own theme choices.</li>
-            <li style={{ color: 'rgba(255,255,255,0.25)' }}>Logged in as: <strong>{identityLabel || 'Unknown'}</strong></li>
           </ul>
+
+          <div style={{ marginTop: 'var(--space-2xl)' }}>
+            <p style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.3)' }}>
+              Logged in as: <strong>{identityLabel || 'Unknown'}</strong>
+            </p>
           </div>
-          </div>
+        </div>
+        </div>
 
         <div className={styles.collaboratorSection}>
         <div className={styles.workspaceSettingsHeader}>

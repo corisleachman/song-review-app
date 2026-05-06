@@ -625,23 +625,3 @@
   .planDetails { grid-template-columns: 1fr; }
 }
 
-/* ── Personal theme + scope: side by side ── */
-.personalThemeRow {
-  display: grid;
-  grid-template-columns: 1fr 260px;
-  gap: 12px;
-  align-items: start;
-}
-
-/* Actions row at bottom of brandExplorer */
-.presetsActions {
-  display: flex;
-  justify-content: flex-end;
-  padding: 0 16px 14px;
-}
-
-@media (max-width: 768px) {
-  .personalThemeRow {
-    grid-template-columns: 1fr;
-  }
-}
