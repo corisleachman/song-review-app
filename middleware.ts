@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -21,14 +20,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const response = NextResponse.next();
-  const supabase = createMiddlewareClient({ req: request, res: response });
-  const { data } = await supabase.auth.getSession();
-  
-  if (data.session) {
-    return response;
-  }
-
+  // No auth cookies present — redirect to login.
+  // We do not call supabase.auth.getSession() here because it accesses
+  // nextUrl.searchParams, which triggers BAILOUT_TO_CLIENT_SIDE_RENDERING
+  // and prevents route-specific CSS chunks from being injected on every page.
   const loginUrl = new URL('/', request.url);
   loginUrl.searchParams.set('redirectTo', pathname);
   return NextResponse.redirect(loginUrl);
