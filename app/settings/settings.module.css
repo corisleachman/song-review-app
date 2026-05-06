@@ -82,13 +82,22 @@
    brandExplorer, collaboratorSection, infoPanel all use this
    ============================================================ */
 .brandExplorer,
-.collaboratorSection,
 .infoPanel {
   background: rgba(8,5,14,0.6);
   border: 1px solid rgba(255,255,255,0.09);
   border-radius: 12px;
   overflow: hidden;
   padding: 15px;
+}
+
+.collaboratorSection {
+  background: rgba(8,5,14,0.6);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 12px;
+  overflow: hidden;
+  padding: 15px;
+  max-width: 860px;
+  margin-top: 12px;
 }
 
 /* ── Section eyebrow header bar ── */
@@ -289,8 +298,9 @@
   grid-template-columns: 1fr auto;
   gap: 16px;
   align-items: start;
-  padding: 16px 16px 14px;
+  padding: 0 0 14px;
   border-bottom: 1px solid rgba(255,255,255,0.07);
+  margin-bottom: 14px;
 }
 
 .workspaceNameSection h3,
@@ -358,8 +368,9 @@
   grid-template-columns: 1fr 1.4fr;
   gap: 20px;
   align-items: start;
-  padding: 16px 16px 14px;
+  padding: 0 0 14px;
   border-bottom: 1px solid rgba(255,255,255,0.07);
+  margin-bottom: 14px;
 }
 
 .notificationSection > div > h3 {
@@ -410,7 +421,9 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-  padding: 14px 16px 16px;
+  padding: 0 0 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  margin-bottom: 14px;
 }
 
 .permissionCard {
@@ -442,7 +455,7 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0,1fr));
   gap: 10px;
-  padding: 14px 16px;
+  padding: 14px 0;
 }
 
 .planStat {
@@ -494,7 +507,7 @@
 }
 
 .collaboratorCard {
-  padding: 14px 16px;
+  padding: 14px;
   border-right: 1px solid rgba(255,255,255,0.07);
 }
 .collaboratorCard:last-child { border-right: none; }
