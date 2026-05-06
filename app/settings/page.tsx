@@ -710,7 +710,9 @@ export default function SettingsPage() {
         <div className={styles.content}>
           <div className={styles.brandExplorer}>
           <div className={styles.explorerHeader}>
-            <span className={styles.sectionEyebrow}>Personal theme</span>
+            <span className={styles.sectionEyebrow}>Personal settings</span>
+            <h2>Personal theme</h2>
+            <p>These colors follow you across every workspace.</p>
           </div>
 
           <div className={styles.colorPicker}>
@@ -775,6 +777,7 @@ export default function SettingsPage() {
           </div>
 
           <div className={styles.presetsSection}>
+            <h3>Quick Presets</h3>
             <div className={styles.presetGrid}>
               {Object.entries(PRESETS).map(([name, preset]) => (
                 <button
@@ -826,7 +829,11 @@ export default function SettingsPage() {
 
         <div className={styles.collaboratorSection}>
         <div className={styles.workspaceSettingsHeader}>
-          <span className={styles.sectionEyebrow}>Workspace settings — {currentWorkspaceName}</span>
+          <div>
+            <span className={styles.sectionEyebrow}>Workspace settings</span>
+            <h2>{currentWorkspaceName}</h2>
+            <p>These controls affect the active workspace.</p>
+          </div>
           <span className={styles.workspaceRoleBadge}>{currentRoleLabel}</span>
         </div>
 
@@ -969,7 +976,10 @@ export default function SettingsPage() {
 
         <div className={styles.planSection}>
           <div className={styles.planHeader}>
-            <h2>Plan</h2>
+            <div>
+              <h2>Plan</h2>
+              <p>Billing and limits belong to this workspace.</p>
+            </div>
             {workspacePlan === 'free' && isOwner && (
               <button
                 type="button"
@@ -1078,7 +1088,14 @@ export default function SettingsPage() {
         </div>
 
         <div className={styles.collaboratorHeader}>
-          <h2>Collaborators</h2>
+          <div>
+            <h2>Collaborators</h2>
+            <p>
+              {isOwner
+                ? 'Workspace owners can invite members, review pending invites, and manage access.'
+                : 'You can see who belongs to this workspace. Invite and removal controls are owner-only.'}
+            </p>
+          </div>
         </div>
 
         {collaboratorError && (
