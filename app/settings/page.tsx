@@ -709,8 +709,8 @@ export default function SettingsPage() {
 
         <div className={styles.content}>
           <div className={styles.personalThemeRow}>
-            <div className={styles.brandExplorer}>
-              <div className={styles.explorerHeader}>
+          <div className={styles.brandExplorer}>
+          <div className={styles.explorerHeader}>
             <span className={styles.sectionEyebrow}>Personal theme</span>
           </div>
 
