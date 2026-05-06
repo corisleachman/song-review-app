@@ -1,20 +1,21 @@
 /* ============================================================
-   Settings page — compact redesign
+   Settings page — properly laid out
    ============================================================ */
 
-/* ── Layout ── */
+/* ── Page container ── */
 .container {
   width: 100%;
   max-width: 100%;
   min-height: 100vh;
   background: linear-gradient(135deg, #0d0914 0%, #1a0f2e 50%, #0d0914 100%);
-  padding: 16px 32px 40px;
+  padding: 20px 28px 60px;
   overflow-x: hidden;
 }
 
+/* ── Page header (Back + Settings title) ── */
 .header {
   max-width: 860px;
-  margin: 0 0 14px;
+  margin: 0 0 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -42,9 +43,9 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 32px;
+  height: 30px;
   padding: 0 12px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-md, 8px);
   background: rgba(255,255,255,0.055);
   border: 1px solid rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.7);
@@ -53,33 +54,52 @@
   font-weight: 700;
   transition: border-color 0.15s;
 }
-.backButton:hover { border-color: rgba(255,20,147,0.3); }
+.backButton:hover { border-color: rgba(255,20,147,0.4); }
 
+.errorBanner {
+  max-width: 860px;
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(127,29,29,0.24);
+  border: 1px solid rgba(248,113,113,0.28);
+  color: #fecaca;
+  font-size: 12px;
+}
+
+/* ── Main content column ── */
 .content {
   max-width: 860px;
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
-/* ── Section cards ── */
+/* ============================================================
+   SHARED CARD SHELL
+   brandExplorer, collaboratorSection, infoPanel all use this
+   ============================================================ */
 .brandExplorer,
 .collaboratorSection,
 .infoPanel {
-  background: rgba(8,5,14,0.5);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: var(--radius-lg);
+  background: rgba(8,5,14,0.6);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 12px;
   overflow: hidden;
 }
 
-/* ── Section eyebrow header ── */
-.explorerHeader {
+/* ── Section eyebrow header bar ── */
+.explorerHeader,
+.workspaceSettingsHeader,
+.planHeader,
+.collaboratorHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 14px;
+  padding: 10px 16px;
   border-bottom: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.02);
 }
 
 .sectionEyebrow {
@@ -87,19 +107,22 @@
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.38);
+  color: rgba(255,255,255,0.4);
 }
 
-/* ── Color picker ── */
+/* ============================================================
+   PERSONAL THEME — top section
+   Two columns: left = color picker + presets, right = info panel
+   ============================================================ */
 .colorPicker {
-  padding: 12px 14px 0;
+  padding: 16px 16px 0;
 }
 
 .pickerRow {
   display: grid;
   grid-template-columns: repeat(3, minmax(0,1fr));
-  gap: 12px;
-  margin-bottom: 10px;
+  gap: 14px;
+  margin-bottom: 0;
 }
 
 .colorControl label {
@@ -109,7 +132,7 @@
   color: rgba(255,255,255,0.4);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 5px;
+  margin-bottom: 6px;
 }
 
 .colorInputWrapper {
@@ -119,9 +142,9 @@
 }
 
 .colorInput {
-  width: 28px;
-  height: 28px;
-  border: 1px solid rgba(255,255,255,0.1);
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(255,255,255,0.12);
   border-radius: 6px;
   cursor: pointer;
   flex-shrink: 0;
@@ -131,21 +154,21 @@
 .textInput {
   flex: 1;
   min-width: 0;
-  height: 28px;
-  padding: 0 8px;
+  height: 32px;
+  padding: 0 10px;
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 6px;
   font-family: 'Courier New', monospace;
   font-size: 12px;
   color: rgba(255,255,255,0.8);
   background: rgba(255,255,255,0.05);
+  transition: border-color 0.15s;
 }
 .textInput:focus { outline: none; border-color: #ff1493; }
 
-/* ── Presets + save row ── */
+/* Presets + save/reset on same row */
 .presetsSection {
-  padding: 10px 14px 12px;
-  border-top: 1px solid rgba(255,255,255,0.07);
+  padding: 14px 16px 16px;
 }
 
 .presetGrid {
@@ -156,10 +179,10 @@
 }
 
 .presetButton {
-  height: 26px;
-  padding: 0 10px;
+  height: 28px;
+  padding: 0 12px;
   border: none;
-  border-radius: 5px;
+  border-radius: 6px;
   color: white;
   font-weight: 700;
   font-size: 11px;
@@ -168,21 +191,22 @@
   letter-spacing: 0.04em;
   transition: opacity 0.15s;
 }
-.presetButton:hover { opacity: 0.85; }
+.presetButton:hover { opacity: 0.82; }
 
 .actions {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   margin-left: auto;
+  flex-shrink: 0;
 }
 
 .saveButton {
-  height: 26px;
-  padding: 0 12px;
+  height: 28px;
+  padding: 0 14px;
   background: linear-gradient(135deg, #ff1493, #00d4ff);
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 6px;
   font-weight: 700;
   font-size: 11px;
   cursor: pointer;
@@ -192,11 +216,11 @@
 }
 
 .resetButtonLarge {
-  height: 26px;
+  height: 28px;
   padding: 0 12px;
   background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 5px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
   font-weight: 700;
   font-size: 11px;
   cursor: pointer;
@@ -204,26 +228,51 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
 }
-.resetButtonLarge:hover { color: rgba(255,255,255,0.9); border-color: rgba(255,255,255,0.2); }
+.resetButtonLarge:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.09); }
 
-/* ── Workspace settings header ── */
-.workspaceSettingsHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 14px;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+/* Info panel — Personal scope */
+.infoPanel {
+  padding: 0;
 }
+
+.infoPanel h3 {
+  display: none; /* eyebrow not needed here */
+}
+
+.tipsList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tipsList li {
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  line-height: 1.5;
+}
+.tipsList li:before {
+  content: '→ ';
+  color: #ff1493;
+  font-weight: 700;
+  margin-right: 4px;
+}
+.tipsList li:last-child { border-bottom: none; }
+
+/* ============================================================
+   WORKSPACE SETTINGS CARD
+   ============================================================ */
 
 .workspaceRoleBadge {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
   padding: 3px 10px;
   border-radius: 999px;
   background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.14);
   color: rgba(255,255,255,0.7);
   font-size: 10px;
   font-weight: 800;
@@ -231,12 +280,13 @@
   letter-spacing: 0.06em;
 }
 
-/* ── Workspace name + image (two columns) ── */
+/* Name + image — two columns inside a padded row */
 .workspaceNameSection {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  padding: 12px 14px;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: start;
+  padding: 16px 16px 14px;
   border-bottom: 1px solid rgba(255,255,255,0.07);
 }
 
@@ -247,7 +297,7 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: rgba(255,255,255,0.38);
-  margin: 0 0 6px;
+  margin: 0 0 8px;
 }
 
 .workspaceNameSection p,
@@ -255,55 +305,57 @@
 
 .workspaceNameForm {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   align-items: center;
 }
 
 .workspaceNameReadOnly {
-  height: 28px;
-  padding: 0 8px;
+  height: 32px;
+  padding: 0 10px;
   border-radius: 6px;
   color: rgba(255,255,255,0.6);
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
   font-size: 13px;
-  line-height: 28px;
+  line-height: 32px;
 }
 
-.workspaceImageSection { display: contents; }
+.workspaceImageSection {
+  padding-top: 2px;
+}
 
 .workspaceImageRow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .workspaceImagePreview {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   flex-shrink: 0;
   display: grid;
   place-items: center;
   overflow: hidden;
-  border-radius: 6px;
+  border-radius: 8px;
   background: rgba(255,20,147,0.14);
-  border: 1px solid rgba(255,20,147,0.26);
+  border: 1px solid rgba(255,20,147,0.3);
   color: rgba(255,255,255,0.9);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 800;
 }
 .workspaceImagePreview img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-.workspaceImageActions { display: flex; gap: 6px; flex-wrap: wrap; }
+.workspaceImageActions { display: flex; gap: 6px; }
 .hiddenFileInput { display: none; }
 
-/* ── Notification mode ── */
+/* Notification mode — label left, options right */
 .notificationSection {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 20px;
   align-items: start;
-  padding: 12px 14px;
+  padding: 16px 16px 14px;
   border-bottom: 1px solid rgba(255,255,255,0.07);
 }
 
@@ -313,32 +365,32 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: rgba(255,255,255,0.38);
-  margin: 0 0 4px;
+  margin: 0 0 5px;
 }
 
 .notificationSection > div > p {
-  font-size: 11px;
-  color: rgba(255,255,255,0.4);
+  font-size: 12px;
+  color: rgba(255,255,255,0.45);
   margin: 0;
   line-height: 1.5;
 }
 
-.notificationToggle { display: flex; flex-direction: column; gap: 6px; }
+.notificationToggle { display: flex; flex-direction: column; gap: 8px; }
 
 .notificationOption {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 8px 10px;
+  gap: 3px;
+  padding: 10px 12px;
   background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 8px;
   text-align: left;
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
   width: 100%;
 }
-.notificationOption:hover:not(:disabled) { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.15); }
+.notificationOption:hover:not(:disabled) { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.16); }
 .notificationOption:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .notificationOptionActive {
@@ -346,81 +398,91 @@
   background: rgba(255,20,147,0.08) !important;
 }
 
-.notificationOptionLabel { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.85); }
-.notificationOptionDesc { font-size: 11px; color: rgba(255,255,255,0.45); line-height: 1.4; }
-.collaboratorSubtext { font-size: 11px; color: rgba(255,255,255,0.45); margin: 0; line-height: 1.5; }
+.notificationOptionLabel { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.88); }
+.notificationOptionDesc { font-size: 11px; color: rgba(255,255,255,0.48); line-height: 1.45; }
+.collaboratorSubtext { font-size: 12px; color: rgba(255,255,255,0.48); margin: 0; line-height: 1.5; }
 
-/* ── Permissions summary ── */
+/* Permissions summary — two equal columns */
 .permissionsSummary {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  padding: 12px 14px;
+  gap: 12px;
+  padding: 14px 16px 16px;
 }
 
 .permissionCard {
-  padding: 10px 12px;
-  border-radius: 6px;
+  padding: 12px 14px;
+  border-radius: 8px;
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.07);
 }
-.permissionCard h3 { margin: 0 0 4px; color: rgba(255,255,255,0.75); font-size: 12px; font-weight: 700; }
-.permissionCard p { margin: 0; color: rgba(255,255,255,0.45); font-size: 11px; line-height: 1.5; }
+.permissionCard h3 { margin: 0 0 5px; color: rgba(255,255,255,0.78); font-size: 13px; font-weight: 700; }
+.permissionCard p { margin: 0; color: rgba(255,255,255,0.48); font-size: 12px; line-height: 1.5; }
 
-/* ── Plan section ── */
+/* ============================================================
+   PLAN SECTION — inside collaboratorSection
+   ============================================================ */
 .planSection { overflow: hidden; }
 
-.planHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 14px;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+.planHeader h2 {
+  margin: 0;
+  font-family: 'Outfit', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.4);
 }
-.planHeader h2 { margin: 0; font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.38); }
 .planHeader p { display: none; }
 
 .planDetails {
   display: grid;
   grid-template-columns: repeat(4, minmax(0,1fr));
-  gap: 8px;
-  padding: 10px 14px;
+  gap: 10px;
+  padding: 14px 16px;
 }
 
 .planStat {
-  display: grid;
-  gap: 3px;
-  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 6px;
+  border-radius: 8px;
 }
 .planStat span { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(255,255,255,0.38); }
-.planStat strong { color: rgba(255,255,255,0.85); font-size: 13px; }
+.planStat strong { color: rgba(255,255,255,0.88); font-size: 14px; font-weight: 700; }
 
 .planTesting {
-  margin: 0 14px 10px;
-  padding: 10px 12px;
-  border-radius: 6px;
+  margin: 0 16px 14px;
+  padding: 12px 14px;
+  border-radius: 8px;
   background: rgba(255,255,255,0.03);
-  border: 1px dashed rgba(255,255,255,0.12);
+  border: 1px dashed rgba(255,255,255,0.14);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
 }
 
-.planTestingCopy { display: grid; gap: 3px; }
-.planTestingCopy strong { color: rgba(255,255,255,0.8); font-size: 12px; }
-.planTestingCopy span { color: rgba(255,255,255,0.45); font-size: 11px; line-height: 1.5; }
-.planTestingActions { display: flex; gap: 6px; flex-wrap: wrap; flex-shrink: 0; }
+.planTestingCopy { display: flex; flex-direction: column; gap: 3px; }
+.planTestingCopy strong { color: rgba(255,255,255,0.82); font-size: 13px; }
+.planTestingCopy span { color: rgba(255,255,255,0.48); font-size: 12px; line-height: 1.5; }
+.planTestingActions { display: flex; gap: 8px; flex-wrap: wrap; flex-shrink: 0; }
 
-/* ── Collaborators section ── */
-.collaboratorHeader {
-  padding: 8px 14px;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+/* ============================================================
+   COLLABORATORS SECTION
+   ============================================================ */
+.collaboratorHeader h2 {
+  margin: 0;
+  font-family: 'Outfit', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.4);
 }
-.collaboratorHeader h2 { font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.38); margin: 0; }
 .collaboratorHeader p { display: none; }
 
 .collaboratorGrid {
@@ -429,15 +491,30 @@
 }
 
 .collaboratorCard {
-  padding: 12px 14px;
+  padding: 14px 16px;
   border-right: 1px solid rgba(255,255,255,0.07);
 }
 .collaboratorCard:last-child { border-right: none; }
-.collaboratorCard h3 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.38); margin: 0 0 8px; }
 
-.collaboratorMuted { display: none; }
-.inviteForm { display: grid; gap: 6px; }
-.collaboratorList { display: grid; }
+.collaboratorCard h3 {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.38);
+  margin: 0 0 10px;
+}
+
+.collaboratorMuted {
+  font-size: 12px;
+  color: rgba(255,255,255,0.35);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.inviteForm { display: flex; flex-direction: column; gap: 8px; }
+
+.collaboratorList { display: flex; flex-direction: column; }
 
 .collaboratorRow {
   display: flex;
@@ -445,14 +522,14 @@
   gap: 8px;
   align-items: center;
   flex-wrap: wrap;
-  padding: 6px 0;
+  padding: 8px 0;
   border-top: 1px solid rgba(255,255,255,0.06);
 }
 .collaboratorRow:first-child { border-top: none; }
 
-.collaboratorMeta { display: grid; gap: 1px; min-width: 0; flex: 1; }
-.collaboratorMeta strong { color: rgba(255,255,255,0.85); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.collaboratorMeta span { color: rgba(255,255,255,0.4); font-size: 11px; line-height: 1.4; overflow-wrap: anywhere; }
+.collaboratorMeta { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.collaboratorMeta strong { color: rgba(255,255,255,0.88); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.collaboratorMeta span { color: rgba(255,255,255,0.42); font-size: 11px; line-height: 1.4; overflow-wrap: anywhere; }
 
 .collaboratorActions { display: flex; align-items: center; gap: 5px; flex-shrink: 0; flex-wrap: wrap; }
 
@@ -460,10 +537,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 2px 8px;
+  padding: 3px 9px;
   border-radius: 999px;
   background: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.7);
+  color: rgba(255,255,255,0.72);
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
@@ -472,73 +549,66 @@
 }
 
 .inlineAction {
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.14);
   background: rgba(255,255,255,0.05);
   color: rgba(255,255,255,0.72);
-  border-radius: 5px;
-  padding: 3px 8px;
+  border-radius: 6px;
+  padding: 4px 9px;
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.15s;
 }
-.inlineAction:hover { background: rgba(255,255,255,0.09); }
+.inlineAction:hover { background: rgba(255,255,255,0.1); }
 
-/* ── Info panel ── */
-.infoPanel h3 { font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.38); margin: 0; padding: 8px 14px; border-bottom: 1px solid rgba(255,255,255,0.07); }
-
-.tipsList { list-style: none; padding: 0; margin: 0; }
-.tipsList li { font-size: 11px; color: rgba(255,255,255,0.45); padding: 7px 14px; border-bottom: 1px solid rgba(255,255,255,0.05); line-height: 1.5; overflow-wrap: anywhere; }
-.tipsList li:before { content: '→ '; color: #ff1493; font-weight: 700; margin-right: 4px; }
-.tipsList li:last-child { border-bottom: none; }
-
-/* ── Shared ── */
-.label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(255,255,255,0.38); margin-bottom: 5px; }
-
-.memberScopeNote {
-  margin: 0 14px 10px;
-  padding: 8px 10px;
-  border-radius: 6px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
-  display: grid;
-  gap: 3px;
-}
-.memberScopeNote strong { color: rgba(255,255,255,0.75); font-size: 12px; }
-.memberScopeNote span { color: rgba(255,255,255,0.45); font-size: 11px; line-height: 1.5; }
-
+/* ============================================================
+   FEEDBACK / ERROR STATES
+   ============================================================ */
 .collaboratorMessage,
 .collaboratorSuccess {
-  border-radius: 6px;
-  padding: 7px 10px;
-  margin-bottom: 8px;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 0 16px 12px;
   font-size: 12px;
   line-height: 1.5;
 }
 .collaboratorMessage { background: rgba(127,29,29,0.24); border: 1px solid rgba(248,113,113,0.28); color: #fecaca; }
 .collaboratorSuccess { background: rgba(16,185,129,0.14); border: 1px solid rgba(16,185,129,0.28); color: #bbf7d0; }
 
-.errorBanner {
-  max-width: 900px;
-  margin: 0 auto 10px;
-  padding: 8px 12px;
-  border-radius: 6px;
-  background: rgba(127,29,29,0.24);
-  border: 1px solid rgba(248,113,113,0.28);
-  color: #fecaca;
-  font-size: 12px;
+.memberScopeNote {
+  margin: 0 16px 14px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.memberScopeNote strong { color: rgba(255,255,255,0.78); font-size: 13px; }
+.memberScopeNote span { color: rgba(255,255,255,0.48); font-size: 12px; line-height: 1.5; }
+
+.label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255,255,255,0.38);
+  margin-bottom: 5px;
 }
 
-/* ── Responsive ── */
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
 @media (max-width: 768px) {
-  .container { padding: 12px 14px 32px; }
-  .pickerRow { grid-template-columns: 1fr; }
+  .container { padding: 14px 16px 40px; }
+  .pickerRow { grid-template-columns: 1fr; gap: 12px; }
   .presetGrid { flex-wrap: wrap; }
   .actions { margin-left: 0; width: 100%; }
   .saveButton, .resetButtonLarge { flex: 1; text-align: center; }
   .workspaceNameSection { grid-template-columns: 1fr; }
-  .workspaceImageSection { display: block; }
   .notificationSection { grid-template-columns: 1fr; }
   .permissionsSummary { grid-template-columns: 1fr; }
   .planDetails { grid-template-columns: repeat(2, minmax(0,1fr)); }
@@ -553,4 +623,25 @@
 
 @media (max-width: 480px) {
   .planDetails { grid-template-columns: 1fr; }
+}
+
+/* ── Personal theme + scope: side by side ── */
+.personalThemeRow {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 12px;
+  align-items: start;
+}
+
+/* Actions row at bottom of brandExplorer */
+.presetsActions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 16px 14px;
+}
+
+@media (max-width: 768px) {
+  .personalThemeRow {
+    grid-template-columns: 1fr;
+  }
 }
