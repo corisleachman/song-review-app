@@ -503,7 +503,8 @@
 
 .collaboratorGrid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0,1fr));
+  grid-template-columns: 1fr 1.2fr 1.4fr;
+  min-width: 0;
 }
 
 .collaboratorCard {
@@ -540,12 +541,14 @@
   flex-wrap: wrap;
   padding: 8px 0;
   border-top: 1px solid rgba(255,255,255,0.06);
+  min-width: 0;
+  overflow: hidden;
 }
 .collaboratorRow:first-child { border-top: none; }
 
 .collaboratorMeta { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
-.collaboratorMeta strong { color: rgba(255,255,255,0.88); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.collaboratorMeta span { color: rgba(255,255,255,0.42); font-size: 11px; line-height: 1.4; overflow-wrap: anywhere; }
+.collaboratorMeta strong { color: rgba(255,255,255,0.88); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.collaboratorMeta span { color: rgba(255,255,255,0.42); font-size: 11px; line-height: 1.4; word-break: break-word; overflow-wrap: anywhere; min-width: 0; }
 
 .collaboratorActions { display: flex; align-items: center; gap: 5px; flex-shrink: 0; flex-wrap: wrap; }
 
