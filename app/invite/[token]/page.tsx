@@ -1,4 +1,6 @@
+import { redirect } from 'next/navigation';
 import { getPublicInviteByToken, type PublicInviteState } from '@/lib/accountInvites';
+import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import InviteActions from './InviteActions';
 
 interface InvitePageProps {
@@ -52,6 +54,19 @@ export default async function InvitePage({ params }: InvitePageProps) {
 
   const state = result.state;
   const invite = result.invite;
+
+  // If the invite is accepted and the current user is already authenticated,
+  // they're already a member — redirect to dashboard instead of a dead-end page.
+  if (state === 'accepted' && invite) {
+    try {
+      const resolved = await resolveCanonicalIdentity();
+      if (resolved) {
+        redirect(`/dashboard?inviteAccepted=${encodeURIComponent(invite.workspace.name)}`);
+      }
+    } catch {
+      // Not authenticated or bootstrap failed — fall through to normal page render
+    }
+  }
 
   return (
     <main
