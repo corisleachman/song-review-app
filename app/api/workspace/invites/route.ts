@@ -109,7 +109,7 @@ async function sendInviteEmail(params: {
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const result = await resend.emails.send({
-      from: 'Song Review <onboarding@resend.dev>',
+      from: 'Song Room <noreply@song-room.live>',
       to: params.to,
       subject: `${params.inviterName} invited you to join ${params.workspaceName}`,
       text: getInviteEmailText(params),

@@ -456,7 +456,7 @@ export async function POST(req: NextRequest) {
     const sendResults = await Promise.allSettled(
       recipientEmails.map(email =>
         resend.emails.send({
-          from: 'Song Review <onboarding@resend.dev>',
+          from: 'Song Room <noreply@song-room.live>',
           to: email,
           subject,
           text: emailText,
