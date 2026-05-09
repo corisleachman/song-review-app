@@ -10,13 +10,18 @@ export async function GET(request: Request) {
   if (code) {
     const cookieStore = cookies();
 
-    const bootstrapUrl = new URL('/api/auth/bootstrap', requestUrl.origin);
-    bootstrapUrl.searchParams.set('redirect', '1');
+    // Redirect to login page with google=success so the client-side
+    // session sync can pick up the session and redirect appropriately.
+    // We avoid a server-side redirect chain to bootstrap because browsers
+    // (especially in incognito) may not persist Set-Cookie headers across
+    // multiple 307 redirect hops before the cookies are stored.
+    const loginUrl = new URL('/', requestUrl.origin);
+    loginUrl.searchParams.set('google', 'success');
     if (next && next !== '/') {
-      bootstrapUrl.searchParams.set('next', next);
+      loginUrl.searchParams.set('redirectTo', next);
     }
 
-    const redirectResponse = NextResponse.redirect(bootstrapUrl);
+    const redirectResponse = NextResponse.redirect(loginUrl);
 
     // Write session cookies directly onto the redirect response
     const supabase = createServerClient(
@@ -49,11 +54,12 @@ export async function GET(request: Request) {
     return redirectResponse;
   }
 
-  const bootstrapUrl = new URL('/api/auth/bootstrap', requestUrl.origin);
-  bootstrapUrl.searchParams.set('redirect', '1');
+  // No code — redirect to login
+  const loginUrl = new URL('/', requestUrl.origin);
+  loginUrl.searchParams.set('google', 'error');
+  loginUrl.searchParams.set('message', 'No auth code received.');
   if (next && next !== '/') {
-    bootstrapUrl.searchParams.set('next', next);
+    loginUrl.searchParams.set('redirectTo', next);
   }
-
-  return NextResponse.redirect(bootstrapUrl);
+  return NextResponse.redirect(loginUrl);
 }
