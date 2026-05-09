@@ -9,8 +9,16 @@ export async function GET(request: Request) {
 
   if (code) {
     const cookieStore = cookies();
-    const response = NextResponse.next();
 
+    const bootstrapUrl = new URL('/api/auth/bootstrap', requestUrl.origin);
+    bootstrapUrl.searchParams.set('redirect', '1');
+    if (next && next !== '/') {
+      bootstrapUrl.searchParams.set('next', next);
+    }
+
+    const redirectResponse = NextResponse.redirect(bootstrapUrl);
+
+    // Write session cookies directly onto the redirect response
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -19,7 +27,7 @@ export async function GET(request: Request) {
           getAll: () => cookieStore.getAll(),
           setAll: (cookiesToSet) => {
             cookiesToSet.forEach(({ name, value, options }) => {
-              response.cookies.set(name, value, options);
+              redirectResponse.cookies.set(name, value, options);
             });
           },
         },
@@ -37,18 +45,6 @@ export async function GET(request: Request) {
       }
       return NextResponse.redirect(errorUrl);
     }
-
-    const bootstrapUrl = new URL('/api/auth/bootstrap', requestUrl.origin);
-    bootstrapUrl.searchParams.set('redirect', '1');
-    if (next && next !== '/') {
-      bootstrapUrl.searchParams.set('next', next);
-    }
-
-    const redirectResponse = NextResponse.redirect(bootstrapUrl);
-    // Copy session cookies from supabase exchange to the redirect response
-    response.cookies.getAll().forEach(cookie => {
-      redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
-    });
 
     return redirectResponse;
   }
