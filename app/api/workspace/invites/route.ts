@@ -203,11 +203,20 @@ export async function POST(req: NextRequest) {
 
     const existingInvite = await findPendingInviteByEmail(resolved.identity.workspaceId, normalizedEmail);
     if (existingInvite) {
+      // Resend the invite email rather than silently skipping it
+      const emailResult = await sendInviteEmail({
+        to: existingInvite.email,
+        inviterName: resolved.identity.displayName,
+        workspaceName: resolved.identity.workspaceName,
+        inviteLink: buildInviteLink(existingInvite.invite_token),
+      });
+
       return NextResponse.json(
         {
           created: false,
           duplicate: true,
-          emailSent: false,
+          emailSent: emailResult.emailSent,
+          emailWarning: emailResult.emailWarning,
           invite: existingInvite,
         },
         { status: 200 }

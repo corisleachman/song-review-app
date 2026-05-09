@@ -460,9 +460,12 @@ export default function SettingsPage() {
       }
 
       if (payload?.duplicate) {
-        setCollaboratorNotice('That collaborator already has a pending invite.');
+        const msg = payload?.emailSent
+          ? 'They already have a pending invite — the email has been resent.'
+          : 'They already have a pending invite. Use "Copy invite link" to share it manually.';
+        setCollaboratorNotice(msg);
       } else {
-        setCollaboratorNotice(payload?.emailWarning || 'Invite created successfully.');
+        setCollaboratorNotice(payload?.emailWarning || 'Invite sent successfully.');
         setInviteEmail('');
       }
     } catch (inviteError) {
