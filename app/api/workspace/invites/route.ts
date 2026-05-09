@@ -108,7 +108,7 @@ async function sendInviteEmail(params: {
 
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from: 'Song Review <onboarding@resend.dev>',
       to: params.to,
       subject: `${params.inviterName} invited you to join ${params.workspaceName}`,
@@ -116,12 +116,22 @@ async function sendInviteEmail(params: {
       html: getInviteEmailHtml(params),
     });
 
+    console.log('[invite-email] Resend result:', JSON.stringify(result));
+
+    if (result.error) {
+      console.error('[invite-email] Resend returned error:', result.error);
+      return {
+        emailSent: false,
+        emailWarning: `Invite created, but email failed: ${result.error.message}. Copy the invite link manually.`,
+      };
+    }
+
     return {
       emailSent: true,
       emailWarning: null as string | null,
     };
   } catch (error) {
-    console.error('Error sending invite email:', error);
+    console.error('[invite-email] Exception sending invite email:', error);
     return {
       emailSent: false,
       emailWarning: 'Invite created, but the email could not be sent. Copy the invite link manually.',
