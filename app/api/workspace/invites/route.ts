@@ -24,8 +24,6 @@ import { logPlanEvent } from '@/lib/planEvents';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 function requireOwner(identity: Awaited<ReturnType<typeof resolveCanonicalIdentity>>) {
   if (!identity) {
     return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
@@ -109,6 +107,7 @@ async function sendInviteEmail(params: {
   }
 
   try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
     await resend.emails.send({
       from: 'Song Review <onboarding@resend.dev>',
       to: params.to,
