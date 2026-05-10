@@ -360,25 +360,42 @@ function DashboardContent() {
     };
   }, [viewerKey]);
 
-  async function loadAll(currentIdentity: string | null = viewerKey) {
-    const shouldShowLoading = songs.length === 0;
-    if (shouldShowLoading) setLoading(true);
-
-    const summaryLoaded = await loadSongs(currentIdentity, '/api/dashboard/summary');
-
-    if (!summaryLoaded) {
-      await loadSongs(currentIdentity);
-    }
-
-    if (shouldShowLoading) setLoading(false);
-
-    void Promise.all([
-      loadSongs(currentIdentity),
-      loadActions(),
-    ]);
+  function getSongCacheKey(identity: string) {
+    return `song_review_song_cache_${identity}`;
   }
 
-  async function loadSongs(currentIdentity: string | null = viewerKey, endpoint = '/api/dashboard') {
+  async function loadAll(currentIdentity: string | null = viewerKey) {
+    // Stale-while-revalidate: show cached songs instantly, fetch fresh in background
+    const cacheKey = currentIdentity ? getSongCacheKey(currentIdentity) : null;
+    const cached = cacheKey && typeof window !== 'undefined'
+      ? window.localStorage.getItem(cacheKey)
+      : null;
+
+    if (cached) {
+      try {
+        const cachedSongs = JSON.parse(cached) as Song[];
+        if (Array.isArray(cachedSongs) && cachedSongs.length > 0) {
+          setSongs(cachedSongs);
+          // Fetch fresh in background — no loading spinner
+          void Promise.all([
+            loadSongs(currentIdentity, undefined, cacheKey),
+            loadActions(),
+          ]);
+          return;
+        }
+      } catch {
+        // Corrupt cache — fall through to normal load
+      }
+    }
+
+    // No cache — show loading, fetch fresh
+    setLoading(true);
+    await loadSongs(currentIdentity, undefined, cacheKey);
+    setLoading(false);
+    void loadActions();
+  }
+
+  async function loadSongs(currentIdentity: string | null = viewerKey, endpoint = '/api/dashboard', cacheKey: string | null = null) {
     const response = await fetch(endpoint, { cache: 'no-store' });
     const payload = await response.json().catch(() => null) as DashboardSongsPayload | null;
 
@@ -433,6 +450,15 @@ function DashboardContent() {
 
     if (currentIdentity && seededSeenMap && typeof window !== 'undefined') {
       window.localStorage.setItem(getSongSeenStorageKey(currentIdentity), JSON.stringify(nextSeenMap));
+    }
+
+    // Cache the assembled song list for instant render on next load
+    if (cacheKey && typeof window !== 'undefined') {
+      try {
+        window.localStorage.setItem(cacheKey, JSON.stringify(assembled));
+      } catch {
+        // localStorage full — ignore
+      }
     }
 
     setSongs(assembled);
