@@ -5,7 +5,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { ActionStatus, getActionStatusLabel, getActionStatusToast, getNextActionStatus, isOpenAction } from '@/lib/actionWorkflow';
 import { createClient } from '@/lib/supabase';
-import { formatTimestamp, getIdentity } from '@/lib/auth';
+import { formatTimestamp, getIdentity, clearAuth, clearIdentity } from '@/lib/auth';
 import { getVersionDisplayLabel } from '@/lib/versionDisplay';
 import styles from './version.module.css';
 
@@ -2988,6 +2988,59 @@ function VersionPageInner() {
           e.target.value = '';
         }}
       />
+
+      {/* Mobile-only bottom nav — hidden on desktop via CSS */}
+      <nav className={styles.mobileBottomNav}>
+        <button
+          className={styles.mobileNavSongsBtn}
+          onClick={() => { stopPlayback(); router.push('/dashboard'); }}
+        >
+          ← Songs
+        </button>
+        <div className={styles.mobileNavRight}>
+          <button
+            className={styles.mobileNavIconBtn}
+            aria-label="Switch workspace"
+            onClick={() => router.push('/dashboard?switcher=1')}
+          >
+            <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="2" y="2" width="6" height="6" rx="1"/>
+              <rect x="10" y="2" width="6" height="6" rx="1"/>
+              <rect x="2" y="10" width="6" height="6" rx="1"/>
+              <rect x="10" y="10" width="6" height="6" rx="1"/>
+            </svg>
+          </button>
+          <button
+            className={styles.mobileNavIconBtn}
+            aria-label="Log out"
+            onClick={async () => {
+              const supabase = createClient();
+              try { await supabase.auth.signOut(); } catch { /* ignore */ }
+              clearAuth();
+              clearIdentity();
+              window.location.assign('/');
+            }}
+          >
+            <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M7 3H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h4"/>
+              <polyline points="12,6 16,9 12,12"/>
+              <line x1="16" y1="9" x2="6" y2="9"/>
+            </svg>
+          </button>
+          <button
+            className={styles.mobileNavAvatar}
+            aria-label="Settings"
+            onClick={() => router.push('/settings')}
+          >
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="" />
+            ) : (
+              identity?.[0]?.toUpperCase() ?? 'U'
+            )}
+          </button>
+        </div>
+      </nav>
+
     </div>
   );
 }
