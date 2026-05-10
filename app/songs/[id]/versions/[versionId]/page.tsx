@@ -472,6 +472,7 @@ function VersionPageInner() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [workspaceNameForNav, setWorkspaceNameForNav] = useState('');
   const [membershipRoleForNav, setMembershipRoleForNav] = useState<'owner' | 'member' | null>(null);
+  const [showMobileWorkspaceSwitcher, setShowMobileWorkspaceSwitcher] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [song, setSong] = useState<Song | null>(null);
   const [version, setVersion] = useState<Version | null>(null);
@@ -3003,15 +3004,31 @@ function VersionPageInner() {
           ← Songs
         </button>
         <div className={styles.mobileNavRight}>
-          {workspaceNameForNav && (
-            <WorkspaceSwitcher
-              userLabel={identity}
-              workspaceName={workspaceNameForNav}
-              workspaceImageUrl={null}
-              membershipRole={membershipRoleForNav}
-              variant="mobile"
-            />
-          )}
+          <div style={{ position: 'relative' }}>
+            <button
+              className={styles.mobileNavIconBtn}
+              aria-label="Switch workspace"
+              onClick={() => setShowMobileWorkspaceSwitcher(v => !v)}
+            >
+              <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="2" y="2" width="6" height="6" rx="1"/>
+                <rect x="10" y="2" width="6" height="6" rx="1"/>
+                <rect x="2" y="10" width="6" height="6" rx="1"/>
+                <rect x="10" y="10" width="6" height="6" rx="1"/>
+              </svg>
+            </button>
+            {showMobileWorkspaceSwitcher && workspaceNameForNav && (
+              <div className={styles.mobileWorkspaceSwitcherOverlay}>
+                <WorkspaceSwitcher
+                  userLabel={identity}
+                  workspaceName={workspaceNameForNav}
+                  workspaceImageUrl={null}
+                  membershipRole={membershipRoleForNav}
+                  variant="mobile"
+                />
+              </div>
+            )}
+          </div>
           <button
             className={styles.mobileNavIconBtn}
             aria-label="Log out"
