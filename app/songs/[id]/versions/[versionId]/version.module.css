@@ -1661,7 +1661,7 @@
     /* Height accounts for content + safe area inset */
     height: calc(56px + env(safe-area-inset-bottom, 0px));
     padding-top: 10px;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-bottom: max(env(safe-area-inset-bottom, 10px), 10px);
     padding-left: 16px;
     padding-right: 16px;
     background: rgba(13, 9, 20, 0.97);
