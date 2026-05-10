@@ -376,6 +376,7 @@ function DashboardContent() {
         const cachedSongs = JSON.parse(cached) as Song[];
         if (Array.isArray(cachedSongs) && cachedSongs.length > 0) {
           setSongs(cachedSongs);
+          setLoading(false); // show cached songs immediately
           // Fetch fresh in background — no loading spinner
           void Promise.all([
             loadSongs(currentIdentity, undefined, cacheKey),
