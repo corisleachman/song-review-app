@@ -2051,3 +2051,12 @@ Note the next follow-up slice.
   - Apply `20260505_notification_mode_up.sql` in Supabase production
   - Deploy and verify notification mode toggle saves and routes emails correctly
   - Run Phase 3 QA closeout checklist
+
+## 2026-05-10 — Phase 3 QA closeout
+
+- Status: **COMPLETE**
+- All 18 QA checklist items passed against production with two Google accounts
+- Outstanding item: step 4 invite email delivery — fixed by verifying song-room.live domain in Resend and updating from address. Recommend retesting step 4 with fresh invite now domain is live.
+- Phase 3 is formally closed.
+- Phase 4 (Core Collaboration Polish) is now the active phase.
+- First Phase 4 workstream: audio/upload/version reliability and mobile review flow.
