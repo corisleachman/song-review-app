@@ -1739,12 +1739,22 @@
   /* WorkspaceSwitcher overlay — floats above the bottom nav */
   .mobileWorkspaceSwitcherOverlay {
     position: fixed;
-    bottom: 72px;
+    bottom: 76px;
+    left: 16px;
     right: 16px;
-    width: 280px;
     z-index: 200;
     border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 -4px 32px rgba(0,0,0,0.5);
+    overflow: visible;
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.1);
+  }
+
+  /* Force the switcher panel to render above the trigger, not below */
+  .mobileWorkspaceSwitcherOverlay [class*="mobilePanel"] {
+    top: auto !important;
+    bottom: calc(100% + 8px) !important;
+    max-height: 60vh;
+    overflow-y: auto;
+    left: 0 !important;
+    right: 0 !important;
   }
 }
