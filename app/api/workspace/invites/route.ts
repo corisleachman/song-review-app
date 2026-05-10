@@ -116,10 +116,8 @@ async function sendInviteEmail(params: {
       html: getInviteEmailHtml(params),
     });
 
-    console.log('[invite-email] Resend result:', JSON.stringify(result));
 
     if (result.error) {
-      console.error('[invite-email] Resend returned error:', result.error);
       return {
         emailSent: false,
         emailWarning: `Invite created, but email failed: ${result.error.message}. Copy the invite link manually.`,
@@ -131,7 +129,7 @@ async function sendInviteEmail(params: {
       emailWarning: null as string | null,
     };
   } catch (error) {
-    console.error('[invite-email] Exception sending invite email:', error);
+    console.error('[invite-email] Send failed:', error);
     return {
       emailSent: false,
       emailWarning: 'Invite created, but the email could not be sent. Copy the invite link manually.',

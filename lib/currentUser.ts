@@ -47,8 +47,6 @@ export async function getCurrentAuthenticatedUser(): Promise<AuthenticatedUser |
   );
   const { data, error } = await supabase.auth.getUser();
 
-  console.log('[currentUser] getUser result:', error ? `error=${error.message}` : `userId=${data.user?.id ?? 'null'}`);
-
   if (error || !data.user) {
     return null;
   }

@@ -2183,3 +2183,49 @@ Owner-only notification mode toggle in Settings (workspace settings section), ba
 - Settings summary route exposes `notification_mode` alongside plan.
 - Settings UI: owner sees two selectable cards (Notify everyone / Notify owner only). Active mode is highlighted. Members see a read-only description of the current mode.
 - `npx tsc --noEmit` passed.
+
+---
+
+## 2026-05-10 — Auth, email and invite flow fixes
+
+### What we were trying to achieve
+
+Complete the Phase 3 QA checklist — specifically get the member invite flow working end to end: invite email delivered, member signs in via Google, member lands in the shared workspace.
+
+### Features / changes made
+
+**1. Supabase client cookie format unification**
+The server was writing session cookies via `@supabase/ssr` but the client-side Supabase client (`lib/supabase.ts`) was still using `createClientComponentClient` from the deprecated `@supabase/auth-helpers-nextjs`. The two packages use different cookie formats, so the client always saw no session after Google OAuth — causing the invite page to show "signed out" and loop. Updated `lib/supabase.ts` to use `createBrowserClient` from `@supabase/ssr`.
+
+**2. Auth callback redirect chain fix**
+The callback was redirecting through two server-side hops (callback → bootstrap → login). In incognito mode and some browsers, `Set-Cookie` headers on 307 redirect responses are not persisted before the browser follows the next hop, losing the session cookie. Simplified to a single redirect from callback directly to `/?google=success&redirectTo=...`.
+
+**3. Invite email — Resend module-level instantiation bug**
+`new Resend(process.env.RESEND_API_KEY)` was called at module level in the invite route. In Vercel serverless functions, `process.env` values are not reliably available at module init time — this produced a broken Resend client that silently accepted send calls but never delivered emails. Moved instantiation inside the `sendInviteEmail` function, matching the pattern used by the comment notification route.
+
+**4. Verified sending domain — song-room.live**
+Registered `song-room.live` domain and verified it in Resend (eu-west-1). Updated both invite and comment notification email routes to send from `noreply@song-room.live` instead of `onboarding@resend.dev`. This removes the Resend free-tier restriction that blocked sending to any email other than the account owner.
+
+**5. Duplicate invite resend**
+When sending an invite to an email that already had a pending invite, the route previously returned early with `duplicate: true` and silently skipped the email send. Now resends the email and returns `emailSent` status. UI updated to show appropriate message.
+
+**6. Accepted invite auto-redirect**
+When an authenticated user lands on an already-accepted invite URL, they were shown a dead-end "invite already used" page. Now detects authenticated state and redirects to dashboard with the `inviteAccepted` success message.
+
+### Files changed
+
+- `lib/supabase.ts`
+- `app/auth/callback/route.ts`
+- `app/api/workspace/invites/route.ts`
+- `app/settings/page.tsx`
+- `app/invite/[token]/page.tsx`
+- `app/api/auth/bootstrap/route.ts`
+- `lib/currentUser.ts`
+- `UPDATE_LOG.md`
+- `public-mvp-roadmap.md`
+
+### Notes
+
+- The `@supabase/ssr` vs `@supabase/auth-helpers-nextjs` cookie format mismatch was the root cause of multiple auth issues including the stale base64-eyJ cookie warnings in the browser console. Updating `lib/supabase.ts` resolves those warnings too.
+- `song-room.live` is now the canonical sending domain for all app emails. If the domain is ever transferred or DNS changes, both email routes need updating.
+- QA steps 1–7 now pass. Steps 8–18 pending.

@@ -18,8 +18,6 @@ export async function GET(req: NextRequest) {
     const shouldRedirect = req.nextUrl.searchParams.get('redirect') === '1';
     const resolved = await resolveCanonicalIdentity();
 
-    console.log('[bootstrap] resolved:', resolved ? `userId=${resolved.identity.userId}` : 'null');
-
     if (!resolved) {
       if (shouldRedirect) {
         const url = new URL('/', req.url);
