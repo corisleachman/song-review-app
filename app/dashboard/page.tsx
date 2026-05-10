@@ -186,6 +186,7 @@ function DashboardContent() {
   // Dashboard audio player
   const audioRef = useRef<HTMLAudioElement>(null);
   const queueRef = useRef<Song[]>([]);
+  const queueIndexRef = useRef(0);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [queueIndex, setQueueIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -773,8 +774,14 @@ function DashboardContent() {
   async function playSong(song: Song, queue: Song[]) {
     if (!song.latestVersionId || !audioRef.current) return;
 
+    // Set playingId immediately so artwork shows loading state on first tap
+    setPlayingId(song.id);
+
     const audioUrl = await resolveLatestVersionAudioUrl(song);
-    if (!audioUrl || !audioRef.current) return;
+    if (!audioUrl || !audioRef.current) {
+      setPlayingId(null); // revert on failure
+      return;
+    }
 
     const hydratedQueue = await Promise.all(queue.map(async item => {
       if (item.id !== song.id || item.latestVersionAudioUrl) return item;
@@ -801,7 +808,7 @@ function DashboardContent() {
 
   async function handlePlayerEnded() {
     const queue = queueRef.current;
-    const nextIdx = queueIndex + 1;
+    const nextIdx = queueIndexRef.current + 1;
 
     if (nextIdx < queue.length) {
       const next = queue[nextIdx];
@@ -810,6 +817,7 @@ function DashboardContent() {
       if (audioUrl && audioRef.current) {
         const hydratedNext = { ...next, latestVersionAudioUrl: audioUrl };
         queueRef.current = queue.map((item, index) => index === nextIdx ? hydratedNext : item);
+        queueIndexRef.current = nextIdx;
         setQueueIndex(nextIdx);
         setPlayingId(next.id);
         audioRef.current.src = audioUrl;
@@ -831,7 +839,7 @@ function DashboardContent() {
 
   async function skipTrack(direction: 'prev' | 'next') {
     const queue = queueRef.current;
-    const targetIdx = direction === 'next' ? queueIndex + 1 : queueIndex - 1;
+    const targetIdx = direction === 'next' ? queueIndexRef.current + 1 : queueIndexRef.current - 1;
     if (targetIdx < 0 || targetIdx >= queue.length) return;
 
     const target = queue[targetIdx];
@@ -840,6 +848,7 @@ function DashboardContent() {
     if (audioUrl && audioRef.current) {
       const hydratedTarget = { ...target, latestVersionAudioUrl: audioUrl };
       queueRef.current = queue.map((item, index) => index === targetIdx ? hydratedTarget : item);
+      queueIndexRef.current = targetIdx;
       setQueueIndex(targetIdx);
       setPlayingId(target.id);
       audioRef.current.src = audioUrl;

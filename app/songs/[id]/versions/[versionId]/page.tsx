@@ -473,6 +473,9 @@ function VersionPageInner() {
   const [song, setSong] = useState<Song | null>(null);
   const [version, setVersion] = useState<Version | null>(null);
   const [versions, setVersions] = useState<Version[]>([]);
+  const versionsRef = useRef<Version[]>([]);
+  const versionIdRef = useRef<string>(versionId);
+  const songIdRef = useRef<string>(songId);
   const [threads, setThreads] = useState<Thread[]>([]);
   const [actions, setActions] = useState<Action[]>([]);
   const [workspaceMembers, setWorkspaceMembers] = useState<WorkspaceMember[]>([]);
@@ -1212,6 +1215,7 @@ function VersionPageInner() {
       songImageRef.current = songPayload.song.image_url ?? '';
       setVersion(versionPayload.version);
       setVersions(versionsPayload.versions);
+      versionsRef.current = versionsPayload.versions;
 
       if (versionPayload.version?.audioUrl) {
         setAudioUrl(versionPayload.version.audioUrl);
@@ -1491,6 +1495,28 @@ function VersionPageInner() {
         });
         navigator.mediaSession.setActionHandler('play', () => ws.play());
         navigator.mediaSession.setActionHandler('pause', () => ws.pause());
+
+        // Wire next/previous to navigate to adjacent versions
+        const allVersions = versionsRef.current ?? [];
+        const currentIdx = allVersions.findIndex(v => v.id === versionIdRef.current);
+
+        navigator.mediaSession.setActionHandler('previoustrack',
+          currentIdx > 0
+            ? () => {
+                const prev = allVersions[currentIdx - 1];
+                if (prev) router.push(`/songs/${songIdRef.current}/versions/${prev.id}`);
+              }
+            : null
+        );
+        navigator.mediaSession.setActionHandler('nexttrack',
+          currentIdx < allVersions.length - 1
+            ? () => {
+                const next = allVersions[currentIdx + 1];
+                if (next) router.push(`/songs/${songIdRef.current}/versions/${next.id}`);
+              }
+            : null
+        );
+
         navigator.mediaSession.playbackState = 'playing';
       }
     });
@@ -1953,6 +1979,7 @@ function VersionPageInner() {
     const versionsPayload = await versionsResponse.json().catch(() => null);
     if (versionsResponse.ok && Array.isArray(versionsPayload?.versions)) {
       setVersions(versionsPayload.versions);
+      versionsRef.current = versionsPayload.versions;
     }
   };
 
@@ -2296,8 +2323,10 @@ function VersionPageInner() {
 
                     if (nativeAudioFallbackRef.current && audio) {
                       if (audio.paused) {
+                        setIsPlaying(true); // immediate feedback
                         void audio.play();
                       } else {
+                        setIsPlaying(false);
                         audio.pause();
                       }
                       return;
@@ -2306,8 +2335,10 @@ function VersionPageInner() {
                     if (!ws) return;
                     if (!audioLoadedRef.current) {
                       audioLoadedRef.current = true;
+                      setIsPlaying(true); // optimistic — show pause icon immediately
                       void ws.load(audioUrl).catch((error: Error) => {
                         const message = error?.message || String(error);
+                        setIsPlaying(false); // revert on error
                         if (!message.toLowerCase().includes('aborted')) {
                           void playNativeAudioFallback(audioUrl, message || 'WaveSurfer load failed').catch(fallbackError => {
                             setWaveErr(
@@ -2320,6 +2351,8 @@ function VersionPageInner() {
                       });
                       ws.once('ready', () => { void ws.play(); });
                     } else {
+                      // Toggle — optimistic state change
+                      setIsPlaying(prev => !prev);
                       ws.playPause();
                     }
                   }}
