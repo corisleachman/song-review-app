@@ -25,6 +25,8 @@ interface WorkspaceSwitcherProps {
   workspaceImageUrl?: string | null;
   membershipRole: WorkspaceRole | null;
   variant: 'rail' | 'mobile';
+  forceOpen?: boolean;
+  onForceClose?: () => void;
 }
 
 interface WorkspacesPayload {
@@ -67,9 +69,11 @@ export default function WorkspaceSwitcher({
   workspaceImageUrl = null,
   membershipRole,
   variant,
+  forceOpen,
+  onForceClose,
 }: WorkspaceSwitcherProps) {
   const rootRef = useRef<HTMLDivElement>(null);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(forceOpen ?? false);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [workspaces, setWorkspaces] = useState<WorkspaceSummary[]>([]);
@@ -197,6 +201,14 @@ export default function WorkspaceSwitcher({
   }
 
   if (variant === 'mobile') {
+    if (forceOpen) {
+      // Render panel directly — no trigger button needed
+      return (
+        <div className={`${styles.root} ${styles.mobileRoot}`} ref={rootRef}>
+          {renderPanel()}
+        </div>
+      );
+    }
     return (
       <div className={`${styles.root} ${styles.mobileRoot}`} ref={rootRef}>
         <button

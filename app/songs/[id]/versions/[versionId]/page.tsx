@@ -3025,6 +3025,7 @@ function VersionPageInner() {
                   workspaceImageUrl={null}
                   membershipRole={membershipRoleForNav}
                   variant="mobile"
+                  forceOpen={true}
                 />
               </div>
             )}
