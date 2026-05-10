@@ -1250,12 +1250,17 @@ function VersionPageInner() {
         showStatusToast('This version is missing an audio file path.');
       }
 
-      await Promise.all([loadThreads(), loadActions(), loadTasks()]);
-      setStatusToast(null);
+      // Clear loading as soon as core data is ready — page is now visible
+      setLoading(false);
       logVersionInit('load:success', {
         songId,
         versionId,
         hasAudioUrl: Boolean(versionPayload.version?.file_path),
+      });
+
+      // Load threads/actions/tasks in background after page is visible
+      void Promise.all([loadThreads(), loadActions(), loadTasks()]).then(() => {
+        setStatusToast(null);
       });
     } catch (error) {
       console.error('Version page load error:', error);
@@ -1264,7 +1269,6 @@ function VersionPageInner() {
       setInitError(message);
       showStatusToast(message);
       logVersionInit('load:failed', { message });
-    } finally {
       setLoading(false);
       logVersionInit('load:complete', {
         loadingCleared: true,
@@ -2108,7 +2112,37 @@ function VersionPageInner() {
     setActionAssignedToUserId(action.assigned_to_user_id ?? '');
   }
 
-  if (loading) return <div className={styles.loading}>Loading this version…</div>;
+  if (loading) return (
+    <div className={styles.loadingScreen}>
+      <div className={styles.loadingLogoWrap}>
+        <svg
+          className={styles.loadingLogo}
+          viewBox="0 0 120 140"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          {/* Placeholder logo — replace path data with real logo when available */}
+          {/* Shape: stylised music note / song room mark */}
+          <path
+            className={styles.loadingLogoOutline}
+            d="M60 10 L90 10 Q110 10 110 30 Q110 50 90 50 L70 50 L95 90 Q100 100 95 112 Q90 125 75 128 Q60 131 50 120 Q40 109 45 95 Q50 81 65 80 L65 50 L60 50 Q40 50 30 35 Q20 20 30 10 Z"
+            strokeWidth="4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            className={styles.loadingLogoFill}
+            d="M60 10 L90 10 Q110 10 110 30 Q110 50 90 50 L70 50 L95 90 Q100 100 95 112 Q90 125 75 128 Q60 131 50 120 Q40 109 45 95 Q50 81 65 80 L65 50 L60 50 Q40 50 30 35 Q20 20 30 10 Z"
+            strokeWidth="4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </div>
+      <p className={styles.loadingLabel}>Loading…</p>
+    </div>
+  );
 
   if (initError) {
     return (

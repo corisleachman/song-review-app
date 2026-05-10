@@ -1758,3 +1758,70 @@
     right: 0 !important;
   }
 }
+
+/* ── Loading screen ── */
+.loadingScreen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0d0914 0%, #1a0f2e 50%, #0d0914 100%);
+  gap: 24px;
+}
+
+.loadingLogoWrap {
+  position: relative;
+  width: 80px;
+  height: 94px;
+}
+
+.loadingLogo {
+  width: 100%;
+  height: 100%;
+}
+
+/* White outline — always visible */
+.loadingLogoOutline {
+  stroke: rgba(255, 255, 255, 0.15);
+  fill: none;
+  stroke-dasharray: 600;
+  stroke-dashoffset: 0;
+}
+
+/* Pink fill — animates upward via stroke-dashoffset */
+.loadingLogoFill {
+  stroke: #ff1493;
+  fill: none;
+  stroke-dasharray: 600;
+  stroke-dashoffset: 600;
+  animation: fillUp 1.8s ease-in-out infinite;
+  filter: drop-shadow(0 0 6px rgba(255, 20, 147, 0.6));
+}
+
+@keyframes fillUp {
+  0% {
+    stroke-dashoffset: 600;
+    opacity: 0.6;
+  }
+  60% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  80% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 600;
+    opacity: 0.6;
+  }
+}
+
+.loadingLabel {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
