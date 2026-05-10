@@ -1772,8 +1772,8 @@
 
 .loadingLogoWrap {
   position: relative;
-  width: 80px;
-  height: 94px;
+  width: 140px;
+  height: 86px;
 }
 
 .loadingLogo {
@@ -1785,7 +1785,7 @@
 .loadingLogoOutline {
   stroke: rgba(255, 255, 255, 0.15);
   fill: none;
-  stroke-dasharray: 600;
+  stroke-dasharray: 400;
   stroke-dashoffset: 0;
 }
 
@@ -1793,15 +1793,15 @@
 .loadingLogoFill {
   stroke: #ff1493;
   fill: none;
-  stroke-dasharray: 600;
-  stroke-dashoffset: 600;
+  stroke-dasharray: 400;
+  stroke-dashoffset: 400;
   animation: fillUp 1.8s ease-in-out infinite;
   filter: drop-shadow(0 0 6px rgba(255, 20, 147, 0.6));
 }
 
 @keyframes fillUp {
   0% {
-    stroke-dashoffset: 600;
+    stroke-dashoffset: 400;
     opacity: 0.6;
   }
   60% {
@@ -1813,7 +1813,7 @@
     opacity: 1;
   }
   100% {
-    stroke-dashoffset: 600;
+    stroke-dashoffset: 400;
     opacity: 0.6;
   }
 }

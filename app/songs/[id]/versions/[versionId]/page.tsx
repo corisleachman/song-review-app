@@ -2117,24 +2117,38 @@ function VersionPageInner() {
       <div className={styles.loadingLogoWrap}>
         <svg
           className={styles.loadingLogo}
-          viewBox="0 0 120 140"
+          viewBox="0 0 130 80"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           aria-hidden="true"
         >
-          {/* Placeholder logo — replace path data with real logo when available */}
-          {/* Shape: stylised music note / song room mark */}
+          {/* S */}
           <path
             className={styles.loadingLogoOutline}
-            d="M60 10 L90 10 Q110 10 110 30 Q110 50 90 50 L70 50 L95 90 Q100 100 95 112 Q90 125 75 128 Q60 131 50 120 Q40 109 45 95 Q50 81 65 80 L65 50 L60 50 Q40 50 30 35 Q20 20 30 10 Z"
-            strokeWidth="4"
+            d="M8 18 Q8 8 20 8 L38 8 Q50 8 50 20 Q50 32 38 32 L20 32 Q8 32 8 44 Q8 56 20 56 L42 56 Q54 56 54 68"
+            strokeWidth="5"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
           <path
             className={styles.loadingLogoFill}
-            d="M60 10 L90 10 Q110 10 110 30 Q110 50 90 50 L70 50 L95 90 Q100 100 95 112 Q90 125 75 128 Q60 131 50 120 Q40 109 45 95 Q50 81 65 80 L65 50 L60 50 Q40 50 30 35 Q20 20 30 10 Z"
-            strokeWidth="4"
+            d="M8 18 Q8 8 20 8 L38 8 Q50 8 50 20 Q50 32 38 32 L20 32 Q8 32 8 44 Q8 56 20 56 L42 56 Q54 56 54 68"
+            strokeWidth="5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          {/* R */}
+          <path
+            className={styles.loadingLogoOutline}
+            d="M70 68 L70 8 L98 8 Q114 8 114 24 Q114 40 98 40 L70 40 M90 40 L118 68"
+            strokeWidth="5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            className={styles.loadingLogoFill}
+            d="M70 68 L70 8 L98 8 Q114 8 114 24 Q114 40 98 40 L70 40 M90 40 L118 68"
+            strokeWidth="5"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
