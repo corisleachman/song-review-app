@@ -1301,12 +1301,12 @@ function DashboardContent() {
                               )}
                             </button>
                           )}
-                          {playingId === song.id && isPlaying && (
-                            <div className={styles.eqBars}>
-                              <span className={styles.eqBar} style={{ animationDelay: '0s' }} />
-                              <span className={styles.eqBar} style={{ animationDelay: '0.15s' }} />
-                              <span className={styles.eqBar} style={{ animationDelay: '0.3s' }} />
-                              <span className={styles.eqBar} style={{ animationDelay: '0.1s' }} />
+                          {playingId === song.id && (
+                            <div className={styles.eqBars} style={{ opacity: isPlaying ? 1 : 0.4 }}>
+                              <span className={styles.eqBar} style={{ animationDelay: '0s', animationPlayState: isPlaying ? 'running' : 'paused' }} />
+                              <span className={styles.eqBar} style={{ animationDelay: '0.15s', animationPlayState: isPlaying ? 'running' : 'paused' }} />
+                              <span className={styles.eqBar} style={{ animationDelay: '0.3s', animationPlayState: isPlaying ? 'running' : 'paused' }} />
+                              <span className={styles.eqBar} style={{ animationDelay: '0.1s', animationPlayState: isPlaying ? 'running' : 'paused' }} />
                             </div>
                           )}
                         </div>
@@ -1547,12 +1547,12 @@ function DashboardContent() {
                             )}
                           </button>
                         )}
-                        {playingId === song.id && isPlaying && (
-                          <div className={styles.eqBars}>
-                            <span className={styles.eqBar} style={{ animationDelay: '0s' }} />
-                            <span className={styles.eqBar} style={{ animationDelay: '0.15s' }} />
-                            <span className={styles.eqBar} style={{ animationDelay: '0.3s' }} />
-                            <span className={styles.eqBar} style={{ animationDelay: '0.1s' }} />
+                        {playingId === song.id && (
+                          <div className={styles.eqBars} style={{ opacity: isPlaying ? 1 : 0.4 }}>
+                            <span className={styles.eqBar} style={{ animationDelay: '0s', animationPlayState: isPlaying ? 'running' : 'paused' }} />
+                            <span className={styles.eqBar} style={{ animationDelay: '0.15s', animationPlayState: isPlaying ? 'running' : 'paused' }} />
+                            <span className={styles.eqBar} style={{ animationDelay: '0.3s', animationPlayState: isPlaying ? 'running' : 'paused' }} />
+                            <span className={styles.eqBar} style={{ animationDelay: '0.1s', animationPlayState: isPlaying ? 'running' : 'paused' }} />
                           </div>
                         )}
                         {song.hasNewActivity && (
