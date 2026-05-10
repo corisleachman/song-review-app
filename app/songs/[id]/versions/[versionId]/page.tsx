@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase';
 import { formatTimestamp, getIdentity, clearAuth, clearIdentity } from '@/lib/auth';
 import { getVersionDisplayLabel } from '@/lib/versionDisplay';
 import styles from './version.module.css';
+import WorkspaceSwitcher from '@/components/WorkspaceSwitcher';
 
 const MAX_AUDIO_SIZE_BYTES = 200 * 1024 * 1024;
 
@@ -469,6 +470,8 @@ function VersionPageInner() {
 
   const [identity, setIdentity] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [workspaceNameForNav, setWorkspaceNameForNav] = useState('');
+  const [membershipRoleForNav, setMembershipRoleForNav] = useState<'owner' | 'member' | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [song, setSong] = useState<Song | null>(null);
   const [version, setVersion] = useState<Version | null>(null);
@@ -946,6 +949,8 @@ function VersionPageInner() {
           setIdentity(payload.identity.authorName);
           setAvatarUrl(payload.identity.avatarUrl ?? null);
           setCurrentUserId(payload.identity.userId);
+          setWorkspaceNameForNav(payload.identity.workspaceName ?? '');
+          setMembershipRoleForNav(payload.identity.membershipRole ?? null);
           logVersionInit('bootstrap:resolved', {
             authorName: payload.identity.authorName,
             userId: payload.identity.userId,
@@ -2998,18 +3003,15 @@ function VersionPageInner() {
           ← Songs
         </button>
         <div className={styles.mobileNavRight}>
-          <button
-            className={styles.mobileNavIconBtn}
-            aria-label="Switch workspace"
-            onClick={() => router.push('/dashboard?switcher=1')}
-          >
-            <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <rect x="2" y="2" width="6" height="6" rx="1"/>
-              <rect x="10" y="2" width="6" height="6" rx="1"/>
-              <rect x="2" y="10" width="6" height="6" rx="1"/>
-              <rect x="10" y="10" width="6" height="6" rx="1"/>
-            </svg>
-          </button>
+          {workspaceNameForNav && (
+            <WorkspaceSwitcher
+              userLabel={identity}
+              workspaceName={workspaceNameForNav}
+              workspaceImageUrl={null}
+              membershipRole={membershipRoleForNav}
+              variant="mobile"
+            />
+          )}
           <button
             className={styles.mobileNavIconBtn}
             aria-label="Log out"
