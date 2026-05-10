@@ -111,12 +111,13 @@ export async function GET(
       const hasAudioObject = await storageObjectExists(normalizedFilePath);
 
       if (hasAudioObject) {
-        const { data: signedAudio, error: signedAudioError } = await supabaseServer.storage
+        // Public URL — no expiry risk. Safe because song-files bucket is public
+        // and each version has a unique file path, eliminating cache collision.
+        const { data: publicAudio } = supabaseServer.storage
           .from('song-files')
-          .createSignedUrl(normalizedFilePath, 60 * 60);
+          .getPublicUrl(normalizedFilePath);
 
-        if (signedAudioError) throw signedAudioError;
-        audioUrl = signedAudio?.signedUrl ?? null;
+        audioUrl = publicAudio?.publicUrl ?? null;
       } else {
         audioMissing = true;
       }
