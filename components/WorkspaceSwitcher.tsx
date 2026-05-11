@@ -27,6 +27,7 @@ interface WorkspaceSwitcherProps {
   variant: 'rail' | 'mobile';
   forceOpen?: boolean;
   onForceClose?: () => void;
+  avatarUrl?: string | null;
 }
 
 interface WorkspacesPayload {
@@ -71,6 +72,7 @@ export default function WorkspaceSwitcher({
   variant,
   forceOpen,
   onForceClose,
+  avatarUrl,
 }: WorkspaceSwitcherProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(forceOpen ?? false);
@@ -218,9 +220,19 @@ export default function WorkspaceSwitcher({
           aria-expanded={open}
           aria-label={`Current workspace: ${workspaceName}`}
         >
-          <span className={styles.mobileEyebrow}>Workspace</span>
-          <span className={styles.mobileName}>{workspaceName}</span>
-          {roleLabel && <span className={styles.mobileRole}>{roleLabel}</span>}
+          <div className={styles.mobileButtonLeft}>
+            <span className={styles.mobileEyebrow}>Workspace</span>
+            <span className={styles.mobileName}>{workspaceName}</span>
+          </div>
+          <div className={styles.mobileButtonRight}>
+            {roleLabel && <span className={styles.mobileRole}>{roleLabel}</span>}
+            <div className={styles.mobileAvatar}>
+              {avatarUrl
+                ? <img src={avatarUrl} alt="" className={styles.mobileAvatarImg} />
+                : <span>{(userLabel?.[0] ?? 'U').toUpperCase()}</span>
+              }
+            </div>
+          </div>
         </button>
         {open && renderPanel()}
       </div>

@@ -1116,6 +1116,7 @@ function DashboardContent() {
       workspaceName={workspaceName}
       workspaceImageUrl={workspaceImageUrl}
       membershipRole={membershipRole}
+      avatarUrl={avatarUrl}
     >
       <div className={`${styles.page} ${playingId ? styles.pageWithPlayer : ''}`}>
       {/* Header */}

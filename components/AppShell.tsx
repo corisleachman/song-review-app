@@ -11,9 +11,10 @@ interface AppShellProps {
   workspaceName?: string | null;
   workspaceImageUrl?: string | null;
   membershipRole?: 'owner' | 'member' | null;
+  avatarUrl?: string | null;
 }
 
-export default function AppShell({ children, label, plan, workspaceName, workspaceImageUrl, membershipRole }: AppShellProps) {
+export default function AppShell({ children, label, plan, workspaceName, workspaceImageUrl, membershipRole, avatarUrl }: AppShellProps) {
   return (
     <div className={styles.shell}>
       <AppSidebar
@@ -24,17 +25,7 @@ export default function AppShell({ children, label, plan, workspaceName, workspa
         membershipRole={membershipRole}
       />
       <div className={styles.content}>
-        {workspaceName && (
-          <div className={styles.mobileWorkspaceBar}>
-            <WorkspaceSwitcher
-              userLabel={label}
-              workspaceName={workspaceName}
-              workspaceImageUrl={workspaceImageUrl}
-              membershipRole={membershipRole}
-              variant="mobile"
-            />
-          </div>
-        )}
+        {/* mobileWorkspaceBar removed — workspace switcher is in AppSidebar mobile rail */}
         {children}
       </div>
     </div>
