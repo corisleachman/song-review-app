@@ -2229,3 +2229,64 @@ When an authenticated user lands on an already-accepted invite URL, they were sh
 - The `@supabase/ssr` vs `@supabase/auth-helpers-nextjs` cookie format mismatch was the root cause of multiple auth issues including the stale base64-eyJ cookie warnings in the browser console. Updating `lib/supabase.ts` resolves those warnings too.
 - `song-room.live` is now the canonical sending domain for all app emails. If the domain is ever transferred or DNS changes, both email routes need updating.
 - QA steps 1–7 now pass. Steps 8–18 pending.
+
+---
+
+## 2026-05-11 — Phase 4 Core Collaboration Polish
+
+### What we were trying to achieve
+
+Improve audio reliability, perceived responsiveness, mobile UX, and dashboard performance.
+
+### Changes made
+
+**1. Audio signed URLs → public URLs**
+`/api/versions/[versionId]/route.ts` was generating 1-hour signed URLs for audio delivery. After expiry, playback silently failed. Switched to `getPublicUrl()` — no expiry risk, no cache collision. `song-files` bucket is public with unique file paths per version.
+
+**2. Immediate play button feedback**
+Version page play button now sets `isPlaying` optimistically on first tap — button flips to pause icon immediately rather than waiting 2 seconds for audio to buffer. Same pattern applied to dashboard artwork tap — EQ bars appear instantly on tap, paused/dimmed while buffering, animated at full opacity when playing.
+
+**3. MediaSession next/previous track**
+Version page: added `nexttrack`/`previoustrack` handlers wired to router navigation between versions. Fixes lock screen, car HUD, and Siri next/previous repeating the same track.
+Dashboard: fixed stale closure in `skipTrack` — `queueIndexRef` now tracks current index so MediaSession handlers always have the correct position.
+
+**4. Dashboard song caching — stale-while-revalidate**
+Songs are now cached in `localStorage` per identity. On return visits, cached songs render instantly with no loading message. Fresh data fetches silently in the background. Also eliminated the sort-reorder flash caused by two sequential `setSongs` calls (summary endpoint then full endpoint).
+
+**5. Faster version page load**
+`setLoading(false)` now fires as soon as song+version data is ready (~1-1.5s). Threads, actions, and tasks load in the background after the page is visible, rather than blocking the initial render.
+
+**6. SR loading animation**
+Replaced plain "Loading this version…" text with a full-screen dark loading screen featuring animated SR monogram — white outline with pink stroke-dashoffset fill animation. Placeholder for real Song Room logo when asset is available.
+
+**7. Mobile bottom nav on version page**
+Added a fixed bottom nav bar (mobile only, `max-width: 700px`) to the song version page:
+- `← Songs` button routes to `/dashboard`
+- Workspace switcher grid icon opens `WorkspaceSwitcher` panel as a fixed overlay sheet
+- Logout icon signs out and redirects to `/`
+- Avatar circle routes to `/settings`
+- Existing top `heroNav` bar hidden on mobile
+- iOS Safari safe: `translateZ(0)` + `will-change: transform` for stable fixed positioning
+
+**8. WorkspaceSwitcher mobile panel → overlay sheet**
+Workspace switcher on mobile now opens as a fixed overlay with blurred backdrop instead of expanding inline and pushing content down. Tap backdrop to dismiss.
+
+**9. Dashboard header hidden on mobile**
+The `dashboard_header` (workspace name + avatar row) was rendering as a duplicate below the `AppShell` `mobileWorkspaceBar`. Hidden on mobile via CSS since the workspace bar covers both.
+
+**10. Avatar in workspace bar**
+Avatar circle added to the right of the Member/Owner pill in the `WorkspaceSwitcher` mobile trigger row. `avatarUrl` threaded through `AppShell` → `WorkspaceSwitcher`.
+
+**11. Settings collaborator layout**
+Invite input given proper height/padding/border styling. Pending invites column widened from `1.4fr` to `1.8fr` to prevent email addresses and action buttons from stacking into narrow single-character columns.
+
+### Files changed
+
+Too many to list individually — major files: `app/songs/[id]/versions/[versionId]/page.tsx`, `app/songs/[id]/versions/[versionId]/version.module.css`, `app/dashboard/page.tsx`, `app/dashboard/dashboard.module.css`, `app/api/versions/[versionId]/route.ts`, `components/WorkspaceSwitcher.tsx`, `components/WorkspaceSwitcher.module.css`, `components/AppShell.tsx`, `app/settings/settings.module.css`
+
+### Notes
+
+- Phase 3 QA all 18 items passing
+- Phase 4 active — mobile UX and collaboration polish ongoing
+- Real Song Room logo path can be dropped into `app/songs/[id]/versions/[versionId]/page.tsx` SR monogram SVG when asset is ready
+- `song-room.live` verified in Resend — all emails now send from `noreply@song-room.live`
