@@ -2060,3 +2060,124 @@ Note the next follow-up slice.
 - Phase 3 is formally closed.
 - Phase 4 (Core Collaboration Polish) is now the active phase.
 - First Phase 4 workstream: audio/upload/version reliability and mobile review flow.
+
+---
+
+## Phase 5: Pricing Review & Stripe Rollout
+
+**Status: Queued**
+
+### Objective
+Rethink the pricing model and tier structure, then implement and test in Stripe.
+
+### Workstreams
+- Review current pricing tiers (Free / Paid) — are the limits right? Is the model right?
+- Discuss pricing strategy: per-seat, per-workspace, flat rate, usage-based?
+- Decide on tier names, feature gates, and limits (songs, collaborators, storage)
+- Update pricing logic in codebase (`lib/plans.ts`, plan limit enforcement)
+- Update Stripe products and prices (switch from test mode to live mode)
+- Update upgrade modal copy and pricing page/flow to reflect new model
+- End-to-end Stripe smoke test with live keys
+- Test upgrade, downgrade, and cancellation flows
+
+---
+
+## Phase 6: Security Hardening
+
+**Status: Queued**
+
+### Objective
+Harden the app before any public launch. All items below must be completed.
+
+### Workstreams
+
+**1. RLS policies (highest priority)**
+Currently the app relies on server-side auth checks in API routes. Supabase anon key access bypasses these. Need row-level security policies on all tables scoped to the authenticated user's workspace memberships. Tables to cover: `songs`, `song_versions`, `comment_threads`, `comments`, `actions`, `tasks`, `accounts`, `account_members`, `account_invites`.
+
+**2. IDOR audit**
+Systematic check of every API route to verify workspace membership is validated before returning or mutating data. A user in Workspace A should never be able to read or write data belonging to Workspace B via direct URL manipulation.
+
+**3. Input validation and sanitisation**
+- Validate all user inputs server-side (not just client-side)
+- Sanitise comment/task/song content before storing and rendering to prevent XSS
+- Check all file upload endpoints for type and size validation
+- Review Supabase query parameters for injection risk
+
+**4. Rate limiting**
+- Invite endpoint (prevent invite spam)
+- Comment/thread creation endpoint
+- Auth/bootstrap endpoint
+- Consider Vercel's built-in rate limiting or a lightweight middleware approach
+
+**5. CORS policy audit**
+Confirm Next.js API routes are not over-permissive. Verify allowed origins are correct for production domain.
+
+**6. Keys and secrets audit**
+- ✅ Resend API key rotated and removed from git history (completed 2026-05-11)
+- Confirm no other real keys are in any branch or git history
+- Ensure `.env.local` is in `.gitignore` and never committed
+- Rotate Supabase service role key as precaution (it was partially visible in DEPLOYMENT.md)
+
+**7. Error tracking and alerts — Sentry**
+- Set up Sentry free tier for runtime error tracking
+- Configure Vercel deployment failure email alerts
+- Add Sentry to both frontend (React error boundary) and API routes
+
+**8. Structured logging**
+- Review existing `console.log` calls — remove debug logs, keep meaningful operational logs
+- Consider Vercel Log Drains or Axiom for persistent log storage
+- Ensure no PII (emails, names) logged unnecessarily
+
+---
+
+## Phase 7: Final Polish
+
+**Status: Queued**
+
+### Objective
+Visual and UX polish pass before marketing site launch.
+
+### Workstreams
+- Settings page CSS redesign (wireframe ready, deferred from Phase 4)
+- Dashboard workspace switcher visual contrast improvement
+- Real Song Room logo in loading animation (swap SR placeholder path data)
+- Mobile UX review pass — any remaining rough edges
+- Empty state review — all empty states named and styled correctly
+- Typography and spacing consistency audit across all pages
+- Accessibility pass (focus states, aria labels, screen reader basics)
+
+---
+
+## Phase 8: Marketing Site
+
+**Status: Queued**
+
+### Objective
+Build a public-facing marketing site for The Song Room.
+
+### Workstreams
+- Define site structure: landing page, features, pricing, sign up CTA
+- Apply updated branding based on the new design system developed in parallel (TSR v2 design tokens, Impact/Haettenschweiler display type, DM Sans UI type, Georgia italic metadata)
+- Build landing page with hero, feature highlights, social proof section
+- Build pricing page reflecting the new model from Phase 5
+- Sign up / waitlist / invite flow from marketing site into the app
+- SEO basics: meta tags, og:image, sitemap
+- Domain setup: point `song-room.live` or a subdomain to the marketing site
+- Separate deployment from the app (Vercel project or subdirectory)
+
+---
+
+## Phase 9: Brand Update (app)
+
+**Status: Queued**
+
+### Objective
+Roll the new branding developed for the marketing site back into the app UI.
+
+### Workstreams
+- Replace current Pulse-inspired aesthetic (hot pink / cyan / purple gradients) with the TSR v2 design system
+- Apply new typography hierarchy: Impact/Haettenschweiler display, DM Sans 600 uppercase UI labels, Georgia italic metadata
+- Update colour tokens: charcoal `#111111`, off-white `#F4F0E8`, sand `#D8CBB8`, pink `#FFB6C8`, acid `#E6FF3F`, blue `#2D7DFF`
+- `border-radius: 0` everywhere (exceptions: avatar circles, waveform dots)
+- Update dashboard, version page, settings, and invite flow
+- QA full app after rebrand
