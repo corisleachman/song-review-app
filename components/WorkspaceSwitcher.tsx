@@ -234,7 +234,13 @@ export default function WorkspaceSwitcher({
             </div>
           </div>
         </button>
-        {open && renderPanel()}
+        {open && (
+          <div className={styles.mobileOverlay} onClick={() => setOpen(false)}>
+            <div className={styles.mobileSheet} onClick={e => e.stopPropagation()}>
+              {renderPanel()}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
