@@ -463,6 +463,14 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
+/* Panel inside the sheet renders inline, not absolutely positioned */
+.mobileSheet .mobilePanel {
+  position: static;
+  top: auto;
+  left: auto;
+  right: auto;
+}
+
 .mobilePanel {
   position: absolute;
   top: calc(100% + 8px);
