@@ -25,7 +25,18 @@ export default function AppShell({ children, label, plan, workspaceName, workspa
         membershipRole={membershipRole}
       />
       <div className={styles.content}>
-        {/* mobileWorkspaceBar removed — workspace switcher is in AppSidebar mobile rail */}
+        {workspaceName && (
+          <div className={styles.mobileWorkspaceBar}>
+            <WorkspaceSwitcher
+              userLabel={label}
+              workspaceName={workspaceName}
+              workspaceImageUrl={workspaceImageUrl}
+              membershipRole={membershipRole}
+              avatarUrl={avatarUrl}
+              variant="mobile"
+            />
+          </div>
+        )}
         {children}
       </div>
     </div>
