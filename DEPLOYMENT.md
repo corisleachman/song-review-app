@@ -115,12 +115,12 @@ Open http://localhost:3000 in browser
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://xouiiaknskivrjvapdma.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key...
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 SHARED_PASSWORD=further_forever
 CORIS_EMAIL=corisleachman@googlemail.com
 AL_EMAIL=furthertcb@gmail.com
-RESEND_API_KEY=re_PcJq6dm...
+RESEND_API_KEY=your_resend_api_key
 NEXT_PUBLIC_APP_URL=https://song-review-app.vercel.app
 ```
 
@@ -174,12 +174,12 @@ Create `.env.local` file in root:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://xouiiaknskivrjvapdma.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key...
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 SHARED_PASSWORD=further_forever
 CORIS_EMAIL=corisleachman@googlemail.com
 AL_EMAIL=furthertcb@gmail.com
-RESEND_API_KEY=re_PcJq6dm...
+RESEND_API_KEY=your_resend_api_key
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
