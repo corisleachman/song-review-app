@@ -1557,6 +1557,9 @@
 
 /* Mobile */
 @media (max-width: 768px) {
+  /* Dashboard header is replaced by the AppShell mobileWorkspaceBar on mobile */
+  .header { display: none; }
+
   .mobileTabs { display: flex; }
 
   .body { display: block; }
