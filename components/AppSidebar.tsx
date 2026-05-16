@@ -1,10 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useState } from 'react';
-import { createClient } from '@/lib/supabase';
-import { clearAuth, clearIdentity } from '@/lib/auth';
+import { isPlanAtLeast, usePathname } from 'next/navigation';
+import { isPlanAtLeast, useState } from 'react';
+import { isPlanAtLeast, createClient } from '@/lib/supabase';
+import { isPlanAtLeast, clearAuth, clearIdentity } from '@/lib/auth';
 import type { AccountPlan } from '@/lib/plans';
 import WorkspaceSwitcher from './WorkspaceSwitcher';
 import styles from './AppSidebar.module.css';
@@ -89,7 +89,7 @@ export default function AppSidebar({
           />
         )}
 
-        {plan === 'paid' && (
+        {isPlanAtLeast(plan, 'pro') && (
           <div className={styles.planLockup} aria-label="Paid plan active" title="Paid plan active">
             <span className={styles.planPill}>Pro</span>
             <span className={styles.planCaption}>Paid</span>
