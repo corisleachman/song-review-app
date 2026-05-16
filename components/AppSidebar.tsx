@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { isPlanAtLeast, usePathname } from 'next/navigation';
-import { isPlanAtLeast, useState } from 'react';
-import { isPlanAtLeast, createClient } from '@/lib/supabase';
-import { isPlanAtLeast, clearAuth, clearIdentity } from '@/lib/auth';
+import { usePathname } from 'next/navigation';
+import { useState } from 'react';
+import { createClient } from '@/lib/supabase';
+import { clearAuth, clearIdentity } from '@/lib/auth';
+import { isPlanAtLeast } from '@/lib/plans';
 import type { AccountPlan } from '@/lib/plans';
 import WorkspaceSwitcher from './WorkspaceSwitcher';
 import styles from './AppSidebar.module.css';
