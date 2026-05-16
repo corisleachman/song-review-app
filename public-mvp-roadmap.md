@@ -2087,8 +2087,8 @@ Rethink the pricing model and tier structure, then implement and test in Stripe.
 - [x] Cost analysis (Supabase storage and egress at scale)
 - [x] Full codebase investigation — billing routes, version create, settings, plans
 - [x] Complete implementation plan documented
-- [ ] Database migration — add storage_bytes_used to accounts, file_size_bytes to song_versions, update plan constraint
-- [ ] lib/plans.ts rewrite — three tiers, storage limits, remove song count
+- [x] Database migration — add storage_bytes_used to accounts, file_size_bytes to song_versions, update plan constraint
+- [x] lib/plans.ts rewrite — three tiers, storage limits, remove song count
 - [ ] lib/stripe.ts — expand to four price IDs
 - [ ] Stripe dashboard — create Pro and Studio products with monthly and annual prices
 - [ ] Vercel env vars — four new price ID env vars
