@@ -49,6 +49,7 @@ export async function GET() {
         workspace: {
           plan: resolved.bootstrap.workspace.plan,
           notification_mode: resolved.bootstrap.workspace.notification_mode ?? 'all_members',
+          storage_bytes_used: resolved.bootstrap.workspace.storage_bytes_used ?? 0,
         },
         theme,
         members,
