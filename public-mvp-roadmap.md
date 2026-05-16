@@ -2089,18 +2089,18 @@ Rethink the pricing model and tier structure, then implement and test in Stripe.
 - [x] Complete implementation plan documented
 - [x] Database migration — add storage_bytes_used to accounts, file_size_bytes to song_versions, update plan constraint
 - [x] lib/plans.ts rewrite — three tiers, storage limits, remove song count
-- [ ] lib/stripe.ts — expand to four price IDs
+- [x] lib/stripe.ts — expand to four price IDs
 - [ ] Stripe dashboard — create Pro and Studio products with monthly and annual prices
 - [ ] Vercel env vars — four new price ID env vars
-- [ ] app/api/versions/create/route.ts — storage enforcement and file size write
-- [ ] app/api/billing/checkout/route.ts — accept plan and interval
-- [ ] app/api/billing/activate/route.ts — resolve tier from price ID
-- [ ] app/api/stripe/webhook/route.ts — resolve tier from price ID
-- [ ] app/api/settings/summary/route.ts — include storage_bytes_used
-- [ ] app/api/workspace/plan/route.ts — support three tiers in dev toggle
-- [ ] components/UpgradeModal.tsx — storage limit type and copy
-- [ ] app/settings/page.tsx — storage bar and three-tier plan UI
-- [ ] TypeScript check
+- [x] app/api/versions/create/route.ts — storage enforcement and file size write
+- [x] app/api/billing/checkout/route.ts — accept plan and interval
+- [x] app/api/billing/activate/route.ts — resolve tier from price ID
+- [x] app/api/stripe/webhook/route.ts — resolve tier from price ID
+- [x] app/api/settings/summary/route.ts — include storage_bytes_used
+- [x] app/api/workspace/plan/route.ts — support three tiers in dev toggle
+- [x] components/UpgradeModal.tsx — storage limit type and copy
+- [x] app/settings/page.tsx — storage bar and three-tier plan UI
+- [x] TypeScript check
 - [ ] Deploy and end-to-end smoke test
 
 ---
