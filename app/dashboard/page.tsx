@@ -300,7 +300,7 @@ function DashboardContent() {
           );
         }
 
-        setWorkspacePlan('paid');
+        setWorkspacePlan('pro');
         setShowUpgradeSuccessModal(true);
         params.delete('billing');
         params.delete('session_id');
@@ -501,8 +501,8 @@ function DashboardContent() {
       const payload = await res.json().catch(() => null);
 
       if (!res.ok) {
-        if (payload?.error === 'PLAN_LIMIT_REACHED' && payload?.limitType === 'songs') {
-          setUpgradeModalType('songs');
+        if (payload?.error === 'PLAN_LIMIT_REACHED' && payload?.limitType === 'storage') {
+          setUpgradeModalType('storage');
           setShowNewModal(false);
           setNewTitle('');
           return;
@@ -2177,7 +2177,7 @@ function DashboardContent() {
       })()}
       <UpgradeModal
         isOpen={upgradeModalType !== null}
-        type={upgradeModalType ?? 'songs'}
+        type={upgradeModalType ?? 'collaborators'}
         onClose={() => setUpgradeModalType(null)}
       />
       <UpgradeSuccessModal
