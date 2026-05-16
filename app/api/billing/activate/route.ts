@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
-import { getStripe } from '@/lib/stripe';
+import { getStripe, getPlanForStripePriceId } from '@/lib/stripe';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 function getErrorMessage(error: unknown) {
   if (error instanceof Error && error.message) return error.message;
-  return 'Could not activate paid plan.';
+  return 'Could not activate plan.';
 }
 
 export async function POST(request: NextRequest) {
@@ -23,7 +23,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (resolved.identity.membershipRole !== 'owner') {
-      return NextResponse.json({ error: 'Only the workspace owner can activate billing.' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'Only the workspace owner can activate billing.' },
+        { status: 403 }
+      );
     }
 
     const body = await request.json().catch(() => null);
@@ -33,22 +36,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Session id is required.' }, { status: 400 });
     }
 
-    const stripe = getStripe();
+    const stripe  = getStripe();
     const session = await stripe.checkout.sessions.retrieve(sessionId, {
-      expand: ['subscription'],
+      expand: ['subscription', 'subscription.items.data.price'],
     });
 
     const workspaceId =
-      session.client_reference_id
-      || session.metadata?.account_id
-      || null;
+      session.client_reference_id ||
+      session.metadata?.account_id ||
+      null;
 
     if (workspaceId !== resolved.identity.workspaceId) {
-      return NextResponse.json({ error: 'Checkout session does not belong to this workspace.' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'Checkout session does not belong to this workspace.' },
+        { status: 403 }
+      );
     }
 
     if (session.payment_status !== 'paid') {
-      return NextResponse.json({ error: 'Checkout is not marked as paid yet.' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Checkout is not marked as paid yet.' },
+        { status: 400 }
+      );
     }
 
     const stripeSubscriptionId =
@@ -61,11 +70,29 @@ export async function POST(request: NextRequest) {
         ? session.customer
         : session.customer?.id ?? null;
 
+    // Derive the plan tier from the price ID on the subscription
+    const subscription =
+      typeof session.subscription === 'object' && session.subscription !== null
+        ? session.subscription
+        : null;
+
+    const priceId =
+      // @ts-expect-error — expanded subscription typing
+      subscription?.items?.data?.[0]?.price?.id ??
+      session.metadata?.target_plan === 'studio' ? null : null;
+
+    // Prefer metadata hint if price ID resolution fails
+    const metaTier = session.metadata?.target_plan;
+    const plan =
+      metaTier === 'studio' || metaTier === 'pro'
+        ? metaTier
+        : getPlanForStripePriceId(priceId as string | null);
+
     const { error: updateError } = await supabaseServer
       .from('accounts')
       .update({
-        plan: 'paid',
-        stripe_customer_id: stripeCustomerId,
+        plan,
+        stripe_customer_id:    stripeCustomerId,
         stripe_subscription_id: stripeSubscriptionId,
       })
       .eq('id', resolved.identity.workspaceId);
@@ -73,11 +100,7 @@ export async function POST(request: NextRequest) {
     if (updateError) throw updateError;
 
     return NextResponse.json(
-      {
-        activated: true,
-        plan: 'paid',
-        stripeSubscriptionId,
-      },
+      { activated: true, plan, stripeSubscriptionId },
       { status: 200 }
     );
   } catch (error) {
