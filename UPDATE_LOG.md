@@ -2341,3 +2341,40 @@ Pricing model investigation and implementation plan — no code changed yet.
 - No code has been changed — this entry records the planning phase only
 - Implementation to begin after confirmed go-ahead on each step
 - UPDATE_LOG and roadmap will be updated again after each confirmed working change
+
+## 2026-05-16 — Phase 5 Step 1 & 2: Database migration and plans rewrite
+
+### What we were trying to achieve
+
+Apply the Phase 5 storage-based pricing schema to the database and rewrite the plans module to support three tiers.
+
+### Feature / change being made
+
+Database migration (run directly in Supabase) and complete rewrite of lib/plans.ts plus all downstream files that referenced the old free/paid binary or song count limits.
+
+### Files changed
+
+- `lib/plans.ts` — complete rewrite: three tiers (free/pro/studio), storage limits (500MB/10GB/50GB), collaborator limits (3/10/unlimited), formatStorageBytes, isStorageLimitReached, planRank, isPlanAtLeast, getPlanDisplayName. Song count limit removed entirely.
+- `app/api/songs/create/route.ts` — removed song count enforcement entirely. Songs are no longer gated; storage is the limit.
+- `lib/stripe.ts` — added getPlanForStripePriceId() which maps a Stripe price ID to a plan tier. Updated getPlanForStripeSubscriptionStatus return type.
+- `app/api/stripe/webhook/route.ts` — updated plan type signatures throughout. handleCheckoutSessionCompleted and handleSubscriptionUpdated now resolve tier from price ID rather than hardcoding paid.
+- `components/AppSidebar.tsx` — replaced plan === 'paid' with isPlanAtLeast(plan, 'pro').
+- `app/dashboard/page.tsx` — replaced 'paid' plan reference with 'pro', replaced 'songs' limit type with 'storage'.
+- `app/settings/page.tsx` — removed FREE_SONG_LIMIT and getSongLimitLabel imports, added storage helpers, updated all plan === 'paid' comparisons to use isPlanAtLeast.
+
+### Database changes (applied directly in Supabase)
+
+- Dropped old accounts_plan_check constraint
+- Migrated existing plan = 'paid' rows to plan = 'pro'
+- Added new constraint: plan IN ('free', 'pro', 'studio')
+- Added accounts.storage_bytes_used BIGINT NOT NULL DEFAULT 0
+- Added song_versions.file_size_bytes BIGINT
+
+### Tests run
+
+- npx tsc --noEmit — zero errors
+
+### Notes
+
+- Steps 3 onwards (storage enforcement in upload route, billing checkout/activate updates, settings UI storage bar, Stripe products) are next
+- Version delete route does not exist yet — when added later it must decrement storage_bytes_used
