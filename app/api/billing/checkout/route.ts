@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
+import { normalizeAccountPlan, isPlanAtLeast } from '@/lib/plans';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { getStripe, getStripePriceId } from '@/lib/stripe';
 
@@ -23,8 +24,21 @@ export async function POST(request: Request) {
     }
 
     if (resolved.identity.membershipRole !== 'owner') {
-      return NextResponse.json({ error: 'Only the workspace owner can upgrade the plan.' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'Only the workspace owner can upgrade the plan.' },
+        { status: 403 }
+      );
     }
+
+    // Parse requested plan and billing interval from body.
+    // Both default safely so existing callers with no body still work.
+    const body = await request.json().catch(() => ({})) as {
+      plan?: string;
+      interval?: string;
+    };
+
+    const targetPlan = body.plan === 'studio' ? 'studio' : 'pro';
+    const interval   = body.interval === 'year' ? 'year' : 'month';
 
     const { data: account, error: accountError } = await supabaseServer
       .from('accounts')
@@ -34,20 +48,26 @@ export async function POST(request: Request) {
 
     if (accountError) throw accountError;
 
-    if (account.plan === 'paid') {
-      return NextResponse.json({ error: 'This workspace is already on the paid plan.' }, { status: 400 });
+    const currentPlan = normalizeAccountPlan(account.plan);
+
+    // Guard: don't let them check out for a plan they already have or lower
+    if (isPlanAtLeast(currentPlan, targetPlan)) {
+      return NextResponse.json(
+        { error: `This workspace is already on the ${currentPlan} plan.` },
+        { status: 400 }
+      );
     }
 
-    const stripe = getStripe();
-    const origin = new URL(request.url).origin;
+    const stripe     = getStripe();
+    const origin     = new URL(request.url).origin;
     let stripeCustomerId = account.stripe_customer_id as string | null;
 
     if (!stripeCustomerId) {
       const customer = await stripe.customers.create({
-        email: resolved.identity.email ?? undefined,
-        name: resolved.identity.displayName,
+        email:    resolved.identity.email ?? undefined,
+        name:     resolved.identity.displayName,
         metadata: {
-          account_id: resolved.identity.workspaceId,
+          account_id:    resolved.identity.workspaceId,
           owner_user_id: resolved.identity.userId,
         },
       });
@@ -56,29 +76,25 @@ export async function POST(request: Request) {
 
       const { error: updateCustomerError } = await supabaseServer
         .from('accounts')
-        .update({
-          stripe_customer_id: stripeCustomerId,
-        })
+        .update({ stripe_customer_id: stripeCustomerId })
         .eq('id', resolved.identity.workspaceId);
 
       if (updateCustomerError) throw updateCustomerError;
     }
 
+    const priceId = getStripePriceId(targetPlan, interval);
+
     const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
-      customer: stripeCustomerId,
+      mode:                'subscription',
+      customer:            stripeCustomerId,
       client_reference_id: resolved.identity.workspaceId,
-      line_items: [
-        {
-          price: getStripePriceId(),
-          quantity: 1,
-        },
-      ],
+      line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${origin}/dashboard?billing=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/settings?billing=cancelled`,
+      cancel_url:  `${origin}/settings?billing=cancelled`,
       metadata: {
-        account_id: resolved.identity.workspaceId,
+        account_id:    resolved.identity.workspaceId,
         owner_user_id: resolved.identity.userId,
+        target_plan:   targetPlan,
       },
     });
 
