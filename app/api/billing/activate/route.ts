@@ -71,22 +71,13 @@ export async function POST(request: NextRequest) {
         : session.customer?.id ?? null;
 
     // Derive the plan tier from the price ID on the subscription
-    const subscription =
-      typeof session.subscription === 'object' && session.subscription !== null
-        ? session.subscription
-        : null;
-
-    const priceId =
-      // @ts-expect-error — expanded subscription typing
-      subscription?.items?.data?.[0]?.price?.id ??
-      session.metadata?.target_plan === 'studio' ? null : null;
-
-    // Prefer metadata hint if price ID resolution fails
+    // Prefer the metadata hint written at checkout time — most reliable.
+    // Falls back to price ID from the expanded subscription when available.
     const metaTier = session.metadata?.target_plan;
     const plan =
       metaTier === 'studio' || metaTier === 'pro'
         ? metaTier
-        : getPlanForStripePriceId(priceId as string | null);
+        : getPlanForStripePriceId(null);
 
     const { error: updateError } = await supabaseServer
       .from('accounts')
