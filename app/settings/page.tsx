@@ -26,6 +26,7 @@ interface BootstrapPayload {
   workspace: {
     plan: AccountPlan;
     notification_mode?: 'all_members' | 'owner_only';
+    storage_bytes_used?: number;
   };
 }
 
@@ -144,6 +145,7 @@ export default function SettingsPage() {
   const [workspaceSettingsNotice, setWorkspaceSettingsNotice] = useState<string | null>(null);
   const [membershipRole, setMembershipRole] = useState<'owner' | 'member' | null>(null);
   const [songCount, setSongCount] = useState<number | null>(null);
+  const [storageBytesUsed, setStorageBytesUsed] = useState<number>(0);
   const [upgradeModalType, setUpgradeModalType] = useState<PlanLimitType | null>(null);
   const [billingNotice, setBillingNotice] = useState<string | null>(null);
   const [billingError, setBillingError] = useState<string | null>(null);
@@ -215,6 +217,7 @@ export default function SettingsPage() {
         setMembers(Array.isArray(summary.members) ? summary.members : []);
         setInvites(ownerAccess && Array.isArray(summary.invites) ? summary.invites : []);
         setSongCount(Number.isFinite(summary.songCount) ? summary.songCount : 0);
+        setStorageBytesUsed(typeof summary.workspace.storage_bytes_used === 'number' ? summary.workspace.storage_bytes_used : 0);
       } catch (err) {
         console.error('Error loading settings:', err);
         setError('Failed to load settings');
@@ -1008,34 +1011,32 @@ export default function SettingsPage() {
             <div className={styles.planDetails}>
               <div className={styles.planStat}>
                 <span>Current plan</span>
-                <strong>{isPlanAtLeast(workspacePlan, 'pro') ? 'Paid' : 'Free'}</strong>
+                <strong>{getPlanDisplayName(workspacePlan)}</strong>
               </div>
               <div className={styles.planStat}>
-                <span>Collaborator limit</span>
+                <span>Storage</span>
+                <strong>{formatStorageBytes(storageBytesUsed)} of {getStorageLimitLabel(workspacePlan)} used</strong>
+              </div>
+              {(() => {
+                const storageLimit = getStorageLimit(workspacePlan);
+                const pct = Math.min(100, Math.round((storageBytesUsed / storageLimit) * 100));
+                return (
+                  <div className={styles.storageBar}>
+                    <div
+                      className={styles.storageBarFill}
+                      style={{ width: `${pct}%`, background: pct >= 90 ? 'var(--color-primary)' : 'var(--color-accent)' }}
+                    />
+                  </div>
+                );
+              })()}
+              <div className={styles.planStat}>
+                <span>Collaborators</span>
                 <strong>{getCollaboratorLimitLabel(workspacePlan)}</strong>
               </div>
-              {workspacePlan !== null && !isPlanAtLeast(workspacePlan, 'pro') && (
-                <>
-                  <div className={styles.planStat}>
-                    <span>Collaborators used</span>
-                    <strong>{`${members.filter(member => member.role !== 'owner').length + invites.filter(invite => invite.status === 'pending').length} of ${FREE_COLLABORATOR_LIMIT} collaborators used`}</strong>
-                  </div>
-                  <div className={styles.planStat}>
-                    <span>Songs used</span>
-                    <strong>{`${songCount ?? 0} songs`}</strong>
-                  </div>
-                </>
-              )}
-              {isPlanAtLeast(workspacePlan, 'pro') && (
+              {!isPlanAtLeast(workspacePlan, 'pro') && (
                 <div className={styles.planStat}>
-                  <span>Song limit</span>
-                  <strong>{getStorageLimitLabel(workspacePlan ?? 'free')}</strong>
-                </div>
-              )}
-              {isPlanAtLeast(workspacePlan, 'pro') && (
-                <div className={styles.planStat}>
-                  <span>Status</span>
-                  <strong>You are on the {workspacePlan ? getPlanDisplayName(workspacePlan) : 'Free'} plan</strong>
+                  <span>Collaborators used</span>
+                  <strong>{`${members.filter(member => member.role !== 'owner').length + invites.filter(invite => invite.status === 'pending').length} of ${FREE_COLLABORATOR_LIMIT}`}</strong>
                 </div>
               )}
             </div>
@@ -1056,7 +1057,7 @@ export default function SettingsPage() {
             <div className={styles.planTesting}>
               <div className={styles.planTestingCopy}>
                 <strong>Local testing</strong>
-                <span>Switch between free and paid views without changing the real Stripe subscription.</span>
+                <span>Switch plan tiers without changing the real Stripe subscription.</span>
               </div>
               <div className={styles.planTestingActions}>
                 <button
@@ -1065,15 +1066,23 @@ export default function SettingsPage() {
                   onClick={() => void handlePlanTestingToggle('free')}
                   disabled={switchingPlan !== null || workspacePlan === 'free'}
                 >
-                  {switchingPlan === 'free' ? 'Switching...' : 'Switch to Free'}
+                  {switchingPlan === 'free' ? 'Switching...' : 'Free'}
                 </button>
                 <button
                   type="button"
                   className={styles.inlineAction}
                   onClick={() => void handlePlanTestingToggle('pro')}
-                  disabled={switchingPlan !== null || isPlanAtLeast(workspacePlan, 'pro')}
+                  disabled={switchingPlan !== null || workspacePlan === 'pro'}
                 >
-                  {switchingPlan === 'pro' ? 'Switching...' : 'Switch to Pro'}
+                  {switchingPlan === 'pro' ? 'Switching...' : 'Pro'}
+                </button>
+                <button
+                  type="button"
+                  className={styles.inlineAction}
+                  onClick={() => void handlePlanTestingToggle('studio')}
+                  disabled={switchingPlan !== null || workspacePlan === 'studio'}
+                >
+                  {switchingPlan === 'studio' ? 'Switching...' : 'Studio'}
                 </button>
               </div>
             </div>
@@ -1217,6 +1226,7 @@ export default function SettingsPage() {
       <UpgradeModal
         isOpen={upgradeModalType !== null}
         type={upgradeModalType ?? 'collaborators'}
+        targetPlan={isPlanAtLeast(workspacePlan ?? 'free', 'pro') ? 'studio' : 'pro'}
         onClose={() => setUpgradeModalType(null)}
       />
     </AppShell>
