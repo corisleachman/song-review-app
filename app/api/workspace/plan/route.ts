@@ -45,9 +45,9 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json().catch(() => null);
     const plan = body?.plan;
 
-    if (plan !== 'free' && plan !== 'paid') {
+    if (plan !== 'free' && plan !== 'pro' && plan !== 'studio') {
       return NextResponse.json(
-        { error: 'A valid plan is required.' },
+        { error: 'plan must be free, pro, or studio.' },
         { status: 400 }
       );
     }
