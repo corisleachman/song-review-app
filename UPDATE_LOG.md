@@ -2378,3 +2378,37 @@ Database migration (run directly in Supabase) and complete rewrite of lib/plans.
 
 - Steps 3 onwards (storage enforcement in upload route, billing checkout/activate updates, settings UI storage bar, Stripe products) are next
 - Version delete route does not exist yet — when added later it must decrement storage_bytes_used
+
+## 2026-05-16 — Phase 5 Steps 3–11: Billing routes, storage enforcement, settings UI
+
+### What we were trying to achieve
+
+Complete all remaining Phase 5 code changes — billing checkout/activate, storage enforcement on upload, upgrade modal, settings storage bar, and three-tier dev toggle — before Stripe products are created.
+
+### Feature / change being made
+
+Full implementation of three-tier storage-based pricing across all relevant routes and UI. No Stripe products created yet — price IDs will be wired in once Stripe dashboard setup is complete.
+
+### Files changed
+
+- `lib/stripe.ts` — getStripePriceId() now accepts plan+interval, falls back to legacy STRIPE_PRICE_ID env var. getPlanForStripePriceId() maps price ID to tier.
+- `app/api/billing/checkout/route.ts` — accepts { plan, interval } in request body. Uses correct price ID per tier. Guards against checking out for a plan already held or lower.
+- `app/api/billing/activate/route.ts` — resolves plan tier from metadata written at checkout time. Writes 'pro' or 'studio' to accounts.plan instead of 'paid'.
+- `app/api/stripe/webhook/route.ts` — subscription updated/completed events now resolve tier from price ID via getPlanForStripePriceId().
+- `app/api/versions/create/route.ts` — checks storage_bytes_used + incoming file size against plan limit before issuing upload URL. Writes file_size_bytes to song_versions. Increments accounts.storage_bytes_used after successful insert.
+- `app/api/workspace/plan/route.ts` — dev toggle now accepts free/pro/studio.
+- `app/api/settings/summary/route.ts` — includes storage_bytes_used in workspace payload.
+- `components/UpgradeModal.tsx` — added storage limit type with plan-aware copy. Added targetPlan prop. Checkout call now passes plan+interval.
+- `app/settings/page.tsx` — storage usage bar (used/limit with colour warning at 90%), three-tier plan display using getPlanDisplayName, studio button in dev toggle, UpgradeModal receives targetPlan.
+- `app/settings/settings.module.css` — storageBar and storageBarFill styles added.
+
+### Tests run
+
+- npx tsc --noEmit — zero errors
+
+### Notes
+
+- All price ID env vars (STRIPE_PRICE_PRO_MONTHLY, STRIPE_PRICE_PRO_ANNUAL, STRIPE_PRICE_STUDIO_MONTHLY, STRIPE_PRICE_STUDIO_ANNUAL) still need to be added to Vercel after Stripe products are created
+- The old STRIPE_PRICE_ID env var remains as a fallback — safe to leave in place until new vars are confirmed working
+- storage_bytes_used bootstrap reads use a cast because WorkspaceRecord type does not yet include the new column — safe at runtime since the column exists in DB
+- When a version delete route is added later it must decrement storage_bytes_used
