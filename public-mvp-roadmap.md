@@ -2065,20 +2065,43 @@ Note the next follow-up slice.
 
 ## Phase 5: Pricing Review & Stripe Rollout
 
-**Status: Queued**
+**Status: In Progress — implementation plan complete, awaiting implementation**
 
 ### Objective
 Rethink the pricing model and tier structure, then implement and test in Stripe.
 
+### Decisions confirmed
+
+- Model: storage-based pricing per workspace (flat rate, not per-seat)
+- Tiers: Free / Pro / Studio
+- Storage limits: 500MB / 10GB / 50GB
+- Collaborator limits: 3 / 10 / unlimited
+- Pricing: £0 / £9 per month / £19 per month
+- Annual: Pro £86/year, Studio £190/year (roughly 20% discount)
+- Hard storage cap — upload rejected when limit hit, no metered overages
+- Song count limit removed — storage is the real cost driver
+
 ### Workstreams
-- Review current pricing tiers (Free / Paid) — are the limits right? Is the model right?
-- Discuss pricing strategy: per-seat, per-workspace, flat rate, usage-based?
-- Decide on tier names, feature gates, and limits (songs, collaborators, storage)
-- Update pricing logic in codebase (`lib/plans.ts`, plan limit enforcement)
-- Update Stripe products and prices (switch from test mode to live mode)
-- Update upgrade modal copy and pricing page/flow to reflect new model
-- End-to-end Stripe smoke test with live keys
-- Test upgrade, downgrade, and cancellation flows
+
+- [x] Pricing model discussion and decision
+- [x] Cost analysis (Supabase storage and egress at scale)
+- [x] Full codebase investigation — billing routes, version create, settings, plans
+- [x] Complete implementation plan documented
+- [ ] Database migration — add storage_bytes_used to accounts, file_size_bytes to song_versions, update plan constraint
+- [ ] lib/plans.ts rewrite — three tiers, storage limits, remove song count
+- [ ] lib/stripe.ts — expand to four price IDs
+- [ ] Stripe dashboard — create Pro and Studio products with monthly and annual prices
+- [ ] Vercel env vars — four new price ID env vars
+- [ ] app/api/versions/create/route.ts — storage enforcement and file size write
+- [ ] app/api/billing/checkout/route.ts — accept plan and interval
+- [ ] app/api/billing/activate/route.ts — resolve tier from price ID
+- [ ] app/api/stripe/webhook/route.ts — resolve tier from price ID
+- [ ] app/api/settings/summary/route.ts — include storage_bytes_used
+- [ ] app/api/workspace/plan/route.ts — support three tiers in dev toggle
+- [ ] components/UpgradeModal.tsx — storage limit type and copy
+- [ ] app/settings/page.tsx — storage bar and three-tier plan UI
+- [ ] TypeScript check
+- [ ] Deploy and end-to-end smoke test
 
 ---
 
