@@ -2,25 +2,43 @@
 
 import { useState } from 'react';
 import styles from './UpgradeModal.module.css';
-import type { PlanLimitType } from '@/lib/plans';
+import type { AccountPlan, PlanLimitType } from '@/lib/plans';
 
 interface UpgradeModalProps {
   isOpen: boolean;
   type: PlanLimitType;
+  /** The plan the user would be upgrading to. Defaults to 'pro'. */
+  targetPlan?: AccountPlan;
   onClose: () => void;
 }
 
-function getCopy(type: PlanLimitType) {
+function getCopy(type: PlanLimitType, targetPlan: AccountPlan) {
+  const tierName = targetPlan === 'studio' ? 'Studio' : 'Pro';
+
   if (type === 'collaborators') {
     return {
-      title: 'You’ve hit the collaboration limit',
-      body: 'Free plan supports up to 2 collaborators. Upgrade to invite more people and work together.',
+      title: 'You\u2019ve hit the collaboration limit',
+      body:
+        targetPlan === 'studio'
+          ? 'Pro plan supports up to 10 collaborators. Upgrade to Studio for unlimited collaborators.'
+          : 'Free plan supports up to 3 collaborators. Upgrade to Pro to invite more people.',
     };
   }
 
+  if (type === 'storage') {
+    return {
+      title: 'You\u2019ve used your storage',
+      body:
+        targetPlan === 'studio'
+          ? 'You\u2019ve used your 10 GB Pro storage. Upgrade to Studio for 50 GB.'
+          : 'You\u2019ve used your 500 MB free storage. Upgrade to Pro for 10 GB.',
+    };
+  }
+
+  // Fallback
   return {
-    title: 'You’ve reached your song limit',
-    body: 'Free plan includes up to 5 songs. Upgrade to keep uploading and managing more tracks.',
+    title: `Upgrade to ${tierName}`,
+    body: `Unlock more features by upgrading to ${tierName}.`,
   };
 }
 
@@ -29,23 +47,25 @@ async function logUpgradeClick(type: PlanLimitType) {
     await fetch('/api/plan-events', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        event: 'upgrade_clicked',
-        type,
-      }),
+      body: JSON.stringify({ event: 'upgrade_clicked', type }),
     });
   } catch (error) {
     console.error('Error logging upgrade click:', error);
   }
 }
 
-export default function UpgradeModal({ isOpen, type, onClose }: UpgradeModalProps) {
+export default function UpgradeModal({
+  isOpen,
+  type,
+  targetPlan = 'pro',
+  onClose,
+}: UpgradeModalProps) {
   const [checkoutError, setCheckoutError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading]         = useState(false);
 
   if (!isOpen) return null;
 
-  const copy = getCopy(type);
+  const copy = getCopy(type, targetPlan);
 
   const handleUpgrade = async () => {
     setCheckoutError('');
@@ -56,6 +76,8 @@ export default function UpgradeModal({ isOpen, type, onClose }: UpgradeModalProp
     try {
       const response = await fetch('/api/billing/checkout', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: targetPlan, interval: 'month' }),
       });
 
       const payload = await response.json().catch(() => null);
@@ -90,16 +112,32 @@ export default function UpgradeModal({ isOpen, type, onClose }: UpgradeModalProp
     onClose();
   };
 
+  const tierName = targetPlan === 'studio' ? 'Studio' : 'Pro';
+
   return (
-    <div className={styles.overlay} onClick={event => { if (event.target === event.currentTarget) handleClose(); }}>
-      <div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="upgrade-modal-title">
-        <h2 id="upgrade-modal-title" className={styles.title}>{copy.title}</h2>
+    <div
+      className={styles.overlay}
+      onClick={event => {
+        if (event.target === event.currentTarget) handleClose();
+      }}
+    >
+      <div
+        className={styles.modal}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="upgrade-modal-title"
+      >
+        <h2 id="upgrade-modal-title" className={styles.title}>
+          {copy.title}
+        </h2>
         <p className={styles.body}>{copy.body}</p>
-        {checkoutError && (
-          <p className={styles.error}>{checkoutError}</p>
-        )}
+        {checkoutError && <p className={styles.error}>{checkoutError}</p>}
         <div className={styles.actions}>
-          <button type="button" className={styles.secondaryButton} onClick={handleClose}>
+          <button
+            type="button"
+            className={styles.secondaryButton}
+            onClick={handleClose}
+          >
             Not now
           </button>
           <button
@@ -108,7 +146,7 @@ export default function UpgradeModal({ isOpen, type, onClose }: UpgradeModalProp
             onClick={() => void handleUpgrade()}
             disabled={isLoading}
           >
-            {isLoading ? 'Redirecting...' : 'Upgrade'}
+            {isLoading ? 'Redirecting...' : `Upgrade to ${tierName}`}
           </button>
         </div>
       </div>
