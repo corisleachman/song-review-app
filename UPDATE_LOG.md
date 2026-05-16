@@ -2290,3 +2290,54 @@ Too many to list individually — major files: `app/songs/[id]/versions/[version
 - Phase 4 active — mobile UX and collaboration polish ongoing
 - Real Song Room logo path can be dropped into `app/songs/[id]/versions/[versionId]/page.tsx` SR monogram SVG when asset is ready
 - `song-room.live` verified in Resend — all emails now send from `noreply@song-room.live`
+
+## 2026-05-16 — Phase 5 pricing model investigation and implementation plan
+
+### What we were trying to achieve
+
+Rethink the pricing model before going live with Stripe. The original two-tier model (Free/Paid) had no storage tracking, song count as a proxy for the real cost driver, and a single Stripe price ID. Phase 5 required deciding the right model, understanding cost implications, and producing a complete implementation plan before touching any code.
+
+### Feature / change being made
+
+Pricing model investigation and implementation plan — no code changed yet.
+
+### Decisions made
+
+- Model: storage-based pricing per workspace (flat rate, not per-seat)
+- Tiers: Free / Pro / Studio
+- Storage limits: 500MB free, 10GB Pro, 50GB Studio
+- Collaborator limits: 3 free, 10 Pro, unlimited Studio
+- Pricing: £0 / £9 per month / £19 per month with annual billing at roughly 20% discount
+- Annual prices: Pro £86/year, Studio £190/year
+- Hard cap on storage (not metered overages) — upload rejected when limit hit
+- Song count limit removed entirely — storage is the real cost driver
+
+### Key findings from investigation
+
+- fileSize is received by the version create route but never written to the database — no file_size column exists on song_versions
+- No version delete route exists — no decrement path needed yet, but must be noted for when delete is added later
+- getStripePriceId() reads a single env var — needs to expand to four price IDs
+- Webhook and activate routes both hardcode the free/paid union — full type system update required across all billing routes
+- Settings page imports FREE_SONG_LIMIT and getSongLimitLabel — both being removed
+- All billing routes need coordinated update — cannot be done piecemeal
+
+### Files to be changed (planned, not yet implemented)
+
+- migrations/20260516_phase5_storage_pricing_up.sql (new)
+- migrations/20260516_phase5_storage_pricing_down.sql (new)
+- lib/plans.ts — complete rewrite for three tiers and storage limits
+- lib/stripe.ts — expand from one price ID to four (pro/studio x monthly/annual)
+- app/api/versions/create/route.ts — storage enforcement and file_size_bytes write
+- app/api/billing/checkout/route.ts — accept plan and interval, use correct price ID
+- app/api/billing/activate/route.ts — resolve tier from Stripe price ID
+- app/api/stripe/webhook/route.ts — resolve tier from price ID on subscription events
+- app/api/settings/summary/route.ts — include storage_bytes_used in response
+- app/api/workspace/plan/route.ts — support three tiers in dev toggle
+- components/UpgradeModal.tsx — add storage limit type and copy
+- app/settings/page.tsx — storage usage display and three-tier plan UI
+
+### Notes
+
+- No code has been changed — this entry records the planning phase only
+- Implementation to begin after confirmed go-ahead on each step
+- UPDATE_LOG and roadmap will be updated again after each confirmed working change
