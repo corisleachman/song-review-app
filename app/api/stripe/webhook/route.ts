@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
-import { getPlanForStripeSubscriptionStatus, getStripe, getStripeWebhookSecret } from '@/lib/stripe';
+import { getPlanForStripePriceId, getPlanForStripeSubscriptionStatus, getStripe, getStripeWebhookSecret } from '@/lib/stripe';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -15,12 +15,12 @@ async function updateAccountPlanByWorkspaceId(params: {
   accountId: string;
   stripeCustomerId?: string | null;
   stripeSubscriptionId?: string | null;
-  plan: 'free' | 'paid';
+  plan: AccountPlan;
 }) {
   const { accountId, stripeCustomerId, stripeSubscriptionId, plan } = params;
 
   const updatePayload: {
-    plan: 'free' | 'paid';
+    plan: AccountPlan;
     stripe_customer_id?: string | null;
     stripe_subscription_id?: string | null;
   } = { plan };
@@ -44,11 +44,11 @@ async function updateAccountPlanByWorkspaceId(params: {
 async function updateAccountPlanByCustomer(params: {
   stripeCustomerId: string;
   stripeSubscriptionId?: string | null;
-  plan: 'free' | 'paid';
+  plan: AccountPlan;
 }) {
   const { plan } = params;
   const updatePayload: {
-    plan: 'free' | 'paid';
+    plan: AccountPlan;
     stripe_subscription_id?: string | null;
   } = { plan };
 
@@ -102,9 +102,11 @@ async function handleCheckoutSessionCompleted(event: { data: { object: unknown }
       ? await stripe.subscriptions.retrieve(stripeSubscriptionId)
       : null;
 
-  const plan = subscription
-    ? getPlanForStripeSubscriptionStatus(subscription.status)
-    : 'paid';
+  // Derive tier from the price ID on the subscription line items
+  const priceId = subscription?.items?.data?.[0]?.price?.id ?? null;
+  const subscriptionStatus = subscription?.status ?? 'active';
+  const isActive = subscriptionStatus === 'active' || subscriptionStatus === 'trialing';
+  const plan = isActive ? getPlanForStripePriceId(priceId) : 'free';
 
   await updateAccountPlanByWorkspaceId({
     accountId,
@@ -117,18 +119,23 @@ async function handleCheckoutSessionCompleted(event: { data: { object: unknown }
 async function handleSubscriptionUpdated(event: { data: { object: unknown } }) {
   const subscription = event.data.object as {
     id: string;
-    status: Parameters<typeof getPlanForStripeSubscriptionStatus>[0];
+    status: string;
     customer: string | { id: string };
+    items?: { data?: Array<{ price?: { id?: string } }> };
   };
   const stripeCustomerId =
     typeof subscription.customer === 'string'
       ? subscription.customer
       : subscription.customer.id;
 
+  const priceId = subscription.items?.data?.[0]?.price?.id ?? null;
+  const isActive = subscription.status === 'active' || subscription.status === 'trialing';
+  const plan = isActive ? getPlanForStripePriceId(priceId) : 'free';
+
   await updateAccountPlanByCustomer({
     stripeCustomerId,
     stripeSubscriptionId: subscription.id,
-    plan: getPlanForStripeSubscriptionStatus(subscription.status),
+    plan,
   });
 }
 
