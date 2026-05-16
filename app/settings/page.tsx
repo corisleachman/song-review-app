@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { getIdentity } from '@/lib/auth';
 import AppShell from '@/components/AppShell';
 import UpgradeModal from '@/components/UpgradeModal';
-import { type AccountPlan, FREE_COLLABORATOR_LIMIT, FREE_SONG_LIMIT, getCollaboratorLimitLabel, getSongLimitLabel, type PlanLimitType } from '@/lib/plans';
+import { type AccountPlan, FREE_COLLABORATOR_LIMIT, getCollaboratorLimitLabel, getStorageLimitLabel, formatStorageBytes, getStorageLimit, getPlanDisplayName, isPlanAtLeast, type PlanLimitType } from '@/lib/plans';
 import styles from './settings.module.css';
 
 interface Theme {
@@ -973,7 +973,7 @@ export default function SettingsPage() {
         <div className={styles.planSection}>
           <div className={styles.planHeader}>
             <h2>Plan</h2>
-            {workspacePlan === 'free' && isOwner && (
+            {workspacePlan !== null && !isPlanAtLeast(workspacePlan, 'pro') && isOwner && (
               <button
                 type="button"
                 className={styles.resetButtonLarge}
@@ -983,7 +983,7 @@ export default function SettingsPage() {
                 {startingCheckout ? 'Redirecting...' : 'Upgrade'}
               </button>
             )}
-            {workspacePlan === 'paid' && isOwner && (
+            {isPlanAtLeast(workspacePlan, 'pro') && isOwner && (
               <button
                 type="button"
                 className={styles.resetButtonLarge}
@@ -1008,13 +1008,13 @@ export default function SettingsPage() {
             <div className={styles.planDetails}>
               <div className={styles.planStat}>
                 <span>Current plan</span>
-                <strong>{workspacePlan === 'paid' ? 'Paid' : 'Free'}</strong>
+                <strong>{isPlanAtLeast(workspacePlan, 'pro') ? 'Paid' : 'Free'}</strong>
               </div>
               <div className={styles.planStat}>
                 <span>Collaborator limit</span>
                 <strong>{getCollaboratorLimitLabel(workspacePlan)}</strong>
               </div>
-              {workspacePlan === 'free' && (
+              {workspacePlan !== null && !isPlanAtLeast(workspacePlan, 'pro') && (
                 <>
                   <div className={styles.planStat}>
                     <span>Collaborators used</span>
@@ -1022,20 +1022,20 @@ export default function SettingsPage() {
                   </div>
                   <div className={styles.planStat}>
                     <span>Songs used</span>
-                    <strong>{`${songCount ?? 0} of ${FREE_SONG_LIMIT} songs used`}</strong>
+                    <strong>{`${songCount ?? 0} songs`}</strong>
                   </div>
                 </>
               )}
-              {workspacePlan === 'paid' && (
+              {isPlanAtLeast(workspacePlan, 'pro') && (
                 <div className={styles.planStat}>
                   <span>Song limit</span>
-                  <strong>{getSongLimitLabel(workspacePlan)}</strong>
+                  <strong>{getStorageLimitLabel(workspacePlan ?? 'free')}</strong>
                 </div>
               )}
-              {workspacePlan === 'paid' && (
+              {isPlanAtLeast(workspacePlan, 'pro') && (
                 <div className={styles.planStat}>
                   <span>Status</span>
-                  <strong>You are on the paid plan</strong>
+                  <strong>You are on the {workspacePlan ? getPlanDisplayName(workspacePlan) : 'Free'} plan</strong>
                 </div>
               )}
             </div>
@@ -1070,10 +1070,10 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   className={styles.inlineAction}
-                  onClick={() => void handlePlanTestingToggle('paid')}
-                  disabled={switchingPlan !== null || workspacePlan === 'paid'}
+                  onClick={() => void handlePlanTestingToggle('pro')}
+                  disabled={switchingPlan !== null || isPlanAtLeast(workspacePlan, 'pro')}
                 >
-                  {switchingPlan === 'paid' ? 'Switching...' : 'Switch to Paid'}
+                  {switchingPlan === 'pro' ? 'Switching...' : 'Switch to Pro'}
                 </button>
               </div>
             </div>
