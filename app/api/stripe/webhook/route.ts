@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
-import { getPlanForStripePriceId, getPlanForStripeSubscriptionStatus, getStripe, getStripeWebhookSecret } from '@/lib/stripe';
+import type { AccountPlan } from '@/lib/plans';
+import { getPlanForStripePriceId, getStripe, getStripeWebhookSecret } from '@/lib/stripe';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
