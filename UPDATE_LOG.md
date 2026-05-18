@@ -2513,3 +2513,25 @@ Complete rebuild of /settings as a subroute architecture with a fixed left nav a
 ### Tests run
 
 - npx tsc --noEmit — zero errors
+
+## 2026-05-18 — Phase 5 marked complete, referral programme added to roadmap
+
+### What we were trying to achieve
+
+Mark Phase 5 (Pricing Review & Stripe Rollout) as complete following confirmation that all pricing code is deployed, Stripe products are live, price IDs are in Vercel, and the upgrade flow is working end to end. Add a referral programme as a new roadmap phase.
+
+### Changes
+
+- public-mvp-roadmap.md: Phase 5 status updated to Complete, all workstream items ticked
+- public-mvp-roadmap.md: Phase 6.5 (Referral Programme) added with full spec — mechanic, database schema, API routes, UI, and open questions
+
+### Referral model decided
+
+- Reward trigger: referred user upgrades to any paid plan
+- Reward: one month free on referrer's current plan, applied as a Stripe credit
+- No reward for free-tier sign-ups
+- One reward per referred user
+- Referred user gets no discount at launch (can add later)
+- Credits via Stripe customerBalanceTransactions — no custom billing logic needed
+
+### No code changed — planning and documentation only
