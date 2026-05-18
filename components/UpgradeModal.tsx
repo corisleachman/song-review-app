@@ -1,118 +1,53 @@
 'use client';
 
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import styles from './UpgradeModal.module.css';
-import type { AccountPlan, PlanLimitType } from '@/lib/plans';
+import type { PlanLimitType } from '@/lib/plans';
 
 interface UpgradeModalProps {
   isOpen: boolean;
   type: PlanLimitType;
-  /** The plan the user would be upgrading to. Defaults to 'pro'. */
-  targetPlan?: AccountPlan;
   onClose: () => void;
 }
 
-function getCopy(type: PlanLimitType, targetPlan: AccountPlan) {
-  const tierName = targetPlan === 'studio' ? 'Studio' : 'Pro';
-
+function getCopy(type: PlanLimitType) {
   if (type === 'collaborators') {
     return {
       title: 'You\u2019ve hit the collaboration limit',
-      body:
-        targetPlan === 'studio'
-          ? 'Pro plan supports up to 10 collaborators. Upgrade to Studio for unlimited collaborators.'
-          : 'Free plan supports up to 3 collaborators. Upgrade to Pro to invite more people.',
+      body: 'Upgrade your plan to invite more collaborators to this workspace.',
     };
   }
-
   if (type === 'storage') {
     return {
       title: 'You\u2019ve used your storage',
-      body:
-        targetPlan === 'studio'
-          ? 'You\u2019ve used your 10 GB Pro storage. Upgrade to Studio for 50 GB.'
-          : 'You\u2019ve used your 500 MB free storage. Upgrade to Pro for 10 GB.',
+      body: 'Upgrade your plan to get more storage and keep uploading.',
     };
   }
-
-  // Fallback
   return {
-    title: `Upgrade to ${tierName}`,
-    body: `Unlock more features by upgrading to ${tierName}.`,
+    title: 'Upgrade your plan',
+    body: 'Unlock more with a Pro or Studio plan.',
   };
-}
-
-async function logUpgradeClick(type: PlanLimitType) {
-  try {
-    await fetch('/api/plan-events', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ event: 'upgrade_clicked', type }),
-    });
-  } catch (error) {
-    console.error('Error logging upgrade click:', error);
-  }
 }
 
 export default function UpgradeModal({
   isOpen,
   type,
-  targetPlan = 'pro',
   onClose,
 }: UpgradeModalProps) {
-  const [checkoutError, setCheckoutError] = useState('');
-  const [isLoading, setIsLoading]         = useState(false);
+  const router = useRouter();
 
   if (!isOpen) return null;
 
-  const copy = getCopy(type, targetPlan);
+  const copy = getCopy(type);
 
-  const handleUpgrade = async () => {
-    setCheckoutError('');
-    setIsLoading(true);
-
-    await logUpgradeClick(type);
-
-    try {
-      const response = await fetch('/api/billing/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: targetPlan, interval: 'month' }),
-      });
-
-      const payload = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        const message =
-          payload && typeof payload.error === 'string'
-            ? payload.error
-            : 'Could not start checkout.';
-        setCheckoutError(message);
-        setIsLoading(false);
-        return;
-      }
-
-      if (!payload?.url || typeof payload.url !== 'string') {
-        setCheckoutError('Checkout URL was missing.');
-        setIsLoading(false);
-        return;
-      }
-
-      window.location.assign(payload.url);
-    } catch (error) {
-      console.error('Upgrade checkout error:', error);
-      setCheckoutError('Could not start checkout.');
-      setIsLoading(false);
-    }
+  const handleSeeOptions = () => {
+    onClose();
+    router.push('/upgrade');
   };
 
   const handleClose = () => {
-    setCheckoutError('');
-    setIsLoading(false);
     onClose();
   };
-
-  const tierName = targetPlan === 'studio' ? 'Studio' : 'Pro';
 
   return (
     <div
@@ -131,7 +66,6 @@ export default function UpgradeModal({
           {copy.title}
         </h2>
         <p className={styles.body}>{copy.body}</p>
-        {checkoutError && <p className={styles.error}>{checkoutError}</p>}
         <div className={styles.actions}>
           <button
             type="button"
@@ -143,10 +77,9 @@ export default function UpgradeModal({
           <button
             type="button"
             className={styles.primaryButton}
-            onClick={() => void handleUpgrade()}
-            disabled={isLoading}
+            onClick={handleSeeOptions}
           >
-            {isLoading ? 'Redirecting...' : `Upgrade to ${tierName}`}
+            See plans
           </button>
         </div>
       </div>
