@@ -149,7 +149,6 @@ export default function SettingsPage() {
   const [upgradeModalType, setUpgradeModalType] = useState<PlanLimitType | null>(null);
   const [billingNotice, setBillingNotice] = useState<string | null>(null);
   const [billingError, setBillingError] = useState<string | null>(null);
-  const [startingCheckout, setStartingCheckout] = useState(false);
   const [openingPortal, setOpeningPortal] = useState(false);
   const [switchingPlan, setSwitchingPlan] = useState<AccountPlan | null>(null);
   const currentWorkspaceName = workspaceName || 'Current workspace';
@@ -566,41 +565,10 @@ export default function SettingsPage() {
     }
   };
 
-  const handleUpgradeCheckout = async () => {
-    setBillingNotice(null);
-    setBillingError(null);
-    setStartingCheckout(true);
-
-    try {
-      const response = await fetch('/api/billing/checkout', {
-        method: 'POST',
-      });
-
-      const payload = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        throw new Error(
-          payload && typeof payload.error === 'string'
-            ? payload.error
-            : 'Could not start checkout.'
-        );
-      }
-
-      if (!payload?.url || typeof payload.url !== 'string') {
-        throw new Error('Checkout URL was missing.');
-      }
-
-      window.location.assign(payload.url);
-    } catch (checkoutError) {
-      const message =
-        checkoutError instanceof Error
-          ? checkoutError.message
-          : 'Could not start checkout.';
-      console.error('Checkout start error:', checkoutError);
-      setBillingError(message);
-      setStartingCheckout(false);
-    }
+  const handleUpgradeCheckout = () => {
+    router.push('/upgrade');
   };
+
 
   const handleManageBilling = async () => {
     setBillingNotice(null);
@@ -980,10 +948,9 @@ export default function SettingsPage() {
               <button
                 type="button"
                 className={styles.resetButtonLarge}
-                onClick={() => void handleUpgradeCheckout()}
-                disabled={startingCheckout}
+                onClick={() => handleUpgradeCheckout()}
               >
-                {startingCheckout ? 'Redirecting...' : 'Upgrade'}
+                Upgrade
               </button>
             )}
             {isPlanAtLeast(workspacePlan, 'pro') && isOwner && (
@@ -1226,7 +1193,6 @@ export default function SettingsPage() {
       <UpgradeModal
         isOpen={upgradeModalType !== null}
         type={upgradeModalType ?? 'collaborators'}
-        targetPlan={isPlanAtLeast(workspacePlan ?? 'free', 'pro') ? 'studio' : 'pro'}
         onClose={() => setUpgradeModalType(null)}
       />
     </AppShell>
