@@ -228,6 +228,18 @@
   line-height: 1.4;
 }
 
+.featureText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.featureNote {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  font-style: italic;
+}
+
 .check {
   color: var(--color-primary);
   font-size: 13px;
