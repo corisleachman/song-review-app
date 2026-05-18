@@ -2440,3 +2440,36 @@ New /upgrade page with side-by-side plan comparison and monthly/annual billing t
 - The /upgrade page handles both monthly and annual billing. Annual prices shown as per-month equivalent with total billed per year.
 - Free plan CTA routes back rather than doing anything — safe for users who land on the page by mistake.
 - Dashboard upgrade flow was already via UpgradeModal — no change needed there.
+
+## 2026-05-18 — Upgrade page: differentiated tier copy
+
+### What we were trying to achieve
+
+The three plan cards on /upgrade looked identical — same number of bullet points, same feature set, only storage and collaborator numbers differed. The page needed each tier to feel genuinely distinct without adding arbitrary song count limits.
+
+### Feature / change being made
+
+Rewrote the plan feature lists to lead with what matters at each tier, added contextual notes beneath key features, and added priority support as a genuine Studio-only differentiator.
+
+### Approach
+
+Kept storage-based pricing (no song count limits added). Fixed the presentation instead:
+- Free: clean, minimal list — honest about the limits, no oversell
+- Pro: storage note calls out the 20x jump, collaborator note says 'Full band + guests'
+- Studio: storage framed around use case (stems, multitracks), collaborators described as 'No ceiling, ever', priority support added as exclusive feature
+
+Added featureNote sub-label styling (italic, tertiary colour) beneath qualifying features.
+
+### Files changed
+
+- `app/upgrade/page.tsx` — rewrote PLANS array with FeatureItem type supporting text + optional note field. Added featureNote rendering in JSX.
+- `app/upgrade/upgrade.module.css` — added featureText and featureNote styles.
+
+### Tests run
+
+- npx tsc --noEmit — zero errors
+
+### Notes
+
+- Priority support on Studio is a commitment — flagged for awareness when support volume increases
+- Song count limits were considered and rejected: storage is the real cost driver, song limits would frustrate users before they are genuinely invested
