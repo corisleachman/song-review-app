@@ -2101,6 +2101,9 @@ Rethink the pricing model and tier structure, then implement and test in Stripe.
 - [x] components/UpgradeModal.tsx — storage limit type and copy
 - [x] app/settings/page.tsx — storage bar and three-tier plan UI
 - [x] TypeScript check
+- [x] Pricing comparison page with monthly/annual toggle (/upgrade)
+- [x] Upgrade modal routes to pricing page instead of direct Stripe
+- [x] Sidebar plan label fixed (getPlanDisplayName)
 - [ ] Deploy and end-to-end smoke test
 
 ---
