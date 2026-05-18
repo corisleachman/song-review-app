@@ -2473,3 +2473,43 @@ Added featureNote sub-label styling (italic, tertiary colour) beneath qualifying
 
 - Priority support on Studio is a commitment — flagged for awareness when support volume increases
 - Song count limits were considered and rejected: storage is the real cost driver, song limits would frustrate users before they are genuinely invested
+
+## 2026-05-18 — Settings page: full rebuild with subroute architecture
+
+### What we were trying to achieve
+
+The settings page was a single 1,200-line page with no clear hierarchy — theme customisation at the top, plan buried mid-page, collaborators and notifications blended together, identical wall of content for owners and members. Needed a clear, navigable structure with signposted sections.
+
+### Feature / change being made
+
+Complete rebuild of /settings as a subroute architecture with a fixed left nav and a shared data context bootstrapped once in the layout.
+
+### Architecture decisions
+
+- URL-based routing (/settings/workspace, /settings/plan, /settings/collaborators, /settings/appearance) — deep-linkable and back-button safe
+- Shared SettingsProvider (lib/settingsContext.tsx) bootstraps data once in the layout, all section pages consume via useSettingsData / useSettingsActions — no redundant fetches on section switch
+- Layout (app/settings/layout.tsx) owns the two-column shell, nav, AppShell wrapper, and UpgradeModal
+- /settings/page.tsx redirects to /settings/workspace (owner) or /settings/appearance (member)
+- Owner-only nav items (Workspace, Plan & Billing, Collaborators) hidden entirely from member nav
+- Member experience: Workspace and Plan show concise read-only views; Collaborators shows their own access summary and the member list (read-only)
+- Mobile: nav stacks vertically above content, nav items wrap into a horizontal row
+- Permissions summary cards removed — contextual information folded into each section
+- Appearance moved to bottom of nav (personal, secondary concern)
+
+### Files created
+
+- lib/settingsContext.tsx — SettingsProvider, useSettingsData, useSettingsActions, all shared types
+- app/settings/workspace/page.tsx — workspace name, image, notification mode
+- app/settings/plan/page.tsx — plan summary grid, storage bar, billing CTA, dev toggle
+- app/settings/collaborators/page.tsx — invite, members list, pending invites, past invites
+- app/settings/appearance/page.tsx — colour controls, presets, save/reset
+
+### Files changed
+
+- app/settings/layout.tsx — rewritten as two-column shell with left nav and SettingsProvider wrapper
+- app/settings/page.tsx — rewritten as redirect-only (no UI)
+- app/settings/settings.module.css — complete rewrite for new layout system
+
+### Tests run
+
+- npx tsc --noEmit — zero errors
