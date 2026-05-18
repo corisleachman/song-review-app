@@ -1,36 +1,39 @@
-/* ============================================================
-   Settings page — properly laid out
-   ============================================================ */
+/* ================================================================
+   Settings — two-column layout with left nav
+   ================================================================ */
 
-/* ── Page container ── */
-.container {
-  width: 100%;
-  max-width: 100%;
+/* ── Outer shell ─────────────────────────────────────────────── */
+.settingsShell {
+  display: flex;
   min-height: 100vh;
   background: linear-gradient(135deg, #0d0914 0%, #1a0f2e 50%, #0d0914 100%);
-  padding: 20px 28px 60px;
-  overflow-x: hidden;
 }
 
-/* ── Page header (Back + Settings title) ── */
-.header {
-  max-width: 860px;
-  margin: 0 0 16px;
+/* ── Left nav ────────────────────────────────────────────────── */
+.settingsNav {
+  width: 220px;
+  flex-shrink: 0;
+  padding: 28px 16px 28px 20px;
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  flex-direction: column;
+  gap: 4px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
 }
 
-.headerLeft {
+.settingsNavHeader {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 12px;
+  margin-bottom: 28px;
 }
 
-.title {
+.settingsTitle {
   font-family: 'Outfit', sans-serif;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 800;
   margin: 0;
   background: linear-gradient(135deg, #ff1493, #00d4ff);
@@ -42,637 +45,616 @@
 .backButton {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 30px;
-  padding: 0 12px;
-  border-radius: var(--radius-md, 8px);
-  background: rgba(255,255,255,0.055);
-  border: 1px solid rgba(255,255,255,0.12);
-  color: rgba(255,255,255,0.7);
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
   text-decoration: none;
   font-size: 12px;
-  font-weight: 700;
-  transition: border-color 0.15s;
+  font-weight: 600;
+  width: fit-content;
+  transition: border-color 0.15s, color 0.15s;
 }
-.backButton:hover { border-color: rgba(255,20,147,0.4); }
-
-.errorBanner {
-  max-width: 860px;
-  margin: 0 0 12px;
-  padding: 10px 14px;
-  border-radius: 8px;
-  background: rgba(127,29,29,0.24);
-  border: 1px solid rgba(248,113,113,0.28);
-  color: #fecaca;
-  font-size: 12px;
+.backButton:hover {
+  border-color: rgba(255, 20, 147, 0.4);
+  color: rgba(255, 255, 255, 0.9);
 }
 
-/* ── Main content column ── */
-.content {
-  max-width: 860px;
-  margin: 0;
-  margin-bottom: 15px;
+.settingsNavList {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 2px;
+  flex: 1;
 }
 
-/* ============================================================
-   SHARED CARD SHELL
-   brandExplorer, collaboratorSection, infoPanel all use this
-   ============================================================ */
-.brandExplorer,
-.infoPanel {
-  background: rgba(8,5,14,0.6);
-  border: 1px solid rgba(255,255,255,0.09);
-  border-radius: 12px;
-  overflow: hidden;
-  padding: 15px;
-}
-
-.collaboratorSection {
-  background: rgba(8,5,14,0.6);
-  border: 1px solid rgba(255,255,255,0.09);
-  border-radius: 12px;
-  overflow: hidden;
-  padding: 15px;
-  max-width: 860px;
-  margin-top: 12px;
-}
-
-/* ── Section eyebrow header bar ── */
-.explorerHeader,
-.workspaceSettingsHeader,
-.planHeader,
-.collaboratorHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
-  background: rgba(255,255,255,0.02);
-}
-
-.sectionEyebrow {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.4);
-}
-
-/* ============================================================
-   PERSONAL THEME — top section
-   Two columns: left = color picker + presets, right = info panel
-   ============================================================ */
-.colorPicker {
-  padding: 16px 16px 0;
-}
-
-.pickerRow {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0,1fr));
-  gap: 14px;
-  margin-bottom: 0;
-}
-
-.colorControl label {
+.settingsNavItem {
   display: block;
-  font-size: 11px;
-  font-weight: 700;
-  color: rgba(255,255,255,0.4);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 6px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+.settingsNavItem:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.85);
+}
+.settingsNavItemActive {
+  background: rgba(255, 20, 147, 0.12);
+  color: #ff1493;
+  font-weight: 600;
+}
+.settingsNavItemActive:hover {
+  background: rgba(255, 20, 147, 0.16);
+  color: #ff1493;
 }
 
-.colorInputWrapper {
+.settingsNavFooter {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.25);
+  padding: 0 12px;
+  margin-top: 16px;
+}
+
+/* ── Right content panel ─────────────────────────────────────── */
+.settingsContent {
+  flex: 1;
+  min-width: 0;
+  padding: 40px 48px 80px;
+  max-width: 720px;
+}
+
+/* ── Section container ───────────────────────────────────────── */
+.sectionContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.sectionHeading {
+  margin-bottom: 32px;
+}
+.sectionHeading h2 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0 0 6px;
+  color: #fff;
+}
+.sectionHeading p {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+}
+
+.sectionLoading {
+  padding: 40px;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 14px;
+}
+
+/* ── Settings block (label + control row) ────────────────────── */
+.settingsBlock {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  padding: 24px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.settingsBlock:last-child {
+  border-bottom: none;
+}
+
+.blockLabel h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 4px;
+}
+.blockLabel p {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.blockControl {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: flex-start;
+}
+
+.blockReadOnly {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 10px 0;
+  line-height: 1.5;
+}
+
+.blockNotice {
+  font-size: 13px;
+  color: #6ee7b7;
+  margin: 0;
+  padding: 8px 12px;
+  background: rgba(110, 231, 183, 0.08);
+  border-radius: 6px;
+  border: 1px solid rgba(110, 231, 183, 0.2);
+}
+
+.blockError {
+  font-size: 13px;
+  color: #fca5a5;
+  margin: 0;
+  padding: 8px 12px;
+  background: rgba(252, 165, 165, 0.08);
+  border-radius: 6px;
+  border: 1px solid rgba(252, 165, 165, 0.2);
+}
+
+.emptyState {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.3);
+  margin: 0;
+}
+
+/* ── Form controls ───────────────────────────────────────────── */
+.inlineForm {
   display: flex;
   gap: 8px;
   align-items: center;
-}
-
-.colorInput {
-  width: 32px;
-  height: 32px;
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 6px;
-  cursor: pointer;
-  flex-shrink: 0;
-  padding: 0;
 }
 
 .textInput {
   flex: 1;
-  min-width: 0;
-  height: 32px;
-  padding: 0 10px;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 6px;
-  font-family: 'Courier New', monospace;
-  font-size: 12px;
-  color: rgba(255,255,255,0.8);
-  background: rgba(255,255,255,0.05);
-  transition: border-color 0.15s;
-}
-.textInput:focus { outline: none; border-color: #ff1493; }
-
-/* Presets + save/reset on same row */
-.presetsSection {
-  padding: 14px 16px 16px;
-}
-
-.presetGrid {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.presetButton {
-  height: 28px;
+  height: 36px;
   padding: 0 12px;
-  border: none;
-  border-radius: 6px;
-  color: white;
-  font-weight: 700;
-  font-size: 11px;
-  cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  transition: opacity 0.15s;
-}
-.presetButton:hover { opacity: 0.82; }
-
-.actions {
-  display: flex;
-  gap: 8px;
-  margin-left: auto;
-  flex-shrink: 0;
-  padding: 15px;
-}
-
-.saveButton {
-  height: 28px;
-  padding: 0 14px;
-  background: linear-gradient(135deg, #ff1493, #00d4ff);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-weight: 700;
-  font-size: 11px;
-  cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
-
-.resetButtonLarge {
-  height: 28px;
-  padding: 0 12px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 6px;
-  font-weight: 700;
-  font-size: 11px;
-  cursor: pointer;
-  color: rgba(255,255,255,0.6);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-  transition: background 0.15s, color 0.15s;
-}
-.resetButtonLarge:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.09); }
-
-/* Info panel — Personal scope */
-.infoPanel {
-  padding: 0;
-}
-
-.infoPanel h3 {
-  display: none; /* eyebrow not needed here */
-}
-
-.tipsList {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.tipsList li {
-  font-size: 12px;
-  color: rgba(255,255,255,0.5);
-  padding: 10px 16px;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  line-height: 1.5;
-}
-.tipsList li:before {
-  content: '→ ';
-  color: #ff1493;
-  font-weight: 700;
-  margin-right: 4px;
-}
-.tipsList li:last-child { border-bottom: none; }
-
-/* ============================================================
-   WORKSPACE SETTINGS CARD
-   ============================================================ */
-
-.workspaceRoleBadge {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.14);
-  color: rgba(255,255,255,0.7);
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-/* Name + image — two columns inside a padded row */
-.workspaceNameSection {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 16px;
-  align-items: start;
-  padding: 0 0 14px;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
-  margin-bottom: 14px;
-}
-
-.workspaceNameSection h3,
-.workspaceImageSection h3 {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: rgba(255,255,255,0.38);
-  margin: 0 0 8px;
-}
-
-.workspaceNameSection p,
-.workspaceImageSection p { display: none; }
-
-.workspaceNameForm {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.workspaceNameReadOnly {
-  height: 32px;
-  padding: 0 10px;
-  border-radius: 6px;
-  color: rgba(255,255,255,0.6);
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
-  font-size: 13px;
-  line-height: 32px;
-}
-
-.workspaceImageSection {
-  padding-top: 2px;
-}
-
-.workspaceImageRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.workspaceImagePreview {
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
-  background: rgba(255,20,147,0.14);
-  border: 1px solid rgba(255,20,147,0.3);
-  color: rgba(255,255,255,0.9);
-  font-size: 13px;
-  font-weight: 800;
-}
-.workspaceImagePreview img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-.workspaceImageActions { display: flex; gap: 6px; }
-.hiddenFileInput { display: none; }
-
-/* Notification mode — label left, options right */
-.notificationSection {
-  display: grid;
-  grid-template-columns: 1fr 1.4fr;
-  gap: 20px;
-  align-items: start;
-  padding: 0 0 14px;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
-  margin-bottom: 14px;
-}
-
-.notificationSection > div > h3 {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: rgba(255,255,255,0.38);
-  margin: 0 0 5px;
-}
-
-.notificationSection > div > p {
-  font-size: 12px;
-  color: rgba(255,255,255,0.45);
-  margin: 0;
-  line-height: 1.5;
-}
-
-.notificationToggle { display: flex; flex-direction: column; gap: 8px; }
-
-.notificationOption {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding: 10px 12px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.09);
-  border-radius: 8px;
-  text-align: left;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-  width: 100%;
-}
-.notificationOption:hover:not(:disabled) { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.16); }
-.notificationOption:disabled { opacity: 0.6; cursor: not-allowed; }
-
-.notificationOptionActive {
-  border-color: #ff1493 !important;
-  background: rgba(255,20,147,0.08) !important;
-}
-
-.notificationOptionLabel { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.88); }
-.notificationOptionDesc { font-size: 11px; color: rgba(255,255,255,0.48); line-height: 1.45; }
-.collaboratorSubtext { font-size: 12px; color: rgba(255,255,255,0.48); margin: 0; line-height: 1.5; }
-
-/* Permissions summary — two equal columns */
-.permissionsSummary {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  padding: 0 0 14px;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
-  margin-bottom: 14px;
-}
-
-.permissionCard {
-  padding: 12px 14px;
-  border-radius: 8px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.07);
-}
-.permissionCard h3 { margin: 0 0 5px; color: rgba(255,255,255,0.78); font-size: 13px; font-weight: 700; }
-.permissionCard p { margin: 0; color: rgba(255,255,255,0.48); font-size: 12px; line-height: 1.5; }
-
-/* ============================================================
-   PLAN SECTION — inside collaboratorSection
-   ============================================================ */
-.planSection { overflow: hidden; }
-
-.planHeader h2 {
-  margin: 0;
-  font-family: 'Outfit', sans-serif;
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: rgba(255,255,255,0.4);
-}
-.planHeader p { display: none; }
-
-.planDetails {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0,1fr));
-  gap: 10px;
-  padding: 14px 0;
-}
-
-.planStat {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 10px 12px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 8px;
-}
-.planStat span { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(255,255,255,0.38); }
-.planStat strong { color: rgba(255,255,255,0.88); font-size: 14px; font-weight: 700; }
-
-.planTesting {
-  margin: 0 16px 14px;
-  padding: 12px 14px;
-  border-radius: 8px;
-  background: rgba(255,255,255,0.03);
-  border: 1px dashed rgba(255,255,255,0.14);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.planTestingCopy { display: flex; flex-direction: column; gap: 3px; }
-.planTestingCopy strong { color: rgba(255,255,255,0.82); font-size: 13px; }
-.planTestingCopy span { color: rgba(255,255,255,0.48); font-size: 12px; line-height: 1.5; }
-.planTestingActions { display: flex; gap: 8px; flex-wrap: wrap; flex-shrink: 0; }
-
-/* ============================================================
-   COLLABORATORS SECTION
-   ============================================================ */
-.collaboratorHeader h2 {
-  margin: 0;
-  font-family: 'Outfit', sans-serif;
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: rgba(255,255,255,0.4);
-}
-.collaboratorHeader p { display: none; }
-
-.collaboratorGrid {
-  display: grid;
-  grid-template-columns: 1fr 1.1fr 1.8fr;
-  min-width: 0;
-}
-
-.collaboratorCard {
-  padding: 14px;
-  border-right: 1px solid rgba(255,255,255,0.07);
-}
-.collaboratorCard:last-child { border-right: none; }
-
-.collaboratorCard h3 {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: rgba(255,255,255,0.38);
-  margin: 0 0 10px;
-}
-
-.collaboratorMuted {
-  font-size: 12px;
-  color: rgba(255,255,255,0.35);
-  margin: 0;
-  line-height: 1.5;
-}
-
-.inviteForm { display: flex; flex-direction: column; gap: 8px; }
-
-.inviteForm input {
-  height: 32px;
-  padding: 0 10px;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 6px;
-  font-size: 12px;
-  color: rgba(255,255,255,0.8);
-  background: rgba(255,255,255,0.05);
-  width: 100%;
-}
-.inviteForm input:focus {
+  color: #fff;
+  font-family: inherit;
+  font-size: 14px;
   outline: none;
-  border-color: #ff1493;
-}
-.inviteForm input::placeholder {
-  color: rgba(255,255,255,0.3);
-}
-
-.collaboratorList { display: flex; flex-direction: column; }
-
-.collaboratorRow {
-  display: flex;
-  justify-content: space-between;
-  gap: 6px;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  padding: 8px 0;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  transition: border-color 0.15s;
   min-width: 0;
 }
-.collaboratorRow:first-child { border-top: none; }
+.textInput:focus {
+  border-color: rgba(255, 20, 147, 0.5);
+}
+.textInput::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+}
+.textInput:disabled {
+  opacity: 0.5;
+}
 
-.collaboratorMeta { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
-.collaboratorMeta strong { color: rgba(255,255,255,0.88); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-.collaboratorMeta span { color: rgba(255,255,255,0.42); font-size: 11px; line-height: 1.4; word-break: break-word; overflow-wrap: anywhere; min-width: 0; }
-
-.collaboratorActions { display: flex; align-items: center; gap: 5px; flex-shrink: 0; flex-wrap: wrap; margin-top: 2px; }
-
-.roleBadge {
+/* ── Buttons ─────────────────────────────────────────────────── */
+.primaryButton {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
-
-.inlineAction {
-  border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.05);
-  color: rgba(255,255,255,0.72);
-  border-radius: 6px;
-  padding: 4px 9px;
-  font-size: 11px;
-  font-weight: 700;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg, var(--color-primary, #ff1493), var(--color-accent, #a855f7));
+  color: white;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s;
+  transition: opacity 0.15s, transform 0.15s;
 }
-.inlineAction:hover { background: rgba(255,255,255,0.1); }
+.primaryButton:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+.primaryButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
 
-/* ============================================================
-   FEEDBACK / ERROR STATES
-   ============================================================ */
-.collaboratorMessage,
-.collaboratorSuccess {
+.actionButton {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 14px;
   border-radius: 8px;
-  padding: 10px 14px;
-  margin: 0 16px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.8);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+.actionButton:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+.actionButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ghostButton {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: inherit;
   font-size: 12px;
-  line-height: 1.5;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
 }
-.collaboratorMessage { background: rgba(127,29,29,0.24); border: 1px solid rgba(248,113,113,0.28); color: #fecaca; }
-.collaboratorSuccess { background: rgba(16,185,129,0.14); border: 1px solid rgba(16,185,129,0.28); color: #bbf7d0; }
+.ghostButton:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.85);
+}
+.ghostButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
-.memberScopeNote {
-  margin: 0 16px 14px;
-  padding: 10px 14px;
-  border-radius: 8px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
+/* ── Workspace image ─────────────────────────────────────────── */
+.imageRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.imagePreview {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: rgba(255, 20, 147, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: #ff1493;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.imagePreview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.hiddenFileInput {
+  display: none;
+}
+
+/* ── Notification options ────────────────────────────────────── */
+.notifOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.notifOption {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.notifOption:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.07);
+}
+.notifOptionActive {
+  border-color: var(--color-primary, #ff1493);
+  background: rgba(255, 20, 147, 0.08);
+}
+.notifOptionLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+.notifOptionDesc {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  line-height: 1.4;
+}
+
+/* ── Plan summary grid ───────────────────────────────────────── */
+.planSummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.planSummaryCard {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
-.memberScopeNote strong { color: rgba(255,255,255,0.78); font-size: 13px; }
-.memberScopeNote span { color: rgba(255,255,255,0.48); font-size: 12px; line-height: 1.5; }
-
-.label {
-  display: block;
+.planSummaryLabel {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: rgba(255,255,255,0.38);
-  margin-bottom: 5px;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.35);
+}
+.planSummaryValue {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
 }
 
-/* ============================================================
-   RESPONSIVE
-   ============================================================ */
-@media (max-width: 768px) {
-  .container { padding: 14px 16px 40px; }
-  .pickerRow { grid-template-columns: 1fr; gap: 12px; }
-  .presetGrid { flex-wrap: wrap; }
-  .actions { margin-left: 0; width: 100%; }
-  .saveButton, .resetButtonLarge { flex: 1; text-align: center; }
-  .workspaceNameSection { grid-template-columns: 1fr; }
-  .notificationSection { grid-template-columns: 1fr; }
-  .permissionsSummary { grid-template-columns: 1fr; }
-  .planDetails { grid-template-columns: repeat(2, minmax(0,1fr)); }
-  .planTesting { flex-direction: column; align-items: stretch; }
-  .planTestingActions { width: 100%; }
-  .collaboratorGrid { grid-template-columns: 1fr; }
-  .collaboratorCard { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.07); }
-  .collaboratorCard:last-child { border-bottom: none; }
-  .collaboratorRow { flex-direction: column; align-items: flex-start; }
-  .collaboratorActions { width: 100%; justify-content: flex-start; }
-}
-
-@media (max-width: 480px) {
-  .planDetails { grid-template-columns: 1fr; }
-}
-
-
-/* ── Storage usage bar ──────────────────────────────────────────── */
-.storageBar {
+/* ── Storage bar ─────────────────────────────────────────────── */
+.storageBarWrap {
   height: 6px;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 3px;
   overflow: hidden;
-  margin: -8px 0 4px;
 }
-
 .storageBarFill {
   height: 100%;
   border-radius: 3px;
   transition: width 0.4s ease;
+}
+.storageBarMeta {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.35);
+  margin: 0;
+}
+
+/* ── Member list ─────────────────────────────────────────────── */
+.memberList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.memberRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.memberRow:last-child {
+  border-bottom: none;
+}
+.memberMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.memberMeta strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.memberMeta span {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.35);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.memberActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.roleBadge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: capitalize;
+}
+.roleBadgeAccepted {
+  background: rgba(110, 231, 183, 0.1);
+  color: #6ee7b7;
+}
+.roleBadgeMuted {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* ── Appearance ──────────────────────────────────────────────── */
+.colourGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.colourControl {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.colourLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.colourInputRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.colourSwatch {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: none;
+  cursor: pointer;
+  padding: 2px;
+  flex-shrink: 0;
+}
+
+.presetGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.presetButton {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 20px;
+  border: none;
+  color: white;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+.presetButton:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+
+.appearanceActions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* ── Dev toggle ──────────────────────────────────────────────── */
+.devToggle {
+  margin-top: 24px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+}
+.devToggleLabel {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.3);
+  margin: 0 0 10px;
+}
+.devToggleButtons {
+  display: flex;
+  gap: 6px;
+}
+.devToggleBtn {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: none;
+  color: rgba(255, 255, 255, 0.4);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.devToggleBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.7);
+}
+.devToggleBtnActive {
+  background: rgba(255, 20, 147, 0.15);
+  border-color: rgba(255, 20, 147, 0.4);
+  color: #ff1493;
+}
+.devToggleBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Mobile ──────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .settingsShell {
+    flex-direction: column;
+  }
+
+  .settingsNav {
+    width: 100%;
+    height: auto;
+    position: static;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    padding: 20px 16px 12px;
+    gap: 0;
+  }
+
+  .settingsNavList {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .settingsNavItem {
+    padding: 7px 12px;
+    font-size: 13px;
+  }
+
+  .settingsNavFooter {
+    display: none;
+  }
+
+  .settingsContent {
+    padding: 24px 16px 60px;
+  }
+
+  .settingsBlock {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .planSummaryGrid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .inlineForm {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .inlineForm .actionButton,
+  .inlineForm .primaryButton {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ── Legacy error banner ─────────────────────────────────────── */
+.errorBanner {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(127, 29, 29, 0.24);
+  border: 1px solid rgba(248, 113, 113, 0.28);
+  color: #fecaca;
+  font-size: 12px;
+  margin-bottom: 16px;
 }
