@@ -2412,3 +2412,31 @@ Full implementation of three-tier storage-based pricing across all relevant rout
 - The old STRIPE_PRICE_ID env var remains as a fallback — safe to leave in place until new vars are confirmed working
 - storage_bytes_used bootstrap reads use a cast because WorkspaceRecord type does not yet include the new column — safe at runtime since the column exists in DB
 - When a version delete route is added later it must decrement storage_bytes_used
+
+## 2026-05-18 — Phase 5: Pricing page and upgrade flow
+
+### What we were trying to achieve
+
+The upgrade button and limit modal were going straight to Stripe checkout with Pro monthly hardcoded — no plan selection, no tier comparison, no annual option. Users needed a proper place to see and choose between Free, Pro, and Studio before entering payment.
+
+### Feature / change being made
+
+New /upgrade page with side-by-side plan comparison and monthly/annual billing toggle. Both upgrade entry points (settings button and limit modal) now route to this page instead of going directly to Stripe.
+
+### Files changed
+
+- `app/upgrade/page.tsx` (new) — full pricing page with three-column plan grid, monthly/annual toggle, animated price switching, per-plan CTA buttons. Free CTA goes back. Pro and Studio CTAs call /api/billing/checkout with the correct plan and interval.
+- `app/upgrade/upgrade.module.css` (new) — styles for pricing page using existing design tokens. Popular badge on Pro card, gradient CTAs, glassmorphism cards.
+- `components/UpgradeModal.tsx` — simplified to a lightweight nudge. No longer calls checkout directly. Shows contextual copy (collaborator limit or storage limit) with a See plans button that routes to /upgrade.
+- `app/settings/page.tsx` — Upgrade button now calls router.push('/upgrade') instead of hitting the checkout API directly. Removed startingCheckout state.
+- `components/AppSidebar.tsx` — fixed hardcoded 'Paid' label. Sidebar now shows getPlanDisplayName(plan) and 'Active' caption for paid tiers.
+
+### Tests run
+
+- npx tsc --noEmit — zero errors
+
+### Notes
+
+- The /upgrade page handles both monthly and annual billing. Annual prices shown as per-month equivalent with total billed per year.
+- Free plan CTA routes back rather than doing anything — safe for users who land on the page by mistake.
+- Dashboard upgrade flow was already via UpgradeModal — no change needed there.
