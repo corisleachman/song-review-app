@@ -2104,6 +2104,7 @@ Rethink the pricing model and tier structure, then implement and test in Stripe.
 - [x] Pricing comparison page with monthly/annual toggle (/upgrade)
 - [x] Upgrade modal routes to pricing page instead of direct Stripe
 - [x] Sidebar plan label fixed (getPlanDisplayName)
+- [x] Settings page rebuild — subroute architecture with left nav
 - [ ] Deploy and end-to-end smoke test
 
 ---
