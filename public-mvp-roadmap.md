@@ -2065,7 +2065,7 @@ Note the next follow-up slice.
 
 ## Phase 5: Pricing Review & Stripe Rollout
 
-**Status: In Progress — implementation plan complete, awaiting implementation**
+**Status: Complete**
 
 ### Objective
 Rethink the pricing model and tier structure, then implement and test in Stripe.
@@ -2090,22 +2090,20 @@ Rethink the pricing model and tier structure, then implement and test in Stripe.
 - [x] Database migration — add storage_bytes_used to accounts, file_size_bytes to song_versions, update plan constraint
 - [x] lib/plans.ts rewrite — three tiers, storage limits, remove song count
 - [x] lib/stripe.ts — expand to four price IDs
-- [ ] Stripe dashboard — create Pro and Studio products with monthly and annual prices
-- [ ] Vercel env vars — four new price ID env vars
+- [x] Stripe dashboard — Pro and Studio products created with monthly and annual prices
+- [x] Vercel env vars — four price ID env vars added
 - [x] app/api/versions/create/route.ts — storage enforcement and file size write
 - [x] app/api/billing/checkout/route.ts — accept plan and interval
 - [x] app/api/billing/activate/route.ts — resolve tier from price ID
 - [x] app/api/stripe/webhook/route.ts — resolve tier from price ID
 - [x] app/api/settings/summary/route.ts — include storage_bytes_used
 - [x] app/api/workspace/plan/route.ts — support three tiers in dev toggle
-- [x] components/UpgradeModal.tsx — storage limit type and copy
-- [x] app/settings/page.tsx — storage bar and three-tier plan UI
-- [x] TypeScript check
-- [x] Pricing comparison page with monthly/annual toggle (/upgrade)
-- [x] Upgrade modal routes to pricing page instead of direct Stripe
+- [x] components/UpgradeModal.tsx — routes to /upgrade page instead of direct Stripe
+- [x] /upgrade page — side-by-side tier comparison with monthly/annual toggle
 - [x] Sidebar plan label fixed (getPlanDisplayName)
-- [x] Settings page rebuild — subroute architecture with left nav
-- [ ] Deploy and end-to-end smoke test
+- [x] Settings page rebuilt — subroute architecture with left nav (/settings/workspace, /settings/plan, /settings/collaborators, /settings/appearance)
+- [x] Smoke test — Pro plan confirmed working in live Stripe mode
+- [ ] Full user journey smoke test in Stripe test mode (switch Stripe keys back to test mode for dummy card testing)
 
 ---
 
@@ -2172,6 +2170,63 @@ Visual and UX polish pass before marketing site launch.
 - Empty state review — all empty states named and styled correctly
 - Typography and spacing consistency audit across all pages
 - Accessibility pass (focus states, aria labels, screen reader basics)
+
+---
+
+## Phase 6.5: Referral Programme
+
+**Status: Queued**
+
+### Objective
+Build a referral system that incentivises existing users to bring new paying customers to The Song Room.
+
+### Why this phase exists
+Referrals are a high-leverage growth tool for a product that lives inside creative workflows — musicians talk to other musicians, producers recommend tools to artists. A referral programme turns existing users into a distribution channel at near-zero cost.
+
+### Proposed model
+
+**The mechanic: credit-based rewards**
+Rather than cash payouts (which require tax complexity) or feature unlocks (which require plan gating logic), rewards come as billing credits applied to the referrer's subscription.
+
+- Referrer shares a unique link
+- Referred user signs up via that link, starts on free
+- When the referred user upgrades to any paid plan (Pro or Studio), the referrer earns one month of their current plan free, applied as a Stripe credit to their next invoice
+- No reward for free-tier sign-ups — reward is tied to a real conversion
+- One reward per referred user (prevents gaming via multiple sign-ups)
+- Referred user gets nothing by default at launch — keeps it simple; can add a "first month discount" later if conversion needs a nudge
+
+**Why credits, not discounts or features:**
+- Stripe supports account credits natively — no custom billing logic
+- Credits stack if a referrer sends multiple paying users
+- The referrer sees a concrete £9 or £19 off their next bill — tangible, legible value
+- No feature entitlement complexity
+
+### What needs building
+
+**Database:**
+- `referral_codes` table — one unique code per user, created on demand
+- `referrals` table — tracks who referred whom, referral status (pending / converted / rewarded), and timestamps
+
+**API routes:**
+- `GET /api/referrals/code` — returns the signed-in user's referral code, creating one if it doesn't exist
+- `POST /api/referrals/track` — called during signup when a referral code is present in the URL
+- Webhook handler extension — when a referred user's Stripe subscription activates, check for a pending referral and apply the credit to the referrer's Stripe account via `stripe.customerBalanceTransactions.create()`
+
+**UI:**
+- `/settings/referrals` — new section in the settings left nav (visible to all users, not owner-only)
+  - Shows the user's unique referral link
+  - One-tap copy button
+  - List of past referrals: email (masked), status (signed up / upgraded / rewarded), date
+  - Running total of credits earned
+- Dashboard nudge — small persistent banner for free users explaining the referral programme (dismissable)
+
+**Referral link format:** `https://song-room.live/r/[code]` or `/signup?ref=[code]`
+
+### Open questions before building
+- Do we want to offer a first-month discount to the referred user as an additional conversion incentive?
+- Should the referral link work from the marketing site (`song-room.live`) or the app (`song-review-app-v2.vercel.app`) — or both?
+- Maximum credits per referrer (unlimited, or cap at e.g. 6 free months per year to prevent abuse)?
+- Does the referral credit apply to both monthly and annual subscribers, or monthly only?
 
 ---
 
