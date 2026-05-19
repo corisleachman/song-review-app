@@ -65,7 +65,7 @@ function getInviteEmailHtml(params: {
   return `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111; line-height: 1.5;">
       <p style="margin: 0 0 16px;"><strong>${escapeHtml(inviterName)}</strong> invited you to join <strong>${escapeHtml(workspaceName)}</strong> on Song Review.</p>
-      <p style="margin: 0 0 20px;">Sign in with your invited Google account to accept the workspace invite and start collaborating.</p>
+      <p style="margin: 0 0 20px;">Sign in with the invited account to accept the workspace invite and start collaborating.</p>
       <p style="margin: 0 0 20px;">
         <a href="${inviteLink}" style="display: inline-block; padding: 10px 16px; background-color: #111; color: #fff; text-decoration: none; border-radius: 6px;">
           Open invite
@@ -87,7 +87,7 @@ function getInviteEmailText(params: {
   return [
     `${inviterName} invited you to join ${workspaceName} on Song Review.`,
     '',
-    'Sign in with your invited Google account to accept the workspace invite.',
+    'Sign in with the invited account to accept the workspace invite.',
     '',
     `Open invite: ${inviteLink}`,
   ].join('\n');

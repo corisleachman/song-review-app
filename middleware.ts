@@ -5,7 +5,7 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   
   // Public routes (no auth required)
-  const publicRoutes = ['/', '/identify', '/auth/callback'];
+  const publicRoutes = ['/', '/identify', '/auth/callback', '/auth/reset-password'];
   const isInviteRoute = pathname.startsWith('/invite/');
   
   // Check if path is public

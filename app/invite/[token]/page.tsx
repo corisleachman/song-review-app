@@ -36,7 +36,7 @@ function getStateTitle(state: PublicInviteState) {
 function getStateMessage(state: PublicInviteState) {
   switch (state) {
     case 'pending':
-      return 'This invite is ready to use. Sign in with the invited Google account and accept the workspace invite.';
+      return 'This invite is ready to use. Sign in with the invited account and accept the workspace invite.';
     case 'revoked':
       return 'The workspace owner revoked this invite. Ask them to send a new one if you still need access.';
     case 'expired':

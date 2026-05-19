@@ -9,6 +9,8 @@ interface InviteActionsProps {
 }
 
 type InviteActionState = 'checking' | 'signed_out' | 'matched' | 'mismatched';
+type SignInMode = 'idle' | 'email';
+
 const POST_LOGIN_INVITE_PATH_KEY = 'song_review_post_login_invite_path';
 
 function lowerEmail(value: string | null | undefined) {
@@ -20,10 +22,41 @@ function getErrorMessage(error: unknown) {
   return 'Could not complete invite action.';
 }
 
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '12px 14px',
+  background: 'rgba(255,255,255,0.06)',
+  border: '1px solid rgba(255,255,255,0.12)',
+  borderRadius: '10px',
+  color: '#ffffff',
+  fontSize: '15px',
+  fontFamily: 'inherit',
+  boxSizing: 'border-box',
+  outline: 'none',
+};
+
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: '12px',
+  fontWeight: 600,
+  color: 'rgba(255,255,255,0.5)',
+  textTransform: 'uppercase',
+  letterSpacing: '0.06em',
+  marginBottom: '6px',
+};
+
 export default function InviteActions({ token, inviteEmail }: InviteActionsProps) {
   const [supabase] = useState(() => createClient());
   const [actionState, setActionState] = useState<InviteActionState>('checking');
   const [signedInEmail, setSignedInEmail] = useState('');
+  const [signInMode, setSignInMode] = useState<SignInMode>('idle');
+
+  // Email sign-in fields
+  const [emailInput, setEmailInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
+  const [emailSignInLoading, setEmailSignInLoading] = useState(false);
+  const [emailSignInError, setEmailSignInError] = useState('');
+
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
   const [error, setError] = useState('');
@@ -62,7 +95,7 @@ export default function InviteActions({ token, inviteEmail }: InviteActionsProps
     return () => {
       mounted = false;
     };
-  }, [inviteEmail, supabase]);
+  }, [inviteEmail, supabase, token]);
 
   const handleGoogleSignIn = async () => {
     setError('');
@@ -90,6 +123,38 @@ export default function InviteActions({ token, inviteEmail }: InviteActionsProps
       setError(getErrorMessage(signInError));
       setIsSigningIn(false);
     }
+  };
+
+  const handleEmailSignIn = async () => {
+    setEmailSignInError('');
+    if (!emailInput.trim() || !passwordInput) {
+      setEmailSignInError('Please enter your email and password.');
+      return;
+    }
+    setEmailSignInLoading(true);
+
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      email: emailInput.trim(),
+      password: passwordInput,
+    });
+
+    if (signInError) {
+      setEmailSignInError(signInError.message);
+      setEmailSignInLoading(false);
+      return;
+    }
+
+    const userEmail = data.session?.user?.email?.trim() ?? '';
+    setSignedInEmail(userEmail);
+    setEmailSignInLoading(false);
+    setSignInMode('idle');
+
+    if (!userEmail) {
+      setActionState('signed_out');
+      return;
+    }
+
+    setActionState(lowerEmail(userEmail) === lowerEmail(inviteEmail) ? 'matched' : 'mismatched');
   };
 
   const handleAcceptInvite = async () => {
@@ -128,66 +193,129 @@ export default function InviteActions({ token, inviteEmail }: InviteActionsProps
     }
   };
 
+  const buttonBase: React.CSSProperties = {
+    border: 'none',
+    borderRadius: '10px',
+    padding: '13px 16px',
+    fontSize: '15px',
+    fontWeight: 600,
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    width: '100%',
+  };
+
   return (
-    <div
-      style={{
-        marginTop: '24px',
-        display: 'grid',
-        gap: '14px',
-      }}
-    >
+    <div style={{ marginTop: '24px', display: 'grid', gap: '14px' }}>
+
       {actionState === 'checking' && (
         <p style={{ margin: 0, color: 'rgba(255,255,255,0.68)', fontSize: '14px' }}>
-          Checking your sign-in status...
+          Checking your sign-in status…
         </p>
       )}
 
       {actionState === 'signed_out' && (
         <>
-          <p style={{ margin: 0, color: 'rgba(255,255,255,0.76)', lineHeight: 1.6 }}>
-            Sign in with the invited Google account to continue.
-          </p>
-          <button
-            type="button"
-            onClick={handleGoogleSignIn}
-            disabled={isSigningIn}
-            style={{
-              border: 'none',
-              borderRadius: '12px',
-              padding: '14px 16px',
-              fontSize: '15px',
-              fontWeight: 600,
-              cursor: isSigningIn ? 'default' : 'pointer',
-              background: '#ffffff',
-              color: '#111111',
-            }}
-          >
-            {isSigningIn ? 'Connecting to Google...' : 'Continue with Google'}
-          </button>
+          {signInMode === 'idle' && (
+            <>
+              <p style={{ margin: 0, color: 'rgba(255,255,255,0.76)', lineHeight: 1.6 }}>
+                Sign in to continue.
+              </p>
+
+              {/* Google */}
+              <button
+                type="button"
+                onClick={handleGoogleSignIn}
+                disabled={isSigningIn}
+                style={{ ...buttonBase, background: '#ffffff', color: '#111111', cursor: isSigningIn ? 'default' : 'pointer' }}
+              >
+                {isSigningIn ? 'Connecting…' : 'Continue with Google'}
+              </button>
+
+              {/* Divider */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }} />
+                <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>or</span>
+                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }} />
+              </div>
+
+              {/* Email toggle */}
+              <button
+                type="button"
+                onClick={() => setSignInMode('email')}
+                style={{ ...buttonBase, background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.85)', border: '1px solid rgba(255,255,255,0.12)' }}
+              >
+                Sign in with email
+              </button>
+            </>
+          )}
+
+          {signInMode === 'email' && (
+            <>
+              <div>
+                <label style={labelStyle} htmlFor="invite-email">Email</label>
+                <input
+                  id="invite-email"
+                  type="email"
+                  style={inputStyle}
+                  placeholder="you@example.com"
+                  value={emailInput}
+                  onChange={e => setEmailInput(e.target.value)}
+                  autoComplete="email"
+                  disabled={emailSignInLoading}
+                />
+              </div>
+              <div>
+                <label style={labelStyle} htmlFor="invite-password">Password</label>
+                <input
+                  id="invite-password"
+                  type="password"
+                  style={inputStyle}
+                  placeholder="••••••••"
+                  value={passwordInput}
+                  onChange={e => setPasswordInput(e.target.value)}
+                  autoComplete="current-password"
+                  disabled={emailSignInLoading}
+                  onKeyDown={e => { if (e.key === 'Enter') void handleEmailSignIn(); }}
+                />
+              </div>
+
+              {emailSignInError && (
+                <p style={{ margin: 0, color: '#fca5a5', fontSize: '13px' }}>{emailSignInError}</p>
+              )}
+
+              <button
+                type="button"
+                onClick={handleEmailSignIn}
+                disabled={emailSignInLoading}
+                style={{ ...buttonBase, background: '#ffffff', color: '#111111', cursor: emailSignInLoading ? 'default' : 'pointer' }}
+              >
+                {emailSignInLoading ? 'Signing in…' : 'Sign in'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setSignInMode('idle'); setEmailSignInError(''); }}
+                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.45)', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline', textUnderlineOffset: '2px', padding: 0 }}
+              >
+                Back
+              </button>
+            </>
+          )}
         </>
       )}
 
       {actionState === 'matched' && (
         <>
           <p style={{ margin: 0, color: 'rgba(255,255,255,0.76)', lineHeight: 1.6 }}>
-            You’re signed in as <strong>{signedInEmail}</strong>. You can join this workspace now.
+            You're signed in as <strong>{signedInEmail}</strong>. You can join this workspace now.
           </p>
           <button
             type="button"
             onClick={handleAcceptInvite}
             disabled={isAccepting}
-            style={{
-              border: 'none',
-              borderRadius: '12px',
-              padding: '14px 16px',
-              fontSize: '15px',
-              fontWeight: 600,
-              cursor: isAccepting ? 'default' : 'pointer',
-              background: '#34d399',
-              color: '#052e16',
-            }}
+            style={{ ...buttonBase, background: '#34d399', color: '#052e16', cursor: isAccepting ? 'default' : 'pointer' }}
           >
-            {isAccepting ? 'Accepting invite...' : 'Accept invite'}
+            {isAccepting ? 'Accepting invite…' : 'Accept invite'}
           </button>
         </>
       )}
@@ -195,8 +323,7 @@ export default function InviteActions({ token, inviteEmail }: InviteActionsProps
       {actionState === 'mismatched' && (
         <p style={{ margin: 0, color: '#fca5a5', lineHeight: 1.6 }}>
           This invite was sent to <strong>{inviteEmail}</strong>, but you are signed in as{' '}
-          <strong>{signedInEmail || 'a different account'}</strong>. Sign in with the invited
-          Google account to accept it.
+          <strong>{signedInEmail || 'a different account'}</strong>. Please sign in with the invited account to accept it.
         </p>
       )}
 
@@ -207,7 +334,7 @@ export default function InviteActions({ token, inviteEmail }: InviteActionsProps
             color: '#fca5a5',
             background: 'rgba(127, 29, 29, 0.28)',
             border: '1px solid rgba(248, 113, 113, 0.32)',
-            borderRadius: '12px',
+            borderRadius: '10px',
             padding: '12px 14px',
             lineHeight: 1.5,
           }}
