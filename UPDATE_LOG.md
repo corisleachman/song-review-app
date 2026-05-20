@@ -2535,3 +2535,36 @@ Mark Phase 5 (Pricing Review & Stripe Rollout) as complete following confirmatio
 - Credits via Stripe customerBalanceTransactions — no custom billing logic needed
 
 ### No code changed — planning and documentation only
+
+
+## 2026-05-20 — Proper RLS policies applied to all tables
+
+### What we were trying to achieve
+
+Supabase flagged a critical security alert: tables in the song-review-v2 project were publicly accessible because Row-Level Security was enabled but all policies used `USING (true)` — meaning any request with the project URL could read, edit, or delete all data without authentication.
+
+### Feature / change being made
+
+Replaced all blanket `Allow all USING (true)` policies with properly scoped RLS policies across all 11 tables. Policies are now gated on `auth.uid()` (Supabase Auth) and workspace membership via `account_members`.
+
+### Policy logic per table
+
+- **profiles / profile_settings** — users can only read and write their own row (`id = auth.uid()` / `user_id = auth.uid()`)
+- **settings (legacy)** — any authenticated user; acceptable as a transitional table with no sensitive isolation requirement
+- **accounts** — SELECT for any member; INSERT by creator; UPDATE/DELETE restricted to workspace owners
+- **account_members** — SELECT for any member of the same workspace; INSERT/DELETE restricted to owners
+- **songs / actions** — SELECT/INSERT/UPDATE for any workspace member; DELETE restricted to owners
+- **song_versions / song_tasks** — SELECT/INSERT/UPDATE for any workspace member; DELETE restricted to owners
+- **comment_threads / comments** — SELECT/INSERT for any workspace member (chained through song_versions → songs → account_members)
+
+### Files added
+
+- `migrations/20260520_rls_policies_up.sql` — idempotent migration: drops all existing policies by name before recreating, safe to re-run
+- `migrations/20260520_rls_policies_down.sql` — rollback: restores blanket `Allow all` policies
+
+### Notes for v2
+
+- All API routes using the service role key bypass RLS by design and are unaffected
+- The `settings` legacy table retains a permissive policy; once `profile_settings` fully replaces it this can be tightened
+- Migration is idempotent — `DROP POLICY IF EXISTS` before every `CREATE POLICY` means it can be re-run safely if needed
+- Confirmed working: login, dashboard, songs, versions, comments all functional after applying
