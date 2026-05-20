@@ -8,6 +8,35 @@ For audio player architecture fixes (mobile background audio, WaveSurfer iOS rul
 
 ---
 
+## [2026-05-20] v2 — Proper RLS policies applied to all Supabase tables
+
+**Branch:** `clone-clean` (v2 build)
+**Files:** `migrations/20260520_rls_policies_up.sql`, `migrations/20260520_rls_policies_down.sql`
+
+### What changed
+Replaced blanket `USING (true)` RLS policies on all 11 database tables with properly scoped policies gated on Supabase Auth (`auth.uid()`) and workspace membership (`account_members`).
+
+### Root cause
+Supabase flagged a critical security alert: RLS was technically enabled but all policies allowed unrestricted access, meaning anyone with the project URL could read, edit, or delete all data without authentication.
+
+### Before
+All tables had a single `Allow all` policy with `USING (true)` — RLS enabled in name only.
+
+### After
+30 targeted policies across 11 tables. Access is now gated on:
+- `auth.uid()` match for profile and personal settings rows
+- Workspace membership via `account_members` for songs, versions, threads, comments, tasks, and actions
+- Owner role (`role = 'owner'` in `account_members`) for destructive operations (delete song, delete member, manage billing)
+
+### Notes for v2
+- API routes using the service role key bypass RLS by design and are unaffected
+- The legacy `settings` table retains a permissive authenticated policy; tighten once `profile_settings` fully replaces it
+- Migration is idempotent (`DROP POLICY IF EXISTS` before every `CREATE`) — safe to re-run
+- A rollback file (`20260520_rls_policies_down.sql`) restores blanket policies if needed
+
+---
+
+
 ## [2026-04-29] iOS Safari login loop — localStorage not written after password verification
 
 **Commit:** `973be97f`
@@ -369,4 +398,5 @@ Either apply `Math.round()` in the API routes, or change the column type to `FLO
 2. Comment bubble alignment fixed (own messages right-aligned, other person's left-aligned)
 3. Song cards on dashboard forced to square aspect ratio
 4. Email deep link `?thread=` parameter fixed to correctly open the referenced thread
+
 
