@@ -20,6 +20,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Workspace',     href: '/settings/workspace',    ownerOnly: true  },
   { label: 'Plan & Billing', href: '/settings/plan',        ownerOnly: true  },
   { label: 'Collaborators', href: '/settings/collaborators', ownerOnly: true  },
+  { label: 'Referrals',     href: '/settings/referrals',    ownerOnly: false },
   { label: 'Appearance',    href: '/settings/appearance',   ownerOnly: false },
 ];
 
