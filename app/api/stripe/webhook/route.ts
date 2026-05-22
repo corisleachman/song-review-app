@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import type { AccountPlan } from '@/lib/plans';
 import { getPendingReferralForAccount, markReferralConverted, markReferralRewarded, REFERRAL_REWARD_CAP } from '@/lib/referrals';
-import { supabaseServer } from '@/lib/supabaseServer';
 import { getPlanForStripePriceId, getStripe, getStripeWebhookSecret } from '@/lib/stripe';
 
 export const dynamic = 'force-dynamic';
