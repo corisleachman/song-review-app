@@ -7,9 +7,10 @@ export async function middleware(request: NextRequest) {
   // Public routes (no auth required)
   const publicRoutes = ['/', '/identify', '/auth/callback', '/auth/reset-password'];
   const isInviteRoute = pathname.startsWith('/invite/');
+  const isReferralRoute = pathname.startsWith('/r/');
   
   // Check if path is public
-  if (publicRoutes.includes(pathname) || isInviteRoute) {
+  if (publicRoutes.includes(pathname) || isInviteRoute || isReferralRoute) {
     return NextResponse.next();
   }
   
