@@ -2568,3 +2568,47 @@ Replaced all blanket `Allow all USING (true)` policies with properly scoped RLS 
 - The `settings` legacy table retains a permissive policy; once `profile_settings` fully replaces it this can be tightened
 - Migration is idempotent — `DROP POLICY IF EXISTS` before every `CREATE POLICY` means it can be re-run safely if needed
 - Confirmed working: login, dashboard, songs, versions, comments all functional after applying
+
+## 2026-05-22 — Phase 6: Referral programme — full implementation
+
+### What we were trying to achieve
+
+Build the complete referral system: cookie-based attribution on signup, 50% off 3 months for referred users at checkout, 50% off one month per conversion for the referrer (up to 5 times), and a settings page showing link, history, and credits earned.
+
+### Files created
+
+- `migrations/20260522_phase6_referrals_up.sql` — referral_codes and referrals tables, generate_referral_code() Postgres function
+- `migrations/20260522_phase6_referrals_down.sql` — rollback
+- `lib/referrals.ts` — shared DB helpers: getOrCreateReferralCode, getReferralCodeByCode, attributeReferralOnSignup, getPendingReferralForAccount, markReferralConverted, markReferralRewarded. Constants: REFERRAL_REWARD_CAP (5), REFERRAL_COOKIE_NAME, REFERRAL_COOKIE_MAX_AGE.
+- `app/api/referrals/code/route.ts` — GET, returns or creates the signed-in user's active referral code and shareable URL
+- `app/api/referrals/summary/route.ts` — GET, returns referral stats, masked email history, and credit totals for the settings UI
+- `app/r/[code]/route.ts` — public GET, validates code, drops httpOnly ref cookie, redirects to signup
+- `app/settings/referrals/page.tsx` — settings section: referral link with copy button, rewards summary cards, referral history list, how-it-works steps
+
+### Files changed
+
+- `middleware.ts` — /r/ added to public paths (no auth redirect)
+- `lib/bootstrapAccount.ts` — reads tsr_ref cookie on new account creation, calls attributeReferralOnSignup best-effort
+- `app/api/billing/checkout/route.ts` — detects pending referral for monthly plan checkouts, applies STRIPE_REFERRAL_COUPON_ID silently, marks referee_coupon_applied
+- `app/api/stripe/webhook/route.ts` — rewrote cleanly, added invoice.paid handler: marks conversion, cap check, applies Stripe customer balance credit to referrer, marks rewarded
+- `app/settings/layout.tsx` — Referrals added to settings nav between Collaborators and Appearance
+- `app/settings/settings.module.css` — referralCredit and howItWorksList styles added
+
+### Referral model implemented
+
+- Referrer reward: 50% off one month of their plan per conversion, max 5 rewards total. Applied as Stripe customer balance credit on invoice.paid (billing_reason: subscription_create).
+- Referee reward: 50% off first 3 months on monthly plans. Applied as Stripe coupon at checkout. Annual plans pay full price — copy guides users toward monthly.
+- Cap: soft cap of 5 rewards checked at reward time, not link-sharing time. Excess referrals marked ineligible with reason cap_reached.
+- Self-referral protection, duplicate referral protection, and ineligible_reason field for all edge cases.
+- reward_eligible_at set to now() at launch — schema ready to add a holding period later.
+- Referrer must have a Stripe customer ID to receive credit. If not yet on a paid plan, referral left as converted for manual resolution.
+
+### Stripe setup required
+
+- Coupon created in Stripe: 50% off, repeating, 3 months, no customer-facing code. ID stored as STRIPE_REFERRAL_COUPON_ID in Vercel.
+- Add invoice.paid to the webhook endpoint event list in Stripe dashboard.
+
+### Tests run
+
+- npx tsc --noEmit — zero errors
+- Migration applied in Supabase: success, no rows returned
