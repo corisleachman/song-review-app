@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { normalizeAccountPlan, isPlanAtLeast } from '@/lib/plans';
+import { getPendingReferralForAccount } from '@/lib/referrals';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { getStripe, getStripePriceId } from '@/lib/stripe';
 
