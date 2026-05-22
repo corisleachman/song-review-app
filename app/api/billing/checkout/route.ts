@@ -4,7 +4,6 @@ import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { normalizeAccountPlan, isPlanAtLeast } from '@/lib/plans';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { getStripe, getStripePriceId } from '@/lib/stripe';
-import { supabaseServer } from '@/lib/supabaseServer';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
