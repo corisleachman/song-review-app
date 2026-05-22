@@ -2612,3 +2612,51 @@ Build the complete referral system: cookie-based attribution on signup, 50% off 
 
 - npx tsc --noEmit — zero errors
 - Migration applied in Supabase: success, no rows returned
+
+## 2026-05-22 — Phase 6: Referral programme implementation
+
+### What we were trying to achieve
+
+Build the complete referral infrastructure — database, API routes, cookie landing, webhook reward logic, checkout coupon, and settings UI.
+
+### What was already built (discovered in repo)
+
+- `lib/referrals.ts` — full helper library with getOrCreateReferralCode, attributeReferralOnSignup, getPendingReferralForAccount, markReferralConverted, markReferralRewarded
+- `app/api/referrals/code/route.ts` — returns or creates referral code for signed-in user
+- `app/api/referrals/summary/route.ts` — referral stats and history for settings UI
+- `app/r/[code]/route.ts` — public landing route, drops httpOnly cookie, redirects to signup
+- `lib/bootstrapAccount.ts` — already calling attributeReferralOnSignup on first sign-in
+- `app/settings/referrals/page.tsx` — partially built
+
+### What was added or completed this session
+
+- `middleware.ts` — added /r/ to public routes so referral landing works for signed-out visitors
+- `app/api/billing/checkout/route.ts` — detects pending referral for monthly plan checkouts, applies STRIPE_REFERRAL_COUPON_ID (50% off 3 months) silently. Annual plan checkouts excluded from coupon — referrer still earns credit but referee pays full annual price.
+- `app/api/stripe/webhook/route.ts` — added invoice.paid handler. Fires only on billing_reason = subscription_create (first invoice). Finds pending referral for the account, checks 5-reward cap, looks up referrer's stripe_customer_id, applies Stripe customer balance credit via createBalanceTransaction, marks referral as rewarded. If Stripe credit fails, leaves status as converted for safe retry.
+- `app/settings/referrals/page.tsx` — completed: referral link with copy button, 3-card reward progress summary, numbered how-it-works list, referral history with masked emails and status pills
+- `app/settings/layout.tsx` — Referrals added to nav between Collaborators and Appearance (visible to all users, not owner-only)
+- `app/settings/settings.module.css` — howItWorksList styles added
+- `migrations/20260522_phase6_referrals_up.sql` — referral_codes and referrals tables, generate_referral_code() Postgres function. Applied in Supabase.
+- `migrations/20260522_phase6_referrals_down.sql` — rollback migration
+
+### Confirmed decisions
+
+- Referrer reward: 50% off one month per conversion, max 5 rewards, applied as Stripe credit
+- Referee reward: 50% off first 3 months on monthly plans only (Stripe coupon applied at checkout)
+- Annual plan referees: no coupon (already saving ~20%), referrer still earns credit
+- Reward trigger: invoice.paid with billing_reason = subscription_create (not checkout.session.completed)
+- Holding period: none at launch, reward_eligible_at set to converted_at
+- Credit cap: 5 rewards per referrer (soft cap checked at reward time)
+
+### Required Stripe dashboard action
+
+Add invoice.paid to the webhook endpoint event listeners in Stripe dashboard:
+Developers -> Webhooks -> Song Review production billing webhook -> Edit -> add invoice.paid
+
+### Environment variable required
+
+STRIPE_REFERRAL_COUPON_ID must be set in Vercel with the coupon ID from the Stripe coupon created (50% off, repeating 3 months, no customer-facing code)
+
+### Tests run
+
+- npx tsc --noEmit — zero errors
