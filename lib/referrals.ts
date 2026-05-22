@@ -55,12 +55,31 @@ export async function getOrCreateReferralCode(
 
   if (existing) return existing as ReferralCode;
 
-  // Generate and insert a new code using the Postgres function
-  const { data: generated, error: genError } = await supabaseServer
-    .rpc('generate_referral_code');
+  // Generate a unique code in JS — avoids PostgREST RPC exposure issues
+  // Format: TSR-XXXXX (5 chars from unambiguous alphabet, no 0/O/1/I)
+  const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let generated: string | null = null;
 
-  if (genError || !generated) {
-    throw new Error('Could not generate referral code.');
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const suffix = Array.from({ length: 5 }, () =>
+      ALPHABET[Math.floor(Math.random() * ALPHABET.length)]
+    ).join('');
+    const candidate = `TSR-${suffix}`;
+
+    const { data: collision } = await supabaseServer
+      .from('referral_codes')
+      .select('id')
+      .eq('code', candidate)
+      .maybeSingle();
+
+    if (!collision) {
+      generated = candidate;
+      break;
+    }
+  }
+
+  if (!generated) {
+    throw new Error('Could not generate a unique referral code after 10 attempts.');
   }
 
   const { data: created, error: createError } = await supabaseServer
@@ -68,7 +87,7 @@ export async function getOrCreateReferralCode(
     .insert({
       user_id:    userId,
       account_id: accountId,
-      code:       generated as string,
+      code:       generated,
     })
     .select('*')
     .single();
