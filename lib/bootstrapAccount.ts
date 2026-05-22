@@ -1,4 +1,5 @@
 import { supabaseServer } from '@/lib/supabaseServer';
+import { attributeReferralOnSignup, REFERRAL_COOKIE_NAME } from '@/lib/referrals';
 import type { AuthenticatedUser } from '@/lib/currentUser';
 import { normalizeAccountPlan, isMissingPlanColumnError, type AccountPlan } from '@/lib/plans';
 import { findValidActiveWorkspaceMembership, readActiveWorkspaceCookie } from '@/lib/activeWorkspace';
@@ -162,6 +163,7 @@ export async function bootstrapAccountForUser(user: AuthenticatedUser): Promise<
 
   if (membershipLookupError) throw membershipLookupError;
 
+  let newAccountId: string | null = null;
   let membership = (activeWorkspaceMembership as MembershipRecord | null)
     ?? chooseDefaultMembership(existingMemberships ?? []);
 
@@ -193,6 +195,7 @@ export async function bootstrapAccountForUser(user: AuthenticatedUser): Promise<
 
     if (createMembershipError) throw createMembershipError;
     membership = createdMembership as MembershipRecord;
+    newAccountId = account.id;
   }
 
   if (!membership) {
@@ -200,6 +203,27 @@ export async function bootstrapAccountForUser(user: AuthenticatedUser): Promise<
   }
 
   const workspace = await loadWorkspace(membership.account_id);
+
+  // ── Referral attribution (best-effort, non-blocking) ───────────────────────
+  // Only runs when a brand-new account was just created (first-ever sign-in).
+  // Reads the tsr_ref cookie set by /r/[code] and writes a referrals row.
+  if (newAccountId) {
+    try {
+      const { cookies } = await import('next/headers');
+      const cookieStore = await cookies();
+      const refCode = cookieStore.get(REFERRAL_COOKIE_NAME)?.value ?? null;
+      if (refCode) {
+        void attributeReferralOnSignup({
+          referralCode:      refCode,
+          referredUserId:    profile.id,
+          referredAccountId: newAccountId,
+        });
+        cookieStore.delete(REFERRAL_COOKIE_NAME);
+      }
+    } catch (refErr) {
+      console.error('[bootstrap] Referral attribution error (non-fatal):', refErr);
+    }
+  }
 
   return {
     user,
