@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabaseServer';
 import type { AccountPlan } from '@/lib/plans';
 import { getPendingReferralForAccount, markReferralConverted, markReferralRewarded, REFERRAL_REWARD_CAP } from '@/lib/referrals';
 import { getPlanForStripePriceId, getStripe, getStripeWebhookSecret } from '@/lib/stripe';
@@ -264,6 +263,111 @@ async function handleSubscriptionDeleted(event: { data: { object: unknown } }) {
   });
 }
 
+
+// ── Plan price values for referral credit calculation ────────────────────────
+// 50% of one month = the referrer's reward
+const PLAN_MONTHLY_PENCE: Record<string, number> = {
+  pro:    900,   // £9.00
+  studio: 1900,  // £19.00
+};
+
+async function handleInvoicePaid(event: { data: { object: unknown } }) {
+  const invoice = event.data.object as {
+    id: string;
+    customer: string;
+    subscription?: string | null;
+    billing_reason?: string | null;
+    amount_paid?: number;
+    currency?: string;
+  };
+
+  // Only process the first subscription invoice — subsequent renewals don't trigger rewards
+  if (invoice.billing_reason !== 'subscription_create') return;
+
+  const stripeCustomerId = invoice.customer;
+  if (!stripeCustomerId) return;
+
+  // Find the account for this Stripe customer
+  const { data: account } = await supabaseServer
+    .from('accounts')
+    .select('id, plan, stripe_customer_id')
+    .eq('stripe_customer_id', stripeCustomerId)
+    .maybeSingle();
+
+  if (!account?.id) return;
+
+  // Find a rewardable referral for this account
+  const referral = await getPendingReferralForAccount(account.id);
+  if (!referral) return;
+
+  // Mark as converted first (idempotent step)
+  await markReferralConverted(referral.id, {
+    stripe_invoice_id: invoice.id,
+    stripe_customer_id: stripeCustomerId,
+  });
+
+  // Cap check — has the referrer already received 5 rewards?
+  const { count: rewardCount } = await supabaseServer
+    .from('referrals')
+    .select('id', { count: 'exact', head: true })
+    .eq('referred_by_user_id', referral.referred_by_user_id)
+    .eq('status', 'rewarded');
+
+  if ((rewardCount ?? 0) >= REFERRAL_REWARD_CAP) {
+    await supabaseServer
+      .from('referrals')
+      .update({ status: 'ineligible', ineligible_reason: 'cap_reached' })
+      .eq('id', referral.id);
+    return;
+  }
+
+  // Find the referrer's billing account to apply the credit
+  const { data: referrerAccount } = await supabaseServer
+    .from('accounts')
+    .select('id, plan, stripe_customer_id')
+    .eq('id', referral.referred_by_account_id ?? '')
+    .maybeSingle();
+
+  if (!referrerAccount?.stripe_customer_id) {
+    // Referrer has no billing account yet — leave as converted for manual resolution
+    console.warn('[referrals] Referrer has no stripe_customer_id — leaving as converted:', referral.id);
+    return;
+  }
+
+  // Calculate credit: 50% of one month of the referrer's current plan
+  const referrerPlan = (referrerAccount.plan as string) ?? 'pro';
+  const monthlyPence = PLAN_MONTHLY_PENCE[referrerPlan] ?? PLAN_MONTHLY_PENCE.pro;
+  const creditAmountPence = Math.round(monthlyPence * 0.5);
+
+  // Apply Stripe customer balance credit
+  const stripe = getStripe();
+  try {
+    await stripe.customers.createBalanceTransaction(
+      referrerAccount.stripe_customer_id,
+      {
+        amount:   -creditAmountPence, // Negative = credit
+        currency: 'gbp',
+        description: `Referral reward — 1 referred user upgraded (50% of 1 month ${referrerPlan})`,
+        metadata: {
+          referral_id:       referral.id,
+          referred_account:  account.id,
+          stripe_invoice_id: invoice.id,
+        },
+      }
+    );
+  } catch (stripeError) {
+    // Stripe credit failed — leave as converted so it can be retried
+    console.error('[referrals] Stripe credit failed — leaving as converted:', stripeError);
+    return;
+  }
+
+  // Mark rewarded
+  await markReferralRewarded(referral.id, creditAmountPence, {
+    stripe_invoice_id:        invoice.id,
+    referrer_stripe_customer: referrerAccount.stripe_customer_id,
+  });
+}
+
 export async function POST(request: Request) {
   try {
     const signature = request.headers.get('stripe-signature');
@@ -287,6 +391,9 @@ export async function POST(request: Request) {
     switch (event.type) {
       case 'checkout.session.completed':
         await handleCheckoutSessionCompleted(event);
+        break;
+      case 'invoice.paid':
+        await handleInvoicePaid(event);
         break;
       case 'customer.subscription.updated':
         await handleSubscriptionUpdated(event);
