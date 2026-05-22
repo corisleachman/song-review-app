@@ -26,13 +26,6 @@ interface ReferralSummary {
   referrals: ReferralRow[];
 }
 
-const STATUS_LABELS: Record<ReferralStatus, string> = {
-  pending:    'Signed up',
-  converted:  'Upgraded',
-  rewarded:   'Rewarded',
-  ineligible: 'Ineligible',
-};
-
 function formatDate(value: string | null) {
   if (!value) return '—';
   return new Intl.DateTimeFormat('en-GB', {
@@ -40,22 +33,39 @@ function formatDate(value: string | null) {
   }).format(new Date(value));
 }
 
-function formatCredit(pence: number | null) {
+function formatPence(pence: number | null) {
   if (!pence) return '—';
   return `£${(pence / 100).toFixed(2)}`;
 }
 
+const STATUS_LABEL: Record<ReferralStatus, string> = {
+  pending:    'Signed up',
+  converted:  'Upgraded',
+  rewarded:   'Rewarded',
+  ineligible: 'Ineligible',
+};
+
+const STATUS_CLASS: Record<ReferralStatus, string> = {
+  pending:    '',
+  converted:  '',
+  rewarded:   'roleBadgeAccepted',
+  ineligible: 'roleBadgeMuted',
+};
+
 export default function ReferralsPage() {
   const [summary, setSummary] = useState<ReferralSummary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState<string | null>(null);
+  const [copied, setCopied]     = useState(false);
 
   useEffect(() => {
     fetch('/api/referrals/summary')
       .then(r => r.json())
-      .then((data: ReferralSummary) => setSummary(data))
-      .catch(() => setError('Could not load referral data.'))
+      .then((data: ReferralSummary & { error?: string }) => {
+        if (data.error) throw new Error(data.error);
+        setSummary(data);
+      })
+      .catch(err => setError(err instanceof Error ? err.message : 'Could not load referrals.'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -72,27 +82,24 @@ export default function ReferralsPage() {
 
   if (loading) return <div className={styles.sectionLoading}>Loading…</div>;
 
+  const rewardCap = summary?.rewardCap ?? 5;
+
   return (
     <div className={styles.sectionContainer}>
       <div className={styles.sectionHeading}>
         <h2>Referrals</h2>
         <p>
-          Invite a collaborator. If they upgrade to a paid plan, you get 50% off
-          one month — up to {summary?.rewardCap ?? 5} times.
+          Invite a collaborator. If they upgrade to a monthly plan, you get 50% off one month.
+          They get 50% off their first three months.
         </p>
       </div>
 
       {error && <div className={styles.blockError}>{error}</div>}
 
-      {/* ── Referral link ── */}
       <div className={styles.settingsBlock}>
         <div className={styles.blockLabel}>
           <h3>Your referral link</h3>
-          <p>
-            Anyone who signs up via this link and upgrades to Pro or Studio gets
-            50% off their first 3 months. You earn 50% off one month when they
-            upgrade.
-          </p>
+          <p>Share this with anyone you think would get value from The Song Room.</p>
         </div>
         <div className={styles.blockControl}>
           <div className={styles.inlineForm}>
@@ -107,7 +114,6 @@ export default function ReferralsPage() {
               type="button"
               className={styles.actionButton}
               onClick={() => void handleCopy()}
-              disabled={!summary?.url}
             >
               {copied ? 'Copied ✓' : 'Copy link'}
             </button>
@@ -115,87 +121,89 @@ export default function ReferralsPage() {
         </div>
       </div>
 
-      {/* ── Rewards summary ── */}
       <div className={styles.settingsBlock}>
         <div className={styles.blockLabel}>
-          <h3>Your rewards</h3>
-          <p>Credits are applied automatically to your next invoice.</p>
+          <h3>Rewards earned</h3>
+          <p>
+            You can earn up to {rewardCap} rewards.
+            Each successful referral gives you 50% off one month.
+          </p>
         </div>
         <div className={styles.blockControl}>
-          <div className={styles.planSummaryGrid} style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+          <div className={styles.planSummaryGrid}>
             <div className={styles.planSummaryCard}>
               <span className={styles.planSummaryLabel}>Rewards earned</span>
               <strong className={styles.planSummaryValue}>
-                {summary?.rewardsEarned ?? 0} / {summary?.rewardCap ?? 5}
+                {summary?.rewardsEarned ?? 0} / {rewardCap}
               </strong>
             </div>
             <div className={styles.planSummaryCard}>
-              <span className={styles.planSummaryLabel}>Remaining</span>
+              <span className={styles.planSummaryLabel}>Credits applied</span>
               <strong className={styles.planSummaryValue}>
-                {summary?.rewardsRemaining ?? 5}
+                {formatPence(summary?.totalCreditPence ?? 0)}
               </strong>
             </div>
             <div className={styles.planSummaryCard}>
-              <span className={styles.planSummaryLabel}>Total credited</span>
+              <span className={styles.planSummaryLabel}>Rewards remaining</span>
               <strong className={styles.planSummaryValue}>
-                {summary ? formatCredit(summary.totalCreditPence) : '—'}
+                {summary?.rewardsRemaining ?? rewardCap}
               </strong>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── Referral history ── */}
-      <div className={styles.settingsBlock}>
-        <div className={styles.blockLabel}>
-          <h3>Referral history</h3>
-          <p>People who signed up using your link.</p>
-        </div>
-        <div className={styles.blockControl}>
-          {!summary || summary.referrals.length === 0 ? (
-            <p className={styles.emptyState}>
-              No referrals yet. Share your link to get started.
-            </p>
-          ) : (
-            <div className={styles.memberList}>
-              {summary.referrals.map(r => (
-                <div key={r.id} className={styles.memberRow}>
-                  <div className={styles.memberMeta}>
-                    <strong>{r.maskedEmail}</strong>
-                    <span>Joined {formatDate(r.createdAt)}</span>
-                  </div>
-                  <div className={styles.memberActions}>
-                    {r.status === 'rewarded' && r.creditPence && (
-                      <span className={styles.referralCredit}>
-                        {formatCredit(r.creditPence)} credited
-                      </span>
-                    )}
-                    <span className={`${styles.roleBadge} ${
-                      r.status === 'rewarded'   ? styles.roleBadgeAccepted :
-                      r.status === 'ineligible' ? styles.roleBadgeMuted    : ''
-                    }`}>
-                      {STATUS_LABELS[r.status]}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── How it works ── */}
       <div className={styles.settingsBlock}>
         <div className={styles.blockLabel}>
           <h3>How it works</h3>
         </div>
         <div className={styles.blockControl}>
           <ol className={styles.howItWorksList}>
-            <li>Share your unique referral link with a collaborator.</li>
-            <li>They sign up and get <strong>50% off their first 3 months</strong> when they upgrade to a monthly plan.</li>
-            <li>Once they upgrade, you earn <strong>50% off one month</strong> — applied automatically to your next invoice.</li>
-            <li>You can earn up to {summary?.rewardCap ?? 5} rewards in total.</li>
+            <li>Share your referral link with a collaborator, bandmate, or producer.</li>
+            <li>They sign up and upgrade to a Pro or Studio monthly plan.</li>
+            <li>They get 50% off their first three months automatically.</li>
+            <li>You get 50% off your next month, applied as a credit to your bill.</li>
+            <li>You can earn up to {rewardCap} rewards in total.</li>
           </ol>
+        </div>
+      </div>
+
+      <div className={styles.settingsBlock}>
+        <div className={styles.blockLabel}>
+          <h3>Referral history</h3>
+          <p>
+            {(summary?.referrals.length ?? 0) === 0
+              ? 'No referrals yet.'
+              : `${summary?.referrals.length} referral${(summary?.referrals.length ?? 0) === 1 ? '' : 's'} tracked.`}
+          </p>
+        </div>
+        <div className={styles.blockControl}>
+          {(summary?.referrals.length ?? 0) === 0 ? (
+            <p className={styles.emptyState}>
+              Share your link to get started. Referrals appear here once someone signs up.
+            </p>
+          ) : (
+            <div className={styles.memberList}>
+              {summary?.referrals.map(r => (
+                <div key={r.id} className={styles.memberRow}>
+                  <div className={styles.memberMeta}>
+                    <strong>{r.maskedEmail}</strong>
+                    <span>Referred {formatDate(r.createdAt)}</span>
+                  </div>
+                  <div className={styles.memberActions}>
+                    {r.status === 'rewarded' && r.creditPence && (
+                      <span className={styles.roleBadge} style={{ color: '#6ee7b7' }}>
+                        {formatPence(r.creditPence)} credited
+                      </span>
+                    )}
+                    <span className={`${styles.roleBadge} ${styles[STATUS_CLASS[r.status]] ?? ''}`}>
+                      {STATUS_LABEL[r.status]}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
