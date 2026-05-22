@@ -4,6 +4,7 @@ import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { normalizeAccountPlan, isPlanAtLeast } from '@/lib/plans';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { getStripe, getStripePriceId } from '@/lib/stripe';
+import { supabaseServer } from '@/lib/supabaseServer';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -84,13 +85,38 @@ export async function POST(request: Request) {
 
     const priceId = getStripePriceId(targetPlan, interval);
 
+    // ── Referee discount (monthly plans only) ──────────────────────────────
+    // If this user has a pending referral and is signing up to a monthly plan,
+    // apply the 50%-off-3-months coupon silently at checkout.
+    let discounts: Array<{ coupon: string }> | undefined;
+    const referralCouponId = process.env.STRIPE_REFERRAL_COUPON_ID;
+
+    if (interval === 'month' && referralCouponId) {
+      const { data: pendingReferral } = await supabaseServer
+        .from('referrals')
+        .select('id')
+        .eq('referred_account_id', resolved.identity.workspaceId)
+        .eq('status', 'pending')
+        .maybeSingle();
+
+      if (pendingReferral) {
+        discounts = [{ coupon: referralCouponId }];
+        // Mark coupon as applied (best-effort)
+        void supabaseServer
+          .from('referrals')
+          .update({ referee_coupon_applied: true })
+          .eq('id', pendingReferral.id);
+      }
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode:                'subscription',
       customer:            stripeCustomerId,
       client_reference_id: resolved.identity.workspaceId,
       line_items: [{ price: priceId, quantity: 1 }],
+      ...(discounts ? { discounts } : {}),
       success_url: `${origin}/dashboard?billing=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url:  `${origin}/settings?billing=cancelled`,
+      cancel_url:  `${origin}/settings/plan?billing=cancelled`,
       metadata: {
         account_id:    resolved.identity.workspaceId,
         owner_user_id: resolved.identity.userId,
