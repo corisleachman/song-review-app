@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Song Room — Log in</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --charcoal:    #111111;
+      --off-white:   #F4F0E8;
+      --sand:        #D8CBB8;
+      --pink:        #FFB6C8;
+      --acid:        #E6FF3F;
+      --blue:        #2D7DFF;
+      --red:         #FF3B30;
+      --olive:       #6F735F;
+
+      --bg:          #111111;
+      --surface:     #1a1a1a;
+      --surface-2:   #222222;
+      --border:      rgba(244,240,232,0.09);
+      --border-mid:  rgba(244,240,232,0.18);
+      --text:        #F4F0E8;
+      --text-mid:    rgba(244,240,232,0.55);
+      --text-soft:   rgba(244,240,232,0.28);
+
+      --display:     'Bebas Neue', Impact, 'Arial Narrow Bold', sans-serif;
+      --ui:          'DM Sans', -apple-system, sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--ui);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      display: grid;
+      grid-template-columns: minmax(340px, 480px) 1fr;
+    }
+
+    /* ── LEFT PANEL ── */
+    .auth-panel {
+      background: var(--surface);
+      border-right: 1px solid var(--border-mid);
+      padding: clamp(32px, 5vw, 52px);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* Brand */
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: clamp(48px, 10vh, 80px);
+    }
+
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      border: 1.5px solid var(--border-mid);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    .brand-mark-text {
+      font-family: var(--display);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: var(--acid);
+    }
+
+    .brand-name {
+      font-family: var(--display);
+      font-size: 16px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+
+    /* Auth card */
+    .auth-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      max-width: 380px;
+    }
+
+    /* Tabs */
+    .auth-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1px solid var(--border-mid);
+      margin-bottom: 36px;
+    }
+
+    .auth-tab {
+      padding: 14px;
+      text-align: center;
+      font-family: var(--display);
+      font-size: 15px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      color: var(--text-soft);
+      transition: background 160ms, color 160ms;
+    }
+
+    .auth-tab.active {
+      background: var(--acid);
+      color: var(--charcoal);
+    }
+
+    .auth-tab:not(.active):hover {
+      background: rgba(244,240,232,0.05);
+      color: var(--text);
+    }
+
+    /* Tab content */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .auth-heading {
+      font-family: var(--display);
+      font-size: clamp(42px, 6vw, 58px);
+      line-height: 0.95;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+
+    .auth-sub {
+      font-size: 13px;
+      color: var(--text-mid);
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    /* Google button */
+    .google-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 20px;
+      background: var(--surface-2);
+      border: 1px solid var(--border-mid);
+      color: var(--text);
+      font-family: var(--ui);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 160ms, background 160ms;
+      margin-bottom: 20px;
+    }
+
+    .google-btn:hover {
+      border-color: var(--sand);
+      background: rgba(244,240,232,0.05);
+    }
+
+    /* Divider */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .divider-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border-mid);
+    }
+
+    .divider-text {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-soft);
+    }
+
+    /* Form fields */
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-soft);
+      margin-bottom: 6px;
+    }
+
+    .field-input {
+      width: 100%;
+      padding: 13px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border-mid);
+      color: var(--text);
+      font-family: var(--ui);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 160ms;
+    }
+
+    .field-input::placeholder { color: var(--text-soft); }
+
+    .field-input:focus {
+      border-color: var(--acid);
+    }
+
+    /* Forgot password */
+    .forgot {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: -6px;
+      margin-bottom: 20px;
+    }
+
+    .forgot a {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text-soft);
+      text-decoration: none;
+      transition: color 160ms;
+    }
+
+    .forgot a:hover { color: var(--acid); }
+
+    /* Terms (signup only) */
+    .terms {
+      font-size: 11px;
+      color: var(--text-soft);
+      line-height: 1.5;
+      margin-bottom: 18px;
+    }
+
+    .terms a {
+      color: var(--sand);
+      text-decoration: none;
+    }
+
+    /* Submit button */
+    .submit-btn {
+      width: 100%;
+      padding: 15px 20px;
+      background: var(--acid);
+      border: none;
+      color: var(--charcoal);
+      font-family: var(--display);
+      font-size: 16px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity 160ms;
+    }
+
+    .submit-btn:hover { opacity: 0.88; }
+
+    /* Trust strip */
+    .trust-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border-mid);
+      border: 1px solid var(--border-mid);
+      margin-top: clamp(40px, 8vh, 64px);
+    }
+
+    .trust-item {
+      background: var(--surface);
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .trust-icon {
+      font-size: 14px;
+      margin-bottom: 2px;
+    }
+
+    .trust-label {
+      font-family: var(--ui);
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text);
+    }
+
+    .trust-desc {
+      font-size: 11px;
+      color: var(--text-soft);
+      line-height: 1.4;
+    }
+
+    /* ── RIGHT PANEL ── */
+    .visual-panel {
+      background: var(--bg);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-height: 100vh;
+    }
+
+    /* Acid border top */
+    .visual-panel::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--acid);
+      z-index: 10;
+    }
+
+    /* Big editorial headline */
+    .visual-headline {
+      position: absolute;
+      top: clamp(40px, 6vh, 72px);
+      left: clamp(32px, 4vw, 52px);
+      right: clamp(32px, 4vw, 52px);
+      z-index: 5;
+    }
+
+    .visual-headline h2 {
+      font-family: var(--display);
+      font-size: clamp(64px, 9vw, 120px);
+      line-height: 0.9;
+      letter-spacing: 0.01em;
+      text-transform: uppercase;
+      color: var(--off-white);
+    }
+
+    .visual-headline h2 em {
+      color: var(--acid);
+      font-style: normal;
+    }
+
+    .visual-eyebrow {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--olive);
+      margin-bottom: 10px;
+    }
+
+    /* Mock song card grid */
+    .card-grid {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      z-index: 4;
+    }
+
+    /* Fade mask over top of grid */
+    .card-grid::before {
+      content: '';
+      position: absolute;
+      top: -120px;
+      left: 0; right: 0;
+      height: 120px;
+      background: linear-gradient(to bottom, var(--bg), transparent);
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .song-card {
+      aspect-ratio: 1;
+      position: relative;
+      overflow: hidden;
+      background: var(--surface);
+    }
+
+    /* Coloured artwork blocks — each a different hue pulled from the TSR palette */
+    .song-card-art {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .song-card-art-bg {
+      position: absolute;
+      inset: 0;
+    }
+
+    .song-card-title {
+      position: relative;
+      z-index: 2;
+      padding: 10px;
+      font-family: var(--display);
+      font-size: clamp(16px, 2.2vw, 26px);
+      line-height: 0.95;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: var(--off-white);
+      text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    }
+
+    /* Mock waveform strip on some cards */
+    .card-wave {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 28px;
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      padding: 0 10px 6px;
+      z-index: 3;
+      opacity: 0.6;
+    }
+
+    .card-wave-bar {
+      flex: 1;
+      background: rgba(244,240,232,0.5);
+      border-radius: 0;
+    }
+
+    /* Card meta strip */
+    .card-meta {
+      position: absolute;
+      top: 10px; right: 10px;
+      z-index: 3;
+    }
+
+    .card-version {
+      background: rgba(17,17,17,0.7);
+      border: 1px solid rgba(244,240,232,0.2);
+      padding: 3px 7px;
+      font-family: var(--ui);
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text);
+    }
+
+    /* Active card glow — acid indicator */
+    .song-card.active::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 2px solid var(--acid);
+      z-index: 8;
+      pointer-events: none;
+    }
+
+    /* Comment bubble overlay on one card */
+    .comment-bubble {
+      position: absolute;
+      bottom: 38px;
+      left: 10px;
+      right: 10px;
+      background: rgba(17,17,17,0.85);
+      border: 1px solid rgba(244,240,232,0.15);
+      padding: 8px 10px;
+      z-index: 5;
+    }
+
+    .comment-timestamp {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 9px;
+      font-style: italic;
+      color: var(--sand);
+      margin-bottom: 3px;
+    }
+
+    .comment-body {
+      font-size: 10px;
+      color: var(--text-mid);
+      line-height: 1.4;
+    }
+
+    .comment-author {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--acid);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8px;
+      font-weight: 700;
+      color: var(--charcoal);
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+
+    /* Activity strip — shows at the very bottom of visual panel */
+    .activity-strip {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      z-index: 20;
+      background: var(--surface);
+      border-top: 1px solid var(--border-mid);
+      padding: 10px clamp(20px, 3vw, 36px);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .activity-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--acid);
+      flex-shrink: 0;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .activity-text {
+      font-size: 12px;
+      color: var(--text-mid);
+    }
+
+    .activity-text strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .activity-count {
+      margin-left: auto;
+      font-family: var(--ui);
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-soft);
+    }
+
+    /* ── MOBILE ── */
+    @media (max-width: 768px) {
+      body { grid-template-columns: 1fr; }
+      .visual-panel { display: none; }
+      .auth-panel { min-height: 100svh; border-right: none; }
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .auth-panel > * {
+      animation: fade-up 0.4s ease both;
+    }
+
+    .auth-panel > *:nth-child(1) { animation-delay: 0s; }
+    .auth-panel > *:nth-child(2) { animation-delay: 0.06s; }
+    .auth-panel > *:nth-child(3) { animation-delay: 0.12s; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── LEFT: AUTH ── -->
+  <aside class="auth-panel">
+
+    <div class="brand">
+      <div class="brand-mark">
+        <span class="brand-mark-text">TSR</span>
+      </div>
+      <span class="brand-name">The Song Room</span>
+    </div>
+
+    <div class="auth-card">
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchTab('login', this)">Log in</button>
+        <button class="auth-tab" onclick="switchTab('signup', this)">Sign up</button>
+      </div>
+
+      <!-- LOGIN -->
+      <div id="tab-login" class="tab-content active">
+        <h1 class="auth-heading">Welcome<br />back</h1>
+        <p class="auth-sub">Log in and get back to creating, reviewing, and finishing great music.</p>
+
+        <button class="google-btn" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          <span>Continue with Google</span>
+        </button>
+
+        <div class="divider">
+          <div class="divider-line"></div>
+          <span class="divider-text">or</span>
+          <div class="divider-line"></div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Email</label>
+          <input class="field-input" type="email" placeholder="you@example.com" />
+        </div>
+
+        <div class="field">
+          <label class="field-label">Password</label>
+          <input class="field-input" type="password" placeholder="••••••••" />
+        </div>
+
+        <div class="forgot">
+          <a href="#">Forgot password?</a>
+        </div>
+
+        <button class="submit-btn" type="button">Log in</button>
+      </div>
+
+      <!-- SIGN UP -->
+      <div id="tab-signup" class="tab-content">
+        <h1 class="auth-heading">Start<br />a room</h1>
+        <p class="auth-sub">Create your first song space — every version, comment, and decision in one place.</p>
+
+        <button class="google-btn" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          <span>Continue with Google</span>
+        </button>
+
+        <div class="divider">
+          <div class="divider-line"></div>
+          <span class="divider-text">or</span>
+          <div class="divider-line"></div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Email</label>
+          <input class="field-input" type="email" placeholder="you@example.com" />
+        </div>
+
+        <div class="field">
+          <label class="field-label">Password</label>
+          <input class="field-input" type="password" placeholder="Minimum 8 characters" />
+        </div>
+
+        <p class="terms">By signing up you agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</p>
+
+        <button class="submit-btn" type="button">Create account</button>
+      </div>
+
+    </div>
+
+    <div class="trust-strip">
+      <div class="trust-item">
+        <span class="trust-icon">🔒</span>
+        <div class="trust-label">Private</div>
+        <div class="trust-desc">Your music stays yours.</div>
+      </div>
+      <div class="trust-item">
+        <span class="trust-icon">🎵</span>
+        <div class="trust-label">Built for music</div>
+        <div class="trust-desc">Designed for creators.</div>
+      </div>
+      <div class="trust-item">
+        <span class="trust-icon">👥</span>
+        <div class="trust-label">Collaborate</div>
+        <div class="trust-desc">Invite your whole team.</div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ── RIGHT: VISUAL ── -->
+  <section class="visual-panel">
+
+    <div class="visual-headline">
+      <div class="visual-eyebrow">The Song Room</div>
+      <h2>Every<br />version.<br /><em>One<br />room.</em></h2>
+    </div>
+
+    <!-- Mock song card grid fading up from bottom -->
+    <div class="card-grid" id="card-grid">
+
+      <!-- Card 1 — green/dark -->
+      <div class="song-card">
+        <div class="song-card-art">
+          <div class="song-card-art-bg" style="background: linear-gradient(160deg, #1a3a1a 0%, #0d200d 100%);"></div>
+          <div class="song-card-title">Can't Stop<br />Letting Go</div>
+        </div>
+        <div class="card-meta"><span class="card-version">V3</span></div>
+        <div class="card-wave" id="wave-1"></div>
+      </div>
+
+      <!-- Card 2 — acid/charcoal — active -->
+      <div class="song-card active">
+        <div class="song-card-art">
+          <div class="song-card-art-bg" style="background: linear-gradient(160deg, #2a2a00 0%, #111100 100%);"></div>
+          <div class="song-card-title">Fading<br />Light</div>
+        </div>
+        <div class="card-meta"><span class="card-version" style="border-color: var(--acid); color: var(--acid);">V5 ★</span></div>
+        <div class="comment-bubble">
+          <div class="comment-timestamp">@ 1:24</div>
+          <div class="comment-body"><span class="comment-author">C</span> Love this drop — open the reverb a bit?</div>
+        </div>
+        <div class="card-wave" id="wave-2"></div>
+      </div>
+
+      <!-- Card 3 — red/dark -->
+      <div class="song-card">
+        <div class="song-card-art">
+          <div class="song-card-art-bg" style="background: linear-gradient(160deg, #3a0d0d 0%, #1a0505 100%);"></div>
+          <div class="song-card-title">Set This<br />On Fire</div>
+        </div>
+        <div class="card-meta"><span class="card-version">V2</span></div>
+        <div class="card-wave" id="wave-3"></div>
+      </div>
+
+      <!-- Card 4 — purple/dark -->
+      <div class="song-card">
+        <div class="song-card-art">
+          <div class="song-card-art-bg" style="background: linear-gradient(160deg, #1e0d2e 0%, #0d0514 100%);"></div>
+          <div class="song-card-title">Rejuve-<br />nation</div>
+        </div>
+        <div class="card-meta"><span class="card-version">V9</span></div>
+        <div class="card-wave" id="wave-4"></div>
+      </div>
+
+      <!-- Card 5 — teal/dark -->
+      <div class="song-card">
+        <div class="song-card-art">
+          <div class="song-card-art-bg" style="background: linear-gradient(160deg, #0d2a25 0%, #051510 100%);"></div>
+          <div class="song-card-title">Baseline</div>
+        </div>
+        <div class="card-meta"><span class="card-version">V4</span></div>
+        <div class="card-wave" id="wave-5"></div>
+      </div>
+
+      <!-- Card 6 — olive/sand -->
+      <div class="song-card">
+        <div class="song-card-art">
+          <div class="song-card-art-bg" style="background: linear-gradient(160deg, #2a2318 0%, #150f08 100%);"></div>
+          <div class="song-card-title">Be Kind</div>
+        </div>
+        <div class="card-meta"><span class="card-version">V7</span></div>
+        <div class="card-wave" id="wave-6"></div>
+      </div>
+
+    </div>
+
+    <!-- Activity strip at very bottom -->
+    <div class="activity-strip">
+      <div class="activity-dot"></div>
+      <div class="activity-text"><strong>Al</strong> left a comment on Fading Light · V5 · 1:24</div>
+      <div class="activity-count">18,742 creators</div>
+    </div>
+
+  </section>
+
+  <script>
+    // Tab switching
+    function switchTab(name, el) {
+      document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('tab-' + name).classList.add('active');
+    }
+
+    // Generate mock waveform bars
+    const wavePattern = [5,8,12,20,32,28,40,32,24,16,18,28,44,38,52,72,60,48,40,32,28,30,44,52,40,28,18,12,8,6];
+    const wavePatternShort = [4,6,8,14,10,18,14,22,18,12,10,14,20,16,24,18,12,10,8,6];
+
+    function buildWave(id, pattern, color) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      pattern.forEach(h => {
+        const bar = document.createElement('div');
+        bar.className = 'card-wave-bar';
+        bar.style.height = h + 'px';
+        bar.style.background = color || 'rgba(244,240,232,0.4)';
+        el.appendChild(bar);
+      });
+    }
+
+    buildWave('wave-1', wavePatternShort, 'rgba(52,211,153,0.5)');
+    buildWave('wave-2', wavePattern, 'rgba(230,255,63,0.6)');
+    buildWave('wave-3', wavePatternShort, 'rgba(255,59,48,0.5)');
+    buildWave('wave-4', wavePatternShort, 'rgba(175,82,222,0.5)');
+    buildWave('wave-5', wavePatternShort, 'rgba(45,125,255,0.5)');
+    buildWave('wave-6', wavePatternShort, 'rgba(216,203,184,0.4)');
+  </script>
+
+</body>
+</html>
