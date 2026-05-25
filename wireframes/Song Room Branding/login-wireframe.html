@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rebel HQ — Login Wireframe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --color-primary: #ff1493;
+    --color-secondary: #00d4ff;
+    --color-accent: #a855f7;
+    --color-text: #ffffff;
+    --color-text-secondary: rgba(255,255,255,0.7);
+    --color-text-tertiary: rgba(255,255,255,0.4);
+    --color-bg-darkest: #0d0914;
+    --color-glass-light: rgba(255,255,255,0.08);
+    --color-border: rgba(255,255,255,0.1);
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --transition-base: 250ms cubic-bezier(0.4,0,0.2,1);
+  }
+
+  html, body {
+    font-family: 'DM Sans', sans-serif;
+    background: linear-gradient(135deg, #0d0914 0%, #1a0f2e 50%, #0d0914 100%);
+    min-height: 100vh;
+    color: var(--color-text);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ── LEFT PANEL — Login ── */
+  .left {
+    width: 480px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 48px;
+    background: rgba(8,5,14,0.6);
+    border-right: 1px solid var(--color-border);
+    position: relative;
+    z-index: 1;
+  }
+
+  .left::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 20% 80%, rgba(255,20,147,0.08) 0%, transparent 60%),
+                radial-gradient(circle at 80% 20%, rgba(168,85,247,0.06) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 48px;
+  }
+
+  .brand-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #ff1493, #a855f7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .brand-name {
+    font-family: 'Outfit', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    background: linear-gradient(135deg, #ff1493, #00d4ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .brand-sub {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+    font-weight: 400;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 40px;
+    background: rgba(255,255,255,0.04);
+    border-radius: var(--radius-md);
+    padding: 4px;
+    border: 1px solid var(--color-border);
+  }
+
+  .tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    color: var(--color-text-tertiary);
+  }
+
+  .tab.active {
+    background: rgba(255,20,147,0.15);
+    color: var(--color-primary);
+    border: 1px solid rgba(255,20,147,0.3);
+  }
+
+  .welcome {
+    margin-bottom: 32px;
+  }
+
+  .welcome h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 34px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 10px;
+    color: #fff;
+  }
+
+  .welcome p {
+    font-size: 15px;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    font-weight: 400;
+  }
+
+  .google-btn {
+    width: 100%;
+    padding: 14px 20px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: var(--radius-md);
+    color: var(--color-text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    transition: all var(--transition-base);
+  }
+
+  .google-btn:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.2);
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    color: var(--color-text-tertiary);
+    font-size: 13px;
+  }
+
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--color-border);
+  }
+
+  .email-btn {
+    width: 100%;
+    padding: 14px 20px;
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-tertiary);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+    transition: all var(--transition-base);
+  }
+
+  .email-btn:hover {
+    border-color: rgba(255,255,255,0.2);
+    color: var(--color-text-secondary);
+  }
+
+  .forgot {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+
+  .forgot a {
+    font-size: 14px;
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .trust-row {
+    display: flex;
+    gap: 0;
+    margin-bottom: 32px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+
+  .trust-item {
+    flex: 1;
+    padding: 16px 12px;
+    text-align: center;
+    border-right: 1px solid var(--color-border);
+  }
+
+  .trust-item:last-child { border-right: none; }
+
+  .trust-icon {
+    width: 28px;
+    height: 28px;
+    margin: 0 auto 8px;
+    background: rgba(255,20,147,0.1);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .trust-item h4 {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 4px;
+  }
+
+  .trust-item p {
+    font-size: 11px;
+    color: var(--color-text-tertiary);
+    line-height: 1.4;
+  }
+
+  .legal {
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  .legal a { color: var(--color-primary); text-decoration: none; }
+
+  /* ── RIGHT PANEL — Marketing ── */
+  .right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 64px 56px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .right::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 70% 30%, rgba(0,212,255,0.08) 0%, transparent 50%),
+                radial-gradient(circle at 30% 70%, rgba(168,85,247,0.08) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .hero-text {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 48px;
+  }
+
+  .hero-text h2 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -1px;
+    margin-bottom: 20px;
+  }
+
+  .hero-text h2 span {
+    background: linear-gradient(135deg, #ff1493, #00d4ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-text p {
+    font-size: 17px;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    max-width: 480px;
+    font-weight: 400;
+  }
+
+  /* Mock UI preview */
+  .preview {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 16px;
+    margin-bottom: 48px;
+  }
+
+  .version-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .version-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all var(--transition-base);
+  }
+
+  .version-card.active {
+    background: rgba(255,20,147,0.1);
+    border-color: rgba(255,20,147,0.4);
+  }
+
+  .play-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .version-card.active .play-dot {
+    background: var(--color-primary);
+  }
+
+  .v-label { font-size: 13px; font-weight: 600; color: var(--color-text); }
+  .v-sub { font-size: 11px; color: var(--color-text-tertiary); margin-top: 1px; }
+
+  .waveform-panel {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .comment-bubble {
+    position: absolute;
+    background: rgba(8,5,14,0.9);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    font-size: 12px;
+    line-height: 1.4;
+    max-width: 200px;
+    backdrop-filter: blur(10px);
+  }
+
+  .comment-bubble.top { top: 12px; right: 12px; }
+  .comment-bubble.bottom { bottom: 48px; right: 12px; }
+
+  .comment-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  .avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+  }
+
+  .avatar.c { background: linear-gradient(135deg, #ff1493, #a855f7); }
+  .avatar.a { background: linear-gradient(135deg, #00d4ff, #a855f7); }
+
+  .comment-name { font-size: 11px; font-weight: 600; color: var(--color-text); }
+  .comment-time { font-size: 10px; color: var(--color-text-tertiary); margin-left: auto; }
+  .comment-body { font-size: 12px; color: var(--color-text-secondary); }
+
+  /* waveform bars */
+  .wave-bars {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 64px;
+    margin-bottom: 12px;
+    padding: 0 4px;
+  }
+
+  .wave-bar {
+    flex: 1;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.15);
+  }
+
+  .wave-bar.played { background: var(--color-primary); opacity: 0.8; }
+
+  .transport {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .transport-play {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .transport-time {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    font-family: 'Outfit', sans-serif;
+  }
+
+  .transport-progress {
+    flex: 1;
+    height: 3px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
+    position: relative;
+  }
+
+  .transport-progress::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 38%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+    border-radius: 2px;
+  }
+
+  /* Feature row */
+  .features {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 40px;
+  }
+
+  .feature {
+    padding: 0;
+  }
+
+  .feature-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .feature-icon.pink { background: rgba(255,20,147,0.15); }
+  .feature-icon.cyan { background: rgba(0,212,255,0.12); }
+  .feature-icon.purple { background: rgba(168,85,247,0.15); }
+
+  .feature h3 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: var(--color-text);
+  }
+
+  .feature p {
+    font-size: 13px;
+    color: var(--color-text-tertiary);
+    line-height: 1.5;
+  }
+
+  /* Testimonial */
+  .testimonial {
+    position: relative;
+    z-index: 1;
+    padding: 20px 24px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .testimonial-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff1493, #a855f7);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+  }
+
+  .testimonial-quote {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    font-style: italic;
+    line-height: 1.5;
+    margin-bottom: 6px;
+  }
+
+  .testimonial-credit {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .testimonial-credit span {
+    font-weight: 400;
+    color: var(--color-text-tertiary);
+  }
+
+  .testimonial-credit a {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 400;
+  }
+
+  /* Wireframe annotation */
+  .annotation {
+    position: absolute;
+    font-size: 10px;
+    color: rgba(0,212,255,0.6);
+    border: 1px dashed rgba(0,212,255,0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
+    pointer-events: none;
+    font-family: monospace;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 900px) {
+    .page { flex-direction: column; }
+    .left { width: 100%; padding: 32px 24px; }
+    .right { padding: 40px 24px; }
+    .hero-text h2 { font-size: 32px; }
+    .preview { grid-template-columns: 1fr; }
+    .version-list { flex-direction: row; }
+    .features { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- LEFT: Login Panel -->
+  <div class="left">
+
+    <div class="brand">
+      <div class="brand-logo">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <rect x="3" y="10" width="3" height="8" rx="1.5" fill="white" opacity="0.9"/>
+          <rect x="8" y="6" width="3" height="12" rx="1.5" fill="white"/>
+          <rect x="13" y="3" width="3" height="15" rx="1.5" fill="white" opacity="0.7"/>
+          <rect x="18" y="7" width="3" height="11" rx="1.5" fill="white" opacity="0.5"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">Rebel HQ</div>
+        <div class="brand-sub">Music Collaboration</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active">Log in</div>
+      <div class="tab">Sign up</div>
+    </div>
+
+    <div class="welcome">
+      <h1>Welcome back</h1>
+      <p>Log in and get back to creating, reviewing, and finishing great music.</p>
+    </div>
+
+    <button class="google-btn">
+      <svg width="18" height="18" viewBox="0 0 18 18">
+        <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+        <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
+        <path d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
+        <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 6.293C4.672 4.166 6.656 3.58 9 3.58z" fill="#EA4335"/>
+      </svg>
+      Continue with Google
+    </button>
+
+    <div class="divider">or</div>
+
+    <button class="email-btn">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <rect x="1" y="3" width="14" height="10" rx="2" stroke="rgba(255,255,255,0.4)" stroke-width="1.2"/>
+        <path d="M1 5l7 5 7-5" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+      Continue with email
+    </button>
+
+    <div class="forgot">
+      <a href="#">Forgot your password?</a>
+    </div>
+
+    <div class="trust-row">
+      <div class="trust-item">
+        <div class="trust-icon">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M7 1L2 3v4c0 3 2.5 5.5 5 6 2.5-.5 5-3 5-6V3L7 1z" stroke="#ff1493" stroke-width="1.2" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h4>Secure sign-in</h4>
+        <p>Your data is encrypted and always protected.</p>
+      </div>
+      <div class="trust-item">
+        <div class="trust-icon">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="5" cy="4" r="2" stroke="#ff1493" stroke-width="1.2"/>
+            <circle cx="9" cy="4" r="2" stroke="#ff1493" stroke-width="1.2"/>
+            <path d="M1 12c0-2 1.8-3.5 4-3.5h4c2.2 0 4 1.5 4 3.5" stroke="#ff1493" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h4>Collaborate safely</h4>
+        <p>Invite your team and manage access easily.</p>
+      </div>
+      <div class="trust-item">
+        <div class="trust-icon">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <rect x="1" y="3" width="12" height="8" rx="2" stroke="#ff1493" stroke-width="1.2"/>
+            <path d="M4 7h6M4 9h4" stroke="#ff1493" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h4>No credit card</h4>
+        <p>Start free and upgrade when you're ready.</p>
+      </div>
+    </div>
+
+    <p class="legal">By continuing, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</p>
+
+  </div>
+
+  <!-- RIGHT: Marketing Panel -->
+  <div class="right">
+
+    <div class="hero-text">
+      <h2>Create together.<br><span>Keep every version moving.</span></h2>
+      <p>Rebel HQ helps artists and producers collaborate smoothly, stay in sync, and finish more songs.</p>
+    </div>
+
+    <!-- Mock UI preview -->
+    <div class="preview">
+      <div class="version-list">
+        <div class="version-card active">
+          <div class="play-dot">
+            <svg width="8" height="10" viewBox="0 0 8 10" fill="white"><path d="M0 0l8 5-8 5z"/></svg>
+          </div>
+          <div>
+            <div class="v-label">V3</div>
+            <div class="v-sub">Final Hook · Today 2:41pm</div>
+          </div>
+        </div>
+        <div class="version-card">
+          <div class="play-dot">
+            <svg width="8" height="10" viewBox="0 0 8 10" fill="rgba(255,255,255,0.4)"><path d="M0 0l8 5-8 5z"/></svg>
+          </div>
+          <div>
+            <div class="v-label">V2</div>
+            <div class="v-sub">Hook Hook · Today 11:08am</div>
+          </div>
+        </div>
+        <div class="version-card">
+          <div class="play-dot">
+            <svg width="8" height="10" viewBox="0 0 8 10" fill="rgba(255,255,255,0.4)"><path d="M0 0l8 5-8 5z"/></svg>
+          </div>
+          <div>
+            <div class="v-label">V1</div>
+            <div class="v-sub">First Draft · Yesterday</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="waveform-panel">
+        <!-- Waveform bars -->
+        <div class="wave-bars" id="waveBars"></div>
+        <!-- Transport -->
+        <div class="transport">
+          <div class="transport-play">
+            <svg width="10" height="12" viewBox="0 0 10 12" fill="white"><path d="M0 0l10 6-10 6z"/></svg>
+          </div>
+          <span class="transport-time">1:24 / 3:47</span>
+          <div class="transport-progress"></div>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M2 8a6 6 0 0 1 6-6 6 6 0 0 1 5.7 4" stroke="rgba(255,255,255,0.4)" stroke-width="1.4" stroke-linecap="round"/>
+            <path d="M14 8a6 6 0 0 1-6 6 6 6 0 0 1-5.7-4" stroke="rgba(255,255,255,0.4)" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+        </div>
+
+        <!-- Comment bubbles -->
+        <div class="comment-bubble top">
+          <div class="comment-meta">
+            <div class="avatar a">A</div>
+            <span class="comment-name">Al</span>
+            <span class="comment-time">2h ago</span>
+          </div>
+          <div class="comment-body">Love this drop! What if we open up the reverb a bit?</div>
+        </div>
+        <div class="comment-bubble bottom">
+          <div class="comment-meta">
+            <div class="avatar c">C</div>
+            <span class="comment-name">Coris</span>
+            <span class="comment-time">5h ago</span>
+          </div>
+          <div class="comment-body">Let's tighten this snare hit.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features -->
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon pink">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <rect x="2" y="2" width="6" height="6" rx="1.5" stroke="#ff1493" stroke-width="1.4"/>
+            <rect x="10" y="2" width="6" height="6" rx="1.5" stroke="#ff1493" stroke-width="1.4" opacity="0.5"/>
+            <rect x="2" y="10" width="6" height="6" rx="1.5" stroke="#ff1493" stroke-width="1.4" opacity="0.5"/>
+            <rect x="10" y="10" width="6" height="6" rx="1.5" stroke="#ff1493" stroke-width="1.4" opacity="0.3"/>
+          </svg>
+        </div>
+        <h3>Version everything</h3>
+        <p>Save, compare, and roll back anytime. Your ideas are always safe.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon cyan">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M14 9c0 3.3-2.24 6-5 6S4 12.3 4 9s2.24-6 5-6" stroke="#00d4ff" stroke-width="1.4" stroke-linecap="round"/>
+            <circle cx="14" cy="5" r="2.5" fill="rgba(0,212,255,0.3)" stroke="#00d4ff" stroke-width="1.2"/>
+          </svg>
+        </div>
+        <h3>Timestamped comments</h3>
+        <p>Pin feedback exactly where it matters and keep conversation in context.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon purple">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M3 4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4z" stroke="#a855f7" stroke-width="1.4"/>
+            <path d="M6 7h6M6 10h4" stroke="#a855f7" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3>Keep songs organised</h3>
+        <p>From demos to finals, keep every file, comment, and collaborator in one place.</p>
+      </div>
+    </div>
+
+    <!-- Testimonial -->
+    <div class="testimonial">
+      <div class="testimonial-avatar">JE</div>
+      <div>
+        <div class="testimonial-quote">"Rebel HQ keeps our creative flow uninterrupted. Feedback is clearer, versions are tidy, and we finish more songs."</div>
+        <div class="testimonial-credit">Jordan Ellis <span>— Producer &amp; Artist · <a href="#">2.1M monthly listeners</a></span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const bars = document.getElementById('waveBars');
+  const heights = [20,35,55,42,28,60,48,38,65,50,30,58,45,32,70,55,40,62,48,35,52,44,28,65,50,38,72,58,42,30,55,48,62,35,45,68,52,40,30,58,45,72,55,38,65,42,30,58,48,35,62,50,40,72,55,28,65,45,38,60,48,32,55,42];
+  const playedCount = Math.floor(heights.length * 0.38);
+  bars.innerHTML = heights.map((h, i) =>
+    `<div class="wave-bar ${i < playedCount ? 'played' : ''}" style="height:${h}%"></div>`
+  ).join('');
+</script>
+</body>
+</html>
