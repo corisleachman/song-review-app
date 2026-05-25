@@ -164,13 +164,14 @@ async function handleSubscriptionDeleted(event: { data: { object: unknown } }) {
 async function handleInvoicePaid(event: { data: { object: unknown } }) {
   const invoice = event.data.object as {
     id: string;
-    customer: string | null;
+    customer: string;
     subscription?: string | null;
     billing_reason?: string | null;
     amount_paid?: number;
+    currency?: string;
   };
 
-  // Only reward on the first subscription invoice — not renewals
+  // Only process the first subscription invoice — renewals don't trigger rewards
   if (invoice.billing_reason !== 'subscription_create') return;
 
   const stripeCustomerId = invoice.customer;
@@ -189,20 +190,13 @@ async function handleInvoicePaid(event: { data: { object: unknown } }) {
   const referral = await getPendingReferralForAccount(account.id as string);
   if (!referral) return;
 
-  // Mark as converted
+  // Mark as converted first (idempotent — safe to call even if already converted)
   await markReferralConverted(referral.id, {
     stripe_invoice_id:  invoice.id,
     stripe_customer_id: stripeCustomerId,
   });
 
-  // Check reward_eligible_at — no holding period at launch (set to converted_at = now())
-  const eligibleAt = referral.reward_eligible_at
-    ? new Date(referral.reward_eligible_at)
-    : new Date();
-
-  if (eligibleAt > new Date()) return; // Holding period not elapsed — leave as converted
-
-  // Cap check
+  // Cap check — has the referrer already received the maximum rewards?
   const { count: rewardCount } = await supabaseServer
     .from('referrals')
     .select('id', { count: 'exact', head: true })
@@ -217,31 +211,64 @@ async function handleInvoicePaid(event: { data: { object: unknown } }) {
     return;
   }
 
-  // Find referrer's billing account
+  // Find the referrer's billing account
   const { data: referrerAccount } = await supabaseServer
     .from('accounts')
     .select('id, plan, stripe_customer_id')
     .eq('id', referral.referred_by_account_id ?? '')
     .maybeSingle();
 
-  if (!referrerAccount?.stripe_customer_id) {
-    // Referrer not yet on a paid plan — leave as converted for manual resolution
-    console.warn('[referrals] Referrer has no stripe_customer_id — leaving as converted:', referral.id);
+  if (!referrerAccount) {
+    console.warn('[referrals] Referrer account not found — leaving as converted:', referral.id);
     return;
   }
 
-  // Calculate credit: 50% of one month of the referrer's plan
+  const stripe = getStripe();
+
+  // If the referrer has no Stripe customer ID (free tier, never paid),
+  // create one now so the credit sits on their balance ready for when they upgrade.
+  let referrerStripeCustomerId = referrerAccount.stripe_customer_id as string | null;
+
+  if (!referrerStripeCustomerId) {
+    const { data: referrerProfile } = await supabaseServer
+      .from('profiles')
+      .select('email, display_name')
+      .eq('id', referral.referred_by_user_id)
+      .maybeSingle();
+
+    try {
+      const newCustomer = await stripe.customers.create({
+        email:    referrerProfile?.email    ?? undefined,
+        name:     referrerProfile?.display_name ?? undefined,
+        metadata: {
+          account_id: referrerAccount.id as string,
+          source:     'referral_reward',
+        },
+      });
+
+      referrerStripeCustomerId = newCustomer.id;
+
+      await supabaseServer
+        .from('accounts')
+        .update({ stripe_customer_id: referrerStripeCustomerId })
+        .eq('id', referrerAccount.id);
+    } catch (createErr) {
+      console.error('[referrals] Could not create Stripe customer for free-tier referrer:', createErr);
+      return; // Leave as converted — safe to retry on next webhook replay
+    }
+  }
+
+  // Calculate credit: 50% of one month of the referrer's current plan
   const referrerPlan = (referrerAccount.plan as string) ?? 'pro';
   const monthlyPence = PLAN_MONTHLY_PENCE[referrerPlan] ?? PLAN_MONTHLY_PENCE.pro;
   const creditAmountPence = Math.round(monthlyPence * 0.5);
 
-  // Apply Stripe customer balance credit
-  const stripe = getStripe();
+  // Apply the Stripe customer balance credit
   try {
     await stripe.customers.createBalanceTransaction(
       referrerStripeCustomerId,
       {
-        amount:      -creditAmountPence, // Negative = credit
+        amount:      -creditAmountPence, // Negative = credit on account
         currency:    'gbp',
         description: `Referral reward — 50% off 1 month (${referrerPlan})`,
         metadata: {
@@ -252,11 +279,12 @@ async function handleInvoicePaid(event: { data: { object: unknown } }) {
       }
     );
   } catch (stripeError) {
-    // Stripe credit failed — leave as converted so it can be retried
+    // Credit failed — leave as converted so it can be safely retried
     console.error('[referrals] Stripe credit failed — leaving as converted:', stripeError);
     return;
   }
 
+  // All done — mark rewarded
   await markReferralRewarded(referral.id, creditAmountPence, {
     stripe_invoice_id:        invoice.id,
     referrer_stripe_customer: referrerStripeCustomerId,
