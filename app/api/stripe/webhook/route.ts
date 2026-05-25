@@ -239,7 +239,7 @@ async function handleInvoicePaid(event: { data: { object: unknown } }) {
   const stripe = getStripe();
   try {
     await stripe.customers.createBalanceTransaction(
-      referrerAccount.stripe_customer_id as string,
+      referrerStripeCustomerId,
       {
         amount:      -creditAmountPence, // Negative = credit
         currency:    'gbp',
@@ -259,7 +259,7 @@ async function handleInvoicePaid(event: { data: { object: unknown } }) {
 
   await markReferralRewarded(referral.id, creditAmountPence, {
     stripe_invoice_id:        invoice.id,
-    referrer_stripe_customer: referrerAccount.stripe_customer_id,
+    referrer_stripe_customer: referrerStripeCustomerId,
     referrer_plan:            referrerPlan,
   });
 }
