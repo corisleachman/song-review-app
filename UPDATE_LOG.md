@@ -2660,3 +2660,37 @@ STRIPE_REFERRAL_COUPON_ID must be set in Vercel with the coupon ID from the Stri
 ### Tests run
 
 - npx tsc --noEmit — zero errors
+
+## 2026-05-25 — Phase 6 complete: referral system smoke tested end to end
+
+### What we tested
+
+Full referral journey in Stripe test mode:
+
+1. Referral link generated at /settings/referrals (TSR-Z3XUJ)
+2. Incognito window — visited /r/TSR-Z3XUJ — redirected to login correctly, cookie dropped
+3. Signed up with fresh Google account (consistencyisthechallenge@gmail.com)
+4. Supabase confirmed referrals row written with status = pending
+5. Visited /upgrade as referred user — Stripe checkout showed "Referral — 50% off first 3 months" coupon applied automatically, total due £4.50 instead of £9.00
+6. Completed checkout with test card 4242 4242 4242 4242 — landed on "Welcome to Pro" screen
+7. Stripe webhook delivered checkout.session.completed and invoice.paid — both 200 OK
+8. Supabase confirmed referrals row updated to status = rewarded, rewarded_at populated, credit_amount_pence = 450
+
+### Bug found and fixed during testing
+
+The invoice.paid webhook handler assumed the referrer always has a stripe_customer_id. Free tier users who have never paid have no Stripe customer record. Fix: when stripe_customer_id is null on the referrer's account, create a Stripe customer for them at reward time, save the ID to accounts, then apply the credit. The credit sits on their Stripe balance and automatically reduces their first invoice when they eventually upgrade.
+
+Additionally: in test mode the referrer's existing stripe_customer_id was a live mode ID (cus_UXclw1k4MnwmuG) invisible to the test Stripe API. This is expected test mode behaviour — in production both IDs would be live mode and the credit applies correctly.
+
+### Files changed
+
+- app/api/stripe/webhook/route.ts — handleInvoicePaid rewritten to create Stripe customer for free-tier referrers before applying credit
+
+### Switched back to live mode after testing
+
+All Vercel env vars restored to live mode values. Live mode customer ID restored in Supabase.
+
+### Known items to address in later phases
+
+- Welcome to Pro screen shows "Unlimited songs" and "Unlimited collaborators" — copy is incorrect for both tiers and the confetti animation needs work. Deferred to Phase 8 (Final Visual Polish).
+- Dashboard nudge for free users (referral awareness banner) — deferred, can add post-launch.
