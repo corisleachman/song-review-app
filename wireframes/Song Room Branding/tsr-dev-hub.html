@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Song Room — Dev Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --charcoal:   #111111;
+      --off-white:  #F4F0E8;
+      --sand:       #D8CBB8;
+      --acid:       #E6FF3F;
+      --blue:       #2D7DFF;
+      --red:        #FF3B30;
+      --pink:       #FFB6C8;
+      --olive:      #6F735F;
+
+      --bg:         #111111;
+      --surface:    #1a1a1a;
+      --surface-2:  #222222;
+      --border:     rgba(244,240,232,0.09);
+      --border-mid: rgba(244,240,232,0.16);
+      --text:       #F4F0E8;
+      --text-mid:   rgba(244,240,232,0.55);
+      --text-soft:  rgba(244,240,232,0.28);
+
+      --display: 'Bebas Neue', Impact, 'Arial Narrow Bold', sans-serif;
+      --ui:      'DM Sans', -apple-system, sans-serif;
+
+      /* Status colours */
+      --s-todo-bg:   rgba(244,240,232,0.05);
+      --s-todo-t:    rgba(244,240,232,0.3);
+      --s-built-bg:  rgba(45,125,255,0.12);
+      --s-built-t:   #2D7DFF;
+      --s-review-bg: rgba(230,255,63,0.10);
+      --s-review-t:  #E6FF3F;
+      --s-signed-bg: rgba(111,115,95,0.18);
+      --s-signed-t:  #D8CBB8;
+      --s-live-bg:   rgba(52,211,153,0.12);
+      --s-live-t:    #34d399;
+    }
+
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--ui);
+      font-size: 15px;
+      line-height: 1.5;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Layout ── */
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 64px 32px 120px;
+    }
+
+    /* ── Header ── */
+    .header {
+      margin-bottom: 56px;
+      border-bottom: 1px solid var(--border-mid);
+      padding-bottom: 40px;
+    }
+
+    .header-eyebrow {
+      font-family: var(--ui);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--acid);
+      margin-bottom: 12px;
+    }
+
+    .header-title {
+      font-family: var(--display);
+      font-size: clamp(52px, 8vw, 88px);
+      line-height: 0.95;
+      letter-spacing: 0.01em;
+      text-transform: uppercase;
+      color: var(--off-white);
+      margin-bottom: 16px;
+    }
+
+    .header-title span {
+      color: var(--acid);
+    }
+
+    .header-sub {
+      font-size: 14px;
+      color: var(--text-mid);
+      max-width: 520px;
+      line-height: 1.6;
+    }
+
+    /* ── Quick links ── */
+    .quick-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    .quick-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border-mid);
+      padding: 12px 16px;
+      text-decoration: none;
+      color: var(--text);
+      transition: border-color 0.15s, background 0.15s;
+      flex: 1;
+      min-width: 180px;
+    }
+
+    .quick-link:hover {
+      border-color: var(--acid);
+      background: var(--surface-2);
+    }
+
+    .ql-icon {
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+      border: 1px solid var(--border-mid);
+      background: var(--surface-2);
+    }
+
+    .ql-title {
+      font-family: var(--ui);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .ql-desc {
+      font-size: 11px;
+      color: var(--text-soft);
+      margin-top: 2px;
+    }
+
+    .ql-arrow {
+      font-size: 13px;
+      color: var(--text-soft);
+      margin-left: auto;
+      transition: color 0.15s;
+    }
+
+    .quick-link:hover .ql-arrow { color: var(--acid); }
+
+    /* ── Section ── */
+    .section {
+      margin-bottom: 48px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-label {
+      font-family: var(--ui);
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--text-soft);
+    }
+
+    .section-count {
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    /* ── Legend ── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-mid);
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      flex-shrink: 0;
+    }
+
+    /* ── Table ── */
+    .tracker-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .tracker-table th {
+      font-family: var(--ui);
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-soft);
+      text-align: left;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border-mid);
+    }
+
+    .tracker-table td {
+      padding: 13px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    .tracker-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .tracker-table tr:hover td {
+      background: var(--surface);
+    }
+
+    .row-section {
+      font-family: var(--display);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+      white-space: nowrap;
+    }
+
+    .row-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .row-desc {
+      font-size: 11px;
+      color: var(--text-soft);
+      margin-top: 2px;
+    }
+
+    .row-device {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text-soft);
+    }
+
+    /* ── Status pills ── */
+    .status {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      font-family: var(--ui);
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      white-space: nowrap;
+    }
+
+    .s-todo   { background: var(--s-todo-bg);   color: var(--s-todo-t);   }
+    .s-built  { background: var(--s-built-bg);  color: var(--s-built-t);  }
+    .s-review { background: var(--s-review-bg); color: var(--s-review-t); }
+    .s-signed { background: var(--s-signed-bg); color: var(--s-signed-t); }
+    .s-live   { background: var(--s-live-bg);   color: var(--s-live-t);   }
+
+    /* ── Progress pips ── */
+    .pips {
+      display: flex;
+      gap: 3px;
+      align-items: center;
+    }
+
+    .pip {
+      width: 20px;
+      height: 3px;
+      background: rgba(244,240,232,0.07);
+    }
+
+    .pip.on { background: var(--acid); }
+    .pip.partial { background: var(--olive); }
+
+    /* ── Link ── */
+    .wireframe-link {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--acid);
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      opacity: 0.9;
+      transition: opacity 0.15s;
+    }
+
+    .wireframe-link:hover { opacity: 1; }
+
+    .no-link {
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    /* ── Group header row ── */
+    .group-row td {
+      background: var(--surface);
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border-mid);
+    }
+
+    .group-label {
+      font-family: var(--display);
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--acid);
+    }
+
+    /* ── Footer ── */
+    .footer {
+      margin-top: 80px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-brand {
+      font-family: var(--display);
+      font-size: 18px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+    }
+
+    .footer-brand span { color: var(--acid); }
+
+    .footer-meta {
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    @media (max-width: 700px) {
+      .page { padding: 40px 20px 80px; }
+      .tracker-table th:nth-child(4),
+      .tracker-table td:nth-child(4),
+      .tracker-table th:nth-child(2),
+      .tracker-table td:nth-child(2) { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-eyebrow">The Song Room — Dev Hub</div>
+    <h1 class="header-title">Wireframe<br><span>Tracker</span></h1>
+    <p class="header-sub">Central tracking for all TSR v2 wireframes. Follow each view from first build to sign-off to live implementation.</p>
+
+    <div class="quick-links">
+      <a class="quick-link" href="https://song-review-app-v2.vercel.app" target="_blank">
+        <div class="ql-icon">🚀</div>
+        <div>
+          <div class="ql-title">Live App v2</div>
+          <div class="ql-desc">clone-clean branch · Vercel</div>
+        </div>
+        <div class="ql-arrow">→</div>
+      </a>
+      <a class="quick-link" href="https://corisleachman.github.io/song-review-app/wireframes/Song%20Room%20Branding/song-room-v2-components.html" target="_blank">
+        <div class="ql-icon">🎨</div>
+        <div>
+          <div class="ql-title">Component Wiki</div>
+          <div class="ql-desc">TSR v2 design system reference</div>
+        </div>
+        <div class="ql-arrow">→</div>
+      </a>
+      <a class="quick-link" href="https://corisleachman.github.io/song-review-app/wireframes/Song%20Room%20Branding/landing-v2.html" target="_blank">
+        <div class="ql-icon">📄</div>
+        <div>
+          <div class="ql-title">Landing Page v2</div>
+          <div class="ql-desc">Marketing site direction</div>
+        </div>
+        <div class="ql-arrow">→</div>
+      </a>
+      <a class="quick-link" href="https://github.com/corisleachman/song-review-app/tree/clone-clean" target="_blank">
+        <div class="ql-icon">⌥</div>
+        <div>
+          <div class="ql-title">GitHub</div>
+          <div class="ql-desc">clone-clean · production branch</div>
+        </div>
+        <div class="ql-arrow">→</div>
+      </a>
+    </div>
+  </header>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(244,240,232,0.15)"></div> Not started</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#2D7DFF"></div> Built</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#E6FF3F"></div> In review</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#D8CBB8"></div> Signed off</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#34d399"></div> Live</div>
+  </div>
+
+  <!-- Tracker table -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-label">Wireframe tracker</span>
+      <span class="section-count">20 views across 6 areas</span>
+    </div>
+
+    <table class="tracker-table">
+      <thead>
+        <tr>
+          <th style="width:14%">Area</th>
+          <th style="width:22%">View</th>
+          <th style="width:9%">Device</th>
+          <th style="width:26%">Progress</th>
+          <th style="width:13%">Status</th>
+          <th style="width:16%">Wireframe</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <!-- AUTH -->
+        <tr class="group-row"><td colspan="6"><span class="group-label">Auth</span></td></tr>
+
+        <tr>
+          <td class="row-section">Auth</td>
+          <td><div class="row-name">Login / Sign up</div><div class="row-desc">Email + Google OAuth entry point</div></td>
+          <td class="row-device">Desktop</td>
+          <td>
+            <div class="pips">
+              <div class="pip on" title="Built"></div>
+              <div class="pip" title="Reviewed"></div>
+              <div class="pip" title="Signed off"></div>
+              <div class="pip" title="Live"></div>
+            </div>
+          </td>
+          <td><span class="status s-built">Built</span></td>
+          <td><a class="wireframe-link" href="https://corisleachman.github.io/song-review-app/wireframes/Song%20Room%20Branding/login-v2.html" target="_blank">View →</a></td>
+        </tr>
+
+        <tr>
+          <td class="row-section">Auth</td>
+          <td><div class="row-name">Login / Sign up</div><div class="row-desc">Mobile view</div></td>
+          <td class="row-device">Mobile</td>
+          <td><div class="pips"><div class="pip" title="Built"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></td>
+          <td><span class="status s-todo">Not started</span></td>
+          <td><span class="no-link">—</span></td>
+        </tr>
+
+        <!-- MARKETING -->
+        <tr class="group-row"><td colspan="6"><span class="group-label">Marketing</span></td></tr>
+
+        <tr>
+          <td class="row-section">Marketing</td>
+          <td><div class="row-name">Landing page</div><div class="row-desc">Public homepage, pricing, CTA</div></td>
+          <td class="row-device">Desktop</td>
+          <td><div class="pips"><div class="pip on"></div><div class="pip on"></div><div class="pip"></div><div class="pip"></div></div></td>
+          <td><span class="status s-review">In review</span></td>
+          <td><a class="wireframe-link" href="https://corisleachman.github.io/song-review-app/wireframes/Song%20Room%20Branding/landing-v2.html" target="_blank">View →</a></td>
+        </tr>
+
+        <tr>
+          <td class="row-section">Marketing</td>
+          <td><div class="row-name">Landing page</div><div class="row-desc">Mobile view</div></td>
+          <td class="row-device">Mobile</td>
+          <td><div class="pips"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></td>
+          <td><span class="status s-todo">Not started</span></td>
+          <td><span class="no-link">—</span></td>
+        </tr>
+
+        <!-- DASHBOARD -->
+        <tr class="group-row"><td colspan="6"><span class="group-label">Dashboard</span></td></tr>
+
+        <tr>
+          <td class="row-section">Dashboard</td>
+          <td><div class="row-name">Dashboard — card view</div><div class="row-desc">Songs grid + actions panel</div></td>
+          <td class="row-device">Desktop</td>
+          <td><div class="pips"><div class="pip on"></div><div class="pip on"></div><div class="pip"></div><div class="pip"></div></div></td>
+          <td><span class="status s-review">In review</span></td>
+          <td><a class="wireframe-link" href="https://corisleachman.github.io/song-review-app/wireframes/Song%20Room%20Branding/dashboard-test.html" target="_blank">View →</a></td>
+        </tr>
+
+        <tr>
+          <td class="row-section">Dashboard</td>
+          <td><div class="row-name">Dashboard — list view</div><div class="row-desc">Row list alternative to card grid</div></td>
+          <td class="row-device">Desktop</td>
+          <td><div class="pips"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></td>
+          <td><span class="status s-todo">Not started</span></td>
+          <td><span class="no-link">—</span></td>
+        </tr>
+
+        <tr>
+          <td class="row-section">Dashboard</td>
+          <td><div class="row-name">Dashboard — mobile</div><div class="row-desc">List view only, tabbed nav</div></td>
+          <td class="row-device">Mobile</td>
+          <td><div class="pips"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></td>
+          <td><span class="status s-todo">Not started</span></td>
+          <td><span class="no-link">—</span></td>
+        </tr>
+
+        <!-- SONG PAGE -->
+        <tr class="group-row"><td colspan="6"><span class="group-label">Song page</span></td></tr>
+
+        <tr>
+          <td class="row-section">Song page</td>
+          <td><div class="row-name">Song page — waveform view</div><div class="row-desc">Player, comments, actions, artwork hero</div></td>
+          <td class="row-device">Desktop</td>
+          <td><div class="pips"><div class="pip on"></div><div class="pip on"></div><div class="pip"></div><div class="pip"></div></div></td>
+          <td><span class="status s-review">In review</span></td>
+          <td><a class="wireframe-link" href="https://corisleachman.github.io/song-review-app/wireframes/Song%20Room%20Branding/song-page-test.html" target="_blank">View →</a></td>
+        </tr>
+
+        <tr>
+          <td class="row-section">Song page</td>
+          <td><div class="row-name">Song page — mobile</div><div class="row-desc">Stacked layout, swipeable comment panel</div></td>
+          <td class="row-device">Mobile</td>
+          <td><div class="pips"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></td>
+          <td><span class="status s-todo">Not started</span></td>
+          <td><span class="no-link">—</span></td>
+        </tr>
+
+        <tr>
+          <td class="row-section">Song page</td>
+          <td><div class="row-name">Song page — no artwork state</div><div class="row-desc">Placeholder when artwork not yet uploaded</div></td>
+          <td class="row-device">Desktop</td>
+          <td><div class="pips"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></td>
+          <td><span class="status s-todo">Not started</span></td>
+          <td><span class="no-link">—</span></td>
+        </tr>
+
+        <tr>
+          <td class="row-section">Song page</td>
+          <td><div class="row-name">Comment thread — expanded</div><div class="row-desc">Full thread view, reply input, action marking</div></td>
+          <td class="row-device">Desktop</td>
+          <td><div class="pips"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></td>
+          <td><span class="status s-todo">Not started</span></td>
+          <td><span class="no-link">—</span></td>
+        </tr>
+
+        <!-- SETTINGS -->
+        <tr class="group-row"><td colspan="6"><span class="group-label">Settings</span></td></tr>
+
+        <tr>
+          <td class="row-section">Settings</td>
+          <td><div class="row-name">Settings — workspace</div><div class="row-desc">Name, logo, workspace details</div></td>
+          <td class="row-device">Desktop</td>
+          <td><div class="pips"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></td>
+          <td><span class="status s-todo">Not started</span></td>
+          <td><span class="no-link">—</span></td>
+        </tr>
+
+        <tr>
+          <td class="row-section">Settings</td>
+          <td><div class="row-name">Settings — plan & billing</div><div class="row-desc">Tier, usage, upgrade/downgrade</div></td>
+          <td class="row-device">Desktop</td>
+          <td><div class="pips"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></td>
+          <td><span class="status s-todo">Not started</span></td>
+          <td><span class="no-link">—</span></td>
+        </tr>
+
+        <tr>
+          <td class="row-section">Settings</td>
+          <td><div class="row-name">Settings — collaborators</div><div class="row-desc">Invite, manage members, roles</div></td>
+          <td class="row-device">Desktop</td>
+          <td><div class="pips"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></td>
+          <td><span class="status s-todo">Not started</span></td>
+          <td><span class="no-link">—</span></td>
+        </tr>
+
+        <tr>
+          <td class="row-section">Settings</td>
+          <td><div class="row-name">Settings — referrals</div><div class="row-desc">Referral link, reward tracking</div></td>
+          <td class="row-device">Desktop</td>
+          <td><div class="pips"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></td>
+          <td><span class="status s-todo">Not started</span></td>
+          <td><span class="no-link">—</span></td>
+        </tr>
+
+        <!-- UPGRADE / PRICING -->
+        <tr class="group-row"><td colspan="6"><span class="group-label">Upgrade &amp; pricing</span></td></tr>
+
+        <tr>
+          <td class="row-section">Upgrade</td>
+          <td><div class="row-name">Upgrade / pricing page</div><div class="row-desc">Free / Pro / Studio tier comparison</div></td>
+          <td class="row-device">Desktop</td>
+          <td><div class="pips"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></td>
+          <td><span class="status s-todo">Not started</span></td>
+          <td><span class="no-link">—</span></td>
+        </tr>
+
+        <tr>
+          <td class="row-section">Upgrade</td>
+          <td><div class="row-name">Upgrade — mobile</div><div class="row-desc">Stacked tier cards</div></td>
+          <td class="row-device">Mobile</td>
+          <td><div class="pips"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></td>
+          <td><span class="status s-todo">Not started</span></td>
+          <td><span class="no-link">—</span></td>
+        </tr>
+
+        <!-- INVITE / ONBOARDING -->
+        <tr class="group-row"><td colspan="6"><span class="group-label">Invite &amp; onboarding</span></td></tr>
+
+        <tr>
+          <td class="row-section">Invite</td>
+          <td><div class="row-name">Invite accept page</div><div class="row-desc">Landing for invited collaborators</div></td>
+          <td class="row-device">Desktop</td>
+          <td><div class="pips"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></td>
+          <td><span class="status s-todo">Not started</span></td>
+          <td><span class="no-link">—</span></td>
+        </tr>
+
+        <tr>
+          <td class="row-section">Onboarding</td>
+          <td><div class="row-name">Post-signup onboarding</div><div class="row-desc">Workspace creation, first song prompt</div></td>
+          <td class="row-device">Desktop</td>
+          <td><div class="pips"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></td>
+          <td><span class="status s-todo">Not started</span></td>
+          <td><span class="no-link">—</span></td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-brand">The Song <span>Room</span></div>
+    <div class="footer-meta">TSR v2 — Phase 7 · Brand update</div>
+  </footer>
+
+</div>
+</body>
+</html>
