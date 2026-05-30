@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Song Room — Product Truth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+
+:root{
+  --charcoal:#111111;
+  --bg:#111111;
+  --surface:#191919;
+  --off-white:#F4F0E8;
+  --sand:#D8CBB8;
+  --pink:#FFB6C8;
+  --acid:#E6FF3F;
+  --blue:#2D7DFF;
+  --red:#FF3B30;
+  --olive:#6F735F;
+
+  --text:#F4F0E8;
+  --text-soft:rgba(244,240,232,0.66);
+  --text-dim:rgba(244,240,232,0.40);
+
+  --border:rgba(244,240,232,0.10);
+  --border-mid:rgba(244,240,232,0.16);
+
+  --display:'Bebas Neue',Impact,'Arial Narrow Bold',sans-serif;
+  --ui:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;
+}
+
+html,body{background:var(--bg);color:var(--text);font-family:var(--ui);min-height:100vh;line-height:1.6;-webkit-font-smoothing:antialiased;}
+
+/* Layout */
+.page{max-width:760px;margin:0 auto;padding:48px 28px 120px;}
+
+/* Back link */
+.back{display:inline-flex;align-items:center;gap:7px;font-family:var(--ui);font-size:11px;
+  font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim);
+  text-decoration:none;margin-bottom:52px;transition:color 0.15s;}
+.back:hover{color:var(--acid);}
+
+/* Page header */
+.page-eyebrow{font-family:var(--ui);font-size:11px;font-weight:600;text-transform:uppercase;
+  letter-spacing:0.14em;color:var(--acid);margin-bottom:14px;}
+.page-title{font-family:var(--display);font-size:92px;font-weight:400;letter-spacing:0.01em;
+  line-height:0.92;text-transform:uppercase;margin-bottom:20px;}
+.page-title .dot{color:var(--acid);}
+.page-sub{font-size:15px;color:var(--text-soft);line-height:1.7;max-width:480px;margin-bottom:8px;}
+
+/* Top rule under header */
+.head-rule{height:1px;background:var(--border-mid);margin:40px 0 44px;}
+
+/* Sections */
+.section{margin-bottom:44px;}
+.section-title{font-family:var(--ui);font-size:11px;font-weight:600;text-transform:uppercase;
+  letter-spacing:0.13em;color:var(--text-dim);margin-bottom:18px;padding-bottom:11px;
+  border-bottom:1px solid var(--border);}
+
+/* Text blocks */
+.lead{font-size:18px;color:var(--text);line-height:1.6;margin-bottom:16px;font-weight:500;}
+p{font-size:15px;color:var(--text-soft);line-height:1.75;margin-bottom:14px;}
+p:last-child{margin-bottom:0;}
+.note{font-size:13px;color:var(--text-dim);margin-top:16px;}
+
+/* Lists — square acid markers (zero radius brand) */
+ul{padding-left:0;list-style:none;display:flex;flex-direction:column;gap:10px;}
+li{font-size:15px;color:var(--text-soft);line-height:1.55;display:flex;align-items:flex-start;gap:12px;}
+li::before{content:'';width:7px;height:7px;background:var(--acid);flex-shrink:0;margin-top:8px;}
+
+/* Core loop */
+.loop{display:flex;flex-direction:column;}
+.loop-item{display:flex;align-items:center;gap:18px;padding:15px 0;border-bottom:1px solid var(--border);}
+.loop-item:last-child{border-bottom:none;}
+.loop-num{width:34px;height:34px;background:var(--acid);color:var(--charcoal);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--display);font-size:20px;line-height:1;padding-top:3px;flex-shrink:0;}
+.loop-text{font-size:16px;color:var(--text);font-weight:500;}
+
+/* Primary promise — solid acid block */
+.promise{background:var(--acid);color:var(--charcoal);padding:34px 36px;}
+.promise-quote{font-family:var(--display);font-size:38px;line-height:1.02;letter-spacing:0.005em;
+  text-transform:uppercase;margin-bottom:14px;}
+.promise-sub{font-size:14px;font-weight:500;color:rgba(17,17,17,0.78);line-height:1.6;}
+
+/* Key actions — square tags */
+.actions{display:flex;flex-wrap:wrap;gap:8px;}
+.action-tag{font-family:var(--ui);font-size:12px;font-weight:600;text-transform:uppercase;
+  letter-spacing:0.06em;padding:9px 15px;background:rgba(230,255,63,0.10);
+  border:1px solid rgba(230,255,63,0.45);color:var(--acid);}
+
+/* Design principles */
+.principles{display:flex;flex-direction:column;gap:10px;}
+.principle{background:var(--surface);border:1px solid var(--border);padding:20px 22px;}
+.principle-num{font-family:var(--ui);font-size:10px;font-weight:600;text-transform:uppercase;
+  letter-spacing:0.1em;color:var(--text-dim);margin-bottom:8px;}
+.principle-title{font-family:var(--display);font-size:24px;line-height:1.05;letter-spacing:0.01em;
+  text-transform:uppercase;color:var(--text);margin-bottom:7px;}
+.principle-desc{font-size:14px;color:var(--text-soft);line-height:1.6;}
+
+/* Component truths */
+.truth{background:var(--surface);border:1px solid var(--border);padding:22px 24px;margin-bottom:10px;}
+.truth-title{font-family:var(--display);font-size:26px;line-height:1;letter-spacing:0.01em;
+  text-transform:uppercase;color:var(--text);margin-bottom:18px;}
+.truth-cols{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.truth-col-label{font-family:var(--ui);font-size:10px;font-weight:600;text-transform:uppercase;
+  letter-spacing:0.1em;margin-bottom:10px;}
+.truth-col-label.is{color:var(--acid);}
+.truth-col-label.not{color:var(--red);}
+.truth-col ul{gap:8px;}
+.truth-col li{font-size:13px;line-height:1.5;}
+.truth-col li.is::before{background:var(--acid);}
+.truth-col li.not::before{background:var(--red);}
+
+/* Red flags */
+.flags{display:flex;flex-direction:column;gap:8px;}
+.flag{display:flex;align-items:flex-start;gap:13px;background:rgba(255,59,48,0.07);
+  border:1px solid rgba(255,59,48,0.22);padding:13px 16px;}
+.flag-icon{color:var(--red);font-size:14px;line-height:1.4;flex-shrink:0;}
+.flag-text{font-size:14px;color:var(--text);line-height:1.5;}
+
+/* North star — bordered charcoal block, acid display text */
+.north-star{background:var(--surface);border:1px solid rgba(230,255,63,0.40);
+  padding:40px 36px;text-align:center;margin-top:52px;}
+.north-star-label{font-family:var(--ui);font-size:10px;font-weight:600;text-transform:uppercase;
+  letter-spacing:0.16em;color:var(--text-dim);margin-bottom:18px;}
+.north-star-quote{font-family:var(--display);font-size:42px;line-height:1.02;letter-spacing:0.01em;
+  text-transform:uppercase;color:var(--acid);}
+
+/* Divider */
+.divider{height:1px;background:var(--border);margin:48px 0;}
+
+/* Footer */
+.footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;font-size:11px;
+  text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim);}
+.footer a{color:var(--text-dim);text-decoration:none;transition:color 0.15s;}
+.footer a:hover{color:var(--acid);}
+.footer-brand span{color:var(--acid);}
+
+/* Responsive */
+@media (max-width:560px){
+  .page{padding:36px 20px 90px;}
+  .page-title{font-size:64px;}
+  .promise-quote{font-size:30px;}
+  .north-star-quote{font-size:32px;}
+  .truth-cols{grid-template-columns:1fr;gap:18px;}
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <a href="tsr-dev-hub.html" class="back">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7.5 2L3.5 6l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Back to hub
+  </a>
+
+  <div class="page-eyebrow">Product truth</div>
+  <h1 class="page-title">The Song<br>Room<span class="dot">.</span></h1>
+  <p class="page-sub">One page. Everything that matters. If the product drifts from this, it's wrong.</p>
+
+  <div class="head-rule"></div>
+
+
+  <!-- ── WHAT IT IS ── -->
+  <div class="section">
+    <div class="section-title">What The Song Room is</div>
+    <p class="lead">The Song Room is where collaborators agree on what a song needs — by leaving feedback pinned to the exact moment it's about.</p>
+    <p>It's built for artists, bands and producers passing versions back and forth. Every note lives on the waveform, every decision becomes a tracked action, and nothing gets lost between takes.</p>
+  </div>
+
+
+  <!-- ── WHAT IT IS NOT ── -->
+  <div class="section">
+    <div class="section-title">What The Song Room is not</div>
+    <ul>
+      <li>A DAW or audio editor</li>
+      <li>A file storage drive</li>
+      <li>A streaming or distribution platform</li>
+      <li>A generic chat or project-management tool</li>
+      <li>A social network for musicians</li>
+    </ul>
+    <p class="note">If it starts behaving like one, it's drifting.</p>
+  </div>
+
+
+  <!-- ── CORE USER LOOP ── -->
+  <div class="section">
+    <div class="section-title">The core user loop</div>
+    <div class="loop">
+      <div class="loop-item"><div class="loop-num">1</div><div class="loop-text">Upload a version</div></div>
+      <div class="loop-item"><div class="loop-num">2</div><div class="loop-text">Listen on the waveform</div></div>
+      <div class="loop-item"><div class="loop-num">3</div><div class="loop-text">Comment at the exact moment</div></div>
+      <div class="loop-item"><div class="loop-num">4</div><div class="loop-text">Discuss in the thread</div></div>
+      <div class="loop-item"><div class="loop-num">5</div><div class="loop-text">Turn decisions into actions</div></div>
+      <div class="loop-item"><div class="loop-num">6</div><div class="loop-text">Upload the next version</div></div>
+    </div>
+    <p class="note">Everything in the product must support this loop.</p>
+  </div>
+
+
+  <!-- ── PRIMARY PROMISE ── -->
+  <div class="section">
+    <div class="section-title">The primary promise</div>
+    <div class="promise">
+      <div class="promise-quote">"I can point at the exact second of the song, and we both know precisely what needs to change."</div>
+      <div class="promise-sub">If feedback ever drifts back to vague and untracked, that's the problem to fix.</div>
+    </div>
+  </div>
+
+
+  <!-- ── MOST IMPORTANT ACTIONS ── -->
+  <div class="section">
+    <div class="section-title">The most important actions</div>
+    <div class="actions">
+      <span class="action-tag">Upload version</span>
+      <span class="action-tag">Play</span>
+      <span class="action-tag">Comment at timestamp</span>
+      <span class="action-tag">Reply</span>
+      <span class="action-tag">Mark as action</span>
+      <span class="action-tag">Resolve</span>
+    </div>
+    <p class="note">Everything else is secondary.</p>
+  </div>
+
+
+  <div class="divider"></div>
+
+
+  <!-- ── DESIGN PRINCIPLES ── -->
+  <div class="section">
+    <div class="section-title">Design principles</div>
+    <div class="principles">
+
+      <div class="principle">
+        <div class="principle-num">Principle 1</div>
+        <div class="principle-title">Feedback lives on the waveform</div>
+        <div class="principle-desc">Context is never optional. A note belongs on the audio it's about, not in a box beside it.</div>
+      </div>
+
+      <div class="principle">
+        <div class="principle-num">Principle 2</div>
+        <div class="principle-title">Precision over volume</div>
+        <div class="principle-desc">The right note at the right second beats a long paragraph of vague description.</div>
+      </div>
+
+      <div class="principle">
+        <div class="principle-num">Principle 3</div>
+        <div class="principle-title">Nothing actionable gets lost</div>
+        <div class="principle-desc">Any comment worth acting on becomes a decision you can track across versions.</div>
+      </div>
+
+      <div class="principle">
+        <div class="principle-num">Principle 4</div>
+        <div class="principle-title">Listening mode vs. work mode</div>
+        <div class="principle-desc">The dashboard is for browsing and continuous play. The song page is for focused review.</div>
+      </div>
+
+      <div class="principle">
+        <div class="principle-num">Principle 5</div>
+        <div class="principle-title">The song is the hero</div>
+        <div class="principle-desc">Colour comes from the artwork, the interface gets out of the way of the audio.</div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <div class="divider"></div>
+
+
+  <!-- ── COMPONENT TRUTHS ── -->
+  <div class="section">
+    <div class="section-title">Component truths</div>
+
+    <div class="truth">
+      <div class="truth-title">Waveform comments</div>
+      <div class="truth-cols">
+        <div class="truth-col">
+          <div class="truth-col-label is">Is</div>
+          <ul><li class="is">Feedback pinned to a precise timestamp</li></ul>
+        </div>
+        <div class="truth-col">
+          <div class="truth-col-label not">Is not</div>
+          <ul><li class="not">A generic comment box</li></ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="truth">
+      <div class="truth-title">Actions</div>
+      <div class="truth-cols">
+        <div class="truth-col">
+          <div class="truth-col-label is">Is</div>
+          <ul><li class="is">Tracked decisions that carry across versions</li></ul>
+        </div>
+        <div class="truth-col">
+          <div class="truth-col-label not">Is not</div>
+          <ul><li class="not">A full project manager or Kanban board</li></ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="truth">
+      <div class="truth-title">Versions</div>
+      <div class="truth-cols">
+        <div class="truth-col">
+          <div class="truth-col-label is">Is</div>
+          <ul><li class="is">The record of how the song evolved</li></ul>
+        </div>
+        <div class="truth-col">
+          <div class="truth-col-label not">Is not</div>
+          <ul><li class="not">A backup or file store</li></ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="truth">
+      <div class="truth-title">Workspace</div>
+      <div class="truth-cols">
+        <div class="truth-col">
+          <div class="truth-col-label is">Is</div>
+          <ul><li class="is">A private room for one project or band</li></ul>
+        </div>
+        <div class="truth-col">
+          <div class="truth-col-label not">Is not</div>
+          <ul><li class="not">A public profile or social feed</li></ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <div class="divider"></div>
+
+
+  <!-- ── RED FLAGS ── -->
+  <div class="section">
+    <div class="section-title">Red flags — watch these</div>
+    <div class="flags">
+      <div class="flag"><div class="flag-icon">⚑</div><div class="flag-text">Feedback that isn't tied to a moment in the audio</div></div>
+      <div class="flag"><div class="flag-icon">⚑</div><div class="flag-text">Comments that never turn into a decision</div></div>
+      <div class="flag"><div class="flag-icon">⚑</div><div class="flag-text">Actions piling up unresolved across versions</div></div>
+      <div class="flag"><div class="flag-icon">⚑</div><div class="flag-text">The product starting to feel like a chat app or a feed</div></div>
+      <div class="flag"><div class="flag-icon">⚑</div><div class="flag-text">Listening getting buried under interface</div></div>
+    </div>
+  </div>
+
+
+  <!-- ── NORTH STAR ── -->
+  <div class="north-star">
+    <div class="north-star-label">The north star</div>
+    <div class="north-star-quote">"The song got better — and we always knew exactly why."</div>
+  </div>
+
+
+  <div class="footer">
+    <div class="footer-brand">The Song Room<span>.</span></div>
+    <a href="tsr-dev-hub.html">← Back to hub</a>
+  </div>
+
+</div>
+</body>
+</html>
