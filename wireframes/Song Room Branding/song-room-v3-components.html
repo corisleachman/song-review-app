@@ -1,0 +1,2146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Song Room — V3 Component Wiki</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet" />
+  <style>
+@font-face {
+  font-family: 'Thunder';
+  src: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-BlackLC.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+}
+
+/* ═══════════════════════════════════════════
+   DESIGN TOKENS — Song Room V3
+   Palette: Off-black · Rich red · Pale yellow · Off-white
+═══════════════════════════════════════════ */
+
+:root {
+  /* ── Core palette ── */
+  --black:      #0E0A0A;   /* off-black, warm red undertone */
+  --surface:    #1C1515;   /* card / panel surface */
+  --surface-2:  #261C1C;   /* elevated surface */
+  --surface-3:  #2E2222;   /* highest surface */
+
+  --red:        #C0392B;   /* primary brand accent — deep cinematic red */
+  --red-bright: #E8402E;   /* hover / active state */
+  --red-dim:    rgba(192,57,43,0.14); /* tint backgrounds */
+
+  --straw:      #F0E48C;   /* pale yellow — secondary accent, editorial highlight */
+  --cream:      #FFF8DC;   /* lightest yellow, cornsilk, subtle tint */
+
+  --off-white:  #F4EDE4;   /* primary text, warm off-white */
+  --sand:       #D4C4B0;   /* secondary text, borders */
+  --dune:       #8C7B6B;   /* tertiary text, muted labels */
+  --olive:      #6B6B4A;   /* quaternary / eyebrow labels */
+
+  /* ── Semantic aliases ── */
+  --color-primary:         var(--red);
+  --color-primary-hover:   var(--red-bright);
+  --color-accent:          var(--straw);
+  --color-text:            var(--off-white);
+  --color-text-secondary:  rgba(244,237,228,0.65);
+  --color-text-tertiary:   rgba(244,237,228,0.35);
+  --color-bg:              var(--black);
+  --color-surface:         var(--surface);
+  --color-surface-2:       var(--surface-2);
+  --color-border:          rgba(244,237,228,0.10);
+  --color-border-mid:      rgba(244,237,228,0.18);
+  --color-border-hi:       rgba(244,237,228,0.30);
+
+  /* ── Spacing ── */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+  --space-3xl: 48px;
+
+  /* ── Shadows ── */
+  --shadow-sm:  0 2px 8px  rgba(0,0,0,0.5);
+  --shadow-md:  0 8px 24px rgba(0,0,0,0.55);
+  --shadow-lg:  0 16px 48px rgba(0,0,0,0.65);
+
+  /* ── Border radius — zero everywhere ── */
+  --radius: 0px;
+
+  /* ── Transitions ── */
+  --fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--black);
+  color: var(--off-white);
+  font-family: 'DM Sans', -apple-system, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(244,237,228,0.14); }
+::-webkit-scrollbar-thumb:hover { background: rgba(244,237,228,0.26); }
+
+/* ── Font rules ── */
+/* Thunder: all display-scale elements */
+/* DM Sans 600 uppercase: small UI labels, pills, badges */
+/* DM Sans italic: timestamps, metadata, secondary copy */
+
+/* ═══════════════════════════════════════════
+   WIKI SHELL
+═══════════════════════════════════════════ */
+
+.wiki-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(14,10,10,0.95);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--color-border-mid);
+  padding: 0 clamp(20px, 4vw, 56px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  height: 60px;
+  overflow-x: auto;
+}
+
+.wiki-brand {
+  font-family: 'Thunder', Impact, sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--red);
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.wiki-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: nowrap;
+}
+
+.wiki-nav-links a {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-tertiary);
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  transition: all var(--fast);
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.wiki-nav-links a:hover {
+  color: var(--off-white);
+  border-color: var(--color-border-mid);
+}
+
+.wiki-main {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: clamp(40px, 6vw, 80px) clamp(20px, 4vw, 56px);
+}
+
+/* Hero */
+.wiki-hero {
+  margin-bottom: 80px;
+  border-bottom: 1px solid var(--color-border-mid);
+  padding-bottom: 64px;
+}
+
+.wiki-hero-eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--dune);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wiki-hero-eyebrow::before {
+  content: "";
+  width: 48px;
+  height: 3px;
+  background: var(--red);
+  flex-shrink: 0;
+}
+
+.wiki-hero h1 {
+  font-family: 'Thunder', Impact, 'Arial Narrow Bold', sans-serif;
+  text-transform: uppercase;
+  font-size: clamp(56px, 9vw, 130px);
+  line-height: 0.84;
+  letter-spacing: 0;
+  margin-bottom: 28px;
+  color: var(--off-white);
+}
+
+.wiki-hero h1 em {
+  font-style: normal;
+  color: var(--red);
+}
+
+.wiki-hero p {
+  max-width: 600px;
+  font-size: 18px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+/* Section */
+.section { margin-bottom: 80px; }
+
+.section-header {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+  margin-bottom: 36px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-border-mid);
+}
+
+.section-number {
+  font-family: 'Thunder', Impact, sans-serif;
+  font-size: 72px;
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--red);
+  opacity: 0.4;
+}
+
+.section-title {
+  font-family: 'Thunder', Impact, sans-serif;
+  font-size: 32px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  color: var(--off-white);
+}
+
+.section-desc {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.component-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--dune);
+  margin-bottom: 10px;
+}
+
+.component-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 28px;
+}
+
+.demo-canvas {
+  background: var(--surface);
+  border: 1px solid var(--color-border-mid);
+  padding: var(--space-2xl);
+}
+
+.demo-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+/* ═══════════════════════════════════════════
+   1. COLOUR PALETTE
+═══════════════════════════════════════════ */
+
+.palette-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 1px;
+  border: 1px solid var(--color-border-mid);
+  background: var(--color-border-mid);
+}
+
+.swatch {
+  padding: 24px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 110px;
+}
+
+.swatch-name {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 2px;
+}
+
+.swatch-hex {
+  font-size: 10px;
+  opacity: 0.55;
+  font-style: italic;
+}
+
+.swatch-role {
+  font-size: 9px;
+  opacity: 0.4;
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ═══════════════════════════════════════════
+   2. TYPOGRAPHY
+═══════════════════════════════════════════ */
+
+.type-display {
+  font-family: 'Thunder', Impact, 'Arial Narrow Bold', sans-serif;
+  text-transform: uppercase;
+  font-size: clamp(64px, 10vw, 140px);
+  line-height: 0.84;
+  letter-spacing: 0;
+}
+
+.type-display-sm {
+  font-family: 'Thunder', Impact, 'Arial Narrow Bold', sans-serif;
+  text-transform: uppercase;
+  font-size: clamp(36px, 6vw, 72px);
+  line-height: 0.88;
+  letter-spacing: 0;
+}
+
+.type-heading-1 {
+  font-family: 'Thunder', Impact, sans-serif;
+  font-size: 36px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.type-heading-2 {
+  font-family: 'Thunder', Impact, sans-serif;
+  font-size: 26px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.type-body-lg { font-size: 18px; line-height: 1.6; }
+.type-body    { font-size: 15px; line-height: 1.55; }
+.type-body-sm { font-size: 13px; line-height: 1.5; color: var(--color-text-secondary); }
+
+.type-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--dune);
+}
+
+.type-meta {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--sand);
+  font-family: 'DM Sans', sans-serif;
+}
+
+.type-straw { color: var(--straw); }
+
+.type-block {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.type-block:last-child { border-bottom: 0; }
+
+.type-note {
+  margin-top: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--dune);
+}
+
+/* ═══════════════════════════════════════════
+   3. BUTTONS
+═══════════════════════════════════════════ */
+
+.btn {
+  border: 1px solid currentColor;
+  background: transparent;
+  color: var(--off-white);
+  padding: 0 22px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background var(--fast), color var(--fast), border-color var(--fast), opacity var(--fast);
+}
+
+/* Primary = red */
+.btn-primary {
+  background: var(--red);
+  color: var(--off-white);
+  border-color: var(--red);
+}
+.btn-primary:hover { background: var(--red-bright); border-color: var(--red-bright); }
+
+/* Ghost */
+.btn-ghost {
+  background: transparent;
+  color: var(--off-white);
+  border-color: var(--color-border-mid);
+}
+.btn-ghost:hover { border-color: var(--off-white); }
+
+/* Danger */
+.btn-danger {
+  background: transparent;
+  color: var(--red);
+  border-color: var(--red);
+}
+.btn-danger:hover { background: var(--red); color: var(--off-white); }
+
+/* Straw accent */
+.btn-accent {
+  background: var(--straw);
+  color: var(--black);
+  border-color: var(--straw);
+}
+.btn-accent:hover { opacity: 0.88; }
+
+/* Off-white filled */
+.btn-white {
+  background: var(--off-white);
+  color: var(--black);
+  border-color: var(--off-white);
+}
+.btn-white:hover { opacity: 0.88; }
+
+/* Sizes */
+.btn-sm { height: 34px; padding: 0 14px; font-size: 10px; }
+.btn-lg { height: 58px; padding: 0 32px; font-size: 12px; }
+.btn-full { width: 100%; }
+
+/* Icon button */
+.btn-icon {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border-mid);
+  background: transparent;
+  color: var(--off-white);
+  cursor: pointer;
+  font-size: 16px;
+  transition: all var(--fast);
+}
+.btn-icon:hover { border-color: var(--off-white); }
+
+/* ═══════════════════════════════════════════
+   4. FORM INPUTS
+═══════════════════════════════════════════ */
+
+.field { display: grid; gap: 7px; margin-bottom: 16px; }
+
+.field-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--sand);
+}
+
+.field-input {
+  width: 100%;
+  background: rgba(244,237,228,0.04);
+  border: 1px solid var(--color-border-mid);
+  color: var(--off-white);
+  padding: 0 var(--space-lg);
+  height: 50px;
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  transition: all var(--fast);
+  outline: none;
+}
+
+.field-input::placeholder { color: var(--color-text-tertiary); }
+
+.field-input:focus {
+  border-color: var(--red);
+  background: rgba(192,57,43,0.06);
+}
+
+.field-input.error { border-color: var(--red); }
+.field-input.success { border-color: #4ade80; }
+
+textarea.field-input {
+  height: auto;
+  padding: var(--space-md) var(--space-lg);
+  resize: vertical;
+  min-height: 100px;
+}
+
+.field-hint { font-size: 12px; color: var(--color-text-tertiary); font-style: italic; }
+.field-error { font-size: 12px; color: var(--red); }
+
+/* Checkbox & Radio */
+.field-check {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.field-check input[type="checkbox"],
+.field-check input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--color-border-mid);
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  transition: all var(--fast);
+}
+
+.field-check input[type="radio"] { border-radius: 999px; }
+
+.field-check input:checked {
+  background: var(--red);
+  border-color: var(--red);
+}
+
+.field-check input[type="checkbox"]:checked::after {
+  content: "✓";
+  font-size: 11px;
+  color: var(--off-white);
+  font-weight: 700;
+}
+
+.field-check input[type="radio"]:checked::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--off-white);
+}
+
+.field-check-label { font-size: 14px; color: var(--off-white); }
+
+/* Toggle */
+.toggle-wrap { display: flex; align-items: center; gap: 12px; }
+
+.toggle {
+  width: 44px;
+  height: 24px;
+  background: var(--surface-2);
+  border: 1px solid var(--color-border-mid);
+  border-radius: 999px;
+  position: relative;
+  cursor: pointer;
+  transition: background var(--base);
+  flex: 0 0 auto;
+}
+
+.toggle.on { background: var(--red); border-color: var(--red); }
+
+.toggle-knob {
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--off-white);
+  transition: transform var(--base);
+}
+
+.toggle.on .toggle-knob { transform: translateX(20px); }
+.toggle-label { font-size: 14px; color: var(--off-white); }
+
+/* ═══════════════════════════════════════════
+   5. CARDS
+═══════════════════════════════════════════ */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--color-border-mid);
+  padding: var(--space-xl);
+  transition: border-color var(--fast);
+}
+.card:hover { border-color: var(--color-border-hi); }
+
+/* Song card */
+.song-card {
+  background: var(--surface);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+  transition: all var(--base);
+}
+.song-card:hover { border-color: var(--color-border-hi); }
+
+.song-card-thumb {
+  width: 100%;
+  aspect-ratio: 1;
+  background: linear-gradient(135deg, var(--red) 0 35%, var(--black) 35%);
+  position: relative;
+  overflow: hidden;
+}
+
+.song-card-thumb-inner {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 40%, rgba(14,10,10,0.85) 100%);
+}
+
+.song-card-body { padding: var(--space-lg); }
+
+.song-card-title {
+  font-family: 'Thunder', Impact, sans-serif;
+  font-size: 17px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  color: var(--off-white);
+}
+
+.song-card-meta {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--dune);
+}
+
+.song-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: var(--space-md) var(--space-lg);
+  border-top: 1px solid var(--color-border);
+}
+
+/* Version badge */
+.version-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  border: 1px solid var(--color-border-mid);
+  color: var(--color-text-secondary);
+}
+
+.version-badge.red    { background: var(--red);    color: var(--off-white); border-color: var(--red); }
+.version-badge.straw  { background: var(--straw);  color: var(--black);     border-color: var(--straw); }
+.version-badge.sand   { background: transparent;   color: var(--sand);      border-color: var(--sand); }
+
+/* Action card */
+.action-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border);
+  background: var(--surface);
+  transition: all var(--fast);
+}
+.action-card:hover { border-color: var(--color-border-hi); }
+
+.action-status-circle {
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid var(--color-border-mid);
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all var(--fast);
+}
+.action-status-circle.done { background: var(--red); border-color: var(--red); }
+.action-status-circle.done::after { content: "✓"; font-size: 10px; font-weight: 700; color: var(--off-white); }
+
+.action-desc { font-size: 14px; color: var(--off-white); }
+.action-meta { font-size: 11px; font-style: italic; color: var(--dune); margin-top: 2px; }
+
+/* Stage pill */
+.stage-pill {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 5px 10px;
+  background: var(--red);
+  color: var(--off-white);
+  white-space: nowrap;
+}
+
+.stage-pill.straw  { background: var(--straw);  color: var(--black); }
+.stage-pill.ghost  { background: transparent; border: 1px solid var(--color-border-mid); color: var(--color-text-secondary); }
+.stage-pill.done   { background: transparent; border: 1px solid var(--dune); color: var(--dune); }
+
+/* ═══════════════════════════════════════════
+   6. WAVEFORM PLAYER
+═══════════════════════════════════════════ */
+
+.player-shell {
+  border: 1px solid var(--color-border-mid);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.player-header {
+  padding: var(--space-lg) var(--space-xl);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.player-title {
+  font-family: 'Thunder', Impact, sans-serif;
+  font-size: 22px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.player-meta { font-size: 12px; font-style: italic; color: var(--dune); margin-top: 2px; }
+
+.waveform-area {
+  position: relative;
+  height: 120px;
+  background: rgba(244,237,228,0.02);
+  overflow: hidden;
+  cursor: crosshair;
+}
+
+.waveform-svg {
+  position: absolute;
+  left: 0; right: 0;
+  top: 50%;
+  height: 70px;
+  transform: translateY(-50%);
+  background: rgba(244,237,228,0.16);
+  clip-path: polygon(0 55%, 2% 38%, 4% 61%, 6% 30%, 9% 74%, 12% 42%, 16% 56%, 19% 18%, 22% 80%, 26% 41%, 29% 63%, 33% 29%, 37% 76%, 42% 36%, 46% 61%, 51% 17%, 55% 84%, 60% 40%, 64% 65%, 69% 29%, 73% 76%, 78% 37%, 82% 61%, 86% 31%, 91% 74%, 95% 43%, 100% 58%, 100% 100%, 0 100%);
+}
+
+.waveform-progress {
+  position: absolute;
+  left: 0; width: 40%;
+  top: 50%; height: 70px;
+  transform: translateY(-50%);
+  background: var(--red);
+  clip-path: polygon(0 55%, 2% 38%, 4% 61%, 6% 30%, 9% 74%, 12% 42%, 16% 56%, 19% 18%, 22% 80%, 26% 41%, 29% 63%, 33% 29%, 37% 76%, 42% 36%, 46% 61%, 51% 17%, 55% 84%, 60% 40%, 64% 65%, 69% 29%, 73% 76%, 78% 37%, 82% 61%, 86% 31%, 91% 74%, 95% 43%, 100% 58%, 100% 100%, 0 100%);
+  opacity: 0.75;
+}
+
+.waveform-playhead {
+  position: absolute;
+  left: 40%; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--red);
+}
+
+.wave-pin {
+  position: absolute;
+  top: 8px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  z-index: 4;
+  white-space: nowrap;
+}
+
+.wave-pin::after {
+  content: "";
+  display: block;
+  width: 1px;
+  height: 80px;
+  margin: 5px auto 0;
+  background: currentColor;
+  opacity: 0.55;
+}
+
+.wpin-red   { left: 22%; color: var(--red); }
+.wpin-straw { left: 48%; color: var(--straw); }
+.wpin-sand  { left: 72%; color: var(--sand); }
+
+.player-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: var(--space-md) var(--space-xl);
+  border-top: 1px solid var(--color-border);
+}
+
+.play-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: var(--red);
+  color: var(--off-white);
+  border: none;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  flex: 0 0 auto;
+  transition: all var(--fast);
+}
+.play-btn:hover { background: var(--red-bright); }
+
+.time-display {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--sand);
+  letter-spacing: 0.04em;
+}
+
+/* ═══════════════════════════════════════════
+   7. COMMENT THREADS
+═══════════════════════════════════════════ */
+
+.thread-shell {
+  border: 1px solid var(--color-border-mid);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.thread-header {
+  padding: var(--space-md) var(--space-xl);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.thread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.thread-timestamp {
+  font-size: 11px;
+  font-weight: 600;
+  font-style: italic;
+  color: var(--straw);
+  letter-spacing: 0.04em;
+}
+
+.thread-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--off-white);
+  margin-left: 4px;
+}
+
+.thread-comments {
+  padding: var(--space-lg) var(--space-xl);
+  display: grid;
+  gap: 16px;
+}
+
+.comment-bubble {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.comment-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1.5px solid var(--color-border-mid);
+  flex: 0 0 auto;
+}
+
+.comment-body-wrap { display: grid; gap: 4px; }
+
+.comment-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.comment-author {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--off-white);
+}
+
+.comment-time {
+  font-size: 10px;
+  font-style: italic;
+  color: var(--dune);
+}
+
+.comment-text {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+/* Own message bubble */
+.comment-bubble.own .comment-body-inner {
+  background: var(--surface-2);
+  border: 1px solid var(--color-border-mid);
+  padding: 10px 12px;
+}
+
+/* Other's message bubble */
+.comment-bubble.other .comment-body-inner {
+  background: var(--surface-3);
+  border: 1px solid var(--color-border);
+  padding: 10px 12px;
+}
+
+.comment-action-link {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--dune);
+  cursor: pointer;
+  border: none;
+  background: none;
+  transition: color var(--fast);
+  padding: 0;
+}
+
+.comment-action-link:hover { color: var(--red); }
+
+.thread-reply {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  padding: var(--space-md) var(--space-xl);
+  border-top: 1px solid var(--color-border);
+}
+
+.reply-input {
+  background: rgba(244,237,228,0.04);
+  border: 1px solid var(--color-border-mid);
+  color: var(--off-white);
+  padding: 0 14px;
+  height: 42px;
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+  transition: all var(--fast);
+}
+
+.reply-input::placeholder { color: var(--color-text-tertiary); }
+.reply-input:focus { border-color: var(--red); }
+
+/* ═══════════════════════════════════════════
+   8. NAVIGATION
+═══════════════════════════════════════════ */
+
+.app-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(20px, 4vw, 48px);
+  height: 62px;
+  background: rgba(14,10,10,0.95);
+  border-bottom: 1px solid var(--color-border-mid);
+}
+
+.nav-brand {
+  font-family: 'Thunder', Impact, sans-serif;
+  font-size: 16px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--off-white);
+}
+
+.nav-brand em {
+  font-style: normal;
+  color: var(--red);
+}
+
+.nav-links { display: flex; align-items: center; gap: 2px; }
+
+.nav-link {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-secondary);
+  padding: 7px 12px;
+  border: 1px solid transparent;
+  transition: all var(--fast);
+  text-decoration: none;
+}
+
+.nav-link:hover { color: var(--off-white); border-color: var(--color-border-mid); }
+.nav-link.active { color: var(--red); border-color: transparent; }
+
+.nav-actions { display: flex; align-items: center; gap: 10px; }
+
+.identity-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--color-border-mid);
+  padding: 5px 12px 5px 5px;
+  cursor: pointer;
+  transition: all var(--fast);
+}
+.identity-chip:hover { border-color: var(--color-border-hi); }
+
+.identity-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.identity-name {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--off-white);
+}
+
+/* ═══════════════════════════════════════════
+   9. TABS
+═══════════════════════════════════════════ */
+
+.tabs {
+  display: flex;
+  border: 1px solid var(--color-border-mid);
+  width: fit-content;
+}
+
+.tab {
+  padding: 12px 24px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  transition: all var(--fast);
+  border-right: 1px solid var(--color-border-mid);
+}
+.tab:last-child { border-right: none; }
+.tab.active { background: var(--red); color: var(--off-white); }
+.tab:not(.active):hover { color: var(--off-white); background: rgba(244,237,228,0.04); }
+
+/* Underline tabs */
+.tabs-underline {
+  display: flex;
+  border-bottom: 1px solid var(--color-border-mid);
+}
+
+.tab-ul {
+  padding: 12px 18px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: none;
+  border-top: none; border-left: none; border-right: none;
+  transition: all var(--fast);
+}
+
+.tab-ul.active { color: var(--red); border-bottom-color: var(--red); }
+.tab-ul:hover:not(.active) { color: var(--off-white); }
+
+/* ═══════════════════════════════════════════
+   10. BADGES & TAGS
+═══════════════════════════════════════════ */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  border: 1px solid currentColor;
+}
+
+.badge-red   { color: var(--red);    background: rgba(192,57,43,0.12); }
+.badge-straw { color: var(--straw);  background: rgba(240,228,140,0.10); }
+.badge-sand  { color: var(--sand);   background: rgba(212,196,176,0.10); }
+.badge-dune  { color: var(--dune);   background: transparent; }
+
+.dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+}
+
+.dot-red   { background: var(--red); }
+.dot-straw { background: var(--straw); }
+.dot-sand  { background: var(--sand); }
+.dot-dune  { background: var(--dune); }
+
+.count-chip {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  background: var(--red);
+  color: var(--off-white);
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 999px;
+}
+
+/* ═══════════════════════════════════════════
+   11. ALERTS & TOASTS
+═══════════════════════════════════════════ */
+
+.alert {
+  padding: var(--space-md) var(--space-xl);
+  border-left: 3px solid currentColor;
+  background: var(--surface);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.alert-title { font-weight: 600; margin-bottom: 3px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; }
+.alert-desc  { font-size: 13px; opacity: 0.72; font-style: italic; }
+.alert-info  { color: var(--sand); }
+.alert-warn  { color: var(--straw); }
+.alert-error { color: var(--red); }
+.alert-success { color: #4ade80; }
+
+.toast {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--color-border-mid);
+  color: var(--off-white);
+  padding: 14px 20px;
+  box-shadow: var(--shadow-lg);
+  font-size: 13px;
+  font-weight: 500;
+  max-width: 320px;
+}
+
+.toast-dot { width: 7px; height: 7px; border-radius: 999px; flex: 0 0 auto; }
+.toast-close { margin-left: auto; cursor: pointer; font-size: 16px; opacity: 0.35; }
+.toast-close:hover { opacity: 1; }
+
+/* ═══════════════════════════════════════════
+   12. MODALS
+═══════════════════════════════════════════ */
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--color-border-mid);
+  overflow: hidden;
+  max-width: 440px;
+}
+
+.modal-header {
+  padding: var(--space-lg) var(--space-xl);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-title {
+  font-family: 'Thunder', Impact, sans-serif;
+  font-size: 20px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--dune);
+  font-size: 20px;
+  cursor: pointer;
+  transition: color var(--fast);
+  line-height: 1;
+  padding: 0;
+}
+.modal-close:hover { color: var(--off-white); }
+
+.modal-body { padding: var(--space-xl); }
+
+.modal-footer {
+  padding: var(--space-lg) var(--space-xl);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* ═══════════════════════════════════════════
+   13. LOADING STATES
+═══════════════════════════════════════════ */
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 0.7; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.skeleton {
+  background: var(--surface-2);
+  animation: skeleton-pulse 1.8s ease-in-out infinite;
+}
+
+.skeleton-thumb  { width: 100%; aspect-ratio: 1; }
+.skeleton-title  { height: 16px; width: 80%; margin-bottom: 8px; }
+.skeleton-text   { height: 12px; }
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--color-border-mid);
+  border-top-color: var(--red);
+  border-radius: 999px;
+  animation: spin 0.75s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════
+   14. DASHBOARD LAYOUT
+═══════════════════════════════════════════ */
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  min-height: 280px;
+  background: var(--color-border);
+  gap: 1px;
+}
+
+.dashboard-col { background: var(--black); }
+
+.dashboard-col-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-xl);
+  border-bottom: 1px solid var(--color-border-mid);
+}
+
+.dashboard-col-title {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--dune);
+}
+
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="wiki-nav">
+  <div class="wiki-brand">The Song Room — V3 Components</div>
+  <div class="wiki-nav-links">
+    <a href="#palette">Palette</a>
+    <a href="#typography">Type</a>
+    <a href="#buttons">Buttons</a>
+    <a href="#inputs">Inputs</a>
+    <a href="#cards">Cards</a>
+    <a href="#player">Player</a>
+    <a href="#comments">Comments</a>
+    <a href="#nav">Nav</a>
+    <a href="#tabs">Tabs</a>
+    <a href="#badges">Badges</a>
+    <a href="#alerts">Alerts</a>
+    <a href="#modals">Modals</a>
+    <a href="#loading">Loading</a>
+    <a href="#layout">Layout</a>
+  </div>
+</nav>
+
+<main class="wiki-main">
+
+  <!-- HERO -->
+  <div class="wiki-hero">
+    <div class="wiki-hero-eyebrow">Design system · V3 · May 2026</div>
+    <h1>The Song<br><em>Room</em></h1>
+    <p>Updated palette and type system. Off-black ground, deep red as primary brand accent, pale yellow as secondary editorial highlight, warm off-white for text. Thunder for all display — DM Sans for UI.</p>
+  </div>
+
+
+  <!-- ══ 1. COLOUR PALETTE ══ -->
+  <div class="section" id="palette">
+    <div class="section-header">
+      <span class="section-number">01</span>
+      <div>
+        <div class="section-title">Colour Palette</div>
+        <div class="section-desc">Off-black base, rich red as primary CTA and brand accent, pale yellow as secondary editorial highlight.</div>
+      </div>
+    </div>
+
+    <div class="component-label" style="margin-bottom:12px">Base surfaces</div>
+    <div class="palette-grid" style="margin-bottom:16px">
+      <div class="swatch" style="background:#0E0A0A">
+        <div class="swatch-name" style="color:#F4EDE4">Black</div>
+        <div class="swatch-hex" style="color:#F4EDE4">#0E0A0A</div>
+        <div class="swatch-role" style="color:#F4EDE4">Page background</div>
+      </div>
+      <div class="swatch" style="background:#1C1515">
+        <div class="swatch-name" style="color:#F4EDE4">Surface</div>
+        <div class="swatch-hex" style="color:#F4EDE4">#1C1515</div>
+        <div class="swatch-role" style="color:#F4EDE4">Cards, panels</div>
+      </div>
+      <div class="swatch" style="background:#261C1C">
+        <div class="swatch-name" style="color:#F4EDE4">Surface 2</div>
+        <div class="swatch-hex" style="color:#F4EDE4">#261C1C</div>
+        <div class="swatch-role" style="color:#F4EDE4">Elevated surface</div>
+      </div>
+      <div class="swatch" style="background:#2E2222">
+        <div class="swatch-name" style="color:#F4EDE4">Surface 3</div>
+        <div class="swatch-hex" style="color:#F4EDE4">#2E2222</div>
+        <div class="swatch-role" style="color:#F4EDE4">Highest surface</div>
+      </div>
+    </div>
+
+    <div class="component-label" style="margin-bottom:12px">Brand & accent</div>
+    <div class="palette-grid" style="margin-bottom:16px">
+      <div class="swatch" style="background:#C0392B">
+        <div class="swatch-name" style="color:#F4EDE4">Red</div>
+        <div class="swatch-hex" style="color:#F4EDE4">#C0392B</div>
+        <div class="swatch-role" style="color:#F4EDE4">Primary CTA, brand mark, active states</div>
+      </div>
+      <div class="swatch" style="background:#E8402E">
+        <div class="swatch-name" style="color:#F4EDE4">Red bright</div>
+        <div class="swatch-hex" style="color:#F4EDE4">#E8402E</div>
+        <div class="swatch-role" style="color:#F4EDE4">Hover / active</div>
+      </div>
+      <div class="swatch" style="background:#F0E48C">
+        <div class="swatch-name" style="color:#0E0A0A">Straw</div>
+        <div class="swatch-hex" style="color:#0E0A0A">#F0E48C</div>
+        <div class="swatch-role" style="color:#0E0A0A">Secondary accent, editorial highlight</div>
+      </div>
+      <div class="swatch" style="background:#FFF8DC">
+        <div class="swatch-name" style="color:#0E0A0A">Cream</div>
+        <div class="swatch-hex" style="color:#0E0A0A">#FFF8DC</div>
+        <div class="swatch-role" style="color:#0E0A0A">Lightest tint</div>
+      </div>
+    </div>
+
+    <div class="component-label" style="margin-bottom:12px">Text & borders</div>
+    <div class="palette-grid">
+      <div class="swatch" style="background:#F4EDE4">
+        <div class="swatch-name" style="color:#0E0A0A">Off-white</div>
+        <div class="swatch-hex" style="color:#0E0A0A">#F4EDE4</div>
+        <div class="swatch-role" style="color:#0E0A0A">Primary text</div>
+      </div>
+      <div class="swatch" style="background:#D4C4B0">
+        <div class="swatch-name" style="color:#0E0A0A">Sand</div>
+        <div class="swatch-hex" style="color:#0E0A0A">#D4C4B0</div>
+        <div class="swatch-role" style="color:#0E0A0A">Secondary text, borders</div>
+      </div>
+      <div class="swatch" style="background:#8C7B6B">
+        <div class="swatch-name" style="color:#F4EDE4">Dune</div>
+        <div class="swatch-hex" style="color:#F4EDE4">#8C7B6B</div>
+        <div class="swatch-role" style="color:#F4EDE4">Tertiary / labels</div>
+      </div>
+      <div class="swatch" style="background:#6B6B4A">
+        <div class="swatch-name" style="color:#F4EDE4">Olive</div>
+        <div class="swatch-hex" style="color:#F4EDE4">#6B6B4A</div>
+        <div class="swatch-role" style="color:#F4EDE4">Quaternary / eyebrows</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══ 2. TYPOGRAPHY ══ -->
+  <div class="section" id="typography">
+    <div class="section-header">
+      <span class="section-number">02</span>
+      <div>
+        <div class="section-title">Typography</div>
+        <div class="section-desc">Thunder for display. DM Sans 600 uppercase for UI labels. DM Sans italic for metadata and secondary copy.</div>
+      </div>
+    </div>
+
+    <div class="demo-canvas">
+      <div class="type-block">
+        <div class="type-display" style="color:var(--off-white)">Create Together</div>
+        <div class="type-note">Thunder · Display · 0 letter-spacing · 0.84 line-height · Hero headings, song titles, section headers, CTA buttons</div>
+      </div>
+
+      <div class="type-block">
+        <div class="type-display" style="color:var(--red)">The Song Room</div>
+        <div class="type-note">Thunder · Display · Brand name in red</div>
+      </div>
+
+      <div class="type-block">
+        <div class="type-display-sm">Every Version. One Room.</div>
+        <div class="type-note">Thunder · Display SM · Secondary headlines, page titles</div>
+      </div>
+
+      <div class="type-block">
+        <div class="type-heading-1">Fading Light</div>
+        <div class="type-note">Thunder · 36px · Song card titles, section headings within pages</div>
+      </div>
+
+      <div class="type-block">
+        <div class="type-straw" style="font-size:33px;font-family:'DM Sans',sans-serif;font-weight:400;letter-spacing:-0.05em;line-height:1.2">Every version. Every note. One room.</div>
+        <div class="type-note">DM Sans 400 · 33px · −0.05em tracking · Straw colour · Editorial sublines, first paragraph highlight</div>
+      </div>
+
+      <div class="type-block">
+        <div class="type-body-lg">Upload a new version and your whole team gets notified instantly. Leave timestamped feedback, mark actions, and track every decision.</div>
+        <div class="type-note">DM Sans 400 · 18px · Body large · Marketing copy, section intros</div>
+      </div>
+
+      <div class="type-block">
+        <div class="type-body">Leave a comment at exactly 1:24 and your collaborators see it pinned directly on the waveform.</div>
+        <div class="type-note">DM Sans 400 · 15px · Body default · UI copy, descriptions</div>
+      </div>
+
+      <div class="type-block">
+        <div class="type-meta">Uploaded by Coris · 31 Mar 2026 · V8 · 3:11</div>
+        <div class="type-note">DM Sans italic · 13px · Sand colour · Timestamps, metadata, upload info</div>
+      </div>
+
+      <div class="type-block">
+        <div class="type-label">Version note · Pending · 3 actions</div>
+        <div class="type-note">DM Sans 600 uppercase · 10px · 0.16em tracking · Pills, badges, status tags, eyebrow labels</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══ 3. BUTTONS ══ -->
+  <div class="section" id="buttons">
+    <div class="section-header">
+      <span class="section-number">03</span>
+      <div>
+        <div class="section-title">Buttons</div>
+        <div class="section-desc">Red is primary CTA. Ghost and white for secondary. Danger is outlined red. Straw sparingly.</div>
+      </div>
+    </div>
+
+    <div class="demo-canvas">
+      <div class="component-label">Primary CTAs</div>
+      <div class="demo-row" style="margin-bottom:24px">
+        <button class="btn btn-primary btn-lg">Upload Version</button>
+        <button class="btn btn-primary">Create Account</button>
+        <button class="btn btn-primary btn-sm">+ New Song</button>
+      </div>
+
+      <div class="component-label">Secondary</div>
+      <div class="demo-row" style="margin-bottom:24px">
+        <button class="btn btn-white btn-lg">Log in with Google</button>
+        <button class="btn btn-white">Save Changes</button>
+        <button class="btn btn-ghost">Change Version</button>
+        <button class="btn btn-ghost btn-sm">Cancel</button>
+      </div>
+
+      <div class="component-label">Accent & Danger</div>
+      <div class="demo-row" style="margin-bottom:24px">
+        <button class="btn btn-accent">Sign up free</button>
+        <button class="btn btn-danger">Delete Song</button>
+        <button class="btn btn-danger btn-sm">Remove</button>
+      </div>
+
+      <div class="component-label">Icon buttons</div>
+      <div class="demo-row">
+        <button class="btn-icon">↑</button>
+        <button class="btn-icon">✎</button>
+        <button class="btn-icon">⋯</button>
+        <button class="btn-icon" style="border-color:var(--red);color:var(--red)">✕</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══ 4. FORM INPUTS ══ -->
+  <div class="section" id="inputs">
+    <div class="section-header">
+      <span class="section-number">04</span>
+      <div>
+        <div class="section-title">Form Inputs</div>
+        <div class="section-desc">Red focus ring. All inputs sharp-cornered. Labels in DM Sans 600 uppercase.</div>
+      </div>
+    </div>
+
+    <div class="demo-canvas">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px">
+        <div>
+          <div class="field">
+            <label class="field-label">Email</label>
+            <input class="field-input" type="email" placeholder="you@example.com" />
+          </div>
+          <div class="field">
+            <label class="field-label">Password</label>
+            <input class="field-input" type="password" placeholder="Minimum 8 characters" />
+          </div>
+          <div class="field">
+            <label class="field-label">Song title</label>
+            <input class="field-input" type="text" placeholder="e.g. Fading Light" />
+            <div class="field-hint">Will appear on the dashboard and song page.</div>
+          </div>
+        </div>
+        <div>
+          <div class="field">
+            <label class="field-label">Version note</label>
+            <textarea class="field-input" placeholder="Describe what changed in this version…"></textarea>
+          </div>
+          <div class="field">
+            <label class="field-label">Error state</label>
+            <input class="field-input error" type="email" value="not-an-email" />
+            <div class="field-error">Please enter a valid email address.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="component-label">Checkboxes, radios & toggles</div>
+      <div class="demo-row" style="gap:24px;flex-wrap:wrap">
+        <label class="field-check">
+          <input type="checkbox" checked />
+          <span class="field-check-label">Email notifications on</span>
+        </label>
+        <label class="field-check">
+          <input type="checkbox" />
+          <span class="field-check-label">Weekly digest</span>
+        </label>
+        <label class="field-check">
+          <input type="radio" name="r" checked />
+          <span class="field-check-label">Monthly billing</span>
+        </label>
+        <label class="field-check">
+          <input type="radio" name="r" />
+          <span class="field-check-label">Annual billing</span>
+        </label>
+        <div class="toggle-wrap">
+          <div class="toggle on"><div class="toggle-knob"></div></div>
+          <span class="toggle-label">Notifications on</span>
+        </div>
+        <div class="toggle-wrap">
+          <div class="toggle"><div class="toggle-knob"></div></div>
+          <span class="toggle-label">Auto-play off</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══ 5. CARDS ══ -->
+  <div class="section" id="cards">
+    <div class="section-header">
+      <span class="section-number">05</span>
+      <div>
+        <div class="section-title">Cards</div>
+        <div class="section-desc">Song cards, action cards, and generic content cards. Song titles in Thunder.</div>
+      </div>
+    </div>
+
+    <div class="demo-canvas">
+      <div class="component-label">Song cards</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--color-border-mid);margin-bottom:28px">
+        <div class="song-card">
+          <div class="song-card-thumb" style="background:linear-gradient(135deg,var(--red) 0 35%,var(--black) 35%)"><div class="song-card-thumb-inner"></div></div>
+          <div class="song-card-body">
+            <div class="song-card-title">Fading Light</div>
+            <div class="song-card-meta">3 versions · 2 open actions</div>
+          </div>
+          <div class="song-card-actions">
+            <span class="version-badge red">V3</span>
+            <span class="stage-pill" style="margin-left:auto">Mixing</span>
+          </div>
+        </div>
+        <div class="song-card">
+          <div class="song-card-thumb" style="background:linear-gradient(135deg,#2a1818 0%,var(--black) 100%)"><div class="song-card-thumb-inner"></div></div>
+          <div class="song-card-body">
+            <div class="song-card-title">Set This On Fire</div>
+            <div class="song-card-meta">2 versions · No actions</div>
+          </div>
+          <div class="song-card-actions">
+            <span class="version-badge sand">V2</span>
+            <span class="stage-pill done" style="margin-left:auto">Done</span>
+          </div>
+        </div>
+        <div class="song-card">
+          <div class="song-card-thumb" style="background:linear-gradient(135deg,#1a2a1a 0%,var(--black) 100%)"><div class="song-card-thumb-inner"></div></div>
+          <div class="song-card-body">
+            <div class="song-card-title">Be Kind</div>
+            <div class="song-card-meta">7 versions · 1 open action</div>
+          </div>
+          <div class="song-card-actions">
+            <span class="version-badge straw">V7</span>
+            <span class="stage-pill ghost" style="margin-left:auto">Writing</span>
+          </div>
+        </div>
+        <div class="song-card">
+          <div class="song-card-thumb" style="background:var(--surface-2);display:flex;align-items:center;justify-content:center">
+            <div style="font-family:'Thunder',Impact,sans-serif;font-size:28px;letter-spacing:0.1em;color:rgba(244,237,228,0.1)">TSR</div>
+          </div>
+          <div class="song-card-body">
+            <div class="song-card-title" style="color:var(--dune)">No artwork yet</div>
+            <div class="song-card-meta">Upload artwork to personalise</div>
+          </div>
+          <div class="song-card-actions">
+            <span class="version-badge">V1</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="component-label">Action cards</div>
+      <div style="display:grid;gap:1px;background:var(--color-border-mid);max-width:520px">
+        <div class="action-card">
+          <div class="action-status-circle"></div>
+          <div><div class="action-desc">Tighten snare at 1:24</div><div class="action-meta">Fading Light · V3</div></div>
+          <span class="badge badge-red">Open</span>
+        </div>
+        <div class="action-card">
+          <div class="action-status-circle"></div>
+          <div><div class="action-desc">Open reverb on the drop</div><div class="action-meta">Set This On Fire · V2</div></div>
+          <span class="badge badge-straw">In progress</span>
+        </div>
+        <div class="action-card">
+          <div class="action-status-circle done"></div>
+          <div><div class="action-desc">Add backing vocals to verse 2</div><div class="action-meta">Be Kind · V6</div></div>
+          <span class="badge badge-dune">Done</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══ 6. WAVEFORM PLAYER ══ -->
+  <div class="section" id="player">
+    <div class="section-header">
+      <span class="section-number">06</span>
+      <div>
+        <div class="section-title">Waveform Player</div>
+        <div class="section-desc">Song title in Thunder. Playhead and progress in red. Comment pins: red, straw, sand.</div>
+      </div>
+    </div>
+
+    <div class="demo-canvas" style="padding:0">
+      <div class="player-shell">
+        <div class="player-header">
+          <div>
+            <div class="player-title">Fading Light</div>
+            <div class="player-meta">Uploaded by Coris · 31 Mar 2026 · V3 · 3:11</div>
+          </div>
+          <button class="btn btn-primary btn-sm">↑ Upload new version</button>
+        </div>
+
+        <div class="waveform-area">
+          <div class="waveform-svg"></div>
+          <div class="waveform-progress"></div>
+          <div class="waveform-playhead"></div>
+          <div class="wave-pin wpin-red">@ 0:22</div>
+          <div class="wave-pin wpin-straw">@ 1:24</div>
+          <div class="wave-pin wpin-sand">@ 2:47</div>
+        </div>
+
+        <div class="player-controls">
+          <button class="play-btn">▶</button>
+          <span class="time-display">1:24 / 3:11</span>
+          <div style="flex:1;height:2px;background:var(--color-border-mid);position:relative">
+            <div style="position:absolute;left:0;top:0;width:40%;height:100%;background:var(--red)"></div>
+          </div>
+          <div class="player-version-select">
+            <button class="btn btn-ghost btn-sm">Change version</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══ 7. COMMENT THREADS ══ -->
+  <div class="section" id="comments">
+    <div class="section-header">
+      <span class="section-number">07</span>
+      <div>
+        <div class="section-title">Comment Threads</div>
+        <div class="section-desc">Sharp corners throughout. Own vs other differentiated by surface colour and border weight, not shape.</div>
+      </div>
+    </div>
+
+    <div class="demo-canvas" style="padding:0;max-width:560px">
+      <div class="thread-shell">
+        <div class="thread-header">
+          <div class="thread-dot" style="background:var(--red)"></div>
+          <span class="thread-timestamp">@ 1:24</span>
+          <span class="thread-title">Fading Light · V3</span>
+        </div>
+
+        <div class="thread-comments">
+          <div class="comment-bubble own">
+            <div class="comment-avatar" style="background:var(--red);color:var(--off-white)">C</div>
+            <div class="comment-body-wrap">
+              <div class="comment-meta">
+                <span class="comment-author">Coris</span>
+                <span class="comment-time">2h ago</span>
+              </div>
+              <div class="comment-body-inner">
+                <div class="comment-text">Love this drop — open the reverb a bit? The tail is cutting off too sharp.</div>
+              </div>
+              <div style="margin-top:6px;display:flex;gap:12px">
+                <button class="comment-action-link">Reply</button>
+                <button class="comment-action-link">Mark as action</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="comment-bubble other">
+            <div class="comment-avatar" style="background:var(--surface-3);color:var(--sand)">A</div>
+            <div class="comment-body-wrap">
+              <div class="comment-meta">
+                <span class="comment-author">Al</span>
+                <span class="comment-time">1h ago</span>
+              </div>
+              <div class="comment-body-inner">
+                <div class="comment-text">Agreed — I'll try a plate reverb on the snare and send V4 this evening.</div>
+              </div>
+              <div style="margin-top:6px;display:flex;gap:12px">
+                <button class="comment-action-link">Reply</button>
+                <button class="comment-action-link">Mark as action</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="thread-reply">
+          <input class="reply-input" type="text" placeholder="Reply…" />
+          <button class="btn btn-primary btn-sm">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══ 8. NAVIGATION ══ -->
+  <div class="section" id="nav">
+    <div class="section-header">
+      <span class="section-number">08</span>
+      <div>
+        <div class="section-title">Navigation</div>
+        <div class="section-desc">Brand name in Thunder. Active nav link in red. Identity chip with avatar circle.</div>
+      </div>
+    </div>
+
+    <div class="demo-canvas" style="padding:0">
+      <nav class="app-nav">
+        <div class="nav-brand">The Song <em>Room</em></div>
+        <div class="nav-links">
+          <a class="nav-link active" href="#">Songs</a>
+          <a class="nav-link" href="#">Actions</a>
+          <a class="nav-link" href="#">Settings</a>
+        </div>
+        <div class="nav-actions">
+          <div class="identity-chip">
+            <div class="identity-avatar" style="background:var(--red);color:var(--off-white)">C</div>
+            <span class="identity-name">Coris</span>
+          </div>
+        </div>
+      </nav>
+    </div>
+  </div>
+
+
+  <!-- ══ 9. TABS ══ -->
+  <div class="section" id="tabs">
+    <div class="section-header">
+      <span class="section-number">09</span>
+      <div>
+        <div class="section-title">Tabs</div>
+        <div class="section-desc">Active state fills red. Underline variant for secondary tab rows.</div>
+      </div>
+    </div>
+
+    <div class="demo-canvas">
+      <div class="component-label" style="margin-bottom:12px">Filled tabs</div>
+      <div class="demo-row" style="margin-bottom:28px;flex-direction:column;align-items:flex-start;gap:16px">
+        <div class="tabs">
+          <button class="tab active">Log in</button>
+          <button class="tab">Sign up</button>
+        </div>
+        <div class="tabs">
+          <button class="tab active">This version</button>
+          <button class="tab">All versions</button>
+        </div>
+        <div class="tabs">
+          <button class="tab active">Songs</button>
+          <button class="tab">Actions</button>
+          <button class="tab">Settings</button>
+        </div>
+      </div>
+
+      <div class="component-label" style="margin-bottom:12px">Underline tabs</div>
+      <div class="tabs-underline">
+        <button class="tab-ul active">Workspace</button>
+        <button class="tab-ul">Plan & billing</button>
+        <button class="tab-ul">Collaborators</button>
+        <button class="tab-ul">Referrals</button>
+        <button class="tab-ul">Appearance</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══ 10. BADGES & TAGS ══ -->
+  <div class="section" id="badges">
+    <div class="section-header">
+      <span class="section-number">10</span>
+      <div>
+        <div class="section-title">Badges, Tags & Indicators</div>
+        <div class="section-desc">DM Sans 600 uppercase throughout. Red for primary states, straw for secondary, sand/dune for neutral.</div>
+      </div>
+    </div>
+
+    <div class="demo-canvas">
+      <div class="component-label">Status badges</div>
+      <div class="demo-row" style="margin-bottom:24px">
+        <span class="badge badge-red">Open</span>
+        <span class="badge badge-red">Pending</span>
+        <span class="badge badge-straw">In progress</span>
+        <span class="badge badge-sand">Mixing</span>
+        <span class="badge badge-dune">Done</span>
+        <span class="badge badge-dune">Resolved</span>
+      </div>
+
+      <div class="component-label">Version badges</div>
+      <div class="demo-row" style="margin-bottom:24px">
+        <span class="version-badge red">V3</span>
+        <span class="version-badge straw">V5 ★</span>
+        <span class="version-badge sand">V1</span>
+        <span class="version-badge">V2</span>
+      </div>
+
+      <div class="component-label">Stage pills</div>
+      <div class="demo-row" style="margin-bottom:24px">
+        <span class="stage-pill">Mixing</span>
+        <span class="stage-pill straw">Mastering</span>
+        <span class="stage-pill ghost">Writing</span>
+        <span class="stage-pill done">Done</span>
+      </div>
+
+      <div class="component-label">Dot indicators</div>
+      <div class="demo-row" style="margin-bottom:24px;gap:16px;align-items:center">
+        <span class="dot dot-red"></span>
+        <span class="dot dot-straw"></span>
+        <span class="dot dot-sand"></span>
+        <span class="dot dot-dune"></span>
+      </div>
+
+      <div class="component-label">Count chips</div>
+      <div class="demo-row">
+        <span class="count-chip">3</span>
+        <span class="count-chip" style="background:var(--straw);color:var(--black)">12</span>
+        <span class="count-chip" style="background:var(--surface-3);color:var(--sand)">0</span>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══ 11. ALERTS & TOASTS ══ -->
+  <div class="section" id="alerts">
+    <div class="section-header">
+      <span class="section-number">11</span>
+      <div>
+        <div class="section-title">Alerts & Toasts</div>
+        <div class="section-desc">Left-border alerts. Toasts use dark surface with border.</div>
+      </div>
+    </div>
+
+    <div class="demo-canvas">
+      <div class="component-label">Alerts</div>
+      <div style="display:grid;gap:8px;margin-bottom:28px;max-width:520px">
+        <div class="alert alert-error">
+          <div class="alert-body">
+            <div class="alert-title">Upload failed</div>
+            <div class="alert-desc">File exceeds the 50GB storage limit on your current plan.</div>
+          </div>
+        </div>
+        <div class="alert alert-warn">
+          <div class="alert-body">
+            <div class="alert-title">Storage at 80%</div>
+            <div class="alert-desc">You're using 8.2GB of 10GB. Consider upgrading to Studio.</div>
+          </div>
+        </div>
+        <div class="alert alert-info">
+          <div class="alert-body">
+            <div class="alert-title">New version available</div>
+            <div class="alert-desc">Al uploaded V4 of Fading Light 2 minutes ago.</div>
+          </div>
+        </div>
+        <div class="alert alert-success">
+          <div class="alert-body">
+            <div class="alert-title">Comment saved</div>
+            <div class="alert-desc">Your feedback has been pinned to 1:24.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="component-label">Toasts</div>
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+        <div class="toast">
+          <div class="toast-dot" style="background:var(--red)"></div>
+          Upload failed — check your connection
+          <span class="toast-close">×</span>
+        </div>
+        <div class="toast">
+          <div class="toast-dot" style="background:var(--straw)"></div>
+          Al is reviewing your latest version
+          <span class="toast-close">×</span>
+        </div>
+        <div class="toast">
+          <div class="toast-dot" style="background:var(--sand)"></div>
+          Comment saved successfully
+          <span class="toast-close">×</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══ 12. MODALS ══ -->
+  <div class="section" id="modals">
+    <div class="section-header">
+      <span class="section-number">12</span>
+      <div>
+        <div class="section-title">Modals & Overlays</div>
+        <div class="section-desc">Modal titles in Thunder. Footer has cancel + primary CTA.</div>
+      </div>
+    </div>
+
+    <div class="demo-canvas">
+      <div class="component-label">New Song modal</div>
+      <div class="modal" style="margin-bottom:28px">
+        <div class="modal-header">
+          <span class="modal-title">New Song</span>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="field">
+            <label class="field-label">Song Title</label>
+            <input class="field-input" type="text" placeholder="e.g. Fading Light" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost btn-sm">Cancel</button>
+          <button class="btn btn-primary btn-sm">Create Song</button>
+        </div>
+      </div>
+
+      <div class="component-label">Delete confirm modal</div>
+      <div class="modal">
+        <div class="modal-header">
+          <span class="modal-title">Delete Song?</span>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size:14px;color:var(--color-text-secondary);line-height:1.6">This will permanently delete <strong style="color:var(--off-white)">Fading Light</strong> and all its versions, comments, and actions. This cannot be undone.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost btn-sm">Cancel</button>
+          <button class="btn btn-danger btn-sm">Delete Song</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══ 13. LOADING STATES ══ -->
+  <div class="section" id="loading">
+    <div class="section-header">
+      <span class="section-number">13</span>
+      <div>
+        <div class="section-title">Loading States</div>
+        <div class="section-desc">Skeleton screens pulse at warm surface colour. Spinner uses red.</div>
+      </div>
+    </div>
+
+    <div class="demo-canvas">
+      <div class="component-label">Skeleton cards</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--color-border-mid);margin-bottom:28px">
+        <div style="background:var(--black)">
+          <div class="skeleton skeleton-thumb"></div>
+          <div style="padding:16px">
+            <div class="skeleton skeleton-title"></div>
+            <div class="skeleton skeleton-text" style="width:60%"></div>
+          </div>
+        </div>
+        <div style="background:var(--black)">
+          <div class="skeleton skeleton-thumb"></div>
+          <div style="padding:16px">
+            <div class="skeleton skeleton-title" style="width:75%"></div>
+            <div class="skeleton skeleton-text" style="width:45%"></div>
+          </div>
+        </div>
+        <div style="background:var(--black)">
+          <div class="skeleton skeleton-thumb"></div>
+          <div style="padding:16px">
+            <div class="skeleton skeleton-title" style="width:55%"></div>
+            <div class="skeleton skeleton-text" style="width:70%"></div>
+          </div>
+        </div>
+        <div style="background:var(--black)">
+          <div class="skeleton skeleton-thumb"></div>
+          <div style="padding:16px">
+            <div class="skeleton skeleton-title"></div>
+            <div class="skeleton skeleton-text" style="width:50%"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="component-label">Spinners</div>
+      <div class="demo-row" style="align-items:center;gap:24px">
+        <div class="spinner" style="width:16px;height:16px;border-width:1.5px"></div>
+        <div class="spinner"></div>
+        <div class="spinner" style="width:40px;height:40px;border-width:3px"></div>
+        <div class="spinner" style="width:56px;height:56px;border-width:4px"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══ 14. DASHBOARD LAYOUT ══ -->
+  <div class="section" id="layout">
+    <div class="section-header">
+      <span class="section-number">14</span>
+      <div>
+        <div class="section-title">Dashboard Layout</div>
+        <div class="section-desc">Two-column grid. Songs wider on left, actions narrower on right. Column headers in DM Sans 600 uppercase.</div>
+      </div>
+    </div>
+
+    <div class="demo-canvas" style="padding:0">
+      <div class="dashboard-grid">
+        <div class="dashboard-col">
+          <div class="dashboard-col-header">
+            <span class="dashboard-col-title">Songs · 4</span>
+            <button class="btn btn-primary btn-sm">+ New Song</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--color-border)">
+            <div class="song-card">
+              <div class="song-card-thumb" style="aspect-ratio:unset;height:80px;background:linear-gradient(135deg,var(--red) 0 35%,var(--black) 35%)"><div class="song-card-thumb-inner"></div></div>
+              <div class="song-card-body" style="padding:10px 12px"><div class="song-card-title" style="font-size:15px">Fading Light</div><div class="song-card-meta">3 versions</div></div>
+              <div class="song-card-actions"><span class="version-badge red">V3</span></div>
+            </div>
+            <div class="song-card">
+              <div class="song-card-thumb" style="aspect-ratio:unset;height:80px;background:linear-gradient(135deg,#2a1818 0%,var(--black) 100%)"><div class="song-card-thumb-inner"></div></div>
+              <div class="song-card-body" style="padding:10px 12px"><div class="song-card-title" style="font-size:15px">Set This On Fire</div><div class="song-card-meta">2 versions</div></div>
+              <div class="song-card-actions"><span class="version-badge sand">V2</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-col">
+          <div class="dashboard-col-header">
+            <span class="dashboard-col-title">Actions · 3</span>
+            <div style="display:flex;gap:4px">
+              <button class="btn btn-primary btn-sm">All</button>
+              <button class="btn btn-ghost btn-sm">Open</button>
+              <button class="btn btn-ghost btn-sm">Done</button>
+            </div>
+          </div>
+          <div style="display:grid;gap:1px;background:var(--color-border)">
+            <div class="action-card">
+              <div class="action-status-circle"></div>
+              <div><div class="action-desc" style="font-size:13px">Tighten snare at 1:24</div><div class="action-meta">Fading Light</div></div>
+              <span class="badge badge-red">Open</span>
+            </div>
+            <div class="action-card">
+              <div class="action-status-circle done"></div>
+              <div><div class="action-desc" style="font-size:13px">Open reverb on the drop</div><div class="action-meta">Set This On Fire</div></div>
+              <span class="badge badge-dune">Done</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Footer -->
+  <div style="border-top:1px solid var(--color-border-mid);padding-top:40px;margin-top:40px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px">
+    <div>
+      <div style="font-family:'Thunder',Impact,sans-serif;font-size:18px;letter-spacing:0.1em;text-transform:uppercase;color:var(--red);margin-bottom:6px">The Song Room — V3 Design System</div>
+      <div style="font-size:12px;color:var(--color-text-tertiary);font-style:italic">Fonts: Thunder (display) + DM Sans (UI) · Palette: Off-black / Red / Straw / Off-white / Sand</div>
+    </div>
+    <div style="font-size:11px;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.1em">Updated May 2026</div>
+  </div>
+
+</main>
+</body>
+</html>
