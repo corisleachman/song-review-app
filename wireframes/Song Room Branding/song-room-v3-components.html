@@ -8,11 +8,40 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet" />
   <style>
+/* Thunder font cuts — weight mapped to size range */
 @font-face {
-  font-family: 'Thunder';
+  font-family: 'ThunderBlack';
   src: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-BlackLC.otf') format('opentype');
   font-weight: 900;
-  font-style: normal;
+}
+@font-face {
+  font-family: 'ThunderBold';
+  src: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-BoldLC.ttf') format('truetype');
+  font-weight: 700;
+}
+@font-face {
+  font-family: 'ThunderReg';
+  src: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-LC.ttf') format('truetype');
+  font-weight: 400;
+}
+@font-face {
+  font-family: 'ThunderLight';
+  src: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-LightLC.ttf') format('truetype');
+  font-weight: 300;
+}
+@font-face {
+  font-family: 'ThunderXLight';
+  src: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-ExtraLightLC.ttf') format('truetype');
+  font-weight: 200;
+}
+
+/* Shorthand vars for convenience */
+:root {
+  --t-black: 'ThunderBlack', Impact, 'Arial Narrow Bold', sans-serif;
+  --t-bold:  'ThunderBold',  Impact, 'Arial Narrow Bold', sans-serif;
+  --t-reg:   'ThunderReg',   Impact, 'Arial Narrow Bold', sans-serif;
+  --t-light: 'ThunderLight', Impact, 'Arial Narrow Bold', sans-serif;
+  --t-xlight:'ThunderXLight',Impact, 'Arial Narrow Bold', sans-serif;
 }
 
 /* ═══════════════════════════════════════════
@@ -118,7 +147,7 @@ body {
 }
 
 .wiki-brand {
-  font-family: 'Thunder', Impact, sans-serif;
+  font-family: var(--t-reg);
   font-size: 14px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -186,7 +215,7 @@ body {
 }
 
 .wiki-hero h1 {
-  font-family: 'Thunder', Impact, 'Arial Narrow Bold', sans-serif;
+  font-family: var(--t-black);
   text-transform: uppercase;
   font-size: clamp(56px, 9vw, 130px);
   line-height: 0.84;
@@ -220,7 +249,7 @@ body {
 }
 
 .section-number {
-  font-family: 'Thunder', Impact, sans-serif;
+  font-family: var(--t-black);
   font-size: 72px;
   line-height: 1;
   letter-spacing: 0;
@@ -229,7 +258,7 @@ body {
 }
 
 .section-title {
-  font-family: 'Thunder', Impact, sans-serif;
+  font-family: var(--t-bold);
   font-size: 32px;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -321,7 +350,7 @@ body {
 ═══════════════════════════════════════════ */
 
 .type-display {
-  font-family: 'Thunder', Impact, 'Arial Narrow Bold', sans-serif;
+  font-family: var(--t-black);
   text-transform: uppercase;
   font-size: clamp(64px, 10vw, 140px);
   line-height: 0.84;
@@ -329,7 +358,7 @@ body {
 }
 
 .type-display-sm {
-  font-family: 'Thunder', Impact, 'Arial Narrow Bold', sans-serif;
+  font-family: var(--t-bold);
   text-transform: uppercase;
   font-size: clamp(36px, 6vw, 72px);
   line-height: 0.88;
@@ -337,14 +366,14 @@ body {
 }
 
 .type-heading-1 {
-  font-family: 'Thunder', Impact, sans-serif;
+  font-family: var(--t-bold);
   font-size: 36px;
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 
 .type-heading-2 {
-  font-family: 'Thunder', Impact, sans-serif;
+  font-family: var(--t-bold);
   font-size: 26px;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -635,7 +664,7 @@ textarea.field-input {
 .song-card-body { padding: var(--space-lg); }
 
 .song-card-title {
-  font-family: 'Thunder', Impact, sans-serif;
+  font-family: var(--t-reg);
   font-size: 17px;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -740,7 +769,7 @@ textarea.field-input {
 }
 
 .player-title {
-  font-family: 'Thunder', Impact, sans-serif;
+  font-family: var(--t-reg);
   font-size: 22px;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -998,7 +1027,7 @@ textarea.field-input {
 }
 
 .nav-brand {
-  font-family: 'Thunder', Impact, sans-serif;
+  font-family: var(--t-reg);
   font-size: 16px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -1215,7 +1244,7 @@ textarea.field-input {
 }
 
 .modal-title {
-  font-family: 'Thunder', Impact, sans-serif;
+  font-family: var(--t-reg);
   font-size: 20px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1438,22 +1467,22 @@ textarea.field-input {
     <div class="demo-canvas">
       <div class="type-block">
         <div class="type-display" style="color:var(--off-white)">Create Together</div>
-        <div class="type-note">Thunder · Display · 0 letter-spacing · 0.84 line-height · Hero headings, song titles, section headers, CTA buttons</div>
+        <div class="type-note">Thunder-BlackLC · 56px+ · Hero headings, full-screen titles, section numbers</div>
       </div>
 
       <div class="type-block">
         <div class="type-display" style="color:var(--red)">The Song Room</div>
-        <div class="type-note">Thunder · Display · Brand name in red</div>
+        <div class="type-note">Thunder-BlackLC · Display · Brand name treatment</div>
       </div>
 
       <div class="type-block">
         <div class="type-display-sm">Every Version. One Room.</div>
-        <div class="type-note">Thunder · Display SM · Secondary headlines, page titles</div>
+        <div class="type-note">Thunder-BoldLC · 36–72px · Secondary headlines, page titles</div>
       </div>
 
       <div class="type-block">
         <div class="type-heading-1">Fading Light</div>
-        <div class="type-note">Thunder · 36px · Song card titles, section headings within pages</div>
+        <div class="type-note">Thunder-BoldLC · 32–36px · Section headings, sub-headers</div>
       </div>
 
       <div class="type-block">
@@ -1479,6 +1508,32 @@ textarea.field-input {
       <div class="type-block">
         <div class="type-label">Version note · Pending · 3 actions</div>
         <div class="type-note">DM Sans 600 uppercase · 10px · 0.16em tracking · Pills, badges, status tags, eyebrow labels</div>
+      </div>
+
+      <div class="type-block" style="padding-top:28px">
+        <div class="component-label" style="margin-bottom:16px">Thunder cuts reference</div>
+        <div style="display:grid;gap:12px">
+          <div>
+            <div style="font-family:'ThunderBlack',Impact,sans-serif;font-size:48px;line-height:1;letter-spacing:0;text-transform:uppercase;color:var(--off-white)">Thunder Black LC</div>
+            <div class="type-note">Thunder-BlackLC · 56px+ · Hero, section numbers, full-screen display</div>
+          </div>
+          <div>
+            <div style="font-family:'ThunderBold',Impact,sans-serif;font-size:36px;line-height:1;letter-spacing:0;text-transform:uppercase;color:var(--off-white)">Thunder Bold LC</div>
+            <div class="type-note">Thunder-BoldLC · 32–55px · Section titles, sub-headings, page headers</div>
+          </div>
+          <div>
+            <div style="font-family:'ThunderReg',Impact,sans-serif;font-size:22px;line-height:1;letter-spacing:0.02em;text-transform:uppercase;color:var(--off-white)">Thunder Regular LC — Modal Title · Player Title · Nav Brand</div>
+            <div class="type-note">Thunder-LC · 16–31px · Modals, player, nav, song card titles, brand name</div>
+          </div>
+          <div>
+            <div style="font-family:'ThunderLight',Impact,sans-serif;font-size:18px;line-height:1;letter-spacing:0.04em;text-transform:uppercase;color:var(--sand)">Thunder Light LC — secondary label use</div>
+            <div class="type-note">Thunder-LightLC · Role TBD — possible use for secondary headings or captions</div>
+          </div>
+          <div>
+            <div style="font-family:'ThunderXLight',Impact,sans-serif;font-size:16px;line-height:1;letter-spacing:0.06em;text-transform:uppercase;color:var(--dune)">Thunder Extra Light LC — decorative / editorial only</div>
+            <div class="type-note">Thunder-ExtraLightLC · Role TBD — editorial / decorative use at larger sizes only</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1647,7 +1702,7 @@ textarea.field-input {
         </div>
         <div class="song-card">
           <div class="song-card-thumb" style="background:var(--surface-2);display:flex;align-items:center;justify-content:center">
-            <div style="font-family:'Thunder',Impact,sans-serif;font-size:28px;letter-spacing:0.1em;color:rgba(244,237,228,0.1)">TSR</div>
+            <div style="font-family:'ThunderReg',Impact,sans-serif;font-size:28px;letter-spacing:0.1em;color:rgba(244,237,228,0.1)">TSR</div>
           </div>
           <div class="song-card-body">
             <div class="song-card-title" style="color:var(--dune)">No artwork yet</div>
@@ -2135,7 +2190,7 @@ textarea.field-input {
   <!-- Footer -->
   <div style="border-top:1px solid var(--color-border-mid);padding-top:40px;margin-top:40px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px">
     <div>
-      <div style="font-family:'Thunder',Impact,sans-serif;font-size:18px;letter-spacing:0.1em;text-transform:uppercase;color:var(--red);margin-bottom:6px">The Song Room — V3 Design System</div>
+      <div style="font-family:'ThunderBold',Impact,sans-serif;font-size:18px;letter-spacing:0.1em;text-transform:uppercase;color:var(--red);margin-bottom:6px">The Song Room — V3 Design System</div>
       <div style="font-size:12px;color:var(--color-text-tertiary);font-style:italic">Fonts: Thunder (display) + DM Sans (UI) · Palette: Off-black / Red / Straw / Off-white / Sand</div>
     </div>
     <div style="font-size:11px;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.1em">Updated May 2026</div>
