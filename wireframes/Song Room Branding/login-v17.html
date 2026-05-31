@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Song Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+@font-face {
+  font-family: 'Thunder';
+  src: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-BlackLC.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'ThunderLC';
+  src: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-LC.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --off-white: #F4F0E8;
+  --charcoal:  #111111;
+  --sand:      #D8CBB8;
+  --border:    rgba(244,240,232,0.16);
+  --border-lo: rgba(244,240,232,0.08);
+  --ui:        'DM Sans', -apple-system, sans-serif;
+  --ease-out:  cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--ui);
+  -webkit-font-smoothing: antialiased;
+  background: #000;
+  color: var(--off-white);
+}
+
+/* ── BACKGROUND ── */
+.bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+/* Each slide sits absolutely on top of each other, crossfade via opacity */
+.bg-slide {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center top;
+  opacity: 0;
+  transition: opacity 2s ease-in-out;
+}
+
+.bg-slide.active { opacity: 1; }
+
+.bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to right,
+      rgba(0,0,0,0.18) 0%,
+      rgba(0,0,0,0.30) 42%,
+      rgba(0,0,0,0.72) 65%,
+      rgba(0,0,0,0.88) 100%
+    ),
+    linear-gradient(to bottom,
+      rgba(0,0,0,0.08) 0%,
+      rgba(0,0,0,0.38) 100%
+    );
+}
+
+/* ── PAGE GRID ── */
+.page {
+  position: relative;
+  z-index: 1;
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto 1fr auto auto;
+}
+
+/* ── NAV ── */
+nav {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px 44px;
+}
+
+.nav-brand {
+  font-family: 'Thunder', Impact, sans-serif;
+  font-size: 17px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--off-white);
+}
+
+/* ── LEFT — AUTH ── */
+.left {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 48px 56px;
+}
+
+.tabs {
+  display: flex;
+  border: 1px solid var(--border);
+  width: fit-content;
+  margin-bottom: 18px;
+}
+
+.tab-btn {
+  padding: 11px 26px;
+  font-family: var(--ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: transparent;
+  border: none;
+  color: rgba(244,240,232,0.36);
+  cursor: pointer;
+  transition: color 140ms, background 140ms;
+  white-space: nowrap;
+}
+
+.tab-btn:first-child { border-right: 1px solid var(--border); }
+
+.tab-btn.active {
+  background: var(--off-white);
+  color: var(--charcoal);
+}
+
+.tab-btn:not(.active):hover {
+  color: var(--off-white);
+  background: rgba(244,240,232,0.06);
+}
+
+.auth-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 320px;
+}
+
+.hidden { display: none !important; }
+
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 18px;
+  background: rgba(244,240,232,0.08);
+  border: 1px solid var(--border);
+  color: var(--off-white);
+  font-family: var(--ui);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 140ms, border-color 140ms;
+  width: 100%;
+  backdrop-filter: blur(6px);
+}
+
+.btn-google:hover {
+  background: rgba(244,240,232,0.14);
+  border-color: rgba(244,240,232,0.3);
+}
+
+.btn-email-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 11px 18px;
+  background: transparent;
+  border: 1px solid var(--border-lo);
+  color: rgba(244,240,232,0.36);
+  font-family: var(--ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 140ms, border-color 140ms;
+  width: 100%;
+}
+
+.btn-email-toggle:hover {
+  color: rgba(244,240,232,0.7);
+  border-color: var(--border);
+}
+
+.chevron {
+  transition: transform 280ms var(--ease-out);
+  flex-shrink: 0;
+}
+
+.chevron.open { transform: rotate(180deg); }
+
+.email-fields {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition:
+    max-height 380ms var(--ease-out),
+    opacity 240ms var(--ease-out);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.email-fields.open {
+  max-height: 260px;
+  opacity: 1;
+}
+
+.field-input {
+  width: 100%;
+  padding: 13px 14px;
+  background: rgba(10,10,10,0.65);
+  border: 1px solid var(--border);
+  color: var(--off-white);
+  font-family: var(--ui);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 140ms;
+  backdrop-filter: blur(6px);
+  -webkit-appearance: none;
+}
+
+.field-input::placeholder { color: rgba(244,240,232,0.26); }
+.field-input:focus { border-color: var(--off-white); }
+
+.btn-submit {
+  width: 100%;
+  padding: 14px 18px;
+  background: var(--off-white);
+  border: none;
+  color: var(--charcoal);
+  font-family: var(--ui);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity 140ms;
+}
+
+.btn-submit:hover { opacity: 0.88; }
+
+.form-footer {
+  padding-top: 2px;
+}
+
+.form-footer a, .terms-link {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(244,240,232,0.28);
+  text-decoration: none;
+  transition: color 140ms;
+}
+
+.form-footer a:hover, .terms-link:hover { color: var(--off-white); }
+
+/* ── RIGHT — HEADLINE ── */
+.right {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 88px 56px 16px;
+}
+
+.headline-svg-wrap { width: 100%; }
+
+.hero-tagline {
+  font-family: 'ThunderLC', Impact, sans-serif;
+  font-size: 33px;
+  font-weight: 400;
+  font-style: normal;
+  color: #F4F0E8;
+  line-height: 1.5;
+  letter-spacing: -0.02em;
+  max-width: 620px;
+  position: relative;
+  top: -40px;
+  left: 21px;
+}
+
+/* ── FOOTER ── */
+footer {
+  grid-column: 1 / -1;
+  padding: 0 44px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.footer-note {
+  font-size: 11px;
+  color: rgba(244,240,232,0.2);
+  letter-spacing: 0.05em;
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.left  { animation: fade-up 0.55s 0.06s var(--ease-out) both; }
+.right {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 88px 56px 16px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+/* ── EQ VISUALISER ── */
+.eq-bar-wrap {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 56px;
+  padding: 0;
+  overflow: hidden;
+  z-index: 10;
+}
+
+.eq-bar {
+  flex: 1;
+  background: rgba(244,240,232,0.18);
+  transform-origin: bottom;
+  transition: height 80ms cubic-bezier(0.23, 1, 0.32, 1);
+  min-width: 2px;
+  border-radius: 0;
+}
+
+</style>
+</head>
+<body>
+
+<div class="bg" id="bg">
+  <div class="bg-slide" style="background-image: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song%20room%20bg%20-%20person1%20Large.jpeg')"></div>
+  <div class="bg-slide" style="background-image: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song%20room%20bg%20-%20person2%20Large.jpeg')"></div>
+  <div class="bg-slide" style="background-image: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song%20room%20bg%20-%20person3%20Large.jpeg')"></div>
+  <div class="bg-slide" style="background-image: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song%20room%20bg%20-%20person4%20Large.jpeg')"></div>
+  <div class="bg-slide" style="background-image: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song%20room%20bg%20-%20person5%20Large.jpeg')"></div>
+  <div class="bg-slide" style="background-image: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song%20room%20bg%20-%20person6%20Large.jpeg')"></div>
+</div>
+
+<div class="page">
+
+  <nav>
+    <div class="nav-brand">The Song Room</div>
+  </nav>
+
+  <!-- LEFT -->
+  <div class="left">
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('login', this)">Log in</button>
+      <button class="tab-btn" onclick="switchTab('signup', this)">Sign up</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div class="auth-panel" id="view-login">
+      <button class="btn-google">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Log in with Google
+      </button>
+
+      <button class="btn-email-toggle" onclick="toggleEmail('login')">
+        <span>Continue with email</span>
+        <svg class="chevron" id="chev-login" width="10" height="6" viewBox="0 0 10 6" fill="none">
+          <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+        </svg>
+      </button>
+
+      <div class="email-fields" id="ef-login">
+        <input class="field-input" type="email" placeholder="Email address">
+        <input class="field-input" type="password" placeholder="Password">
+        <button class="btn-submit">Log in</button>
+        <div class="form-footer"><a href="#">Forgot password?</a></div>
+      </div>
+    </div>
+
+    <!-- SIGNUP -->
+    <div class="auth-panel hidden" id="view-signup">
+      <button class="btn-google">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Sign up with Google
+      </button>
+
+      <button class="btn-email-toggle" onclick="toggleEmail('signup')">
+        <span>Sign up with email</span>
+        <svg class="chevron" id="chev-signup" width="10" height="6" viewBox="0 0 10 6" fill="none">
+          <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+        </svg>
+      </button>
+
+      <div class="email-fields" id="ef-signup">
+        <input class="field-input" type="email" placeholder="Email address">
+        <input class="field-input" type="password" placeholder="Password (min 8 characters)">
+        <button class="btn-submit">Create account</button>
+        <div class="form-footer"><a class="terms-link" href="#">Terms &amp; Privacy</a></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+    <div class="headline-svg-wrap">
+<svg id="headline-svg" viewBox="0 0 563 344" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;overflow:visible"><g transform="translate(0,0)"><path d="M37.2 56.39999999999999C37.2 54.0 37.6 53.19999999999999 38.400000000000006 53.19999999999999C39.2 53.19999999999999 39.6 54.0 39.6 56.39999999999999V92.0H75.60000000000001V59.0C75.60000000000001 35.400000000000006 61.800000000000004 22.0 37.800000000000004 22.0C14.200000000000001 22.0 1.2000000000000002 34.79999999999998 1.2000000000000002 59.0V128.8C1.2000000000000002 153.0 14.200000000000001 166.0 37.800000000000004 166.0C61.800000000000004 166.0 75.60000000000001 152.6 75.60000000000001 128.8V96.0H39.6V131.6C39.6 133.8 39.2 134.8 38.400000000000006 134.8C37.6 134.8 37.2 133.8 37.2 131.6Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="810" stroke-dashoffset="810" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="810" to="0" dur="3.8s" begin="0.179s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.179s" fill="freeze"/></path></g>
+<g transform="translate(0,0)"><path d="M78.00000000000001 24.0V164.0H114.00000000000001V114.0H114.4C116.4 114.0 116.4 114.4 116.4 117.19999999999999V135.2C116.4 146.0 116.60000000000002 155.2 118.4 164.0H154.40000000000003C152.60000000000002 155.4 152.40000000000003 146.2 152.40000000000003 135.6V134.0C152.40000000000003 112.6 140.4 99.6 132.0 99.6V97.2C140.60000000000002 97.2 152.40000000000003 85.8 152.40000000000003 62.39999999999999V61.39999999999999C152.40000000000003 36.0 138.60000000000002 24.0 114.80000000000001 24.0ZM114.00000000000001 55.19999999999999H114.4C116.4 55.19999999999999 116.4 55.599999999999994 116.4 58.19999999999999V79.6C116.4 82.39999999999999 116.4 82.8 114.4 82.8H114.00000000000001Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="788" stroke-dashoffset="788" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="788" to="0" dur="3.8s" begin="0.007s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.007s" fill="freeze"/></path></g>
+<g transform="translate(0,0)"><path d="M206.8 55.19999999999999V24.0H154.8V164.0H206.8V132.8H190.8V105.8H206.8V74.6H190.8V55.19999999999999Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="610" stroke-dashoffset="610" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="610" to="0" dur="3.8s" begin="0.077s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.077s" fill="freeze"/></path></g>
+<g transform="translate(0,0)"><path d="M218.20000000000002 24.0 208.60000000000002 164.0H244.60000000000002V135.2H247.00000000000003V164.0H283.0L274.20000000000005 24.0ZM244.60000000000002 104.0V86.8H247.00000000000003V104.0Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="632" stroke-dashoffset="632" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="632" to="0" dur="3.8s" begin="0.062s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.062s" fill="freeze"/></path></g>
+<g transform="translate(0,0)"><path d="M356.40000000000003 24.0H284.40000000000003V55.19999999999999H302.40000000000003V164.0H338.40000000000003V55.19999999999999H356.40000000000003Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="580" stroke-dashoffset="580" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="580" to="0" dur="3.8s" begin="0.206s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.206s" fill="freeze"/></path></g>
+<g transform="translate(0,0)"><path d="M410.40000000000003 55.19999999999999V24.0H358.40000000000003V164.0H410.40000000000003V132.8H394.40000000000003V105.8H410.40000000000003V74.6H394.40000000000003V55.19999999999999Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="610" stroke-dashoffset="610" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="610" to="0" dur="3.8s" begin="0.189s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.189s" fill="freeze"/></path></g>
+<g transform="translate(0,144)"><path d="M72.8 24.0H0.8V55.19999999999999H18.8V164.0H54.800000000000004V55.19999999999999H72.8Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="580" stroke-dashoffset="580" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="580" to="0" dur="3.8s" begin="0.25s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.25s" fill="freeze"/></path></g>
+<g transform="translate(0,144)"><path d="M74.80000000000001 59.0V128.8C74.80000000000001 153.0 87.80000000000001 166.0 111.4 166.0C135.4 166.0 149.20000000000002 152.6 149.20000000000002 128.8V59.0C149.20000000000002 35.400000000000006 135.4 22.0 111.4 22.0C87.80000000000001 22.0 74.80000000000001 34.79999999999998 74.80000000000001 59.0ZM110.80000000000001 56.39999999999999C110.80000000000001 54.0 111.20000000000002 53.19999999999999 112.00000000000001 53.19999999999999C112.80000000000001 53.19999999999999 113.20000000000002 54.0 113.20000000000002 56.39999999999999V131.6C113.20000000000002 133.8 112.80000000000001 134.8 112.00000000000001 134.8C111.20000000000002 134.8 110.80000000000001 133.8 110.80000000000001 131.6Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="730" stroke-dashoffset="730" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="730" to="0" dur="3.8s" begin="0.024s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.024s" fill="freeze"/></path></g>
+<g transform="translate(0,144)"><path d="M187.60000000000002 56.39999999999999C187.60000000000002 54.0 188.00000000000003 53.19999999999999 188.80000000000004 53.19999999999999C189.60000000000002 53.19999999999999 190.00000000000003 54.0 190.00000000000003 56.39999999999999V81.6H226.00000000000006V59.0C226.00000000000006 35.400000000000006 212.20000000000005 22.0 188.20000000000005 22.0C164.60000000000002 22.0 151.60000000000002 34.79999999999998 151.60000000000002 59.0V128.8C151.60000000000002 155.4 166.40000000000003 166.0 179.60000000000002 166.0C188.60000000000002 166.0 197.00000000000003 161.2 199.20000000000005 152.8H201.60000000000002V164.0H226.00000000000006V85.6H187.60000000000002ZM187.60000000000002 108.8H190.00000000000003V131.6C190.00000000000003 133.8 189.60000000000002 134.8 188.80000000000004 134.8C188.00000000000003 134.8 187.60000000000002 133.8 187.60000000000002 131.6Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="796" stroke-dashoffset="796" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="796" to="0" dur="3.8s" begin="0.118s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.118s" fill="freeze"/></path></g>
+<g transform="translate(0,144)"><path d="M280.40000000000003 55.19999999999999V24.0H228.40000000000003V164.0H280.40000000000003V132.8H264.40000000000003V105.8H280.40000000000003V74.6H264.40000000000003V55.19999999999999Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="610" stroke-dashoffset="610" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="610" to="0" dur="3.8s" begin="0.008s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.008s" fill="freeze"/></path></g>
+<g transform="translate(0,144)"><path d="M354.40000000000003 24.0H282.40000000000003V55.19999999999999H300.40000000000003V164.0H336.40000000000003V55.19999999999999H354.40000000000003Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="580" stroke-dashoffset="580" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="580" to="0" dur="3.8s" begin="0.061s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.061s" fill="freeze"/></path></g>
+<g transform="translate(0,144)"><path d="M394.80000000000007 24.0V76.6H392.40000000000003V24.0H356.40000000000003V164.0H392.40000000000003V107.8H394.80000000000007V164.0H430.80000000000007V24.0Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="858" stroke-dashoffset="858" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="858" to="0" dur="3.8s" begin="0.141s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.141s" fill="freeze"/></path></g>
+<g transform="translate(0,144)"><path d="M485.20000000000005 55.19999999999999V24.0H433.20000000000005V164.0H485.20000000000005V132.8H469.20000000000005V105.8H485.20000000000005V74.6H469.20000000000005V55.19999999999999Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="610" stroke-dashoffset="610" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="610" to="0" dur="3.8s" begin="0.007s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.007s" fill="freeze"/></path></g>
+<g transform="translate(0,144)"><path d="M487.6000000000001 24.0V164.0H523.6000000000001V114.0H524.0000000000001C526.0000000000001 114.0 526.0000000000001 114.4 526.0000000000001 117.19999999999999V135.2C526.0000000000001 146.0 526.2 155.2 528.0000000000001 164.0H564.0000000000001C562.2 155.4 562.0000000000001 146.2 562.0000000000001 135.6V134.0C562.0000000000001 112.6 550.0000000000001 99.6 541.6000000000001 99.6V97.2C550.2 97.2 562.0000000000001 85.8 562.0000000000001 62.39999999999999V61.39999999999999C562.0000000000001 36.0 548.2 24.0 524.4000000000001 24.0ZM523.6000000000001 55.19999999999999H524.0000000000001C526.0000000000001 55.19999999999999 526.0000000000001 55.599999999999994 526.0000000000001 58.19999999999999V79.6C526.0000000000001 82.39999999999999 526.0000000000001 82.8 524.0000000000001 82.8H523.6000000000001Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="788" stroke-dashoffset="788" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="788" to="0" dur="3.8s" begin="0.056s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.056s" fill="freeze"/></path></g></svg>
+    </div>
+    <p class="hero-tagline">Every version. Every note. One room.</p>
+  </div>
+
+  <!-- EQ VISUALISER -->
+  <div class="eq-bar-wrap" id="eq"></div>
+
+  <footer>
+    <span class="footer-note">© The Song Room 2026</span>
+    <span class="footer-note">Collaborative music review</span>
+  </footer>
+
+</div>
+
+<script>
+  // ── EQ VISUALISER — frequency-aware ──
+  const eq = document.getElementById('eq');
+  const BAR_COUNT = 120;
+  const bars = [];
+
+  for (let i = 0; i < BAR_COUNT; i++) {
+    const b = document.createElement('div');
+    b.className = 'eq-bar';
+    b.style.height = '3px';
+    eq.appendChild(b);
+    bars.push(b);
+  }
+
+  const state = bars.map(() => ({ h: 3, target: 3, vel: 0 }));
+
+  let lastMouseX = -1, lastMouseY = -1;
+  let mouseActivity = 0;
+
+  // Simulated 120BPM beat clock — kicks every 500ms, with sub-beat at 250ms
+  let beatPhase = 0;       // 0–1 within a bar (4 beats)
+  let kickEnergy = 0;      // current kick transient energy
+  let subEnergy  = 0;      // sub-bass swell
+  const BPM = 120;
+  const BEAT_MS = (60 / BPM) * 1000;  // 500ms per beat
+  let lastTime = performance.now();
+
+  document.addEventListener('mousemove', (e) => {
+    const dx = e.clientX - lastMouseX;
+    const dy = e.clientY - lastMouseY;
+    mouseActivity = Math.min(1, mouseActivity + Math.sqrt(dx*dx + dy*dy) * 0.012);
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+  });
+
+  function tick(now) {
+    const dt = now - lastTime;
+    lastTime = now;
+
+    // Advance beat clock
+    beatPhase = (beatPhase + dt / (BEAT_MS * 4)) % 1; // phase 0–1 over 4 beats (1 bar)
+
+    // Kick drum hits on beats 1 and 3 (phase 0, 0.5)
+    // Snare on 2 and 4 (phase 0.25, 0.75)
+    const beatPos = (beatPhase * 4) % 1; // 0–1 within each beat
+    const isKick   = beatPos < 0.04;
+    const isSnare  = Math.abs(beatPos - 0.5) < 0.03;
+    const beatNum  = Math.floor(beatPhase * 4); // 0,1,2,3
+
+    if (isKick && (beatNum === 0 || beatNum === 2)) {
+      kickEnergy = Math.min(1, kickEnergy + mouseActivity * 0.95 + 0.35);
+    }
+    if (isSnare && (beatNum === 1 || beatNum === 3)) {
+      subEnergy  = Math.min(1, subEnergy  + mouseActivity * 0.6  + 0.22);
+    }
+
+    // Decay — slow enough to stay lively while mouse is moving at all
+    mouseActivity = Math.max(0.18, mouseActivity - 0.006);
+    kickEnergy    = Math.max(0, kickEnergy    - 0.022);
+    subEnergy     = Math.max(0, subEnergy     - 0.014);
+
+    const activity = mouseActivity;
+
+    bars.forEach((bar, i) => {
+      const s = state[i];
+      const t = i / BAR_COUNT; // 0 = leftmost (bass), 1 = rightmost (treble)
+
+      // Frequency band character
+      const isBass   = t < 0.20;   // sub + kick — big pumping columns
+      const isLow    = t < 0.38;   // low-mid — still meaty
+      const isMid    = t < 0.65;   // mids — moderate
+      // highs = rest — shimmer, fast, shorter
+
+      // Max height per band
+      const maxH = isBass ? 52 : isLow ? 42 : isMid ? 32 : 22;
+
+      // Base energy per band
+      let energy = activity;
+      if (isBass) energy = Math.max(energy, kickEnergy * 0.95);
+      if (isLow)  energy = Math.max(energy, kickEnergy * 0.65 + subEnergy * 0.3);
+      if (isMid)  energy = Math.max(energy, subEnergy  * 0.45 + activity * 0.5);
+
+      // Each bar has its own random trigger probability
+      const triggerProb = isBass
+        ? 0.06 + energy * 0.55          // bass fires hard on beat
+        : isLow
+        ? 0.05 + energy * 0.38
+        : isMid
+        ? 0.08 + energy * 0.28
+        : 0.10 + energy * 0.20;         // highs shimmer more constantly
+
+      if (Math.random() < triggerProb) {
+        const baseH = isBass ? 4 + energy * maxH * 0.92
+                    : isLow  ? 4 + energy * maxH * 0.78
+                    : isMid  ? 3 + energy * maxH * 0.65
+                    :           2 + energy * maxH * 0.55;
+        const jitter = Math.random() * (isBass ? 10 : isMid ? 7 : 5) * energy;
+        s.target = Math.min(maxH, baseH + jitter);
+      } else {
+        // Decay — bass holds longer, highs snap back fast
+        const decay = isBass ? 0.88 + energy * 0.06
+                    : isLow  ? 0.82 + energy * 0.05
+                    : isMid  ? 0.74
+                    :           0.62;
+        s.target = Math.max(2, s.target * decay);
+      }
+
+      // Spring physics — bass is heavier (slower), highs are snappy
+      const springK  = isBass ? 0.28 : isLow ? 0.32 : isMid ? 0.38 : 0.48;
+      const friction  = isBass ? 0.65 : isLow ? 0.60 : isMid ? 0.55 : 0.48;
+      const diff = s.target - s.h;
+      s.vel = s.vel * friction + diff * springK;
+      s.h   = Math.max(2, Math.min(maxH, s.h + s.vel));
+
+      bar.style.height = s.h + 'px';
+
+      // Bass bars slightly brighter when pumping
+      const alpha = isBass
+        ? 0.15 + (s.h / maxH) * 0.55
+        : 0.10 + (s.h / maxH) * 0.38;
+      bar.style.background = `rgba(244,240,232,${alpha.toFixed(2)})`;
+    });
+
+    requestAnimationFrame(tick);
+  }
+
+  requestAnimationFrame(tick);
+
+  // ── TABS & EMAIL ──
+  function switchTab(name, el) {
+    document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('view-login').classList.toggle('hidden', name !== 'login');
+    document.getElementById('view-signup').classList.toggle('hidden', name !== 'signup');
+    ['login','signup'].forEach(v => {
+      document.getElementById('ef-' + v).classList.remove('open');
+      document.getElementById('chev-' + v).classList.remove('open');
+    });
+  }
+
+  function toggleEmail(view) {
+    const fields = document.getElementById('ef-' + view);
+    const chev   = document.getElementById('chev-' + view);
+    const isOpen = fields.classList.contains('open');
+    fields.classList.toggle('open', !isOpen);
+    chev.classList.toggle('open', !isOpen);
+  }
+
+  // ── BACKGROUND CROSSFADE ──
+  const slides = document.querySelectorAll('.bg-slide');
+  let current = 0;
+  slides[current].classList.add('active');
+
+  setInterval(() => {
+    slides[current].classList.remove('active');
+    current = (current + 1) % slides.length;
+    slides[current].classList.add('active');
+  }, 5000); // 5s per image, 2s crossfade transition
+
+</script>
+</body>
+</html>
+
