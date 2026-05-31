@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TSR — Bento Background Test</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+@font-face {
+  font-family: 'Thunder';
+  src: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-BlackLC.otf') format('opentype');
+}
+@font-face {
+  font-family: 'ThunderLC';
+  src: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-LC.ttf') format('truetype');
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --off-white: #F4F0E8;
+  --charcoal:  #111111;
+  --border:    rgba(244,240,232,0.14);
+  --border-lo: rgba(244,240,232,0.07);
+  --ui: 'DM Sans', -apple-system, sans-serif;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+
+  /* Base URLs */
+  --img-root: 'https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/';
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--ui);
+  -webkit-font-smoothing: antialiased;
+  background: #0a0808;
+  color: var(--off-white);
+}
+
+/* ══════════════════════════════
+   BENTO GRID BACKGROUND
+══════════════════════════════ */
+.bento-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+
+  /* 
+    Layout: 7 cells
+    - Cell A: large hero, spans 2 rows, left ~40% width
+    - Cells B–G: smaller, right side and bottom strip
+    
+    Grid: 3 cols × 3 rows
+    Col widths:  2fr  1fr  1fr   (left big, two smaller right)
+    Row heights: 1fr  1fr  1fr
+  */
+  display: grid;
+  grid-template-columns: 2.2fr 1fr 1fr;
+  grid-template-rows: 1.4fr 1fr 1fr;
+  gap: 3px;
+  background: #0a0808; /* gap colour */
+}
+
+/* Each cell */
+.bento-cell {
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  /* Fade in on load */
+  transition: opacity 1.2s ease-in-out;
+}
+
+.bento-cell.visible { opacity: 1; }
+
+/* Image layer inside each cell */
+.bento-cell-img {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  /* Slight scale for cinematic feel */
+  transform: scale(1.04);
+  transition: transform 8s ease-in-out;
+}
+
+.bento-cell.visible .bento-cell-img {
+  transform: scale(1);
+}
+
+/* Dark overlay per cell — heavier at edges, lighter in centre */
+.bento-cell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 8, 8, 0.42);
+  z-index: 1;
+  transition: background 1s ease;
+}
+
+/* Cell A — large hero, spans full left column, all 3 rows */
+.cell-a {
+  grid-column: 1;
+  grid-row: 1 / 4;
+}
+
+/* Cell B — top centre */
+.cell-b {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+/* Cell C — top right */
+.cell-c {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+/* Cell D — mid centre (wider, spans cols 2–3) */
+.cell-d {
+  grid-column: 2 / 4;
+  grid-row: 2;
+}
+
+/* Cell E — bottom centre */
+.cell-e {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+/* Cell F — bottom right */
+.cell-f {
+  grid-column: 3;
+  grid-row: 3;
+}
+
+/* Overlay gradient — dark vignette over entire grid for UI readability */
+.bento-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  background:
+    /* Strong dark on left behind auth panel */
+    linear-gradient(to right,
+      rgba(10,8,8,0.78) 0%,
+      rgba(10,8,8,0.55) 35%,
+      rgba(10,8,8,0.28) 60%,
+      rgba(10,8,8,0.15) 100%
+    ),
+    /* Overall bottom dark for footer/EQ */
+    linear-gradient(to bottom,
+      rgba(10,8,8,0.12) 0%,
+      rgba(10,8,8,0.08) 70%,
+      rgba(10,8,8,0.55) 100%
+    );
+  pointer-events: none;
+}
+
+/* ══════════════════════════════
+   PAGE LAYOUT (same as v17)
+══════════════════════════════ */
+.page {
+  position: relative;
+  z-index: 2;
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto 1fr auto auto;
+}
+
+nav {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  padding: 28px 44px;
+}
+
+.nav-brand {
+  font-family: 'Thunder', Impact, sans-serif;
+  font-size: 17px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--off-white);
+}
+
+/* LEFT — auth */
+.left {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 48px 56px;
+}
+
+.tabs {
+  display: flex;
+  border: 1px solid var(--border);
+  width: fit-content;
+  margin-bottom: 18px;
+}
+
+.tab-btn {
+  padding: 11px 26px;
+  font-family: var(--ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: transparent;
+  border: none;
+  color: rgba(244,240,232,0.36);
+  cursor: pointer;
+  transition: color 140ms, background 140ms;
+  white-space: nowrap;
+}
+
+.tab-btn:first-child { border-right: 1px solid var(--border); }
+.tab-btn.active { background: var(--off-white); color: var(--charcoal); }
+.tab-btn:not(.active):hover { color: var(--off-white); background: rgba(244,240,232,0.06); }
+
+.auth-panel { display: flex; flex-direction: column; gap: 8px; max-width: 320px; }
+.hidden { display: none !important; }
+
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 18px;
+  background: rgba(244,240,232,0.08);
+  border: 1px solid var(--border);
+  color: var(--off-white);
+  font-family: var(--ui);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 140ms, border-color 140ms;
+  width: 100%;
+  backdrop-filter: blur(8px);
+}
+
+.btn-google:hover { background: rgba(244,240,232,0.14); border-color: rgba(244,240,232,0.3); }
+
+.btn-email-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 11px 18px;
+  background: transparent;
+  border: 1px solid var(--border-lo);
+  color: rgba(244,240,232,0.36);
+  font-family: var(--ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 140ms, border-color 140ms;
+  width: 100%;
+}
+
+.btn-email-toggle:hover { color: rgba(244,240,232,0.7); border-color: var(--border); }
+
+.chevron { transition: transform 280ms var(--ease-out); flex-shrink: 0; }
+.chevron.open { transform: rotate(180deg); }
+
+.email-fields {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 380ms var(--ease-out), opacity 240ms var(--ease-out);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.email-fields.open { max-height: 260px; opacity: 1; }
+
+.field-input {
+  width: 100%;
+  padding: 13px 14px;
+  background: rgba(10,10,10,0.65);
+  border: 1px solid var(--border);
+  color: var(--off-white);
+  font-family: var(--ui);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 140ms;
+  backdrop-filter: blur(6px);
+  -webkit-appearance: none;
+}
+
+.field-input::placeholder { color: rgba(244,240,232,0.26); }
+.field-input:focus { border-color: var(--off-white); }
+
+.btn-submit {
+  width: 100%;
+  padding: 14px 18px;
+  background: var(--off-white);
+  border: none;
+  color: var(--charcoal);
+  font-family: var(--ui);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity 140ms;
+}
+
+.btn-submit:hover { opacity: 0.88; }
+
+.form-footer { padding-top: 2px; }
+.form-footer a, .terms-link {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(244,240,232,0.3);
+  text-decoration: none;
+  transition: color 140ms;
+}
+.form-footer a:hover, .terms-link:hover { color: var(--off-white); }
+
+/* RIGHT — headline */
+.right {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 88px 56px 16px;
+}
+
+.headline-svg-wrap { width: 100%; }
+
+.hero-tagline {
+  font-family: 'ThunderLC', Impact, sans-serif;
+  font-size: 33px;
+  font-weight: 400;
+  font-style: normal;
+  color: #F4F0E8;
+  line-height: 1.5;
+  letter-spacing: -0.02em;
+  max-width: 620px;
+  position: relative;
+  top: -40px;
+  left: 21px;
+}
+
+/* EQ */
+.eq-bar-wrap {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 56px;
+  padding: 0;
+  overflow: hidden;
+  z-index: 10;
+}
+
+.eq-bar {
+  flex: 1;
+  background: rgba(244,240,232,0.18);
+  transform-origin: bottom;
+  min-width: 2px;
+}
+
+footer {
+  grid-column: 1 / -1;
+  padding: 0 44px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.footer-note { font-size: 11px; color: rgba(244,240,232,0.2); letter-spacing: 0.05em; }
+</style>
+</head>
+<body>
+
+<!-- ══ BENTO GRID BACKGROUND ══ -->
+<div class="bento-bg" id="bento">
+
+  <div class="bento-cell cell-a" id="cell-a">
+    <div class="bento-cell-img" style="background-image:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/bento1.jpeg')"></div>
+  </div>
+
+  <div class="bento-cell cell-b" id="cell-b">
+    <div class="bento-cell-img" style="background-image:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/bento2.jpeg')"></div>
+  </div>
+
+  <div class="bento-cell cell-c" id="cell-c">
+    <div class="bento-cell-img" style="background-image:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/bento3.jpeg')"></div>
+  </div>
+
+  <div class="bento-cell cell-d" id="cell-d">
+    <div class="bento-cell-img" style="background-image:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/bento4.jpeg')"></div>
+  </div>
+
+  <div class="bento-cell cell-e" id="cell-e">
+    <div class="bento-cell-img" style="background-image:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/bento5.jpeg')"></div>
+  </div>
+
+  <div class="bento-cell cell-f" id="cell-f">
+    <div class="bento-cell-img" style="background-image:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/bento1.jpeg');background-position:center right"></div>
+  </div>
+
+</div>
+
+<!-- Vignette overlay -->
+<div class="bento-overlay"></div>
+
+<!-- ══ PAGE ══ -->
+<div class="page">
+
+  <nav>
+    <div class="nav-brand">The Song Room</div>
+  </nav>
+
+  <!-- LEFT -->
+  <div class="left">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('login',this)">Log in</button>
+      <button class="tab-btn" onclick="switchTab('signup',this)">Sign up</button>
+    </div>
+
+    <div class="auth-panel" id="view-login">
+      <button class="btn-google">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Log in with Google
+      </button>
+      <button class="btn-email-toggle" onclick="toggleEmail('login')">
+        <span>Continue with email</span>
+        <svg class="chevron" id="chev-login" width="10" height="6" viewBox="0 0 10 6" fill="none">
+          <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+        </svg>
+      </button>
+      <div class="email-fields" id="ef-login">
+        <input class="field-input" type="email" placeholder="Email address">
+        <input class="field-input" type="password" placeholder="Password">
+        <button class="btn-submit">Log in</button>
+        <div class="form-footer"><a href="#">Forgot password?</a></div>
+      </div>
+    </div>
+
+    <div class="auth-panel hidden" id="view-signup">
+      <button class="btn-google">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Sign up with Google
+      </button>
+      <button class="btn-email-toggle" onclick="toggleEmail('signup')">
+        <span>Sign up with email</span>
+        <svg class="chevron" id="chev-signup" width="10" height="6" viewBox="0 0 10 6" fill="none">
+          <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+        </svg>
+      </button>
+      <div class="email-fields" id="ef-signup">
+        <input class="field-input" type="email" placeholder="Email address">
+        <input class="field-input" type="password" placeholder="Password (min 8 characters)">
+        <button class="btn-submit">Create account</button>
+        <div class="form-footer"><a class="terms-link" href="#">Terms &amp; Privacy</a></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT — headline placeholder (SVG draw would go here in production) -->
+  <div class="right">
+    <div class="headline-svg-wrap">
+      <!-- Static headline for this background test -->
+      <div style="font-family:'Thunder',Impact,sans-serif;font-size:18vw;line-height:0.72;letter-spacing:0;text-transform:uppercase;color:#F4F0E8">
+        Create<br>Together
+      </div>
+    </div>
+    <p class="hero-tagline">Every version. Every note. One room.</p>
+  </div>
+
+  <!-- EQ -->
+  <div class="eq-bar-wrap" id="eq"></div>
+
+  <footer>
+    <span class="footer-note">© The Song Room 2026</span>
+    <span class="footer-note">Collaborative music review</span>
+  </footer>
+
+</div>
+
+<script>
+  // ── BENTO FADE-IN — staggered ──
+  const cells = ['cell-a','cell-b','cell-c','cell-d','cell-e','cell-f'];
+  // Randomise order slightly but keep hero (cell-a) first
+  const staggerMs = [0, 180, 320, 500, 680, 850];
+
+  cells.forEach((id, i) => {
+    setTimeout(() => {
+      document.getElementById(id).classList.add('visible');
+    }, 400 + staggerMs[i]); // 400ms initial pause
+  });
+
+  // ── EQ VISUALISER (v12 version) ──
+  const eq = document.getElementById('eq');
+  const BAR_COUNT = 120;
+  const bars = [];
+  const state = [];
+
+  for (let i = 0; i < BAR_COUNT; i++) {
+    const b = document.createElement('div');
+    b.className = 'eq-bar';
+    b.style.height = '3px';
+    eq.appendChild(b);
+    bars.push(b);
+    state.push({ h: 3, target: 3, vel: 0 });
+  }
+
+  let lastMouseX = -1, lastMouseY = -1, mouseActivity = 0;
+  let beatPhase = 0, kickEnergy = 0, subEnergy = 0;
+  const BEAT_MS = 500;
+  let lastTime = performance.now();
+
+  document.addEventListener('mousemove', (e) => {
+    const dx = e.clientX - lastMouseX, dy = e.clientY - lastMouseY;
+    mouseActivity = Math.min(1, mouseActivity + Math.sqrt(dx*dx+dy*dy)*0.012);
+    lastMouseX = e.clientX; lastMouseY = e.clientY;
+  });
+
+  function tick(now) {
+    const dt = now - lastTime; lastTime = now;
+    beatPhase = (beatPhase + dt / (BEAT_MS * 4)) % 1;
+    const beatPos = (beatPhase * 4) % 1;
+    const beatNum = Math.floor(beatPhase * 4);
+    if (beatPos < 0.04 && (beatNum === 0 || beatNum === 2)) kickEnergy = Math.min(1, kickEnergy + mouseActivity * 0.95 + 0.35);
+    if (Math.abs(beatPos - 0.5) < 0.03 && (beatNum === 1 || beatNum === 3)) subEnergy = Math.min(1, subEnergy + mouseActivity * 0.6 + 0.22);
+    mouseActivity = Math.max(0.18, mouseActivity - 0.006);
+    kickEnergy = Math.max(0, kickEnergy - 0.022);
+    subEnergy  = Math.max(0, subEnergy  - 0.014);
+    const activity = mouseActivity;
+    bars.forEach((bar, i) => {
+      const s = state[i];
+      const t = i / BAR_COUNT;
+      const isBass = t < 0.20, isLow = t < 0.38, isMid = t < 0.65;
+      const maxH = isBass ? 52 : isLow ? 42 : isMid ? 32 : 22;
+      let energy = activity;
+      if (isBass) energy = Math.max(energy, kickEnergy * 0.95);
+      if (isLow)  energy = Math.max(energy, kickEnergy * 0.65 + subEnergy * 0.3);
+      if (isMid)  energy = Math.max(energy, subEnergy * 0.45 + activity * 0.5);
+      const tp = isBass ? 0.06+energy*0.55 : isLow ? 0.05+energy*0.38 : isMid ? 0.08+energy*0.28 : 0.10+energy*0.20;
+      if (Math.random() < tp) {
+        const bH = isBass ? 4+energy*maxH*0.92 : isLow ? 4+energy*maxH*0.78 : isMid ? 3+energy*maxH*0.65 : 2+energy*maxH*0.55;
+        s.target = Math.min(maxH, bH + Math.random()*(isBass?10:isMid?7:5)*energy);
+      } else {
+        const decay = isBass?0.88+energy*0.06:isLow?0.82+energy*0.05:isMid?0.74:0.62;
+        s.target = Math.max(2, s.target * decay);
+      }
+      const sk = isBass?0.28:isLow?0.32:isMid?0.38:0.48;
+      const fr = isBass?0.65:isLow?0.60:isMid?0.55:0.48;
+      s.vel = s.vel*fr + (s.target-s.h)*sk;
+      s.h = Math.max(2, Math.min(maxH, s.h+s.vel));
+      bar.style.height = s.h + 'px';
+      const alpha = isBass ? 0.15+(s.h/maxH)*0.55 : 0.10+(s.h/maxH)*0.38;
+      bar.style.background = `rgba(244,240,232,${alpha.toFixed(2)})`;
+    });
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  // ── TABS ──
+  function switchTab(name, el) {
+    document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('view-login').classList.toggle('hidden', name !== 'login');
+    document.getElementById('view-signup').classList.toggle('hidden', name !== 'signup');
+    ['login','signup'].forEach(v => {
+      document.getElementById('ef-'+v).classList.remove('open');
+      document.getElementById('chev-'+v).classList.remove('open');
+    });
+  }
+
+  function toggleEmail(view) {
+    const f = document.getElementById('ef-'+view);
+    const c = document.getElementById('chev-'+view);
+    f.classList.toggle('open', !f.classList.contains('open'));
+    c.classList.toggle('open', !c.classList.contains('open'));
+  }
+</script>
+</body>
+</html>
