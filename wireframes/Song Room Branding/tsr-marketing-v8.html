@@ -1766,7 +1766,7 @@ window.addEventListener('scroll', () => {
   nav.classList.toggle('scrolled', window.scrollY > 40);
 }, { passive: true });
 
-// ── BENTO — sequential fade in then continuous crossfade rotation ──
+// ── BENTO -- sequential fade in then continuous crossfade rotation ──
 // No image ever appears in two cells at the same time.
 const BASE_URL = 'https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/';
 
@@ -1787,7 +1787,7 @@ function shuffle(arr) {
   return a;
 }
 
-// Pick next image for a cell — never one already showing elsewhere
+// Pick next image for a cell -- never one already showing elsewhere
 function pickNext(cellId) {
   const inUse = new Set(Object.values(currentImg));
   const available = ALL_IMGS.filter(img => !inUse.has(img));
@@ -1833,7 +1833,7 @@ function crossfadeCell(cellId) {
   img.src = nextUrl;
 }
 
-// Assign unique starting images — shuffle and take first 6
+// Assign unique starting images -- shuffle and take first 6
 const startImgs = shuffle(ALL_IMGS);
 CELL_IDS.forEach((id, i) => setCellImage(id, startImgs[i]));
 
@@ -1909,7 +1909,7 @@ reveals.forEach(el => observer.observe(el));
 // ── WHATSAPP CHAT ANIMATION ──
 (function() {
   const MESSAGES = [
-    { from: 'C', name: 'Coris', text: 'Hey, loving the new section. The riff is almost there but it feels too jarring — just needs softening slightly' },
+    { from: 'C', name: 'Coris', text: 'Hey, loving the new section. The riff is almost there but it feels too jarring -- just needs softening slightly' },
     { from: 'A', name: 'Al',    text: 'Yeah I already fixed that and sent it over' },
     { from: 'C', name: 'Coris', text: 'Which version are you on? I've been listening to V7' },
     { from: 'A', name: 'Al',    text: 'No that's old, it's V8. I sent V8 to you' },
@@ -1917,9 +1917,9 @@ reveals.forEach(el => observer.observe(el));
     { from: 'A', name: 'Al',    text: 'WhatsApp' },
     { from: 'C', name: 'Coris', text: 'I've searched WhatsApp, can't find it' },
     { from: 'A', name: 'Al',    text: 'Maybe I sent it as a voice note' },
-    { from: 'C', name: 'Coris', text: 'Found a voice note but it's just you humming the riff — there's no file attached' },
+    { from: 'C', name: 'Coris', text: 'Found a voice note but it's just you humming the riff -- there's no file attached' },
     { from: 'A', name: 'Al',    text: 'Ok I definitely sent the file. Do you remember we agreed to change the outro too?' },
-    { from: 'C', name: 'Coris', text: 'Yes — where did we write that down, was it Apple Notes?' },
+    { from: 'C', name: 'Coris', text: 'Yes -- where did we write that down, was it Apple Notes?' },
     { from: 'A', name: 'Al',    text: 'No I think it was in the WhatsApp thread' },
     { from: 'C', name: 'Coris', text: 'The same thread I can't find?' },
     { from: 'A', name: 'Al',    text: '...I'll just resend everything' },
@@ -1946,7 +1946,7 @@ reveals.forEach(el => observer.observe(el));
 
   function showNext() {
     if (msgIdx >= MESSAGES.length) {
-      // Sequence done — restart after a pause
+      // Sequence done -- restart after a pause
       setTimeout(() => {
         // Fade out all visible bubbles
         visible.forEach(el => el.classList.add('fading'));
@@ -1965,7 +1965,7 @@ reveals.forEach(el => observer.observe(el));
 
     // Show typing for a beat
     typingEl.classList.add('visible');
-    // Typing duration — longer for longer messages
+    // Typing duration -- longer for longer messages
     const typingMs = 600 + msg.text.length * 18;
 
     setTimeout(() => {
@@ -2000,7 +2000,7 @@ reveals.forEach(el => observer.observe(el));
 
       msgIdx++;
 
-      // Pause before next message — varies by message length
+      // Pause before next message -- varies by message length
       const nextDelay = 1200 + msg.text.length * 22;
       setTimeout(showNext, nextDelay);
 
