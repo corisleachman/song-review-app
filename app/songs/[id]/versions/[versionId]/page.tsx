@@ -69,6 +69,11 @@ type Rgb = {
 };
 
 const MARKER_COLORS = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#ffa07a', '#98d8c8', '#f7dc6f', '#bb8fce'];
+
+// Reactive canvas performance constants
+const MAX_REACTIVE_CANVAS_DPR = 1.5;       // cap pixel ratio to avoid huge canvas on Retina/HiDPI displays
+const MOBILE_REACTIVE_FPS = 30;             // cap mobile draw loop to reduce heat on older devices
+const MOBILE_FRAME_INTERVAL = 1000 / MOBILE_REACTIVE_FPS;
 const DEFAULT_REACTIVE_PRIMARY: Rgb = { r: 255, g: 20, b: 147 };
 const DEFAULT_REACTIVE_SECONDARY: Rgb = { r: 0, g: 212, b: 255 };
 
@@ -342,6 +347,7 @@ export default function VersionPage() {
   const reactiveRefreshTimeoutRef = useRef<number | null>(null);
   const reactivePlayingRef = useRef(false);
   const startReactiveDrawingRef = useRef<(() => void) | null>(null);
+  const lastReactiveFrameRef = useRef<number>(0); // timestamp of last reactive canvas draw (mobile FPS cap)
 
   const [identity, setIdentity] = useState('');
   const [song, setSong] = useState<Song | null>(null);
@@ -485,7 +491,7 @@ export default function VersionPage() {
   }, [getReactiveCanvasEntries, reactivePalette]);
 
   const resizeReactiveCanvas = useCallback(() => {
-    const ratio = window.devicePixelRatio || 1;
+    const ratio = Math.min(window.devicePixelRatio || 1, MAX_REACTIVE_CANVAS_DPR);
     for (const { canvas, container } of getReactiveCanvasEntries()) {
       const { width, height } = container.getBoundingClientRect();
 
@@ -532,7 +538,17 @@ export default function VersionPage() {
     const timeData = new Uint8Array(fftSize);
     const frequencyData = new Uint8Array(freqBins);
 
-    const render = () => {
+    const isMobileDevice = typeof navigator !== 'undefined' &&
+      /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    const render = (timestamp: number = performance.now()) => {
+      // Mobile FPS cap: skip frame if not enough time has elapsed since last draw
+      if (isMobileDevice && timestamp - lastReactiveFrameRef.current < MOBILE_FRAME_INTERVAL) {
+        reactiveAnimationFrameRef.current = requestAnimationFrame(render);
+        return;
+      }
+      lastReactiveFrameRef.current = timestamp;
+
       const loop = (Math.sin(performance.now() / 2400) + 1) / 2;
       const accentA = mixColor(reactivePalette.primary, reactivePalette.secondary, loop, 0.24);
       const accentB = mixColor(reactivePalette.primary, reactivePalette.secondary, 1 - loop, 0.18);
@@ -592,7 +608,7 @@ export default function VersionPage() {
         context.lineJoin = 'round';
         context.lineWidth = 3;
         context.strokeStyle = lineColor;
-        context.shadowBlur = 34;
+        context.shadowBlur = isMobileDevice ? 0 : 34;
         context.shadowColor = glowColor;
         context.beginPath();
 
@@ -712,9 +728,20 @@ export default function VersionPage() {
       observer.observe(heroOverlayRef.current);
     }
 
+    // Pause the reactive drawing loop when the tab/page is hidden (saves CPU/GPU/battery)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        stopReactiveDrawing();
+      } else if (document.visibilityState === 'visible' && reactivePlayingRef.current) {
+        startReactiveDrawingRef.current?.();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       window.removeEventListener('resize', handleResize);
       observer?.disconnect();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       stopReactiveDrawing();
       clearReactiveRefreshTimeout();
     };
