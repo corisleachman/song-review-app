@@ -1,0 +1,1637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Song Room — Where songs get finished</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+@font-face {
+  font-family: 'ThunderBlack';
+  src: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-BlackLC.otf') format('opentype');
+}
+@font-face {
+  font-family: 'ThunderBold';
+  src: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-BoldLC.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'ThunderReg';
+  src: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-LC.ttf') format('truetype');
+}
+
+/* ═══════════════════════════════════
+   TOKENS
+═══════════════════════════════════ */
+:root {
+  --black:     #0E0A0A;
+  --surface:   #1C1515;
+  --surface-2: #261C1C;
+  --red:       #C0392B;
+  --red-b:     #E8402E;
+  --straw:     #F0E48C;
+  --off-white: #F4EDE4;
+  --sand:      #D4C4B0;
+  --dune:      #8C7B6B;
+  --border:    rgba(244,237,228,0.10);
+  --border-m:  rgba(244,237,228,0.18);
+
+  --tblack: 'ThunderBlack', Impact, 'Arial Narrow Bold', sans-serif;
+  --tbold:  'ThunderBold',  Impact, 'Arial Narrow Bold', sans-serif;
+  --treg:   'ThunderReg',   Impact, 'Arial Narrow Bold', sans-serif;
+  --ui:     'DM Sans', -apple-system, sans-serif;
+
+  --img: 'https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/';
+
+  --ease: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--black);
+  color: var(--off-white);
+  font-family: var(--ui);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+img { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+
+/* Utility */
+.eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--dune);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.eyebrow::before {
+  content: '';
+  width: 32px;
+  height: 2px;
+  background: var(--red);
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════
+   NAV
+═══════════════════════════════════ */
+.nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(24px, 4vw, 56px);
+  transition: background 300ms, backdrop-filter 300ms;
+}
+
+.nav.scrolled {
+  background: rgba(14,10,10,0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-brand {
+  font-family: var(--treg);
+  font-size: 17px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--off-white);
+}
+
+.nav-brand em {
+  font-style: normal;
+  color: var(--red);
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.nav-link {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--sand);
+  padding: 8px 14px;
+  transition: color 150ms;
+}
+.nav-link:hover { color: var(--off-white); }
+
+.nav-cta {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  background: var(--red);
+  color: var(--off-white);
+  padding: 10px 20px;
+  transition: background 150ms;
+  margin-left: 8px;
+}
+.nav-cta:hover { background: var(--red-b); }
+
+/* ═══════════════════════════════════
+   SECTION 1 — HERO
+═══════════════════════════════════ */
+.hero {
+  position: relative;
+  height: 100vh;
+  min-height: 600px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 0 clamp(48px, 8vh, 96px);
+}
+
+/* Bento grid background */
+.hero-bento {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 2.2fr 1fr 1fr;
+  grid-template-rows: 1.4fr 1fr 1fr;
+  gap: 0;
+  background: var(--black);
+}
+
+.bento-cell {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  margin: 4px;
+  opacity: 0;
+  transition: opacity 1.4s ease-in-out;
+}
+
+.bento-cell.on { opacity: 1; }
+
+.bento-cell-img {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transform: scale(1.05);
+  transition: transform 10s ease-in-out;
+}
+.bento-cell.on .bento-cell-img { transform: scale(1); }
+
+.cell-a { grid-column:1; grid-row:1/4; }
+.cell-b { grid-column:2; grid-row:1; }
+.cell-c { grid-column:3; grid-row:1; }
+.cell-d { grid-column:2/4; grid-row:2; }
+.cell-e { grid-column:2; grid-row:3; }
+.cell-f { grid-column:3; grid-row:3; }
+
+/* Overall dark gradient over bento */
+.hero-veil {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom,
+      rgba(14,10,10,0.35) 0%,
+      rgba(14,10,10,0.15) 40%,
+      rgba(14,10,10,0.65) 75%,
+      rgba(14,10,10,0.92) 100%
+    );
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Hero content */
+.hero-content {
+  position: relative;
+  z-index: 2;
+  padding: 0 clamp(24px, 5vw, 72px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: flex-end;
+  gap: 32px;
+}
+
+.hero-left { display: flex; flex-direction: column; gap: 28px; }
+
+.hero-subline {
+  font-family: var(--treg);
+  font-size: clamp(18px, 2vw, 26px);
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: var(--off-white);
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s 3.8s var(--ease), transform 0.6s 3.8s var(--ease);
+}
+.hero-subline.on { opacity: 1; transform: translateY(0); }
+
+.hero-cta-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s 4.1s var(--ease), transform 0.6s 4.1s var(--ease);
+}
+.hero-cta-row.on { opacity: 1; transform: translateY(0); }
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--red);
+  color: var(--off-white);
+  font-family: var(--ui);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 16px 28px;
+  transition: background 150ms;
+  border: none;
+  cursor: pointer;
+}
+.btn-primary:hover { background: var(--red-b); }
+
+.btn-ghost {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(244,237,228,0.5);
+  transition: color 150ms;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-ghost:hover { color: var(--off-white); }
+.btn-ghost svg { transition: transform 150ms; }
+.btn-ghost:hover svg { transform: translateX(3px); }
+
+.hero-right {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.hero-headline-wrap { width: 100%; }
+
+.hero-tagline {
+  font-family: var(--treg);
+  font-size: clamp(18px, 2.2vw, 30px);
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--off-white);
+  opacity: 0.7;
+  margin-top: -24px;
+  padding-left: 4px;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s 4.0s var(--ease), transform 0.6s 4.0s var(--ease);
+}
+.hero-tagline.on { opacity: 0.65; transform: translateY(0); }
+
+/* ═══════════════════════════════════
+   SECTION 2 — PROBLEM
+═══════════════════════════════════ */
+.problem {
+  background: var(--black);
+  padding: clamp(80px, 12vw, 160px) clamp(24px, 5vw, 72px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(48px, 6vw, 96px);
+  align-items: center;
+  border-top: 1px solid var(--border);
+}
+
+.problem-left { display: flex; flex-direction: column; gap: 24px; }
+
+.problem-heading {
+  font-family: var(--tblack);
+  font-size: clamp(52px, 7vw, 100px);
+  line-height: 0.88;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  color: var(--off-white);
+}
+
+.problem-heading em {
+  font-style: normal;
+  color: var(--red);
+}
+
+.problem-body {
+  font-size: clamp(15px, 1.4vw, 18px);
+  color: var(--sand);
+  line-height: 1.65;
+  max-width: 460px;
+}
+
+.problem-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--border-m);
+  border: 1px solid var(--border-m);
+}
+
+.pain-item {
+  background: var(--surface);
+  padding: 20px 24px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.pain-num {
+  font-family: var(--tblack);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--red);
+  margin-top: 2px;
+  opacity: 0.6;
+}
+
+.pain-text {
+  font-size: 15px;
+  color: var(--off-white);
+  line-height: 1.5;
+}
+
+.pain-text strong {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.pain-text span {
+  font-size: 13px;
+  color: var(--dune);
+  font-style: italic;
+}
+
+/* ═══════════════════════════════════
+   SECTION 3 — PRODUCT IN CONTEXT
+═══════════════════════════════════ */
+.product {
+  padding: clamp(80px, 12vw, 160px) clamp(24px, 5vw, 72px);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
+.product-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  margin-bottom: clamp(48px, 6vw, 80px);
+  align-items: end;
+}
+
+.product-heading {
+  font-family: var(--tblack);
+  font-size: clamp(48px, 6.5vw, 96px);
+  line-height: 0.88;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.product-desc {
+  font-size: clamp(15px, 1.3vw, 18px);
+  color: var(--sand);
+  line-height: 1.65;
+  padding-bottom: 8px;
+}
+
+/* Mock song page preview */
+.mock-player {
+  background: var(--black);
+  border: 1px solid var(--border-m);
+  overflow: hidden;
+}
+
+.mock-player-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 24px;
+  padding: 0;
+}
+
+.mock-artwork {
+  width: 100%;
+  aspect-ratio: 16/7;
+  position: relative;
+  overflow: hidden;
+}
+
+.mock-artwork-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR5.jpeg');
+  background-size: cover;
+  background-position: center top;
+  filter: brightness(0.55);
+}
+
+/* Dynamic colour extraction simulation */
+.mock-artwork-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(140,30,20,0.6) 0%,
+    rgba(60,20,15,0.8) 50%,
+    rgba(20,10,10,0.95) 100%
+  );
+}
+
+.mock-artwork-content {
+  position: absolute;
+  inset: 0;
+  padding: clamp(20px, 3vw, 40px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.mock-version-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 10px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  background: var(--red);
+  color: var(--off-white);
+  width: fit-content;
+}
+
+.mock-song-title {
+  font-family: var(--tblack);
+  font-size: clamp(32px, 5vw, 72px);
+  line-height: 0.88;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.mock-song-meta {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--sand);
+}
+
+/* Waveform strip */
+.mock-waveform {
+  height: 72px;
+  background: rgba(244,237,228,0.03);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 0 clamp(16px, 2vw, 32px);
+  gap: 2px;
+  border-top: 1px solid var(--border);
+}
+
+.wf-bar {
+  flex: 1;
+  background: rgba(244,237,228,0.12);
+  border-radius: 0;
+}
+
+.wf-bar.played { background: rgba(192,57,43,0.7); }
+.wf-bar.current { background: var(--red); }
+
+/* Comment pins */
+.wf-pin {
+  position: absolute;
+  top: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.wf-pin-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.wf-pin-line {
+  width: 1px;
+  height: 44px;
+  opacity: 0.4;
+}
+
+/* Controls */
+.mock-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px clamp(16px, 2vw, 32px);
+  border-top: 1px solid var(--border);
+}
+
+.mock-play {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--red);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.mock-time {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--sand);
+}
+
+.mock-progress {
+  flex: 1;
+  height: 2px;
+  background: var(--border-m);
+  position: relative;
+}
+
+.mock-progress::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 0;
+  width: 37%;
+  height: 100%;
+  background: var(--red);
+}
+
+/* Comment threads panel */
+.mock-threads {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  border-top: 1px solid var(--border-m);
+}
+
+.mock-thread {
+  background: var(--surface);
+  padding: 16px 20px;
+}
+
+.mock-thread-ts {
+  font-size: 10px;
+  font-weight: 600;
+  font-style: italic;
+  color: var(--straw);
+  margin-bottom: 6px;
+}
+
+.mock-thread-body {
+  font-size: 13px;
+  color: var(--off-white);
+  line-height: 1.45;
+  margin-bottom: 8px;
+}
+
+.mock-thread-meta {
+  font-size: 10px;
+  color: var(--dune);
+  font-style: italic;
+}
+
+.mock-thread-avatar {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 700;
+  margin-right: 5px;
+}
+
+/* ═══════════════════════════════════
+   SECTION 4 — FEATURES (3 moments)
+═══════════════════════════════════ */
+.features {
+  padding: clamp(80px, 12vw, 160px) 0;
+  background: var(--black);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--border);
+}
+
+.feature-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 420px;
+  background: var(--black);
+}
+
+.feature-row:nth-child(even) { direction: rtl; }
+.feature-row:nth-child(even) > * { direction: ltr; }
+
+.feature-img {
+  position: relative;
+  overflow: hidden;
+  min-height: 320px;
+}
+
+.feature-img-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transition: transform 8s ease;
+}
+.feature-row:hover .feature-img-bg { transform: scale(1.04); }
+
+.feature-img-veil {
+  position: absolute;
+  inset: 0;
+  background: rgba(14,10,10,0.38);
+}
+
+.feature-body {
+  padding: clamp(40px, 5vw, 72px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 20px;
+}
+
+.feature-number {
+  font-family: var(--tblack);
+  font-size: 80px;
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--red);
+  opacity: 0.18;
+  margin-bottom: -12px;
+}
+
+.feature-heading {
+  font-family: var(--tbold);
+  font-size: clamp(32px, 4vw, 56px);
+  line-height: 0.9;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.feature-heading em {
+  font-style: normal;
+  display: block;
+  color: var(--red);
+}
+
+.feature-desc {
+  font-size: clamp(14px, 1.2vw, 16px);
+  color: var(--sand);
+  line-height: 1.7;
+  max-width: 400px;
+}
+
+.feature-quote {
+  font-family: var(--treg);
+  font-size: clamp(16px, 1.6vw, 22px);
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: var(--straw);
+  line-height: 1.3;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-m);
+}
+
+/* ═══════════════════════════════════
+   SECTION 5 — SOCIAL PROOF
+═══════════════════════════════════ */
+.proof {
+  padding: clamp(80px, 12vw, 140px) clamp(24px, 5vw, 72px);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(48px, 6vw, 96px);
+  align-items: center;
+}
+
+.proof-image {
+  position: relative;
+  aspect-ratio: 4/3;
+  overflow: hidden;
+}
+
+.proof-image-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR2.jpeg');
+  background-size: cover;
+  background-position: center;
+}
+
+.proof-content {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.proof-quote {
+  font-family: var(--tblack);
+  font-size: clamp(36px, 4.5vw, 64px);
+  line-height: 0.9;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  color: var(--off-white);
+}
+
+.proof-quote em {
+  font-style: normal;
+  color: var(--red);
+}
+
+.proof-attr {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.proof-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1.5px solid var(--border-m);
+}
+
+.proof-avatar-img {
+  width: 100%;
+  height: 100%;
+  background-image: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR6.jpeg');
+  background-size: cover;
+  background-position: center top;
+}
+
+.proof-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--off-white);
+}
+
+.proof-role {
+  font-size: 12px;
+  color: var(--dune);
+  font-style: italic;
+}
+
+.proof-subquote {
+  font-size: 15px;
+  color: var(--sand);
+  line-height: 1.65;
+  font-style: italic;
+  border-left: 2px solid var(--red);
+  padding-left: 16px;
+}
+
+/* ═══════════════════════════════════
+   SECTION 6 — PRICING
+═══════════════════════════════════ */
+.pricing {
+  padding: clamp(80px, 12vw, 160px) clamp(24px, 5vw, 72px);
+  background: var(--black);
+  border-top: 1px solid var(--border);
+}
+
+.pricing-header {
+  margin-bottom: clamp(48px, 6vw, 72px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: end;
+}
+
+.pricing-heading {
+  font-family: var(--tblack);
+  font-size: clamp(52px, 7vw, 100px);
+  line-height: 0.88;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.pricing-note {
+  font-size: clamp(14px, 1.2vw, 16px);
+  color: var(--sand);
+  line-height: 1.65;
+  padding-bottom: 8px;
+}
+
+.pricing-note strong {
+  color: var(--off-white);
+  font-weight: 600;
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border-m);
+  border: 1px solid var(--border-m);
+}
+
+.tier {
+  background: var(--surface);
+  padding: clamp(28px, 3vw, 40px);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: relative;
+  transition: background 200ms;
+}
+
+.tier.featured {
+  background: var(--surface-2);
+}
+
+.tier-badge {
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--red);
+  color: var(--off-white);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 4px 12px;
+}
+
+.tier-name {
+  font-family: var(--tbold);
+  font-size: 28px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.tier-price {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.tier-price-amount {
+  font-family: var(--tblack);
+  font-size: clamp(52px, 5vw, 72px);
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.tier-price-period {
+  font-size: 13px;
+  color: var(--dune);
+  font-style: italic;
+}
+
+.tier-storage {
+  font-family: var(--treg);
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--red);
+  background: rgba(192,57,43,0.08);
+  padding: 8px 12px;
+  border: 1px solid rgba(192,57,43,0.2);
+  width: fit-content;
+}
+
+.tier-features {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.tier-features li {
+  font-size: 14px;
+  color: var(--sand);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.45;
+}
+
+.tier-features li::before {
+  content: '—';
+  color: var(--red);
+  font-size: 12px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.tier-cta {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  text-align: center;
+  font-family: var(--ui);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border: 1px solid var(--border-m);
+  color: var(--sand);
+  background: transparent;
+  cursor: pointer;
+  transition: all 150ms;
+}
+
+.tier-cta:hover { border-color: var(--off-white); color: var(--off-white); }
+
+.tier.featured .tier-cta {
+  background: var(--red);
+  color: var(--off-white);
+  border-color: var(--red);
+}
+
+.tier.featured .tier-cta:hover { background: var(--red-b); border-color: var(--red-b); }
+
+.pricing-footnote {
+  margin-top: 20px;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--dune);
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ═══════════════════════════════════
+   SECTION 7 — FINAL CTA
+═══════════════════════════════════ */
+.final-cta {
+  position: relative;
+  height: 60vh;
+  min-height: 400px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 1px solid var(--border);
+}
+
+.final-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR6.jpeg');
+  background-size: cover;
+  background-position: center 30%;
+  filter: brightness(0.35);
+}
+
+.final-veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(14,10,10,0.5) 0%, rgba(14,10,10,0.85) 100%);
+}
+
+.final-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 0 clamp(24px, 5vw, 72px);
+}
+
+.final-heading {
+  font-family: var(--tblack);
+  font-size: clamp(52px, 9vw, 130px);
+  line-height: 0.88;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.final-sub {
+  font-size: 15px;
+  color: var(--sand);
+  max-width: 440px;
+  line-height: 1.65;
+}
+
+.final-cta-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ═══════════════════════════════════
+   FOOTER
+═══════════════════════════════════ */
+footer {
+  background: var(--surface);
+  border-top: 1px solid var(--border-m);
+  padding: 40px clamp(24px, 5vw, 72px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.footer-brand {
+  font-family: var(--treg);
+  font-size: 15px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sand);
+}
+
+.footer-brand em { font-style:normal; color: var(--red); }
+
+.footer-links {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.footer-link {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--dune);
+  transition: color 150ms;
+}
+.footer-link:hover { color: var(--off-white); }
+
+.footer-copy {
+  font-size: 11px;
+  color: var(--dune);
+  font-style: italic;
+}
+
+/* ═══════════════════════════════════
+   SCROLL REVEAL
+═══════════════════════════════════ */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+}
+.reveal.on {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-d1 { transition-delay: 0.1s; }
+.reveal-d2 { transition-delay: 0.2s; }
+.reveal-d3 { transition-delay: 0.3s; }
+.reveal-d4 { transition-delay: 0.4s; }
+
+/* ═══════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════ */
+@media (max-width: 900px) {
+  .nav-links { display: none; }
+  .hero-content { grid-template-columns: 1fr; }
+  .hero-right { display: none; }
+  .problem { grid-template-columns: 1fr; }
+  .product-header { grid-template-columns: 1fr; }
+  .feature-row { grid-template-columns: 1fr; }
+  .feature-row:nth-child(even) { direction: ltr; }
+  .proof { grid-template-columns: 1fr; }
+  .pricing-header { grid-template-columns: 1fr; }
+  .pricing-grid { grid-template-columns: 1fr; }
+  .final-heading { font-size: clamp(52px, 14vw, 96px); }
+  footer { flex-direction: column; gap: 16px; text-align: center; }
+  .footer-links { justify-content: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ NAV ══ -->
+<nav class="nav" id="nav">
+  <div class="nav-brand">T<em>S</em>R</div>
+  <div class="nav-links">
+    <a class="nav-link" href="#features">Features</a>
+    <a class="nav-link" href="#pricing">Pricing</a>
+    <a class="nav-link" href="login-v17.html">Sign in</a>
+  </div>
+  <a class="nav-cta" href="login-v17.html">Start for free</a>
+</nav>
+
+<!-- ══ HERO ══ -->
+<section class="hero" id="hero">
+
+  <div class="hero-bento" id="bento">
+    <div class="bento-cell cell-a" id="bc-a">
+      <div class="bento-cell-img" style="background-image:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR1.jpeg')"></div>
+    </div>
+    <div class="bento-cell cell-b" id="bc-b">
+      <div class="bento-cell-img" style="background-image:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR3.jpeg');background-position:center 30%"></div>
+    </div>
+    <div class="bento-cell cell-c" id="bc-c">
+      <div class="bento-cell-img" style="background-image:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR5.jpeg')"></div>
+    </div>
+    <div class="bento-cell cell-d" id="bc-d">
+      <div class="bento-cell-img" style="background-image:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR6.jpeg')"></div>
+    </div>
+    <div class="bento-cell cell-e" id="bc-e">
+      <div class="bento-cell-img" style="background-image:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR2.jpeg')"></div>
+    </div>
+    <div class="bento-cell cell-f" id="bc-f">
+      <div class="bento-cell-img" style="background-image:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR4.jpeg')"></div>
+    </div>
+  </div>
+
+  <div class="hero-veil"></div>
+
+  <div class="hero-content">
+    <div class="hero-left">
+      <p class="hero-subline" id="hero-sub">Where songs<br>get finished.</p>
+      <div class="hero-cta-row" id="hero-cta">
+        <a class="btn-primary" href="login-v17.html">
+          Start for free
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+          </svg>
+        </a>
+        <a class="btn-ghost" href="#features">
+          See how it works
+          <svg width="14" height="10" viewBox="0 0 14 10" fill="none">
+            <path d="M1 5h12M8 1l5 4-5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+
+    <div class="hero-right">
+      <div class="hero-headline-wrap" id="hero-svg-wrap">
+        <!-- SVG draw animation injected by JS -->
+      </div>
+      <p class="hero-tagline" id="hero-tagline">Every version. Every note. One room.</p>
+    </div>
+  </div>
+
+</section>
+
+<!-- ══ PROBLEM ══ -->
+<section class="problem" id="features">
+  <div class="problem-left">
+    <p class="eyebrow reveal">The problem</p>
+    <h2 class="problem-heading reveal reveal-d1">
+      You've been<br>doing it<br><em>the hard way.</em>
+    </h2>
+    <p class="problem-body reveal reveal-d2">
+      Great music is getting lost in WhatsApp threads, confusing email chains, and folders full of files called V4_FINAL_2_REAL. Your collaborators are guessing which version to listen to. Your best ideas are going missing before anyone acts on them.
+    </p>
+  </div>
+
+  <div class="problem-right reveal reveal-d2">
+    <div class="pain-item">
+      <span class="pain-num">01</span>
+      <div class="pain-text">
+        <strong>The version nobody can find</strong>
+        <span>"Was it the one I sent on Tuesday, or the one from the voice note?"</span>
+      </div>
+    </div>
+    <div class="pain-item">
+      <span class="pain-num">02</span>
+      <div class="pain-text">
+        <strong>The feedback that means nothing</strong>
+        <span>"Make it more punchy." — timestamped to nowhere.</span>
+      </div>
+    </div>
+    <div class="pain-item">
+      <span class="pain-num">03</span>
+      <div class="pain-text">
+        <strong>The action nobody took</strong>
+        <span>Someone said they'd fix the snare in the bridge. Six weeks ago.</span>
+      </div>
+    </div>
+    <div class="pain-item">
+      <span class="pain-num">04</span>
+      <div class="pain-text">
+        <strong>The song that never got finished</strong>
+        <span>Not because it wasn't good enough. Because the process got in the way.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PRODUCT ══ -->
+<section class="product">
+  <div class="product-header">
+    <div>
+      <p class="eyebrow reveal">The Song Room</p>
+      <h2 class="product-heading reveal reveal-d1">
+        Your music,<br>the way it<br>should look.
+      </h2>
+    </div>
+    <p class="product-desc reveal reveal-d2">
+      Upload a version and the app extracts colour directly from your artwork — making every song page feel personal to the artist who made it. Leave feedback exactly where you mean it, at the precise moment in the track.
+    </p>
+  </div>
+
+  <!-- Mock song page -->
+  <div class="mock-player reveal">
+    <div class="mock-artwork">
+      <div class="mock-artwork-bg"></div>
+      <div class="mock-artwork-overlay"></div>
+      <div class="mock-artwork-content">
+        <span class="mock-version-pill">V3 — Final Hook</span>
+        <div class="mock-song-title">Fading Light</div>
+        <div class="mock-song-meta">Uploaded by Coris · 31 Mar · 3:11</div>
+      </div>
+    </div>
+
+    <div class="mock-waveform" id="mock-wf"></div>
+
+    <div class="mock-controls">
+      <div class="mock-play">
+        <svg width="10" height="12" viewBox="0 0 10 12" fill="#F4EDE4"><path d="M0 0l10 6-10 6z"/></svg>
+      </div>
+      <span class="mock-time">1:24 / 3:11</span>
+      <div class="mock-progress"></div>
+      <button style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;background:transparent;border:1px solid rgba(244,237,228,0.18);color:var(--sand);padding:7px 14px;cursor:pointer">Change version</button>
+    </div>
+
+    <div class="mock-threads">
+      <div class="mock-thread" style="border-right:1px solid var(--border)">
+        <div class="mock-thread-ts">@ 0:22</div>
+        <div class="mock-thread-body"><span class="mock-thread-avatar" style="background:var(--red);color:var(--off-white)">C</span>Love this intro — the reverb tail is perfect here.</div>
+        <div class="mock-thread-meta">Coris · 2h ago · <span style="color:var(--red)">1 reply</span></div>
+      </div>
+      <div class="mock-thread" style="border-right:1px solid var(--border);background:var(--surface-2)">
+        <div class="mock-thread-ts">@ 1:24</div>
+        <div class="mock-thread-body"><span class="mock-thread-avatar" style="background:var(--surface-2);border:1px solid var(--border-m);color:var(--sand)">A</span>The drop hits hard but the snare feels too tight here. Try opening it up?</div>
+        <div class="mock-thread-meta">Al · 1h ago · <span style="color:var(--straw);font-style:italic">Action added</span></div>
+      </div>
+      <div class="mock-thread">
+        <div class="mock-thread-ts">@ 2:47</div>
+        <div class="mock-thread-body"><span class="mock-thread-avatar" style="background:var(--red);color:var(--off-white)">C</span>Outro is exactly right. Don't touch this.</div>
+        <div class="mock-thread-meta">Coris · 45m ago</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FEATURES ══ -->
+<section class="features" id="how">
+
+  <div class="feature-row">
+    <div class="feature-img">
+      <div class="feature-img-bg" style="background-image:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR1.jpeg')"></div>
+      <div class="feature-img-veil"></div>
+    </div>
+    <div class="feature-body">
+      <div class="feature-number">01</div>
+      <h3 class="feature-heading reveal">
+        Upload it.<br><em>Everyone<br>hears it.</em>
+      </h3>
+      <p class="feature-desc reveal reveal-d1">
+        Every version is stored, labelled, and instantly accessible to everyone in your workspace. No more sending files. No more "which one did you send me?" The moment you upload, your collaborators are notified.
+      </p>
+      <p class="feature-quote reveal reveal-d2">"V7 just dropped. Your producer wakes up to it."</p>
+    </div>
+  </div>
+
+  <div class="feature-row">
+    <div class="feature-img">
+      <div class="feature-img-bg" style="background-image:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR4.jpeg')"></div>
+      <div class="feature-img-veil"></div>
+    </div>
+    <div class="feature-body">
+      <div class="feature-number">02</div>
+      <h3 class="feature-heading reveal">
+        Leave notes<br><em>that actually<br>mean something.</em>
+      </h3>
+      <p class="feature-desc reveal reveal-d1">
+        Click anywhere on the waveform to leave a comment at the exact moment you mean it. No more "around the 1 minute mark" — your feedback is pinned to the millisecond, in context, where it belongs.
+      </p>
+      <p class="feature-quote reveal reveal-d2">"Not 'make it punchier.' @ 1:24 — open this up."</p>
+    </div>
+  </div>
+
+  <div class="feature-row">
+    <div class="feature-img">
+      <div class="feature-img-bg" style="background-image:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR6.jpeg')"></div>
+      <div class="feature-img-veil"></div>
+    </div>
+    <div class="feature-body">
+      <div class="feature-number">03</div>
+      <h3 class="feature-heading reveal">
+        Turn notes<br><em>into finished<br>songs.</em>
+      </h3>
+      <p class="feature-desc reveal reveal-d1">
+        Mark any comment as an action. Track it, assign it, resolve it. Your whole team knows what needs doing and what's done. Nothing falls through the cracks between sessions.
+      </p>
+      <p class="feature-quote reveal reveal-d2">"That snare fix from three weeks ago? Done. Resolved. Gone."</p>
+    </div>
+  </div>
+
+</section>
+
+<!-- ══ SOCIAL PROOF ══ -->
+<section class="proof">
+  <div class="proof-image reveal">
+    <div class="proof-image-bg"></div>
+  </div>
+  <div class="proof-content">
+    <p class="eyebrow reveal">From the room</p>
+    <blockquote class="proof-quote reveal reveal-d1">
+      "We stopped losing<br>ideas the week<br><em>we started using it.</em>"
+    </blockquote>
+    <p class="proof-subquote reveal reveal-d2">
+      Before TSR we had notes everywhere — voice memos, WhatsApp, emails. Now there's one place and everyone's in it. We've finished more songs in three months than in the year before.
+    </p>
+    <div class="proof-attr reveal reveal-d3">
+      <div class="proof-avatar">
+        <div class="proof-avatar-img"></div>
+      </div>
+      <div>
+        <div class="proof-name">Marcus Webb</div>
+        <div class="proof-role">Producer & songwriter — London</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PRICING ══ -->
+<section class="pricing" id="pricing">
+  <div class="pricing-header">
+    <div>
+      <p class="eyebrow reveal">Pricing</p>
+      <h2 class="pricing-heading reveal reveal-d1">Simple.<br>Honest.</h2>
+    </div>
+    <p class="pricing-note reveal reveal-d1">
+      <strong>We charge for storage, not people.</strong> Invite your whole band, your producer, your mixing engineer — for free. You only pay for the space your music takes up. That's the way it should be.
+    </p>
+  </div>
+
+  <div class="pricing-grid reveal">
+    <!-- Free -->
+    <div class="tier">
+      <div>
+        <div class="tier-name">Free</div>
+        <div class="tier-price">
+          <span class="tier-price-amount">£0</span>
+          <span class="tier-price-period">/ forever</span>
+        </div>
+      </div>
+      <div class="tier-storage">500 MB storage</div>
+      <ul class="tier-features">
+        <li>Unlimited songs</li>
+        <li>Unlimited collaborators</li>
+        <li>Timestamped comments</li>
+        <li>Action tracking</li>
+        <li>Version history</li>
+        <li>Email notifications</li>
+      </ul>
+      <a class="tier-cta" href="login-v17.html">Start for free</a>
+    </div>
+
+    <!-- Pro -->
+    <div class="tier featured">
+      <div class="tier-badge">Most popular</div>
+      <div>
+        <div class="tier-name" style="color:var(--red)">Pro</div>
+        <div class="tier-price">
+          <span class="tier-price-amount">£9</span>
+          <span class="tier-price-period">/ month</span>
+        </div>
+      </div>
+      <div class="tier-storage">10 GB storage</div>
+      <ul class="tier-features">
+        <li>Everything in Free</li>
+        <li>Up to 10 collaborators</li>
+        <li>Priority notifications</li>
+        <li>Referral rewards</li>
+        <li>Annual billing option (save 20%)</li>
+      </ul>
+      <a class="tier-cta" href="login-v17.html">Start for free</a>
+    </div>
+
+    <!-- Studio -->
+    <div class="tier">
+      <div>
+        <div class="tier-name">Studio</div>
+        <div class="tier-price">
+          <span class="tier-price-amount">£19</span>
+          <span class="tier-price-period">/ month</span>
+        </div>
+      </div>
+      <div class="tier-storage">50 GB storage</div>
+      <ul class="tier-features">
+        <li>Everything in Pro</li>
+        <li>Unlimited collaborators</li>
+        <li>Priority support</li>
+        <li>Annual billing option (save 20%)</li>
+      </ul>
+      <a class="tier-cta" href="login-v17.html">Start for free</a>
+    </div>
+  </div>
+
+  <p class="pricing-footnote reveal">No credit card required to start. Upgrade or downgrade any time. All prices exclude VAT.</p>
+</section>
+
+<!-- ══ FINAL CTA ══ -->
+<section class="final-cta">
+  <div class="final-bg"></div>
+  <div class="final-veil"></div>
+  <div class="final-content">
+    <h2 class="final-heading reveal">
+      Ready to finish<br>more songs?
+    </h2>
+    <p class="final-sub reveal reveal-d1">
+      Free forever. No credit card. Your whole band in on day one.
+    </p>
+    <div class="final-cta-row reveal reveal-d2">
+      <a class="btn-primary" href="login-v17.html">
+        Start for free
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FOOTER ══ -->
+<footer>
+  <div class="footer-brand">The Song <em>Room</em></div>
+  <div class="footer-links">
+    <a class="footer-link" href="#">Features</a>
+    <a class="footer-link" href="#">Pricing</a>
+    <a class="footer-link" href="#">Privacy</a>
+    <a class="footer-link" href="#">Terms</a>
+    <a class="footer-link" href="#">Contact</a>
+  </div>
+  <div class="footer-copy">© The Song Room 2026</div>
+</footer>
+
+<script>
+// ── NAV SCROLL ──
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 40);
+}, { passive: true });
+
+// ── BENTO SEQUENTIAL FADE IN ──
+const bcells = [
+  document.getElementById('bc-a'),
+  document.getElementById('bc-b'),
+  document.getElementById('bc-c'),
+  document.getElementById('bc-d'),
+  document.getElementById('bc-e'),
+  document.getElementById('bc-f'),
+];
+
+bcells.forEach((c, i) => {
+  setTimeout(() => c.classList.add('on'), 300 + i * 1400);
+});
+
+// ── HERO UI REVEALS ──
+// Sub and CTA come in after bento is established and SVG starts
+setTimeout(() => document.getElementById('hero-sub').classList.add('on'), 3800);
+setTimeout(() => document.getElementById('hero-tagline').classList.add('on'), 4000);
+setTimeout(() => document.getElementById('hero-cta').classList.add('on'), 4100);
+
+// ── SVG DRAW HEADLINE ──
+(function() {
+  // Embed the path data inline — generated from Thunder BlackLC
+  // CREATE: 6 letters
+  // TOGETHER: 8 letters
+  // Using same path generation as headline-svg-v5
+
+  const PATHS = {
+    // precomputed from fonttools — same as v5
+    CREATE: [
+      { d: "M59.15 164.0 C52.96 164.0 47.2 162.98 41.86 160.93 C36.53 158.88 31.89 155.85 27.94 151.84 C23.99 147.83 20.89 142.94 18.64 137.16 C16.4 131.38 15.28 124.85 15.28 117.56 L15.28 82.44 C15.28 75.15 16.4 68.62 18.64 62.84 C20.89 57.06 23.99 52.17 27.94 48.16 C31.89 44.15 36.53 41.12 41.86 39.07 C47.2 37.02 52.96 36.0 59.15 36.0 C65.34 36.0 71.1 37.02 76.44 39.07 C81.77 41.12 86.41 44.15 90.36 48.16 C94.31 52.17 97.41 57.06 99.66 62.84 C101.9 68.62 103.02 75.15 103.02 82.44 L86.55 82.44 C86.55 75.15 84.4 69.45 80.1 65.34 C75.8 61.22 70.12 59.17 63.03 59.17 C55.94 59.17 50.26 61.22 45.96 65.34 C41.66 69.45 39.51 75.15 39.51 82.44 L39.51 117.56 C39.51 124.85 41.66 130.55 45.96 134.66 C50.26 138.78 55.94 140.83 63.03 140.83 C70.12 140.83 75.8 138.78 80.1 134.66 C84.4 130.55 86.55 124.85 86.55 117.56 L103.02 117.56 C103.02 124.85 101.9 131.38 99.66 137.16 C97.41 142.94 94.31 147.83 90.36 151.84 C86.41 155.85 81.77 158.88 76.44 160.93 C71.1 162.98 65.34 164.0 59.15 164.0 Z", len: 810 },
+      { d: "M112.5 162.0 L112.5 38.0 L158.5 38.0 C165.6 38.0 171.9 39.0 177.4 41.0 C182.9 43.0 187.5 45.9 191.2 49.8 C194.9 53.7 197.7 58.5 199.6 64.2 C201.5 69.9 202.5 76.5 202.5 84.0 C202.5 91.5 201.2 97.8 198.7 102.9 C196.2 108.0 192.6 111.9 187.9 114.6 L207.5 162.0 L182.5 162.0 L164.5 118.0 L137.5 118.0 L137.5 162.0 Z M137.5 97.0 L157.5 97.0 C163.5 97.0 168.1 95.4 171.3 92.2 C174.5 89.0 176.1 84.5 176.1 78.7 C176.1 72.9 174.5 68.5 171.3 65.4 C168.1 62.3 163.5 60.8 157.5 60.8 L137.5 60.8 Z", len: 788 },
+      { d: "M216.5 162.0 L216.5 38.0 L295.5 38.0 L295.5 60.0 L241.5 60.0 L241.5 88.0 L289.5 88.0 L289.5 110.0 L241.5 110.0 L241.5 140.0 L296.5 140.0 L296.5 162.0 Z", len: 480 },
+      { d: "M350.5 162.0 L316.5 38.0 L342.5 38.0 L366.5 128.0 L390.5 38.0 L416.5 38.0 L382.5 162.0 Z", len: 632 },
+      { d: "M418.5 60.0 L418.5 38.0 L505.5 38.0 L505.5 60.0 L474.5 60.0 L474.5 162.0 L449.5 162.0 L449.5 60.0 Z", len: 380 },
+      { d: "M510.5 162.0 L510.5 38.0 L589.5 38.0 L589.5 60.0 L535.5 60.0 L535.5 88.0 L583.5 88.0 L583.5 110.0 L535.5 110.0 L535.5 140.0 L590.5 140.0 L590.5 162.0 Z", len: 480 },
+    ],
+    TOGETHER: [
+      { d: "M0 60.0 L0 38.0 L87.0 38.0 L87.0 60.0 L56.0 60.0 L56.0 162.0 L31.0 162.0 L31.0 60.0 Z", len: 380 },
+      { d: "M146.5 164.0 C140.3 164.0 134.6 162.98 129.2 160.93 C123.9 158.88 119.2 155.85 115.3 151.84 C111.4 147.83 108.3 142.94 106.0 137.16 C103.8 131.38 102.6 124.85 102.6 117.56 L102.6 82.44 C102.6 75.15 103.8 68.62 106.0 62.84 C108.3 57.06 111.4 52.17 115.3 48.16 C119.2 44.15 123.9 41.12 129.2 39.07 C134.6 37.02 140.3 36.0 146.5 36.0 C152.7 36.0 158.4 37.02 163.8 39.07 C169.1 41.12 173.8 44.15 177.7 48.16 C181.6 52.17 184.7 57.06 186.9 62.84 C189.1 68.62 190.3 75.15 190.3 82.44 L190.3 117.56 C190.3 124.85 189.1 131.38 186.9 137.16 C184.7 142.94 181.6 147.83 177.7 151.84 C173.8 155.85 169.1 158.88 163.8 160.93 C158.4 162.98 152.7 164.0 146.5 164.0 Z M146.5 141.0 C153.6 141.0 159.3 138.9 163.6 134.8 C167.9 130.6 170.0 124.9 170.0 117.6 L170.0 82.4 C170.0 75.1 167.9 69.4 163.6 65.2 C159.3 61.1 153.6 59.0 146.5 59.0 C139.4 59.0 133.7 61.1 129.4 65.2 C125.1 69.4 123.0 75.1 123.0 82.4 L123.0 117.6 C123.0 124.9 125.1 130.6 129.4 134.8 C133.7 138.9 139.4 141.0 146.5 141.0 Z", len: 730 },
+      { d: "M248.5 164.0 C242.3 164.0 236.6 162.98 231.2 160.93 C225.9 158.88 221.2 155.85 217.3 151.84 C213.4 147.83 210.3 142.94 208.0 137.16 C205.8 131.38 204.6 124.85 204.6 117.56 L204.6 82.44 C204.6 75.15 205.8 68.62 208.0 62.84 C210.3 57.06 213.4 52.17 217.3 48.16 C221.2 44.15 225.9 41.12 231.2 39.07 C236.6 37.02 242.3 36.0 248.5 36.0 C254.7 36.0 260.4 37.02 265.8 39.07 C271.1 41.12 275.8 44.15 279.7 48.16 C283.6 52.17 286.7 57.06 288.9 62.84 C291.1 68.62 292.3 75.15 292.3 82.44 L292.3 117.56 C292.3 124.85 291.1 131.38 288.9 137.16 C286.7 142.94 283.6 147.83 279.7 151.84 C275.8 155.85 271.1 158.88 265.8 160.93 C260.4 162.98 254.7 164.0 248.5 164.0 Z M248.5 141.0 C255.6 141.0 261.3 138.9 265.6 134.8 C269.9 130.6 272.0 124.9 272.0 117.6 L272.0 116.0 L253.5 116.0 L253.5 94.0 L292.3 94.0 L292.3 117.56 C292.3 124.85 291.1 131.38 288.9 137.16 C286.7 142.94 283.6 147.83 279.7 151.84 C275.8 155.85 271.1 158.88 265.8 160.93 C260.4 162.98 254.7 164.0 248.5 164.0 Z M272.0 82.4 C272.0 75.1 269.9 69.4 265.6 65.2 C261.3 61.1 255.6 59.0 248.5 59.0 C241.4 59.0 235.7 61.1 231.4 65.2 C227.1 69.4 225.0 75.1 225.0 82.4 L225.0 94.0 L272.0 94.0 Z", len: 860 },
+      { d: "M299.5 162.0 L299.5 38.0 L378.5 38.0 L378.5 60.0 L324.5 60.0 L324.5 88.0 L372.5 88.0 L372.5 110.0 L324.5 110.0 L324.5 140.0 L379.5 140.0 L379.5 162.0 Z", len: 480 },
+      { d: "M381.5 60.0 L381.5 38.0 L468.5 38.0 L468.5 60.0 L437.5 60.0 L437.5 162.0 L412.5 162.0 L412.5 60.0 Z", len: 380 },
+      { d: "M475.5 162.0 L475.5 38.0 L500.5 38.0 L500.5 88.0 L540.5 88.0 L540.5 38.0 L565.5 38.0 L565.5 162.0 L540.5 162.0 L540.5 110.0 L500.5 110.0 L500.5 162.0 Z", len: 580 },
+      { d: "M572.5 162.0 L572.5 38.0 L651.5 38.0 L651.5 60.0 L597.5 60.0 L597.5 88.0 L645.5 88.0 L645.5 110.0 L597.5 110.0 L597.5 140.0 L652.5 140.0 L652.5 162.0 Z", len: 480 },
+      { d: "M660.5 162.0 L660.5 38.0 L706.5 38.0 C713.6 38.0 719.9 39.0 725.4 41.0 C730.9 43.0 735.5 45.9 739.2 49.8 C742.9 53.7 745.7 58.5 747.6 64.2 C749.5 69.9 750.5 76.5 750.5 84.0 C750.5 91.5 749.2 97.8 746.7 102.9 C744.2 108.0 740.6 111.9 735.9 114.6 L755.5 162.0 L730.5 162.0 L712.5 118.0 L685.5 118.0 L685.5 162.0 Z M685.5 97.0 L705.5 97.0 C711.5 97.0 716.1 95.4 719.3 92.2 C722.5 89.0 724.1 84.5 724.1 78.7 C724.1 72.9 722.5 68.5 719.3 65.4 C716.1 62.3 711.5 60.8 705.5 60.8 L685.5 60.8 Z", len: 788 },
+    ]
+  };
+
+  const JITTER = [0.08,0.21,0.05,0.18,0.14,0.25,0.11,0.19,0.03,0.22,0.16,0.07,0.24,0.13];
+  const DUR = 3.8;
+  const LINE_H = 164;
+  const WORD2_Y = Math.round(LINE_H * 0.72); // 118
+  const SVG_H = WORD2_Y + LINE_H;
+
+  // Calculate widths
+  const createWidth = 590;
+  const togetherWidth = 756;
+  const SVG_W = Math.max(createWidth, togetherWidth);
+
+  let paths_svg = '';
+  let ji = 0;
+
+  Object.entries(PATHS).forEach(([word, letters], wi) => {
+    const y = wi === 0 ? 0 : WORD2_Y;
+    letters.forEach(({ d, len }) => {
+      const delay = JITTER[ji++] || 0.1;
+      paths_svg += `<g transform="translate(0,${y})">` +
+        `<path d="${d}" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="${len}" stroke-dashoffset="${len}" stroke-opacity="0">` +
+        `<animate attributeName="stroke-dashoffset" from="${len}" to="0" dur="${DUR}s" begin="${delay}s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/>` +
+        `<animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="${delay}s" fill="freeze"/>` +
+        `</path></g>`;
+    });
+  });
+
+  const svg = `<svg viewBox="0 0 ${SVG_W} ${SVG_H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;overflow:visible">${paths_svg}</svg>`;
+  document.getElementById('hero-svg-wrap').innerHTML = svg;
+})();
+
+// ── MOCK WAVEFORM ──
+(function() {
+  const wf = document.getElementById('mock-wf');
+  const h = [18,26,40,32,20,48,38,28,56,44,24,50,36,26,62,52,34,58,44,30,46,38,22,54,42,32,66,52,36,24,48,40,56,28,38,60,46,32,24,52,38,64,50,32,58,36,24,52,42,28,56,44,34,66,50,22,58,38,30,54,42,26,48,36,20,44,34,52,28,36,60,46,30,22,50,38,62,44,28,54];
+  const playedPct = 0.37;
+  const n = h.length;
+  h.forEach((v, i) => {
+    const bar = document.createElement('div');
+    bar.className = 'wf-bar';
+    const pct = i / n;
+    if (pct < playedPct - 0.02) bar.classList.add('played');
+    else if (pct < playedPct + 0.01) bar.classList.add('current');
+    bar.style.height = v + '%';
+    wf.appendChild(bar);
+  });
+
+  // Comment pins
+  const pins = [
+    { pct: 0.12, color: '#C0392B' },
+    { pct: 0.37, color: '#F0E48C' },
+    { pct: 0.79, color: '#D4C4B0' },
+  ];
+  pins.forEach(({ pct, color }) => {
+    const pin = document.createElement('div');
+    pin.className = 'wf-pin';
+    pin.style.left = (pct * 100) + '%';
+    pin.style.color = color;
+    pin.innerHTML = `<div class="wf-pin-dot" style="background:${color}"></div><div class="wf-pin-line" style="background:${color}"></div>`;
+    wf.appendChild(pin);
+  });
+})();
+
+// ── SCROLL REVEAL ──
+const reveals = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('on');
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.15 });
+
+reveals.forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
