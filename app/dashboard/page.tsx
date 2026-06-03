@@ -654,6 +654,7 @@ function DashboardContent() {
                       // not navigation. Tapping elsewhere on the card still navigates.
                       if ((e.target as HTMLElement).closest('button')) return; // let button handle it
                       e.stopPropagation();
+                      e.preventDefault(); // prevent browser synthesising a click event that would trigger card navigation
                       if (song.latestVersionFilePath) {
                         if (playingId === song.id) {
                           togglePlayPause();
@@ -1077,3 +1078,4 @@ export default function Dashboard() {
     </Suspense>
   );
 }
+
