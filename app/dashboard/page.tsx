@@ -62,7 +62,12 @@ function DashboardContent() {
   const [mobileTab, setMobileTab] = useState<'songs' | 'actions'>('songs');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [actionFilter, setActionFilter] = useState<'all' | Action['status']>('all');
-  const [songSort, setSongSort] = useState<'activity' | 'upload' | 'title'>('activity');
+  const [songSort, setSongSort] = useState<'activity' | 'upload' | 'title'>(() => {
+    if (typeof window === 'undefined') return 'activity';
+    const saved = window.localStorage.getItem('song-review-sort');
+    if (saved === 'upload' || saved === 'title') return saved;
+    return 'activity';
+  });
   const [stageFilter, setStageFilter] = useState<'all' | Stage>('all');
 
   // New song modal
@@ -389,7 +394,8 @@ function DashboardContent() {
         getSongSeenStorageKey(identity),
         JSON.stringify({ ...seenMap, [song.id]: new Date().toISOString() })
       );
-      setSongs(prev => prev.map(item => item.id === song.id ? { ...item, hasNewActivity: false } : item));
+      // Note: intentionally not calling setSongs here — updating hasNewActivity
+      // would re-sort the list and cause a visible flash before navigation completes.
     }
     if (song.latestVersionId) {
       router.push(`/songs/${song.id}/versions/${song.latestVersionId}`);
@@ -590,7 +596,11 @@ function DashboardContent() {
                     id="song-sort"
                     className={styles.sortSelect}
                     value={songSort}
-                    onChange={e => setSongSort(e.target.value as 'activity' | 'upload' | 'title')}
+                    onChange={e => {
+                      const val = e.target.value as 'activity' | 'upload' | 'title';
+                      setSongSort(val);
+                      if (typeof window !== 'undefined') window.localStorage.setItem('song-review-sort', val);
+                    }}
                   >
                     <option value="activity">Recent activity</option>
                     <option value="upload">Latest upload</option>
@@ -1078,4 +1088,5 @@ export default function Dashboard() {
     </Suspense>
   );
 }
+
 
