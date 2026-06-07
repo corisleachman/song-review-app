@@ -22,7 +22,7 @@
 .railMark {
   width: 38px;
   height: 38px;
-  border-radius: 14px;
+  border-radius: 0;
   display: grid;
   place-items: center;
   background: rgba(255, 255, 255, 0.07);
@@ -45,7 +45,7 @@
 .railButton:hover .railMark,
 .railButton[aria-expanded="true"] .railMark {
   background: rgba(255, 20, 147, 0.14);
-  border-color: rgba(255, 20, 147, 0.3);
+  border-color: rgba(192,57,43,0.28);
   transform: translateY(-1px);
 }
 
@@ -75,7 +75,7 @@
   top: 0;
   left: 64px;
   width: 330px;
-  border-radius: 16px;
+  border-radius: 0;
   padding: 14px;
 }
 
@@ -116,7 +116,7 @@
   gap: 10px;
   align-items: center;
   padding: 10px;
-  border-radius: 12px;
+  border-radius: 0;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.035);
   color: inherit;
@@ -237,7 +237,7 @@
   align-items: center;
   padding: 10px;
   border: 1px dashed rgba(255, 255, 255, 0.16);
-  border-radius: 12px;
+  border-radius: 0;
   background: rgba(255, 255, 255, 0.025);
   color: inherit;
   cursor: pointer;
@@ -286,7 +286,7 @@
   gap: 8px;
   padding: 10px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+  border-radius: 0;
   background: rgba(255, 255, 255, 0.035);
 }
 
@@ -303,7 +303,7 @@
   width: 100%;
   min-width: 0;
   padding: 10px 11px;
-  border-radius: 10px;
+  border-radius: 0;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(0, 0, 0, 0.18);
   color: rgba(255, 255, 255, 0.92);
@@ -341,7 +341,7 @@
 
 .createPrimary {
   border: 1px solid rgba(255, 20, 147, 0.34);
-  background: rgba(255, 20, 147, 0.2);
+  background: rgba(192,57,43,0.18);
   color: #ffb4dc;
 }
 
@@ -365,7 +365,7 @@
   padding: 10px 18px;
   border: 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(13, 9, 20, 0.94);
+  background: rgba(14,10,10, 0.94);
   color: inherit;
   text-align: left;
   backdrop-filter: blur(16px);
@@ -393,7 +393,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #ff1493;
+  background: #C0392B;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -458,7 +458,7 @@
   top: 56px;
   left: 0;
   right: 0;
-  background: #0d0914;
+  background: #0E0A0A;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
@@ -476,7 +476,7 @@
   top: calc(100% + 8px);
   right: 10px;
   left: 10px;
-  border-radius: 14px;
+  border-radius: 0;
   padding: 12px;
 }
 
