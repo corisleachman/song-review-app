@@ -20,10 +20,10 @@
 .brand {
   width: 44px;
   height: 44px;
-  border-radius: 14px;
+  border-radius: 0;
   display: grid;
   place-items: center;
-  background: linear-gradient(180deg, rgba(255, 20, 147, 0.18), rgba(255, 20, 147, 0.06));
+  background: rgba(192,57,43,0.12);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
   color: #fff;
@@ -34,8 +34,8 @@
 }
 
 .brand:hover {
-  border-color: rgba(255, 20, 147, 0.34);
-  background: linear-gradient(180deg, rgba(255, 20, 147, 0.24), rgba(255, 20, 147, 0.08));
+  border-color: rgba(192,57,43,0.34);
+  background: rgba(192,57,43,0.12);
   transform: translateY(-1px);
 }
 
@@ -58,7 +58,7 @@
   justify-content: center;
   min-width: 44px;
   padding: 6px 10px;
-  border-radius: 999px;
+  border-radius: 0;
   background: linear-gradient(135deg, rgba(255, 216, 122, 0.24), rgba(255, 132, 208, 0.24));
   border: 1px solid rgba(255, 216, 122, 0.34);
   box-shadow: 0 10px 24px rgba(255, 179, 102, 0.14);
@@ -91,7 +91,7 @@
 .navButton {
   width: 44px;
   height: 44px;
-  border-radius: 14px;
+  border-radius: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -116,10 +116,10 @@
 }
 
 .active {
-  background: rgba(255, 20, 147, 0.16);
-  border-color: rgba(255, 20, 147, 0.32);
+  background: rgba(192,57,43,0.16);
+  border-color: rgba(192,57,43,0.32);
   color: #fff;
-  box-shadow: 0 12px 28px rgba(255, 20, 147, 0.12);
+  box-shadow: 0 12px 28px rgba(192,57,43,0.12);
 }
 
 .icon {
