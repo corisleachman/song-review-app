@@ -70,9 +70,9 @@ export interface SettingsActions {
 }
 
 const DEFAULT_THEME: Theme = {
-  primary_color: '#ff1493',
-  accent_color: '#a855f7',
-  background_color: '#0d0914',
+  primary_color: '#C0392B',
+  accent_color: '#C0392B',
+  background_color: '#0E0A0A',
 };
 
 // ── Context ──────────────────────────────────────────────────────
