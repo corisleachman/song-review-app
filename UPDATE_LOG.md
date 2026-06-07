@@ -2729,3 +2729,30 @@ Full palette and font change from Pulse pink/purple branding to TSR v3 warm off-
 - Vercel will auto-deploy on push — check live site for any missed hardcoded values
 - Phase 7 complete
 
+---
+
+## 2026-06-07 — Phase 7 follow-up fixes (confirmed working)
+
+**What we were trying to achieve:**
+Clean up remaining pink/purple/old-radius values missed in the initial Phase 7 token swap, and fix a build-breaking CSS syntax error.
+
+**Changes made:**
+- `app/dashboard/dashboard.module.css` — fixed spaced rgba(255, 20, 147) variants, removed border-radius: 999px pill shapes, fixed indigo rgba(99,102,241) status pill colours to TSR v3, fixed purple-dark card body background rgba(22,15,35) → off-black, fixed remaining #ff69b4 pink text (6 instances), fixed infoPanel and cardInfoOverlay dark purple backgrounds
+- `app/settings/settings.module.css` — fixed spaced rgba(255, 20, 147) variants
+- `app/songs/[id]/versions/[versionId]/version.module.css` — fixed border-radius: 999px pill shapes, purple rgba values, dark purple modal backdrop
+- `app/identify/identify.module.css` — fixed radial gradient pink/cyan glows, dark purple backdrop
+- `app/page.module.css` — fixed radial gradient pink/cyan glows, dark purple backdrop
+- `app/upgrade/upgrade.module.css` — fixed purple rgba box-shadows
+- `components/AppSidebar.module.css` — fixed sidebar rail background rgba(11,8,18) → off-black, plan pill gradient → flat surface, brand icon glow removed
+- `components/UpgradeSuccessModal.module.css` — CRITICAL: rewrote cleanly to fix PostCSS build error caused by regex stripping multi-value background property and leaving orphaned gradient lines
+- `components/AccountMenu.module.css` — border-radius cleanup
+- `components/WorkspaceSwitcher.module.css` — pink rgba and border-radius cleanup
+
+**Root cause of build failure:**
+Regex-based gradient removal stripped the gradient from multi-value `background` shorthand properties, leaving orphaned comma-separated values on subsequent lines. PostCSS could not parse these as valid CSS. Fix: rewrote UpgradeSuccessModal.module.css from scratch with correct TSR v3 tokens.
+
+**Lesson learned:**
+For future CSS token swaps, always rewrite multi-value `background` properties explicitly rather than using regex to strip individual values from them. Validate with a CSS parser before committing.
+
+**Status:** Build confirmed passing. Phase 7 complete.
+
