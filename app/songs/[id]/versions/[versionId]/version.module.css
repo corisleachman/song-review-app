@@ -380,7 +380,7 @@
   background: transparent;
   border: 1px solid rgba(192,57,43,0.4);
   color: #C0392B;
-  border-radius: 999px;
+  border-radius: 0;
   padding: 4px 10px;
   font-size: 0.72rem;
   font-weight: 700;
@@ -388,8 +388,8 @@
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 .waveRetryBtn:hover {
-  background: rgba(255,20,147,0.14);
-  border-color: rgba(255,20,147,0.7);
+  background: rgba(192,57,43,0.14);
+  border-color: rgba(192,57,43,0.7);
 }
 
 /* ── Inline comment form ────────────────────────────────────── */
@@ -619,7 +619,7 @@
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
   color: rgba(255,255,255,0.62);
-  border-radius: 999px;
+  border-radius: 0;
   padding: 6px 12px;
   font-size: 0.74rem;
   font-family: inherit;
@@ -632,8 +632,8 @@
   color: #fff;
 }
 .actionTabActive {
-  background: rgba(255,20,147,0.14);
-  border-color: rgba(255,20,147,0.32);
+  background: rgba(192,57,43,0.14);
+  border-color: rgba(192,57,43,0.32);
   color: #fff;
 }
 .actionFilterRow {
@@ -646,7 +646,7 @@
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
   color: rgba(255,255,255,0.54);
-  border-radius: 999px;
+  border-radius: 0;
   padding: 4px 10px;
   font-size: 0.72rem;
   font-family: inherit;
@@ -705,7 +705,7 @@
 }
 .actionLinkBtn:hover {
   color: #fff;
-  text-decoration-color: rgba(255,20,147,0.52);
+  text-decoration-color: rgba(192,57,43,0.52);
 }
 .actionTimestamp { color: #ff6b6b; }
 .actionControls {
@@ -720,7 +720,7 @@
   color: rgba(255,255,255,0.62);
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 999px;
+  border-radius: 0;
   padding: 2px 7px;
   text-transform: capitalize;
 }
@@ -748,7 +748,7 @@
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.1);
   color: rgba(255,255,255,0.74);
-  border-radius: 999px;
+  border-radius: 0;
   padding: 3px 8px;
   font-size: 0.68rem;
   font-family: inherit;
@@ -763,7 +763,7 @@
   color: #9ceec7;
   background: rgba(34,197,94,0.12);
   border: 1px solid rgba(34,197,94,0.24);
-  border-radius: 999px;
+  border-radius: 0;
   padding: 2px 7px;
 }
 
@@ -812,7 +812,7 @@
   border: 1px solid rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.72);
   padding: 8px 12px;
-  border-radius: 999px;
+  border-radius: 0;
   cursor: pointer;
   font-size: 0.74rem;
   font-family: inherit;
@@ -875,12 +875,12 @@
   0% {
     opacity: 0;
     transform: translateY(8px) scale(0.96);
-    box-shadow: 0 0 0 rgba(255,20,147,0);
+    box-shadow: none;
   }
   72% {
     opacity: 1;
     transform: translateY(0) scale(1.012);
-    box-shadow: 0 16px 34px rgba(255,20,147,0.14);
+    box-shadow: 0 16px 34px rgba(192,57,43,0.14);
   }
   100% {
     opacity: 1;
@@ -889,8 +889,8 @@
   }
 }
 .markActionBtn {
-  background: rgba(168,85,247,0.15);
-  border: 1px solid rgba(168,85,247,0.4);
+  background: rgba(192,57,43,0.15);
+  border: 1px solid rgba(192,57,43,0.4);
   color: #C0392B;
   border-radius: 0;
   padding: 4px 12px;
@@ -898,7 +898,7 @@
   cursor: pointer;
   transition: background 0.2s;
 }
-.markActionBtn:hover { background: rgba(168,85,247,0.25); }
+.markActionBtn:hover { background: rgba(192,57,43,0.25); }
 
 /* Reply row */
 .replyRow {
@@ -974,7 +974,7 @@
   color: rgba(255,255,255,0.42);
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 999px;
+  border-radius: 0;
   padding: 2px 7px;
   white-space: nowrap;
 }
@@ -1079,7 +1079,7 @@
   border: 1px solid rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.72);
   padding: 7px 10px;
-  border-radius: 999px;
+  border-radius: 0;
   cursor: pointer;
   font-size: 0.78rem;
   text-transform: capitalize;
@@ -1116,7 +1116,7 @@
 .progressWrap {
   height: 6px;
   background: rgba(255,255,255,0.06);
-  border-radius: 999px;
+  border-radius: 0;
   overflow: hidden;
 }
 .progressBar {
@@ -1220,10 +1220,10 @@
   bottom: 24px;
   transform: translateX(-50%);
   background: rgba(16, 12, 24, 0.94);
-  border: 1px solid rgba(255,20,147,0.28);
+  border: 1px solid rgba(192,57,43,0.28);
   color: rgba(255,255,255,0.9);
   padding: 10px 14px;
-  border-radius: 999px;
+  border-radius: 0;
   font-size: 0.82rem;
   box-shadow: 0 10px 28px rgba(0,0,0,0.45);
   z-index: 120;
@@ -1243,7 +1243,7 @@
 .taskRow:hover { background: rgba(255,255,255,0.03); }
 .taskRowDragOver {
   border-color: rgba(192,57,43,0.4);
-  background: rgba(255,20,147,0.05);
+  background: rgba(192,57,43,0.05);
 }
 .taskRowDone { opacity: 0.5; }
 
@@ -1623,7 +1623,7 @@
   transition: background 0.12s;
 }
 .versionModalItem:hover { background: rgba(255,255,255,0.06); }
-.versionModalItemActive { background: rgba(255,20,147,0.1) !important; }
+.versionModalItemActive { background: rgba(192,57,43,0.1) !important; }
 .versionModalLabel {
   flex: 1;
   font-size: 0.9rem;
@@ -1723,7 +1723,7 @@
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: rgba(255, 20, 147, 0.85);
+    background: rgba(192,57,43,0.85);
     border: none;
     display: flex;
     align-items: center;
@@ -1773,7 +1773,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0E0A0A 0%, #1C1515 50%, #0E0A0A 100%);
+  background: var(--color-bg-darkest);
   gap: 24px;
 }
 
@@ -1803,7 +1803,7 @@
   stroke-dasharray: 400;
   stroke-dashoffset: 400;
   animation: fillUp 1.8s ease-in-out infinite;
-  filter: drop-shadow(0 0 6px rgba(255, 20, 147, 0.6));
+  filter: drop-shadow(0 0 6px rgba(192,57,43,0.6));
 }
 
 @keyframes fillUp {
