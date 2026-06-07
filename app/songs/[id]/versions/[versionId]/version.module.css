@@ -2,7 +2,7 @@
 .page {
   min-height: 100vh;
   background: #0E0A0A;
-  color: #fff;
+  color: #F4EDE4;
   display: flex;
   flex-direction: column;
   font-family: 'DM Sans', sans-serif;
@@ -12,7 +12,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #aaa;
+  color: rgba(244,237,228,0.45);
   background: #0E0A0A;
 }
 .initErrorCard {
@@ -25,7 +25,7 @@
 }
 .initErrorTitle {
   margin: 0 0 10px;
-  color: #fff;
+  color: #F4EDE4;
   font-size: 1.25rem;
   font-weight: 700;
 }
@@ -43,7 +43,7 @@
 /* ── Hero ───────────────────────────────────────────────────── */
 .hero {
   position: relative;
-  background-color: #1a0f2a;
+  background-color: #0E0A0A;
   background-size: cover;
   background-position: center;
 }
@@ -166,7 +166,7 @@
   font-weight: 800;
   line-height: 1.05;
   margin: 0 0 6px;
-  color: #fff;
+  color: #F4EDE4;
   letter-spacing: -0.02em;
 }
 .heroArtist {
@@ -224,7 +224,7 @@
   height: 56px;
   border-radius: 50%;
   border: none;
-  background: #fff;
+  background: #F4EDE4;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -369,7 +369,7 @@
   animation: pulseWave 1.2s ease-in-out infinite;
 }
 @keyframes pulseWave { 0%,100%{opacity:1} 50%{opacity:0.35} }
-.waveErrMsg { font-size: 0.78rem; color: #ff6b6b; }
+.waveErrMsg { font-size: 0.78rem; color: #C0392B; }
 .waveStatus {
   display: inline-flex;
   align-items: center;
@@ -412,7 +412,7 @@
   bottom: calc(100% + 10px);  /* sits ABOVE the waveform */
   width: var(--comment-box-width);
   max-width: calc(100vw - 32px);
-  background: #1a1030;
+  background: #0E0A0A;
   border: 1px solid rgba(192,57,43,0.5);
   border-radius: 0;
   padding: 14px;
@@ -441,7 +441,7 @@
   background: rgba(0,0,0,0.3);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 0;
-  color: #fff;
+  color: #F4EDE4;
   font-size: 0.9rem;
   font-family: inherit;
   padding: 8px 10px;
@@ -466,11 +466,11 @@
   font-size: 0.82rem;
   font-family: inherit;
 }
-.cancelBtn:hover { border-color: rgba(255,255,255,0.4); color: #fff; }
+.cancelBtn:hover { border-color: rgba(255,255,255,0.4); color: #F4EDE4; }
 .postBtn {
   background: linear-gradient(135deg, #C0392B, #C0392B);
   border: none;
-  color: #fff;
+  color: #F4EDE4;
   padding: 6px 18px;
   border-radius: 0;
   cursor: pointer;
@@ -495,12 +495,12 @@
   white-space: nowrap;
   transition: background 0.15s;
 }
-.songsBtn:hover { background: rgba(255,255,255,0.18); color: #fff; }
+.songsBtn:hover { background: rgba(255,255,255,0.18); color: #F4EDE4; }
 
 .versionSelect {
   background: rgba(255,255,255,0.08);
   border: 1px solid rgba(255,255,255,0.15);
-  color: #fff;
+  color: #F4EDE4;
   padding: 6px 12px;
   border-radius: 0;
   cursor: pointer;
@@ -533,7 +533,7 @@
   white-space: nowrap;
   transition: background 0.15s, border-color 0.15s;
 }
-.changeVersionBtn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.35); color: #fff; }
+.changeVersionBtn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.35); color: #F4EDE4; }
 
 .avatar {
   width: 32px;
@@ -546,7 +546,7 @@
   font-size: 0.85rem;
   font-weight: 700;
   flex-shrink: 0;
-  color: #fff;
+  color: #F4EDE4;
   overflow: hidden;
 }
 
@@ -567,7 +567,7 @@
 
 /* ── Actions panel (left) ───────────────────────────────────── */
 .actionsPanel {
-  border-right: 1px solid #1e1630;
+  border-right: 1px solid #1C1515;
   padding: 20px 24px;
   overflow-y: auto;
 }
@@ -577,7 +577,7 @@
   justify-content: space-between;
   margin-bottom: 16px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #1e1630;
+  border-bottom: 1px solid #1C1515;
 }
 .sectionHeaderCopy {
   display: flex;
@@ -585,13 +585,13 @@
   gap: 4px;
   min-width: 0;
 }
-.actionsPanelTitle { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; color: #888; }
+.actionsPanelTitle { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; color: rgba(244,237,228,0.35); }
 .sectionHeaderSubtle {
   font-size: 0.76rem;
   color: rgba(255,255,255,0.38);
   line-height: 1.35;
 }
-.pendingBadge { font-size: 0.75rem; color: #888; }
+.pendingBadge { font-size: 0.75rem; color: rgba(244,237,228,0.35); }
 .actionContextCard {
   display: flex;
   flex-direction: column;
@@ -606,7 +606,7 @@
   line-height: 1.45;
 }
 .actionContextCard strong {
-  color: #fff;
+  color: #F4EDE4;
   font-size: 0.76rem;
 }
 .actionTabRow {
@@ -629,12 +629,12 @@
 .actionTab:hover {
   background: rgba(255,255,255,0.08);
   border-color: rgba(255,255,255,0.16);
-  color: #fff;
+  color: #F4EDE4;
 }
 .actionTabActive {
   background: rgba(192,57,43,0.14);
   border-color: rgba(192,57,43,0.32);
-  color: #fff;
+  color: #F4EDE4;
 }
 .actionFilterRow {
   display: flex;
@@ -655,7 +655,7 @@
 .actionFilterPillActive {
   background: rgba(192,57,43,0.12);
   border-color: rgba(192,57,43,0.35);
-  color: #fff;
+  color: #F4EDE4;
 }
 
 .actionItem {
@@ -663,7 +663,7 @@
   align-items: flex-start;
   gap: 12px;
   padding: 10px 0;
-  border-bottom: 1px solid #1a1030;
+  border-bottom: 1px solid #0E0A0A;
 }
 .actionDone { opacity: 0.5; }
 
@@ -671,7 +671,7 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  border: 2px solid #444;
+  border: 2px solid rgba(244,237,228,0.18);
   background: transparent;
   cursor: pointer;
   flex-shrink: 0;
@@ -687,8 +687,8 @@
 
 .actionText { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .actionDesc { font-size: 0.88rem; line-height: 1.4; }
-.actionDescDone { text-decoration: line-through; color: #666; }
-.actionMeta { font-size: 0.72rem; color: #666; }
+.actionDescDone { text-decoration: line-through; color: rgba(244,237,228,0.28); }
+.actionMeta { font-size: 0.72rem; color: rgba(244,237,228,0.28); }
 .actionLinkBtn {
   display: inline-flex;
   align-items: center;
@@ -704,10 +704,10 @@
   text-underline-offset: 2px;
 }
 .actionLinkBtn:hover {
-  color: #fff;
+  color: #F4EDE4;
   text-decoration-color: rgba(192,57,43,0.52);
 }
-.actionTimestamp { color: #ff6b6b; }
+.actionTimestamp { color: #C0392B; }
 .actionControls {
   display: flex;
   align-items: center;
@@ -725,12 +725,12 @@
   text-transform: capitalize;
 }
 .actionStatusApproved {
-  color: #ffd58a;
+  color: #D4C4B0;
   background: rgba(245,174,61,0.12);
   border-color: rgba(245,174,61,0.28);
 }
 .actionStatusCompleted {
-  color: #9ceec7;
+  color: #D4C4B0;
   background: rgba(34,197,94,0.12);
   border-color: rgba(34,197,94,0.28);
 }
@@ -743,7 +743,7 @@
   font-family: inherit;
   padding: 0;
 }
-.actionEditBtn:hover { color: #fff; }
+.actionEditBtn:hover { color: #F4EDE4; }
 .actionResolveBtn {
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.1);
@@ -756,11 +756,11 @@
 }
 .actionResolveBtn:hover {
   border-color: rgba(192,57,43,0.35);
-  color: #fff;
+  color: #F4EDE4;
 }
 .actionResolvedBadge {
   font-size: 0.68rem;
-  color: #9ceec7;
+  color: #D4C4B0;
   background: rgba(34,197,94,0.12);
   border: 1px solid rgba(34,197,94,0.24);
   border-radius: 0;
@@ -779,10 +779,10 @@
   align-items: center;
   gap: 10px;
   padding: 16px 20px;
-  border-bottom: 1px solid #1e1630;
+  border-bottom: 1px solid #1C1515;
   flex-shrink: 0;
 }
-.threadsPanelTitle { font-size: 0.82rem; color: #888; }
+.threadsPanelTitle { font-size: 0.82rem; color: rgba(244,237,228,0.35); }
 .threadHeaderInfo {
   display: flex;
   align-items: center;
@@ -799,7 +799,7 @@
 .threadTimestamp { font-size: 0.9rem; font-weight: 600; color: #D4C4B0; }
 .threadHeaderCount {
   font-size: 0.72rem;
-  color: #666;
+  color: rgba(244,237,228,0.28);
 }
 .threadHeaderActions {
   display: flex;
@@ -822,17 +822,17 @@
 .threadActionBtn:hover {
   background: rgba(192,57,43,0.12);
   border-color: rgba(192,57,43,0.4);
-  color: #fff;
+  color: #F4EDE4;
 }
 .threadsDropdown {
   margin-left: auto;
   background: transparent;
   border: none;
-  color: #888;
+  color: rgba(244,237,228,0.35);
   cursor: pointer;
   font-size: 0.8rem;
 }
-.threadsDropdown:hover { color: #fff; }
+.threadsDropdown:hover { color: #F4EDE4; }
 
 /* Bubbles */
 .bubbleList {
@@ -846,7 +846,7 @@
 .bubbleWrap { display: flex; flex-direction: column; gap: 4px; }
 .bubbleWrapOwn { align-items: flex-end; }
 .bubbleWrapOther { align-items: flex-start; }
-.bubbleAuthor { font-size: 0.72rem; color: #888; padding: 0 4px; }
+.bubbleAuthor { font-size: 0.72rem; color: rgba(244,237,228,0.35); padding: 0 4px; }
 .bubble {
   max-width: 80%;
   padding: 10px 14px;
@@ -857,13 +857,13 @@
 }
 .bubbleOwn {
   background: linear-gradient(135deg, #C0392B, #C0392B);
-  color: #fff;
+  color: #F4EDE4;
   align-self: flex-end;
   border-bottom-right-radius: 4px;
 }
 .bubbleOther {
-  background: #1e1630;
-  color: #eee;
+  background: #1C1515;
+  color: #F4EDE4;
   align-self: flex-start;
   border-bottom-left-radius: 4px;
 }
@@ -906,15 +906,15 @@
   align-items: center;
   gap: 10px;
   padding: 12px 20px;
-  border-top: 1px solid #1e1630;
+  border-top: 1px solid #1C1515;
   flex-shrink: 0;
 }
 .replyDot { width: 10px; height: 10px; border-radius: 50%; background: #D4C4B0; flex-shrink: 0; }
 .replyInput {
   flex: 1;
-  background: #1a1030;
-  border: 1px solid #2a1e45;
-  color: #fff;
+  background: #0E0A0A;
+  border: 1px solid #2E2222;
+  color: #F4EDE4;
   border-radius: 0;
   padding: 9px 16px;
   font-size: 0.88rem;
@@ -922,7 +922,7 @@
   min-width: 0;
 }
 .replyInput:focus { outline: none; border-color: #C0392B; }
-.replyTime { font-size: 0.75rem; color: #555; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.replyTime { font-size: 0.75rem; color: rgba(244,237,228,0.25); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .replyBtn {
   width: 36px;
   height: 36px;
@@ -948,12 +948,12 @@
   padding: 10px 20px;
   background: transparent;
   border: none;
-  color: #ccc;
+  color: rgba(244,237,228,0.65);
   cursor: pointer;
   text-align: left;
   transition: background 0.15s;
 }
-.threadIndexItem:hover { background: #1a1030; }
+.threadIndexItem:hover { background: #0E0A0A; }
 .threadIndexDot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .threadIndexBody {
   min-width: 0;
@@ -980,14 +980,14 @@
 }
 .threadIndexPreview {
   font-size: 0.82rem;
-  color: #ddd;
+  color: rgba(244,237,228,0.75);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .threadIndexMeta {
   font-size: 0.72rem;
-  color: #777;
+  color: rgba(244,237,228,0.3);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -996,7 +996,7 @@
 /* ── Shared buttons ─────────────────────────────────────────── */
 .postBtn {
   background: linear-gradient(135deg, #C0392B, #C0392B);
-  color: #fff;
+  color: #F4EDE4;
   border: none;
   padding: 8px 20px;
   border-radius: 0;
@@ -1009,14 +1009,14 @@
 .postBtn:not(:disabled):hover { opacity: 0.85; }
 .cancelBtn {
   background: transparent;
-  border: 1px solid #444;
-  color: #aaa;
+  border: 1px solid rgba(244,237,228,0.18);
+  color: rgba(244,237,228,0.45);
   padding: 8px 14px;
   border-radius: 0;
   cursor: pointer;
   font-size: 0.85rem;
 }
-.cancelBtn:hover { border-color: #888; color: #fff; }
+.cancelBtn:hover { border-color: rgba(244,237,228,0.35); color: #F4EDE4; }
 
 .empty {
   color: rgba(255,255,255,0.42);
@@ -1036,8 +1036,8 @@
   z-index: 100;
 }
 .modal {
-  background: #1a1030;
-  border: 1px solid #2a1e45;
+  background: #0E0A0A;
+  border: 1px solid #2E2222;
   border-radius: 0;
   padding: 24px;
   width: 400px;
@@ -1049,8 +1049,8 @@
 .modalTitle { font-size: 1rem; font-weight: 700; margin: 0; }
 .modalInput {
   background: #0E0A0A;
-  border: 1px solid #333;
-  color: #fff;
+  border: 1px solid rgba(244,237,228,0.12);
+  color: #F4EDE4;
   border-radius: 0;
   padding: 10px 12px;
   font-size: 0.9rem;
@@ -1059,8 +1059,8 @@
 .modalInput:focus { outline: none; border-color: #C0392B; }
 .modalTextarea {
   background: #0E0A0A;
-  border: 1px solid #333;
-  color: #fff;
+  border: 1px solid rgba(244,237,228,0.12);
+  color: #F4EDE4;
   border-radius: 0;
   padding: 10px;
   font-size: 0.9rem;
@@ -1088,7 +1088,7 @@
 .actionStateBtnActive {
   background: rgba(192,57,43,0.12);
   border-color: rgba(192,57,43,0.35);
-  color: #fff;
+  color: #F4EDE4;
 }
 .uploadMetaCard {
   background: rgba(255,255,255,0.05);
@@ -1101,7 +1101,7 @@
 }
 .uploadMetaCard strong {
   font-size: 0.88rem;
-  color: #fff;
+  color: #F4EDE4;
   word-break: break-word;
 }
 .uploadMetaCard span {
@@ -1133,12 +1133,12 @@
 }
 .errorMsg {
   font-size: 0.8rem;
-  color: #ff6b6b;
+  color: #C0392B;
 }
 
 /* ── Song Admin panel (right) ───────────────────────────────── */
 .adminPanel {
-  border-left: 1px solid #1e1630;
+  border-left: 1px solid #1C1515;
   padding: 20px 20px;
   overflow-y: auto;
   display: flex;
@@ -1151,13 +1151,13 @@
   gap: 10px;
   margin-bottom: 14px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #1e1630;
+  border-bottom: 1px solid #1C1515;
 }
 .adminPanelTitle {
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: #888;
+  color: rgba(244,237,228,0.35);
 }
 .adminCount {
   background: rgba(192,57,43,0.15);
@@ -1181,7 +1181,7 @@
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 0;
   padding: 8px 12px;
-  color: #fff;
+  color: #F4EDE4;
   font-size: 0.85rem;
   font-family: inherit;
 }
@@ -1193,7 +1193,7 @@
   background: linear-gradient(135deg, #C0392B, #C0392B);
   border: none;
   border-radius: 0;
-  color: #fff;
+  color: #F4EDE4;
   font-size: 1.2rem;
   cursor: pointer;
   display: flex;
@@ -1280,14 +1280,14 @@
 .taskDesc {
   flex: 1;
   font-size: 0.85rem;
-  color: #ddd;
+  color: rgba(244,237,228,0.75);
   line-height: 1.4;
   cursor: text;
   word-break: break-word;
 }
 .taskDescDone {
   text-decoration: line-through;
-  color: #666;
+  color: rgba(244,237,228,0.28);
 }
 .taskEditInput {
   flex: 1;
@@ -1295,7 +1295,7 @@
   border: 1px solid rgba(192,57,43,0.5);
   border-radius: 0;
   padding: 3px 8px;
-  color: #fff;
+  color: #F4EDE4;
   font-size: 0.85rem;
   font-family: inherit;
 }
@@ -1313,19 +1313,19 @@
   border-radius: 0;
   transition: color 0.15s, background 0.15s;
 }
-.taskDeleteBtn:hover { color: #ff6b6b; background: rgba(255,107,107,0.1); }
+.taskDeleteBtn:hover { color: #C0392B; background: rgba(192,57,43,0.1); }
 
 /* Completed section */
 .completedSection {
   margin-top: 20px;
-  border-top: 1px solid #1e1630;
+  border-top: 1px solid #1C1515;
   padding-top: 14px;
 }
 .completedHeading {
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: #555;
+  color: rgba(244,237,228,0.25);
   margin-bottom: 8px;
   display: flex;
   align-items: center;
@@ -1333,7 +1333,7 @@
 }
 .completedCount {
   background: rgba(255,255,255,0.06);
-  color: #666;
+  color: rgba(244,237,228,0.28);
   padding: 1px 7px;
   border-radius: 0;
   font-weight: 600;
@@ -1444,7 +1444,7 @@
   .songsBtn {
     background: #C0392B !important;
     border-color: #C0392B !important;
-    color: #fff !important;
+    color: #F4EDE4 !important;
     font-weight: 700 !important;
     text-transform: uppercase !important;
     font-size: 0.72rem !important;
@@ -1454,7 +1454,7 @@
   .uploadBtn {
     background: #C0392B !important;
     border-color: #C0392B !important;
-    color: #fff !important;
+    color: #F4EDE4 !important;
     font-weight: 600 !important;
     font-size: 0.72rem !important;
     white-space: nowrap !important;
@@ -1542,7 +1542,7 @@
   }
   .actionsPanelTitle,
   .adminPanelTitle {
-    color: #fff;
+    color: #F4EDE4;
     font-size: 0.84rem;
     letter-spacing: 0.06em;
   }
@@ -1566,8 +1566,8 @@
   .threadsPanel { order: 1; }
   .actionsPanel { order: 2; }
   .adminPanel { order: 3; }
-  .actionsPanel { border-right: none; border-bottom: 1px solid #1e1630; }
-  .adminPanel { border-left: none; border-top: 1px solid #1e1630; }
+  .actionsPanel { border-right: none; border-bottom: 1px solid #1C1515; }
+  .adminPanel { border-left: none; border-top: 1px solid #1C1515; }
 
 
 
@@ -1576,7 +1576,7 @@
 
 /* ── Version picker modal ───────────────────────────────────── */
 .versionModal {
-  background: #1a1030;
+  background: #0E0A0A;
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 0;
   width: 340px;
@@ -1595,7 +1595,7 @@
   font-size: 0.95rem;
   font-weight: 600;
   margin: 0;
-  color: #fff;
+  color: #F4EDE4;
 }
 .versionModalClose {
   background: transparent;
@@ -1607,7 +1607,7 @@
   border-radius: 0;
   line-height: 1;
 }
-.versionModalClose:hover { color: #fff; background: rgba(255,255,255,0.08); }
+.versionModalClose:hover { color: #F4EDE4; background: rgba(255,255,255,0.08); }
 .versionModalList { padding: 8px; }
 .versionModalItem {
   width: 100%;
@@ -1627,7 +1627,7 @@
 .versionModalLabel {
   flex: 1;
   font-size: 0.9rem;
-  color: #fff;
+  color: #F4EDE4;
   font-weight: 500;
 }
 .versionModalMeta {
@@ -1691,7 +1691,7 @@
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 0;
-    color: #fff;
+    color: #F4EDE4;
     font-size: 13px;
     font-weight: 700;
     cursor: pointer;
@@ -1728,7 +1728,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #fff;
+    color: #F4EDE4;
     font-size: 13px;
     font-weight: 700;
     cursor: pointer;
