@@ -1100,7 +1100,7 @@
 }
 
 .modal {
-  background: #1a1025;
+  background: #0E0A0A;
   border: 0.5px solid rgba(255,255,255,0.12);
   border-radius: 0;
   padding: 24px;
@@ -1427,7 +1427,7 @@
 }
 .bottomSheet {
   width: 100%;
-  background: #1e1330;
+  background: #0E0A0A;
   border-radius: 0;
   border-top: 1px solid rgba(255,255,255,0.1);
   overflow: hidden;
