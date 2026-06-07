@@ -1,7 +1,7 @@
 /* ── Base ───────────────────────────────────────────────────── */
 .page {
   min-height: 100vh;
-  background: #0d0914;
+  background: #0E0A0A;
   color: #fff;
   display: flex;
   flex-direction: column;
@@ -13,12 +13,12 @@
   align-items: center;
   justify-content: center;
   color: #aaa;
-  background: #0d0914;
+  background: #0E0A0A;
 }
 .initErrorCard {
   width: min(480px, calc(100vw - 32px));
   padding: 24px;
-  border-radius: 18px;
+  border-radius: 0;
   border: 1px solid rgba(255,255,255,0.12);
   background: rgba(255,255,255,0.04);
   box-shadow: 0 18px 48px rgba(0,0,0,0.28);
@@ -51,7 +51,7 @@
   position: relative;
   backdrop-filter: blur(60px) brightness(0.45) saturate(1.4);
   -webkit-backdrop-filter: blur(60px) brightness(0.45) saturate(1.4);
-  background: linear-gradient(160deg, rgba(13,9,20,0.6) 0%, rgba(13,9,20,0.3) 50%, rgba(13,9,20,0.75) 100%);
+  background: linear-gradient(160deg, rgba(14,10,10,0.6) 0%, rgba(14,10,10,0.3) 50%, rgba(14,10,10,0.75) 100%);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -129,13 +129,13 @@
 }
 .heroMeta { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .heroBadge {
-  background: rgba(255,20,147,0.2);
-  border: 1px solid rgba(255,20,147,0.35);
-  color: #ff1493;
+  background: rgba(192,57,43,0.18);
+  border: 1px solid rgba(192,57,43,0.35);
+  color: #C0392B;
   font-size: 0.72rem;
   font-weight: 600;
   padding: 3px 10px;
-  border-radius: 20px;
+  border-radius: 0;
   cursor: default;
   display: flex;
   align-items: center;
@@ -150,13 +150,13 @@
   cursor: pointer;
 }
 .heroBadgeInput {
-  background: rgba(255,20,147,0.15);
-  border: 1px solid #ff1493;
-  color: #ff1493;
+  background: rgba(192,57,43,0.15);
+  border: 1px solid #C0392B;
+  color: #C0392B;
   font-size: 0.72rem;
   font-weight: 600;
   padding: 3px 10px;
-  border-radius: 20px;
+  border-radius: 0;
   outline: none;
   font-family: inherit;
   min-width: 120px;
@@ -249,7 +249,7 @@
   grid-area: art;
   width: 330px;
   height: 330px;
-  border-radius: 12px;
+  border-radius: 0;
   overflow: hidden;
   position: relative;
   box-shadow: 0 16px 48px rgba(0,0,0,0.6);
@@ -284,7 +284,7 @@
   font-size: 0.75rem;
   font-weight: 700;
   padding: 5px 14px;
-  border-radius: 20px;
+  border-radius: 0;
 }
 
 /* Waveform — "wave" grid area, below heroLeft, left of artwork */
@@ -304,7 +304,7 @@
 .waveformWrap {
   position: relative;
   width: 100%;
-  border-radius: 8px;
+  border-radius: 0;
   overflow: visible;  /* allow floating comment box to escape */
   background: rgba(0,0,0,0.24);
 }
@@ -312,7 +312,7 @@
 .waveform {
   width: 100%;
   cursor: crosshair;
-  border-radius: 8px;
+  border-radius: 0;
   overflow: hidden;
   position: relative;
   z-index: 1;
@@ -323,7 +323,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  border-radius: 8px;
+  border-radius: 0;
   pointer-events: none;
   z-index: 2;
 }
@@ -343,7 +343,7 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  border: 2px solid rgba(13,9,20,0.6);
+  border: 2px solid rgba(14,10,10,0.6);
   cursor: pointer;
   padding: 0;
   pointer-events: all;
@@ -365,7 +365,7 @@
 
 .loadingWave {
   font-size: 0.78rem;
-  color: #a855f7;
+  color: #C0392B;
   animation: pulseWave 1.2s ease-in-out infinite;
 }
 @keyframes pulseWave { 0%,100%{opacity:1} 50%{opacity:0.35} }
@@ -378,8 +378,8 @@
 }
 .waveRetryBtn {
   background: transparent;
-  border: 1px solid rgba(255,20,147,0.45);
-  color: #ff1493;
+  border: 1px solid rgba(192,57,43,0.4);
+  color: #C0392B;
   border-radius: 999px;
   padding: 4px 10px;
   font-size: 0.72rem;
@@ -396,8 +396,8 @@
 .inlineForm {
   margin-top: 12px;
   background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,20,147,0.4);
-  border-radius: 10px;
+  border: 1px solid rgba(192,57,43,0.4);
+  border-radius: 0;
   padding: 12px 14px;
   display: flex;
   flex-direction: column;
@@ -413,8 +413,8 @@
   width: var(--comment-box-width);
   max-width: calc(100vw - 32px);
   background: #1a1030;
-  border: 1px solid rgba(255,20,147,0.5);
-  border-radius: 12px;
+  border: 1px solid rgba(192,57,43,0.5);
+  border-radius: 0;
   padding: 14px;
   display: flex;
   flex-direction: column;
@@ -430,17 +430,17 @@
   left: 50%;
   transform: translateX(-50%);
   border: 6px solid transparent;
-  border-top-color: rgba(255,20,147,0.5);
+  border-top-color: rgba(192,57,43,0.5);
 }
 .inlineFormTime {
   font-size: 0.78rem;
-  color: #ff1493;
+  color: #C0392B;
   font-weight: 600;
 }
 .inlineTextarea {
   background: rgba(0,0,0,0.3);
   border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 7px;
+  border-radius: 0;
   color: #fff;
   font-size: 0.9rem;
   font-family: inherit;
@@ -449,7 +449,7 @@
   width: 100%;
   box-sizing: border-box;
 }
-.inlineTextarea:focus { outline: none; border-color: rgba(255,20,147,0.5); }
+.inlineTextarea:focus { outline: none; border-color: rgba(192,57,43,0.5); }
 .inlineTextarea::placeholder { color: rgba(255,255,255,0.3); }
 .inlineFormActions {
   display: flex;
@@ -461,18 +461,18 @@
   border: 1px solid rgba(255,255,255,0.2);
   color: rgba(255,255,255,0.6);
   padding: 6px 14px;
-  border-radius: 20px;
+  border-radius: 0;
   cursor: pointer;
   font-size: 0.82rem;
   font-family: inherit;
 }
 .cancelBtn:hover { border-color: rgba(255,255,255,0.4); color: #fff; }
 .postBtn {
-  background: linear-gradient(135deg, #ff1493, #a855f7);
+  background: linear-gradient(135deg, #C0392B, #C0392B);
   border: none;
   color: #fff;
   padding: 6px 18px;
-  border-radius: 20px;
+  border-radius: 0;
   cursor: pointer;
   font-size: 0.82rem;
   font-weight: 600;
@@ -488,7 +488,7 @@
   border: 1px solid rgba(255,255,255,0.15);
   color: rgba(255,255,255,0.8);
   padding: 6px 14px;
-  border-radius: 8px;
+  border-radius: 0;
   cursor: pointer;
   font-size: 0.82rem;
   font-family: inherit;
@@ -502,31 +502,31 @@
   border: 1px solid rgba(255,255,255,0.15);
   color: #fff;
   padding: 6px 12px;
-  border-radius: 8px;
+  border-radius: 0;
   cursor: pointer;
   font-size: 0.82rem;
   font-family: inherit;
 }
 .uploadBtn {
   background: transparent;
-  border: 1px solid #ff1493;
-  color: #ff1493;
+  border: 1px solid #C0392B;
+  color: #C0392B;
   padding: 6px 14px;
-  border-radius: 8px;
+  border-radius: 0;
   cursor: pointer;
   font-size: 0.82rem;
   font-family: inherit;
   white-space: nowrap;
   transition: background 0.15s;
 }
-.uploadBtn:hover { background: rgba(255,20,147,0.12); }
+.uploadBtn:hover { background: rgba(192,57,43,0.12); }
 
 .changeVersionBtn {
   background: transparent;
   border: 1px solid rgba(255,255,255,0.2);
   color: rgba(255,255,255,0.8);
   padding: 6px 14px;
-  border-radius: 8px;
+  border-radius: 0;
   cursor: pointer;
   font-size: 0.82rem;
   font-family: inherit;
@@ -539,7 +539,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ff1493, #a855f7);
+  background: linear-gradient(135deg, #C0392B, #C0392B);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -599,7 +599,7 @@
   margin-bottom: 12px;
   padding: 10px 12px;
   border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 10px;
+  border-radius: 0;
   background: rgba(255,255,255,0.03);
   color: rgba(255,255,255,0.62);
   font-size: 0.74rem;
@@ -653,8 +653,8 @@
   cursor: pointer;
 }
 .actionFilterPillActive {
-  background: rgba(255,20,147,0.12);
-  border-color: rgba(255,20,147,0.35);
+  background: rgba(192,57,43,0.12);
+  border-color: rgba(192,57,43,0.35);
   color: #fff;
 }
 
@@ -681,7 +681,7 @@
   justify-content: center;
   transition: border-color 0.2s, background 0.2s;
 }
-.actionToggle:hover { border-color: #ff1493; }
+.actionToggle:hover { border-color: #C0392B; }
 .actionToggleDone { background: #22c55e; border-color: #22c55e; }
 .actionToggleApproved { background: #f5ae3d; border-color: #f5ae3d; }
 
@@ -755,7 +755,7 @@
   cursor: pointer;
 }
 .actionResolveBtn:hover {
-  border-color: rgba(255,20,147,0.35);
+  border-color: rgba(192,57,43,0.35);
   color: #fff;
 }
 .actionResolvedBadge {
@@ -796,7 +796,7 @@
   gap: 2px;
   min-width: 0;
 }
-.threadTimestamp { font-size: 0.9rem; font-weight: 600; color: #00d4ff; }
+.threadTimestamp { font-size: 0.9rem; font-weight: 600; color: #D4C4B0; }
 .threadHeaderCount {
   font-size: 0.72rem;
   color: #666;
@@ -820,8 +820,8 @@
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 .threadActionBtn:hover {
-  background: rgba(255,20,147,0.12);
-  border-color: rgba(255,20,147,0.4);
+  background: rgba(192,57,43,0.12);
+  border-color: rgba(192,57,43,0.4);
   color: #fff;
 }
 .threadsDropdown {
@@ -850,13 +850,13 @@
 .bubble {
   max-width: 80%;
   padding: 10px 14px;
-  border-radius: 16px;
+  border-radius: 0;
   font-size: 0.9rem;
   line-height: 1.45;
   box-shadow: 0 10px 24px rgba(0,0,0,0.16);
 }
 .bubbleOwn {
-  background: linear-gradient(135deg, #a855f7, #7c3aed);
+  background: linear-gradient(135deg, #C0392B, #C0392B);
   color: #fff;
   align-self: flex-end;
   border-bottom-right-radius: 4px;
@@ -891,8 +891,8 @@
 .markActionBtn {
   background: rgba(168,85,247,0.15);
   border: 1px solid rgba(168,85,247,0.4);
-  color: #a855f7;
-  border-radius: 20px;
+  color: #C0392B;
+  border-radius: 0;
   padding: 4px 12px;
   font-size: 0.75rem;
   cursor: pointer;
@@ -909,26 +909,26 @@
   border-top: 1px solid #1e1630;
   flex-shrink: 0;
 }
-.replyDot { width: 10px; height: 10px; border-radius: 50%; background: #00d4ff; flex-shrink: 0; }
+.replyDot { width: 10px; height: 10px; border-radius: 50%; background: #D4C4B0; flex-shrink: 0; }
 .replyInput {
   flex: 1;
   background: #1a1030;
   border: 1px solid #2a1e45;
   color: #fff;
-  border-radius: 20px;
+  border-radius: 0;
   padding: 9px 16px;
   font-size: 0.88rem;
   font-family: inherit;
   min-width: 0;
 }
-.replyInput:focus { outline: none; border-color: #ff1493; }
+.replyInput:focus { outline: none; border-color: #C0392B; }
 .replyTime { font-size: 0.75rem; color: #555; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .replyBtn {
   width: 36px;
   height: 36px;
   border-radius: 50%;
   border: none;
-  background: linear-gradient(135deg, #ff1493, #a855f7);
+  background: linear-gradient(135deg, #C0392B, #C0392B);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -968,7 +968,7 @@
   justify-content: space-between;
   gap: 10px;
 }
-.threadIndexTime { font-size: 0.78rem; color: #00d4ff; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.threadIndexTime { font-size: 0.78rem; color: #D4C4B0; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .threadIndexCount {
   font-size: 0.68rem;
   color: rgba(255,255,255,0.42);
@@ -995,11 +995,11 @@
 
 /* ── Shared buttons ─────────────────────────────────────────── */
 .postBtn {
-  background: linear-gradient(135deg, #ff1493, #a855f7);
+  background: linear-gradient(135deg, #C0392B, #C0392B);
   color: #fff;
   border: none;
   padding: 8px 20px;
-  border-radius: 20px;
+  border-radius: 0;
   cursor: pointer;
   font-size: 0.85rem;
   font-weight: 600;
@@ -1012,7 +1012,7 @@
   border: 1px solid #444;
   color: #aaa;
   padding: 8px 14px;
-  border-radius: 20px;
+  border-radius: 0;
   cursor: pointer;
   font-size: 0.85rem;
 }
@@ -1038,7 +1038,7 @@
 .modal {
   background: #1a1030;
   border: 1px solid #2a1e45;
-  border-radius: 16px;
+  border-radius: 0;
   padding: 24px;
   width: 400px;
   max-width: 90vw;
@@ -1048,26 +1048,26 @@
 }
 .modalTitle { font-size: 1rem; font-weight: 700; margin: 0; }
 .modalInput {
-  background: #0d0914;
+  background: #0E0A0A;
   border: 1px solid #333;
   color: #fff;
-  border-radius: 8px;
+  border-radius: 0;
   padding: 10px 12px;
   font-size: 0.9rem;
   font-family: inherit;
 }
-.modalInput:focus { outline: none; border-color: #ff1493; }
+.modalInput:focus { outline: none; border-color: #C0392B; }
 .modalTextarea {
-  background: #0d0914;
+  background: #0E0A0A;
   border: 1px solid #333;
   color: #fff;
-  border-radius: 8px;
+  border-radius: 0;
   padding: 10px;
   font-size: 0.9rem;
   resize: vertical;
   font-family: inherit;
 }
-.modalTextarea:focus { outline: none; border-color: #ff1493; }
+.modalTextarea:focus { outline: none; border-color: #C0392B; }
 .modalActions { display: flex; gap: 8px; justify-content: flex-end; }
 .actionStateRow {
   display: flex;
@@ -1086,14 +1086,14 @@
   font-family: inherit;
 }
 .actionStateBtnActive {
-  background: rgba(255,20,147,0.12);
-  border-color: rgba(255,20,147,0.35);
+  background: rgba(192,57,43,0.12);
+  border-color: rgba(192,57,43,0.35);
   color: #fff;
 }
 .uploadMetaCard {
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 10px;
+  border-radius: 0;
   padding: 12px;
   display: flex;
   flex-direction: column;
@@ -1121,7 +1121,7 @@
 }
 .progressBar {
   height: 100%;
-  background: linear-gradient(90deg, #ff1493, #a855f7);
+  background: linear-gradient(90deg, #C0392B, #C0392B);
   border-radius: inherit;
   transition: width 0.2s ease;
 }
@@ -1160,12 +1160,12 @@
   color: #888;
 }
 .adminCount {
-  background: rgba(255,20,147,0.15);
-  color: #ff1493;
+  background: rgba(192,57,43,0.15);
+  color: #C0392B;
   font-size: 0.68rem;
   font-weight: 700;
   padding: 1px 7px;
-  border-radius: 10px;
+  border-radius: 0;
   margin-left: auto;
 }
 
@@ -1179,20 +1179,20 @@
   flex: 1;
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 8px;
+  border-radius: 0;
   padding: 8px 12px;
   color: #fff;
   font-size: 0.85rem;
   font-family: inherit;
 }
-.addTaskInput:focus { outline: none; border-color: rgba(255,20,147,0.5); }
+.addTaskInput:focus { outline: none; border-color: rgba(192,57,43,0.5); }
 .addTaskInput::placeholder { color: rgba(255,255,255,0.25); }
 .addTaskBtn {
   width: 34px;
   height: 34px;
-  background: linear-gradient(135deg, #ff1493, #a855f7);
+  background: linear-gradient(135deg, #C0392B, #C0392B);
   border: none;
-  border-radius: 8px;
+  border-radius: 0;
   color: #fff;
   font-size: 1.2rem;
   cursor: pointer;
@@ -1235,14 +1235,14 @@
   align-items: center;
   gap: 8px;
   padding: 8px 6px;
-  border-radius: 8px;
+  border-radius: 0;
   border: 1px solid transparent;
   transition: background 0.12s, border-color 0.12s;
   cursor: default;
 }
 .taskRow:hover { background: rgba(255,255,255,0.03); }
 .taskRowDragOver {
-  border-color: rgba(255,20,147,0.4);
+  border-color: rgba(192,57,43,0.4);
   background: rgba(255,20,147,0.05);
 }
 .taskRowDone { opacity: 0.5; }
@@ -1292,8 +1292,8 @@
 .taskEditInput {
   flex: 1;
   background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,20,147,0.5);
-  border-radius: 6px;
+  border: 1px solid rgba(192,57,43,0.5);
+  border-radius: 0;
   padding: 3px 8px;
   color: #fff;
   font-size: 0.85rem;
@@ -1310,7 +1310,7 @@
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  border-radius: 4px;
+  border-radius: 0;
   transition: color 0.15s, background 0.15s;
 }
 .taskDeleteBtn:hover { color: #ff6b6b; background: rgba(255,107,107,0.1); }
@@ -1335,7 +1335,7 @@
   background: rgba(255,255,255,0.06);
   color: #666;
   padding: 1px 7px;
-  border-radius: 10px;
+  border-radius: 0;
   font-weight: 600;
 }
 
@@ -1366,7 +1366,7 @@
     top: -24px;
     width: 100%;
     height: 327px;
-    border-radius: 8px;
+    border-radius: 0;
     opacity: 0.5;
     pointer-events: none;
     z-index: 0;
@@ -1409,7 +1409,7 @@
   .statusToast {
     width: calc(100% - 32px);
     max-width: 360px;
-    border-radius: 16px;
+    border-radius: 0;
     text-align: center;
     bottom: 18px;
   }
@@ -1442,8 +1442,8 @@
     margin-top: 34px !important;
   }
   .songsBtn {
-    background: #ff1493 !important;
-    border-color: #ff1493 !important;
+    background: #C0392B !important;
+    border-color: #C0392B !important;
     color: #fff !important;
     font-weight: 700 !important;
     text-transform: uppercase !important;
@@ -1452,8 +1452,8 @@
     min-height: 40px !important;
   }
   .uploadBtn {
-    background: #ff1493 !important;
-    border-color: #ff1493 !important;
+    background: #C0392B !important;
+    border-color: #C0392B !important;
     color: #fff !important;
     font-weight: 600 !important;
     font-size: 0.72rem !important;
@@ -1464,9 +1464,9 @@
   .changeVersionBtn { min-height: 40px; flex: 1 1 140px; }
   .heroControls { flex-wrap: wrap; gap: 12px; }
   .versionSelect {
-    background: rgba(255,20,147,0.15) !important;
-    border-color: #ff1493 !important;
-    color: #ff1493 !important;
+    background: rgba(192,57,43,0.15) !important;
+    border-color: #C0392B !important;
+    color: #C0392B !important;
     font-size: 0.72rem !important;
   }
   .threadsPanelHeader {
@@ -1578,7 +1578,7 @@
 .versionModal {
   background: #1a1030;
   border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 14px;
+  border-radius: 0;
   width: 340px;
   max-width: 90vw;
   overflow: hidden;
@@ -1604,7 +1604,7 @@
   font-size: 1rem;
   cursor: pointer;
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: 0;
   line-height: 1;
 }
 .versionModalClose:hover { color: #fff; background: rgba(255,255,255,0.08); }
@@ -1615,7 +1615,7 @@
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: 0;
   border: none;
   background: transparent;
   cursor: pointer;
@@ -1635,7 +1635,7 @@
   color: rgba(255,255,255,0.4);
 }
 .versionModalTick {
-  color: #ff1493;
+  color: #C0392B;
   font-size: 0.85rem;
   font-weight: 700;
 }
@@ -1664,7 +1664,7 @@
     padding-bottom: max(env(safe-area-inset-bottom, 40px), 40px);
     padding-left: 16px;
     padding-right: 16px;
-    background: rgba(13, 9, 20, 0.97);
+    background: rgba(14,10,10, 0.97);
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
@@ -1690,7 +1690,7 @@
     padding: 0 14px;
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 8px;
+    border-radius: 0;
     color: #fff;
     font-size: 13px;
     font-weight: 700;
@@ -1749,7 +1749,7 @@
     left: 16px;
     right: 16px;
     z-index: 10000;
-    border-radius: 12px;
+    border-radius: 0;
     overflow: visible;
     box-shadow: 0 -8px 40px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.1);
     -webkit-transform: translateZ(0);
@@ -1773,7 +1773,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0d0914 0%, #1a0f2e 50%, #0d0914 100%);
+  background: linear-gradient(135deg, #0E0A0A 0%, #1C1515 50%, #0E0A0A 100%);
   gap: 24px;
 }
 
@@ -1798,7 +1798,7 @@
 
 /* Pink fill — animates upward via stroke-dashoffset */
 .loadingLogoFill {
-  stroke: #ff1493;
+  stroke: #C0392B;
   fill: none;
   stroke-dasharray: 400;
   stroke-dashoffset: 400;
