@@ -678,9 +678,9 @@ html, body { height:100%; background:var(--black); color:var(--off-white); font-
 
 <!-- WIREFRAME VIEW SWITCHER -->
 <div class="view-switcher">
-  <button class="vs-btn active" onclick="switchView('grid')">Desktop — Card view</button>
-  <button class="vs-btn" onclick="switchView('list')">Desktop — List view</button>
-  <button class="vs-btn" onclick="switchView('mobile')">Mobile — List view</button>
+  <button class="vs-btn active" onclick="switchView('grid', this)">Desktop — Card view</button>
+  <button class="vs-btn" onclick="switchView('list', this)">Desktop — List view</button>
+  <button class="vs-btn" onclick="switchView('mobile', this)">Mobile — List view</button>
   <span class="vs-label">TSR v3 brand — wireframe only</span>
 </div>
 
@@ -718,14 +718,14 @@ html, body { height:100%; background:var(--black); color:var(--off-white); font-
           </select>
           <!-- View toggle -->
           <div class="view-toggle">
-            <button class="view-btn active" title="Grid view">
+            <button class="view-btn active" title="Grid view" onclick="switchView('grid', this)">
               <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="1" width="4.5" height="4.5" stroke="currentColor" stroke-width="1.2"/><rect x="7.5" y="1" width="4.5" height="4.5" stroke="currentColor" stroke-width="1.2"/><rect x="1" y="7.5" width="4.5" height="4.5" stroke="currentColor" stroke-width="1.2"/><rect x="7.5" y="7.5" width="4.5" height="4.5" stroke="currentColor" stroke-width="1.2"/></svg>
             </button>
-            <button class="view-btn" title="List view">
+            <button class="view-btn" title="List view" onclick="switchView('list', this)">
               <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="1" width="3" height="3" rx="0.5" fill="currentColor"/><rect x="5.5" y="1.75" width="6.5" height="1.5" rx="0.75" fill="currentColor"/><rect x="1" y="5" width="3" height="3" rx="0.5" fill="currentColor"/><rect x="5.5" y="5.75" width="6.5" height="1.5" rx="0.75" fill="currentColor"/><rect x="1" y="9" width="3" height="3" rx="0.5" fill="currentColor"/><rect x="5.5" y="9.75" width="6.5" height="1.5" rx="0.75" fill="currentColor"/></svg>
             </button>
           </div>
-          <button class="new-btn">
+          <button class="new-btn" onclick="showNewModal()">
             <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 1v9M1 5.5h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             New song
           </button>
@@ -941,7 +941,7 @@ html, body { height:100%; background:var(--black); color:var(--off-white); font-
         </div>
 
         <!-- Ghost add card -->
-        <div class="card-ghost">
+        <div class="card-ghost" onclick="showNewModal()">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
           Add song
         </div>
@@ -1098,7 +1098,7 @@ html, body { height:100%; background:var(--black); color:var(--off-white); font-
               <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="1" width="3" height="3" rx="0.5" fill="currentColor"/><rect x="5.5" y="1.75" width="6.5" height="1.5" rx="0.75" fill="currentColor"/><rect x="1" y="5" width="3" height="3" rx="0.5" fill="currentColor"/><rect x="5.5" y="5.75" width="6.5" height="1.5" rx="0.75" fill="currentColor"/><rect x="1" y="9" width="3" height="3" rx="0.5" fill="currentColor"/><rect x="5.5" y="9.75" width="6.5" height="1.5" rx="0.75" fill="currentColor"/></svg>
             </button>
           </div>
-          <button class="new-btn">
+          <button class="new-btn" onclick="showNewModal()">
             <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 1v9M1 5.5h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             New song
           </button>
@@ -1137,7 +1137,7 @@ html, body { height:100%; background:var(--black); color:var(--off-white); font-
               </div>
             </div>
             <div class="list-actions">
-              <button class="icon-btn icon-btn-info active" onclick="toggleExpand('lc1')"><svg width="10" height="10" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" stroke-width="1.2"/><path d="M5.5 5v3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="5.5" cy="3.2" r="0.6" fill="currentColor"/></svg></button>
+              <button class="icon-btn icon-btn-info active" onclick="toggleExpand('lc1', this)"><svg width="10" height="10" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" stroke-width="1.2"/><path d="M5.5 5v3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="5.5" cy="3.2" r="0.6" fill="currentColor"/></svg></button>
               <button class="icon-btn"><svg width="10" height="10" viewBox="0 0 11 11" fill="none"><path d="M7.5 1.5l2 2-6 6H1.5v-2l6-6z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg></button>
               <button class="icon-btn"><svg width="10" height="10" viewBox="0 0 11 11" fill="none"><rect x="1" y="2" width="9" height="7" rx="1" stroke="currentColor" stroke-width="1"/><circle cx="3.5" cy="4.5" r="1" fill="currentColor"/><path d="M1 8l3-3 2 2 2-2 2 3" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg></button>
               <button class="icon-btn"><svg width="10" height="10" viewBox="0 0 11 11" fill="none"><path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -1175,7 +1175,7 @@ html, body { height:100%; background:var(--black); color:var(--off-white); font-
               </div>
             </div>
             <div class="list-actions">
-              <button class="icon-btn icon-btn-info" onclick="toggleExpand('lc2')"><svg width="10" height="10" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" stroke-width="1.2"/><path d="M5.5 5v3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="5.5" cy="3.2" r="0.6" fill="currentColor"/></svg></button>
+              <button class="icon-btn icon-btn-info" onclick="toggleExpand('lc2', this)"><svg width="10" height="10" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" stroke-width="1.2"/><path d="M5.5 5v3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="5.5" cy="3.2" r="0.6" fill="currentColor"/></svg></button>
               <button class="icon-btn"><svg width="10" height="10" viewBox="0 0 11 11" fill="none"><path d="M7.5 1.5l2 2-6 6H1.5v-2l6-6z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg></button>
               <button class="icon-btn"><svg width="10" height="10" viewBox="0 0 11 11" fill="none"><rect x="1" y="2" width="9" height="7" rx="1" stroke="currentColor" stroke-width="1"/><circle cx="3.5" cy="4.5" r="1" fill="currentColor"/><path d="M1 8l3-3 2 2 2-2 2 3" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg></button>
               <button class="icon-btn"><svg width="10" height="10" viewBox="0 0 11 11" fill="none"><path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -1209,13 +1209,18 @@ html, body { height:100%; background:var(--black); color:var(--off-white); font-
               </div>
             </div>
             <div class="list-actions">
-              <button class="icon-btn icon-btn-info" onclick="toggleExpand('lc3')"><svg width="10" height="10" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" stroke-width="1.2"/><path d="M5.5 5v3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="5.5" cy="3.2" r="0.6" fill="currentColor"/></svg></button>
+              <button class="icon-btn icon-btn-info" onclick="toggleExpand('lc3', this)"><svg width="10" height="10" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" stroke-width="1.2"/><path d="M5.5 5v3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="5.5" cy="3.2" r="0.6" fill="currentColor"/></svg></button>
               <button class="icon-btn"><svg width="10" height="10" viewBox="0 0 11 11" fill="none"><path d="M7.5 1.5l2 2-6 6H1.5v-2l6-6z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg></button>
               <button class="icon-btn"><svg width="10" height="10" viewBox="0 0 11 11" fill="none"><rect x="1" y="2" width="9" height="7" rx="1" stroke="currentColor" stroke-width="1"/><circle cx="3.5" cy="4.5" r="1" fill="currentColor"/><path d="M1 8l3-3 2 2 2-2 2 3" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg></button>
               <button class="icon-btn"><svg width="10" height="10" viewBox="0 0 11 11" fill="none"><path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             </div>
           </div>
-          <div class="expand-panel" id="ep-lc3"></div>
+          <div class="expand-panel" id="ep-lc3"><div class="expand-grid">
+              <div class="expand-item"><span class="expand-label">Latest version</span><span class="expand-value">v1</span></div>
+              <div class="expand-item"><span class="expand-label">Last activity</span><span class="expand-value">3 Jun</span></div>
+              <div class="expand-item"><span class="expand-label">Comments</span><span class="expand-value">2</span></div>
+              <div class="expand-item"><span class="expand-label">Open work</span><span class="expand-value">None</span></div>
+            </div></div>
         </div>
 
         <!-- Row 4 -->
@@ -1230,13 +1235,18 @@ html, body { height:100%; background:var(--black); color:var(--off-white); font-
               <div class="list-meta-primary"><span>Mastering</span><span class="meta-sep">·</span><span>v12 · Final</span></div>
             </div>
             <div class="list-actions">
-              <button class="icon-btn icon-btn-info" onclick="toggleExpand('lc4')"><svg width="10" height="10" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" stroke-width="1.2"/><path d="M5.5 5v3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="5.5" cy="3.2" r="0.6" fill="currentColor"/></svg></button>
+              <button class="icon-btn icon-btn-info" onclick="toggleExpand('lc4', this)"><svg width="10" height="10" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" stroke-width="1.2"/><path d="M5.5 5v3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="5.5" cy="3.2" r="0.6" fill="currentColor"/></svg></button>
               <button class="icon-btn"><svg width="10" height="10" viewBox="0 0 11 11" fill="none"><path d="M7.5 1.5l2 2-6 6H1.5v-2l6-6z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg></button>
               <button class="icon-btn"><svg width="10" height="10" viewBox="0 0 11 11" fill="none"><rect x="1" y="2" width="9" height="7" rx="1" stroke="currentColor" stroke-width="1"/><circle cx="3.5" cy="4.5" r="1" fill="currentColor"/><path d="M1 8l3-3 2 2 2-2 2 3" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg></button>
               <button class="icon-btn"><svg width="10" height="10" viewBox="0 0 11 11" fill="none"><path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             </div>
           </div>
-          <div class="expand-panel" id="ep-lc4"></div>
+          <div class="expand-panel" id="ep-lc4"><div class="expand-grid">
+              <div class="expand-item"><span class="expand-label">Latest version</span><span class="expand-value">v12 · Final</span></div>
+              <div class="expand-item"><span class="expand-label">Last activity</span><span class="expand-value">28 May</span></div>
+              <div class="expand-item"><span class="expand-label">Comments</span><span class="expand-value">18</span></div>
+              <div class="expand-item"><span class="expand-label">Open work</span><span class="expand-value">None</span></div>
+            </div></div>
         </div>
 
         <!-- Row 5 -->
@@ -1255,13 +1265,21 @@ html, body { height:100%; background:var(--black); color:var(--off-white); font-
               </div>
             </div>
             <div class="list-actions">
-              <button class="icon-btn icon-btn-info" onclick="toggleExpand('lc5')"><svg width="10" height="10" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" stroke-width="1.2"/><path d="M5.5 5v3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="5.5" cy="3.2" r="0.6" fill="currentColor"/></svg></button>
+              <button class="icon-btn icon-btn-info" onclick="toggleExpand('lc5', this)"><svg width="10" height="10" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" stroke-width="1.2"/><path d="M5.5 5v3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="5.5" cy="3.2" r="0.6" fill="currentColor"/></svg></button>
               <button class="icon-btn"><svg width="10" height="10" viewBox="0 0 11 11" fill="none"><path d="M7.5 1.5l2 2-6 6H1.5v-2l6-6z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg></button>
               <button class="icon-btn"><svg width="10" height="10" viewBox="0 0 11 11" fill="none"><rect x="1" y="2" width="9" height="7" rx="1" stroke="currentColor" stroke-width="1"/><circle cx="3.5" cy="4.5" r="1" fill="currentColor"/><path d="M1 8l3-3 2 2 2-2 2 3" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg></button>
               <button class="icon-btn"><svg width="10" height="10" viewBox="0 0 11 11" fill="none"><path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             </div>
           </div>
-          <div class="expand-panel" id="ep-lc5"></div>
+          <div class="expand-panel" id="ep-lc5"><div class="expand-grid">
+              <div class="expand-item"><span class="expand-label">Latest version</span><span class="expand-value">v5</span></div>
+              <div class="expand-item"><span class="expand-label">Last activity</span><span class="expand-value">Today, 09:14</span></div>
+              <div class="expand-item"><span class="expand-label">Comments</span><span class="expand-value">11</span></div>
+              <div class="expand-item"><span class="expand-label">Open work</span><span class="expand-value">1 action</span></div>
+            </div>
+            <div class="expand-assign-row">
+              <button class="assign-pill">1 assigned to me</button>
+            </div></div>
         </div>
 
       </div>
@@ -1452,35 +1470,101 @@ html, body { height:100%; background:var(--black); color:var(--off-white); font-
 </div>
 
 <script>
-function switchView(v) {
+// ── View switcher ──
+function switchView(v, btn) {
   document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.vs-btn').forEach(el => el.classList.remove('active'));
   document.getElementById('view-' + v).classList.add('active');
-  event.target.classList.add('active');
+  btn.classList.add('active');
 }
 
-function toggleExpand(cardId) {
+// ── List view expand panels ──
+function toggleExpand(cardId, btn) {
   const ep = document.getElementById('ep-' + cardId);
-  const btn = document.querySelector('#' + cardId + ' .icon-btn-info');
   if (!ep) return;
   const isOpen = ep.classList.contains('open');
 
-  // Close all
+  // Close all first
   document.querySelectorAll('.expand-panel').forEach(p => p.classList.remove('open'));
   document.querySelectorAll('.icon-btn-info').forEach(b => b.classList.remove('active'));
 
   if (!isOpen) {
     ep.classList.add('open');
-    btn && btn.classList.add('active');
+    // Find the closest icon-btn-info to mark active
+    const infoBtn = btn.closest('.icon-btn-info') || btn;
+    infoBtn.classList.add('active');
   }
 }
 
+// ── Grid card info overlay ──
+function toggleOverlay(songId, btn) {
+  const overlay = document.getElementById('overlay-' + songId);
+  if (!overlay) return;
+  const isOpen = overlay.classList.contains('visible');
+
+  document.querySelectorAll('.card-info-overlay').forEach(o => o.classList.remove('visible'));
+  document.querySelectorAll('.icon-btn-info').forEach(b => b.classList.remove('active'));
+
+  if (!isOpen) {
+    overlay.classList.add('visible');
+    btn.classList.add('active');
+  }
+}
+
+// ── Mobile bottom sheet ──
 function showSheet() {
   document.getElementById('bs-overlay').classList.add('visible');
 }
 function hideSheet() {
   document.getElementById('bs-overlay').classList.remove('visible');
 }
+
+// ── Modals ──
+function showNewModal() {
+  document.getElementById('modal-new').classList.add('visible');
+  setTimeout(() => document.getElementById('new-song-input').focus(), 100);
+}
+function showDeleteModal(name) {
+  document.getElementById('delete-song-name').textContent = name || 'this song';
+  document.getElementById('modal-delete').classList.add('visible');
+}
+function hideModal(id) {
+  document.getElementById(id).classList.remove('visible');
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.visible').forEach(m => m.classList.remove('visible'));
+  }
+});
 </script>
+
+<!-- ══ NEW SONG MODAL ══ -->
+<div class="modal-overlay" id="modal-new" onclick="if(event.target===this)hideModal('modal-new')">
+  <div class="modal">
+    <div class="modal-title">New song</div>
+    <input class="modal-input" placeholder="Song title" id="new-song-input"
+      onkeydown="if(event.key==='Escape')hideModal('modal-new')">
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="hideModal('modal-new')">Cancel</button>
+      <button class="modal-confirm">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DELETE MODAL ══ -->
+<div class="modal-overlay" id="modal-delete" onclick="if(event.target===this)hideModal('modal-delete')">
+  <div class="modal">
+    <div class="modal-title">Delete song?</div>
+    <p style="color:var(--dune);font-size:13px;line-height:1.6;margin-bottom:20px">
+      This will permanently delete <strong style="color:var(--sand)" id="delete-song-name">Fading Light</strong>,
+      all versions, comments, and actions. This cannot be undone.
+    </p>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="hideModal('modal-delete')">Cancel</button>
+      <button class="modal-confirm" style="background:#b91c1c">Delete</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
