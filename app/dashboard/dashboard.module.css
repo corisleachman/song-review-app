@@ -2,7 +2,7 @@
 
 .page {
   min-height: 100vh;
-  background: #0d0914;
+  background: #0E0A0A;
   color: #fff;
   display: flex;
   flex-direction: column;
@@ -19,7 +19,7 @@
   position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(13,9,20,0.88);
+  background: rgba(14,10,10,0.88);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
 }
@@ -80,7 +80,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--primary, #ff1493);
+  background: #C0392B;
   flex-shrink: 0;
 }
 
@@ -90,7 +90,7 @@
   color: rgba(255,255,255,0.4);
   font-size: 12px;
   padding: 6px 12px;
-  border-radius: 7px;
+  border-radius: 0;
   cursor: pointer;
   font-family: inherit;
   transition: border-color 0.15s, color 0.15s;
@@ -143,16 +143,16 @@
   margin-bottom: -0.5px;
 }
 .mobileTabActive {
-  color: var(--primary, #ff1493);
-  border-bottom-color: var(--primary, #ff1493);
+  color: #C0392B;
+  border-bottom-color: #C0392B;
 }
 
 .tabBadge {
-  background: rgba(255,20,147,0.2);
-  color: var(--primary, #ff1493);
+  background: rgba(192,57,43,0.15);
+  color: #C0392B;
   font-size: 10px;
   padding: 1px 6px;
-  border-radius: 10px;
+  border-radius: 0;
 }
 
 /* Body */
@@ -169,8 +169,7 @@
   border-right: 0.5px solid rgba(255,255,255,0.08);
   overflow-y: auto;
   background:
-    radial-gradient(circle at top left, rgba(168,85,247,0.06), transparent 32%),
-    linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0));
+    none;
 }
 
 .panelHeader {
@@ -208,7 +207,7 @@
   appearance: none;
   background: rgba(255,255,255,0.05);
   border: 0.5px solid rgba(255,255,255,0.12);
-  border-radius: 7px;
+  border-radius: 0;
   color: rgba(255,255,255,0.82);
   font-size: 12px;
   font-family: inherit;
@@ -227,12 +226,12 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  background: var(--primary, #ff1493);
+  background: #C0392B;
   color: #fff;
   font-size: 12px;
   font-weight: 500;
   padding: 8px 14px;
-  border-radius: 10px;
+  border-radius: 0;
   border: none;
   cursor: pointer;
   font-family: inherit;
@@ -254,34 +253,34 @@
 
 .card {
   background: rgba(255,255,255,0.045);
-  border-radius: 14px;
+  border-radius: 0;
   border: 0.5px solid rgba(255,255,255,0.09);
   overflow: hidden;
   cursor: pointer;
   transition: border-color 0.15s, transform 0.18s, box-shadow 0.15s, opacity 0.28s;
   position: relative;
   aspect-ratio: 1 / 1;
-  box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+  box-shadow: 0 10px 24px rgba(14,10,10,0.25);
 }
 .cardInfoExpanded {
   border-color: rgba(255,255,255,0.18);
   box-shadow: 0 18px 42px rgba(0,0,0,0.32);
 }
 .cardAttention {
-  box-shadow: -1px 0 0 0 #ff1493, 0 1px 2px rgba(0,0,0,0.18);
-  border-color: rgba(255,20,147,0.2);
+  box-shadow: -1px 0 0 0 #C0392B, 0 1px 2px rgba(14,10,10,0.25);
+  border-color: rgba(192,57,43,0.15);
 }
 .desktopGridCard.cardAttention {
-  box-shadow: 0 0 0 2px #ff1493, 0 1px 2px rgba(0,0,0,0.18) !important;
+  box-shadow: 0 0 0 2px #C0392B, 0 1px 2px rgba(14,10,10,0.25) !important;
   border-color: transparent !important;
 }
 .desktopGridCard.cardAttention:hover {
-  box-shadow: 0 0 0 2px #ff1493, 0 1px 2px rgba(0,0,0,0.18) !important;
-    border-color: rgba(255,20,147,0.35) !important;
+  box-shadow: 0 0 0 2px #C0392B, 0 1px 2px rgba(14,10,10,0.25) !important;
+    border-color: rgba(192,57,43,0.35) !important;
 
 }
 .card:hover {
-  border-color: rgba(255,20,147,0.35);
+  border-color: rgba(192,57,43,0.35);
 }
 .cardDeleting {
   opacity: 0;
@@ -318,7 +317,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: rgba(255,20,147,0.08);
+  background: rgba(192,57,43,0.08);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -328,13 +327,13 @@
   position: absolute;
   top: 7px;
   right: 7px;
-  background: rgba(255,20,147,0.15);
-  color: var(--primary, #ff1493);
+  background: rgba(192,57,43,0.15);
+  color: #C0392B;
   font-size: 9px;
   font-weight: 600;
   padding: 2px 7px;
-  border-radius: 10px;
-  border: 0.5px solid rgba(255,20,147,0.25);
+  border-radius: 0;
+  border: 0.5px solid rgba(192,57,43,0.25);
   pointer-events: none;
 }
 
@@ -342,13 +341,13 @@
   position: absolute;
   top: 7px;
   left: 7px;
-  background: rgba(0,212,255,0.16);
-  color: #7ee7ff;
+  background: rgba(192,57,43,0.18);
+  color: #D4C4B0;
   font-size: 9px;
   font-weight: 700;
   padding: 2px 7px;
-  border-radius: 10px;
-  border: 0.5px solid rgba(0,212,255,0.35);
+  border-radius: 0;
+  border: 0.5px solid rgba(192,57,43,0.35);
   pointer-events: none;
   letter-spacing: 0.02em;
 }
@@ -361,7 +360,7 @@
   color: rgba(255,255,255,0.5);
   font-size: 9px;
   padding: 2px 6px;
-  border-radius: 10px;
+  border-radius: 0;
   display: flex;
   align-items: center;
   gap: 3px;
@@ -375,7 +374,7 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.18) 44%, transparent 72%);
+  background: linear-gradient(to top, rgba(14,10,10,0.88) 0%, rgba(14,10,10,0.25) 44%, transparent 72%);
   z-index: 2;
 }
 
@@ -412,7 +411,7 @@
   color: rgba(255,255,255,0.66);
 }
 .songStatusInProgress {
-  background: rgba(255,20,147,0.15);
+  background: rgba(192,57,43,0.15);
   color: #ff93cb;
 }
 .songStatusMixing {
@@ -466,15 +465,15 @@
   font-weight: 500;
   padding: 2px 7px;
   border-radius: 20px;
-  background: rgba(255,20,147,0.15);
+  background: rgba(192,57,43,0.15);
   color: #ff69b4;
-  border: 0.5px solid rgba(255,20,147,0.25);
+  border: 0.5px solid rgba(192,57,43,0.25);
 }
 .cardActionPillDot {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #ff1493;
+  background: #C0392B;
 }
 .interactivePill {
   display: inline-flex;
@@ -518,7 +517,7 @@
   position: relative;
   margin-top: 10px;
   padding: 12px;
-  border-radius: 12px;
+  border-radius: 0;
   background: rgba(10, 11, 17, 0.56);
   border: 0.5px solid rgba(255,255,255,0.12);
   backdrop-filter: blur(18px);
@@ -569,7 +568,7 @@
 .editInput {
   width: 100%;
   background: rgba(255,255,255,0.06);
-  border: 0.5px solid rgba(255,20,147,0.4);
+  border: 0.5px solid rgba(192,57,43,0.4);
   border-radius: 5px;
   color: #fff;
   font-size: 12px;
@@ -608,16 +607,16 @@
   font-weight: 500;
   padding: 1px 7px;
   border-radius: 20px;
-  background: rgba(255,20,147,0.15);
+  background: rgba(192,57,43,0.15);
   color: #ff69b4;
-  border: 0.5px solid rgba(255,20,147,0.25);
+  border: 0.5px solid rgba(192,57,43,0.25);
   flex-shrink: 0;
 }
 .metaPillDot {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #ff1493;
+  background: #C0392B;
 }
 .cardStatusControl {
   display: flex;
@@ -643,7 +642,7 @@
 .cardStatusSelect {
   background: rgba(255,255,255,0.06);
   border: 0.5px solid rgba(255,255,255,0.12);
-  border-radius: 7px;
+  border-radius: 0;
   color: rgba(255,255,255,0.76);
   font-size: 10px;
   font-family: inherit;
@@ -652,7 +651,7 @@
   max-width: calc(100% - 50px);
 }
 .cardStatusSelect:focus {
-  border-color: rgba(255,20,147,0.35);
+  border-color: rgba(192,57,43,0.35);
 }
 
 .cardMetaComments {
@@ -684,7 +683,7 @@
   background: rgba(10,5,20,0.88);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  border-radius: 10px 10px 0 0;
+  border-radius: 0 10px 0 0;
   padding: 14px;
   display: flex;
   flex-direction: column;
@@ -845,7 +844,7 @@
 .iconBtn {
   width: 22px;
   height: 22px;
-  border-radius: 7px;
+  border-radius: 0;
   background: rgba(16,12,24,0.78);
   border: 0.5px solid rgba(255,255,255,0.12);
   display: flex;
@@ -870,7 +869,7 @@
 /* Ghost card */
 .cardGhost {
   background: transparent;
-  border-radius: 10px;
+  border-radius: 0;
   border: 0.5px dashed rgba(255,255,255,0.1);
   min-height: 130px;
   display: flex;
@@ -898,7 +897,7 @@
   margin: 6px 0 0;
   padding: 28px 22px;
   border: 0.5px dashed rgba(255,255,255,0.14);
-  border-radius: 14px;
+  border-radius: 0;
   background: rgba(255,255,255,0.02);
   display: flex;
   flex-direction: column;
@@ -923,9 +922,9 @@
 
 .emptyStateAction {
   margin-top: 4px;
-  background: rgba(255,20,147,0.12);
+  background: rgba(192,57,43,0.12);
   border: 0.5px solid rgba(255,20,147,0.3);
-  color: var(--primary, #ff1493);
+  color: #C0392B;
   font-size: 12px;
   font-weight: 600;
   font-family: inherit;
@@ -944,7 +943,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #0d0914;
+  background: #0E0A0A;
   color: rgba(255,255,255,0.42);
   font-size: 13px;
 }
@@ -980,7 +979,7 @@
 .filterPillActive {
   background: rgba(255,20,147,0.1);
   border-color: rgba(255,20,147,0.3);
-  color: var(--primary, #ff1493);
+  color: #C0392B;
 }
 .filterCount {
   margin-left: 6px;
@@ -1104,7 +1103,7 @@
 .modal {
   background: #1a1025;
   border: 0.5px solid rgba(255,255,255,0.12);
-  border-radius: 14px;
+  border-radius: 0;
   padding: 24px;
   width: 100%;
   max-width: 380px;
@@ -1128,7 +1127,7 @@
   width: 100%;
   background: rgba(255,255,255,0.05);
   border: 0.5px solid rgba(255,255,255,0.15);
-  border-radius: 8px;
+  border-radius: 0;
   color: #fff;
   font-size: 14px;
   font-family: inherit;
@@ -1138,7 +1137,7 @@
   transition: border-color 0.15s;
   box-sizing: border-box;
 }
-.modalInput:focus { border-color: rgba(255,20,147,0.5); }
+.modalInput:focus { border-color: rgba(192,57,43,0.5); }
 .modalInput::placeholder { color: rgba(255,255,255,0.25); }
 
 .modalActions {
@@ -1154,21 +1153,21 @@
   font-size: 13px;
   font-family: inherit;
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: 0;
   cursor: pointer;
   transition: all 0.15s;
 }
 .modalCancel:hover { border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.7); }
 
 .modalConfirm {
-  background: var(--primary, #ff1493);
+  background: #C0392B;
   border: none;
   color: #fff;
   font-size: 13px;
   font-weight: 500;
   font-family: inherit;
   padding: 8px 20px;
-  border-radius: 8px;
+  border-radius: 0;
   cursor: pointer;
   transition: opacity 0.15s;
 }
@@ -1186,7 +1185,7 @@
   align-items: center;
   gap: 2px;
   background: rgba(255,255,255,0.05);
-  border-radius: 7px;
+  border-radius: 0;
   padding: 3px;
 }
 .viewBtn {
@@ -1233,7 +1232,7 @@
   height: 70px !important;
   min-width: 70px !important;
   flex-shrink: 0 !important;
-  border-radius: 8px 0 0 0 !important;
+  border-radius: 0 0 0 0 !important;
   inset: unset !important;
 }
 .desktopListCard .cardBody {
@@ -1279,7 +1278,7 @@
   width: 100% !important;
   aspect-ratio: 1 / 1 !important;
   flex-shrink: 0 !important;
-  border-radius: 10px 10px 0 0 !important;
+  border-radius: 0 10px 0 0 !important;
 }
 .desktopGridCard {
   aspect-ratio: unset !important;
@@ -1340,7 +1339,7 @@
   height: 26px !important;
 }
 .desktopGridCard .cardInfoOverlay {
-  border-radius: 10px 10px 0 0 !important;
+  border-radius: 0 10px 0 0 !important;
 }
 .desktopListCard .versionBadge,
 .desktopListCard .commentBadge,
@@ -1399,7 +1398,7 @@
   cursor: pointer;
 }
 .expandAssignPillMe {
-  background: rgba(255,20,147,0.15);
+  background: rgba(192,57,43,0.15);
   color: #ff69b4;
   border-color: rgba(255,20,147,0.28);
 }
@@ -1466,7 +1465,7 @@
 .bsArt {
   width: 44px;
   height: 44px;
-  border-radius: 8px;
+  border-radius: 0;
   flex-shrink: 0;
   overflow: hidden;
   display: flex;
@@ -1542,9 +1541,9 @@
 }
 .bsCta {
   margin: 4px 16px 16px;
-  background: #ff1493;
+  background: #C0392B;
   border: none;
-  border-radius: 10px;
+  border-radius: 0;
   color: white;
   font-size: 14px;
   font-weight: 500;
@@ -1624,7 +1623,7 @@
     align-items: center;
     aspect-ratio: unset;
     height: 76px;
-    border-radius: 12px;
+    border-radius: 0;
     gap: 0;
     box-shadow: none;
   }
@@ -1636,7 +1635,7 @@
     height: 76px !important;
   }
   .cardAttention {
-    box-shadow: -3px 0 0 0 #ff1493;
+    box-shadow: -3px 0 0 0 #C0392B;
     border-color: rgba(255, 20, 147, 0.3);
   }
   .cardInfoExpanded {
@@ -1655,7 +1654,7 @@
     height: 76px;
     min-width: 76px;
     flex-shrink: 0;
-    border-radius: 10px 0 0 10px;
+    border-radius: 0 0 0 10px;
     inset: unset;
   }
   .desktopGridCard .cardThumb {
@@ -1665,7 +1664,7 @@
     height: 76px !important;
     min-width: 76px !important;
     aspect-ratio: auto !important;
-    border-radius: 10px 0 0 10px !important;
+    border-radius: 0 0 0 10px !important;
   }
 
   /* Hide the overlay title on mobile — we show cardBody inline */
@@ -1864,7 +1863,7 @@
   .cardAttention .iconBtnInfo,
   .desktopListCard.cardAttention .iconBtnInfo,
   .desktopGridCard.cardAttention .iconBtnInfo {
-    border-color: rgba(255,20,147,0.5) !important;
+    border-color: rgba(192,57,43,0.5) !important;
     color: #ff69b4 !important;
   }
   .iconBtn svg {
@@ -1897,14 +1896,14 @@
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: #ff1493;
+  background: #C0392B;
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   z-index: 4;
-  box-shadow: 0 2px 10px rgba(255,20,147,0.5);
+  box-shadow: 0 2px 10px rgba(192,57,43,0.5);
   opacity: 0;
   transform: scale(0.85);
   transition: opacity 0.15s, transform 0.15s;
@@ -1935,8 +1934,8 @@
 .eqBar {
   display: block;
   width: 3px;
-  border-radius: 1.5px;
-  background: #ff1493;
+  border-radius: 0;
+  background: #C0392B;
   animation: eqBounce 0.7s ease-in-out infinite alternate;
 }
 .eqBar:nth-child(1) { height: 6px; }
@@ -1965,8 +1964,8 @@
     align-items: flex-end;
     justify-content: center;
     gap: 8%;
-    background: rgba(13, 9, 20, 0.45);
-    border-radius: 8px;
+    background: rgba(14,10,10,0.45);
+    border-radius: 0;
     padding: 18% 12%;
     transform: translate(-50%, -50%);
   }
@@ -1974,7 +1973,7 @@
     width: 18%;
     min-width: 3px;
     border-radius: 999px;
-    background: linear-gradient(180deg, #ff1493 0%, #00d4ff 100%);
+    background: linear-gradient(180deg, #C0392B 0%, #D4C4B0 100%);
     box-shadow: 0 0 10px rgba(255,20,147,0.45);
   }
 }
@@ -1989,7 +1988,7 @@
     top: 50% !important;
     transform: translate(-50%, -50%) scale(0.85) !important;
     opacity: 0 !important;
-    box-shadow: 0 4px 20px rgba(255,20,147,0.6) !important;
+    box-shadow: 0 4px 20px rgba(192,57,43,0.6) !important;
   }
   .desktopGridCard:hover .thumbPlayBtn {
     opacity: 1 !important;
@@ -2014,7 +2013,7 @@
 }
 .desktopListCard:hover .thumbPlayBtn {
   filter: brightness(1.15);
-  box-shadow: 0 2px 14px rgba(255,20,147,0.7);
+  box-shadow: 0 2px 14px rgba(192,57,43,0.7);
   transform: translate(-50%, -50%) !important;
 }
 .desktopListCard .thumbPlayBtnActive {
@@ -2030,10 +2029,10 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(13, 9, 20, 0.97);
+  background: rgba(14,10,10,0.97);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid rgba(255,20,147,0.25);
+  border-top: 1px solid rgba(192,57,43,0.25);
   z-index: 60;
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -2048,7 +2047,7 @@
   left: 0;
   top: 0;
   height: 100%;
-  background: #ff1493;
+  background: #C0392B;
   border-radius: 0;
   pointer-events: none;
   transition: width 0.25s linear;
@@ -2083,15 +2082,15 @@
 .miniPlayerArt {
   width: 38px;
   height: 38px;
-  border-radius: 6px;
+  border-radius: 0;
   object-fit: cover;
   flex-shrink: 0;
 }
 .miniPlayerArtPlaceholder {
   width: 38px;
   height: 38px;
-  border-radius: 6px;
-  background: rgba(255,20,147,0.12);
+  border-radius: 0;
+  background: rgba(192,57,43,0.12);
   flex-shrink: 0;
 }
 .miniPlayerInfo {
@@ -2138,12 +2137,12 @@
   height: 40px;
   border-radius: 50%;
   border: none;
-  background: #ff1493;
+  background: #C0392B;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 2px 12px rgba(255,20,147,0.4);
+  box-shadow: 0 2px 12px rgba(192,57,43,0.4);
   transition: transform 0.12s;
 }
 .miniPlayerPlayBtn:hover { transform: scale(1.07); }
@@ -2152,3 +2151,4 @@
 .pageWithPlayer {
   padding-bottom: 80px;
 }
+
