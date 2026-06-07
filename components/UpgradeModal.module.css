@@ -13,7 +13,7 @@
 .modal {
   width: 100%;
   max-width: 420px;
-  border-radius: 18px;
+  border-radius: 0;
   padding: 24px;
   background: #1a1025;
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -50,7 +50,7 @@
 
 .secondaryButton,
 .primaryButton {
-  border-radius: 10px;
+  border-radius: 0;
   padding: 10px 16px;
   font-size: 14px;
   font-weight: 600;
@@ -70,7 +70,7 @@
 
 .primaryButton {
   border: none;
-  background: var(--color-primary, #ff1493);
+  background: var(--color-primary);
   color: #fff;
 }
 
