@@ -106,7 +106,7 @@ type Rgb = {
   b: number;
 };
 
-const MARKER_COLORS = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#ffa07a', '#98d8c8', '#f7dc6f', '#bb8fce'];
+const MARKER_COLORS = ['#C0392B', '#4ecdc4', '#45b7d1', '#D4C4B0', '#98d8c8', '#f7dc6f', '#8C7B6B'];
 const DEFAULT_REACTIVE_PRIMARY: Rgb = { r: 255, g: 20, b: 147 };
 const DEFAULT_REACTIVE_SECONDARY: Rgb = { r: 0, g: 212, b: 255 };
 const INIT_REQUEST_TIMEOUT_MS = 12000;
@@ -1448,9 +1448,9 @@ function VersionPageInner() {
 
     const ws = WaveSurfer.create({
       container,
-      waveColor: 'rgba(255,255,255,0.2)',
-      progressColor: '#ff1493',
-      cursorColor: 'rgba(255,255,255,0.5)',
+      waveColor: 'rgba(244,237,228,0.18)',
+      progressColor: '#C0392B',
+      cursorColor: 'rgba(244,237,228,0.6)',
       cursorWidth: 1,
       height: 96,
       barWidth: 2,
@@ -1601,7 +1601,7 @@ function VersionPageInner() {
     setIsPlaying(false);
   }, [drawReactiveIdle, stopReactiveDrawing]);
 
-  // Draw hover overlay on canvas: dimmed pink between playhead and mouse
+  // Draw hover overlay on canvas: between playhead and mouse
   const drawHoverOverlay = () => {
     const canvas = hoverCanvasRef.current;
     const ws = wavesurferRef.current;
@@ -1618,7 +1618,7 @@ function VersionPageInner() {
     const playedX = (ws.getCurrentTime() / dur) * w;
     const mouseX = hx * w;
     if (mouseX > playedX) {
-      ctx.fillStyle = 'rgba(255,20,147,0.3)';
+      ctx.fillStyle = 'rgba(192,57,43,0.25)';
       ctx.fillRect(playedX, 0, mouseX - playedX, h);
     }
   };
