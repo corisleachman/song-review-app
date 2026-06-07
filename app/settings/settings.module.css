@@ -6,7 +6,7 @@
 .settingsShell {
   display: flex;
   min-height: 100vh;
-  background: linear-gradient(135deg, #0E0A0A 0%, #1C1515 50%, #0E0A0A 100%);
+  background: var(--color-bg-darkest);
 }
 
 /* ── Left nav ────────────────────────────────────────────────── */
@@ -36,7 +36,7 @@
   font-size: 20px;
   font-weight: 800;
   margin: 0;
-  background: linear-gradient(135deg, #C0392B, #D4C4B0);
+  background: var(--color-primary);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -84,12 +84,12 @@
   color: rgba(255, 255, 255, 0.85);
 }
 .settingsNavItemActive {
-  background: rgba(255, 20, 147, 0.12);
+  background: rgba(192,57,43,0.12);
   color: #C0392B;
   font-weight: 600;
 }
 .settingsNavItemActive:hover {
-  background: rgba(255, 20, 147, 0.16);
+  background: rgba(192,57,43,0.16);
   color: #C0392B;
 }
 
@@ -224,7 +224,7 @@
   min-width: 0;
 }
 .textInput:focus {
-  border-color: rgba(255, 20, 147, 0.5);
+  border-color: rgba(192,57,43,0.5);
 }
 .textInput::placeholder {
   color: rgba(255, 255, 255, 0.25);
@@ -362,7 +362,7 @@
 }
 .notifOptionActive {
   border-color: var(--color-primary);
-  background: rgba(255, 20, 147, 0.08);
+  background: rgba(192,57,43,0.08);
 }
 .notifOptionLabel {
   font-size: 13px;
@@ -582,7 +582,7 @@
   color: rgba(255, 255, 255, 0.7);
 }
 .devToggleBtnActive {
-  background: rgba(255, 20, 147, 0.15);
+  background: rgba(192,57,43,0.15);
   border-color: rgba(192,57,43,0.4);
   color: #C0392B;
 }
@@ -693,7 +693,7 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: rgba(255, 20, 147, 0.15);
+  background: rgba(192,57,43,0.15);
   border: 1px solid rgba(192,57,43,0.28);
   color: #C0392B;
   font-size: 11px;
