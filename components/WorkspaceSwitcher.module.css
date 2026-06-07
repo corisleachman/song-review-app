@@ -44,7 +44,7 @@
 
 .railButton:hover .railMark,
 .railButton[aria-expanded="true"] .railMark {
-  background: rgba(255, 20, 147, 0.14);
+  background: rgba(192,57,43,0.14);
   border-color: rgba(192,57,43,0.28);
   transform: translateY(-1px);
 }
@@ -135,15 +135,15 @@
 }
 
 .activeOption {
-  border-color: rgba(255, 20, 147, 0.28);
-  background: rgba(255, 20, 147, 0.1);
+  border-color: rgba(192,57,43,0.28);
+  background: rgba(192,57,43,0.1);
 }
 
 .optionMark {
   position: relative;
   width: 34px;
   height: 34px;
-  border-radius: 11px;
+  border-radius: 0;
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -172,7 +172,7 @@
 }
 
 .activeOption .optionMark {
-  background: rgba(255, 20, 147, 0.22);
+  background: rgba(192,57,43,0.22);
   color: #ff8acb;
 }
 
@@ -246,16 +246,16 @@
 
 .createPrompt:hover {
   background: rgba(255, 255, 255, 0.055);
-  border-color: rgba(255, 20, 147, 0.28);
+  border-color: rgba(192,57,43,0.28);
 }
 
 .createPlus {
   width: 34px;
   height: 34px;
-  border-radius: 11px;
+  border-radius: 0;
   display: grid;
   place-items: center;
-  background: rgba(255, 20, 147, 0.16);
+  background: rgba(192,57,43,0.16);
   color: #ff8acb;
   font-size: 18px;
   font-weight: 700;
@@ -313,7 +313,7 @@
 }
 
 .createInput:focus {
-  border-color: rgba(255, 20, 147, 0.38);
+  border-color: rgba(192,57,43,0.38);
 }
 
 .createActions {
@@ -325,7 +325,7 @@
 .createSecondary,
 .createPrimary {
   min-height: 32px;
-  border-radius: 9px;
+  border-radius: 0;
   padding: 0 11px;
   font: inherit;
   font-size: 12px;
@@ -340,7 +340,7 @@
 }
 
 .createPrimary {
-  border: 1px solid rgba(255, 20, 147, 0.34);
+  border: 1px solid rgba(192,57,43,0.34);
   background: rgba(192,57,43,0.18);
   color: #ffb4dc;
 }
@@ -434,7 +434,7 @@
 .mobileRole {
   align-self: center;
   padding: 4px 7px;
-  border-radius: 999px;
+  border-radius: 0;
   background: rgba(255, 255, 255, 0.08);
   color: rgba(255, 255, 255, 0.72);
   font-size: 10px;
