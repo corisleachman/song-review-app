@@ -30,7 +30,7 @@
   min-width: 180px;
   background: rgba(13, 9, 20, 0.96);
   border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 12px;
+  border-radius: 0;
   box-shadow: 0 18px 42px rgba(0,0,0,0.34);
   padding: 8px;
   display: grid;
@@ -54,7 +54,7 @@
   text-align: left;
   background: transparent;
   border: none;
-  border-radius: 8px;
+  border-radius: 0;
   padding: 10px;
   color: rgba(255,255,255,0.86);
   font-size: 14px;
