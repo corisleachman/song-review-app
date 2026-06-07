@@ -222,7 +222,7 @@
 .heroPlayBtn {
   width: 56px;
   height: 56px;
-  border-radius: 50%;
+  border-radius: 0;
   border: none;
   background: #F4EDE4;
   cursor: pointer;
@@ -468,7 +468,7 @@
 }
 .cancelBtn:hover { border-color: rgba(255,255,255,0.4); color: #F4EDE4; }
 .postBtn {
-  background: linear-gradient(135deg, #C0392B, #C0392B);
+  background: #C0392B;
   border: none;
   color: #F4EDE4;
   padding: 6px 18px;
@@ -538,8 +538,8 @@
 .avatar {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #C0392B, #C0392B);
+  border-radius: 0;
+  background: #C0392B;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -670,7 +670,7 @@
 .actionToggle {
   width: 22px;
   height: 22px;
-  border-radius: 50%;
+  border-radius: 0;
   border: 2px solid rgba(244,237,228,0.18);
   background: transparent;
   cursor: pointer;
@@ -789,7 +789,7 @@
   gap: 10px;
   min-width: 0;
 }
-.threadMarkerDot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.threadMarkerDot { width: 10px; height: 10px; border-radius: 0; flex-shrink: 0; }
 .threadHeaderMeta {
   display: flex;
   flex-direction: column;
@@ -856,7 +856,7 @@
   box-shadow: 0 10px 24px rgba(0,0,0,0.16);
 }
 .bubbleOwn {
-  background: linear-gradient(135deg, #C0392B, #C0392B);
+  background: #C0392B;
   color: #F4EDE4;
   align-self: flex-end;
   border-bottom-right-radius: 4px;
@@ -909,7 +909,7 @@
   border-top: 1px solid #1C1515;
   flex-shrink: 0;
 }
-.replyDot { width: 10px; height: 10px; border-radius: 50%; background: #D4C4B0; flex-shrink: 0; }
+.replyDot { width: 10px; height: 10px; border-radius: 0; background: #D4C4B0; flex-shrink: 0; }
 .replyInput {
   flex: 1;
   background: #0E0A0A;
@@ -926,9 +926,9 @@
 .replyBtn {
   width: 36px;
   height: 36px;
-  border-radius: 50%;
+  border-radius: 0;
   border: none;
-  background: linear-gradient(135deg, #C0392B, #C0392B);
+  background: #C0392B;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -954,7 +954,7 @@
   transition: background 0.15s;
 }
 .threadIndexItem:hover { background: #0E0A0A; }
-.threadIndexDot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.threadIndexDot { width: 8px; height: 8px; border-radius: 0; flex-shrink: 0; }
 .threadIndexBody {
   min-width: 0;
   flex: 1;
@@ -995,7 +995,7 @@
 
 /* ── Shared buttons ─────────────────────────────────────────── */
 .postBtn {
-  background: linear-gradient(135deg, #C0392B, #C0392B);
+  background: #C0392B;
   color: #F4EDE4;
   border: none;
   padding: 8px 20px;
@@ -1190,7 +1190,7 @@
 .addTaskBtn {
   width: 34px;
   height: 34px;
-  background: linear-gradient(135deg, #C0392B, #C0392B);
+  background: #C0392B;
   border: none;
   border-radius: 0;
   color: #F4EDE4;
@@ -1260,7 +1260,7 @@
 .taskCircle {
   width: 18px;
   height: 18px;
-  border-radius: 50%;
+  border-radius: 0;
   border: 1.5px solid rgba(255,255,255,0.25);
   background: transparent;
   cursor: pointer;
@@ -1707,7 +1707,7 @@
   .mobileNavIconBtn {
     width: 36px;
     height: 36px;
-    border-radius: 50%;
+    border-radius: 0;
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
@@ -1722,7 +1722,7 @@
   .mobileNavAvatar {
     width: 36px;
     height: 36px;
-    border-radius: 50%;
+    border-radius: 0;
     background: rgba(192,57,43,0.85);
     border: none;
     display: flex;
