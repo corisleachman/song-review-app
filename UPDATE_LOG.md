@@ -2694,3 +2694,38 @@ All Vercel env vars restored to live mode values. Live mode customer ID restored
 
 - Welcome to Pro screen shows "Unlimited songs" and "Unlimited collaborators" — copy is incorrect for both tiers and the confetti animation needs work. Deferred to Phase 8 (Final Visual Polish).
 - Dashboard nudge for free users (referral awareness banner) — deferred, can add post-launch.
+
+---
+
+## 2026-06-07
+
+**What we were trying to achieve:**
+Phase 7 — TSR v3 brand token swap across the entire clone-clean app.
+
+**Feature / change:**
+Full palette and font change from Pulse pink/purple branding to TSR v3 warm off-black and deep red.
+
+**Files changed:**
+- `styles/globals.css` — root token definitions rewritten: --color-primary #ff1493→#C0392B, --color-bg-darkest #0d0914→#0E0A0A, removed purple/cyan vars, border radius vars set to 0, Outfit font removed (DM Sans only), glassmorphism helpers removed
+- `app/dashboard/dashboard.module.css` — 26 colour/radius substitutions
+- `app/settings/settings.module.css` — 9 substitutions
+- `app/songs/[id]/song.module.css` — 4 substitutions
+- `app/songs/[id]/versions/[versionId]/version.module.css` — 34 substitutions
+- `app/upgrade/upgrade.module.css` — 7 substitutions (already used CSS vars, just needed default update)
+- `app/identify/identify.module.css` — 2 substitutions
+- `app/page.module.css` — 4 substitutions
+- `components/AppShell.module.css` — 1 substitution
+- `components/UpgradeModal.module.css` — 1 substitution
+- `components/WorkspaceSwitcher.module.css` — 2 substitutions
+- `lib/settingsContext.tsx` — DEFAULT_THEME updated to TSR v3 values
+- `app/settings/appearance/page.tsx` — Pulse preset updated to TSR v3 red/off-black
+
+**Notes:**
+- `lib/themeManager.ts` confirmed dead code (no imports anywhere) — left untouched
+- Rounded corners removed throughout (border-radius: 0 on all non-avatar/non-circle elements)
+- Glassmorphism purple gradients replaced with flat dark surfaces
+- Pink/purple rgba values replaced with red rgba equivalents
+- Pre-audit identified 122 hits across 14 files; all resolved
+- Vercel will auto-deploy on push — check live site for any missed hardcoded values
+- Phase 7 complete
+
