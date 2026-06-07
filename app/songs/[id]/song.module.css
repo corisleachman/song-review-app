@@ -2,7 +2,7 @@
 
 .page {
   min-height: 100vh;
-  background: #0d0914;
+  background: #0E0A0A;
   color: #fff;
   display: flex;
   flex-direction: column;
@@ -18,7 +18,7 @@
   position: sticky;
   top: 0;
   z-index: 20;
-  background: #0d0914;
+  background: #0E0A0A;
 }
 
 .backBtn {
@@ -74,7 +74,7 @@
 
 .dropZone {
   border: 1.5px dashed rgba(255,255,255,0.12);
-  border-radius: 12px;
+  border-radius: 0;
   padding: 40px 24px;
   display: flex;
   flex-direction: column;
@@ -87,11 +87,11 @@
   user-select: none;
 }
 .dropZone:hover {
-  border-color: rgba(255,20,147,0.3);
+  border-color: rgba(192,57,43,0.28);
   background: rgba(255,20,147,0.03);
 }
 .dropZoneActive {
-  border-color: rgba(255,20,147,0.5);
+  border-color: rgba(192,57,43,0.5);
   background: rgba(255,20,147,0.06);
 }
 .dropZoneHasFile {
@@ -147,7 +147,7 @@
 .labelInput {
   background: rgba(255,255,255,0.05);
   border: 0.5px solid rgba(255,255,255,0.1);
-  border-radius: 8px;
+  border-radius: 0;
   color: #fff;
   font-size: 13px;
   font-family: inherit;
@@ -157,13 +157,13 @@
   box-sizing: border-box;
   width: 100%;
 }
-.labelInput:focus { border-color: rgba(255,20,147,0.4); }
+.labelInput:focus { border-color: rgba(192,57,43,0.4); }
 .labelInput::placeholder { color: rgba(255,255,255,0.2); }
 .labelInput:disabled { opacity: 0.5; }
 .notesInput {
   background: rgba(255,255,255,0.05);
   border: 0.5px solid rgba(255,255,255,0.1);
-  border-radius: 8px;
+  border-radius: 0;
   color: #fff;
   font-size: 13px;
   font-family: inherit;
@@ -175,7 +175,7 @@
   resize: vertical;
   min-height: 84px;
 }
-.notesInput:focus { border-color: rgba(255,20,147,0.4); }
+.notesInput:focus { border-color: rgba(192,57,43,0.4); }
 .notesInput::placeholder { color: rgba(255,255,255,0.2); }
 .notesInput:disabled { opacity: 0.5; }
 
@@ -190,13 +190,13 @@
 .progressWrap {
   height: 4px;
   background: rgba(255,255,255,0.06);
-  border-radius: 4px;
+  border-radius: 0;
   overflow: hidden;
 }
 .progressBar {
   height: 100%;
-  background: var(--primary, #ff1493);
-  border-radius: 4px;
+  background: #C0392B;
+  border-radius: 0;
   transition: width 0.2s ease;
 }
 .progressLabel {
@@ -214,10 +214,10 @@
 }
 
 .uploadBtn {
-  background: var(--primary, #ff1493);
+  background: #C0392B;
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: 0;
   font-size: 13px;
   font-weight: 500;
   font-family: inherit;
