@@ -6,7 +6,7 @@ import type { Theme } from '@/lib/settingsContext';
 import styles from '../settings.module.css';
 
 const PRESETS: Record<string, Theme> = {
-  Pulse:  { primary_color: '#ff1493', accent_color: '#a855f7', background_color: '#0d0914' },
+  Pulse:  { primary_color: '#C0392B', accent_color: '#C0392B', background_color: '#0E0A0A' },
   Ocean:  { primary_color: '#0ea5e9', accent_color: '#06b6d4', background_color: '#0f172a' },
   Sunset: { primary_color: '#f97316', accent_color: '#ec4899', background_color: '#1c1917' },
   Forest: { primary_color: '#10b981', accent_color: '#14b8a6', background_color: '#0f766e' },
@@ -90,7 +90,7 @@ export default function AppearancePage() {
                     value={theme[key]}
                     onChange={e => handleChange(key, e.target.value)}
                     className={styles.textInput}
-                    placeholder="#ff1493"
+                    placeholder="#C0392B"
                   />
                 </div>
               </div>
