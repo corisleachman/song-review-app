@@ -65,7 +65,7 @@
 .workspaceRolePill {
   align-self: center;
   padding: 4px 8px;
-  border-radius: 999px;
+  border-radius: 0;
   background: rgba(255,255,255,0.07);
   border: 0.5px solid rgba(255,255,255,0.1);
   color: rgba(255,255,255,0.58);
@@ -108,7 +108,7 @@
   font-weight: 600;
   flex-shrink: 0;
   overflow: hidden;
-  background: rgba(255, 20, 147, 0.16);
+  background: rgba(192,57,43,0.16);
   color: #fff;
 }
 
@@ -399,7 +399,7 @@
 .songStatusBadge {
   display: inline-flex;
   align-items: center;
-  border-radius: 999px;
+  border-radius: 0;
   padding: 2px 7px;
   font-size: 9px;
   font-weight: 700;
@@ -415,7 +415,7 @@
   color: #ff93cb;
 }
 .songStatusMixing {
-  background: rgba(0,212,255,0.14);
+  background: rgba(212,196,176,0.14);
   color: #81eaff;
 }
 .songStatusMastering {
@@ -430,7 +430,7 @@
   font-size: 10px;
   font-weight: 500;
   padding: 2px 7px;
-  border-radius: 20px;
+  border-radius: 0;
 }
 .cardStatusWriting {
   background: rgba(20,184,166,0.15);
@@ -464,7 +464,7 @@
   font-size: 10px;
   font-weight: 500;
   padding: 2px 7px;
-  border-radius: 20px;
+  border-radius: 0;
   background: rgba(192,57,43,0.15);
   color: #ff69b4;
   border: 0.5px solid rgba(192,57,43,0.25);
@@ -481,7 +481,7 @@
   gap: 6px;
   min-height: 24px;
   padding: 3px 9px;
-  border-radius: 999px;
+  border-radius: 0;
   border: 0.5px solid rgba(255,255,255,0.14);
   background: rgba(255,255,255,0.09);
   color: rgba(255,255,255,0.84);
@@ -498,7 +498,7 @@
   color: #fff;
 }
 .interactivePill:focus-visible {
-  outline: 2px solid rgba(255,20,147,0.45);
+  outline: 2px solid rgba(192,57,43,0.45);
   outline-offset: 2px;
 }
 .interactivePillLabel {
@@ -606,7 +606,7 @@
   font-size: 10px;
   font-weight: 500;
   padding: 1px 7px;
-  border-radius: 20px;
+  border-radius: 0;
   background: rgba(192,57,43,0.15);
   color: #ff69b4;
   border: 0.5px solid rgba(192,57,43,0.25);
@@ -729,7 +729,7 @@
   appearance: none;
   font-size: 10px;
   padding: 3px 8px;
-  border-radius: 20px;
+  border-radius: 0;
   background: rgba(255,255,255,0.08);
   color: rgba(255,255,255,0.7);
   border: 0.5px solid rgba(255,255,255,0.14);
@@ -741,9 +741,9 @@
   color: rgba(255,255,255,0.92);
 }
 .overlayPillMe {
-  background: rgba(255,20,147,0.18);
+  background: rgba(192,57,43,0.18);
   color: #ff69b4;
-  border-color: rgba(255,20,147,0.28);
+  border-color: rgba(192,57,43,0.28);
 }
 .overlayStageRow {
   display: flex;
@@ -759,7 +759,7 @@
   color: rgba(255,255,255,0.82);
   background: rgba(255,255,255,0.08);
   padding: 2px 8px;
-  border-radius: 20px;
+  border-radius: 0;
   border: 0.5px solid rgba(255,255,255,0.14);
 }
 .overlayActivity {
@@ -837,7 +837,7 @@
 }
 .iconBtnInfo {}
 .cardAttention .iconBtnInfo {
-  border-color: rgba(255,20,147,0.45) !important;
+  border-color: rgba(192,57,43,0.45) !important;
   color: #ff69b4 !important;
 }
 
@@ -856,13 +856,13 @@
   box-shadow: 0 8px 20px rgba(0,0,0,0.22);
 }
 .iconBtn:hover {
-  background: rgba(255,20,147,0.18);
+  background: rgba(192,57,43,0.18);
   color: #fff;
   transform: translateY(-1px);
 }
 .iconBtnActive {
-  background: rgba(255,20,147,0.22);
-  border-color: rgba(255,20,147,0.42);
+  background: rgba(192,57,43,0.22);
+  border-color: rgba(192,57,43,0.42);
   color: #fff;
 }
 
@@ -923,19 +923,19 @@
 .emptyStateAction {
   margin-top: 4px;
   background: rgba(192,57,43,0.12);
-  border: 0.5px solid rgba(255,20,147,0.3);
+  border: 0.5px solid rgba(192,57,43,0.3);
   color: #C0392B;
   font-size: 12px;
   font-weight: 600;
   font-family: inherit;
   padding: 9px 14px;
-  border-radius: 999px;
+  border-radius: 0;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }
 .emptyStateAction:hover {
-  background: rgba(255,20,147,0.18);
-  border-color: rgba(255,20,147,0.42);
+  background: rgba(192,57,43,0.18);
+  border-color: rgba(192,57,43,0.42);
 }
 
 .loadingView {
@@ -953,7 +953,6 @@
   padding: 24px 20px 28px;
   overflow-y: auto;
   background:
-    radial-gradient(circle at top right, rgba(255,20,147,0.05), transparent 30%),
     linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0));
 }
 
@@ -967,7 +966,7 @@
 .filterPill {
   font-size: 11px;
   padding: 4px 11px;
-  border-radius: 20px;
+  border-radius: 0;
   border: 0.5px solid rgba(255,255,255,0.1);
   background: transparent;
   color: rgba(255,255,255,0.35);
@@ -977,8 +976,8 @@
 }
 .filterPill:hover { border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); }
 .filterPillActive {
-  background: rgba(255,20,147,0.1);
-  border-color: rgba(255,20,147,0.3);
+  background: rgba(192,57,43,0.1);
+  border-color: rgba(192,57,43,0.3);
   color: #C0392B;
 }
 .filterCount {
@@ -1061,7 +1060,7 @@
 .actionStatus {
   display: inline-flex;
   align-items: center;
-  border-radius: 999px;
+  border-radius: 0;
   padding: 2px 7px;
   font-size: 10px;
   font-weight: 700;
@@ -1390,7 +1389,7 @@
 .expandAssignPill {
   font-size: 11px;
   padding: 3px 10px;
-  border-radius: 20px;
+  border-radius: 0;
   background: rgba(255,255,255,0.07);
   color: rgba(255,255,255,0.65);
   border: 0.5px solid rgba(255,255,255,0.13);
@@ -1400,7 +1399,7 @@
 .expandAssignPillMe {
   background: rgba(192,57,43,0.15);
   color: #ff69b4;
-  border-color: rgba(255,20,147,0.28);
+  border-color: rgba(192,57,43,0.28);
 }
 .expandActivity {
   font-size: 11px;
@@ -1429,7 +1428,7 @@
 .bottomSheet {
   width: 100%;
   background: #1e1330;
-  border-radius: 20px 20px 0 0;
+  border-radius: 0;
   border-top: 1px solid rgba(255,255,255,0.1);
   overflow: hidden;
   transform: translateY(100%);
@@ -1523,15 +1522,15 @@
 .bsPill {
   font-size: 12px;
   padding: 5px 12px;
-  border-radius: 20px;
+  border-radius: 0;
   background: rgba(255,255,255,0.07);
   color: rgba(255,255,255,0.7);
   border: 0.5px solid rgba(255,255,255,0.13);
 }
 .bsPillMe {
-  background: rgba(255,20,147,0.18);
+  background: rgba(192,57,43,0.18);
   color: #ff69b4;
-  border-color: rgba(255,20,147,0.28);
+  border-color: rgba(192,57,43,0.28);
 }
 .bsActivitySnippet {
   font-size: 12px;
@@ -1636,7 +1635,7 @@
   }
   .cardAttention {
     box-shadow: -3px 0 0 0 #C0392B;
-    border-color: rgba(255, 20, 147, 0.3);
+    border-color: rgba(192,57,43,0.3);
   }
   .cardInfoExpanded {
     height: auto;
@@ -1972,9 +1971,9 @@
   .eqBar {
     width: 18%;
     min-width: 3px;
-    border-radius: 999px;
+    border-radius: 0;
     background: linear-gradient(180deg, #C0392B 0%, #D4C4B0 100%);
-    box-shadow: 0 0 10px rgba(255,20,147,0.45);
+    box-shadow: 0 0 10px rgba(192,57,43,0.45);
   }
 }
 
