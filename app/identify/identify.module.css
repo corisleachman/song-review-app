@@ -14,8 +14,7 @@
 .gradientBg {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 20% 50%, rgba(255, 20, 147, 0.1) 0%, transparent 50%),
-              radial-gradient(circle at 80% 80%, rgba(0, 212, 255, 0.1) 0%, transparent 50%);
+  background: ;
   animation: drift 20s ease-in-out infinite;
   pointer-events: none;
   z-index: 0;
@@ -71,7 +70,7 @@
   background: rgba(8, 5, 14, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(20px);
-  border-radius: var(--radius-lg);
+  border-radius: 0;
   padding: var(--space-2xl);
   cursor: pointer;
   transition: all var(--transition-base);
@@ -88,7 +87,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255, 20, 147, 0.1), rgba(0, 212, 255, 0.1));
+  background: var(--color-surface);
   opacity: 0;
   transition: opacity var(--transition-base);
   pointer-events: none;
