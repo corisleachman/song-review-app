@@ -265,8 +265,7 @@
   position: relative;
   top: -40px;
   left: 21px;
-  /* Use system font since custom fonts aren't loaded here */
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'ThunderLC', 'DM Sans', sans-serif;
 }
 
 /* EQ */
