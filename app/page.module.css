@@ -305,6 +305,4 @@
   .nav { padding: 20px 24px; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  :global(*) { animation: none !important; transition: none !important; }
-}
+
