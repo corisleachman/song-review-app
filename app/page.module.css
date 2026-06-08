@@ -8,6 +8,8 @@
   color: #F4F0E8;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
+  /* Prevent any content escaping the fixed container */
+  isolation: isolate;
 }
 
 /* Background crossfade */
@@ -49,6 +51,8 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: auto 1fr auto auto;
+  overflow: hidden;
+  min-height: 0;
 }
 
 /* Nav */
@@ -74,6 +78,8 @@
   justify-content: center;
   padding: 0 48px 56px;
   animation: fadeUp 0.55s 0.06s cubic-bezier(0.23, 1, 0.32, 1) both;
+  overflow: hidden;
+  min-width: 0;
 }
 
 /* Tabs */
@@ -239,8 +245,15 @@
   flex-direction: column;
   justify-content: center;
   padding: 0 88px 56px 16px;
+  overflow: hidden;
+  min-width: 0;
 }
-.headlineSvgWrap { width: 100%; }
+.headlineSvgWrap {
+  width: 100%;
+  overflow: hidden;
+  flex-shrink: 1;
+  min-width: 0;
+}
 .heroTagline {
   font-size: 33px;
   font-weight: 400;
@@ -258,7 +271,6 @@
 
 /* EQ */
 .eqWrap {
-  grid-column: 1 / -1;
   position: fixed;
   bottom: 0;
   left: 0;
