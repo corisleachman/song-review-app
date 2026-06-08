@@ -422,28 +422,8 @@ function LoginContent() {
               xmlns="http://www.w3.org/2000/svg"
               style={{ width: '100%', height: 'auto', overflow: 'visible' }}
             >
-              {/* CREATE */}
-              {SVG_PATHS.CREATE.map((p, i) => (
-                <g key={`c${i}`} transform="translate(0,0)">
-                  <path
-                    d={p.d}
-                    fill="none"
-                    stroke="#F4F0E8"
-                    strokeWidth="1"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeDasharray={p.len}
-                    strokeDashoffset={p.len}
-                    strokeOpacity="0"
-                  >
-                    <animate attributeName="stroke-dashoffset" from={p.len} to="0" dur="3.8s" begin={`${p.delay}s`} calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/>
-                    <animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin={`${p.delay}s`} fill="freeze"/>
-                  </path>
-                </g>
-              ))}
-              {/* TOGETHER */}
-              {SVG_PATHS.TOGETHER.map((p, i) => (
-                <g key={`t${i}`} transform="translate(0,144)">
+              {SVG_PATHS.map((p, i) => (
+                <g key={i} transform={`translate(0,${p.y})`}>
                   <path
                     d={p.d}
                     fill="none"
