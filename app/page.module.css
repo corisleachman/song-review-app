@@ -324,56 +324,83 @@
 }
 
 @media (max-width: 768px) {
-  /* Single column, 4 rows: nav | SVG | auth | footer */
+  /*
+   * On mobile the page is fixed/full-screen. We use absolute positioning
+   * for all slots so nothing causes layout reflow or scrolling.
+   * The email fields expand downward in-place without moving anything above.
+   */
   .page {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr auto auto;
+    display: block;  /* Abandon grid on mobile — use absolute children */
+    position: relative;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
   }
 
+  /* Nav — pinned top-left */
   .nav {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
     padding: 20px 24px;
-    grid-row: 1;
-    grid-column: 1;
+    z-index: 2;
   }
 
-  /* SVG in row 2 — centred, fills the upper image area */
+  /* SVG headline — centred, positioned in upper-middle zone, 50% bigger */
   .right {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
+    justify-content: center;
     align-items: center;
-    padding: 0 32px 20px;
+    padding: 0 28px;
     pointer-events: none;
-    grid-row: 2;
-    grid-column: 1;
-    min-height: 160px;
+    /* Push headline up by ~100px from centre */
+    padding-bottom: 40vh;
+    z-index: 1;
   }
   .headlineSvgWrap {
-    width: 220px;
-    max-width: 260px;
+    /* 50% bigger than the 220px we had before = 330px */
+    width: 330px;
+    max-width: 90vw;
     margin: 0 auto;
   }
   .heroTagline { display: none; }
 
-  /* Auth panel in row 3 — centred, shifted into the dark zone */
+  /* Auth panel — pinned to a fixed vertical position in the dark lower zone */
   .left {
+    position: absolute;
+    left: 0;
+    right: 0;
+    /* 55% down the screen puts it in the dark gradient zone without being too low */
+    top: 52%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    padding: 0 24px 56px;
-    padding-top: 140px;
-    grid-row: 3;
-    grid-column: 1;
+    padding: 0 24px;
+    /* No bottom padding needed — content just flows downward and is clipped by .root overflow:hidden */
+    z-index: 2;
+    /* Remove the animation so it doesn't interact with absolute position */
+    animation: none;
+    overflow: visible;
   }
 
-  /* Footer in row 4 */
+  /* Footer — pinned to bottom */
   .footer {
-    grid-row: 4;
-    grid-column: 1;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0 24px 20px;
+    z-index: 2;
   }
 
-  /* Tabs fill the same width as Google button, tight gap below */
+  /* Tabs fill the same width as Google button */
   .tabs {
     width: 100%;
     max-width: 320px;
@@ -395,7 +422,21 @@
     max-width: 320px;
     margin-top: 0;
   }
+
+  /* Email fields expand downward in-place — nothing above shifts */
+  .emailFields {
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 380ms cubic-bezier(0.23, 1, 0.32, 1),
+                opacity 240ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .emailFieldsOpen {
+    max-height: 400px;
+    opacity: 1;
+  }
 }
+
 
 
 
