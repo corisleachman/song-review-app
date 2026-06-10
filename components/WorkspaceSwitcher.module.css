@@ -165,15 +165,15 @@
   inset: 0;
   display: grid;
   place-items: center;
-  background: rgba(38, 12, 31, 0.58);
-  color: #ffb4dc;
+  background: rgba(14, 10, 10, 0.58);
+  color: #E6FF3F;
   font-size: 15px;
   font-weight: 900;
 }
 
 .activeOption .optionMark {
   background: rgba(192,57,43,0.22);
-  color: #ff8acb;
+  color: #E6FF3F;
 }
 
 .optionText {
@@ -256,7 +256,7 @@
   display: grid;
   place-items: center;
   background: rgba(192,57,43,0.16);
-  color: #ff8acb;
+  color: #E6FF3F;
   font-size: 18px;
   font-weight: 700;
   line-height: 1;
@@ -342,7 +342,7 @@
 .createPrimary {
   border: 1px solid rgba(192,57,43,0.34);
   background: rgba(192,57,43,0.18);
-  color: #ffb4dc;
+  color: #E6FF3F;
 }
 
 .createSecondary:disabled,
@@ -356,20 +356,43 @@
   display: none;
 }
 
-.mobileButton {
+/* Outer bar wrapper — flex row, workspace button + right controls */
+.mobileBar {
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px 18px;
-  border: 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(14,10,10, 0.94);
-  color: inherit;
-  text-align: left;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+}
+
+.mobileButton {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px 10px 18px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.mobileButtonChevron {
+  color: rgba(255,255,255,0.36);
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.mobileBarRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 14px;
+  flex-shrink: 0;
 }
 
 .mobileButtonLeft {
@@ -381,12 +404,23 @@
   pointer-events: none;
 }
 
-.mobileButtonRight {
+.mobileSignOutBtn {
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: transparent;
+  color: rgba(255,255,255,0.44);
+  cursor: pointer;
+  border-radius: 0;
+  transition: color 0.15s, border-color 0.15s;
   flex-shrink: 0;
-  pointer-events: none;
+}
+.mobileSignOutBtn:hover {
+  color: rgba(255,255,255,0.82);
+  border-color: rgba(255,255,255,0.22);
 }
 
 .mobileAvatar {
