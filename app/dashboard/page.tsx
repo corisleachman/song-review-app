@@ -6,7 +6,7 @@ import { ActionStatus, getActionStatusLabel, getNextActionStatus, isOpenAction }
 import { type AwaitingResponseState, getAwaitingResponseLabel, type SongActivityItem } from '@/lib/collaborationSignals';
 import { type AccountPlan, type PlanLimitType } from '@/lib/plans';
 import { SongStatus, SONG_STATUS_VALUES, getSongStatusLabel } from '@/lib/songWorkflow';
-import { getIdentity } from '@/lib/auth';
+import { getIdentity, clearAuth, clearIdentity } from '@/lib/auth';
 import { createClient } from '@/lib/supabase';
 import AppShell from '@/components/AppShell';
 import UpgradeModal from '@/components/UpgradeModal';
@@ -195,6 +195,18 @@ function DashboardContent() {
   const [billingError, setBillingError] = useState<string | null>(null);
   const [showUpgradeSuccessModal, setShowUpgradeSuccessModal] = useState(false);
   const [acceptedInviteWorkspaceName, setAcceptedInviteWorkspaceName] = useState<string | null>(null);
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Sign-out error:', error);
+    } finally {
+      clearAuth();
+      clearIdentity();
+      window.location.assign('/');
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -1117,6 +1129,7 @@ function DashboardContent() {
       workspaceImageUrl={workspaceImageUrl}
       membershipRole={membershipRole}
       avatarUrl={avatarUrl}
+      onSignOut={handleSignOut}
     >
       <div className={`${styles.page} ${playingId ? styles.pageWithPlayer : ''}`}>
       {/* Header */}
@@ -1952,21 +1965,28 @@ function DashboardContent() {
           </div>
           {sheetSong && (
             <>
-              <div className={styles.bsHeader}>
-                <div
-                  className={styles.bsArt}
-                  style={sheetSong.image_url ? undefined : { background: 'rgba(255,20,147,0.12)' }}
+              {/* Large artwork block with close button */}
+              <div className={styles.bsArtBlock}>
+                {sheetSong.image_url ? (
+                  <img
+                    src={sheetSong.image_url}
+                    alt={sheetSong.title}
+                    className={styles.bsArtBlockImg}
+                  />
+                ) : (
+                  <div className={styles.bsArtBlockPlaceholder} />
+                )}
+                <button
+                  type="button"
+                  className={styles.bsCloseBtn}
+                  onClick={() => setSheetSongId(null)}
+                  aria-label="Close"
                 >
-                  {sheetSong.image_url ? (
-                    <img
-                      src={sheetSong.image_url}
-                      alt={sheetSong.title}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  ) : (
-                    <div className={styles.bsArtPlaceholder} />
-                  )}
-                </div>
+                  ✕
+                </button>
+              </div>
+              {/* Title strip */}
+              <div className={styles.bsHeader}>
                 <div>
                   <p className={styles.bsSongTitle}>{sheetSong.title}</p>
                   <p className={styles.bsSub}>
@@ -1999,14 +2019,37 @@ function DashboardContent() {
                 </div>
                 <div className={styles.bsAssignRow}>
                   {sheetSong.assignedToMeCount > 0 && (
-                    <span className={`${styles.bsPill} ${styles.bsPillMe}`}>
-                      {sheetSong.assignedToMeCount} assigned to me
-                    </span>
+                    <button
+                      type="button"
+                      className={`${styles.bsPill} ${styles.bsPillMe} ${styles.bsPillBtn}`}
+                      onClick={() => {
+                        setSheetSongId(null);
+                        openSongContext(sheetSong, {
+                          versionId: sheetSong.assignedContextVersionId,
+                          focus: 'actions',
+                          actionsTab: 'all_versions',
+                          actionFilter: 'assigned_to_me',
+                        });
+                      }}
+                    >
+                      {sheetSong.assignedToMeCount} assigned to me →
+                    </button>
                   )}
                   {sheetSong.awaitingResponse && (
-                    <span className={styles.bsPill}>
-                      {getAwaitingResponseLabel(sheetSong.awaitingResponse) ?? 'Awaiting response'}
-                    </span>
+                    <button
+                      type="button"
+                      className={`${styles.bsPill} ${styles.bsPillBtn}`}
+                      onClick={() => {
+                        setSheetSongId(null);
+                        openSongContext(sheetSong, {
+                          versionId: sheetSong.awaitingVersionId,
+                          focus: 'threads',
+                          threadId: sheetSong.awaitingThreadId,
+                        });
+                      }}
+                    >
+                      {getAwaitingResponseLabel(sheetSong.awaitingResponse) ?? 'Awaiting response'} →
+                    </button>
                   )}
                 </div>
                 <div className={styles.cardStatusControl}>
