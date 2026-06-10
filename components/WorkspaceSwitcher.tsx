@@ -28,6 +28,7 @@ interface WorkspaceSwitcherProps {
   forceOpen?: boolean;
   onForceClose?: () => void;
   avatarUrl?: string | null;
+  onSignOut?: () => void;
 }
 
 interface WorkspacesPayload {
@@ -73,6 +74,7 @@ export default function WorkspaceSwitcher({
   forceOpen,
   onForceClose,
   avatarUrl,
+  onSignOut,
 }: WorkspaceSwitcherProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(forceOpen ?? false);
@@ -213,18 +215,25 @@ export default function WorkspaceSwitcher({
     }
     return (
       <div className={`${styles.root} ${styles.mobileRoot}`} ref={rootRef}>
-        <button
-          type="button"
-          className={styles.mobileButton}
-          onClick={() => setOpen(value => !value)}
-          aria-expanded={open}
-          aria-label={`Current workspace: ${workspaceName}`}
-        >
-          <div className={styles.mobileButtonLeft}>
-            <span className={styles.mobileEyebrow}>Workspace</span>
-            <span className={styles.mobileName}>{workspaceName}</span>
-          </div>
-          <div className={styles.mobileButtonRight}>
+        <div className={styles.mobileBar}>
+          <button
+            type="button"
+            className={styles.mobileButton}
+            onClick={() => setOpen(value => !value)}
+            aria-expanded={open}
+            aria-label={`Current workspace: ${workspaceName}. Tap to switch workspace.`}
+          >
+            <div className={styles.mobileButtonLeft}>
+              <span className={styles.mobileEyebrow}>Workspace</span>
+              <span className={styles.mobileName}>{workspaceName}</span>
+            </div>
+            <div className={styles.mobileButtonChevron}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                <path d={open ? 'M2 8l4-4 4 4' : 'M2 4l4 4 4-4'} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+          </button>
+          <div className={styles.mobileBarRight}>
             {roleLabel && <span className={styles.mobileRole}>{roleLabel}</span>}
             <div className={styles.mobileAvatar}>
               {avatarUrl
@@ -232,8 +241,22 @@ export default function WorkspaceSwitcher({
                 : <span>{(userLabel?.[0] ?? 'U').toUpperCase()}</span>
               }
             </div>
+            {onSignOut && (
+              <button
+                type="button"
+                className={styles.mobileSignOutBtn}
+                onClick={onSignOut}
+                aria-label="Sign out"
+                title="Sign out"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M6 14H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                  <path d="M11 11l3-3-3-3M14 8H6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            )}
           </div>
-        </button>
+        </div>
         {open && (
           <div className={styles.mobileOverlay} onClick={() => setOpen(false)}>
             <div className={styles.mobileSheet} onClick={e => e.stopPropagation()}>
