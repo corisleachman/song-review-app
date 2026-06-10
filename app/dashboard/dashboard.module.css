@@ -1420,30 +1420,32 @@
   text-overflow: ellipsis;
 }
 
+/* ── Bottom Sheet ─────────────────────────────────────────────────────────── */
+
+/* Dim overlay — covers full screen, aligns sheet to bottom edge */
 .bsOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0);
-  transition: background 0.25s ease;
   z-index: 60;
   display: flex;
   align-items: flex-end;
+  background: rgba(0,0,0,0);
+  transition: background 0.25s ease;
   pointer-events: none;
 }
 .bsOverlayVisible {
-  background: rgba(0,0,0,0.75);
+  background: rgba(0,0,0,0.72);
   pointer-events: all;
 }
+
+/* The sheet itself — slides up from off-screen bottom */
 .bottomSheet {
-  position: relative;
   width: 100%;
   background: #0E0A0A;
-  border-radius: 0;
   border-top: 1px solid rgba(255,255,255,0.1);
   overflow: hidden;
-  max-height: 88vh;
   transform: translateY(100%);
-  transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: transform 0.30s cubic-bezier(0.32, 0.72, 0, 1);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 .bottomSheetWithPlayer {
@@ -1453,109 +1455,99 @@
 .bsOverlayVisible .bottomSheet {
   transform: translateY(0);
 }
-/* Handle pill floats over the top of the artwork — contributes zero height */
-.bsHandle {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  padding: 10px 0 6px;
-  cursor: pointer;
-  z-index: 3;
-  pointer-events: none; /* overlay area is non-interactive; close btn handles dismiss */
-}
-.bsHandleBar {
-  width: 36px;
-  height: 4px;
-  border-radius: 2px;
-  background: rgba(255,255,255,0.55);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-}
-/* Artwork fills from the very top of the sheet, edge-to-edge — no gap above */
+
+/*
+ * Artwork block — fills the full width from the sheet's top border, no gap.
+ * Height is calculated so the total sheet fits on screen without scrolling:
+ *   artwork + header(54px) + body(152px) + cta(56px) ≈ total
+ * On iPhone 14 (844px), 88vh = 742px → artwork = 742 - 262 = 480px max.
+ * We use 58vw (≈228px on 393px) — compact, shows full image, matches the mock.
+ * The handle pill and close button are both inside this block as overlays.
+ */
 .bsArtBlock {
   position: relative;
   width: 100%;
-  /*
-   * Target total sheet height without scroll on a 844px (iPhone 14) viewport:
-   * art + header (~52px) + body (~140px) + CTA (~52px) + padding (~12px) ≤ 88vh (~742px)
-   * → artwork can be up to ~486px, but visually ~60vw (≈236px on 393px) matches the mock.
-   * Using aspect-ratio 4/3 gives a landscape crop that shows the full square art comfortably.
-   */
-  aspect-ratio: 4 / 3;
-  max-height: 300px;
+  height: 58vw;          /* ~228px on iPhone 14 Pro / 15 */
+  max-height: 260px;     /* cap for larger phones / tablets */
   overflow: hidden;
-  background: rgba(192,57,43,0.10);
-  flex-shrink: 0;
-  /* Artwork slides up into view just AFTER the sheet arrives */
+  background: #1a1010;   /* dark fallback when no artwork */
+  /* Entrance: slides up slightly behind the sheet (sheet starts moving first) */
   opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.38s 0.24s cubic-bezier(0.32, 0.72, 0, 1),
-              transform 0.38s 0.24s cubic-bezier(0.32, 0.72, 0, 1);
+  transform: translateY(16px);
+  transition: opacity 0.32s 0.18s ease-out,
+              transform 0.32s 0.18s ease-out;
 }
 .bsOverlayVisible .bsArtBlock {
   opacity: 1;
   transform: translateY(0);
 }
+
+/* The artwork image fills the block completely */
 .bsArtBlockImg {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
-.bsArtBlockPlaceholder {
-  width: 100%;
-  height: 100%;
-  background: rgba(192,57,43,0.10);
+
+/* Drag handle pill — overlaid at the very top of the artwork */
+.bsHandle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  padding: 10px 0;
+  cursor: pointer;
 }
-/* Close button sits top-left of the artwork */
+.bsHandleBar {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.5);
+}
+
+/* Close button — overlaid top-left of artwork */
 .bsCloseBtn {
   position: absolute;
   top: 10px;
   left: 10px;
-  width: 32px;
-  height: 32px;
+  z-index: 2;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(14,10,10,0.72);
-  border: 1px solid rgba(255,255,255,0.18);
-  color: rgba(255,255,255,0.85);
-  cursor: pointer;
-  font-size: 16px;
+  background: rgba(14,10,10,0.7);
+  border: 1px solid rgba(255,255,255,0.16);
+  color: rgba(255,255,255,0.9);
+  font-size: 14px;
   line-height: 1;
-  z-index: 2;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   border-radius: 0;
   padding: 0;
+  transition: background 0.12s;
 }
-.bsCloseBtn:hover { background: rgba(14,10,10,0.92); color: #fff; }
-/* Title strip — slides up first (before artwork) */
+.bsCloseBtn:hover { background: rgba(14,10,10,0.95); }
+
+/* Title strip — enters with the sheet */
 .bsHeader {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px 14px;
+  padding: 12px 16px 13px;
   border-bottom: 1px solid rgba(255,255,255,0.07);
   opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 0.28s 0.10s cubic-bezier(0.32, 0.72, 0, 1),
-              transform 0.28s 0.10s cubic-bezier(0.32, 0.72, 0, 1);
+  transform: translateY(8px);
+  transition: opacity 0.24s 0.08s ease-out,
+              transform 0.24s 0.08s ease-out;
 }
 .bsOverlayVisible .bsHeader {
   opacity: 1;
   transform: translateY(0);
-}
-/* Legacy small art — hidden in new layout */
-.bsArt {
-  display: none;
-}
-.bsArtPlaceholder {
-  width: 100%;
-  height: 100%;
 }
 .bsSongTitle {
   font-size: 14px;
@@ -1565,32 +1557,29 @@
 }
 .bsSub {
   font-size: 12px;
-  color: rgba(255,255,255,0.42);
-  margin: 2px 0 0;
+  color: rgba(255,255,255,0.4);
+  margin: 3px 0 0;
 }
-/* Info body enters slightly after title, before artwork finishes */
+
+/* Stats + pills + stage — enters just after header */
 .bsBody {
   padding: 14px 16px 4px;
   display: flex;
   flex-direction: column;
   gap: 12px;
   opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 0.28s 0.16s cubic-bezier(0.32, 0.72, 0, 1),
-              transform 0.28s 0.16s cubic-bezier(0.32, 0.72, 0, 1);
+  transform: translateY(8px);
+  transition: opacity 0.24s 0.14s ease-out,
+              transform 0.24s 0.14s ease-out;
 }
 .bsOverlayVisible .bsBody {
   opacity: 1;
   transform: translateY(0);
 }
-@keyframes bsContentEnter {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
 .bsGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 10px 16px;
 }
 .bsItem {
   display: flex;
@@ -1599,15 +1588,15 @@
 }
 .bsItemLabel {
   font-size: 10px;
-  color: rgba(255,255,255,0.35);
   font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
 }
 .bsItemValue {
   font-size: 13px;
-  color: rgba(255,255,255,0.9);
   font-weight: 500;
+  color: rgba(255,255,255,0.9);
 }
 .bsAssignRow {
   display: flex;
@@ -1617,52 +1606,52 @@
 .bsPill {
   font-size: 12px;
   padding: 5px 12px;
-  border-radius: 0;
   background: rgba(255,255,255,0.07);
   color: rgba(255,255,255,0.7);
-  border: 0.5px solid rgba(255,255,255,0.13);
+  border: 0.5px solid rgba(255,255,255,0.12);
 }
 .bsPillMe {
   background: rgba(192,57,43,0.18);
   color: #F4EDE4;
-  border-color: rgba(192,57,43,0.28);
+  border-color: rgba(192,57,43,0.26);
 }
 .bsPillBtn {
   cursor: pointer;
   font-family: inherit;
   transition: opacity 0.12s;
 }
-.bsPillBtn:hover { opacity: 0.8; }
+.bsPillBtn:hover { opacity: 0.78; }
 .bsActivitySnippet {
   font-size: 12px;
-  color: rgba(255,255,255,0.38);
+  color: rgba(255,255,255,0.36);
   border-top: 1px solid rgba(255,255,255,0.07);
   padding-top: 12px;
 }
+
+/* CTA button — enters last */
 .bsCta {
+  display: block;
   margin: 4px 16px 16px;
+  width: calc(100% - 32px);
+  padding: 13px;
   background: #C0392B;
   border: none;
-  border-radius: 0;
-  color: white;
+  color: #fff;
+  font-family: inherit;
   font-size: 14px;
   font-weight: 500;
-  padding: 12px;
-  width: calc(100% - 32px);
   cursor: pointer;
-  font-family: inherit;
-  display: block;
   opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 0.28s 0.30s cubic-bezier(0.32, 0.72, 0, 1),
-              transform 0.28s 0.30s cubic-bezier(0.32, 0.72, 0, 1),
+  transform: translateY(8px);
+  transition: opacity 0.24s 0.22s ease-out,
+              transform 0.24s 0.22s ease-out,
               background 0.12s;
 }
 .bsOverlayVisible .bsCta {
   opacity: 1;
   transform: translateY(0);
 }
-.bsCta:hover { background: #E8402E; }
+.bsCta:hover { background: #d63e2e; }
 
 /* Mobile */
 @media (max-width: 768px) {
