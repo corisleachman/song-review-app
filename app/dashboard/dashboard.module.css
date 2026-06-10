@@ -1467,8 +1467,8 @@
 .bsArtBlock {
   position: relative;
   width: 100%;
-  height: 58vw;          /* ~228px on iPhone 14 Pro / 15 */
-  max-height: 260px;     /* cap for larger phones / tablets */
+  height: 100vw;
+  max-height: 450px;
   overflow: hidden;
   background: #1a1010;   /* dark fallback when no artwork */
   /* Entrance: slides up slightly behind the sheet (sheet starts moving first) */
