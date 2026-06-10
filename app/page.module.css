@@ -314,6 +314,8 @@
   .right { display: none; }
   .left { padding: 0 24px 56px; }
   .nav { padding: 20px 24px; }
+  .authPanel { margin-top: 100px; }
+  .forgotPanel { margin-top: 100px; }
 }
 
 
