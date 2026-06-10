@@ -1954,28 +1954,26 @@ function DashboardContent() {
       <div
         className={`${styles.bsOverlay} ${sheetSongId ? styles.bsOverlayVisible : ''}`}
         onClick={event => {
-          if (event.target === event.currentTarget) {
-            setSheetSongId(null);
-          }
+          if (event.target === event.currentTarget) setSheetSongId(null);
         }}
       >
         <div className={`${styles.bottomSheet} ${playingId ? styles.bottomSheetWithPlayer : ''}`}>
-          <div className={styles.bsHandle} onClick={() => setSheetSongId(null)}>
-            <div className={styles.bsHandleBar} />
-          </div>
           {sheetSong && (
             <>
-              {/* Large artwork block with close button */}
+              {/* Artwork — fills sheet edge-to-edge from top */}
               <div className={styles.bsArtBlock}>
-                {sheetSong.image_url ? (
+                {sheetSong.image_url && (
                   <img
                     src={sheetSong.image_url}
                     alt={sheetSong.title}
                     className={styles.bsArtBlockImg}
                   />
-                ) : (
-                  <div className={styles.bsArtBlockPlaceholder} />
                 )}
+                {/* Drag handle pill — overlaid at top of artwork */}
+                <div className={styles.bsHandle} onClick={() => setSheetSongId(null)}>
+                  <div className={styles.bsHandleBar} />
+                </div>
+                {/* Close button — overlaid top-left */}
                 <button
                   type="button"
                   className={styles.bsCloseBtn}
