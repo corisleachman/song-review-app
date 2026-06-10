@@ -12,9 +12,10 @@ interface AppShellProps {
   workspaceImageUrl?: string | null;
   membershipRole?: 'owner' | 'member' | null;
   avatarUrl?: string | null;
+  onSignOut?: () => void;
 }
 
-export default function AppShell({ children, label, plan, workspaceName, workspaceImageUrl, membershipRole, avatarUrl }: AppShellProps) {
+export default function AppShell({ children, label, plan, workspaceName, workspaceImageUrl, membershipRole, avatarUrl, onSignOut }: AppShellProps) {
   return (
     <div className={styles.shell}>
       <AppSidebar
@@ -34,6 +35,7 @@ export default function AppShell({ children, label, plan, workspaceName, workspa
               membershipRole={membershipRole}
               avatarUrl={avatarUrl}
               variant="mobile"
+              onSignOut={onSignOut}
             />
           </div>
         )}
