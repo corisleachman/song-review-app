@@ -1439,7 +1439,10 @@
   background: #0E0A0A;
   border-radius: 0;
   border-top: 1px solid rgba(255,255,255,0.1);
-  overflow: hidden;
+  /* Allow scroll so artwork + content is fully reachable */
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 92vh;
   transform: translateY(100%);
   transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
   padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -1456,6 +1459,11 @@
   justify-content: center;
   padding: 10px 0 6px;
   cursor: pointer;
+  /* Sticky so handle is always reachable when scrolled */
+  position: sticky;
+  top: 0;
+  background: #0E0A0A;
+  z-index: 2;
 }
 .bsHandleBar {
   width: 36px;
@@ -1463,24 +1471,24 @@
   border-radius: 0;
   background: rgba(255,255,255,0.2);
 }
-/* Large artwork block above the title strip */
+/* Large artwork block: fixed height, full width — always fully shown */
 .bsArtBlock {
   position: relative;
   width: 100%;
-  /* Square crop — on a ~390px screen this is ~390px tall, showing the full art */
-  aspect-ratio: 1 / 1;
+  /* Use a fixed height rather than aspect-ratio so it can't overflow the sheet */
+  height: min(72vw, 280px);
   overflow: hidden;
   background: rgba(192,57,43,0.10);
   flex-shrink: 0;
-  /* Artwork slides in just AFTER the sheet itself (sheet: 0.28s, art: 0.18s delay) */
-  animation: bsArtEnter 0.42s 0.22s cubic-bezier(0.32, 0.72, 0, 1) both;
+  /* Artwork slides up into view just AFTER the sheet arrives */
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.38s 0.24s cubic-bezier(0.32, 0.72, 0, 1),
+              transform 0.38s 0.24s cubic-bezier(0.32, 0.72, 0, 1);
 }
 .bsOverlayVisible .bsArtBlock {
-  animation: bsArtEnter 0.42s 0.22s cubic-bezier(0.32, 0.72, 0, 1) both;
-}
-@keyframes bsArtEnter {
-  from { clip-path: inset(100% 0 0 0); opacity: 0; }
-  to   { clip-path: inset(0% 0 0 0);   opacity: 1; }
+  opacity: 1;
+  transform: translateY(0);
 }
 .bsArtBlockImg {
   width: 100%;
@@ -1516,16 +1524,23 @@
   padding: 0;
 }
 .bsCloseBtn:hover { background: rgba(14,10,10,0.92); color: #fff; }
-/* Title strip below artwork — enters with the sheet */
+/* Title strip — slides up first (before artwork) */
 .bsHeader {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 12px 16px 14px;
   border-bottom: 1px solid rgba(255,255,255,0.07);
-  animation: bsContentEnter 0.32s 0.08s cubic-bezier(0.32, 0.72, 0, 1) both;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.28s 0.10s cubic-bezier(0.32, 0.72, 0, 1),
+              transform 0.28s 0.10s cubic-bezier(0.32, 0.72, 0, 1);
 }
-/* Legacy small art — keep for non-artwork fallback, hidden in new layout */
+.bsOverlayVisible .bsHeader {
+  opacity: 1;
+  transform: translateY(0);
+}
+/* Legacy small art — hidden in new layout */
 .bsArt {
   display: none;
 }
@@ -1544,13 +1559,20 @@
   color: rgba(255,255,255,0.42);
   margin: 2px 0 0;
 }
-/* Info body enters slightly after header */
+/* Info body enters slightly after title, before artwork finishes */
 .bsBody {
   padding: 14px 16px 4px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  animation: bsContentEnter 0.32s 0.14s cubic-bezier(0.32, 0.72, 0, 1) both;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.28s 0.16s cubic-bezier(0.32, 0.72, 0, 1),
+              transform 0.28s 0.16s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.bsOverlayVisible .bsBody {
+  opacity: 1;
+  transform: translateY(0);
 }
 @keyframes bsContentEnter {
   from { opacity: 0; transform: translateY(8px); }
@@ -1621,7 +1643,17 @@
   cursor: pointer;
   font-family: inherit;
   display: block;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.28s 0.30s cubic-bezier(0.32, 0.72, 0, 1),
+              transform 0.28s 0.30s cubic-bezier(0.32, 0.72, 0, 1),
+              background 0.12s;
 }
+.bsOverlayVisible .bsCta {
+  opacity: 1;
+  transform: translateY(0);
+}
+.bsCta:hover { background: #E8402E; }
 
 /* Mobile */
 @media (max-width: 768px) {
