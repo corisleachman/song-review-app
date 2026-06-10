@@ -49,9 +49,10 @@
     background:
       linear-gradient(to bottom,
         rgba(0,0,0,0.08) 0%,
-        rgba(0,0,0,0.40) 40%,
-        rgba(0,0,0,0.82) 62%,
-        rgba(0,0,0,0.96) 100%
+        rgba(0,0,0,0.35) 35%,
+        rgba(0,0,0,0.78) 55%,
+        rgba(0,0,0,0.97) 75%,
+        rgba(0,0,0,0.99) 100%
       );
   }
 }
@@ -323,42 +324,46 @@
 }
 
 @media (max-width: 768px) {
+  /* Single column, 4 rows: nav | SVG | auth | footer */
   .page {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto 1fr auto;
-    /* nav → SVG → auth → footer */
-  }
-
-  /* Slot the SVG into row 2 (below nav) */
-  .right {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    padding: 0 32px 0;
-    pointer-events: none;
-    grid-row: 2;
-    grid-column: 1;
-    min-height: 0;
-    align-self: end;
-  }
-  .headlineSvgWrap {
-    max-width: 280px;
-    margin: 0 auto;
-  }
-  .heroTagline { display: none; }
-
-  /* Auth in row 3 */
-  .left {
-    padding: 0 24px 56px;
-    justify-content: flex-start;
-    padding-top: 40px;
-    grid-row: 3;
-    grid-column: 1;
+    grid-template-rows: auto 1fr auto auto;
   }
 
   .nav {
     padding: 20px 24px;
     grid-row: 1;
+    grid-column: 1;
+  }
+
+  /* SVG in row 2 — centred, fills the upper image area */
+  .right {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0 32px 20px;
+    pointer-events: none;
+    grid-row: 2;
+    grid-column: 1;
+    min-height: 160px;
+  }
+  .headlineSvgWrap {
+    width: 220px;
+    max-width: 260px;
+    margin: 0 auto;
+  }
+  .heroTagline { display: none; }
+
+  /* Auth panel in row 3 — centred, shifted into the dark zone */
+  .left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0 24px 56px;
+    padding-top: 140px;
+    grid-row: 3;
     grid-column: 1;
   }
 
@@ -368,7 +373,7 @@
     grid-column: 1;
   }
 
-  /* Tabs match Google button width, no extra gap */
+  /* Tabs fill the same width as Google button, tight gap below */
   .tabs {
     width: 100%;
     max-width: 320px;
@@ -376,12 +381,13 @@
   }
   .tabBtn { flex: 1; text-align: center; }
 
-  /* Auth panel: full width, tight gap */
+  /* Auth panel: full width, tight gap, centred */
   .authPanel {
     width: 100%;
     max-width: 320px;
     gap: 8px;
     margin-top: 0;
+    align-items: stretch;
   }
 
   .forgotPanel {
@@ -390,5 +396,6 @@
     margin-top: 0;
   }
 }
+
 
 
