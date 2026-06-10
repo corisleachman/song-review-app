@@ -43,6 +43,19 @@
     );
 }
 
+/* On mobile, heavier bottom-to-top gradient so buttons land in dark */
+@media (max-width: 768px) {
+  .bgVeil {
+    background:
+      linear-gradient(to bottom,
+        rgba(0,0,0,0.08) 0%,
+        rgba(0,0,0,0.40) 40%,
+        rgba(0,0,0,0.82) 62%,
+        rgba(0,0,0,0.96) 100%
+      );
+  }
+}
+
 /* Page grid */
 .page {
   position: relative;
@@ -310,12 +323,72 @@
 }
 
 @media (max-width: 768px) {
-  .page { grid-template-columns: 1fr; }
-  .right { display: none; }
-  .left { padding: 0 24px 56px; }
-  .nav { padding: 20px 24px; }
-  .authPanel { margin-top: 100px; }
-  .forgotPanel { margin-top: 100px; }
+  .page {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr auto;
+    /* nav → SVG → auth → footer */
+  }
+
+  /* Slot the SVG into row 2 (below nav) */
+  .right {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 0 32px 0;
+    pointer-events: none;
+    grid-row: 2;
+    grid-column: 1;
+    min-height: 0;
+    align-self: end;
+  }
+  .headlineSvgWrap {
+    max-width: 280px;
+    margin: 0 auto;
+  }
+  .heroTagline { display: none; }
+
+  /* Auth in row 3 */
+  .left {
+    padding: 0 24px 56px;
+    justify-content: flex-start;
+    padding-top: 40px;
+    grid-row: 3;
+    grid-column: 1;
+  }
+
+  .nav {
+    padding: 20px 24px;
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  /* Footer in row 4 */
+  .footer {
+    grid-row: 4;
+    grid-column: 1;
+  }
+
+  /* Tabs match Google button width, no extra gap */
+  .tabs {
+    width: 100%;
+    max-width: 320px;
+    margin-bottom: 8px;
+  }
+  .tabBtn { flex: 1; text-align: center; }
+
+  /* Auth panel: full width, tight gap */
+  .authPanel {
+    width: 100%;
+    max-width: 320px;
+    gap: 8px;
+    margin-top: 0;
+  }
+
+  .forgotPanel {
+    width: 100%;
+    max-width: 320px;
+    margin-top: 0;
+  }
 }
 
 
