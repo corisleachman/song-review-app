@@ -1456,26 +1456,34 @@
   transform: translateY(0);
 }
 
-/*
- * Artwork block — fills the full width from the sheet's top border, no gap.
- * Height is calculated so the total sheet fits on screen without scrolling:
- *   artwork + header(54px) + body(152px) + cta(56px) ≈ total
- * On iPhone 14 (844px), 88vh = 742px → artwork = 742 - 262 = 480px max.
- * We use 58vw (≈228px on 393px) — compact, shows full image, matches the mock.
- * The handle pill and close button are both inside this block as overlays.
- */
+/* Artwork — tapping anywhere closes the sheet */
 .bsArtBlock {
   position: relative;
   width: 100%;
   height: 100vw;
   max-height: 450px;
   overflow: hidden;
-  background: #1a1010;   /* dark fallback when no artwork */
-  /* Entrance: slides up slightly behind the sheet (sheet starts moving first) */
+  background: #1a1010;
+  cursor: pointer;
+  /* Entrance: slides up slightly behind the sheet */
   opacity: 0;
   transform: translateY(16px);
   transition: opacity 0.32s 0.18s ease-out,
               transform 0.32s 0.18s ease-out;
+}
+/* Drag-handle pill rendered as a pseudo — purely decorative, no click needed */
+.bsArtBlock::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.45);
+  z-index: 2;
+  pointer-events: none;
 }
 .bsOverlayVisible .bsArtBlock {
   opacity: 1;
@@ -1490,25 +1498,6 @@
   height: 100%;
   object-fit: cover;
   display: block;
-}
-
-/* Drag handle pill — overlaid at the very top of the artwork */
-.bsHandle {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 2;
-  display: flex;
-  justify-content: center;
-  padding: 10px 0;
-  cursor: pointer;
-}
-.bsHandleBar {
-  width: 36px;
-  height: 4px;
-  border-radius: 2px;
-  background: rgba(255,255,255,0.5);
 }
 
 /* Close button — overlaid top-left of artwork */
