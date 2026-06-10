@@ -1960,8 +1960,13 @@ function DashboardContent() {
         <div className={`${styles.bottomSheet} ${playingId ? styles.bottomSheetWithPlayer : ''}`}>
           {sheetSong && (
             <>
-              {/* Artwork — fills sheet edge-to-edge from top */}
-              <div className={styles.bsArtBlock}>
+              {/* Artwork — tap anywhere to close, or use the ✕ button */}
+              <div
+                className={styles.bsArtBlock}
+                onClick={() => setSheetSongId(null)}
+                role="button"
+                aria-label="Close song info"
+              >
                 {sheetSong.image_url && (
                   <img
                     src={sheetSong.image_url}
@@ -1969,11 +1974,7 @@ function DashboardContent() {
                     className={styles.bsArtBlockImg}
                   />
                 )}
-                {/* Drag handle pill — overlaid at top of artwork */}
-                <div className={styles.bsHandle} onClick={() => setSheetSongId(null)}>
-                  <div className={styles.bsHandleBar} />
-                </div>
-                {/* Close button — overlaid top-left */}
+                {/* ✕ button — visible affordance, stops propagation not needed since parent already closes */}
                 <button
                   type="button"
                   className={styles.bsCloseBtn}
