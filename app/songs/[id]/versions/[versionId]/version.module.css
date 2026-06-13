@@ -1774,61 +1774,17 @@
   align-items: center;
   justify-content: center;
   background: var(--color-bg-darkest);
-  gap: 24px;
+  gap: 0;
 }
 
 .loadingLogoWrap {
-  position: relative;
-  width: 140px;
-  height: 86px;
+  width: 170px;
+  height: auto;
+  overflow: visible;
 }
 
 .loadingLogo {
   width: 100%;
-  height: 100%;
-}
-
-/* White outline — always visible */
-.loadingLogoOutline {
-  stroke: rgba(255, 255, 255, 0.15);
-  fill: none;
-  stroke-dasharray: 400;
-  stroke-dashoffset: 0;
-}
-
-/* Pink fill — animates upward via stroke-dashoffset */
-.loadingLogoFill {
-  stroke: #C0392B;
-  fill: none;
-  stroke-dasharray: 400;
-  stroke-dashoffset: 400;
-  animation: fillUp 1.8s ease-in-out infinite;
-  filter: drop-shadow(0 0 6px rgba(192,57,43,0.6));
-}
-
-@keyframes fillUp {
-  0% {
-    stroke-dashoffset: 400;
-    opacity: 0.6;
-  }
-  60% {
-    stroke-dashoffset: 0;
-    opacity: 1;
-  }
-  80% {
-    stroke-dashoffset: 0;
-    opacity: 1;
-  }
-  100% {
-    stroke-dashoffset: 400;
-    opacity: 0.6;
-  }
-}
-
-.loadingLabel {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.35);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-weight: 600;
+  height: auto;
+  overflow: visible;
 }
