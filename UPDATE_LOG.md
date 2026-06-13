@@ -2756,3 +2756,24 @@ For future CSS token swaps, always rewrite multi-value `background` properties e
 
 **Status:** Build confirmed passing. Phase 7 complete.
 
+
+---
+
+## 2026-06-13 — Loading animation: SONG/ROOM Thunder letterforms
+
+**What we were trying to achieve:**
+Replace the temporary S+R placeholder loading animation with something properly branded. The S and R were hand-drawn bezier approximations that looked rough and did not match the TSR visual language.
+
+**Feature/change:**
+Loading animation on every page now shows SONG on one line and ROOM on the line below, using real Thunder BlackLC letterforms extracted from the font file. The draw animation is identical to the Create Together animation on the login screen (stroke-dashoffset with per-letter stagger) but at 50% of the size. The animation runs once and stays frozen (same fill=freeze behaviour as the login page).
+
+**Files changed:**
+- `app/songs/[id]/versions/[versionId]/page.tsx` — replaced the loading return block with new SONG/ROOM SVG
+- `app/songs/[id]/versions/[versionId]/version.module.css` — removed old loadingLogoOutline, loadingLogoFill, keyframes fillUp, and loadingLabel rules; simplified loadingLogoWrap to width:170px; height:auto; overflow:visible
+- `app/loading.tsx` — new file — root-level Next.js loading UI covering dashboard, settings, song page, and all other routes without their own loading.tsx
+
+**Notes:**
+- Letter paths derived from Thunder BlackLC OTF via fonttools SVGPathPen + TransformPen, scaled to match the login page coordinate space (upem=1000 scale=0.2, Y-flip + offset). Same transform as the existing wireframe paths.
+- SVG viewBox 0 0 342.8 334 with SONG row at y=0 and ROOM row at y=144. Displayed at 170px wide via CSS.
+- app/loading.tsx is a server component (no use client) so it renders on every route without hydration overhead.
+- The Loading label text was removed as the letterforms are self-explanatory.
