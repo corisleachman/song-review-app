@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TSR — Public Listen Page Wireframe</title>
+<style>
+  @font-face {
+    font-family: 'Thunder';
+    src: url('https://corisleachman.github.io/song-review-app/wireframes/fonts/Thunder-BlackLC.otf') format('opentype');
+    font-weight: 900;
+  }
+  @font-face {
+    font-family: 'Thunder';
+    src: url('https://corisleachman.github.io/song-review-app/wireframes/fonts/Thunder-BoldLC.ttf') format('truetype');
+    font-weight: 700;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #111111;
+    --surface: #191919;
+    --border: #2a2a2a;
+    --yellow: #E6FF3F;
+    --off-white: #F4F0E8;
+    --muted: rgba(244,240,232,0.35);
+    --dimmed: rgba(244,240,232,0.15);
+  }
+
+  body {
+    background: #0a0a0a;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    color: var(--off-white);
+    min-height: 100vh;
+  }
+
+  /* ─── NAV SWITCHER ─── */
+  .nav-switcher {
+    display: flex;
+    gap: 0;
+    background: #1a1a1a;
+    border-bottom: 1px solid #2a2a2a;
+    padding: 0 24px;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .nav-tabs {
+    display: flex;
+    gap: 0;
+  }
+  .nav-tab {
+    padding: 14px 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .nav-tab.active {
+    color: var(--yellow);
+    border-bottom-color: var(--yellow);
+  }
+  .nav-label {
+    font-size: 10px;
+    color: var(--dimmed);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* ─── VIEWS ─── */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ═══════════════════════════════════════════
+     VIEW 1: PUBLIC LISTEN PAGE
+  ═══════════════════════════════════════════ */
+
+  .listen-page {
+    min-height: 100vh;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Artwork hero — full bleed, blurred bg */
+  .listen-hero {
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .listen-hero-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 120% at 50% -20%, #2a1f0a 0%, #111111 60%);
+    z-index: 0;
+  }
+
+  /* Simulated blurred artwork bg */
+  .listen-artwork-blur {
+    position: absolute;
+    inset: -20px;
+    background: 
+      radial-gradient(circle at 30% 40%, rgba(180, 120, 40, 0.25) 0%, transparent 50%),
+      radial-gradient(circle at 70% 60%, rgba(80, 60, 20, 0.2) 0%, transparent 50%);
+    filter: blur(40px);
+    z-index: 0;
+  }
+
+  /* Reactive EQ canvas simulation */
+  .listen-reactive-canvas {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .reactive-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 100%;
+    width: 100%;
+    padding: 0 20px;
+    opacity: 0.18;
+  }
+  .reactive-bar {
+    flex: 1;
+    background: linear-gradient(to top, var(--yellow), rgba(230,255,63,0.2));
+    border-radius: 1px 1px 0 0;
+    animation: barPulse var(--dur, 1.2s) ease-in-out infinite alternate;
+    animation-delay: var(--delay, 0s);
+  }
+  @keyframes barPulse {
+    from { height: var(--min-h, 8%); }
+    to { height: var(--max-h, 60%); }
+  }
+
+  .listen-overlay {
+    position: relative;
+    z-index: 2;
+    backdrop-filter: blur(60px) brightness(0.4) saturate(1.5);
+    -webkit-backdrop-filter: blur(60px) brightness(0.4) saturate(1.5);
+  }
+
+  /* Top bar — minimal TSR branding + share controls */
+  .listen-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 28px 16px;
+    border-bottom: 1px solid rgba(244,240,232,0.06);
+  }
+
+  .tsr-wordmark {
+    font-family: 'Thunder', sans-serif;
+    font-weight: 900;
+    font-size: 15px;
+    letter-spacing: 0.12em;
+    color: var(--yellow);
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .listen-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .listen-cta-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 14px;
+    background: var(--yellow);
+    color: #111;
+    border: none;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  /* Main player area */
+  .listen-player {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "info  art"
+      "wave  art";
+    gap: 0 32px;
+    padding: 28px 28px 0;
+  }
+
+  .listen-info {
+    grid-area: info;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding-bottom: 20px;
+  }
+
+  .listen-workspace-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .workspace-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--yellow);
+    flex-shrink: 0;
+  }
+  .workspace-name {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .listen-song-title {
+    font-family: 'Thunder', sans-serif;
+    font-weight: 900;
+    font-size: 58px;
+    line-height: 0.92;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    color: var(--off-white);
+    margin-bottom: 16px;
+    word-break: break-word;
+  }
+
+  .listen-meta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .listen-version-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border: 1px solid rgba(244,240,232,0.2);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .listen-meta-sep { color: var(--dimmed); font-size: 12px; }
+
+  /* Controls */
+  .listen-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-top: 28px;
+    margin-bottom: 20px;
+  }
+
+  .play-btn-large {
+    width: 52px;
+    height: 52px;
+    background: var(--yellow);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .play-btn-large svg { display: block; }
+
+  .time-display {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+  }
+  .time-current { color: var(--off-white); }
+  .time-sep { color: var(--dimmed); }
+
+  .volume-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+  }
+  .volume-icon { color: var(--muted); }
+  .volume-slider {
+    width: 72px;
+    height: 2px;
+    background: rgba(244,240,232,0.15);
+    position: relative;
+  }
+  .volume-fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 70%;
+    background: var(--off-white);
+  }
+  .volume-thumb {
+    position: absolute;
+    top: 50%;
+    left: 70%;
+    transform: translate(-50%, -50%);
+    width: 10px;
+    height: 10px;
+    background: var(--off-white);
+    border-radius: 50%;
+  }
+
+  /* Waveform */
+  .listen-waveform-area {
+    grid-area: wave;
+    padding-bottom: 28px;
+  }
+  .waveform-mock {
+    height: 72px;
+    position: relative;
+    overflow: hidden;
+  }
+  .wf-bars {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 100%;
+  }
+  .wf-bar {
+    flex: 1;
+    background: rgba(244,240,232,0.12);
+    border-radius: 1px;
+  }
+  .wf-bar.played {
+    background: rgba(192,57,43,0.85);
+  }
+  .wf-bar.near-played {
+    background: rgba(192,57,43,0.45);
+  }
+  .wf-playhead {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 34%;
+    width: 2px;
+    background: var(--off-white);
+  }
+
+  /* Artwork */
+  .listen-artwork {
+    grid-area: art;
+    position: relative;
+    align-self: stretch;
+  }
+  .listen-artwork-img {
+    width: 100%;
+    aspect-ratio: 1;
+    background: linear-gradient(135deg, #2a1f10 0%, #1a1410 40%, #0d0a08 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(244,240,232,0.06);
+    position: relative;
+    overflow: hidden;
+  }
+  .artwork-placeholder-text {
+    font-family: 'Thunder', sans-serif;
+    font-size: 42px;
+    font-weight: 900;
+    color: rgba(244,240,232,0.08);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* Footer */
+  .listen-footer {
+    border-top: 1px solid rgba(244,240,232,0.06);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .listen-footer-made {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--dimmed);
+  }
+  .listen-footer-made a {
+    color: var(--yellow);
+    text-decoration: none;
+    opacity: 0.7;
+  }
+  .listen-footer-made a:hover { opacity: 1; }
+
+
+  /* ═══════════════════════════════════════════
+     VIEW 2: SHARE MODAL ON PLAYER PAGE
+  ═══════════════════════════════════════════ */
+
+  .player-page-view {
+    min-height: 100vh;
+    background: var(--bg);
+    position: relative;
+  }
+
+  /* Simplified player header to show context */
+  .player-stub-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .player-stub-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .back-btn {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--muted);
+  }
+  .back-btn svg { color: var(--muted); }
+  .player-stub-song {
+    font-family: 'Thunder', sans-serif;
+    font-size: 22px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--off-white);
+  }
+  .player-stub-right {
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* Share button in player */
+  .share-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    background: transparent;
+    border: 1px solid rgba(244,240,232,0.2);
+    color: var(--off-white);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .share-btn:hover {
+    border-color: var(--yellow);
+    color: var(--yellow);
+  }
+  .share-btn.active {
+    background: rgba(230,255,63,0.08);
+    border-color: var(--yellow);
+    color: var(--yellow);
+  }
+
+  /* Stub player body */
+  .player-stub-body {
+    padding: 28px 24px;
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 28px;
+    filter: blur(1.5px);
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .stub-waveform {
+    height: 80px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 12px 16px;
+  }
+  .stub-bar {
+    flex: 1;
+    background: rgba(244,240,232,0.1);
+    border-radius: 1px;
+  }
+  .stub-bar.p { background: rgba(192,57,43,0.7); }
+
+  .stub-artwork {
+    aspect-ratio: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+
+  /* Modal overlay */
+  .modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(10,10,10,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    backdrop-filter: blur(4px);
+  }
+
+  .share-modal {
+    background: #1a1a1a;
+    border: 1px solid #2e2e2e;
+    width: 440px;
+    max-width: calc(100vw - 40px);
+    position: relative;
+  }
+
+  .share-modal-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid #2a2a2a;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .share-modal-title-group {}
+  .share-modal-eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--yellow);
+    margin-bottom: 6px;
+  }
+  .share-modal-title {
+    font-family: 'Thunder', sans-serif;
+    font-weight: 900;
+    font-size: 28px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--off-white);
+    line-height: 1;
+  }
+  .share-modal-subtitle {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+  .modal-close {
+    width: 28px;
+    height: 28px;
+    background: none;
+    border: 1px solid #333;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .share-modal-body {
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* Toggle row */
+  .share-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: rgba(244,240,232,0.03);
+    border: 1px solid #2a2a2a;
+  }
+  .share-toggle-label {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .share-toggle-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--off-white);
+  }
+  .share-toggle-desc {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  /* Custom toggle switch */
+  .toggle-switch {
+    position: relative;
+    width: 40px;
+    height: 22px;
+    flex-shrink: 0;
+  }
+  .toggle-track {
+    position: absolute;
+    inset: 0;
+    background: rgba(244,240,232,0.1);
+    border: 1px solid #333;
+    transition: all 0.2s;
+  }
+  .toggle-track.on {
+    background: rgba(230,255,63,0.2);
+    border-color: var(--yellow);
+  }
+  .toggle-thumb {
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 14px; height: 14px;
+    background: rgba(244,240,232,0.3);
+    transition: all 0.2s;
+  }
+  .toggle-track.on .toggle-thumb {
+    left: 21px;
+    background: var(--yellow);
+  }
+
+  /* Link row */
+  .share-link-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .share-link-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .share-link-row {
+    display: flex;
+    gap: 0;
+    border: 1px solid #2a2a2a;
+  }
+  .share-link-url {
+    flex: 1;
+    background: rgba(244,240,232,0.03);
+    padding: 10px 14px;
+    font-size: 12px;
+    font-family: 'DM Mono', 'Courier New', monospace;
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border: none;
+    outline: none;
+  }
+  .copy-btn {
+    padding: 10px 16px;
+    background: var(--yellow);
+    border: none;
+    color: #111;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .copy-btn.copied {
+    background: #2a3a1a;
+    color: #7ab648;
+  }
+
+  /* Preview */
+  .share-preview {
+    border: 1px solid #2a2a2a;
+    overflow: hidden;
+  }
+  .share-preview-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 10px 14px;
+    border-bottom: 1px solid #222;
+    background: rgba(244,240,232,0.02);
+  }
+  .share-preview-card {
+    padding: 14px;
+    display: flex;
+    gap: 14px;
+    background: #141414;
+  }
+  .preview-thumb {
+    width: 52px;
+    height: 52px;
+    background: linear-gradient(135deg, #2a1f10, #0d0a08);
+    flex-shrink: 0;
+    border: 1px solid #222;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .preview-thumb-text {
+    font-family: 'Thunder', sans-serif;
+    font-size: 11px;
+    font-weight: 900;
+    color: rgba(244,240,232,0.15);
+    text-transform: uppercase;
+  }
+  .preview-card-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+  }
+  .preview-card-domain {
+    font-size: 10px;
+    color: var(--dimmed);
+    letter-spacing: 0.05em;
+  }
+  .preview-card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--off-white);
+  }
+  .preview-card-sub {
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* Disabled state */
+  .share-disabled-state {
+    padding: 16px;
+    background: rgba(244,240,232,0.02);
+    border: 1px dashed #2a2a2a;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+  }
+  .share-disabled-icon {
+    color: var(--dimmed);
+    margin-bottom: 2px;
+  }
+  .share-disabled-text {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .share-modal-footer {
+    padding: 14px 24px;
+    border-top: 1px solid #222;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .share-modal-footer-note {
+    font-size: 11px;
+    color: var(--dimmed);
+    line-height: 1.4;
+  }
+
+  /* ─── ANNOTATION LABELS ─── */
+  .annotation {
+    display: inline-block;
+    background: #E6FF3F;
+    color: #111;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    margin-bottom: 8px;
+  }
+
+  .section-label {
+    background: #1a1a1a;
+    border-top: 1px solid #333;
+    padding: 8px 20px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(230,255,63,0.5);
+  }
+
+  /* ─── MOBILE VIEW ─── */
+  .mobile-frame {
+    max-width: 390px;
+    margin: 0 auto;
+    background: var(--bg);
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .mobile-listen-hero {
+    position: relative;
+    overflow: hidden;
+    background: #0d0a08;
+  }
+  .mobile-artwork-bg {
+    position: absolute;
+    inset: -20px;
+    background: 
+      radial-gradient(circle at 50% 30%, rgba(180,120,40,0.3) 0%, transparent 60%),
+      radial-gradient(circle at 80% 70%, rgba(80,60,20,0.2) 0%, transparent 50%);
+    filter: blur(30px);
+  }
+  .mobile-artwork-overlay {
+    position: relative;
+    z-index: 1;
+    backdrop-filter: blur(50px) brightness(0.4) saturate(1.4);
+    -webkit-backdrop-filter: blur(50px) brightness(0.4) saturate(1.4);
+    padding: 0 0 20px;
+  }
+  .mobile-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px 14px;
+  }
+  .mobile-tsr {
+    font-family: 'Thunder', sans-serif;
+    font-weight: 900;
+    font-size: 14px;
+    letter-spacing: 0.12em;
+    color: var(--yellow);
+    text-transform: uppercase;
+  }
+  .mobile-artwork-center {
+    padding: 0 40px;
+    margin-bottom: 20px;
+  }
+  .mobile-artwork-sq {
+    aspect-ratio: 1;
+    background: linear-gradient(135deg, #2a1f10 0%, #0d0a08 100%);
+    border: 1px solid rgba(244,240,232,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .mobile-artwork-text {
+    font-family: 'Thunder', sans-serif;
+    font-size: 32px;
+    font-weight: 900;
+    color: rgba(244,240,232,0.06);
+    text-transform: uppercase;
+  }
+  .mobile-reactive-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    padding: 0 8px;
+    opacity: 0.2;
+  }
+  .mobile-reactive-bar {
+    flex: 1;
+    background: linear-gradient(to top, var(--yellow), transparent);
+    border-radius: 1px;
+    animation: barPulse var(--dur, 1.4s) ease-in-out infinite alternate;
+    animation-delay: var(--delay, 0s);
+  }
+  .mobile-song-info {
+    padding: 0 20px;
+    margin-bottom: 16px;
+  }
+  .mobile-workspace-tag {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 8px;
+  }
+  .mobile-ws-dot { width: 5px; height: 5px; background: var(--yellow); }
+  .mobile-ws-name {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .mobile-song-title {
+    font-family: 'Thunder', sans-serif;
+    font-weight: 900;
+    font-size: 40px;
+    line-height: 0.9;
+    text-transform: uppercase;
+    color: var(--off-white);
+    margin-bottom: 10px;
+    letter-spacing: -0.01em;
+  }
+  .mobile-meta {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  /* Mobile waveform + controls */
+  .mobile-waveform-section {
+    padding: 0 20px 20px;
+  }
+  .mobile-wf {
+    height: 52px;
+    display: flex;
+    align-items: center;
+    gap: 1.5px;
+    margin-bottom: 14px;
+    position: relative;
+  }
+  .mobile-wf-bar {
+    flex: 1;
+    background: rgba(244,240,232,0.1);
+    border-radius: 0.5px;
+  }
+  .mobile-wf-bar.p { background: rgba(192,57,43,0.8); }
+  .mobile-playhead {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 34%;
+    width: 1.5px;
+    background: var(--off-white);
+  }
+  .mobile-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .mobile-time {
+    font-size: 12px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+  }
+  .mobile-time .cur { color: var(--off-white); }
+  .mobile-play-btn {
+    width: 46px;
+    height: 46px;
+    background: var(--yellow);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .mobile-vol {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+  }
+
+  .mobile-footer {
+    border-top: 1px solid rgba(244,240,232,0.06);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .mobile-footer-text {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dimmed);
+  }
+  .mobile-footer-text a {
+    color: var(--yellow);
+    text-decoration: none;
+    opacity: 0.65;
+  }
+
+  /* ─── Page-level container ─── */
+  .wireframe-page {
+    padding: 0 0 60px;
+  }
+
+  .view-header {
+    background: #111;
+    padding: 20px 28px 16px;
+    border-bottom: 1px solid #222;
+  }
+  .view-header h2 {
+    font-family: 'Thunder', sans-serif;
+    font-size: 28px;
+    font-weight: 900;
+    text-transform: uppercase;
+    color: var(--off-white);
+    margin-bottom: 4px;
+    letter-spacing: 0.04em;
+  }
+  .view-header p {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+    max-width: 560px;
+  }
+
+  /* ─── JAVASCRIPT STATE ─── */
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- NAV SWITCHER -->
+<div class="nav-switcher">
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="switchView('listen-desktop')">Public Listen — Desktop</div>
+    <div class="nav-tab" onclick="switchView('listen-mobile')">Public Listen — Mobile</div>
+    <div class="nav-tab" onclick="switchView('share-modal')">Share Modal (In-App)</div>
+  </div>
+  <span class="nav-label">TSR Wireframes — Public Listen Feature</span>
+</div>
+
+<!-- ═══════ VIEW 1: DESKTOP LISTEN PAGE ═══════ -->
+<div class="view active" id="view-listen-desktop">
+  <div class="view-header">
+    <h2>Public Listen — Desktop</h2>
+    <p>What anyone sees when they open a share link. No login, no workspace chrome. Just the player, artwork, and a subtle TSR attribution.</p>
+  </div>
+
+  <div class="listen-page">
+    <div class="listen-hero">
+      <div class="listen-artwork-blur"></div>
+
+      <!-- Reactive EQ bars running behind everything -->
+      <div class="listen-reactive-canvas">
+        <div class="reactive-bars" id="reactive-bars-desktop"></div>
+      </div>
+
+      <div class="listen-overlay">
+        <!-- Top bar -->
+        <div class="listen-topbar">
+          <a class="tsr-wordmark" href="#">The Song Room</a>
+          <div class="listen-topbar-right">
+            <button class="listen-cta-btn">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M6 1v7M3 5l3 3 3-3" stroke="#111" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M1 9.5V11h10V9.5" stroke="#111" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              Start collaborating free
+            </button>
+          </div>
+        </div>
+
+        <!-- Player grid -->
+        <div class="listen-player">
+          <div class="listen-info">
+            <div class="listen-workspace-tag">
+              <div class="workspace-dot"></div>
+              <span class="workspace-name">Polite Rebels</span>
+            </div>
+            <h1 class="listen-song-title">Midnight<br>Current</h1>
+            <div class="listen-meta">
+              <span class="listen-version-pill">Version 4 — Final Mix</span>
+              <span class="listen-meta-sep">·</span>
+              <span style="font-size:12px;color:var(--muted);">3:47</span>
+            </div>
+            <div class="listen-controls">
+              <button class="play-btn-large" onclick="togglePlay(this)">
+                <svg id="play-icon-desktop" width="20" height="20" viewBox="0 0 20 20" fill="#111">
+                  <path d="M7 4.5l10 5.5-10 5.5z"/>
+                </svg>
+              </button>
+              <div class="time-display">
+                <span class="time-current">1:24</span>
+                <span class="time-sep">/</span>
+                <span>3:47</span>
+              </div>
+              <div class="volume-wrap">
+                <svg class="volume-icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M2 6h3l4-3v10l-4-3H2V6z"/>
+                  <path d="M11 5.5c1 .8 1.5 1.5 1.5 2.5s-.5 1.7-1.5 2.5" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+                  <path d="M13 3.5c1.5 1.2 2.5 2.7 2.5 4.5s-1 3.3-2.5 4.5" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+                </svg>
+                <div class="volume-slider">
+                  <div class="volume-fill"></div>
+                  <div class="volume-thumb"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Waveform -->
+          <div class="listen-waveform-area">
+            <div class="waveform-mock" id="wf-desktop"></div>
+          </div>
+
+          <!-- Artwork -->
+          <div class="listen-artwork">
+            <div class="listen-artwork-img">
+              <span class="artwork-placeholder-text">Art</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="listen-footer">
+          <span class="listen-footer-made">Shared via <a href="#">The Song Room</a> — music collaboration for serious artists</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ VIEW 2: MOBILE LISTEN PAGE ═══════ -->
+<div class="view" id="view-listen-mobile">
+  <div class="view-header">
+    <h2>Public Listen — Mobile</h2>
+    <p>Artwork becomes the full-bleed hero. Waveform and controls sit beneath. Single-column, thumb-friendly layout.</p>
+  </div>
+
+  <div style="background:#0d0d0d;padding:32px 20px 60px;display:flex;align-items:flex-start;justify-content:center;">
+    <div style="position:relative;">
+      <!-- Phone frame -->
+      <div style="position:absolute;inset:-12px;border:2px solid #333;pointer-events:none;z-index:10;"></div>
+      <div class="mobile-frame">
+        <div class="mobile-listen-hero">
+          <div class="mobile-artwork-bg"></div>
+          <div class="mobile-artwork-overlay">
+            <div class="mobile-topbar">
+              <span class="mobile-tsr">The Song Room</span>
+              <button style="background:var(--yellow);border:none;padding:7px 12px;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#111;cursor:pointer;">Try free</button>
+            </div>
+            <div class="mobile-artwork-center">
+              <div class="mobile-artwork-sq">
+                <span class="mobile-artwork-text">Art</span>
+                <div class="mobile-reactive-overlay" id="mobile-reactive"></div>
+              </div>
+            </div>
+            <div class="mobile-song-info">
+              <div class="mobile-workspace-tag">
+                <div class="mobile-ws-dot"></div>
+                <span class="mobile-ws-name">Polite Rebels</span>
+              </div>
+              <h1 class="mobile-song-title">Midnight<br>Current</h1>
+              <span class="mobile-meta">Version 4 — Final Mix · 3:47</span>
+            </div>
+            <div class="mobile-waveform-section">
+              <div class="mobile-wf" id="wf-mobile">
+                <div class="mobile-playhead"></div>
+              </div>
+              <div class="mobile-controls">
+                <span class="mobile-time"><span class="cur">1:24</span> / 3:47</span>
+                <button class="mobile-play-btn" onclick="togglePlay(this)">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="#111">
+                    <path d="M6 3.5l9 5.5-9 5.5z"/>
+                  </svg>
+                </button>
+                <div class="mobile-vol">
+                  <svg width="15" height="15" viewBox="0 0 15 15" fill="currentColor">
+                    <path d="M2 5.5h2.5l3.5-2.5v9L4.5 9.5H2V5.5z"/>
+                    <path d="M10 5c.9.7 1.5 1.4 1.5 2.5s-.6 1.8-1.5 2.5" stroke="currentColor" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mobile-footer">
+          <span class="mobile-footer-text">Shared via <a href="#">The Song Room</a></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ VIEW 3: SHARE MODAL ═══════ -->
+<div class="view" id="view-share-modal">
+  <div class="view-header">
+    <h2>Share Modal — In-App Player</h2>
+    <p>Triggered by a "Share" button in the existing player header. Toggle makes the song public, generates a link. Owner-controlled, reversible.</p>
+  </div>
+
+  <div class="player-page-view" style="min-height:600px;">
+    <!-- Stub player header -->
+    <div class="player-stub-header">
+      <div class="player-stub-left">
+        <div class="back-btn">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          Songs
+        </div>
+        <span class="player-stub-song">Midnight Current</span>
+      </div>
+      <div class="player-stub-right">
+        <button class="share-btn active" onclick="toggleModal()">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+            <circle cx="10.5" cy="2.5" r="1.5" stroke="currentColor" stroke-width="1.2"/>
+            <circle cx="2.5" cy="6.5" r="1.5" stroke="currentColor" stroke-width="1.2"/>
+            <circle cx="10.5" cy="10.5" r="1.5" stroke="currentColor" stroke-width="1.2"/>
+            <path d="M4 5.8l5-2.6M4 7.2l5 2.6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          Share
+        </button>
+        <button style="background:none;border:1px solid #2a2a2a;width:32px;height:32px;color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="7" r="1.2" fill="currentColor"/>
+            <circle cx="3" cy="7" r="1.2" fill="currentColor"/>
+            <circle cx="11" cy="7" r="1.2" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Blurred player stub -->
+    <div class="player-stub-body">
+      <div>
+        <div class="stub-waveform">
+          <div id="stub-wf"></div>
+        </div>
+      </div>
+      <div class="stub-artwork"></div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="share-modal-overlay">
+      <div class="share-modal">
+        <div class="share-modal-header">
+          <div class="share-modal-title-group">
+            <div class="share-modal-eyebrow">Public Access</div>
+            <div class="share-modal-title">Share Song</div>
+            <div class="share-modal-subtitle">Let anyone listen with a link — no account needed. Comments and version history stay private.</div>
+          </div>
+          <button class="modal-close" onclick="toggleModal()">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="share-modal-body">
+
+          <!-- ON/OFF toggle -->
+          <div class="share-toggle-row">
+            <div class="share-toggle-label">
+              <span class="share-toggle-name">Public listen link</span>
+              <span class="share-toggle-desc">Anyone with the link can stream the latest version</span>
+            </div>
+            <div class="toggle-switch" onclick="toggleShareState()">
+              <div class="toggle-track on" id="toggle-track">
+                <div class="toggle-thumb"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Link (shown when enabled) -->
+          <div id="link-section" class="share-link-section">
+            <span class="share-link-label">Listen link</span>
+            <div class="share-link-row">
+              <input class="share-link-url" type="text" readonly value="song-room.live/listen/mid-curr-f3a2" id="link-url">
+              <button class="copy-btn" id="copy-btn" onclick="copyLink()">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <rect x="4" y="4" width="7" height="7" rx="0" stroke="currentColor" stroke-width="1.2"/>
+                  <path d="M2 8V1h7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                </svg>
+                Copy
+              </button>
+            </div>
+          </div>
+
+          <!-- Link preview -->
+          <div id="preview-section" class="share-preview">
+            <div class="share-preview-label">Link preview</div>
+            <div class="share-preview-card">
+              <div class="preview-thumb">
+                <span class="preview-thumb-text">Art</span>
+              </div>
+              <div class="preview-card-info">
+                <span class="preview-card-domain">song-room.live</span>
+                <span class="preview-card-title">Midnight Current</span>
+                <span class="preview-card-sub">Listen on The Song Room</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="share-modal-footer">
+          <span class="share-modal-footer-note">Only the latest version is shared.<br>Disable the link anytime to revoke access.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── VIEW SWITCHER ───
+function switchView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ─── GENERATE WAVEFORM BARS ───
+function makeBars(containerId, count, playedFraction, isMobile) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const bars = [];
+  for (let i = 0; i < count; i++) {
+    const div = document.createElement('div');
+    const fraction = i / count;
+    const progress = fraction < playedFraction ? 'played' :
+                     fraction < playedFraction + 0.04 ? 'near-played' : '';
+
+    let h;
+    // Generate a music-like waveform shape
+    const x = i / count;
+    const base = 0.18;
+    const mid = Math.sin(x * Math.PI) * 0.55;
+    const detail = Math.sin(x * Math.PI * 8) * 0.12 + Math.sin(x * Math.PI * 17) * 0.08 + Math.sin(x * Math.PI * 31) * 0.04;
+    h = Math.max(0.06, Math.min(1, base + mid + detail));
+
+    const maxH = isMobile ? 42 : 60;
+    const minH = isMobile ? 3 : 4;
+    const barH = Math.round(minH + h * (maxH - minH));
+
+    div.className = (isMobile ? 'mobile-wf-bar' : 'wf-bar') + (progress ? (' ' + progress) : '');
+    div.style.height = barH + 'px';
+    bars.push(div);
+  }
+  container.append(...bars);
+}
+
+// ─── STUB WAVEFORM ───
+function makeStubBars() {
+  const c = document.getElementById('stub-wf');
+  if (!c) return;
+  c.style.display = 'flex';
+  c.style.alignItems = 'center';
+  c.style.gap = '2px';
+  c.style.height = '100%';
+  for (let i = 0; i < 80; i++) {
+    const d = document.createElement('div');
+    const x = i / 80;
+    const h = Math.max(0.08, Math.min(1, 0.15 + Math.sin(x * Math.PI) * 0.5 + Math.sin(x * Math.PI * 11) * 0.1));
+    d.style.flex = '1';
+    d.style.height = Math.round(6 + h * 50) + 'px';
+    d.style.background = i < 30 ? 'rgba(192,57,43,0.6)' : 'rgba(244,240,232,0.1)';
+    d.style.borderRadius = '1px';
+    c.appendChild(d);
+  }
+}
+
+// ─── REACTIVE EQ BARS ───
+function makeReactiveBars(containerId, count, isMobile) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  for (let i = 0; i < count; i++) {
+    const div = document.createElement('div');
+    div.className = isMobile ? 'mobile-reactive-bar' : 'reactive-bar';
+    const minH = 4 + Math.random() * 10;
+    const maxH = 20 + Math.random() * 50;
+    div.style.setProperty('--min-h', minH + '%');
+    div.style.setProperty('--max-h', maxH + '%');
+    div.style.setProperty('--dur', (0.7 + Math.random() * 1.2) + 's');
+    div.style.setProperty('--delay', (Math.random() * 0.8) + 's');
+    container.appendChild(div);
+  }
+}
+
+// ─── PLAY TOGGLE ───
+function togglePlay(btn) {
+  const icons = btn.querySelectorAll('svg path, svg rect');
+  // Simple visual toggle — swap between play/pause icons
+  const svg = btn.querySelector('svg');
+  const isPlaying = btn.dataset.playing === '1';
+  if (isPlaying) {
+    svg.innerHTML = '<path d="M7 4.5l10 5.5-10 5.5z" fill="#111"/>';
+    btn.dataset.playing = '0';
+  } else {
+    svg.innerHTML = '<rect x="4" y="3" width="4" height="14" rx="1" fill="#111"/><rect x="12" y="3" width="4" height="14" rx="1" fill="#111"/>';
+    btn.dataset.playing = '1';
+  }
+}
+
+// ─── MODAL TOGGLE ───
+function toggleModal() {
+  const overlay = document.getElementById('share-modal-overlay');
+  overlay.style.display = overlay.style.display === 'none' ? 'flex' : 'none';
+  const shareBtn = document.querySelector('.share-btn');
+  if (shareBtn) shareBtn.classList.toggle('active', overlay.style.display !== 'none');
+}
+
+// ─── SHARE STATE TOGGLE ───
+let shareEnabled = true;
+function toggleShareState() {
+  shareEnabled = !shareEnabled;
+  const track = document.getElementById('toggle-track');
+  const linkSection = document.getElementById('link-section');
+  const previewSection = document.getElementById('preview-section');
+
+  if (shareEnabled) {
+    track.classList.add('on');
+    linkSection.style.display = '';
+    previewSection.style.display = '';
+  } else {
+    track.classList.remove('on');
+    linkSection.style.display = 'none';
+    previewSection.style.display = 'none';
+  }
+}
+
+// ─── COPY LINK ───
+function copyLink() {
+  const btn = document.getElementById('copy-btn');
+  const url = document.getElementById('link-url');
+  try { navigator.clipboard.writeText(url.value); } catch(e) {}
+  btn.classList.add('copied');
+  btn.textContent = '✓ Copied';
+  setTimeout(() => {
+    btn.classList.remove('copied');
+    btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="4" y="4" width="7" height="7" stroke="currentColor" stroke-width="1.2"/><path d="M2 8V1h7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg> Copy';
+  }, 2000);
+}
+
+// ─── INIT ───
+document.addEventListener('DOMContentLoaded', () => {
+  makeBars('wf-desktop', 140, 0.355);
+  makeBars('wf-mobile', 80, 0.355, true);
+  makeReactiveBars('reactive-bars-desktop', 60);
+  makeReactiveBars('mobile-reactive', 30, true);
+  makeStubBars();
+});
+</script>
+</body>
+</html>
