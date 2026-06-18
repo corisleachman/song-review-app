@@ -134,6 +134,8 @@ function ListenPageInner() {
   const nativeAudioCleanupRef = useRef<(() => void) | null>(null);
   const waveLoadIdRef = useRef(0);
   const heroRef = useRef<HTMLDivElement>(null);
+  const songTitleRef = useRef<string>('');
+  const songImageRef = useRef<string>('');
   const heroOverlayRef = useRef<HTMLDivElement>(null);
 
   // Reactive canvas
@@ -173,6 +175,8 @@ function ListenPageInner() {
       })
       .then(d => {
         setData(d);
+        songTitleRef.current = d.song.title ?? '';
+        songImageRef.current = d.song.image_url ?? '';
         if (d.version.audioUrl) setAudioUrl(d.version.audioUrl);
       })
       .catch(e => setLoadError(e instanceof Error ? e.message : 'Failed to load.'));
@@ -332,9 +336,40 @@ function ListenPageInner() {
     nativeAudioCleanupRef.current?.();
     const upDur = () => { if (loadId !== waveLoadIdRef.current) return; if (isFinite(audio.duration) && audio.duration > 0) setDuration(audio.duration); };
     const upTime = () => { if (loadId === waveLoadIdRef.current) setCurrentTime(audio.currentTime || 0); };
-    const onPlay = () => { if (loadId !== waveLoadIdRef.current) return; setIsPlaying(true); startReactiveDrawing(); };
-    const onPause = () => { if (loadId !== waveLoadIdRef.current) return; setIsPlaying(false); stopReactiveDrawing(); drawReactiveIdle(); };
-    const onEnded = () => { if (loadId !== waveLoadIdRef.current) return; setIsPlaying(false); stopReactiveDrawing(); drawReactiveIdle(); };
+    const onPlay = () => {
+      if (loadId !== waveLoadIdRef.current) return;
+      setIsPlaying(true);
+      startReactiveDrawing();
+      if ('mediaSession' in navigator) {
+        const artwork: MediaImage[] = songImageRef.current
+          ? [{ src: songImageRef.current, sizes: '512x512', type: 'image/jpeg' }]
+          : [];
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: songTitleRef.current || 'The Song Room',
+          artist: '',
+          artwork,
+        });
+        navigator.mediaSession.setActionHandler('play', () => { void audio.play(); });
+        navigator.mediaSession.setActionHandler('pause', () => audio.pause());
+        navigator.mediaSession.setActionHandler('previoustrack', null);
+        navigator.mediaSession.setActionHandler('nexttrack', null);
+        navigator.mediaSession.playbackState = 'playing';
+      }
+    };
+    const onPause = () => {
+      if (loadId !== waveLoadIdRef.current) return;
+      setIsPlaying(false);
+      stopReactiveDrawing();
+      drawReactiveIdle();
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+    };
+    const onEnded = () => {
+      if (loadId !== waveLoadIdRef.current) return;
+      setIsPlaying(false);
+      stopReactiveDrawing();
+      drawReactiveIdle();
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
+    };
     audio.addEventListener('loadedmetadata', upDur);
     audio.addEventListener('durationchange', upDur);
     audio.addEventListener('timeupdate', upTime);
@@ -421,9 +456,38 @@ function ListenPageInner() {
       if (audio && !isMobile) {
         ensureReactiveAudioGraph(audio).then(ok => { if (ok) startReactiveDrawing(); }).catch(() => {});
       }
+      if ('mediaSession' in navigator) {
+        const artwork: MediaImage[] = songImageRef.current
+          ? [{ src: songImageRef.current, sizes: '512x512', type: 'image/jpeg' }]
+          : [];
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: songTitleRef.current || 'The Song Room',
+          artist: '',
+          artwork,
+        });
+        navigator.mediaSession.setActionHandler('play', () => ws.play());
+        navigator.mediaSession.setActionHandler('pause', () => ws.pause());
+        navigator.mediaSession.setActionHandler('previoustrack', null);
+        navigator.mediaSession.setActionHandler('nexttrack', null);
+        navigator.mediaSession.playbackState = 'playing';
+      }
     });
-    ws.on('pause', () => { if (loadId === waveLoadIdRef.current) { setIsPlaying(false); stopReactiveDrawing(); drawReactiveIdle(); } });
-    ws.on('finish', () => { if (loadId === waveLoadIdRef.current) { setIsPlaying(false); stopReactiveDrawing(); drawReactiveIdle(); } });
+    ws.on('pause', () => {
+      if (loadId === waveLoadIdRef.current) {
+        setIsPlaying(false);
+        stopReactiveDrawing();
+        drawReactiveIdle();
+        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+      }
+    });
+    ws.on('finish', () => {
+      if (loadId === waveLoadIdRef.current) {
+        setIsPlaying(false);
+        stopReactiveDrawing();
+        drawReactiveIdle();
+        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
+      }
+    });
     ws.on('error', async (e: Error) => {
       if (loadId !== waveLoadIdRef.current) return;
       setWaveErr('Could not load audio. Tap to try again.');
