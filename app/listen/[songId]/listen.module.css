@@ -4,8 +4,6 @@
   background: #0E0A0A;
   color: #F4EDE4;
   font-family: 'DM Sans', sans-serif;
-  display: flex;
-  flex-direction: column;
 }
 
 /* ── Loading / Error states ─────────────────────────────────── */
@@ -15,14 +13,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-}
-.loadingWordmark {
-  font-family: 'Thunder', sans-serif;
-  font-weight: 900;
-  font-size: 18px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #F0E48C;
 }
 .errorPage {
   min-height: 100vh;
@@ -62,16 +52,18 @@
 }
 .errorCta:hover { opacity: 0.75; }
 
-/* ── Hero ────────────────────────────────────────────────────── */
+/* ── Hero — must fill the full viewport ─────────────────────── */
 .hero {
   position: relative;
-  flex: 1;
+  min-height: 100vh;
   background-color: #0E0A0A;
   background-size: cover;
   background-position: center;
+  /* Contain the absolutely-positioned canvases */
+  overflow: hidden;
 }
 
-/* Reactive canvases */
+/* Reactive canvases — absolutely positioned inside .hero */
 .reactiveCanvasDesktop,
 .reactiveCanvasMobile {
   position: absolute;
@@ -90,9 +82,10 @@
   display: none;
 }
 
-/* Overlay — same blur treatment as version page */
+/* Overlay — sits on top of the canvas, must also fill the hero */
 .heroOverlay {
   position: relative;
+  z-index: 1;
   backdrop-filter: blur(60px) brightness(0.45) saturate(1.4);
   -webkit-backdrop-filter: blur(60px) brightness(0.45) saturate(1.4);
   background: linear-gradient(160deg, rgba(14,10,10,0.6) 0%, rgba(14,10,10,0.3) 50%, rgba(14,10,10,0.75) 100%);
@@ -110,6 +103,7 @@
   position: relative;
   z-index: 1;
   gap: 12px;
+  flex-shrink: 0;
 }
 .wordmark {
   font-family: 'Thunder', sans-serif;
@@ -135,7 +129,7 @@
 }
 .ctaBtn:hover { opacity: 0.88; }
 
-/* ── Player content grid ─────────────────────────────────────── */
+/* ── Player content grid — matches version page heroContent ──── */
 .playerContent {
   display: grid;
   grid-template-columns: 1fr 330px;
@@ -248,9 +242,11 @@
   font-weight: 500;
 }
 
-/* ── Waveform ────────────────────────────────────────────────── */
+/* ── Waveform — grid-area: wave, direct child of playerContent ─ */
 .waveformWrap {
   grid-area: wave;
+  min-width: 0;
+  padding-top: 16px;
   padding-bottom: 24px;
   position: relative;
 }
@@ -260,7 +256,6 @@
   overflow: hidden;
   position: relative;
   z-index: 1;
-  background: rgba(0,0,0,0.24);
 }
 .waveHint {
   font-size: 0.72rem;
@@ -269,7 +264,7 @@
   letter-spacing: 0.02em;
 }
 
-/* ── Artwork ─────────────────────────────────────────────────── */
+/* ── Artwork — grid-area: art ───────────────────────────────── */
 .artwork {
   grid-area: art;
   width: 330px;
@@ -297,6 +292,7 @@
   position: relative;
   z-index: 1;
   margin-top: auto;
+  flex-shrink: 0;
 }
 .footerText {
   font-size: 10px;

@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import sharp from 'sharp';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
+
+const IMAGE_MAX_PX = 1200;
+const IMAGE_QUALITY = 85;
 
 export async function POST(req: NextRequest) {
   try {
@@ -36,25 +40,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'You do not have access to this song.' }, { status: 403 });
     }
 
-    // Upload file to Supabase Storage
-    const fileName = `${songId}-${Date.now()}${file.name.substring(file.name.lastIndexOf('.'))}`;
-    const fileBuffer = await file.arrayBuffer();
+    // Resize and compress with Sharp — 1200×1200 max, JPEG 85%, strip metadata
+    const rawBuffer = Buffer.from(await file.arrayBuffer());
+    const optimisedBuffer = await sharp(rawBuffer)
+      .resize(IMAGE_MAX_PX, IMAGE_MAX_PX, {
+        fit: 'inside',
+        withoutEnlargement: true,
+      })
+      .jpeg({ quality: IMAGE_QUALITY, mozjpeg: true })
+      .toBuffer();
 
-    const { data, error: uploadError } = await supabaseServer.storage
+    // Unique filename with timestamp — bypasses CDN cache, no stale images
+    const fileName = `${songId}-${Date.now()}.jpg`;
+
+    const { error: uploadError } = await supabaseServer.storage
       .from('song-images')
-      .upload(fileName, fileBuffer, {
-        contentType: file.type,
-        upsert: true,
+      .upload(fileName, optimisedBuffer, {
+        contentType: 'image/jpeg',
+        upsert: false,
       });
 
     if (uploadError) throw uploadError;
 
-    // Get public URL
     const { data: urlData } = supabaseServer.storage
       .from('song-images')
       .getPublicUrl(fileName);
 
-    // Update song with image URL
     const { error: updateError } = await supabaseServer
       .from('songs')
       .update({ image_url: urlData.publicUrl })
