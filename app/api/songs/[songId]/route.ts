@@ -39,7 +39,7 @@ export async function GET(
 
     const { data, error } = await supabaseServer
       .from('songs')
-      .select('id, title, image_url, status, account_id')
+      .select('id, title, image_url, status, account_id, is_public')
       .eq('id', songId)
       .maybeSingle();
 

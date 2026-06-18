@@ -8,9 +8,10 @@ export async function middleware(request: NextRequest) {
   const publicRoutes = ['/', '/identify', '/auth/callback', '/auth/reset-password', '/privacy', '/terms'];
   const isInviteRoute = pathname.startsWith('/invite/');
   const isReferralRoute = pathname.startsWith('/r/');
+  const isListenRoute = pathname.startsWith('/listen/');
   
   // Check if path is public
-  if (publicRoutes.includes(pathname) || isInviteRoute || isReferralRoute) {
+  if (publicRoutes.includes(pathname) || isInviteRoute || isReferralRoute || isListenRoute) {
     return NextResponse.next();
   }
   

@@ -1788,3 +1788,197 @@
   height: auto;
   overflow: visible;
 }
+
+/* ── Share button ────────────────────────────────────────────── */
+.shareBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  background: transparent;
+  border: 1px solid rgba(244,237,228,0.18);
+  color: rgba(244,237,228,0.65);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.shareBtn:hover {
+  border-color: #F0E48C;
+  color: #F0E48C;
+}
+.shareBtnActive {
+  border-color: #F0E48C;
+  color: #F0E48C;
+  background: rgba(240,228,140,0.07);
+}
+
+/* ── Share modal ─────────────────────────────────────────────── */
+.shareModalOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10,8,8,0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.shareModal {
+  background: #1a1515;
+  border: 1px solid #2e2626;
+  width: 440px;
+  max-width: calc(100vw - 32px);
+  position: relative;
+}
+.shareModalHeader {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #2a2020;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.shareModalEyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #F0E48C;
+  margin-bottom: 6px;
+}
+.shareModalTitle {
+  font-family: 'Thunder', sans-serif;
+  font-weight: 900;
+  font-size: 28px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #F4EDE4;
+  line-height: 1;
+}
+.shareModalSubtitle {
+  font-size: 12px;
+  color: rgba(244,237,228,0.4);
+  margin-top: 8px;
+  line-height: 1.5;
+}
+.shareModalClose {
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: 1px solid #2e2626;
+  color: rgba(244,237,228,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.shareModalClose:hover { border-color: rgba(244,237,228,0.3); color: #F4EDE4; }
+.shareModalBody {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Toggle row */
+.shareToggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  background: rgba(244,237,228,0.03);
+  border: 1px solid #2a2020;
+}
+.shareToggleName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #F4EDE4;
+  margin-bottom: 3px;
+}
+.shareToggleDesc {
+  font-size: 11px;
+  color: rgba(244,237,228,0.4);
+  line-height: 1.4;
+}
+.shareToggle {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+  background: rgba(244,237,228,0.08);
+  border: 1px solid rgba(244,237,228,0.15);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.shareToggle:disabled { opacity: 0.5; cursor: not-allowed; }
+.shareToggleOn {
+  background: rgba(240,228,140,0.18);
+  border-color: #F0E48C;
+}
+.shareToggleThumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  background: rgba(244,237,228,0.3);
+  transition: left 0.2s, background 0.2s;
+  display: block;
+}
+.shareToggleOn .shareToggleThumb {
+  left: 21px;
+  background: #F0E48C;
+}
+
+/* Link row */
+.shareLinkSection { display: flex; flex-direction: column; gap: 7px; }
+.shareLinkLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(244,237,228,0.35);
+}
+.shareLinkRow {
+  display: flex;
+  border: 1px solid #2a2020;
+}
+.shareLinkUrl {
+  flex: 1;
+  background: rgba(244,237,228,0.03);
+  border: none;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-family: 'DM Mono', 'Courier New', monospace;
+  color: rgba(244,237,228,0.5);
+  outline: none;
+  min-width: 0;
+}
+.shareCopyBtn {
+  padding: 10px 16px;
+  background: #F0E48C;
+  border: none;
+  color: #0E0A0A;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-family: inherit;
+}
+.shareCopyBtn:hover { opacity: 0.88; }
+.shareCopyBtnDone { background: #2a3a1a; color: #7ab648; }
+.shareNote {
+  font-size: 11px;
+  color: rgba(244,237,228,0.28);
+  line-height: 1.5;
+}

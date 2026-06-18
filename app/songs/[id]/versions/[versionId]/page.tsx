@@ -83,6 +83,7 @@ interface Song {
   id: string;
   title: string;
   image_url: string | null;
+  is_public: boolean;
 }
 
 interface BootstrapPayload {
@@ -527,6 +528,9 @@ function VersionPageInner() {
   const [statusToast, setStatusToast] = useState<string | null>(null);
   const [animatedCommentId, setAnimatedCommentId] = useState<string | null>(null);
   const [mobileReactiveStripWidth, setMobileReactiveStripWidth] = useState(700);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareToggling, setShareToggling] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   const [reactivePalette, setReactivePalette] = useState(() => ({
     primary: DEFAULT_REACTIVE_PRIMARY,
     secondary: DEFAULT_REACTIVE_SECONDARY,
@@ -2322,6 +2326,19 @@ function VersionPageInner() {
           <div className={styles.heroNav}>
             <button className={styles.songsBtn} onClick={() => { stopPlayback(); router.push('/dashboard'); }}>← Songs</button>
             <div className={styles.heroNavRight}>
+              <button
+                className={`${styles.shareBtn} ${song?.is_public ? styles.shareBtnActive : ''}`}
+                onClick={() => setShowShareModal(true)}
+                title="Share song"
+              >
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                  <circle cx="10.5" cy="2.5" r="1.5" stroke="currentColor" strokeWidth="1.2"/>
+                  <circle cx="2.5" cy="6.5" r="1.5" stroke="currentColor" strokeWidth="1.2"/>
+                  <circle cx="10.5" cy="10.5" r="1.5" stroke="currentColor" strokeWidth="1.2"/>
+                  <path d="M4 5.8l5-2.6M4 7.2l5 2.6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                </svg>
+                Share
+              </button>
               <div className={styles.avatar} title={identity || 'User'} aria-label={identity || 'User'}>
                 {avatarUrl ? (
                   <img src={avatarUrl} alt="" />
@@ -2605,6 +2622,92 @@ function VersionPageInner() {
           </div>{/* /heroContent */}
 
         </div>{/* /heroOverlay */}
+
+        {/* Share modal */}
+        {showShareModal && (
+          <div className={styles.shareModalOverlay} onClick={() => setShowShareModal(false)}>
+            <div className={styles.shareModal} onClick={e => e.stopPropagation()}>
+              <div className={styles.shareModalHeader}>
+                <div>
+                  <div className={styles.shareModalEyebrow}>Public Access</div>
+                  <div className={styles.shareModalTitle}>Share Song</div>
+                  <div className={styles.shareModalSubtitle}>
+                    Let anyone listen with a link — no account needed. Comments and version history stay private.
+                  </div>
+                </div>
+                <button className={styles.shareModalClose} onClick={() => setShowShareModal(false)}>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              </div>
+
+              <div className={styles.shareModalBody}>
+                {/* Toggle */}
+                <div className={styles.shareToggleRow}>
+                  <div>
+                    <div className={styles.shareToggleName}>Public listen link</div>
+                    <div className={styles.shareToggleDesc}>Anyone with the link can stream the latest version</div>
+                  </div>
+                  <button
+                    className={`${styles.shareToggle} ${song?.is_public ? styles.shareToggleOn : ''}`}
+                    disabled={shareToggling}
+                    onClick={async () => {
+                      if (!song) return;
+                      setShareToggling(true);
+                      try {
+                        const res = await fetch(`/api/songs/${songId}/visibility`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ is_public: !song.is_public }),
+                        });
+                        if (res.ok) {
+                          setSong(prev => prev ? { ...prev, is_public: !prev.is_public } : prev);
+                        }
+                      } finally {
+                        setShareToggling(false);
+                      }
+                    }}
+                    aria-label={song?.is_public ? 'Disable public link' : 'Enable public link'}
+                  >
+                    <span className={styles.shareToggleThumb} />
+                  </button>
+                </div>
+
+                {/* Link row — only when public */}
+                {song?.is_public && (
+                  <>
+                    <div className={styles.shareLinkSection}>
+                      <span className={styles.shareLinkLabel}>Listen link</span>
+                      <div className={styles.shareLinkRow}>
+                        <input
+                          className={styles.shareLinkUrl}
+                          type="text"
+                          readOnly
+                          value={`https://song-room.live/listen/${songId}`}
+                          onFocus={e => e.target.select()}
+                        />
+                        <button
+                          className={`${styles.shareCopyBtn} ${shareCopied ? styles.shareCopyBtnDone : ''}`}
+                          onClick={() => {
+                            void navigator.clipboard.writeText(`https://song-room.live/listen/${songId}`);
+                            setShareCopied(true);
+                            setTimeout(() => setShareCopied(false), 2000);
+                          }}
+                        >
+                          {shareCopied ? '✓ Copied' : 'Copy'}
+                        </button>
+                      </div>
+                    </div>
+                    <p className={styles.shareNote}>
+                      Only the latest version is shared. Disable the link anytime to revoke access.
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>{/* /hero */}
 
       {/* Three-column body */}
