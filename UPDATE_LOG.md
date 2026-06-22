@@ -2777,3 +2777,50 @@ Loading animation on every page now shows SONG on one line and ROOM on the line 
 - SVG viewBox 0 0 342.8 334 with SONG row at y=0 and ROOM row at y=144. Displayed at 170px wide via CSS.
 - app/loading.tsx is a server component (no use client) so it renders on every route without hydration overhead.
 - The Loading label text was removed as the letterforms are self-explanatory.
+
+---
+
+## 2026-06-22 — Cover art upload 500ing in production (confirmed working)
+
+**What we were trying to achieve:**
+Cover art uploads on the dashboard and song/version page were failing on `song-room.live` — image picked, nothing displayed afterward, `songs.image_url` stayed `null` in the database. No error was visible to the user.
+
+**Investigation:**
+- Confirmed via Vercel runtime logs that `POST /api/songs/upload-image` was returning `500` in production, with the failure originating in the Sharp resize step (before storage upload or the DB update ever ran) — consistent with the `image_url: null` Coris found in Supabase.
+- Ruled out file format/corruption: the test file was a valid 138KB JPEG.
+- Ruled out stale build cache: redeployed with "Use existing Build Cache" unticked, confirmed a genuinely clean `npm install`, error persisted unchanged.
+- First attempted fix — marking `sharp` as a Next.js server external package (`experimental.serverComponentsExternalPackages`) — did not resolve it.
+- Root-caused by running `next build` locally and inspecting the `.next/server/.../route.js.nft.json` trace manifest: Sharp's native `linux-x64` binary *was* being correctly bundled, ruling out a Next.js file-tracing problem entirely.
+- Found the actual cause in Sharp's own loader source (`node_modules/sharp/dist/sharp.cjs`): `sharp >=0.33.0` added a runtime check requiring the host CPU to support the **x86-64-v2 microarchitecture** for its prebuilt linux-x64 binary. Vercel's serverless compute doesn't satisfy this check — a known, widely-reported issue (`lovell/sharp#3870`, `lovell/sharp#4543`, multiple Vercel community threads), and the production error text matched those reports verbatim.
+
+**Root cause:**
+`sharp@^0.35.1` (added in the 2026-06-07 image-resize commit) requires x86-64-v2 CPU instructions on its prebuilt Linux x64 binary, which Vercel's serverless functions don't support. This was the first time Sharp processing actually ran in production on `clone-clean`, so it isn't a regression of previously-working code — it failed from the point that dependency was added.
+
+**Fix:**
+- `package.json` — pinned `sharp` to `0.32.6` (last version before the x86-64-v2 requirement was introduced; same resize/jpeg/toBuffer API, no other code changes needed)
+- `package-lock.json` — regenerated for the pinned version
+- `next.config.js` — kept `experimental.serverComponentsExternalPackages: ['sharp']` as a harmless defensive addition (not the actual fix, but reasonable practice for native modules)
+- `app/api/songs/upload-image/route.ts` — wrapped the Sharp call in its own try/catch, returning a clear `400` (bad/unsupported file) or `500` (processing unavailable) with a real message instead of a bare 500
+- `app/dashboard/page.tsx`, `app/songs/[id]/versions/[versionId]/page.tsx` — surfaced upload failures to the user (`window.alert`) instead of failing silently with only a `console.error`
+
+**Files changed:**
+- `package.json`
+- `package-lock.json`
+- `next.config.js`
+- `app/api/songs/upload-image/route.ts`
+- `app/dashboard/page.tsx`
+- `app/songs/[id]/versions/[versionId]/page.tsx`
+
+**Before/after:**
+- Before: image upload appeared to do nothing; `image_url` stayed `null`; no error shown anywhere.
+- After: cover art uploads successfully on both dashboard and song/version page; any future upload failure (bad file, transient processing issue) now shows a visible message instead of failing silently.
+
+**Tests run:**
+- `npx tsc --noEmit` — passed
+- `npx next build` — passed locally; confirmed via `.nft.json` that `sharp-linux-x64.node` (libvips 8.14.5) is correctly traced into the function bundle
+- Confirmed working in production by Coris on `www.song-room.live` after deploy
+
+**Notes for v2 consumer build:**
+- Do not bump `sharp` past `0.32.x` on this project without first confirming Vercel has resolved the x86-64-v2 binary issue (check `lovell/sharp#3870` for status) — `^0.35.1` will silently break cover art and any other image-processing route again.
+- The earlier "Restored build cache" / Next.js bundling theories were both investigated and ruled out before finding the real cause — see commit history (`7bff7b1`, `ec346a2`) for the full trail if this resurfaces in a different form.
+
