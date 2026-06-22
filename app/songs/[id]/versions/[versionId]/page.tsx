@@ -2540,11 +2540,20 @@ function VersionPageInner() {
                     const fd = new FormData();
                     fd.append('songId', songId);
                     fd.append('file', file);
-                    const res = await fetch('/api/songs/upload-image', { method: 'POST', body: fd });
-                    if (res.ok) {
+                    try {
+                      const res = await fetch('/api/songs/upload-image', { method: 'POST', body: fd });
+                      if (!res.ok) {
+                        const body = await res.json().catch(() => null);
+                        console.error('Image upload failed', body);
+                        window.alert(body?.error || 'That image could not be uploaded. Please try again.');
+                        return;
+                      }
                       const { imageUrl } = await res.json();
                       setSong(prev => prev ? { ...prev, image_url: imageUrl } : prev);
                       songImageRef.current = imageUrl;
+                    } catch (uploadErr) {
+                      console.error('Image upload error:', uploadErr);
+                      window.alert('That image could not be uploaded. Please try again.');
                     }
                   }}
                 />

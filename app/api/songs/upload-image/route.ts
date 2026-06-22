@@ -42,13 +42,31 @@ export async function POST(req: NextRequest) {
 
     // Resize and compress with Sharp — 1200×1200 max, JPEG 85%, strip metadata
     const rawBuffer = Buffer.from(await file.arrayBuffer());
-    const optimisedBuffer = await sharp(rawBuffer)
-      .resize(IMAGE_MAX_PX, IMAGE_MAX_PX, {
-        fit: 'inside',
-        withoutEnlargement: true,
-      })
-      .jpeg({ quality: IMAGE_QUALITY, mozjpeg: true })
-      .toBuffer();
+    let optimisedBuffer: Buffer;
+    try {
+      optimisedBuffer = await sharp(rawBuffer)
+        .resize(IMAGE_MAX_PX, IMAGE_MAX_PX, {
+          fit: 'inside',
+          withoutEnlargement: true,
+        })
+        .jpeg({ quality: IMAGE_QUALITY, mozjpeg: true })
+        .toBuffer();
+    } catch (sharpError) {
+      console.error('Sharp failed to process the uploaded image:', sharpError);
+      const message = sharpError instanceof Error ? sharpError.message : String(sharpError);
+      // Distinguish "couldn't load the sharp native module at all" (server/deploy
+      // problem on our end) from "this specific file couldn't be decoded" (the
+      // person picked an unsupported/corrupt file) so the right side gets blamed.
+      const isModuleLoadFailure = /could not load the "?sharp"? module/i.test(message);
+      return NextResponse.json(
+        {
+          error: isModuleLoadFailure
+            ? 'Image processing is temporarily unavailable on our end. Please try again shortly.'
+            : 'That image could not be read. Please try a JPEG, PNG, or WebP file.',
+        },
+        { status: isModuleLoadFailure ? 500 : 400 }
+      );
+    }
 
     // Unique filename with timestamp — bypasses CDN cache, no stale images
     const fileName = `${songId}-${Date.now()}.jpg`;

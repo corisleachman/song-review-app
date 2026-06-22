@@ -615,12 +615,19 @@ function DashboardContent() {
       formData.append('songId', songId);
       formData.append('file', file);
       const res = await fetch('/api/songs/upload-image', { method: 'POST', body: formData });
-      if (!res.ok) { console.error('Image upload failed', await res.text()); return; }
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        console.error('Image upload failed', body);
+        setSongs(prev => prev.map(s => s.id === songId ? { ...s, imageUploading: false } : s));
+        window.alert(body?.error || 'That image could not be uploaded. Please try again.');
+        return;
+      }
       const { imageUrl } = await res.json();
       setSongs(prev => prev.map(s => s.id === songId ? { ...s, image_url: imageUrl, imageUploading: false } : s));
     } catch (e) {
       console.error('Image upload error:', e);
       setSongs(prev => prev.map(s => s.id === songId ? { ...s, imageUploading: false } : s));
+      window.alert('That image could not be uploaded. Please try again.');
     }
   }
 
