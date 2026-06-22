@@ -1713,12 +1713,6 @@ function DashboardContent() {
                           <span className={`${styles.cardStatusPill} ${statusPillClass(song.status)}`}>
                             {getSongStatusLabel(song.status)}
                           </span>
-                          {showMetaPill && (
-                            <span className={styles.cardActionPill}>
-                              <span className={styles.cardActionPillDot} />
-                              {getMetaPillLabel(song)}
-                            </span>
-                          )}
                         </div>
                         <div className={styles.cardBodyDivider} />
                         <div className={styles.cardMetaRow}>
