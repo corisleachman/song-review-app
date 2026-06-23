@@ -639,17 +639,12 @@ footer {
     slides[current].classList.add('active');
   }, 5000);
 
-  // ── AUTH — Supabase JS SDK ──
-  const SUPABASE_URL  = 'https://hxtsuhmqrufcdplidtov.supabase.co';
-  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh4dHN1aG1xcnVmY2RwbGlkdG92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3ODk3MDksImV4cCI6MjA5MDM2NTcwOX0.STi6L1rrKQcTTRgRrCNnG38m7GnTHRPsoPz2f-ZRyYY';
-
-  // Load Supabase SDK
-  const sbScript = document.createElement('script');
-  sbScript.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
-  sbScript.onload = function() {
-    window._sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-  };
-  document.head.appendChild(sbScript);
+  // ── AUTH — wireframe only, not wired to a live Supabase project ──
+  // This wireframe previously had a live anon key hardcoded here, which is
+  // safe by design (anon keys are meant to be public) but was paired with a
+  // since-fixed RLS gap on the v1 project, so it's removed as a defense-in-depth
+  // cleanup. window._sb is intentionally left undefined; the form handlers
+  // below already fall back to redirecting to the real app when it's unset.
 
   function showError(id, msg) {
     const el = document.getElementById(id);
