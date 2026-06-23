@@ -2824,3 +2824,32 @@ Cover art uploads on the dashboard and song/version page were failing on `song-r
 - Do not bump `sharp` past `0.32.x` on this project without first confirming Vercel has resolved the x86-64-v2 binary issue (check `lovell/sharp#3870` for status) — `^0.35.1` will silently break cover art and any other image-processing route again.
 - The earlier "Restored build cache" / Next.js bundling theories were both investigated and ruled out before finding the real cause — see commit history (`7bff7b1`, `ec346a2`) for the full trail if this resurfaces in a different form.
 
+---
+
+## 2026-06-22 — Desktop dashboard grid card: duplicate "assigned to me" pill pushing icon row down (confirmed working)
+
+**What we were trying to achieve:**
+On the desktop dashboard, grid view, an "N assigned to me" (or "N actions") pill was appearing directly under the song artwork by default, below the "In progress" status badge. This pushed the divider, latest-version/comment-count row, and the icon row (info / rename / cover art / delete) further down the card. That info was meant to only appear inside the info overlay triggered by clicking the info (i) icon — not in the card's default static state.
+
+**Root cause:**
+`cardStatusRow` in the desktop grid card (`app/dashboard/page.tsx`) rendered the status pill *and* an unconditional `cardActionPill` (`getMetaPillLabel(song)` — "N assigned to me" / "N actions") whenever `song.unresolvedActionCount > 0`. This was a duplicate: the exact same information already renders correctly inside `cardInfoOverlay`'s `overlayAssignRow`, which is properly gated behind `isOverlayOpen` (the info icon toggle). The static copy in `cardStatusRow` should never have existed outside the overlay.
+
+**Fix:**
+Removed the duplicate `cardActionPill` block from `cardStatusRow` in the desktop grid card, leaving only the song status pill in the default view. The overlay (toggled by the info icon) remains the only place the assigned-to-me/awaiting-response pills and "Open work" count appear.
+
+**Files changed:**
+- `app/dashboard/page.tsx`
+
+**Before/after:**
+- Before: "N assigned to me" pill always visible under the artwork on any song with unresolved actions, inconsistently pushing the icon row to a different vertical position card-to-card.
+- After: default grid card shows only title, status pill, divider, and the meta/comment row before the icon row — consistent height across cards. Assigned-to-me/awaiting-response info only appears when the info icon is clicked.
+
+**Scope note:**
+Desktop list view was checked and is unaffected — its equivalent meta pill renders inline on the title's metadata row (separator-delimited, not stacked), so it never pushed the icon row and wasn't part of this issue. No change made there.
+
+**Tests run:**
+- `npx tsc --noEmit` — passed
+- `npx next build` — passed locally
+- Confirmed working in production by Coris on `www.song-room.live` after deploy
+
+
