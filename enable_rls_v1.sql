@@ -15,6 +15,8 @@ alter table song_versions enable row level security;
 alter table comment_threads enable row level security;
 alter table comments enable row level security;
 alter table song_tasks enable row level security;
+alter table actions enable row level security;
+alter table settings enable row level security;
 
 create policy "Allow all access (anon)" on songs
   for all to anon using (true) with check (true);
@@ -31,11 +33,13 @@ create policy "Allow all access (anon)" on comments
 create policy "Allow all access (anon)" on song_tasks
   for all to anon using (true) with check (true);
 
--- NOTE: the README for this app also mentions a `settings` table (per-user color
--- theme), which doesn't appear in the committed SUPABASE_SCHEMA.sql — it was likely
--- added later directly via the SQL Editor. If you have a `settings` table (check
--- Table Editor in the dashboard to confirm), run this too:
---
--- alter table settings enable row level security;
--- create policy "Allow all access (anon)" on settings
---   for all to anon using (true) with check (true);
+create policy "Allow all access (anon)" on actions
+  for all to anon using (true) with check (true);
+
+create policy "Allow all access (anon)" on settings
+  for all to anon using (true) with check (true);
+
+-- NOTE: actions and settings aren't in the committed SUPABASE_SCHEMA.sql — they
+-- were added later directly via the SQL Editor (per Coris, the live project has
+-- 7 tables total: songs, song_versions, comment_threads, comments, song_tasks,
+-- actions, settings — all 7 are covered above).
