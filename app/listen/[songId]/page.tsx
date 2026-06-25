@@ -15,6 +15,20 @@ const DEFAULT_REACTIVE_SECONDARY: Rgb = { r: 240, g: 228, b: 140 };
 
 function clamp(v: number, min: number, max: number) { return Math.min(max, Math.max(min, v)); }
 
+function formatRelativeTime(iso: string): string {
+  const then = new Date(iso).getTime();
+  const now = Date.now();
+  const diff = Math.max(0, now - then);
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
 function mixColor(start: Rgb, end: Rgb, amount: number, alpha: number) {
   const r = Math.round(start.r + (end.r - start.r) * amount);
   const g = Math.round(start.g + (end.g - start.g) * amount);
@@ -115,8 +129,15 @@ async function precomputeFrequencyFrames(audioBuffer: AudioBuffer) {
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 interface PublicSongData {
-  song: { id: string; title: string; image_url: string | null; workspace_name: string | null };
+  song: { id: string; title: string; image_url: string | null; workspace_name: string | null; comments_enabled: boolean };
   version: { id: string; version_number: number; label: string | null; display_name?: string; file_path: string; audioUrl: string | null };
+}
+
+interface PublicComment {
+  id: string;
+  author_name: string;
+  body: string;
+  created_at: string;
 }
 
 // ─── Inner component ────────────────────────────────────────────────────────
@@ -159,6 +180,12 @@ function ListenPageInner() {
   const [duration, setDuration] = useState(0);
   const [waveReloadNonce, setWaveReloadNonce] = useState(0);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [comments, setComments] = useState<PublicComment[]>([]);
+  const [commentName, setCommentName] = useState('');
+  const [commentBody, setCommentBody] = useState('');
+  const [commentWebsite, setCommentWebsite] = useState(''); // honeypot
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const [commentError, setCommentError] = useState<string | null>(null);
   const [reactivePalette, setReactivePalette] = useState(() => ({
     primary: DEFAULT_REACTIVE_PRIMARY,
     secondary: DEFAULT_REACTIVE_SECONDARY,
@@ -178,6 +205,12 @@ function ListenPageInner() {
         songTitleRef.current = d.song.title ?? '';
         songImageRef.current = d.song.image_url ?? '';
         if (d.version.audioUrl) setAudioUrl(d.version.audioUrl);
+        if (d.song.comments_enabled) {
+          fetch(`/api/public/song/${songId}/comments`)
+            .then(r => r.ok ? r.json() : { comments: [] })
+            .then(c => setComments(c.comments ?? []))
+            .catch(() => {});
+        }
       })
       .catch(e => setLoadError(e instanceof Error ? e.message : 'Failed to load.'));
   }, [songId]);
@@ -509,6 +542,41 @@ function ListenPageInner() {
   }, [audioUrl, waveReloadNonce]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Play handler ──────────────────────────────────────────────────────────
+  const handleSubmitComment = useCallback(async () => {
+    if (commentSubmitting) return;
+    const name = commentName.trim();
+    const text = commentBody.trim();
+    if (!name) { setCommentError('Please enter your name.'); return; }
+    if (!text) { setCommentError('Please enter a comment.'); return; }
+
+    setCommentSubmitting(true);
+    setCommentError(null);
+    try {
+      const res = await fetch(`/api/public/song/${songId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          author_name: name,
+          body: text,
+          website: commentWebsite, // honeypot
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setCommentError(json.error ?? 'Could not post your comment.');
+        return;
+      }
+      if (json.comment) {
+        setComments(prev => [json.comment, ...prev]);
+      }
+      setCommentBody('');
+    } catch {
+      setCommentError('Could not post your comment. Please try again.');
+    } finally {
+      setCommentSubmitting(false);
+    }
+  }, [songId, commentName, commentBody, commentWebsite, commentSubmitting]);
+
   const handlePlay = useCallback(() => {
     const ws = wavesurferRef.current;
     const audio = audioRef.current;
@@ -646,7 +714,7 @@ function ListenPageInner() {
     <div className={styles.page}>
       <div
         ref={heroRef}
-        className={styles.hero}
+        className={`${styles.hero} ${song.comments_enabled ? styles.heroWithComments : ''}`}
         style={song.image_url ? { backgroundImage: `url(${song.image_url})` } : undefined}
       >
         {/* Reactive canvases */}
@@ -737,16 +805,92 @@ function ListenPageInner() {
           </div>
 
           {/* Footer */}
-          <div className={styles.footer}>
-            <span className={styles.footerText}>
-              Shared via{' '}
-              <a href="https://song-room.live" className={styles.footerLink} target="_blank" rel="noopener noreferrer">
-                The Song Room
-              </a>
-              {' '}— music collaboration for serious artists
-            </span>
-          </div>
         </div>
+      </div>
+
+      {/* Public comments — only when enabled */}
+      {song.comments_enabled && (
+        <section className={styles.commentsSection}>
+          <div className={styles.commentsInner}>
+            <h2 className={styles.commentsHeading}>
+              Comments
+              {comments.length > 0 && (
+                <span className={styles.commentsCount}>{comments.length}</span>
+              )}
+            </h2>
+
+            {/* Comment form */}
+            <div className={styles.commentForm}>
+              <input
+                className={styles.commentNameInput}
+                type="text"
+                placeholder="Your name"
+                value={commentName}
+                maxLength={50}
+                onChange={e => setCommentName(e.target.value)}
+              />
+              {/* Honeypot — hidden from real users */}
+              <input
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                value={commentWebsite}
+                onChange={e => setCommentWebsite(e.target.value)}
+                style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }}
+                aria-hidden="true"
+              />
+              <textarea
+                className={styles.commentBodyInput}
+                placeholder="Leave a comment…"
+                value={commentBody}
+                maxLength={500}
+                rows={2}
+                onChange={e => setCommentBody(e.target.value)}
+              />
+              <div className={styles.commentFormFooter}>
+                {commentError
+                  ? <span className={styles.commentError}>{commentError}</span>
+                  : <span className={styles.commentHint}>Be kind — the whole band can see this.</span>
+                }
+                <button
+                  className={styles.commentSubmit}
+                  onClick={handleSubmitComment}
+                  disabled={commentSubmitting}
+                >
+                  {commentSubmitting ? 'Posting…' : 'Post'}
+                </button>
+              </div>
+            </div>
+
+            {/* Comment list */}
+            {comments.length === 0 ? (
+              <p className={styles.commentsEmpty}>No comments yet. Be the first.</p>
+            ) : (
+              <ul className={styles.commentsList}>
+                {comments.map(c => (
+                  <li key={c.id} className={styles.commentItem}>
+                    <div className={styles.commentItemHeader}>
+                      <span className={styles.commentAuthor}>{c.author_name}</span>
+                      <span className={styles.commentTime}>{formatRelativeTime(c.created_at)}</span>
+                    </div>
+                    <p className={styles.commentText}>{c.body}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Footer */}
+      <div className={styles.footer}>
+        <span className={styles.footerText}>
+          Shared via{' '}
+          <a href="https://song-room.live" className={styles.footerLink} target="_blank" rel="noopener noreferrer">
+            The Song Room
+          </a>
+          {' '}— music collaboration for serious artists
+        </span>
       </div>
     </div>
   );

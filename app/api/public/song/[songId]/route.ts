@@ -24,7 +24,7 @@ export async function GET(
     // Fetch song — service role bypasses RLS, so we check is_public ourselves
     const { data: song, error: songError } = await supabaseServer
       .from('songs')
-      .select('id, title, image_url, is_public, account_id')
+      .select('id, title, image_url, is_public, account_id, public_comments_enabled')
       .eq('id', songId)
       .maybeSingle();
 
@@ -82,6 +82,7 @@ export async function GET(
           title: song.title,
           image_url: song.image_url,
           workspace_name: workspaceName,
+          comments_enabled: song.public_comments_enabled ?? false,
         },
         version: {
           ...withVersionDisplayName(version),

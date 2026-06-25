@@ -84,6 +84,7 @@ interface Song {
   title: string;
   image_url: string | null;
   is_public: boolean;
+  public_comments_enabled: boolean;
 }
 
 interface BootstrapPayload {
@@ -531,6 +532,8 @@ function VersionPageInner() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareToggling, setShareToggling] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const [publicComments, setPublicComments] = useState<Array<{ id: string; author_name: string; body: string; is_hidden: boolean; created_at: string }>>([]);
+  const [publicCommentsLoaded, setPublicCommentsLoaded] = useState(false);
   const [reactivePalette, setReactivePalette] = useState(() => ({
     primary: DEFAULT_REACTIVE_PRIMARY,
     secondary: DEFAULT_REACTIVE_SECONDARY,
@@ -1061,6 +1064,16 @@ function VersionPageInner() {
     }
   }, [loading, queueReactiveCanvasRefresh, song?.image_url, versionId]);
 
+  // Load public comments for moderation when share modal opens
+  useEffect(() => {
+    if (showShareModal && song?.public_comments_enabled && !publicCommentsLoaded) {
+      fetch(`/api/songs/${songId}/public-comments`)
+        .then(r => r.ok ? r.json() : { comments: [] })
+        .then(d => { setPublicComments(d.comments ?? []); setPublicCommentsLoaded(true); })
+        .catch(() => {});
+    }
+  }, [showShareModal, song?.public_comments_enabled, publicCommentsLoaded, songId]);
+
   useEffect(() => {
     if (!song?.image_url) {
       setReactivePalette({
@@ -1220,7 +1233,11 @@ function VersionPageInner() {
         throw new Error('Could not load the version list.');
       }
 
-      setSong(songPayload.song);
+      setSong({
+        ...songPayload.song,
+        is_public: songPayload.song.is_public ?? false,
+        public_comments_enabled: songPayload.song.public_comments_enabled ?? false,
+      });
       songTitleRef.current = songPayload.song.title ?? '';
       songImageRef.current = songPayload.song.image_url ?? '';
       setVersion(versionPayload.version);
@@ -2671,7 +2688,12 @@ function VersionPageInner() {
                           body: JSON.stringify({ is_public: !song.is_public }),
                         });
                         if (res.ok) {
-                          setSong(prev => prev ? { ...prev, is_public: !prev.is_public } : prev);
+                          const json = await res.json();
+                          setSong(prev => prev ? {
+                            ...prev,
+                            is_public: json.is_public ?? !prev.is_public,
+                            public_comments_enabled: json.public_comments_enabled ?? false,
+                          } : prev);
                         }
                       } finally {
                         setShareToggling(false);
@@ -2683,7 +2705,41 @@ function VersionPageInner() {
                   </button>
                 </div>
 
-                {/* Link row — only when public */}
+                {/* Comments toggle — nested, only active when public */}
+                <div className={`${styles.shareToggleRow} ${styles.shareToggleNested} ${!song?.is_public ? styles.shareToggleDisabled : ''}`}>
+                  <div>
+                    <div className={styles.shareToggleName}>Allow comments</div>
+                    <div className={styles.shareToggleDesc}>Let listeners leave comments below the track</div>
+                  </div>
+                  <button
+                    className={`${styles.shareToggle} ${song?.public_comments_enabled ? styles.shareToggleOn : ''}`}
+                    disabled={shareToggling || !song?.is_public}
+                    onClick={async () => {
+                      if (!song || !song.is_public) return;
+                      setShareToggling(true);
+                      try {
+                        const res = await fetch(`/api/songs/${songId}/visibility`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ public_comments_enabled: !song.public_comments_enabled }),
+                        });
+                        if (res.ok) {
+                          const json = await res.json();
+                          setSong(prev => prev ? {
+                            ...prev,
+                            is_public: json.is_public ?? prev.is_public,
+                            public_comments_enabled: json.public_comments_enabled ?? false,
+                          } : prev);
+                        }
+                      } finally {
+                        setShareToggling(false);
+                      }
+                    }}
+                    aria-label={song?.public_comments_enabled ? 'Disable comments' : 'Enable comments'}
+                  >
+                    <span className={styles.shareToggleThumb} />
+                  </button>
+                </div>
                 {song?.is_public && (
                   <>
                     <div className={styles.shareLinkSection}>
@@ -2711,6 +2767,43 @@ function VersionPageInner() {
                     <p className={styles.shareNote}>
                       Only the latest version is shared. Disable the link anytime to revoke access.
                     </p>
+
+                    {/* Comment moderation — visible when comments enabled */}
+                    {song?.public_comments_enabled && (
+                      <div className={styles.shareModList}>
+                        <span className={styles.shareLinkLabel}>
+                          Public comments {publicComments.length > 0 ? `(${publicComments.length})` : ''}
+                        </span>
+                        {publicComments.length === 0 ? (
+                          <p className={styles.shareModEmpty}>
+                            {publicCommentsLoaded ? 'No comments yet.' : 'Loading…'}
+                          </p>
+                        ) : (
+                          <ul className={styles.shareModItems}>
+                            {publicComments.map(c => (
+                              <li key={c.id} className={styles.shareModItem}>
+                                <div className={styles.shareModItemBody}>
+                                  <span className={styles.shareModAuthor}>{c.author_name}</span>
+                                  <span className={styles.shareModText}>{c.body}</span>
+                                </div>
+                                <button
+                                  className={styles.shareModDelete}
+                                  title="Delete comment"
+                                  onClick={async () => {
+                                    const res = await fetch(`/api/songs/${songId}/public-comments/${c.id}`, { method: 'DELETE' });
+                                    if (res.ok) setPublicComments(prev => prev.filter(x => x.id !== c.id));
+                                  }}
+                                >
+                                  <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                                    <path d="M2 2l9 9M11 2l-9 9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                                  </svg>
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
                   </>
                 )}
               </div>

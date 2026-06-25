@@ -1982,3 +1982,79 @@
   color: rgba(244,237,228,0.28);
   line-height: 1.5;
 }
+
+/* ── Nested comments toggle in share modal ───────────────────── */
+.shareToggleNested {
+  margin-top: -8px;
+  margin-left: 16px;
+  border-left: 1px solid #2a2020;
+  border-top: none;
+}
+.shareToggleDisabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* ── Comment moderation list in share modal ──────────────────── */
+.shareModList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+  border-top: 1px solid #2a2020;
+  padding-top: 16px;
+}
+.shareModEmpty {
+  font-size: 12px;
+  color: rgba(244,237,228,0.3);
+}
+.shareModItems {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.shareModItem {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  background: rgba(244,237,228,0.03);
+  border: 1px solid #2a2020;
+}
+.shareModItemBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.shareModAuthor {
+  font-size: 11px;
+  font-weight: 700;
+  color: #F4EDE4;
+}
+.shareModText {
+  font-size: 12px;
+  color: rgba(244,237,228,0.6);
+  line-height: 1.4;
+  word-break: break-word;
+}
+.shareModDelete {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid #2e2626;
+  color: rgba(244,237,228,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.shareModDelete:hover { color: #C0392B; border-color: #C0392B; }

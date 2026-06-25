@@ -4,6 +4,8 @@
   background: #0E0A0A;
   color: #F4EDE4;
   font-family: 'DM Sans', sans-serif;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ── Loading / Error states ─────────────────────────────────── */
@@ -52,15 +54,20 @@
 }
 .errorCta:hover { opacity: 0.75; }
 
-/* ── Hero — must fill the full viewport ─────────────────────── */
+/* ── Hero — fills viewport; shrinks to content when comments present ── */
 .hero {
   position: relative;
-  min-height: 100vh;
+  flex: 1 0 auto;
+  min-height: calc(100vh - 50px);
   background-color: #0E0A0A;
   background-size: cover;
   background-position: center;
   /* Contain the absolutely-positioned canvases */
   overflow: hidden;
+}
+.heroWithComments {
+  flex: 0 0 auto;
+  min-height: calc(100vh - 50px);
 }
 
 /* Reactive canvases — absolutely positioned inside .hero */
@@ -91,7 +98,8 @@
   background: linear-gradient(160deg, rgba(14,10,10,0.6) 0%, rgba(14,10,10,0.3) 50%, rgba(14,10,10,0.75) 100%);
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  min-height: calc(100vh - 50px);
+  height: 100%;
 }
 
 /* ── Top bar ─────────────────────────────────────────────────── */
@@ -285,14 +293,14 @@
   justify-content: center;
 }
 
-/* ── Footer ──────────────────────────────────────────────────── */
+/* ── Footer — page level ─────────────────────────────────────── */
 .footer {
   padding: 14px 28px;
   border-top: 1px solid rgba(244,237,228,0.06);
   position: relative;
   z-index: 1;
-  margin-top: auto;
   flex-shrink: 0;
+  background: #0E0A0A;
 }
 .footerText {
   font-size: 10px;
@@ -342,4 +350,134 @@
   }
 
   .footer { padding: 12px 16px; }
+}
+
+/* ── Public comments ─────────────────────────────────────────── */
+.commentsSection {
+  background: #0E0A0A;
+  border-top: 1px solid rgba(244,237,228,0.08);
+  padding: 48px 28px 64px;
+}
+.commentsInner {
+  max-width: 680px;
+  margin: 0 auto;
+}
+.commentsHeading {
+  font-family: 'Thunder', sans-serif;
+  font-weight: 900;
+  font-size: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #F4EDE4;
+  margin: 0 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.commentsCount {
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: #0E0A0A;
+  background: #F0E48C;
+  padding: 2px 10px;
+  letter-spacing: 0;
+}
+
+/* Form */
+.commentForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 36px;
+  position: relative;
+}
+.commentNameInput,
+.commentBodyInput {
+  width: 100%;
+  background: #191919;
+  border: 1px solid rgba(244,237,228,0.12);
+  color: #F4EDE4;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  padding: 12px 14px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.commentNameInput::placeholder,
+.commentBodyInput::placeholder { color: rgba(244,237,228,0.3); }
+.commentNameInput:focus,
+.commentBodyInput:focus { border-color: rgba(240,228,140,0.5); }
+.commentNameInput { max-width: 240px; }
+.commentBodyInput { resize: vertical; min-height: 52px; line-height: 1.5; }
+.commentFormFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.commentHint { font-size: 0.78rem; color: rgba(244,237,228,0.3); }
+.commentError { font-size: 0.78rem; color: #C0392B; font-weight: 500; }
+.commentSubmit {
+  padding: 9px 22px;
+  background: #F0E48C;
+  border: none;
+  color: #0E0A0A;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+.commentSubmit:hover { opacity: 0.88; }
+.commentSubmit:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* List */
+.commentsEmpty {
+  font-size: 0.9rem;
+  color: rgba(244,237,228,0.35);
+  padding: 8px 0;
+}
+.commentsList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.commentItem {
+  padding: 18px 0;
+  border-bottom: 1px solid rgba(244,237,228,0.07);
+}
+.commentItem:first-child { padding-top: 0; }
+.commentItemHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.commentAuthor {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #F4EDE4;
+}
+.commentTime {
+  font-size: 0.72rem;
+  color: rgba(244,237,228,0.3);
+}
+.commentText {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: rgba(244,237,228,0.8);
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (max-width: 700px) {
+  .commentsSection { padding: 32px 16px 48px; }
+  .commentsHeading { font-size: 1.6rem; }
 }
