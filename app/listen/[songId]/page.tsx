@@ -900,7 +900,7 @@ export default function ListenPage() {
   return (
     <Suspense fallback={
       <div style={{ minHeight: '100vh', background: '#0E0A0A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ fontFamily: 'Thunder, sans-serif', fontSize: 18, color: '#F0E48C', letterSpacing: '0.12em', textTransform: 'uppercase' }}>The Song Room</span>
+        <span style={{ fontFamily: 'ThunderLC, DM Sans, sans-serif', fontSize: 18, color: '#F0E48C', letterSpacing: '0.1em', textTransform: 'uppercase' }}>The Song Room</span>
       </div>
     }>
       <ListenPageInner />
