@@ -1,0 +1,2355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Song Room — Where songs get finished</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+@font-face {
+  font-family: 'ThunderBlack';
+  src: url('https://corisleachman.github.io/song-review-app/wireframes/fonts/Thunder-BlackLC.woff2') format('woff2'),
+       url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-BlackLC.otf') format('opentype');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'ThunderBold';
+  src: url('https://corisleachman.github.io/song-review-app/wireframes/fonts/Thunder-BoldLC.woff2') format('woff2'),
+       url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-BoldLC.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'ThunderReg';
+  src: url('https://corisleachman.github.io/song-review-app/wireframes/fonts/Thunder-LC.woff2') format('woff2'),
+       url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-LC.ttf') format('truetype');
+  font-display: swap;
+}
+
+/* ═══════════════════════════════════
+   TOKENS
+═══════════════════════════════════ */
+:root {
+  --black:     #0E0A0A;
+  --surface:   #1C1515;
+  --surface-2: #261C1C;
+  --red:       #C0392B;
+  --red-b:     #E8402E;
+  --straw:     #F0E48C;
+  --off-white: #F4EDE4;
+  --sand:      #D4C4B0;
+  --dune:      #8C7B6B;
+  --border:    rgba(244,237,228,0.10);
+  --border-m:  rgba(244,237,228,0.18);
+
+  --tblack: 'ThunderBlack', Impact, 'Arial Narrow Bold', sans-serif;
+  --tbold:  'ThunderBold',  Impact, 'Arial Narrow Bold', sans-serif;
+  --treg:   'ThunderReg',   Impact, 'Arial Narrow Bold', sans-serif;
+  --ui:     'DM Sans', -apple-system, sans-serif;
+
+  --img: 'https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/';
+
+  --ease: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--black);
+  color: var(--off-white);
+  font-family: var(--ui);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+img { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+
+/* Utility */
+.eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--dune);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.eyebrow::before {
+  content: '';
+  width: 32px;
+  height: 2px;
+  background: var(--red);
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════
+   NAV
+═══════════════════════════════════ */
+.nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(24px, 4vw, 56px);
+  transition: background 300ms, backdrop-filter 300ms;
+}
+
+.nav.scrolled {
+  background: rgba(14,10,10,0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-brand {
+  font-family: var(--treg);
+  font-size: 17px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--off-white);
+}
+
+.nav-brand em {
+  font-style: normal;
+  color: var(--red);
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.nav-link {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--sand);
+  padding: 8px 14px;
+  transition: color 150ms;
+}
+.nav-link:hover { color: var(--off-white); }
+
+.nav-cta {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  background: var(--red);
+  color: var(--off-white);
+  padding: 10px 20px;
+  transition: background 150ms;
+  margin-left: 8px;
+}
+.nav-cta:hover { background: var(--red-b); }
+
+/* ═══════════════════════════════════
+   SECTION 1 — HERO
+═══════════════════════════════════ */
+.hero {
+  position: relative;
+  height: 100vh;
+  min-height: 600px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 0 clamp(48px, 8vh, 96px);
+}
+
+/* Bento grid background */
+.hero-bento {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 2.2fr 1fr 1fr;
+  grid-template-rows: 1.4fr 1fr 1fr;
+  gap: 0;
+  background: var(--black);
+}
+
+.bento-cell {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  margin: 4px;
+  opacity: 0;
+  transition: opacity 1.4s ease-in-out;
+}
+
+.bento-cell.on { opacity: 1; }
+
+.bento-cell-img {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transform: scale(1.05);
+  transition: transform 10s ease-in-out, opacity 1.4s ease-in-out;
+}
+.bento-cell.on .bento-cell-img { transform: scale(1); }
+.bento-cell-img-next {
+  opacity: 0;
+  transform: scale(1);
+  z-index: 1;
+}
+.bento-cell-img-next.fading-in {
+  opacity: 1;
+}
+
+.cell-a { grid-column:1; grid-row:1/4; }
+.cell-b { grid-column:2; grid-row:1; }
+.cell-c { grid-column:3; grid-row:1; }
+.cell-d { grid-column:2/4; grid-row:2; }
+.cell-e { grid-column:2; grid-row:3; }
+.cell-f { grid-column:3; grid-row:3; }
+
+/* Overall dark gradient over bento */
+.hero-veil {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom,
+      rgba(14,10,10,0.35) 0%,
+      rgba(14,10,10,0.15) 40%,
+      rgba(14,10,10,0.65) 75%,
+      rgba(14,10,10,0.92) 100%
+    );
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Hero content */
+.hero-content {
+  position: relative;
+  z-index: 2;
+  padding: 0 clamp(24px, 5vw, 72px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 32px;
+}
+
+.hero-left {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  justify-content: center;
+}
+
+/* Brand announcement block */
+.hero-brand-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.6s 0.3s var(--ease), transform 0.6s 0.3s var(--ease);
+}
+.hero-brand-block.on { opacity: 1; transform: translateY(0); }
+
+.hero-brand-name {
+  font-family: var(--tblack);
+  font-size: clamp(36px, 5vw, 68px);
+  line-height: 0.9;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  color: var(--off-white);
+}
+
+.hero-brand-tagline {
+  font-family: var(--treg);
+  font-size: clamp(14px, 1.6vw, 22px);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--sand);
+}
+
+.hero-cta-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.6s 0.6s var(--ease), transform 0.6s 0.6s var(--ease);
+}
+.hero-cta-row.on { opacity: 1; transform: translateY(0); }
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--red);
+  color: var(--off-white);
+  font-family: var(--ui);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 16px 28px;
+  transition: background 150ms;
+  border: none;
+  cursor: pointer;
+}
+.btn-primary:hover { background: var(--red-b); }
+
+.btn-ghost {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(244,237,228,0.5);
+  transition: color 150ms;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-ghost:hover { color: var(--off-white); }
+.btn-ghost svg { transition: transform 150ms; }
+.btn-ghost:hover svg { transform: translateX(3px); }
+
+.hero-right {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-right: 150px; /* shift headline left from right edge */
+}
+
+.hero-headline-wrap { width: 100%; }
+
+.hero-tagline {
+  font-family: var(--treg);
+  font-size: clamp(12px, 1.4vw, 20px);
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: rgba(244,237,228,0.6);
+  margin-top: 5px; /* 5px gap below TOGETHER */
+  text-align: right; /* right-aligned, lines up with the R */
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.6s 4.0s var(--ease), transform 0.6s 4.0s var(--ease);
+}
+.hero-tagline.on { opacity: 1; transform: translateY(0); }
+
+/* ═══════════════════════════════════
+   SECTION 2 — PROBLEM
+═══════════════════════════════════ */
+.problem {
+  background: var(--black);
+  padding: clamp(80px, 12vw, 160px) clamp(24px, 5vw, 72px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(48px, 6vw, 96px);
+  align-items: center;
+  border-top: 1px solid var(--border);
+}
+
+.problem-left { display: flex; flex-direction: column; gap: 24px; }
+
+.problem-heading {
+  font-family: var(--tblack);
+  font-size: clamp(64px, 10vw, 140px);
+  line-height: 0.74;
+  margin-top: 20px;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  color: var(--off-white);
+}
+
+.problem-heading em {
+  font-style: normal;
+  color: var(--red);
+}
+
+.problem-body {
+  font-size: clamp(15px, 1.4vw, 18px);
+  color: var(--sand);
+  line-height: 1.65;
+  max-width: 460px;
+}
+
+.problem-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--border-m);
+  border: 1px solid var(--border-m);
+}
+
+.pain-item {
+  background: var(--surface);
+  padding: 20px 24px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.pain-num {
+  font-family: var(--tblack);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--red);
+  margin-top: 2px;
+  opacity: 0.6;
+}
+
+.pain-text {
+  font-size: 15px;
+  color: var(--off-white);
+  line-height: 1.5;
+}
+
+.pain-text strong {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.pain-text span {
+  font-size: 13px;
+  color: var(--dune);
+  font-style: italic;
+}
+
+/* ═══════════════════════════════════
+   SECTION 3 — PRODUCT IN CONTEXT
+═══════════════════════════════════ */
+.product {
+  padding: clamp(80px, 12vw, 160px) clamp(24px, 5vw, 72px);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
+.product-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  margin-bottom: clamp(48px, 6vw, 80px);
+  align-items: end;
+}
+
+.product-heading {
+  font-family: var(--tblack);
+  font-size: clamp(52px, 7.5vw, 110px);
+  line-height: 0.74;
+  margin-top: 20px;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.product-desc {
+  font-size: clamp(15px, 1.3vw, 18px);
+  color: var(--sand);
+  line-height: 1.65;
+  padding-bottom: 8px;
+}
+
+/* Mock song page preview */
+.mock-player {
+  background: var(--black);
+  border: 1px solid var(--border-m);
+  overflow: hidden;
+}
+
+.mock-player-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 24px;
+  padding: 0;
+}
+
+.mock-artwork {
+  width: 100%;
+  aspect-ratio: 16/7;
+  position: relative;
+  overflow: hidden;
+}
+
+.mock-artwork-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR10.jpeg');
+  background-size: cover;
+  background-position: center top;
+  filter: brightness(0.55);
+}
+
+/* Dynamic colour extraction simulation */
+.mock-artwork-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(140,30,20,0.6) 0%,
+    rgba(60,20,15,0.8) 50%,
+    rgba(20,10,10,0.95) 100%
+  );
+}
+
+.mock-artwork-content {
+  position: absolute;
+  inset: 0;
+  padding: clamp(20px, 3vw, 40px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.mock-version-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 10px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  background: var(--red);
+  color: var(--off-white);
+  width: fit-content;
+}
+
+.mock-song-title {
+  font-family: var(--tblack);
+  font-size: clamp(32px, 5vw, 72px);
+  line-height: 0.88;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.mock-song-meta {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--sand);
+}
+
+/* Waveform strip */
+.mock-waveform {
+  height: 72px;
+  background: rgba(244,237,228,0.03);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 0 clamp(16px, 2vw, 32px);
+  gap: 2px;
+  border-top: 1px solid var(--border);
+}
+
+.wf-bar {
+  flex: 1;
+  background: rgba(244,237,228,0.12);
+  border-radius: 0;
+}
+
+.wf-bar.played { background: rgba(192,57,43,0.7); }
+.wf-bar.current { background: var(--red); }
+
+/* Comment pins */
+.wf-pin {
+  position: absolute;
+  top: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.wf-pin-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.wf-pin-line {
+  width: 1px;
+  height: 44px;
+  opacity: 0.4;
+}
+
+/* Controls */
+.mock-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px clamp(16px, 2vw, 32px);
+  border-top: 1px solid var(--border);
+}
+
+.mock-play {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--red);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.mock-time {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--sand);
+}
+
+.mock-progress {
+  flex: 1;
+  height: 2px;
+  background: var(--border-m);
+  position: relative;
+}
+
+.mock-progress::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 0;
+  width: 37%;
+  height: 100%;
+  background: var(--red);
+}
+
+/* Comment threads panel */
+.mock-threads {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  border-top: 1px solid var(--border-m);
+}
+
+.mock-thread {
+  background: var(--surface);
+  padding: 16px 20px;
+}
+
+.mock-thread-ts {
+  font-size: 10px;
+  font-weight: 600;
+  font-style: italic;
+  color: var(--straw);
+  margin-bottom: 6px;
+}
+
+.mock-thread-body {
+  font-size: 13px;
+  color: var(--off-white);
+  line-height: 1.45;
+  margin-bottom: 8px;
+}
+
+.mock-thread-meta {
+  font-size: 10px;
+  color: var(--dune);
+  font-style: italic;
+}
+
+.mock-thread-avatar {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 700;
+  margin-right: 5px;
+}
+
+/* ═══════════════════════════════════
+   SECTION 4 — FEATURES (3 moments)
+═══════════════════════════════════ */
+.features {
+  padding: clamp(80px, 12vw, 160px) 0;
+  background: var(--black);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--border);
+}
+
+.feature-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 420px;
+  background: var(--black);
+}
+
+.feature-row:nth-child(even) { direction: rtl; }
+.feature-row:nth-child(even) > * { direction: ltr; }
+
+.feature-img {
+  position: relative;
+  overflow: hidden;
+  min-height: 320px;
+}
+
+.feature-img-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transition: transform 8s ease;
+}
+.feature-row:hover .feature-img-bg { transform: scale(1.04); }
+
+.feature-img-veil {
+  position: absolute;
+  inset: 0;
+  background: rgba(14,10,10,0.38);
+}
+
+.feature-body {
+  padding: clamp(40px, 5vw, 72px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 20px;
+}
+
+.feature-number {
+  font-family: var(--tblack);
+  font-size: 80px;
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--red);
+  opacity: 0.18;
+  margin-bottom: -12px;
+}
+
+.feature-heading {
+  font-family: var(--tblack);
+  font-size: clamp(44px, 5.5vw, 80px);
+  line-height: 0.74;
+  margin-top: 20px;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.feature-heading em {
+  font-style: normal;
+  display: block;
+  color: var(--red);
+}
+
+.feature-desc {
+  font-size: clamp(14px, 1.2vw, 16px);
+  color: var(--sand);
+  line-height: 1.7;
+  max-width: 400px;
+}
+
+.feature-quote {
+  font-family: var(--treg);
+  font-size: clamp(16px, 1.6vw, 22px);
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: var(--straw);
+  line-height: 1.3;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-m);
+}
+
+/* ═══════════════════════════════════
+   SECTION 5 — SOCIAL PROOF
+═══════════════════════════════════ */
+.proof {
+  padding: clamp(80px, 12vw, 140px) clamp(24px, 5vw, 72px);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(48px, 6vw, 96px);
+  align-items: center;
+}
+
+.proof-image {
+  position: relative;
+  aspect-ratio: 4/3;
+  overflow: hidden;
+}
+
+.proof-image-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR2.jpeg');
+  background-size: cover;
+  background-position: center;
+}
+
+.proof-content {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.proof-quote {
+  font-family: var(--tblack);
+  font-size: clamp(44px, 5.5vw, 80px);
+  line-height: 0.74;
+  margin-top: 20px;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  color: var(--off-white);
+}
+
+.proof-quote em {
+  font-style: normal;
+  color: var(--red);
+}
+
+.proof-attr {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.proof-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1.5px solid var(--border-m);
+}
+
+.proof-avatar-img {
+  width: 100%;
+  height: 100%;
+  background-image: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR9.jpeg');
+  background-size: cover;
+  background-position: center top;
+}
+
+.proof-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--off-white);
+}
+
+.proof-role {
+  font-size: 12px;
+  color: var(--dune);
+  font-style: italic;
+}
+
+.proof-subquote {
+  font-size: 15px;
+  color: var(--sand);
+  line-height: 1.65;
+  font-style: italic;
+  border-left: 2px solid var(--red);
+  padding-left: 16px;
+}
+
+/* ═══════════════════════════════════
+   SECTION 6 — PRICING
+═══════════════════════════════════ */
+.pricing {
+  padding: clamp(80px, 12vw, 160px) clamp(24px, 5vw, 72px);
+  background: var(--black);
+  border-top: 1px solid var(--border);
+}
+
+.pricing-header {
+  margin-bottom: clamp(48px, 6vw, 72px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: end;
+}
+
+.pricing-heading {
+  font-family: var(--tblack);
+  font-size: clamp(64px, 10vw, 140px);
+  line-height: 0.74;
+  margin-top: 20px;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.pricing-note {
+  font-size: clamp(14px, 1.2vw, 16px);
+  color: var(--sand);
+  line-height: 1.65;
+  padding-bottom: 8px;
+}
+
+.pricing-note strong {
+  color: var(--off-white);
+  font-weight: 600;
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border-m);
+  border: 1px solid var(--border-m);
+}
+
+.tier {
+  background: var(--surface);
+  padding: clamp(28px, 3vw, 40px);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: relative;
+  transition: background 200ms;
+}
+
+.tier.featured {
+  background: var(--surface-2);
+}
+
+.tier-badge {
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--red);
+  color: var(--off-white);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 4px 12px;
+}
+
+.tier-name {
+  font-family: var(--tbold);
+  font-size: 28px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.tier-price {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.tier-price-amount {
+  font-family: var(--tblack);
+  font-size: clamp(52px, 5vw, 72px);
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.tier-price-period {
+  font-size: 13px;
+  color: var(--dune);
+  font-style: italic;
+}
+
+.tier-storage {
+  font-family: var(--treg);
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--red);
+  background: rgba(192,57,43,0.08);
+  padding: 8px 12px;
+  border: 1px solid rgba(192,57,43,0.2);
+  width: fit-content;
+}
+
+.tier-features {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.tier-features li {
+  font-size: 14px;
+  color: var(--sand);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.45;
+}
+
+.tier-features li::before {
+  content: '—';
+  color: var(--red);
+  font-size: 12px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.tier-cta {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  text-align: center;
+  font-family: var(--ui);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border: 1px solid var(--border-m);
+  color: var(--sand);
+  background: transparent;
+  cursor: pointer;
+  transition: all 150ms;
+}
+
+.tier-cta:hover { border-color: var(--off-white); color: var(--off-white); }
+
+.tier.featured .tier-cta {
+  background: var(--red);
+  color: var(--off-white);
+  border-color: var(--red);
+}
+
+.tier.featured .tier-cta:hover { background: var(--red-b); border-color: var(--red-b); }
+
+.pricing-footnote {
+  margin-top: 20px;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--dune);
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ═══════════════════════════════════
+   SECTION 7 — FINAL CTA
+═══════════════════════════════════ */
+.final-cta {
+  position: relative;
+  height: 60vh;
+  min-height: 400px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 1px solid var(--border);
+}
+
+.final-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR12.jpeg');
+  background-size: cover;
+  background-position: center 30%;
+  filter: brightness(0.35);
+}
+
+.final-veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(14,10,10,0.5) 0%, rgba(14,10,10,0.85) 100%);
+}
+
+.final-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 0 clamp(24px, 5vw, 72px);
+}
+
+.final-heading {
+  font-family: var(--tblack);
+  font-size: clamp(64px, 10vw, 140px);
+  line-height: 0.74;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.final-sub {
+  font-size: 15px;
+  color: var(--sand);
+  max-width: 440px;
+  line-height: 1.65;
+}
+
+.final-cta-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ═══════════════════════════════════
+   FOOTER
+═══════════════════════════════════ */
+footer {
+  background: var(--surface);
+  border-top: 1px solid var(--border-m);
+  padding: 40px clamp(24px, 5vw, 72px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.footer-brand {
+  font-family: var(--treg);
+  font-size: 15px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sand);
+}
+
+.footer-brand em { font-style:normal; color: var(--red); }
+
+.footer-links {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.footer-link {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--dune);
+  transition: color 150ms;
+}
+.footer-link:hover { color: var(--off-white); }
+
+.footer-copy {
+  font-size: 11px;
+  color: var(--dune);
+  font-style: italic;
+}
+
+/* ═══════════════════════════════════
+   SCROLL REVEAL
+═══════════════════════════════════ */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+}
+.reveal.on {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-d1 { transition-delay: 0.1s; }
+.reveal-d2 { transition-delay: 0.2s; }
+.reveal-d3 { transition-delay: 0.3s; }
+.reveal-d4 { transition-delay: 0.4s; }
+
+/* ═══════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════ */
+@media (max-width: 900px) {
+  .nav-links { display: none; }
+  .hero-content { grid-template-columns: 1fr; }
+  .hero-right { display: none; }
+  .problem { grid-template-columns: 1fr; }
+  .product-header { grid-template-columns: 1fr; }
+  .feature-row { grid-template-columns: 1fr; }
+  .feature-row:nth-child(even) { direction: ltr; }
+  .proof { grid-template-columns: 1fr; }
+  .pricing-header { grid-template-columns: 1fr; }
+  .pricing-grid { grid-template-columns: 1fr; }
+  .final-heading { font-size: clamp(64px, 10vw, 140px); }
+  footer { flex-direction: column; gap: 16px; text-align: center; }
+  .footer-links { justify-content: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+/* ═══════════════════════════════════
+   WHATSAPP CHAT COMPONENT
+═══════════════════════════════════ */
+.chat-window {
+  background: #0a0a0a;
+  border: 1px solid var(--border-m);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 480px;
+  position: relative;
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.chat-header-avatars {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.chat-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--off-white);
+  border: 2px solid var(--surface-2);
+}
+
+.chat-avatar:nth-child(2) { margin-left: -8px; }
+
+.chat-header-info { flex: 1; }
+
+.chat-header-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--off-white);
+  letter-spacing: 0.01em;
+}
+
+.chat-header-status {
+  font-size: 10px;
+  color: #4ade80;
+  margin-top: 1px;
+}
+
+.chat-header-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4ade80;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* Messages area — scrolls internally */
+.chat-messages {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  /* Fade out top quarter */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 30%);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 30%);
+}
+
+/* Bubbles positioned absolutely — layout never shifts */
+.chat-bubble {
+  position: absolute;
+  max-width: 72%;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  opacity: 0;
+  transition: bottom 0.55s cubic-bezier(0.34, 1.38, 0.64, 1),
+              opacity 0.4s ease;
+}
+
+/* Received — Al — left side */
+.chat-bubble.received {
+  left: 14px;
+  align-items: flex-start;
+}
+
+/* Sent — Coris — right side */
+.chat-bubble.sent {
+  right: 14px;
+  align-items: flex-end;
+}
+
+.chat-bubble.fading-out {
+  opacity: 0 !important;
+  transition: opacity 0.4s ease !important;
+}
+
+/* Sent (right / Coris) */
+.chat-bubble.sent {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+/* Received (left / Al) */
+.chat-bubble.received {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.bubble-name {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--dune);
+  padding: 0 6px;
+}
+
+.bubble-text {
+  padding: 10px 13px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--off-white);
+  position: relative;
+}
+
+.chat-bubble.sent .bubble-text {
+  background: #1a3a2a;
+  border: 1px solid rgba(74,222,128,0.15);
+}
+
+.chat-bubble.received .bubble-text {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.bubble-time {
+  font-size: 9px;
+  color: var(--dune);
+  padding: 0 6px;
+  font-style: italic;
+}
+
+/* Typing indicator */
+.typing-indicator {
+  align-self: flex-start;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 10px 14px;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  max-width: 60px;
+}
+
+.typing-indicator.visible { opacity: 1; }
+
+.typing-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--dune);
+  animation: typing-bounce 1.2s ease-in-out infinite;
+}
+
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typing-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+  40% { transform: translateY(-4px); opacity: 1; }
+}
+
+/* Input bar */
+.chat-input-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.chat-input-mock {
+  flex: 1;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 9px 14px;
+  font-size: 12px;
+  color: var(--dune);
+  font-style: italic;
+}
+
+.chat-send-btn {
+  width: 34px;
+  height: 34px;
+  background: #1a3a2a;
+  border: 1px solid rgba(74,222,128,0.2);
+  display: grid;
+  place-items: center;
+  color: #4ade80;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+/* ── Remove old pain-item styles (no longer used in hero) ── */
+
+
+/* ═══════════════════════════════════
+   PRODUCT SHOWCASE + LIGHTBOX
+═══════════════════════════════════ */
+.showcase {
+  padding: clamp(80px, 12vw, 160px) clamp(24px, 5vw, 72px);
+  max-width: 1280px;
+  margin: 0 auto;
+}
+.showcase-head { margin-bottom: clamp(40px, 5vw, 72px); }
+.showcase-heading {
+  font-family: var(--tblack);
+  font-size: clamp(48px, 6.5vw, 100px);
+  line-height: 0.82;
+  text-transform: uppercase;
+  color: var(--off-white);
+  margin: 18px 0 20px;
+}
+.showcase-heading em { font-style: normal; color: var(--red); }
+.showcase-sub {
+  font-family: var(--ui);
+  font-size: clamp(15px, 1.3vw, 18px);
+  color: var(--sand);
+  max-width: 520px;
+  line-height: 1.5;
+}
+.shot-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(16px, 2vw, 28px);
+}
+.shot {
+  display: block;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+  width: 100%;
+}
+.shot.lead { grid-column: 1 / -1; }
+.shot-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  border: 1px solid var(--border-m);
+  background: var(--surface);
+  aspect-ratio: 16 / 10;
+  transition: border-color 0.4s var(--ease), transform 0.5s var(--ease);
+}
+.shot.lead .shot-frame { aspect-ratio: 16 / 8.2; }
+.shot-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+  transition: transform 0.7s var(--ease);
+}
+.shot:hover .shot-frame { border-color: var(--red); transform: translateY(-4px); }
+.shot:hover .shot-frame img { transform: scale(1.035); }
+.shot:focus-visible .shot-frame { outline: 2px solid var(--red); outline-offset: 3px; }
+.shot-expand {
+  position: absolute;
+  top: 14px; right: 14px;
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(14,10,10,0.55);
+  border: 1px solid var(--border-m);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  color: var(--off-white);
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 0.4s var(--ease), transform 0.4s var(--ease);
+  pointer-events: none;
+}
+.shot:hover .shot-expand { opacity: 1; transform: scale(1); }
+.shot-cap {
+  margin-top: 14px;
+  font-family: var(--ui);
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--dune);
+}
+@media (max-width: 900px) {
+  .shot-grid { grid-template-columns: 1fr; }
+  .shot-frame, .shot.lead .shot-frame { aspect-ratio: 16 / 10; }
+  .shot-expand { opacity: 1; transform: scale(1); }
+}
+
+/* ── LIGHTBOX ── */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(16px, 4vw, 64px);
+  background: rgba(8,6,6,0.88);
+  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.32s var(--ease), visibility 0.32s var(--ease);
+}
+.lightbox.open { opacity: 1; visibility: visible; }
+.lb-figure {
+  margin: 0;
+  max-width: 1200px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  transform: scale(0.965);
+  opacity: 0;
+  transition: transform 0.4s var(--ease), opacity 0.4s var(--ease);
+}
+.lightbox.open .lb-figure { transform: scale(1); opacity: 1; }
+.lb-img {
+  max-width: 100%;
+  max-height: 78vh;
+  width: auto; height: auto;
+  object-fit: contain;
+  border-radius: 14px;
+  border: 1px solid var(--border-m);
+  box-shadow: 0 40px 120px rgba(0,0,0,0.6);
+  display: block;
+}
+.lb-cap {
+  font-family: var(--ui);
+  font-size: 14px;
+  color: var(--sand);
+  text-align: center;
+  letter-spacing: 0.01em;
+  max-width: 640px;
+}
+.lb-close, .lb-nav {
+  position: fixed;
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(244,237,228,0.08);
+  border: 1px solid var(--border-m);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  color: var(--off-white);
+  cursor: pointer;
+  transition: background 0.3s var(--ease), border-color 0.3s var(--ease), transform 0.3s var(--ease);
+}
+.lb-close:hover, .lb-nav:hover { background: rgba(244,237,228,0.16); border-color: var(--red); }
+.lb-close { top: clamp(16px, 3vw, 32px); right: clamp(16px, 3vw, 32px); }
+.lb-prev { left: clamp(12px, 2vw, 28px); top: 50%; transform: translateY(-50%); }
+.lb-next { right: clamp(12px, 2vw, 28px); top: 50%; transform: translateY(-50%); }
+.lb-prev:hover { transform: translateY(-50%) scale(1.06); }
+.lb-next:hover { transform: translateY(-50%) scale(1.06); }
+.lb-close svg, .lb-nav svg { width: 20px; height: 20px; }
+@media (max-width: 900px) {
+  .lb-prev, .lb-next { top: auto; bottom: clamp(16px, 5vw, 28px); transform: none; }
+  .lb-prev:hover, .lb-next:hover { transform: scale(1.06); }
+  .lb-img { max-height: 70vh; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ══ NAV ══ -->
+<nav class="nav" id="nav">
+  <div class="nav-brand">T<em>S</em>R</div>
+  <div class="nav-links">
+    <a class="nav-link" href="#features">Features</a>
+    <a class="nav-link" href="#pricing">Pricing</a>
+    <a class="nav-link" href="login-v17.html">Sign in</a>
+  </div>
+  <a class="nav-cta" href="login-v17.html">Start for free</a>
+</nav>
+
+<!-- ══ HERO ══ -->
+<section class="hero" id="hero">
+
+  <div class="hero-bento" id="bento">
+    <div class="bento-cell cell-a" id="bc-a">
+      <div class="bento-cell-img" id="bci-a"></div>
+      <div class="bento-cell-img bento-cell-img-next" id="bcn-a"></div>
+    </div>
+    <div class="bento-cell cell-b" id="bc-b">
+      <div class="bento-cell-img" id="bci-b"></div>
+      <div class="bento-cell-img bento-cell-img-next" id="bcn-b"></div>
+    </div>
+    <div class="bento-cell cell-c" id="bc-c">
+      <div class="bento-cell-img" id="bci-c"></div>
+      <div class="bento-cell-img bento-cell-img-next" id="bcn-c"></div>
+    </div>
+    <div class="bento-cell cell-d" id="bc-d">
+      <div class="bento-cell-img" id="bci-d"></div>
+      <div class="bento-cell-img bento-cell-img-next" id="bcn-d"></div>
+    </div>
+    <div class="bento-cell cell-e" id="bc-e">
+      <div class="bento-cell-img" id="bci-e"></div>
+      <div class="bento-cell-img bento-cell-img-next" id="bcn-e"></div>
+    </div>
+    <div class="bento-cell cell-f" id="bc-f">
+      <div class="bento-cell-img" id="bci-f"></div>
+      <div class="bento-cell-img bento-cell-img-next" id="bcn-f"></div>
+    </div>
+  </div>
+
+  <div class="hero-veil"></div>
+
+  <div class="hero-content">
+
+    <div class="hero-left">
+      <div class="hero-brand-block" id="hero-brand">
+        <div class="hero-brand-name">The Song Room</div>
+        <p class="hero-brand-tagline">Where songs get finished.</p>
+      </div>
+      <div class="hero-cta-row" id="hero-cta">
+        <a class="btn-primary" href="login-v17.html">
+          Start for free
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+          </svg>
+        </a>
+        <a class="btn-ghost" href="#features">
+          See how it works
+          <svg width="14" height="10" viewBox="0 0 14 10" fill="none">
+            <path d="M1 5h12M8 1l5 4-5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+
+    <div class="hero-right">
+      <div class="hero-headline-wrap" id="hero-svg-wrap">
+        <!-- SVG draw animation injected by JS -->
+      </div>
+      <p class="hero-tagline" id="hero-tagline">Every version. Every note. One room.</p>
+    </div>
+
+  </div>
+
+</section>
+
+<!-- ══ PROBLEM ══ -->
+<section class="problem" id="features">
+  <div class="problem-left">
+    <p class="eyebrow reveal">The problem</p>
+    <h2 class="problem-heading reveal reveal-d1">
+      You've been<br>doing it<br><em>the hard way.</em>
+    </h2>
+    <p class="problem-body reveal reveal-d2">
+      Great music is getting lost in WhatsApp threads, confusing email chains, and folders full of files called V4_FINAL_2_REAL. Your collaborators are guessing which version to listen to. Your best ideas are going missing before anyone acts on them.
+    </p>
+  </div>
+
+  <!-- WhatsApp conversation -->
+  <div class="chat-window reveal reveal-d2" id="chat-window">
+    <div class="chat-header">
+      <div class="chat-header-avatars">
+        <div class="chat-avatar" style="background:#C0392B">C</div>
+        <div class="chat-avatar" style="background:#6B6B4A">A</div>
+      </div>
+      <div class="chat-header-info">
+        <div class="chat-header-name">Coris &amp; Al</div>
+        <div class="chat-header-status">online</div>
+      </div>
+      <div class="chat-header-dot"></div>
+    </div>
+    <div class="chat-messages" id="chat-messages"></div>
+    <div class="chat-input-bar">
+      <div class="chat-input-mock">Message</div>
+      <div class="chat-send-btn">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PRODUCT ══ -->
+<section class="product">
+  <div class="product-header">
+    <div>
+      <p class="eyebrow reveal">The Song Room</p>
+      <h2 class="product-heading reveal reveal-d1">
+        Your music,<br>the way it<br>should look.
+      </h2>
+    </div>
+    <p class="product-desc reveal reveal-d2">
+      Upload a version and the app extracts colour directly from your artwork — making every song page feel personal to the artist who made it. Leave feedback exactly where you mean it, at the precise moment in the track.
+    </p>
+  </div>
+
+  <!-- Mock song page -->
+  <div class="mock-player reveal">
+    <div class="mock-artwork">
+      <div class="mock-artwork-bg"></div>
+      <div class="mock-artwork-overlay"></div>
+      <div class="mock-artwork-content">
+        <span class="mock-version-pill">V3 — Final Hook</span>
+        <div class="mock-song-title">Fading Light</div>
+        <div class="mock-song-meta">Uploaded by Coris · 31 Mar · 3:11</div>
+      </div>
+    </div>
+
+    <div class="mock-waveform" id="mock-wf"></div>
+
+    <div class="mock-controls">
+      <div class="mock-play">
+        <svg width="10" height="12" viewBox="0 0 10 12" fill="#F4EDE4"><path d="M0 0l10 6-10 6z"/></svg>
+      </div>
+      <span class="mock-time">1:24 / 3:11</span>
+      <div class="mock-progress"></div>
+      <button style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;background:transparent;border:1px solid rgba(244,237,228,0.18);color:var(--sand);padding:7px 14px;cursor:pointer">Change version</button>
+    </div>
+
+    <div class="mock-threads">
+      <div class="mock-thread" style="border-right:1px solid var(--border)">
+        <div class="mock-thread-ts">@ 0:22</div>
+        <div class="mock-thread-body"><span class="mock-thread-avatar" style="background:var(--red);color:var(--off-white)">C</span>Love this intro — the reverb tail is perfect here.</div>
+        <div class="mock-thread-meta">Coris · 2h ago · <span style="color:var(--red)">1 reply</span></div>
+      </div>
+      <div class="mock-thread" style="border-right:1px solid var(--border);background:var(--surface-2)">
+        <div class="mock-thread-ts">@ 1:24</div>
+        <div class="mock-thread-body"><span class="mock-thread-avatar" style="background:var(--surface-2);border:1px solid var(--border-m);color:var(--sand)">A</span>The drop hits hard but the snare feels too tight here. Try opening it up?</div>
+        <div class="mock-thread-meta">Al · 1h ago · <span style="color:var(--straw);font-style:italic">Action added</span></div>
+      </div>
+      <div class="mock-thread">
+        <div class="mock-thread-ts">@ 2:47</div>
+        <div class="mock-thread-body"><span class="mock-thread-avatar" style="background:var(--red);color:var(--off-white)">C</span>Outro is exactly right. Don't touch this.</div>
+        <div class="mock-thread-meta">Coris · 45m ago</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FEATURES ══ -->
+<section class="features" id="how">
+
+  <div class="feature-row">
+    <div class="feature-img">
+      <div class="feature-img-bg" style="background-image:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR11.jpeg')"></div>
+      <div class="feature-img-veil"></div>
+    </div>
+    <div class="feature-body">
+      <div class="feature-number">01</div>
+      <h3 class="feature-heading reveal">
+        Upload it.<br><em>Everyone<br>hears it.</em>
+      </h3>
+      <p class="feature-desc reveal reveal-d1">
+        Every version is stored, labelled, and instantly accessible to everyone in your workspace. No more sending files. No more "which one did you send me?" The moment you upload, your collaborators are notified.
+      </p>
+      <p class="feature-quote reveal reveal-d2">"V7 just dropped. Your producer wakes up to it."</p>
+    </div>
+  </div>
+
+  <div class="feature-row">
+    <div class="feature-img">
+      <div class="feature-img-bg" style="background-image:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR12.jpeg')"></div>
+      <div class="feature-img-veil"></div>
+    </div>
+    <div class="feature-body">
+      <div class="feature-number">02</div>
+      <h3 class="feature-heading reveal">
+        Leave notes<br><em>that actually<br>mean something.</em>
+      </h3>
+      <p class="feature-desc reveal reveal-d1">
+        Click anywhere on the waveform to comment at the exact moment you mean it. No more "around the 1 minute mark" — your feedback is pinned in context, where it belongs.
+      </p>
+      <p class="feature-quote reveal reveal-d2">"Not 'make it punchier.' @ 1:24 — open this up."</p>
+    </div>
+  </div>
+
+  <div class="feature-row">
+    <div class="feature-img">
+      <div class="feature-img-bg" style="background-image:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR9.jpeg')"></div>
+      <div class="feature-img-veil"></div>
+    </div>
+    <div class="feature-body">
+      <div class="feature-number">03</div>
+      <h3 class="feature-heading reveal">
+        Turn notes<br><em>into finished<br>songs.</em>
+      </h3>
+      <p class="feature-desc reveal reveal-d1">
+        Mark any comment as an action — track it, assign it, resolve it. Your whole team knows what's done and what's left, so nothing falls through the cracks between sessions.
+      </p>
+      <p class="feature-quote reveal reveal-d2">"That snare fix from three weeks ago? Done. Resolved. Gone."</p>
+    </div>
+  </div>
+
+</section>
+
+<!-- ══ PRODUCT SHOWCASE ══ -->
+<section class="showcase" id="showcase">
+  <div class="showcase-head">
+    <p class="eyebrow reveal">See it in action</p>
+    <h2 class="showcase-heading reveal reveal-d1">A look<br>inside <em>the room.</em></h2>
+    <p class="showcase-sub reveal reveal-d1">Real screens from the app. Tap any shot to take a closer look.</p>
+  </div>
+  <div class="shot-grid reveal reveal-d2">
+    <button class="shot lead" data-src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-song-view%20Large.jpeg" data-cap="The song view — leave feedback on the waveform at the exact moment you mean it." aria-label="Enlarge screenshot: The song view — leave feedback on the waveform at the exact moment you mean it.">
+      <div class="shot-frame">
+        <img src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-song-view%20Large.jpeg" alt="The song view — leave feedback on the waveform at the exact moment you mean it." loading="lazy">
+        <span class="shot-expand" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+        </span>
+      </div>
+      <p class="shot-cap">The song view — leave feedback on the waveform at the exact moment you mean it.</p>
+    </button>
+    <button class="shot" data-src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-desktop-card%20view%20Large.jpeg" data-cap="Your library, coloured by your own artwork." aria-label="Enlarge screenshot: Your library, coloured by your own artwork.">
+      <div class="shot-frame">
+        <img src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-desktop-card%20view%20Large.jpeg" alt="Your library, coloured by your own artwork." loading="lazy">
+        <span class="shot-expand" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+        </span>
+      </div>
+      <p class="shot-cap">Your library, coloured by your own artwork.</p>
+    </button>
+    <button class="shot" data-src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-desktop-list-view%20Large.jpeg" data-cap="Every version and every action, in one workspace." aria-label="Enlarge screenshot: Every version and every action, in one workspace.">
+      <div class="shot-frame">
+        <img src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-desktop-list-view%20Large.jpeg" alt="Every version and every action, in one workspace." loading="lazy">
+        <span class="shot-expand" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+        </span>
+      </div>
+      <p class="shot-cap">Every version and every action, in one workspace.</p>
+    </button>
+    <button class="shot" data-src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-comment-view%20Large.jpeg" data-cap="Timestamped notes, pinned in context." aria-label="Enlarge screenshot: Timestamped notes, pinned in context.">
+      <div class="shot-frame">
+        <img src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-comment-view%20Large.jpeg" alt="Timestamped notes, pinned in context." loading="lazy">
+        <span class="shot-expand" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+        </span>
+      </div>
+      <p class="shot-cap">Timestamped notes, pinned in context.</p>
+    </button>
+    <button class="shot" data-src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-settings%20Large.jpeg" data-cap="Make the room yours." aria-label="Enlarge screenshot: Make the room yours.">
+      <div class="shot-frame">
+        <img src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-settings%20Large.jpeg" alt="Make the room yours." loading="lazy">
+        <span class="shot-expand" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+        </span>
+      </div>
+      <p class="shot-cap">Make the room yours.</p>
+    </button>
+  </div>
+</section>
+
+<!-- ══ SOCIAL PROOF ══ -->
+<section class="proof">
+  <div class="proof-image reveal">
+    <div class="proof-image-bg"></div>
+  </div>
+  <div class="proof-content">
+    <p class="eyebrow reveal">From the room</p>
+    <blockquote class="proof-quote reveal reveal-d1">
+      "We stopped losing<br>ideas the week<br><em>we started using it.</em>"
+    </blockquote>
+    <p class="proof-subquote reveal reveal-d2">
+      Before TSR we had notes everywhere — voice memos, WhatsApp, emails. Now there's one place and everyone's in it. We've finished more songs in three months than in the year before.
+    </p>
+    <div class="proof-attr reveal reveal-d3">
+      <div class="proof-avatar">
+        <div class="proof-avatar-img"></div>
+      </div>
+      <div>
+        <div class="proof-name">Marcus Webb</div>
+        <div class="proof-role">Producer & songwriter — London</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PRICING ══ -->
+<section class="pricing" id="pricing">
+  <div class="pricing-header">
+    <div>
+      <p class="eyebrow reveal">Pricing</p>
+      <h2 class="pricing-heading reveal reveal-d1">Simple.<br>Honest.</h2>
+    </div>
+    <p class="pricing-note reveal reveal-d1">
+      <strong>We charge for storage, not people.</strong> Invite your whole band, your producer, your mixing engineer — for free. You only pay for the space your music takes up. That's the way it should be.
+    </p>
+  </div>
+
+  <div class="pricing-grid reveal">
+    <!-- Free -->
+    <div class="tier">
+      <div>
+        <div class="tier-name">Free</div>
+        <div class="tier-price">
+          <span class="tier-price-amount">£0</span>
+          <span class="tier-price-period">/ forever</span>
+        </div>
+      </div>
+      <div class="tier-storage">500 MB storage</div>
+      <ul class="tier-features">
+        <li>Unlimited songs</li>
+        <li>Unlimited collaborators</li>
+        <li>Timestamped comments</li>
+        <li>Action tracking</li>
+        <li>Version history</li>
+        <li>Email notifications</li>
+      </ul>
+      <a class="tier-cta" href="login-v17.html">Start for free</a>
+    </div>
+
+    <!-- Pro -->
+    <div class="tier featured">
+      <div class="tier-badge">Most popular</div>
+      <div>
+        <div class="tier-name" style="color:var(--red)">Pro</div>
+        <div class="tier-price">
+          <span class="tier-price-amount">£9</span>
+          <span class="tier-price-period">/ month</span>
+        </div>
+      </div>
+      <div class="tier-storage">10 GB storage</div>
+      <ul class="tier-features">
+        <li>Everything in Free</li>
+        <li>Priority notifications</li>
+        <li>Referral rewards</li>
+        <li>Annual billing option (save 20%)</li>
+      </ul>
+      <a class="tier-cta" href="login-v17.html">Start for free</a>
+    </div>
+
+    <!-- Studio -->
+    <div class="tier">
+      <div>
+        <div class="tier-name">Studio</div>
+        <div class="tier-price">
+          <span class="tier-price-amount">£19</span>
+          <span class="tier-price-period">/ month</span>
+        </div>
+      </div>
+      <div class="tier-storage">50 GB storage</div>
+      <ul class="tier-features">
+        <li>Everything in Pro</li>
+        <li>Priority support</li>
+        <li>Annual billing option (save 20%)</li>
+      </ul>
+      <a class="tier-cta" href="login-v17.html">Start for free</a>
+    </div>
+  </div>
+
+  <p class="pricing-footnote reveal">No credit card required to start. Upgrade or downgrade any time. All prices exclude VAT.</p>
+</section>
+
+<!-- ══ FINAL CTA ══ -->
+<section class="final-cta">
+  <div class="final-bg"></div>
+  <div class="final-veil"></div>
+  <div class="final-content">
+    <h2 class="final-heading reveal">
+      Ready to finish<br>more songs?
+    </h2>
+    <p class="final-sub reveal reveal-d1">
+      Free forever. No credit card. Your whole band in on day one.
+    </p>
+    <div class="final-cta-row reveal reveal-d2">
+      <a class="btn-primary" href="login-v17.html">
+        Start for free
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FOOTER ══ -->
+<footer>
+  <div class="footer-brand">The Song <em>Room</em></div>
+  <div class="footer-links">
+    <a class="footer-link" href="#">Features</a>
+    <a class="footer-link" href="#">Pricing</a>
+    <a class="footer-link" href="#">Privacy</a>
+    <a class="footer-link" href="#">Terms</a>
+    <a class="footer-link" href="#">Contact</a>
+  </div>
+  <div class="footer-copy">© The Song Room 2026</div>
+</footer>
+
+
+<!-- ══ SCREENSHOT LIGHTBOX ══ -->
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Screenshot viewer" aria-hidden="true">
+  <button class="lb-close" id="lb-close" aria-label="Close viewer">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+  </button>
+  <button class="lb-nav lb-prev" id="lb-prev" aria-label="Previous screenshot">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+  </button>
+  <button class="lb-nav lb-next" id="lb-next" aria-label="Next screenshot">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+  </button>
+  <figure class="lb-figure">
+    <img class="lb-img" id="lb-img" src="" alt="">
+    <figcaption class="lb-cap" id="lb-cap"></figcaption>
+  </figure>
+</div>
+
+<script>
+// ── NAV SCROLL ──
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 40);
+}, { passive: true });
+
+// ── BENTO -- sequential fade in then continuous crossfade rotation ──
+// No image ever appears in two cells at the same time.
+const BASE_URL = 'https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/';
+
+const ALL_IMGS = [6,7,8,9,10,11,12,13,14,15,16,17,18].map(n => BASE_URL + 'TSR' + n + '.jpeg');
+const CELL_IDS = ['a','b','c','d','e','f'];
+const FADE_IN_STAGGER  = 1400;
+const ROTATION_INTERVAL = 5000;
+
+// Track which image is currently showing in each cell
+const currentImg = {};
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Pick next image for a cell -- never one already showing elsewhere
+function pickNext(cellId) {
+  const inUse = new Set(Object.values(currentImg));
+  const available = ALL_IMGS.filter(img => !inUse.has(img));
+  // Fallback: if somehow all images are in use, allow any except this cell's current
+  const pool = available.length > 0 ? available : ALL_IMGS.filter(img => img !== currentImg[cellId]);
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// Set initial image
+function setCellImage(cellId, imgUrl) {
+  const el = document.getElementById('bci-' + cellId);
+  if (el) el.style.backgroundImage = "url('" + imgUrl + "')";
+  currentImg[cellId] = imgUrl;
+}
+
+// Crossfade a cell to a new unique image
+function crossfadeCell(cellId) {
+  const current = document.getElementById('bci-' + cellId);
+  const next    = document.getElementById('bcn-' + cellId);
+  if (!current || !next) return;
+
+  const nextUrl = pickNext(cellId);
+  if (!nextUrl) return;
+
+  // Reserve this image immediately so no other cell picks it while loading
+  currentImg[cellId] = nextUrl;
+
+  const img = new Image();
+  img.onload = function() {
+    next.style.backgroundImage = "url('" + nextUrl + "')";
+    next.style.opacity = '0';
+    next.style.transition = 'none';
+    void next.offsetWidth;
+    next.style.transition = 'opacity 2.5s cubic-bezier(0.4, 0, 0.2, 1)';
+    next.style.opacity = '1';
+
+    setTimeout(() => {
+      current.style.backgroundImage = "url('" + nextUrl + "')";
+      next.style.transition = 'none';
+      next.style.opacity = '0';
+    }, 2600);
+  };
+  img.src = nextUrl;
+}
+
+// Assign unique starting images -- shuffle and take first 6
+const startImgs = shuffle(ALL_IMGS);
+CELL_IDS.forEach((id, i) => setCellImage(id, startImgs[i]));
+
+// Sequential fade-in then start per-cell rotation
+CELL_IDS.forEach((id, i) => {
+  setTimeout(() => {
+    const cell = document.getElementById('bc-' + id);
+    if (cell) cell.classList.add('on');
+
+    // Stagger when each cell starts rotating
+    setTimeout(() => {
+      crossfadeCell(id);
+      setInterval(() => crossfadeCell(id), ROTATION_INTERVAL);
+    }, ROTATION_INTERVAL + (i * 800));
+
+  }, 300 + i * FADE_IN_STAGGER);
+});
+
+// ── HERO UI REVEALS ──
+setTimeout(() => document.getElementById('hero-brand').classList.add('on'), 300);
+setTimeout(() => document.getElementById('hero-cta').classList.add('on'), 600);
+setTimeout(() => document.getElementById('hero-tagline').classList.add('on'), 4000);
+
+// ── SVG DRAW HEADLINE ──
+document.getElementById('hero-svg-wrap').innerHTML = '<svg viewBox="0 0 563 344" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;overflow:visible"><g transform="translate(0,0)"><path d="M37.2 56.39999999999999C37.2 54.0 37.6 53.19999999999999 38.400000000000006 53.19999999999999C39.2 53.19999999999999 39.6 54.0 39.6 56.39999999999999V92.0H75.60000000000001V59.0C75.60000000000001 35.400000000000006 61.800000000000004 22.0 37.800000000000004 22.0C14.200000000000001 22.0 1.2000000000000002 34.79999999999998 1.2000000000000002 59.0V128.8C1.2000000000000002 153.0 14.200000000000001 166.0 37.800000000000004 166.0C61.800000000000004 166.0 75.60000000000001 152.6 75.60000000000001 128.8V96.0H39.6V131.6C39.6 133.8 39.2 134.8 38.400000000000006 134.8C37.6 134.8 37.2 133.8 37.2 131.6Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="810" stroke-dashoffset="810" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="810" to="0" dur="3.8s" begin="0.179s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.179s" fill="freeze"/></path></g><g transform="translate(0,0)"><path d="M78.00000000000001 24.0V164.0H114.00000000000001V114.0H114.4C116.4 114.0 116.4 114.4 116.4 117.19999999999999V135.2C116.4 146.0 116.60000000000002 155.2 118.4 164.0H154.40000000000003C152.60000000000002 155.4 152.40000000000003 146.2 152.40000000000003 135.6V134.0C152.40000000000003 112.6 140.4 99.6 132.0 99.6V97.2C140.60000000000002 97.2 152.40000000000003 85.8 152.40000000000003 62.39999999999999V61.39999999999999C152.40000000000003 36.0 138.60000000000002 24.0 114.80000000000001 24.0ZM114.00000000000001 55.19999999999999H114.4C116.4 55.19999999999999 116.4 55.599999999999994 116.4 58.19999999999999V79.6C116.4 82.39999999999999 116.4 82.8 114.4 82.8H114.00000000000001Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="788" stroke-dashoffset="788" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="788" to="0" dur="3.8s" begin="0.007s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.007s" fill="freeze"/></path></g><g transform="translate(0,0)"><path d="M206.8 55.19999999999999V24.0H154.8V164.0H206.8V132.8H190.8V105.8H206.8V74.6H190.8V55.19999999999999Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="610" stroke-dashoffset="610" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="610" to="0" dur="3.8s" begin="0.077s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.077s" fill="freeze"/></path></g><g transform="translate(0,0)"><path d="M218.20000000000002 24.0 208.60000000000002 164.0H244.60000000000002V135.2H247.00000000000003V164.0H283.0L274.20000000000005 24.0ZM244.60000000000002 104.0V86.8H247.00000000000003V104.0Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="632" stroke-dashoffset="632" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="632" to="0" dur="3.8s" begin="0.062s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.062s" fill="freeze"/></path></g><g transform="translate(0,0)"><path d="M356.40000000000003 24.0H284.40000000000003V55.19999999999999H302.40000000000003V164.0H338.40000000000003V55.19999999999999H356.40000000000003Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="580" stroke-dashoffset="580" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="580" to="0" dur="3.8s" begin="0.206s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.206s" fill="freeze"/></path></g><g transform="translate(0,0)"><path d="M410.40000000000003 55.19999999999999V24.0H358.40000000000003V164.0H410.40000000000003V132.8H394.40000000000003V105.8H410.40000000000003V74.6H394.40000000000003V55.19999999999999Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="610" stroke-dashoffset="610" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="610" to="0" dur="3.8s" begin="0.189s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.189s" fill="freeze"/></path></g><g transform="translate(0,144)"><path d="M72.8 24.0H0.8V55.19999999999999H18.8V164.0H54.800000000000004V55.19999999999999H72.8Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="580" stroke-dashoffset="580" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="580" to="0" dur="3.8s" begin="0.25s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.25s" fill="freeze"/></path></g><g transform="translate(0,144)"><path d="M74.80000000000001 59.0V128.8C74.80000000000001 153.0 87.80000000000001 166.0 111.4 166.0C135.4 166.0 149.20000000000002 152.6 149.20000000000002 128.8V59.0C149.20000000000002 35.400000000000006 135.4 22.0 111.4 22.0C87.80000000000001 22.0 74.80000000000001 34.79999999999998 74.80000000000001 59.0ZM110.80000000000001 56.39999999999999C110.80000000000001 54.0 111.20000000000002 53.19999999999999 112.00000000000001 53.19999999999999C112.80000000000001 53.19999999999999 113.20000000000002 54.0 113.20000000000002 56.39999999999999V131.6C113.20000000000002 133.8 112.80000000000001 134.8 112.00000000000001 134.8C111.20000000000002 134.8 110.80000000000001 133.8 110.80000000000001 131.6Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="730" stroke-dashoffset="730" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="730" to="0" dur="3.8s" begin="0.024s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.024s" fill="freeze"/></path></g><g transform="translate(0,144)"><path d="M187.60000000000002 56.39999999999999C187.60000000000002 54.0 188.00000000000003 53.19999999999999 188.80000000000004 53.19999999999999C189.60000000000002 53.19999999999999 190.00000000000003 54.0 190.00000000000003 56.39999999999999V81.6H226.00000000000006V59.0C226.00000000000006 35.400000000000006 212.20000000000005 22.0 188.20000000000005 22.0C164.60000000000002 22.0 151.60000000000002 34.79999999999998 151.60000000000002 59.0V128.8C151.60000000000002 155.4 166.40000000000003 166.0 179.60000000000002 166.0C188.60000000000002 166.0 197.00000000000003 161.2 199.20000000000005 152.8H201.60000000000002V164.0H226.00000000000006V85.6H187.60000000000002ZM187.60000000000002 108.8H190.00000000000003V131.6C190.00000000000003 133.8 189.60000000000002 134.8 188.80000000000004 134.8C188.00000000000003 134.8 187.60000000000002 133.8 187.60000000000002 131.6Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="796" stroke-dashoffset="796" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="796" to="0" dur="3.8s" begin="0.118s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.118s" fill="freeze"/></path></g><g transform="translate(0,144)"><path d="M280.40000000000003 55.19999999999999V24.0H228.40000000000003V164.0H280.40000000000003V132.8H264.40000000000003V105.8H280.40000000000003V74.6H264.40000000000003V55.19999999999999Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="610" stroke-dashoffset="610" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="610" to="0" dur="3.8s" begin="0.008s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.008s" fill="freeze"/></path></g><g transform="translate(0,144)"><path d="M354.40000000000003 24.0H282.40000000000003V55.19999999999999H300.40000000000003V164.0H336.40000000000003V55.19999999999999H354.40000000000003Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="580" stroke-dashoffset="580" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="580" to="0" dur="3.8s" begin="0.061s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.061s" fill="freeze"/></path></g><g transform="translate(0,144)"><path d="M394.80000000000007 24.0V76.6H392.40000000000003V24.0H356.40000000000003V164.0H392.40000000000003V107.8H394.80000000000007V164.0H430.80000000000007V24.0Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="858" stroke-dashoffset="858" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="858" to="0" dur="3.8s" begin="0.141s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.141s" fill="freeze"/></path></g><g transform="translate(0,144)"><path d="M485.20000000000005 55.19999999999999V24.0H433.20000000000005V164.0H485.20000000000005V132.8H469.20000000000005V105.8H485.20000000000005V74.6H469.20000000000005V55.19999999999999Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="610" stroke-dashoffset="610" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="610" to="0" dur="3.8s" begin="0.007s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.007s" fill="freeze"/></path></g><g transform="translate(0,144)"><path d="M487.6000000000001 24.0V164.0H523.6000000000001V114.0H524.0000000000001C526.0000000000001 114.0 526.0000000000001 114.4 526.0000000000001 117.19999999999999V135.2C526.0000000000001 146.0 526.2 155.2 528.0000000000001 164.0H564.0000000000001C562.2 155.4 562.0000000000001 146.2 562.0000000000001 135.6V134.0C562.0000000000001 112.6 550.0000000000001 99.6 541.6000000000001 99.6V97.2C550.2 97.2 562.0000000000001 85.8 562.0000000000001 62.39999999999999V61.39999999999999C562.0000000000001 36.0 548.2 24.0 524.4000000000001 24.0ZM523.6000000000001 55.19999999999999H524.0000000000001C526.0000000000001 55.19999999999999 526.0000000000001 55.599999999999994 526.0000000000001 58.19999999999999V79.6C526.0000000000001 82.39999999999999 526.0000000000001 82.8 524.0000000000001 82.8H523.6000000000001Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="788" stroke-dashoffset="788" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="788" to="0" dur="3.8s" begin="0.056s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.056s" fill="freeze"/></path></g></svg>';
+
+// ── MOCK WAVEFORM ──
+(function() {
+  const wf = document.getElementById('mock-wf');
+  const h = [18,26,40,32,20,48,38,28,56,44,24,50,36,26,62,52,34,58,44,30,46,38,22,54,42,32,66,52,36,24,48,40,56,28,38,60,46,32,24,52,38,64,50,32,58,36,24,52,42,28,56,44,34,66,50,22,58,38,30,54,42,26,48,36,20,44,34,52,28,36,60,46,30,22,50,38,62,44,28,54];
+  const playedPct = 0.37;
+  const n = h.length;
+  h.forEach((v, i) => {
+    const bar = document.createElement('div');
+    bar.className = 'wf-bar';
+    const pct = i / n;
+    if (pct < playedPct - 0.02) bar.classList.add('played');
+    else if (pct < playedPct + 0.01) bar.classList.add('current');
+    bar.style.height = v + '%';
+    wf.appendChild(bar);
+  });
+
+  // Comment pins
+  const pins = [
+    { pct: 0.12, color: '#C0392B' },
+    { pct: 0.37, color: '#F0E48C' },
+    { pct: 0.79, color: '#D4C4B0' },
+  ];
+  pins.forEach(({ pct, color }) => {
+    const pin = document.createElement('div');
+    pin.className = 'wf-pin';
+    pin.style.left = (pct * 100) + '%';
+    pin.style.color = color;
+    pin.innerHTML = `<div class="wf-pin-dot" style="background:${color}"></div><div class="wf-pin-line" style="background:${color}"></div>`;
+    wf.appendChild(pin);
+  });
+})();
+
+// ── SCROLL REVEAL ──
+const reveals = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('on');
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.15 });
+
+reveals.forEach(el => observer.observe(el));
+
+
+// ── WHATSAPP CHAT ANIMATION ──
+(function() {
+  const MESSAGES = [
+    { from: "C", name: "Coris", text: "Hey, loving the new section. The riff is almost there but it feels too jarring -- just needs softening slightly" },
+    { from: "A", name: "Al",    text: "Yeah I already fixed that and sent it over" },
+    { from: "C", name: "Coris", text: "Which version are you on? I've been listening to V7" },
+    { from: "A", name: "Al",    text: "No that's old, it's V8. I sent V8 to you" },
+    { from: "C", name: "Coris", text: "Was that the one on WhatsApp or email?" },
+    { from: "A", name: "Al",    text: "WhatsApp" },
+    { from: "C", name: "Coris", text: "I've searched WhatsApp, can't find it" },
+    { from: "A", name: "Al",    text: "Maybe I sent it as a voice note" },
+    { from: "C", name: "Coris", text: "Found a voice note but it's just you humming the riff -- no file attached" },
+    { from: "A", name: "Al",    text: "I definitely sent the file. Do you remember we agreed to change the outro too?" },
+    { from: "C", name: "Coris", text: "Yes -- where did we write that down, Apple Notes?" },
+    { from: "A", name: "Al",    text: "No I think it was in the WhatsApp thread" },
+    { from: "C", name: "Coris", text: "The same thread I can't find?" },
+    { from: "A", name: "Al",    text: "...I'll just resend everything" },
+  ];
+
+  const container = document.getElementById('chat-messages');
+  if (!container) return;
+
+  const TIMES = ['10:14','10:14','10:15','10:15','10:15','10:16','10:16','10:17','10:18','10:18','10:19','10:19','10:20','10:20'];
+  const GAP = 10; // px gap between bubbles
+  const SPRING = 'cubic-bezier(0.34, 1.38, 0.64, 1)';
+  const EASE   = 'cubic-bezier(0.4, 0, 0.2, 1)';
+  const visible = []; // { el, height }
+  let msgIdx = 0;
+  let running = false;
+
+  // Typing indicator
+  const typingEl = document.createElement('div');
+  typingEl.className = 'typing-indicator';
+  typingEl.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+  typingEl.style.position = 'absolute';
+  typingEl.style.left = '14px';
+  container.appendChild(typingEl);
+
+  const containerH = container.offsetHeight;
+
+  // Place typing indicator just above bottom
+  function positionTyping() {
+    typingEl.style.bottom = '16px';
+    typingEl.style.top = 'auto';
+  }
+  positionTyping();
+
+  // Recalculate and animate all bubble positions after a new one is added
+  // Each bubble is positioned from the bottom up
+  function repositionAll(animate) {
+    let y = 16; // start from bottom (in px from bottom)
+    // Work from newest (last) to oldest (first)
+    for (let i = visible.length - 1; i >= 0; i--) {
+      const item = visible[i];
+      const targetBottom = y;
+      if (animate) {
+        item.el.style.transition =
+          'transform 0.55s ' + SPRING + ', bottom 0.55s ' + SPRING + ', opacity 0.4s ' + EASE;
+      } else {
+        item.el.style.transition = 'none';
+      }
+      item.el.style.bottom = targetBottom + 'px';
+      item.el.style.top = 'auto';
+      y += item.height + GAP;
+    }
+  }
+
+  function showNext() {
+    if (msgIdx >= MESSAGES.length) {
+      setTimeout(() => {
+        // Fade all out then restart
+        visible.forEach(item => item.el.classList.add('fading-out'));
+        setTimeout(() => {
+          visible.forEach(item => item.el.remove());
+          visible.length = 0;
+          msgIdx = 0;
+          setTimeout(showNext, 300);
+        }, 450);
+      }, 2800);
+      return;
+    }
+
+    const msg = MESSAGES[msgIdx];
+    const isSent = msg.from === 'C';
+
+    // Show typing indicator
+    typingEl.classList.add('visible');
+    const typingMs = 480 + msg.text.length * 15;
+
+    setTimeout(() => {
+      typingEl.classList.remove('visible');
+
+      // Create bubble off-screen below
+      const bubble = document.createElement('div');
+      bubble.className = 'chat-bubble ' + (isSent ? 'sent' : 'received');
+      bubble.style.bottom = '-120px'; // start below viewport
+      bubble.style.opacity = '0';
+      bubble.innerHTML =
+        '<div class="bubble-name">' + msg.name + '</div>' +
+        '<div class="bubble-text">' + msg.text + '</div>' +
+        '<div class="bubble-time">' + TIMES[msgIdx] + '</div>';
+
+      container.insertBefore(bubble, typingEl);
+
+      // Measure height after paint
+      requestAnimationFrame(() => {
+        const h = bubble.offsetHeight;
+        visible.push({ el: bubble, height: h });
+
+        // Fade out and remove oldest if too many
+        const MAX = 4;
+        if (visible.length > MAX) {
+          const old = visible.shift();
+          old.el.style.transition = 'opacity 0.4s ' + EASE;
+          old.el.classList.add('fading-out');
+          setTimeout(() => old.el.remove(), 420);
+        }
+
+        // Slide everything up with spring, new bubble comes from below
+        requestAnimationFrame(() => {
+          bubble.style.opacity = '1';
+          repositionAll(true);
+        });
+      });
+
+      msgIdx++;
+      const nextDelay = 1000 + msg.text.length * 18;
+      setTimeout(showNext, nextDelay);
+
+    }, typingMs);
+  }
+
+    // Start when the problem section scrolls into view
+  const chatWindow = document.getElementById('chat-window');
+  const chatObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting && !running) {
+        running = true;
+        setTimeout(showNext, 800);
+        chatObserver.unobserve(chatWindow);
+      }
+    });
+  }, { threshold: 0.4 });
+
+  if (chatWindow) chatObserver.observe(chatWindow);
+})();
+
+
+// ── SCREENSHOT LIGHTBOX ──
+(function(){
+  const lb = document.getElementById('lightbox');
+  if (!lb) return;
+  const imgEl = document.getElementById('lb-img');
+  const capEl = document.getElementById('lb-cap');
+  const btnClose = document.getElementById('lb-close');
+  const btnPrev = document.getElementById('lb-prev');
+  const btnNext = document.getElementById('lb-next');
+  const shots = Array.from(document.querySelectorAll('.shot'));
+  const items = shots.map(s => ({ src: s.dataset.src, cap: s.dataset.cap || '' }));
+  let idx = 0, lastFocus = null;
+
+  function render(){
+    const it = items[idx];
+    imgEl.src = it.src;
+    imgEl.alt = it.cap;
+    capEl.textContent = it.cap;
+  }
+  function open(i){
+    idx = i; render();
+    lastFocus = document.activeElement;
+    lb.classList.add('open');
+    lb.setAttribute('aria-hidden','false');
+    document.body.style.overflow = 'hidden';
+    btnClose.focus();
+  }
+  function close(){
+    lb.classList.remove('open');
+    lb.setAttribute('aria-hidden','true');
+    document.body.style.overflow = '';
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+  function prev(){ idx = (idx - 1 + items.length) % items.length; render(); }
+  function next(){ idx = (idx + 1) % items.length; render(); }
+
+  shots.forEach((s,i) => s.addEventListener('click', () => open(i)));
+  btnClose.addEventListener('click', close);
+  btnPrev.addEventListener('click', prev);
+  btnNext.addEventListener('click', next);
+  lb.addEventListener('click', e => { if (e.target === lb) close(); });
+  document.addEventListener('keydown', e => {
+    if (!lb.classList.contains('open')) return;
+    if (e.key === 'Escape') close();
+    else if (e.key === 'ArrowLeft') prev();
+    else if (e.key === 'ArrowRight') next();
+  });
+})();
+</script>
+
+</body>
+</html>
