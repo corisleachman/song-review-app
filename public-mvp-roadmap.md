@@ -2263,3 +2263,79 @@ Roll the new branding developed for the marketing site back into the app UI.
 - `border-radius: 0` everywhere (exceptions: avatar circles, waveform dots)
 - Update dashboard, version page, settings, and invite flow
 - QA full app after rebrand
+
+---
+
+## Phase 10: Plan Gating & Pricing Enforcement (app)
+
+**Status: Queued**
+
+### Objective
+Build the feature gates that the v19 marketing site pricing now promises. The marketing page advertises tier differences that do not exist in the app yet — **the marketing site must not go public until this phase ships**, or we are advertising features we cannot enforce.
+
+### Background
+Pricing was restructured on the marketing site (`tsr-marketing-v19.html`) to differentiate tiers by **buyer type** rather than storage alone, because storage-only differentiation gave no compelling reason to upgrade from Free. Collaborators remain unlimited on every tier — that positioning is deliberate and should not change.
+
+**Advertised tiers:**
+
+| | Free (£0) | Pro (£9/mo) | Studio (£19/mo) |
+|---|---|---|---|
+| Who | Trying it out | Working artists & bands | Producers & studios, multiple acts |
+| Storage | 500 MB (~10 songs) | 10 GB (~200 songs) | 50 GB (~1,000 songs) |
+| Collaborators | Unlimited | Unlimited | Unlimited |
+| Songs | Unlimited | Unlimited | Unlimited |
+| Version history | Last 3 per song | Full — nothing dropped | Full |
+| Upload formats | MP3 only | Lossless WAV & FLAC | Lossless WAV & FLAC |
+| Public share links | 1 active | Unlimited | Unlimited |
+| Workspaces | 1 | 1 | Multiple (one per act/client) |
+| Public page branding | TSR branded | TSR branded | Unbranded / client-facing |
+| Support | Standard | Standard | Priority |
+
+### Workstreams
+
+**Plan-gating foundation**
+- Single source of truth for plan limits (shared constant/table) that both UI and API routes read — avoid duplicating limit logic per route
+- Plan resolution helper: given a workspace, return its current tier and limits
+- Consistent upgrade-prompt component for when a gate is hit
+
+**Storage enforcement**
+- Enforce 500 MB / 10 GB / 50 GB caps at upload time
+- Storage usage calculation per workspace
+- Usage indicator in settings (e.g. "3.2 GB of 10 GB used")
+- Graceful behaviour at limit: block new uploads, do not delete existing files
+
+**Version retention (Free tier)**
+- Cap Free workspaces at last 3 versions per song
+- Decide behaviour for versions beyond the cap: lock/hide vs prune (recommend **lock, not delete** — deleting user audio is hostile and unrecoverable)
+- Surface clearly on the song page when older versions are locked behind an upgrade
+
+**Upload format gating**
+- Restrict Free tier to MP3; block WAV/FLAC at upload with a clear upgrade message
+- Validate server-side, not just in the client picker
+
+**Public share links**
+- Cap Free at 1 active public link; unlimited on Pro/Studio
+- Handle the case where a Free user already has multiple public songs (grandfathering vs forced deactivation)
+- Studio: strip TSR branding from public listen pages (`/listen/[songId]`)
+
+**Multiple workspaces (Studio)**
+- Gate workspace creation to Studio tier
+- Workspace switcher already exists — needs plan-aware creation limits
+- Billing model: confirm whether Studio subscription covers all its workspaces, or bills per workspace
+
+**Stripe**
+- Three price points: Free (no charge), Pro £9/mo, Studio £19/mo
+- Annual variants at 20% discount for Pro and Studio
+- Upgrade/downgrade paths, including what happens on downgrade when usage exceeds the new tier's limits
+- Webhook handling to sync subscription state to workspace tier
+
+### Open questions before building
+- **Public share links on Free:** capping at 1 may throttle the viral loop, since public links are how non-users discover TSR. Consider unlimited public links on all tiers and gating only the *unbranded* version (Studio). **Needs a decision before build.**
+- Storage-to-song estimates on the marketing site assume ~50 MB per song across a few versions — validate against real usage data and adjust the marketing copy if it is materially off.
+- Downgrade behaviour: if a Pro user drops to Free with 8 GB stored and 12 versions per song, what happens? (Recommend: read-only over-limit state rather than deletion.)
+- Does version retention count *all* versions or only those with audio still attached?
+- Grandfathering: any existing users who should be exempt from new limits?
+
+### Dependencies
+- Blocks: Phase 8 (Marketing Site) public launch
+- Related: Phase 5 (Pricing Review & Stripe Rollout), Phase 6.5 (Referral Programme — "Referral rewards" is advertised as a Pro feature)
