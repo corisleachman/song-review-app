@@ -2923,3 +2923,43 @@ Migration-backed database integrity and payment-webhook idempotency.
 
 - `npx tsc --noEmit --incremental false` — passed.
 - SQL was reviewed statically; no local PostgreSQL/Supabase CLI is available to execute the migrations against a disposable database.
+
+---
+
+## 2026-07-18 — Stage 2B version upload integrity
+
+### What we were trying to achieve
+
+Prevent quota bypass, unsafe object names, duplicate version numbers, inaccurate storage totals, and common orphan rows in the signed audio-upload flow.
+
+### Feature / change being made
+
+Two-phase version uploads with database-backed allocation and finalization.
+
+### Files changed
+
+- `app/api/versions/create/route.ts`
+- `app/api/versions/[versionId]/finalize/route.ts`
+- `app/api/versions/[versionId]/route.ts`
+- `app/songs/[id]/upload/page.tsx`
+- `app/songs/[id]/versions/[versionId]/page.tsx`
+- `migrations/20260718_account_storage_schema_up.sql`
+- `migrations/20260718_account_storage_schema_down.sql`
+- `migrations/20260718_version_upload_integrity_up.sql`
+- `migrations/20260718_version_upload_integrity_down.sql`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Added the previously undocumented storage counter, version file-size column, and current free/pro/studio plan constraint to migration history.
+- Version numbers are allocated while locking the parent song, eliminating concurrent count-plus-one races.
+- Storage paths are generated server-side with random object IDs rather than embedding user-supplied filenames.
+- File size and extension are validated before issuing a signed URL; the stored object is then inspected for actual size and audio content type.
+- Storage usage and upload finalization are committed atomically after object verification and a second quota check.
+- Failed client uploads attempt to remove their pending row/object, and pending versions cannot be played as completed uploads.
+- Compatibility fallbacks keep the existing path working if application code reaches production before PostgREST has refreshed the new functions, but migration-first deployment remains required.
+
+### Verification
+
+- `npx tsc --noEmit --incremental false` — passed.
+- SQL was reviewed statically; migration execution still requires a disposable Supabase/PostgreSQL environment.

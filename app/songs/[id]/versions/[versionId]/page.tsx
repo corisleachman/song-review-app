@@ -310,17 +310,48 @@ async function fetchJsonWithTimeout<T>(
 }
 
 function validateAudioFile(file: File) {
-  const isAudio = file.type.startsWith('audio/') || /\.(mp3|wav|m4a|aac|flac|ogg)$/i.test(file.name);
+  const isAudio = file.type.startsWith('audio/') || /\.(mp3|wav|m4a|aac|flac|ogg|aif|aiff)$/i.test(file.name);
 
   if (!isAudio) {
-    return 'Choose an audio file such as MP3, WAV, M4A, FLAC, or OGG.';
+    return 'Choose an audio file such as MP3, WAV, M4A, AAC, FLAC, OGG, AIF, or AIFF.';
   }
+
+  if (file.size <= 0) return 'That audio file is empty.';
 
   if (file.size > MAX_AUDIO_SIZE_BYTES) {
     return 'That file is too large for the current upload flow. Try a file under 200 MB.';
   }
 
   return null;
+}
+
+async function finalizeUploadedVersion(versionIdToFinalize: string) {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    if (attempt > 0) {
+      await new Promise(resolve => window.setTimeout(resolve, 450));
+    }
+
+    let response: Response;
+    try {
+      response = await fetch(`/api/versions/${versionIdToFinalize}/finalize`, { method: 'POST' });
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error('Could not finish the upload.');
+      continue;
+    }
+
+    const payload = await response.json().catch(() => null);
+    if (response.ok) return;
+
+    const responseError = new Error(getUploadErrorMessage(payload?.error));
+    if (response.status < 500 && response.status !== 409) {
+      throw responseError;
+    }
+    lastError = responseError;
+  }
+
+  throw lastError ?? new Error('Could not finish the upload.');
 }
 
 async function verifyUploadedVersion(versionIdToVerify: string) {
@@ -2072,6 +2103,7 @@ function VersionPageInner() {
 
   async function uploadNewVersion() {
     if (!pendingVersionFile || !identity) return;
+    let createdVersionId: string | null = null;
 
     setUploadingVersion(true);
     setVersionUploadError('');
@@ -2095,6 +2127,7 @@ function VersionPageInner() {
       if (!res.ok || !data.uploadUrl || !data.versionId) {
         throw new Error(getUploadErrorMessage(data.error));
       }
+      createdVersionId = data.versionId;
 
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -2110,6 +2143,7 @@ function VersionPageInner() {
         xhr.send(pendingVersionFile);
       });
 
+      await finalizeUploadedVersion(data.versionId);
       await verifyUploadedVersion(data.versionId);
 
       setShowUploadVersionModal(false);
@@ -2119,6 +2153,9 @@ function VersionPageInner() {
       showStatusToast('Version uploaded');
       router.push(`/songs/${songId}/versions/${data.versionId}`);
     } catch (error) {
+      if (createdVersionId) {
+        await fetch(`/api/versions/${createdVersionId}/finalize`, { method: 'DELETE' }).catch(() => null);
+      }
       setVersionUploadError(error instanceof Error ? error.message : 'Upload failed. Please try again.');
     } finally {
       setUploadingVersion(false);
@@ -3295,7 +3332,7 @@ function VersionPageInner() {
       <input
         ref={versionFileInputRef}
         type="file"
-        accept="audio/*,.mp3,.wav,.m4a,.aac,.flac,.ogg"
+        accept="audio/*,.mp3,.wav,.m4a,.aac,.flac,.ogg,.aif,.aiff"
         style={{ display: 'none' }}
         onChange={e => {
           handleVersionFilePicked(e.target.files?.[0]);

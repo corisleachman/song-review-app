@@ -105,8 +105,10 @@ export async function GET(
 
     let audioUrl: string | null = null;
     let audioMissing = false;
+    const uploadIsPending = Object.prototype.hasOwnProperty.call(version, 'upload_finalized_at')
+      && !version.upload_finalized_at;
 
-    if (version.file_path) {
+    if (version.file_path && !uploadIsPending) {
       const normalizedFilePath = normalizeStoragePath(version.file_path);
       const hasAudioObject = await storageObjectExists(normalizedFilePath);
 
@@ -121,6 +123,8 @@ export async function GET(
       } else {
         audioMissing = true;
       }
+    } else if (uploadIsPending) {
+      audioMissing = true;
     }
 
     return NextResponse.json(
