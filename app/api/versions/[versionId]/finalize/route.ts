@@ -55,10 +55,8 @@ async function removePendingUpload(versionId: string, filePath: string) {
   }
 }
 
-export async function POST(
-  _req: NextRequest,
-  { params }: { params: { versionId: string } }
-) {
+export async function POST(_req: NextRequest, props: { params: Promise<{ versionId: string }> }) {
+  const params = await props.params;
   try {
     const resolved = await resolveCanonicalIdentity();
     if (!resolved) {
@@ -183,10 +181,8 @@ export async function POST(
   }
 }
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: { versionId: string } }
-) {
+export async function DELETE(_req: NextRequest, props: { params: Promise<{ versionId: string }> }) {
+  const params = await props.params;
   try {
     const resolved = await resolveCanonicalIdentity();
     if (!resolved) {

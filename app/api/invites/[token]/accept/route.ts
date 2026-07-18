@@ -23,10 +23,8 @@ function getErrorMessage(error: unknown) {
   return 'Could not accept invite.';
 }
 
-export async function POST(
-  _request: Request,
-  { params }: { params: { token: string } }
-) {
+export async function POST(_request: Request, props: { params: Promise<{ token: string }> }) {
+  const params = await props.params;
   try {
     noStore();
 

@@ -3,12 +3,11 @@ import { supabaseServer } from '@/lib/supabaseServer';
 
 interface ListenLayoutProps {
   children: React.ReactNode;
-  params: { songId: string };
+  params: Promise<{ songId: string }>;
 }
 
-export async function generateMetadata(
-  { params }: { params: { songId: string } }
-): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ songId: string }> }): Promise<Metadata> {
+  const params = await props.params;
   const { songId } = params;
 
   // Fetch song — check is_public before exposing any metadata

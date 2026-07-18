@@ -22,10 +22,8 @@ function getErrorMessage(error: unknown) {
   return 'Could not load versions.';
 }
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { songId: string } }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ songId: string }> }) {
+  const params = await props.params;
   try {
     noStore();
     const { songId } = params;

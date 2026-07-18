@@ -10,10 +10,8 @@ function normalizeStoragePath(value: string | null | undefined) {
   return trimmed.startsWith(prefix) ? trimmed.slice(prefix.length) : trimmed;
 }
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { songId: string } }
-) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ songId: string }> }) {
+  const params = await props.params;
   try {
     const { songId } = params;
 

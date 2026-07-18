@@ -48,7 +48,7 @@ export async function GET() {
     // Fetch masked referred user emails for display
     // We join to profiles to get display names — emails are not stored on referrals
     const referredUserIds = rows.map(r => r.referred_user_id as string);
-    let profileMap: Record<string, string> = {};
+    const profileMap: Record<string, string> = {};
 
     if (referredUserIds.length > 0) {
       const { data: profiles } = await supabaseServer

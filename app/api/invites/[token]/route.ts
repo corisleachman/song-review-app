@@ -10,10 +10,8 @@ function getErrorMessage(error: unknown) {
   return 'Could not load invite.';
 }
 
-export async function GET(
-  _request: Request,
-  { params }: { params: { token: string } }
-) {
+export async function GET(_request: Request, props: { params: Promise<{ token: string }> }) {
+  const params = await props.params;
   try {
     noStore();
 

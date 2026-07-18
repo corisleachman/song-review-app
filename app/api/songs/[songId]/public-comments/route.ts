@@ -22,10 +22,8 @@ async function assertSongAccess(songId: string) {
 }
 
 // ── GET — band sees ALL comments (including hidden) ─────────────────────────
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { songId: string } }
-) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ songId: string }> }) {
+  const params = await props.params;
   try {
     const access = await assertSongAccess(params.songId);
     if ('error' in access) {

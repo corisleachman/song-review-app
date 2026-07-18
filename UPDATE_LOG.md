@@ -3047,3 +3047,56 @@ Standards-based accessibility and responsive hardening for authentication, menus
 - `npm run build` — passed; landing first-load JavaScript remains 158kB and dashboard remains 181kB.
 - Headless Chrome at 1440×900 and 375×667 — home page returned 200 with no framework error overlay, labelled email/password fields rendered, keyboard focus had a visible 2px outline, and the expanded login/forgot-password flows had no horizontal overflow.
 - Reduced-motion emulation rendered no SVG animation elements or running document animations.
+
+---
+
+## 2026-07-18 — Stage 5 supported framework, dependency, and response hardening
+
+### What we were trying to achieve
+
+Remove known dependency vulnerabilities, restore an executable lint check, and add safe baseline browser-response protections without combining the change with a React major upgrade or storage-privacy migration.
+
+### Feature / change being made
+
+Dedicated Next.js 15 security upgrade and compatibility checkpoint.
+
+### Files changed
+
+- `package.json`
+- `package-lock.json`
+- `next.config.js`
+- `next-env.d.ts`
+- `eslint.config.mjs`
+- `app/icon.svg`
+- Dynamic route handlers under `app/api/**/[parameter]/route.ts`
+- `app/auth/callback/route.ts`
+- `app/invite/[token]/page.tsx`
+- `app/invite/[token]/InviteActions.tsx`
+- `app/listen/[songId]/layout.tsx`
+- `app/r/[code]/route.ts`
+- `app/songs/[id]/page.tsx`
+- `app/songs/[id]/versions/[versionId]/page.tsx`
+- `app/privacy/page.tsx`
+- `app/terms/page.tsx`
+- `lib/currentUser.ts`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Upgraded unsupported Next.js 14.2.35 to the supported 15.5.20 backport and migrated dynamic route parameters and cookie reads to the asynchronous request API.
+- Kept React at 18.3.1, which Next.js 15.5 supports, so framework security work is not combined with a separate React major-version migration.
+- Updated Supabase, Stripe, Wavesurfer, and Resend; removed the unused deprecated Supabase auth-helper package.
+- Overrode Next.js's vulnerable PostCSS transitive version with patched PostCSS 8.5.10.
+- Added ESLint 9 with the Next.js Core Web Vitals/TypeScript configuration. Existing explicit-`any` debt is reported as warnings so the new check is usable without an unrelated type refactor.
+- Added `nosniff`, frame denial, strict referrer, limited browser permissions, and one-year HSTS headers; disabled the framework disclosure header. A restrictive CSP remains a separate report-only rollout because the app currently uses inline styles and external fonts/images.
+- Replaced broken legal-page font URLs and added the missing application icon, eliminating their 404 requests.
+- The supported Next.js runtime increases shared first-load JavaScript: landing 158kB → 175kB and dashboard 181kB → 193kB. This is recorded as a known security-versus-payload tradeoff for later measurement.
+
+### Verification
+
+- `npm audit` — 0 vulnerabilities (previously 1 moderate and 3 high across four vulnerable packages).
+- `npm run lint` — passed with 46 existing warnings and 0 errors.
+- `npx tsc --noEmit --incremental false` — passed.
+- `npm run build` — passed on Next.js 15.5.20.
+- Headless Chrome verified `/`, `/privacy`, and `/terms` at a 375×667 viewport with 200 responses, no framework error overlay, and no horizontal overflow.
+- Runtime header inspection confirmed all configured security headers and confirmed `X-Powered-By` is absent.

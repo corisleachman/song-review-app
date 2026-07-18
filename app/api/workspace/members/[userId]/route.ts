@@ -29,10 +29,8 @@ function getErrorMessage(error: unknown) {
   return 'Could not remove workspace member.';
 }
 
-export async function DELETE(
-  _request: Request,
-  { params }: { params: { userId: string } }
-) {
+export async function DELETE(_request: Request, props: { params: Promise<{ userId: string }> }) {
+  const params = await props.params;
   try {
     noStore();
 

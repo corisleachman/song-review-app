@@ -1685,7 +1685,6 @@ function VersionPageInner() {
     setIsRetryingWave(false);
     setDuration(0);
 
-    let debounceTimer: ReturnType<typeof setTimeout>;
     let attempts = 0;
 
     const tryInit = () => {
@@ -1696,7 +1695,7 @@ function VersionPageInner() {
       }
     };
 
-    debounceTimer = setTimeout(tryInit, 80);
+    const debounceTimer = setTimeout(tryInit, 80);
 
     return () => {
       clearTimeout(debounceTimer);

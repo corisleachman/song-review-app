@@ -21,10 +21,8 @@ function getErrorMessage(error: unknown) {
   return 'Song request failed.';
 }
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { songId: string } }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ songId: string }> }) {
+  const params = await props.params;
   try {
     const { songId } = params;
     const resolved = await resolveCanonicalIdentity();
@@ -70,10 +68,8 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { songId: string } }
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ songId: string }> }) {
+  const params = await props.params;
   try {
     const { songId } = params;
     const { title, status } = await req.json();
@@ -126,10 +122,8 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { songId: string } }
-) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ songId: string }> }) {
+  const params = await props.params;
   try {
     const { songId } = params;
     const resolved = await resolveCanonicalIdentity();

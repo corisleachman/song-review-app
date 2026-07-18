@@ -21,10 +21,8 @@ function getErrorMessage(error: unknown) {
   return 'Could not load comments.';
 }
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { versionId: string } }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ versionId: string }> }) {
+  const params = await props.params;
   try {
     noStore();
     const { versionId } = params;
