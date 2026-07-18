@@ -1,0 +1,15 @@
+# The Song Room — robots.txt
+# Place at the domain root: https://www.song-room.live/robots.txt
+
+User-agent: *
+Allow: /
+
+# Private app areas — no value in indexing, and some require auth
+Disallow: /dashboard
+Disallow: /settings
+Disallow: /upgrade
+Disallow: /identify
+Disallow: /invite
+Disallow: /r/
+
+Sitemap: https://www.song-room.live/sitemap.xml
