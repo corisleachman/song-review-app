@@ -3129,3 +3129,32 @@ Repository-level agent workflow and rollout-reporting protocol.
 
 - Documentation was reviewed against the existing required workflow and output format.
 - No application code, schema, dependencies, environment variables, or deployment settings were changed.
+
+---
+
+## 2026-07-18 — Preview-safe notification email initialization
+
+### What we were trying to achieve
+
+Allow preview builds to compile when notification email delivery is intentionally not configured, while preserving the route's existing runtime skip behavior.
+
+### Feature / change being made
+
+Lazy Resend client initialization in the thread-notification API route.
+
+### Files changed
+
+- `app/api/email/notify-thread/route.ts`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Resend 4 rejects a missing API key when its client is constructed. The notification route constructed that client at module scope, so Next.js failed while collecting route data before the existing missing-key fallback could run.
+- The route now trims and validates `RESEND_API_KEY` before constructing the client only when an email is actually ready to send.
+- Missing preview configuration continues to return the existing `missing-resend-api-key` skip response; configured environments keep the same delivery path.
+
+### Verification
+
+- `npm run lint` — passed with 46 existing warnings and 0 errors.
+- `npx tsc --noEmit --incremental false` — passed.
+- `RESEND_API_KEY= npm run build` — passed, including page-data collection for `/api/email/notify-thread`.

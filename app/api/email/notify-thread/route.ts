@@ -6,8 +6,6 @@ import {
 } from '@/lib/internalRequestAuth';
 import { supabaseServer } from '@/lib/supabaseServer';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 interface NotifyThreadRequest {
   threadId?: unknown;
   commentId?: unknown;
@@ -424,7 +422,9 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    if (!process.env.RESEND_API_KEY) {
+    const resendApiKey = process.env.RESEND_API_KEY?.trim();
+
+    if (!resendApiKey) {
       console.warn('[notify-thread] RESEND_API_KEY is not configured; skipping notification send.');
       return NextResponse.json({ sent: false, skipped: 'missing-resend-api-key' });
     }
@@ -477,6 +477,7 @@ export async function POST(req: NextRequest) {
       isReply,
     });
 
+    const resend = new Resend(resendApiKey);
     const result = await resend.emails.send({
       from: 'Song Room <noreply@song-room.live>',
       to: recipientEmails,
