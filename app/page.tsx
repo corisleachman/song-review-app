@@ -79,6 +79,7 @@ function LoginContent() {
   const [emailLoading, setEmailLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const [emailOpen, setEmailOpen] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   // Form fields
   const [email, setEmail] = useState('');
@@ -94,6 +95,14 @@ function LoginContent() {
 
   const googleStatus = searchParams.get('google');
   const googleMessage = searchParams.get('message');
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const syncPreference = () => setPrefersReducedMotion(mediaQuery.matches);
+    syncPreference();
+    mediaQuery.addEventListener('change', syncPreference);
+    return () => mediaQuery.removeEventListener('change', syncPreference);
+  }, []);
 
   // Redirect after OAuth
   useEffect(() => {
@@ -291,9 +300,9 @@ function LoginContent() {
   const isSignup = activeTab === 'signup';
 
   return (
-    <div className={styles.root}>
+    <div className={`${styles.root} ${(emailOpen || mode === 'forgot') ? styles.rootFormOpen : ''}`}>
       {/* Background slides */}
-      <div className={styles.bg}>
+      <div className={styles.bg} aria-hidden="true">
         {(previousBgIndex === null || previousBgIndex === bgIndex
           ? [bgIndex]
           : [previousBgIndex, bgIndex]
@@ -316,13 +325,15 @@ function LoginContent() {
         {/* Left — auth */}
         <div className={styles.left}>
           {/* Tabs */}
-          <div className={styles.tabs}>
+          <div className={styles.tabs} aria-label="Authentication method">
             <button
               className={`${styles.tabBtn} ${!isSignup ? styles.tabBtnActive : ''}`}
+              aria-pressed={!isSignup}
               onClick={() => { setActiveTab('login'); setMode('idle'); setError(''); setNotice(''); setEmailOpen(false); }}
             >Log in</button>
             <button
               className={`${styles.tabBtn} ${isSignup ? styles.tabBtnActive : ''}`}
+              aria-pressed={isSignup}
               onClick={() => { setActiveTab('signup'); setMode('signup'); setError(''); setNotice(''); setEmailOpen(false); }}
             >Sign up</button>
           </div>
@@ -336,7 +347,7 @@ function LoginContent() {
               onClick={handleGoogleSignIn}
               disabled={googleLoading || emailLoading}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
@@ -346,7 +357,12 @@ function LoginContent() {
             </button>
 
             {/* Email toggle */}
-            <button className={styles.btnEmailToggle} onClick={() => setEmailOpen(o => !o)}>
+            <button
+              className={styles.btnEmailToggle}
+              onClick={() => setEmailOpen(o => !o)}
+              aria-expanded={emailOpen && mode !== 'forgot'}
+              aria-controls="email-auth-fields"
+            >
               <span>{isSignup ? 'Sign up with email' : 'Continue with email'}</span>
               <svg
                 className={`${styles.chevron} ${emailOpen ? styles.chevronOpen : ''}`}
@@ -357,19 +373,28 @@ function LoginContent() {
             </button>
 
             {/* Email fields */}
-            <div className={`${styles.emailFields} ${emailOpen ? styles.emailFieldsOpen : ''}`}>
+            {mode !== 'forgot' && <div
+              id="email-auth-fields"
+              className={`${styles.emailFields} ${emailOpen ? styles.emailFieldsOpen : ''}`}
+            >
               {isSignup && (
-                <input
-                  className={styles.fieldInput}
-                  type="text"
-                  placeholder="Your name"
-                  value={displayName}
-                  onChange={e => setDisplayName(e.target.value)}
-                  autoComplete="name"
-                  disabled={emailLoading}
-                />
+                <>
+                  <label className={styles.srOnly} htmlFor="auth-display-name">Your name</label>
+                  <input
+                    id="auth-display-name"
+                    className={styles.fieldInput}
+                    type="text"
+                    placeholder="Your name"
+                    value={displayName}
+                    onChange={e => setDisplayName(e.target.value)}
+                    autoComplete="name"
+                    disabled={emailLoading}
+                  />
+                </>
               )}
+              <label className={styles.srOnly} htmlFor="auth-email">Email address</label>
               <input
+                id="auth-email"
                 className={styles.fieldInput}
                 type="email"
                 placeholder="Email address"
@@ -379,29 +404,35 @@ function LoginContent() {
                 disabled={emailLoading}
                 onKeyDown={e => { if (e.key === 'Enter' && !isSignup) void handleEmailSignIn(); }}
               />
-              {mode !== 'forgot' && (
-                <input
-                  className={styles.fieldInput}
-                  type="password"
-                  placeholder={isSignup ? 'Password (min 8 characters)' : 'Password'}
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  autoComplete={isSignup ? 'new-password' : 'current-password'}
-                  disabled={emailLoading}
-                  onKeyDown={e => { if (e.key === 'Enter' && !isSignup) void handleEmailSignIn(); }}
-                />
-              )}
+              <label className={styles.srOnly} htmlFor="auth-password">
+                {isSignup ? 'Password, minimum 8 characters' : 'Password'}
+              </label>
+              <input
+                id="auth-password"
+                className={styles.fieldInput}
+                type="password"
+                placeholder={isSignup ? 'Password (min 8 characters)' : 'Password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                autoComplete={isSignup ? 'new-password' : 'current-password'}
+                disabled={emailLoading}
+                onKeyDown={e => { if (e.key === 'Enter' && !isSignup) void handleEmailSignIn(); }}
+              />
               {isSignup && (
-                <input
-                  className={styles.fieldInput}
-                  type="password"
-                  placeholder="Confirm password"
-                  value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)}
-                  autoComplete="new-password"
-                  disabled={emailLoading}
-                  onKeyDown={e => { if (e.key === 'Enter') void handleEmailSignUp(); }}
-                />
+                <>
+                  <label className={styles.srOnly} htmlFor="auth-confirm-password">Confirm password</label>
+                  <input
+                    id="auth-confirm-password"
+                    className={styles.fieldInput}
+                    type="password"
+                    placeholder="Confirm password"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    autoComplete="new-password"
+                    disabled={emailLoading}
+                    onKeyDown={e => { if (e.key === 'Enter') void handleEmailSignUp(); }}
+                  />
+                </>
               )}
               <button
                 className={styles.btnSubmit}
@@ -420,15 +451,19 @@ function LoginContent() {
               )}
               {isSignup && (
                 <div className={styles.formFooter}>
-                  <a className={styles.formLink} href="#">Terms &amp; Privacy</a>
+                  <a className={styles.formLink} href="/terms">Terms</a>
+                  <span className={styles.formSeparator} aria-hidden="true"> · </span>
+                  <a className={styles.formLink} href="/privacy">Privacy</a>
                 </div>
               )}
-            </div>
+            </div>}
 
             {/* Forgot password — show when mode is forgot */}
             {mode === 'forgot' && (
               <div className={styles.forgotPanel}>
+                <label className={styles.srOnly} htmlFor="forgot-email">Email address</label>
                 <input
+                  id="forgot-email"
                   className={styles.fieldInput}
                   type="email"
                   placeholder="Email address"
@@ -452,10 +487,10 @@ function LoginContent() {
             )}
 
             {/* Error / notice */}
-            {error && <div className={styles.fieldError}>{error}</div>}
-            {notice && <div className={styles.fieldNotice}>{notice}</div>}
+            {error && <div className={styles.fieldError} role="alert">{error}</div>}
+            {notice && <div className={styles.fieldNotice} role="status">{notice}</div>}
             {googleStatus === 'error' && !error && (
-              <div className={styles.fieldError}>{googleMessage || 'Sign-in could not be completed. Please try again.'}</div>
+              <div className={styles.fieldError} role="alert">{googleMessage || 'Sign-in could not be completed. Please try again.'}</div>
             )}
           </div>
         </div>
@@ -467,6 +502,8 @@ function LoginContent() {
               viewBox="0 0 563 344"
               xmlns="http://www.w3.org/2000/svg"
               style={{ width: '100%', height: 'auto', overflow: 'visible' }}
+              role="img"
+              aria-label="Create together"
             >
               {SVG_PATHS.map((p, i) => (
                 <g key={i} transform={`translate(0,${p.y})`}>
@@ -478,11 +515,15 @@ function LoginContent() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeDasharray={p.len}
-                    strokeDashoffset={p.len}
-                    strokeOpacity="0"
+                    strokeDashoffset={prefersReducedMotion ? 0 : p.len}
+                    strokeOpacity={prefersReducedMotion ? 1 : 0}
                   >
-                    <animate attributeName="stroke-dashoffset" from={p.len} to="0" dur="3.8s" begin={`${p.delay}s`} calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/>
-                    <animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin={`${p.delay}s`} fill="freeze"/>
+                    {!prefersReducedMotion && (
+                      <>
+                        <animate attributeName="stroke-dashoffset" from={p.len} to="0" dur="3.8s" begin={`${p.delay}s`} calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/>
+                        <animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin={`${p.delay}s`} fill="freeze"/>
+                      </>
+                    )}
                   </path>
                 </g>
               ))}

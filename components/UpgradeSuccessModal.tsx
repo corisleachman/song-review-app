@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
+import { useDialogFocus } from '@/lib/useDialogFocus';
 import styles from './UpgradeSuccessModal.module.css';
 
 interface UpgradeSuccessModalProps {
@@ -23,6 +24,8 @@ export default function UpgradeSuccessModal({
     })),
     []
   );
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(isOpen, onClose, dialogRef);
 
   if (!isOpen) return null;
 
@@ -34,10 +37,13 @@ export default function UpgradeSuccessModal({
       }}
     >
       <div
+        ref={dialogRef}
         className={styles.modal}
         role="dialog"
         aria-modal="true"
         aria-labelledby="upgrade-success-title"
+        aria-describedby="upgrade-success-description"
+        tabIndex={-1}
       >
         <div className={styles.particles} aria-hidden="true">
           {particles.map(particle => (
@@ -61,7 +67,7 @@ export default function UpgradeSuccessModal({
           <h2 id="upgrade-success-title" className={styles.title}>
             Welcome to Pro
           </h2>
-          <p className={styles.subtitle}>
+          <p id="upgrade-success-description" className={styles.subtitle}>
             Your workspace just unlocked the full collaboration canvas. Keep building without caps.
           </p>
         </div>

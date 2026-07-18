@@ -226,6 +226,7 @@
 .btnSubmit:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .formFooter { padding-top: 2px; }
+.formSeparator { color: rgba(244,240,232,0.28); }
 .formLink {
   background: none;
   border: none;
@@ -237,6 +238,18 @@
   text-decoration: none;
   transition: color 140ms;
   padding: 0;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 .formLink:hover { color: #F4F0E8; }
 
@@ -330,12 +343,22 @@
    * for all slots so nothing causes layout reflow or scrolling.
    * The email fields expand downward in-place without moving anything above.
    */
+  .root {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
   .page {
     display: block;  /* Abandon grid on mobile — use absolute children */
     position: relative;
+    min-height: 100dvh;
     height: 100%;
     width: 100%;
-    overflow: hidden;
+    overflow: visible;
+  }
+
+  .rootFormOpen .page {
+    height: max(100dvh, 900px);
   }
 
   /* Nav — pinned top-left */
@@ -437,6 +460,5 @@
     opacity: 1;
   }
 }
-
 
 

@@ -209,8 +209,8 @@ export default function UploadVersionPage() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <button className={styles.backBtn} onClick={() => router.back()}>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <button type="button" className={styles.backBtn} onClick={() => router.back()}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
             <path d="M9 11L5 7l4-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           Back
@@ -225,10 +225,19 @@ export default function UploadVersionPage() {
 
           <div
             className={`${styles.dropZone} ${dragging ? styles.dropZoneActive : ''} ${file ? styles.dropZoneHasFile : ''}`}
+            role={!file ? 'button' : undefined}
+            tabIndex={!file ? 0 : -1}
+            aria-label={!file ? 'Choose an audio file to upload' : undefined}
             onDragOver={e => { e.preventDefault(); setDragging(true); }}
             onDragLeave={() => setDragging(false)}
             onDrop={handleDrop}
             onClick={() => !file && fileInputRef.current?.click()}
+            onKeyDown={event => {
+              if (!file && (event.key === 'Enter' || event.key === ' ')) {
+                event.preventDefault();
+                fileInputRef.current?.click();
+              }
+            }}
           >
             {file ? (
               <div className={styles.fileInfo}>
@@ -239,6 +248,8 @@ export default function UploadVersionPage() {
                 <span className={styles.fileName}>{file.name}</span>
                 <span className={styles.fileSize}>{(file.size / 1024 / 1024).toFixed(1)} MB</span>
                 <button
+                  type="button"
+                  aria-label="Remove selected audio file"
                   className={styles.removeFile}
                   onClick={e => { e.stopPropagation(); setFile(null); setProgress(0); }}
                 >✕</button>
@@ -276,6 +287,7 @@ export default function UploadVersionPage() {
 
           <input
             className={styles.labelInput}
+            aria-label="Version label"
             placeholder='Version label (optional, e.g. "Rough mix")'
             value={label}
             onChange={e => setLabel(e.target.value)}
@@ -284,6 +296,7 @@ export default function UploadVersionPage() {
 
           <textarea
             className={styles.notesInput}
+            aria-label="Version notes"
             placeholder='What changed in this version? (optional)'
             value={notes}
             onChange={e => setNotes(e.target.value)}
@@ -300,9 +313,10 @@ export default function UploadVersionPage() {
             </div>
           )}
 
-          {error && <div className={styles.errorMsg}>{error}</div>}
+          {error && <div className={styles.errorMsg} role="alert">{error}</div>}
 
           <button
+            type="button"
             className={styles.uploadBtn}
             onClick={handleUpload}
             disabled={!file || uploading}

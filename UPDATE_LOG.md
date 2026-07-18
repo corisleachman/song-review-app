@@ -3003,3 +3003,47 @@ Page-load, refresh, caching, query-index, and animation performance improvements
 - `npm run build` — passed, and the previous `/api/auth/bootstrap` dynamic-server warning is gone.
 - First-load JavaScript remained effectively flat: landing page 158kB before/after; dashboard 180kB → 181kB after adding scoped cache/action response handling.
 - Static call-path inspection confirms initial/focus dashboard loading no longer calls `loadActions()` separately; it remains only for targeted action mutations.
+
+---
+
+## 2026-07-18 — Stage 4 accessibility and responsive resilience
+
+### What we were trying to achieve
+
+Remove the highest-confidence keyboard, focus, zoom, motion, form-label, and small-screen usability barriers identified during the code review without redesigning the interface.
+
+### Feature / change being made
+
+Standards-based accessibility and responsive hardening for authentication, menus, dialogs, workspace switching, and version uploads.
+
+### Files changed
+
+- `app/layout.tsx`
+- `app/page.tsx`
+- `app/page.module.css`
+- `app/songs/[id]/upload/page.tsx`
+- `components/AccountMenu.tsx`
+- `components/UpgradeModal.tsx`
+- `components/UpgradeSuccessModal.tsx`
+- `components/WorkspaceSwitcher.tsx`
+- `components/WorkspaceSwitcher.module.css`
+- `lib/useDialogFocus.ts`
+- `styles/globals.css`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Restored browser pinch zoom and added a consistent visible keyboard-focus treatment.
+- Added reduced-motion behavior for global CSS animation and the landing-page SVG headline.
+- Authentication fields now have programmatic labels, status/error announcements, real terms/privacy links, and a mobile layout that can scroll when forms expand.
+- Upgrade dialogs and the mobile workspace sheet now trap focus, close with Escape, and restore the prior focus target.
+- The account menu supports keyboard entry, arrow-key navigation, Home/End, and Escape.
+- The version upload drop zone is keyboard-operable, form controls are labelled, and upload errors are announced.
+- Mobile sign-out uses a 44px target; tightly packed dashboard card actions retain their existing 24px target to avoid creating overlap at narrow widths.
+
+### Verification
+
+- `npx tsc --noEmit --incremental false` — passed.
+- `npm run build` — passed; landing first-load JavaScript remains 158kB and dashboard remains 181kB.
+- Headless Chrome at 1440×900 and 375×667 — home page returned 200 with no framework error overlay, labelled email/password fields rendered, keyboard focus had a visible 2px outline, and the expanded login/forgot-password flows had no horizontal overflow.
+- Reduced-motion emulation rendered no SVG animation elements or running document animations.
