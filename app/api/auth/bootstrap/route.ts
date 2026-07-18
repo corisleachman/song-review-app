@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { unstable_noStore as noStore } from 'next/cache';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 function buildReturnUrl(request: NextRequest, next: string | null) {
   const url = new URL('/', request.url);
@@ -14,6 +18,7 @@ function buildReturnUrl(request: NextRequest, next: string | null) {
 
 export async function GET(req: NextRequest) {
   try {
+    noStore();
     const next = req.nextUrl.searchParams.get('next');
     const shouldRedirect = req.nextUrl.searchParams.get('redirect') === '1';
     const resolved = await resolveCanonicalIdentity();
@@ -46,7 +51,7 @@ export async function GET(req: NextRequest) {
     if (req.nextUrl.searchParams.get('redirect') === '1') {
       const url = new URL('/', req.url);
       url.searchParams.set('google', 'error');
-      url.searchParams.set('message', error instanceof Error ? error.message : 'Bootstrap failed.');
+      url.searchParams.set('message', 'Could not finish signing you in.');
       const next = req.nextUrl.searchParams.get('next');
       if (next && next !== '/') {
         url.searchParams.set('redirectTo', next);
@@ -55,7 +60,7 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Bootstrap failed' },
+      { error: 'Could not load the authenticated session.' },
       { status: 500 }
     );
   }

@@ -87,8 +87,9 @@ export async function GET() {
         .order('version_number', { ascending: false }),
       supabaseServer
         .from('actions')
-        .select('id, song_id, comment_id, description, suggested_by, status, created_at, updated_at, assigned_to_user_id')
-        .in('song_id', songIds),
+        .select('id, song_id, comment_id, description, suggested_by, status, timestamp_seconds, created_at, updated_at, assigned_to_user_id, resolved_in_version_id')
+        .in('song_id', songIds)
+        .order('created_at', { ascending: false }),
       listWorkspaceMembers(resolved.identity.workspaceId),
     ]);
 
@@ -363,8 +364,26 @@ export async function GET() {
       };
     });
 
+    const songsById = new Map((songs ?? []).map(song => [song.id, song.title]));
+    const membersByUserId = new Map(members.map(member => [member.userId, member]));
+    const versionsById = new Map((versions ?? []).map(version => [version.id, version]));
+    const dashboardActions = (actions ?? []).map(action => ({
+      ...action,
+      status: normalizeActionStatus(action.status),
+      songTitle: songsById.get(action.song_id) ?? 'Unknown',
+      assigned_to_name: action.assigned_to_user_id
+        ? membersByUserId.get(action.assigned_to_user_id)?.displayName ?? null
+        : null,
+      resolved_in_version_label: action.resolved_in_version_id
+        ? (() => {
+            const resolvedVersion = versionsById.get(action.resolved_in_version_id);
+            return resolvedVersion ? getVersionDisplayLabel(resolvedVersion) : null;
+          })()
+        : null,
+    }));
+
     return NextResponse.json(
-      { songs: dashboardSongs },
+      { songs: dashboardSongs, actions: dashboardActions },
       { status: 200, headers: { 'Cache-Control': 'no-store, max-age=0' } }
     );
   } catch (error) {

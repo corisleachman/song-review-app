@@ -298,9 +298,10 @@
 }
 .eqBar {
   flex: 1;
-  background: rgba(244,240,232,0.18);
+  height: 100%;
+  background: rgb(244,240,232);
   transform-origin: bottom;
-  transition: height 80ms cubic-bezier(0.23, 1, 0.32, 1);
+  will-change: transform, opacity;
   min-width: 2px;
 }
 
@@ -436,7 +437,6 @@
     opacity: 1;
   }
 }
-
 
 
 

@@ -2963,3 +2963,43 @@ Two-phase version uploads with database-backed allocation and finalization.
 
 - `npx tsc --noEmit --incremental false` — passed.
 - SQL was reviewed statically; migration execution still requires a disposable Supabase/PostgreSQL environment.
+
+---
+
+## 2026-07-18 — Stage 3 dashboard and landing-page performance
+
+### What we were trying to achieve
+
+Reduce duplicate dashboard work, prevent cross-workspace cache reuse, and lower the landing page's initial network and per-frame rendering cost.
+
+### Feature / change being made
+
+Page-load, refresh, caching, query-index, and animation performance improvements.
+
+### Files changed
+
+- `app/api/auth/bootstrap/route.ts`
+- `app/api/dashboard/route.ts`
+- `app/dashboard/page.tsx`
+- `app/page.tsx`
+- `app/page.module.css`
+- `migrations/20260718_dashboard_query_indexes_up.sql`
+- `migrations/20260718_dashboard_query_indexes_down.sql`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The dashboard response now includes its action list, removing the duplicate `/api/actions` request on initial load and focus refresh.
+- Dashboard song/activity caches are scoped by user and workspace, expire after five minutes, remove the old unscoped keys, and are cleared for the current workspace on sign-out.
+- Focus and visibility events within one second are coalesced so a tab return does not immediately issue the same reload twice.
+- Added composite indexes matching the dashboard's workspace, version, action, thread, comment, and membership lookups.
+- The landing page initially references one background image and preloads each next slide only when it is needed instead of causing all six to download at once.
+- The equalizer uses 72 transform/opacity animations instead of 120 height/background writes, stops in hidden tabs, and renders a static reduced-motion variant.
+- Auth bootstrap is now explicitly dynamic/no-store, removing the production-build static-generation warning and avoiding raw bootstrap errors in responses.
+
+### Verification
+
+- `npx tsc --noEmit --incremental false` — passed.
+- `npm run build` — passed, and the previous `/api/auth/bootstrap` dynamic-server warning is gone.
+- First-load JavaScript remained effectively flat: landing page 158kB before/after; dashboard 180kB → 181kB after adding scoped cache/action response handling.
+- Static call-path inspection confirms initial/focus dashboard loading no longer calls `loadActions()` separately; it remains only for targeted action mutations.

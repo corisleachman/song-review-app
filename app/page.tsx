@@ -88,6 +88,7 @@ function LoginContent() {
 
   // BG slideshow
   const [bgIndex, setBgIndex] = useState(0);
+  const [previousBgIndex, setPreviousBgIndex] = useState<number | null>(null);
   const eqRef = useRef<HTMLDivElement>(null);
   const animRef = useRef<number>(0);
 
@@ -125,23 +126,46 @@ function LoginContent() {
 
   // BG crossfade
   useEffect(() => {
-    const id = setInterval(() => setBgIndex(i => (i + 1) % BG_IMAGES.length), 5000);
-    return () => clearInterval(id);
-  }, []);
+    let cancelled = false;
+    let nextImage: HTMLImageElement | null = null;
+    const id = window.setTimeout(() => {
+      const nextIndex = (bgIndex + 1) % BG_IMAGES.length;
+      nextImage = new Image();
+      nextImage.onload = () => {
+        if (cancelled) return;
+        setPreviousBgIndex(bgIndex);
+        setBgIndex(nextIndex);
+      };
+      nextImage.src = BG_IMAGES[nextIndex];
+    }, 5000);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(id);
+      if (nextImage) nextImage.onload = null;
+    };
+  }, [bgIndex]);
 
   // EQ visualiser
   useEffect(() => {
     const container = eqRef.current;
     if (!container) return;
-    const BAR_COUNT = 120;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const BAR_COUNT = prefersReducedMotion ? 36 : 72;
     const bars: HTMLDivElement[] = [];
     for (let i = 0; i < BAR_COUNT; i++) {
       const b = document.createElement('div');
       b.className = styles.eqBar;
-      b.style.height = '3px';
+      b.style.transform = 'scaleY(0.06)';
+      b.style.opacity = '0.18';
       container.appendChild(b);
       bars.push(b);
     }
+
+    if (prefersReducedMotion) {
+      return () => bars.forEach(b => b.remove());
+    }
+
     const state = bars.map(() => ({ h: 3, target: 3, vel: 0 }));
     let lastMouseX = -1, lastMouseY = -1;
     let mouseActivity = 0, beatPhase = 0, kickEnergy = 0, subEnergy = 0;
@@ -153,6 +177,11 @@ function LoginContent() {
     };
     document.addEventListener('mousemove', onMove);
     const tick = (now: number) => {
+      if (document.visibilityState === 'hidden') {
+        animRef.current = 0;
+        return;
+      }
+
       const dt = now - lastTime; lastTime = now;
       beatPhase = (beatPhase + dt / 2000) % 1;
       const beatPos = (beatPhase * 4) % 1, beatNum = Math.floor(beatPhase * 4);
@@ -177,15 +206,31 @@ function LoginContent() {
         }
         s.vel = s.vel * (isBass?0.65:isLow?0.60:isMid?0.55:0.48) + (s.target - s.h) * (isBass?0.28:isLow?0.32:isMid?0.38:0.48);
         s.h = Math.max(2, Math.min(maxH, s.h + s.vel));
-        bar.style.height = s.h + 'px';
+        bar.style.transform = `scaleY(${Math.max(0.04, s.h / maxH)})`;
         const alpha = isBass ? 0.15+(s.h/maxH)*0.55 : 0.10+(s.h/maxH)*0.38;
-        bar.style.background = `rgba(244,240,232,${alpha.toFixed(2)})`;
+        bar.style.opacity = alpha.toFixed(2);
       });
       animRef.current = requestAnimationFrame(tick);
     };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        cancelAnimationFrame(animRef.current);
+        animRef.current = 0;
+        return;
+      }
+
+      if (!animRef.current) {
+        lastTime = performance.now();
+        animRef.current = requestAnimationFrame(tick);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     animRef.current = requestAnimationFrame(tick);
     return () => {
       document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       cancelAnimationFrame(animRef.current);
       bars.forEach(b => b.remove());
     };
@@ -249,11 +294,14 @@ function LoginContent() {
     <div className={styles.root}>
       {/* Background slides */}
       <div className={styles.bg}>
-        {BG_IMAGES.map((src, i) => (
+        {(previousBgIndex === null || previousBgIndex === bgIndex
+          ? [bgIndex]
+          : [previousBgIndex, bgIndex]
+        ).map(i => (
           <div
             key={i}
             className={`${styles.bgSlide} ${i === bgIndex ? styles.bgSlideActive : ''}`}
-            style={{ backgroundImage: `url('${src}')` }}
+            style={{ backgroundImage: `url('${BG_IMAGES[i]}')` }}
           />
         ))}
         <div className={styles.bgVeil} />

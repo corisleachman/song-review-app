@@ -97,6 +97,7 @@ interface DashboardSongsPayload {
     activityFeed: SongActivityItem[];
     latestActivityAt: string | null;
   }>;
+  actions?: Action[];
 }
 
 interface VersionPayload {
@@ -107,8 +108,24 @@ interface VersionPayload {
   } | null;
 }
 
-function getSongSeenStorageKey(viewerKey: string) {
-  return `song-review-song-seen:${viewerKey}`;
+interface CachedDashboardSongs {
+  version: 1;
+  cachedAt: number;
+  songs: Song[];
+}
+
+const DASHBOARD_CACHE_TTL_MS = 5 * 60 * 1000;
+
+function getWorkspaceScope(viewerKey: string, workspaceId: string | null) {
+  return `${viewerKey}:${workspaceId ?? 'legacy'}`;
+}
+
+function getSongSeenStorageKey(viewerKey: string, workspaceId: string | null) {
+  return `song-review-song-seen:${getWorkspaceScope(viewerKey, workspaceId)}`;
+}
+
+function getSongCacheKey(viewerKey: string, workspaceId: string | null) {
+  return `song_review_song_cache_${getWorkspaceScope(viewerKey, workspaceId)}`;
 }
 
 function getComparableTime(value?: string | null) {
@@ -146,6 +163,7 @@ function DashboardContent() {
   const [identity, setIdentity] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [viewerKey, setViewerKey] = useState<string | null>(null);
+  const [workspaceId, setWorkspaceId] = useState<string | null>(null);
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
   const [workspacePlan, setWorkspacePlan] = useState<AccountPlan | null>(null);
   const [workspaceName, setWorkspaceName] = useState<string | null>(null);
@@ -202,6 +220,10 @@ function DashboardContent() {
     } catch (error) {
       console.error('Sign-out error:', error);
     } finally {
+      if (viewerKey && typeof window !== 'undefined') {
+        window.localStorage.removeItem(getSongCacheKey(viewerKey, workspaceId));
+        window.localStorage.removeItem(getSongSeenStorageKey(viewerKey, workspaceId));
+      }
       clearAuth();
       clearIdentity();
       window.location.assign('/');
@@ -222,12 +244,13 @@ function DashboardContent() {
           setIdentity(payload.identity.authorName || payload.identity.displayName || 'U');
           setAvatarUrl(payload.identity.avatarUrl ?? null);
           setViewerKey(payload.identity.userId);
+          setWorkspaceId(payload.identity.workspaceId);
           setWorkspacePlan(payload.workspace.plan);
           setWorkspaceName(payload.identity.workspaceName);
           setWorkspaceImageUrl(payload.identity.workspaceImageUrl ?? null);
           setMembershipRole(payload.identity.membershipRole);
           setBootstrapError(null);
-          await loadAll(payload.identity.userId);
+          await loadAll(payload.identity.userId, payload.identity.workspaceId);
           return;
         }
 
@@ -238,12 +261,13 @@ function DashboardContent() {
           setIdentity(legacyIdentity);
           setAvatarUrl(null);
           setViewerKey(legacyIdentity);
+          setWorkspaceId(null);
           setWorkspacePlan(null);
           setWorkspaceName(null);
           setWorkspaceImageUrl(null);
           setMembershipRole(null);
           setBootstrapError(null);
-          await loadAll(legacyIdentity);
+          await loadAll(legacyIdentity, null);
           return;
         }
 
@@ -257,12 +281,13 @@ function DashboardContent() {
           setIdentity(legacyIdentity);
           setAvatarUrl(null);
           setViewerKey(legacyIdentity);
+          setWorkspaceId(null);
           setWorkspacePlan(null);
           setWorkspaceName(null);
           setWorkspaceImageUrl(null);
           setMembershipRole(null);
           setBootstrapError(null);
-          await loadAll(legacyIdentity);
+          await loadAll(legacyIdentity, null);
           return;
         }
 
@@ -353,8 +378,12 @@ function DashboardContent() {
   useEffect(() => {
     if (!viewerKey) return;
 
+    let lastReloadAt = 0;
     const reload = () => {
-      void loadAll(viewerKey);
+      const now = Date.now();
+      if (now - lastReloadAt < 1000) return;
+      lastReloadAt = now;
+      void loadAll(viewerKey, workspaceId);
     };
 
     const handleVisibilityChange = () => {
@@ -370,45 +399,54 @@ function DashboardContent() {
       window.removeEventListener('focus', reload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [viewerKey]);
+  }, [viewerKey, workspaceId]);
 
-  function getSongCacheKey(identity: string) {
-    return `song_review_song_cache_${identity}`;
-  }
+  async function loadAll(
+    currentIdentity: string | null = viewerKey,
+    currentWorkspaceId: string | null = workspaceId
+  ) {
+    if (currentIdentity && currentWorkspaceId && typeof window !== 'undefined') {
+      window.localStorage.removeItem(`song_review_song_cache_${currentIdentity}`);
+      window.localStorage.removeItem(`song-review-song-seen:${currentIdentity}`);
+    }
 
-  async function loadAll(currentIdentity: string | null = viewerKey) {
     // Stale-while-revalidate: show cached songs instantly, fetch fresh in background
-    const cacheKey = currentIdentity ? getSongCacheKey(currentIdentity) : null;
+    const cacheKey = currentIdentity ? getSongCacheKey(currentIdentity, currentWorkspaceId) : null;
     const cached = cacheKey && typeof window !== 'undefined'
       ? window.localStorage.getItem(cacheKey)
       : null;
 
     if (cached) {
       try {
-        const cachedSongs = JSON.parse(cached) as Song[];
-        if (Array.isArray(cachedSongs) && cachedSongs.length > 0) {
-          setSongs(cachedSongs);
+        const cachedPayload = JSON.parse(cached) as CachedDashboardSongs;
+        const isFresh = cachedPayload?.version === 1
+          && Number.isFinite(cachedPayload.cachedAt)
+          && Date.now() - cachedPayload.cachedAt < DASHBOARD_CACHE_TTL_MS;
+        if (isFresh && Array.isArray(cachedPayload.songs) && cachedPayload.songs.length > 0) {
+          setSongs(cachedPayload.songs);
           setLoading(false); // show cached songs immediately
           // Fetch fresh in background — no loading spinner
-          void Promise.all([
-            loadSongs(currentIdentity, undefined, cacheKey),
-            loadActions(),
-          ]);
+          void loadSongs(currentIdentity, currentWorkspaceId, undefined, cacheKey);
           return;
         }
+        if (cacheKey) window.localStorage.removeItem(cacheKey);
       } catch {
-        // Corrupt cache — fall through to normal load
+        if (cacheKey) window.localStorage.removeItem(cacheKey);
       }
     }
 
     // No cache — show loading, fetch fresh
     setLoading(true);
-    await loadSongs(currentIdentity, undefined, cacheKey);
+    await loadSongs(currentIdentity, currentWorkspaceId, undefined, cacheKey);
     setLoading(false);
-    void loadActions();
   }
 
-  async function loadSongs(currentIdentity: string | null = viewerKey, endpoint = '/api/dashboard', cacheKey: string | null = null) {
+  async function loadSongs(
+    currentIdentity: string | null = viewerKey,
+    currentWorkspaceId: string | null = workspaceId,
+    endpoint = '/api/dashboard',
+    cacheKey: string | null = null
+  ) {
     const response = await fetch(endpoint, { cache: 'no-store' });
     const payload = await response.json().catch(() => null) as DashboardSongsPayload | null;
 
@@ -418,7 +456,7 @@ function DashboardContent() {
     }
 
     const seenMap = typeof window !== 'undefined' && currentIdentity
-      ? JSON.parse(window.localStorage.getItem(getSongSeenStorageKey(currentIdentity)) || '{}') as Record<string, string>
+      ? JSON.parse(window.localStorage.getItem(getSongSeenStorageKey(currentIdentity, currentWorkspaceId)) || '{}') as Record<string, string>
       : {};
     const nextSeenMap = { ...seenMap };
     let seededSeenMap = false;
@@ -462,19 +500,27 @@ function DashboardContent() {
     });
 
     if (currentIdentity && seededSeenMap && typeof window !== 'undefined') {
-      window.localStorage.setItem(getSongSeenStorageKey(currentIdentity), JSON.stringify(nextSeenMap));
+      window.localStorage.setItem(getSongSeenStorageKey(currentIdentity, currentWorkspaceId), JSON.stringify(nextSeenMap));
     }
 
     // Cache the assembled song list for instant render on next load
     if (cacheKey && typeof window !== 'undefined') {
       try {
-        window.localStorage.setItem(cacheKey, JSON.stringify(assembled));
+        const cachePayload: CachedDashboardSongs = {
+          version: 1,
+          cachedAt: Date.now(),
+          songs: assembled,
+        };
+        window.localStorage.setItem(cacheKey, JSON.stringify(cachePayload));
       } catch {
         // localStorage full — ignore
       }
     }
 
     setSongs(assembled);
+    if (Array.isArray(payload.actions)) {
+      setActions(payload.actions);
+    }
     return true;
   }
 
@@ -704,7 +750,7 @@ function DashboardContent() {
   function markSongSeen(songId: string) {
     if (!viewerKey || typeof window === 'undefined') return;
 
-    const storageKey = getSongSeenStorageKey(viewerKey);
+    const storageKey = getSongSeenStorageKey(viewerKey, workspaceId);
     const seenMap = JSON.parse(window.localStorage.getItem(storageKey) || '{}') as Record<string, string>;
     window.localStorage.setItem(
       storageKey,
