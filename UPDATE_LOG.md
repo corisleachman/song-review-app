@@ -2889,3 +2889,37 @@ First staged security hardening pass for comment notifications, action creation,
 - `npx tsc --noEmit --incremental false` — passed.
 - `npm run build` — passed; the pre-existing `/api/auth/bootstrap` dynamic-render warning remains for a later stage.
 
+---
+
+## 2026-07-18 — Stage 2A schema reproducibility and Stripe idempotency
+
+### What we were trying to achieve
+
+Make the public-comments feature reproducible from migrations and prevent Stripe webhook retries or partial failures from applying referral credit more than once.
+
+### Feature / change being made
+
+Migration-backed database integrity and payment-webhook idempotency.
+
+### Files changed
+
+- `app/api/stripe/webhook/route.ts`
+- `lib/referrals.ts`
+- `migrations/20260718_public_comments_up.sql`
+- `migrations/20260718_public_comments_down.sql`
+- `migrations/20260718_stripe_webhook_idempotency_up.sql`
+- `migrations/20260718_stripe_webhook_idempotency_down.sql`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Added the missing song visibility columns, public comments table, validation constraints, index, RLS enablement, and service-role-only grants.
+- Added an atomic Stripe event ledger that rejects concurrent/processed duplicates and permits failed or abandoned work to retry.
+- Referral customer creation and balance credits now use deterministic Stripe idempotency keys.
+- Failed Stripe or database writes now fail the webhook so Stripe can retry instead of silently marking incomplete work successful.
+- The webhook temporarily falls back to Stripe operation-level idempotency if the ledger migration has not yet been applied, allowing a migration-first rollout.
+
+### Verification
+
+- `npx tsc --noEmit --incremental false` — passed.
+- SQL was reviewed statically; no local PostgreSQL/Supabase CLI is available to execute the migrations against a disposable database.

@@ -24,6 +24,54 @@ function getErrorMessage(error: unknown) {
   return 'Webhook handling failed.';
 }
 
+function isMissingWebhookLedger(error: unknown) {
+  if (!error || typeof error !== 'object') return false;
+
+  const code = 'code' in error && typeof error.code === 'string' ? error.code : '';
+  const message = 'message' in error && typeof error.message === 'string'
+    ? error.message.toLowerCase()
+    : '';
+
+  return code === 'PGRST202'
+    || code === '42883'
+    || (message.includes('claim_stripe_webhook_event') && message.includes('schema cache'));
+}
+
+async function claimWebhookEvent(eventId: string, eventType: string) {
+  const { data, error } = await supabaseServer.rpc('claim_stripe_webhook_event', {
+    p_event_id: eventId,
+    p_event_type: eventType,
+  });
+
+  if (error) {
+    if (isMissingWebhookLedger(error)) {
+      console.warn('[stripe] Webhook event ledger migration is not applied; relying on operation-level idempotency.');
+      return { claimed: true, ledgerAvailable: false };
+    }
+    throw error;
+  }
+
+  return { claimed: data === true, ledgerAvailable: true };
+}
+
+async function completeWebhookEvent(eventId: string) {
+  const { error } = await supabaseServer.rpc('complete_stripe_webhook_event', {
+    p_event_id: eventId,
+  });
+  if (error) throw error;
+}
+
+async function failWebhookEvent(eventId: string, error: unknown) {
+  const { error: ledgerError } = await supabaseServer.rpc('fail_stripe_webhook_event', {
+    p_event_id: eventId,
+    p_error: getErrorMessage(error),
+  });
+
+  if (ledgerError) {
+    console.error('[stripe] Could not mark webhook event as failed:', ledgerError);
+  }
+}
+
 // ── Account plan helpers ──────────────────────────────────────────────────────
 
 async function updateAccountPlanByWorkspaceId(params: {
@@ -178,11 +226,13 @@ async function handleInvoicePaid(event: { data: { object: unknown } }) {
   if (!stripeCustomerId) return;
 
   // Find the account for this Stripe customer
-  const { data: account } = await supabaseServer
+  const { data: account, error: accountError } = await supabaseServer
     .from('accounts')
     .select('id, plan, stripe_customer_id')
     .eq('stripe_customer_id', stripeCustomerId)
     .maybeSingle();
+
+  if (accountError) throw accountError;
 
   if (!account?.id) return;
 
@@ -197,30 +247,34 @@ async function handleInvoicePaid(event: { data: { object: unknown } }) {
   });
 
   // Cap check — has the referrer already received the maximum rewards?
-  const { count: rewardCount } = await supabaseServer
+  const { count: rewardCount, error: rewardCountError } = await supabaseServer
     .from('referrals')
     .select('id', { count: 'exact', head: true })
     .eq('referred_by_user_id', referral.referred_by_user_id)
     .eq('status', 'rewarded');
 
+  if (rewardCountError) throw rewardCountError;
+
   if ((rewardCount ?? 0) >= REFERRAL_REWARD_CAP) {
-    await supabaseServer
+    const { error: ineligibleError } = await supabaseServer
       .from('referrals')
       .update({ status: 'ineligible', ineligible_reason: 'cap_reached' })
       .eq('id', referral.id);
+    if (ineligibleError) throw ineligibleError;
     return;
   }
 
   // Find the referrer's billing account
-  const { data: referrerAccount } = await supabaseServer
+  const { data: referrerAccount, error: referrerAccountError } = await supabaseServer
     .from('accounts')
     .select('id, plan, stripe_customer_id')
     .eq('id', referral.referred_by_account_id ?? '')
     .maybeSingle();
 
+  if (referrerAccountError) throw referrerAccountError;
+
   if (!referrerAccount) {
-    console.warn('[referrals] Referrer account not found — leaving as converted:', referral.id);
-    return;
+    throw new Error(`Referrer account not found for referral ${referral.id}.`);
   }
 
   const stripe = getStripe();
@@ -230,11 +284,13 @@ async function handleInvoicePaid(event: { data: { object: unknown } }) {
   let referrerStripeCustomerId = referrerAccount.stripe_customer_id as string | null;
 
   if (!referrerStripeCustomerId) {
-    const { data: referrerProfile } = await supabaseServer
+    const { data: referrerProfile, error: referrerProfileError } = await supabaseServer
       .from('profiles')
       .select('email, display_name')
       .eq('id', referral.referred_by_user_id)
       .maybeSingle();
+
+    if (referrerProfileError) throw referrerProfileError;
 
     try {
       const newCustomer = await stripe.customers.create({
@@ -244,17 +300,21 @@ async function handleInvoicePaid(event: { data: { object: unknown } }) {
           account_id: referrerAccount.id as string,
           source:     'referral_reward',
         },
+      }, {
+        idempotencyKey: `referral-customer:${referral.id}`,
       });
 
       referrerStripeCustomerId = newCustomer.id;
 
-      await supabaseServer
+      const { error: accountUpdateError } = await supabaseServer
         .from('accounts')
         .update({ stripe_customer_id: referrerStripeCustomerId })
         .eq('id', referrerAccount.id);
+
+      if (accountUpdateError) throw accountUpdateError;
     } catch (createErr) {
       console.error('[referrals] Could not create Stripe customer for free-tier referrer:', createErr);
-      return; // Leave as converted — safe to retry on next webhook replay
+      throw createErr;
     }
   }
 
@@ -264,8 +324,9 @@ async function handleInvoicePaid(event: { data: { object: unknown } }) {
   const creditAmountPence = Math.round(monthlyPence * 0.5);
 
   // Apply the Stripe customer balance credit
+  let balanceTransactionId: string;
   try {
-    await stripe.customers.createBalanceTransaction(
+    const balanceTransaction = await stripe.customers.createBalanceTransaction(
       referrerStripeCustomerId,
       {
         amount:      -creditAmountPence, // Negative = credit on account
@@ -276,20 +337,25 @@ async function handleInvoicePaid(event: { data: { object: unknown } }) {
           referred_account:  account.id as string,
           stripe_invoice_id: invoice.id,
         },
+      },
+      {
+        idempotencyKey: `referral-credit:${referral.id}:${invoice.id}`,
       }
     );
+    balanceTransactionId = balanceTransaction.id;
   } catch (stripeError) {
-    // Credit failed — leave as converted so it can be safely retried
+    // Credit failed — leave as converted and fail the webhook so Stripe retries.
     console.error('[referrals] Stripe credit failed — leaving as converted:', stripeError);
-    return;
+    throw stripeError;
   }
 
-  // All done — mark rewarded
   await markReferralRewarded(referral.id, creditAmountPence, {
-    stripe_invoice_id:        invoice.id,
-    referrer_stripe_customer: referrerStripeCustomerId,
-    referrer_plan:            referrerPlan,
+    stripe_invoice_id:             invoice.id,
+    referrer_stripe_customer:      referrerStripeCustomerId,
+    referrer_plan:                 referrerPlan,
+    stripe_balance_transaction_id: balanceTransactionId,
   });
+
 }
 
 // ── Main handler ──────────────────────────────────────────────────────────────
@@ -312,26 +378,42 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid Stripe signature.' }, { status: 400 });
     }
 
-    switch (event.type) {
-      case 'checkout.session.completed':
-        await handleCheckoutSessionCompleted(event);
-        break;
-      case 'invoice.paid':
-        await handleInvoicePaid(event);
-        break;
-      case 'customer.subscription.updated':
-        await handleSubscriptionUpdated(event);
-        break;
-      case 'customer.subscription.deleted':
-        await handleSubscriptionDeleted(event);
-        break;
-      default:
-        break;
+    const claim = await claimWebhookEvent(event.id, event.type);
+    if (!claim.claimed) {
+      return NextResponse.json({ received: true, duplicate: true }, { status: 200 });
+    }
+
+    try {
+      switch (event.type) {
+        case 'checkout.session.completed':
+          await handleCheckoutSessionCompleted(event);
+          break;
+        case 'invoice.paid':
+          await handleInvoicePaid(event);
+          break;
+        case 'customer.subscription.updated':
+          await handleSubscriptionUpdated(event);
+          break;
+        case 'customer.subscription.deleted':
+          await handleSubscriptionDeleted(event);
+          break;
+        default:
+          break;
+      }
+
+      if (claim.ledgerAvailable) {
+        await completeWebhookEvent(event.id);
+      }
+    } catch (error) {
+      if (claim.ledgerAvailable) {
+        await failWebhookEvent(event.id, error);
+      }
+      throw error;
     }
 
     return NextResponse.json({ received: true }, { status: 200 });
   } catch (error) {
     console.error('Stripe webhook error:', error);
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    return NextResponse.json({ error: 'Webhook handling failed.' }, { status: 500 });
   }
 }

@@ -201,12 +201,14 @@ export async function attributeReferralOnSignup(params: {
 export async function getPendingReferralForAccount(
   accountId: string,
 ): Promise<Referral | null> {
-  const { data } = await supabaseServer
+  const { data, error } = await supabaseServer
     .from('referrals')
     .select('*')
     .eq('referred_account_id', accountId)
     .in('status', ['pending', 'converted'])
     .maybeSingle();
+
+  if (error) throw error;
 
   return (data as Referral | null) ?? null;
 }
@@ -220,7 +222,7 @@ export async function markReferralConverted(
   metadata: Record<string, unknown> = {},
 ): Promise<void> {
   const now = new Date().toISOString();
-  await supabaseServer
+  const { error } = await supabaseServer
     .from('referrals')
     .update({
       status:             'converted',
@@ -229,6 +231,8 @@ export async function markReferralConverted(
       metadata,
     })
     .eq('id', referralId);
+
+  if (error) throw error;
 }
 
 /**
@@ -239,7 +243,7 @@ export async function markReferralRewarded(
   creditAmountPence: number,
   metadata: Record<string, unknown> = {},
 ): Promise<void> {
-  await supabaseServer
+  const { error } = await supabaseServer
     .from('referrals')
     .update({
       status:               'rewarded',
@@ -248,4 +252,6 @@ export async function markReferralRewarded(
       metadata,
     })
     .eq('id', referralId);
+
+  if (error) throw error;
 }
