@@ -2549,11 +2549,16 @@ function VersionPageInner() {
               <label className={styles.heroArtworkUpload} title="Upload cover art">
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
                   style={{ display: 'none' }}
                   onChange={async e => {
                     const file = e.target.files?.[0];
                     if (!file) return;
+                    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+                      window.alert('Choose a JPEG, PNG, or WebP image that is 5MB or smaller.');
+                      e.target.value = '';
+                      return;
+                    }
                     const fd = new FormData();
                     fd.append('songId', songId);
                     fd.append('file', file);

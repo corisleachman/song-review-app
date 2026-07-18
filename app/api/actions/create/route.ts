@@ -44,6 +44,41 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'You do not have access to this song.' }, { status: 403 });
     }
 
+    const { data: comment, error: commentError } = await supabaseServer
+      .from('comments')
+      .select('id, thread_id')
+      .eq('id', commentId)
+      .maybeSingle();
+
+    if (commentError) throw commentError;
+
+    const { data: thread, error: threadError } = comment?.thread_id
+      ? await supabaseServer
+          .from('comment_threads')
+          .select('id, song_version_id')
+          .eq('id', comment.thread_id)
+          .maybeSingle()
+      : { data: null, error: null };
+
+    if (threadError) throw threadError;
+
+    const { data: sourceVersion, error: versionError } = thread?.song_version_id
+      ? await supabaseServer
+          .from('song_versions')
+          .select('id, song_id')
+          .eq('id', thread.song_version_id)
+          .maybeSingle()
+      : { data: null, error: null };
+
+    if (versionError) throw versionError;
+
+    if (!comment || !thread || !sourceVersion || sourceVersion.song_id !== songId) {
+      return NextResponse.json(
+        { error: 'The selected comment does not belong to this song.' },
+        { status: 400 }
+      );
+    }
+
     if (nextAssignedToUserId) {
       const members = await listWorkspaceMembers(song.account_id);
       const isValidAssignee = members.some(member => member.userId === nextAssignedToUserId);
@@ -79,7 +114,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('Error creating action:', error);
     return NextResponse.json(
-      { error: String(error) },
+      { error: 'Could not create the action.' },
       { status: 500 }
     );
   }

@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import {
+  INTERNAL_REQUEST_SIGNATURE_HEADER,
+  verifyInternalRequestSignature,
+} from '@/lib/internalRequestAuth';
 import { supabaseServer } from '@/lib/supabaseServer';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 interface NotifyThreadRequest {
-  threadId?: string | null;
-  songId?: string | null;
-  versionId?: string | null;
-  timestamp?: number | null;
-  author?: string | null;
-  commentText?: string | null;
-  isReply?: boolean;
-  actorUserId?: string | null;
-  workspaceId?: string | null;
+  threadId?: unknown;
+  commentId?: unknown;
+  songId?: unknown;
+  versionId?: unknown;
+  actorUserId?: unknown;
 }
 
 interface WorkspaceRecipient {
@@ -32,8 +32,9 @@ function escapeHtml(value: string) {
 }
 
 function formatTimestamp(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
+  const normalizedSeconds = Math.max(0, Math.round(seconds));
+  const mins = Math.floor(normalizedSeconds / 60);
+  const secs = normalizedSeconds % 60;
   return `${mins}:${String(secs).padStart(2, '0')}`;
 }
 
@@ -131,7 +132,7 @@ function getHtmlEmail(params: {
         <p style="margin: 0; white-space: pre-wrap;">${escapeHtml(commentBody)}</p>
       </blockquote>
       <p style="margin: 0 0 20px;">
-        <a href="${deepLink}" style="display: inline-block; padding: 10px 16px; background-color: #111; color: #fff; text-decoration: none; border-radius: 6px;">
+        <a href="${escapeHtml(deepLink)}" style="display: inline-block; padding: 10px 16px; background-color: #111; color: #fff; text-decoration: none; border-radius: 6px;">
           ${ctaLabel}
         </a>
       </p>
@@ -257,12 +258,6 @@ async function resolveWorkspaceRecipients(workspaceId: string, actorUserId: stri
 
   if (membersError) throw membersError;
 
-  console.log('[notify-thread] all_members debug:', {
-    workspaceId,
-    actorUserId,
-    rawMembers: members,
-  });
-
   const recipientUserIds = Array.from(
     new Set(
       (members ?? [])
@@ -270,8 +265,6 @@ async function resolveWorkspaceRecipients(workspaceId: string, actorUserId: stri
         .filter(userId => userId && userId !== actorUserId)
     )
   );
-
-  console.log('[notify-thread] recipientUserIds after filter:', recipientUserIds);
 
   if (recipientUserIds.length === 0) {
     return [] as WorkspaceRecipient[];
@@ -281,8 +274,6 @@ async function resolveWorkspaceRecipients(workspaceId: string, actorUserId: stri
     .from('profiles')
     .select('id, email, display_name')
     .in('id', recipientUserIds);
-
-  console.log('[notify-thread] profiles resolved:', profiles?.map(p => ({ id: p.id, email: p.email })));
 
   if (profilesError) throw profilesError;
 
@@ -315,68 +306,102 @@ async function resolveWorkspaceRecipients(workspaceId: string, actorUserId: stri
 
 export async function POST(req: NextRequest) {
   try {
-    const {
-      threadId,
-      songId,
-      versionId,
-      timestamp,
-      author,
-      commentText,
-      isReply,
-      actorUserId,
-      workspaceId,
-    } = await req.json() as NotifyThreadRequest;
-
-    if (!songId || !author || typeof timestamp !== 'number' || !commentText) {
-      return NextResponse.json(
-        { sent: false, skipped: 'missing-required-fields' },
-        { status: 400 }
-      );
+    const contentLength = Number(req.headers.get('content-length') ?? 0);
+    if (Number.isFinite(contentLength) && contentLength > 16 * 1024) {
+      return NextResponse.json({ error: 'Notification request is too large.' }, { status: 413 });
     }
 
-    if (!actorUserId) {
-      console.warn('[notify-thread] Missing canonical actor user id; skipping notification send.');
-      return NextResponse.json({ sent: false, skipped: 'missing-actor-user-id' });
+    const rawPayload = await req.text();
+    if (Buffer.byteLength(rawPayload, 'utf8') > 16 * 1024) {
+      return NextResponse.json({ error: 'Notification request is too large.' }, { status: 413 });
     }
 
-    let resolvedVersionId = versionId;
+    const isTrustedRequest = verifyInternalRequestSignature(
+      rawPayload,
+      req.headers.get(INTERNAL_REQUEST_SIGNATURE_HEADER)
+    );
 
-    if (!resolvedVersionId && threadId) {
-      const { data: threadVersionData } = await supabaseServer
-        .from('comment_threads')
-        .select('song_version_id')
-        .eq('id', threadId)
-        .single();
-
-      resolvedVersionId = threadVersionData?.song_version_id ?? null;
+    if (!isTrustedRequest) {
+      return NextResponse.json({ error: 'Unauthorised notification request.' }, { status: 401 });
     }
 
-    const { data: songData } = await supabaseServer
+    const payload = JSON.parse(rawPayload) as NotifyThreadRequest;
+    const threadId = typeof payload.threadId === 'string' ? payload.threadId.trim() : '';
+    const commentId = typeof payload.commentId === 'string' ? payload.commentId.trim() : '';
+    const songId = typeof payload.songId === 'string' ? payload.songId.trim() : '';
+    const versionId = typeof payload.versionId === 'string' ? payload.versionId.trim() : '';
+    const actorUserId = typeof payload.actorUserId === 'string' ? payload.actorUserId.trim() : '';
+
+    if (!threadId || !commentId || !songId || !versionId || !actorUserId) {
+      return NextResponse.json({ error: 'Missing required notification identifiers.' }, { status: 400 });
+    }
+
+    const { data: threadData, error: threadError } = await supabaseServer
+      .from('comment_threads')
+      .select('id, song_version_id, timestamp_seconds')
+      .eq('id', threadId)
+      .maybeSingle();
+
+    if (threadError) throw threadError;
+    if (!threadData || threadData.song_version_id !== versionId) {
+      return NextResponse.json({ error: 'Thread not found.' }, { status: 404 });
+    }
+
+    const { data: versionData, error: versionError } = await supabaseServer
+      .from('song_versions')
+      .select('id, song_id, version_number, label')
+      .eq('id', versionId)
+      .maybeSingle();
+
+    if (versionError) throw versionError;
+    if (!versionData || versionData.song_id !== songId) {
+      return NextResponse.json({ error: 'Version not found.' }, { status: 404 });
+    }
+
+    const { data: songData, error: songError } = await supabaseServer
       .from('songs')
       .select('title, account_id')
       .eq('id', songId)
-      .single();
+      .maybeSingle();
 
-    const { data: versionData } = resolvedVersionId
-      ? await supabaseServer
-          .from('song_versions')
-          .select('version_number, label')
-          .eq('id', resolvedVersionId)
-          .single()
-      : { data: null };
-
-    const resolvedWorkspaceId = songData?.account_id ?? workspaceId ?? null;
-
-    if (!resolvedWorkspaceId) {
-      console.warn('[notify-thread] Could not resolve workspace for notification; skipping send.', {
-        songId,
-        threadId,
-      });
-      return NextResponse.json({ sent: false, skipped: 'missing-workspace' });
+    if (songError) throw songError;
+    if (!songData?.account_id) {
+      return NextResponse.json({ error: 'Song not found.' }, { status: 404 });
     }
 
-    // Resolve recipients from canonical workspace membership, never from
-    // collaborator display-name flips like "Coris" -> "Al".
+    const { data: actorMembership, error: membershipError } = await supabaseServer
+      .from('account_members')
+      .select('user_id')
+      .eq('account_id', songData.account_id)
+      .eq('user_id', actorUserId)
+      .maybeSingle();
+
+    if (membershipError) throw membershipError;
+    if (!actorMembership) {
+      return NextResponse.json({ error: 'Notification actor is not a workspace member.' }, { status: 403 });
+    }
+
+    const { data: commentData, error: commentError } = await supabaseServer
+      .from('comments')
+      .select('id, thread_id, author, body')
+      .eq('id', commentId)
+      .maybeSingle();
+
+    if (commentError) throw commentError;
+    if (!commentData || commentData.thread_id !== threadId) {
+      return NextResponse.json({ error: 'Comment not found.' }, { status: 404 });
+    }
+
+    const actorName = normalizeNotificationActor(commentData.author);
+
+    const { count: threadCommentCount, error: commentCountError } = await supabaseServer
+      .from('comments')
+      .select('id', { count: 'exact', head: true })
+      .eq('thread_id', threadId);
+
+    if (commentCountError) throw commentCountError;
+
+    const resolvedWorkspaceId = songData.account_id;
     const workspaceRecipients = await resolveWorkspaceRecipients(resolvedWorkspaceId, actorUserId);
     const forcedRecipients = parseEmailList(process.env.EMAIL_NOTIFICATIONS_FORCE_TO);
     const notificationsAreEnabled = notificationsEnabled();
@@ -390,12 +415,12 @@ export async function POST(req: NextRequest) {
         threadId,
         actorUserId,
         workspaceId: resolvedWorkspaceId,
-        intendedRecipients: recipientEmails,
+        intendedRecipientCount: recipientEmails.length,
       });
       return NextResponse.json({
         sent: false,
         skipped: 'notifications-disabled',
-        recipients: recipientEmails,
+        recipientCount: recipientEmails.length,
       });
     }
 
@@ -414,21 +439,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ sent: false, skipped: 'no-recipients' });
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const deepLink = resolvedVersionId
-      ? `${baseUrl}/songs/${songId}/versions/${resolvedVersionId}?thread=${threadId}`
-      : `${baseUrl}/songs/${songId}`;
-    const actorName = normalizeNotificationActor(author);
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin;
+    const deepLinkUrl = new URL(
+      `/songs/${encodeURIComponent(songId)}/versions/${encodeURIComponent(versionId)}`,
+      baseUrl
+    );
+    deepLinkUrl.searchParams.set('thread', threadId);
+    const deepLink = deepLinkUrl.toString();
     const songTitle = getSongTitle(songData?.title);
     const versionLabel = getVersionLabel(versionData);
-    const timestampLabel = formatTimestamp(timestamp);
-    const commentBody = getCommentBody(commentText);
+    const timestampLabel = formatTimestamp(Number(threadData.timestamp_seconds) || 0);
+    const commentBody = getCommentBody(commentData.body);
+    const isReply = (threadCommentCount ?? 0) > 1;
     const subject = getEmailSubject({
       actorName,
       songTitle,
       versionLabel,
       timestampLabel,
-      isReply: Boolean(isReply),
+      isReply,
     });
     const emailText = getPlainTextEmail({
       actorName,
@@ -437,7 +465,7 @@ export async function POST(req: NextRequest) {
       timestampLabel,
       commentBody,
       deepLink,
-      isReply: Boolean(isReply),
+      isReply,
     });
     const emailHtml = getHtmlEmail({
       actorName,
@@ -446,7 +474,7 @@ export async function POST(req: NextRequest) {
       timestampLabel,
       commentBody,
       deepLink,
-      isReply: Boolean(isReply),
+      isReply,
     });
 
     const result = await resend.emails.send({
@@ -461,16 +489,16 @@ export async function POST(req: NextRequest) {
       result,
       actorUserId,
       workspaceId: resolvedWorkspaceId,
-      recipients: recipientEmails,
+      recipientCount: recipientEmails.length,
       recipientMode: forcedRecipients.length > 0 ? 'forced' : 'workspace-members',
     });
     return NextResponse.json({
       sent: true,
-      recipients: recipientEmails,
+      recipientCount: recipientEmails.length,
       recipientMode: forcedRecipients.length > 0 ? 'forced' : 'workspace-members',
     });
   } catch (error) {
     console.error('Error sending email:', error);
-    return NextResponse.json({ sent: false, error: String(error) }, { status: 500 });
+    return NextResponse.json({ sent: false, error: 'Could not send notification.' }, { status: 500 });
   }
 }

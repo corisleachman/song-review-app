@@ -608,6 +608,11 @@ function DashboardContent() {
   }
 
   async function uploadCoverArt(file: File, songId: string) {
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+      window.alert('Choose a JPEG, PNG, or WebP image that is 5MB or smaller.');
+      return;
+    }
+
     // Mark uploading state on the card
     setSongs(prev => prev.map(s => s.id === songId ? { ...s, imageUploading: true } : s));
     try {
@@ -1942,7 +1947,7 @@ function DashboardContent() {
       <input
         ref={coverInputRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp"
         style={{ display: 'none' }}
         onChange={e => {
           const file = e.target.files?.[0];

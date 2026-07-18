@@ -2852,4 +2852,40 @@ Desktop list view was checked and is unaffected — its equivalent meta pill ren
 - `npx next build` — passed locally
 - Confirmed working in production by Coris on `www.song-room.live` after deploy
 
+---
+
+## 2026-07-18 — Stage 1 code-review security hardening
+
+### What we were trying to achieve
+
+Close the highest-confidence authorization, information-disclosure, and unsafe image-processing gaps identified by the full `clone-clean` code review without changing storage architecture, framework versions, or database schema.
+
+### Feature / change being made
+
+First staged security hardening pass for comment notifications, action creation, and cover-art uploads.
+
+### Files changed
+
+- `app/api/actions/create/route.ts`
+- `app/api/email/notify-thread/route.ts`
+- `app/api/songs/upload-image/route.ts`
+- `app/api/threads/create/route.ts`
+- `app/api/threads/reply/route.ts`
+- `app/dashboard/page.tsx`
+- `app/songs/[id]/versions/[versionId]/page.tsx`
+- `lib/internalRequestAuth.ts`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Notification requests now require a short-lived server-generated HMAC signature and validate the comment, thread, version, song, actor membership, and workspace relationship before sending.
+- Notification content is read from canonical database records; recipient email addresses and raw membership/profile data are no longer returned or logged.
+- Action creation now proves that its source comment belongs to the selected song before the service-role client links or later exposes it.
+- Cover-art processing now authenticates before multipart parsing, enforces a 5MB JPEG/PNG/WebP limit, caps decoded pixel count, and returns safe errors.
+- Client-side cover-art pickers mirror the server constraints for faster feedback.
+
+### Verification
+
+- `npx tsc --noEmit --incremental false` — passed.
+- `npm run build` — passed; the pre-existing `/api/auth/bootstrap` dynamic-render warning remains for a later stage.
 
