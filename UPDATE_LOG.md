@@ -3158,3 +3158,35 @@ Lazy Resend client initialization in the thread-notification API route.
 - `npm run lint` — passed with 46 existing warnings and 0 errors.
 - `npx tsc --noEmit --incremental false` — passed.
 - `RESEND_API_KEY= npm run build` — passed, including page-data collection for `/api/email/notify-thread`.
+
+---
+
+## 2026-07-18 — Preserve public listening during two-phase uploads
+
+### What we were trying to achieve
+
+Keep existing public song URLs playable while the upload-integrity migration introduces pending version rows.
+
+### Feature / change being made
+
+Finalized-version selection and response minimization for the public song endpoint.
+
+### Files changed
+
+- `app/api/public/song/[songId]/route.ts`
+- `app/listen/[songId]/page.tsx`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Public URLs remain keyed by song ID and the `song-files` bucket/path contract is unchanged.
+- After the upload-integrity migration, the public endpoint ignores versions whose audio upload has not been finalized, so an interrupted upload cannot replace the last playable public version.
+- A legacy query fallback keeps the endpoint compatible before the new column exists during the migration-first rollout.
+- The public response now returns only the version fields used by the listener instead of exposing the complete database row and storage path.
+
+### Verification
+
+- `npm run lint` — passed with 46 existing warnings and 0 errors.
+- `npx tsc --noEmit --incremental false` — passed.
+- `RESEND_API_KEY= npm run build` — passed on Next.js 15.5.20.
+- A read-only local production-server check against the currently configured pre-migration Supabase schema returned `200` for an existing public song, supplied an audio URL, exercised the missing-column fallback, and confirmed `file_path` was absent from the public response.
