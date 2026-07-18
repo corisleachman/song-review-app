@@ -3100,3 +3100,32 @@ Dedicated Next.js 15 security upgrade and compatibility checkpoint.
 - `npm run build` — passed on Next.js 15.5.20.
 - Headless Chrome verified `/`, `/privacy`, and `/terms` at a 375×667 viewport with 200 responses, no framework error overlay, and no horizontal overflow.
 - Runtime header inspection confirmed all configured security headers and confirmed `X-Powered-By` is absent.
+
+---
+
+## 2026-07-18 — Mandatory post-update handoff protocol
+
+### What we were trying to achieve
+
+Make every substantial implementation handoff tell the user exactly what they need to do, where to do it, how to verify it, when to stop, and what should happen next.
+
+### Feature / change being made
+
+Repository-level agent workflow and rollout-reporting protocol.
+
+### Files changed
+
+- `AGENTS.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Added mandatory `Your Actions` and `Next Step` sections to every completed-task response.
+- Added a major-update protocol that distinguishes code-complete, preview/staging, deployed, and production-complete states.
+- Required exact external-service instructions, expected results, failure evidence, rollout order, rollback guidance, stop conditions, and explicit user/agent ownership.
+- Required each handoff to end with one recommended next step and to verify external work before describing production as complete.
+
+### Verification
+
+- Documentation was reviewed against the existing required workflow and output format.
+- No application code, schema, dependencies, environment variables, or deployment settings were changed.

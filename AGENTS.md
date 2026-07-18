@@ -73,6 +73,48 @@ What was causing the issue.
 ### Risks / Follow-ups
 Any remaining uncertainty, tech debt, or recommended next step.
 
+### Your Actions
+- State explicitly whether the user needs to do anything.
+- If no action is required, write: `No action required from you.`
+- If action is required, give a numbered checklist. Every step must include:
+  - who should do it (`User` or `Agent`)
+  - where to do it (for example Supabase SQL Editor, Vercel, Stripe, GitHub, local terminal, or the app)
+  - the exact action or command, without exposing secret values
+  - the expected successful result
+  - what evidence or error details to return if it fails
+
+### Next Step
+End with one clear recommended next step. Do not leave multiple possible next steps without identifying which one should happen first.
+
+---
+
+## Major Update Handoff Protocol
+
+Use this protocol after any substantial update, including changes that affect multiple files, database schema, authentication, billing, storage, dependencies, deployment configuration, security boundaries, or an important user journey.
+
+1. **Separate implementation status from rollout status.**
+   - Say whether the change is only local, committed, pushed, in a pull request, deployed to preview/staging, or deployed to production.
+   - Use `Code complete` only for finished repository work.
+   - Use `Production complete` only after required migrations, external configuration, deployment, and live verification are confirmed.
+2. **List every external action still required.**
+   - Cover Supabase migrations, Vercel variables/deployments, Stripe webhooks/products, Resend configuration, GitHub push/merge, cache invalidation, or other service changes.
+   - Never imply that an external change has happened unless it was verified.
+3. **Provide an exact verification checklist.**
+   - Put checks in the safest execution order.
+   - Name the environment for each check: local, preview/staging, or production.
+   - Give the expected visible or data result for each check.
+   - Include stop conditions: if a check fails, stop the rollout and report the URL, step, error text, relevant log excerpt, and screenshot where useful.
+4. **Explain rollout and rollback.**
+   - State whether migrations must run before or after application deployment.
+   - Identify the relevant down migration, revert commit, feature flag, or previous deployment when a rollback exists.
+   - Flag irreversible or data-destructive steps before they happen.
+5. **Assign ownership clearly.**
+   - Say which actions the agent can perform if authorised and which require the user because they involve credentials, dashboards, billing, production data, or approval.
+   - Offer to perform safe repository/GitHub actions, but do not push, merge, deploy, or change production services without authority.
+6. **Close the loop.**
+   - End with one recommended next step.
+   - After the user completes an external step, verify the result where access allows and update the status from code-complete toward production-complete.
+
 ---
 
 ## Project-Specific Rules
