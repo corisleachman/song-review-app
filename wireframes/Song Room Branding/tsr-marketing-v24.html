@@ -246,6 +246,44 @@ a { color: inherit; text-decoration: none; }
   opacity: 1;
 }
 
+/* Text overlay for the middle-right bento cell (cell-d) */
+.bento-cell-text {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  padding: clamp(18px, 2.4vw, 34px);
+  background: linear-gradient(90deg,
+    rgba(14,10,10,0.86) 0%,
+    rgba(14,10,10,0.64) 55%,
+    rgba(14,10,10,0.30) 100%);
+  pointer-events: none;
+}
+.bento-cell-kicker {
+  font-family: var(--ui);
+  font-size: clamp(10px, 0.85vw, 12px);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--straw);
+}
+.bento-cell-text p {
+  margin: 0;
+  max-width: 48ch;
+  font-family: var(--ui);
+  font-weight: 500;
+  color: var(--off-white);
+  font-size: clamp(15px, 1.35vw, 23px);
+  line-height: 1.42;
+}
+.bento-cell-text em {
+  font-style: normal;
+  color: var(--straw);
+}
+
 .cell-a { grid-column:1; grid-row:1/4; }
 .cell-b { grid-column:2; grid-row:1; }
 .cell-c { grid-column:3; grid-row:1; }
@@ -1539,6 +1577,10 @@ footer {
     <div class="bento-cell cell-d" id="bc-d">
       <div class="bento-cell-img" id="bci-d"></div>
       <div class="bento-cell-img bento-cell-img-next" id="bcn-d"></div>
+      <div class="bento-cell-text">
+        <span class="bento-cell-kicker">What is The Song Room?</span>
+        <p>A collaboration space for artists, bands and producers &mdash; upload song versions, drop <em>timestamped comments</em> on the waveform, and track every action and decision across a record&rsquo;s lifecycle, all in one shared workspace.</p>
+      </div>
     </div>
     <div class="bento-cell cell-e" id="bc-e">
       <div class="bento-cell-img" id="bci-e"></div>
