@@ -1,0 +1,57 @@
+name: Generate SEO article
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 8 * * 1'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: seo-article-generation
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Generate the next approved article
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: node scripts/generate-seo-article.mjs
+
+      - name: Create review pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: automated/seo-article
+          delete-branch: true
+          commit-message: 'Generate next SEO article'
+          title: 'SEO article ready for review'
+          body: |
+            The SEO agent generated the next approved article from `seo/topics.json`.
+
+            Please review:
+            - factual accuracy and practical usefulness
+            - product claims and feature descriptions
+            - tone of voice and British English
+            - title, description and page structure
+            - links and call to action
+
+            Merging this pull request publishes the article through the existing GitHub Pages deployment.
+          labels: |
+            seo
+            content
+            automated
