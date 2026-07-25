@@ -574,7 +574,7 @@ a { color: inherit; text-decoration: none; }
    SECTION 4 — FEATURES (3 moments)
 ═══════════════════════════════════ */
 .features {
-  padding: clamp(80px, 12vw, 160px) 0;
+  padding: 0;
   background: var(--black);
   border-top: 1px solid var(--border);
   display: flex;
@@ -2445,16 +2445,25 @@ reveals.forEach(el => observer.observe(el));
   opts.forEach(b => b.addEventListener('click', () => setCycle(b.dataset.cycle)));
 })();
 
-// ── Product screenshot cross-fade rotation ──
+// ── Product screenshot cross-fade rotation (1 -> 2 -> 3 -> loop) ──
 (function(){
-  const slides = document.querySelectorAll('.mock-artwork .mock-artwork-bg');
+  const slides = Array.from(document.querySelectorAll('.mock-artwork .mock-artwork-bg'));
   if (slides.length < 2) return;
-  let i = 0;
+  slides.forEach((s, k) => { s.style.zIndex = k === 0 ? '1' : '0'; });
+  let cur = 0;
+  const HOLD = 4000, FADE = 1200;
   setInterval(() => {
-    slides[i].classList.remove('is-active');
-    i = (i + 1) % slides.length;
-    slides[i].classList.add('is-active');
-  }, 4000);
+    const next = (cur + 1) % slides.length;
+    slides[next].style.zIndex = '2';          // incoming always on top
+    slides[next].classList.add('is-active');  // fade it in over the current
+    const prev = cur;
+    setTimeout(() => {
+      slides[prev].classList.remove('is-active');
+      slides[prev].style.zIndex = '0';
+      slides[next].style.zIndex = '1';
+    }, FADE + 60);
+    cur = next;
+  }, HOLD);
 })();
 
 // ── Hero-showcase video: mute/unmute toggle ──
