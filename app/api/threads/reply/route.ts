@@ -76,6 +76,7 @@ export async function POST(req: NextRequest) {
         {
           thread_id: threadId,
           author,
+          author_user_id: resolved.identity.userId,
           body: trimmedText,
         },
       ])
