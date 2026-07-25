@@ -563,10 +563,12 @@ a { color: inherit; text-decoration: none; }
 .mock-artwork-bg {
   position: absolute;
   inset: 0;
-  background-image: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-song-view%20Large.jpeg');
   background-size: cover;
   background-position: center top;
+  opacity: 0;
+  transition: opacity 1.2s ease-in-out;
 }
+.mock-artwork-bg.is-active { opacity: 1; }
 
 /* ═══════════════════════════════════
    SECTION 4 — FEATURES (3 moments)
@@ -1727,7 +1729,9 @@ footer {
   <!-- Mock song page -->
   <div class="mock-player reveal">
     <div class="mock-artwork">
-      <div class="mock-artwork-bg"></div>
+      <div class="mock-artwork-bg is-active" style="background-image:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-1.jpeg')"></div>
+      <div class="mock-artwork-bg" style="background-image:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-2.jpeg')"></div>
+      <div class="mock-artwork-bg" style="background-image:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-3.jpeg')"></div>
     </div>
   </div>
 </section>
@@ -2420,6 +2424,18 @@ reveals.forEach(el => observer.observe(el));
     });
   }
   opts.forEach(b => b.addEventListener('click', () => setCycle(b.dataset.cycle)));
+})();
+
+// ── Product screenshot cross-fade rotation ──
+(function(){
+  const slides = document.querySelectorAll('.mock-artwork .mock-artwork-bg');
+  if (slides.length < 2) return;
+  let i = 0;
+  setInterval(() => {
+    slides[i].classList.remove('is-active');
+    i = (i + 1) % slides.length;
+    slides[i].classList.add('is-active');
+  }, 4000);
 })();
 </script>
 
