@@ -840,6 +840,9 @@ function DashboardContent() {
     const hydratedSong = hydratedQueue.find(item => item.id === song.id) ?? { ...song, latestVersionAudioUrl: audioUrl };
     const idx = hydratedQueue.findIndex(item => item.id === song.id);
 
+    // Keep the ref in sync with state so Media Session next/prev (lock screen)
+    // read the correct current index, not a stale one from the last auto-advance.
+    queueIndexRef.current = idx >= 0 ? idx : 0;
     setQueueIndex(idx >= 0 ? idx : 0);
     setPlayingId(song.id);
     setIsPlaying(true);
