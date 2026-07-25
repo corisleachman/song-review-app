@@ -262,6 +262,10 @@ Move the core song pages from legacy identity gating to real session/bootstrap.
 ### Status
 Implemented
 
+### Update — 2026-07-25
+- Comment authorship upgraded from temporary string author to a stable `comments.author_user_id` (FK to `profiles`); "you vs others" in threads now matches by user id, not display name.
+- `profiles.avatar_url` added and populated on sign-in; the comment channel now shows avatar (Google photo, initials fallback) + name, two-sided.
+
 ---
 
 ## Slice 3: Settings cutover
