@@ -1456,6 +1456,22 @@ footer {
   transition: border-color 0.4s var(--ease), transform 0.5s var(--ease);
 }
 .shot.lead .shot-frame { aspect-ratio: 16 / 8.2; }
+.shot-video { grid-column: 1 / -1; }
+.shot-video .shot-frame { aspect-ratio: 16 / 8.2; }
+.shot-video video { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
+.vid-mute {
+  position: absolute; bottom: 14px; right: 14px; z-index: 2;
+  width: 40px; height: 40px; border-radius: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(14,10,10,0.6); border: 1px solid var(--border-m);
+  color: var(--off-white); cursor: pointer;
+  transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+.vid-mute:hover { background: rgba(14,10,10,0.88); border-color: var(--off-white); }
+.vid-mute svg { width: 20px; height: 20px; }
+.vid-mute .ic-on { display: none; }
+.vid-mute[aria-pressed="true"] .ic-muted { display: none; }
+.vid-mute[aria-pressed="true"] .ic-on { display: block; }
 .shot-frame img {
   width: 100%;
   height: 100%;
@@ -1492,7 +1508,7 @@ footer {
 }
 @media (max-width: 900px) {
   .shot-grid { grid-template-columns: 1fr; }
-  .shot-frame, .shot.lead .shot-frame { aspect-ratio: 16 / 10; }
+  .shot-frame, .shot.lead .shot-frame, .shot-video .shot-frame { aspect-ratio: 16 / 10; }
   .shot-expand { opacity: 1; transform: scale(1); }
 }
 
@@ -1845,15 +1861,18 @@ footer {
       </div>
       <p class="shot-cap">Make the room yours.</p>
     </button>
-    <button class="shot lead" data-src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/public-sharing-view.jpeg" data-cap="Flip a song public and share one link — anyone can listen and comment, no login needed." aria-label="Enlarge screenshot: Flip a song public and share one link — anyone can listen and comment, no login needed.">
+    <div class="shot-video">
       <div class="shot-frame">
-        <img src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/public-sharing-view.jpeg" alt="Flip a song public and share one link — anyone can listen and comment, no login needed." loading="lazy">
-        <span class="shot-expand" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
-        </span>
+        <video class="shot-vid" autoplay muted loop playsinline preload="auto" poster="public-sharing-view.jpeg">
+          <source src="Be-Kind.mp4" type="video/mp4">
+        </video>
+        <button class="vid-mute" type="button" aria-pressed="false" aria-label="Turn sound on">
+          <svg class="ic-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+          <svg class="ic-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+        </button>
       </div>
       <p class="shot-cap">Flip a song public and share one link — anyone can listen and comment, no login needed.</p>
-    </button>
+    </div>
   </div>
 
   <p class="eyebrow reveal phone-eyebrow">In your pocket</p>
@@ -2436,6 +2455,22 @@ reveals.forEach(el => observer.observe(el));
     i = (i + 1) % slides.length;
     slides[i].classList.add('is-active');
   }, 4000);
+})();
+
+// ── Hero-showcase video: mute/unmute toggle ──
+(function(){
+  const v = document.querySelector('.shot-video video');
+  const btn = document.querySelector('.vid-mute');
+  if (!v || !btn) return;
+  v.muted = true;
+  v.play().catch(() => {});
+  btn.addEventListener('click', () => {
+    v.muted = !v.muted;
+    const on = !v.muted;
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    btn.setAttribute('aria-label', on ? 'Turn sound off' : 'Turn sound on');
+    if (on) v.play().catch(() => {});
+  });
 })();
 </script>
 
