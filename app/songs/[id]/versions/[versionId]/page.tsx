@@ -1899,17 +1899,28 @@ function VersionPageInner() {
   };
 
   const submitReply = async (threadId: string) => {
-    if (!replyText.trim()) return;
-    const res = await fetch('/api/threads/reply', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ threadId, songId, versionId, text: replyText.trim() }),
-    });
-    if (res.ok) {
-      const { commentId } = await res.json();
+    if (!replyText.trim() || posting) return;
+    setPosting(true);
+    try {
+      const res = await fetch('/api/threads/reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ threadId, songId, versionId, text: replyText.trim() }),
+      });
+      const payload = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(
+          payload && typeof payload.error === 'string' ? payload.error : 'Could not post reply.'
+        );
+      }
       setReplyText('');
       await loadThreads();
-      triggerCommentAnimation(commentId ?? null);
+      triggerCommentAnimation(payload?.commentId ?? null);
+    } catch (error) {
+      console.error('Reply error:', error);
+      showStatusToast(error instanceof Error ? error.message : 'Could not post reply.');
+    } finally {
+      setPosting(false);
     }
   };
 
@@ -3021,9 +3032,10 @@ function VersionPageInner() {
                   value={replyText}
                   onChange={e => setReplyText(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') submitReply(selectedThread.id); }}
+                  disabled={posting}
                 />
-                <span className={styles.replyTime}>{formatTimestamp(Math.floor(currentTime))}</span>
-                <button className={styles.replyBtn} onClick={() => submitReply(selectedThread.id)} disabled={!replyText.trim()}>
+                <span className={styles.replyTime}>{posting ? 'Posting…' : formatTimestamp(Math.floor(currentTime))}</span>
+                <button className={styles.replyBtn} aria-label="Post reply" onClick={() => submitReply(selectedThread.id)} disabled={!replyText.trim() || posting}>
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M1 7h11M8 3l4 4-4 4"/>
                   </svg>
@@ -3375,3 +3387,4 @@ export default function VersionPage() {
     </Suspense>
   );
 }
+
