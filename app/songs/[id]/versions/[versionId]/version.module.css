@@ -851,7 +851,7 @@
 .bubbleRow { display: flex; gap: 10px; align-items: flex-end; max-width: 88%; }
 .bubbleRowOther { align-self: flex-start; }
 .bubbleRowOwn { align-self: flex-end; flex-direction: row-reverse; }
-.bubbleStack { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.bubbleStack { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
 .bubbleRowOwn .bubbleStack { align-items: flex-end; }
 .bubbleAvatar {
   position: relative;
