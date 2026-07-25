@@ -247,7 +247,7 @@ function DashboardContent() {
           return;
         }
 
-        router.push('/?redirectTo=%2Fdashboard');
+        router.push('/login?redirectTo=%2Fdashboard');
       } catch (error) {
         console.error('Dashboard bootstrap error:', error);
         if (!mounted) return;

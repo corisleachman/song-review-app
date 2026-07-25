@@ -10,6 +10,15 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['sharp'],
   },
+  async rewrites() {
+    return {
+      beforeFiles: [
+        { source: '/', destination: '/marketing.html' },
+      ],
+      afterFiles: [],
+      fallback: [],
+    };
+  },
 };
 
 module.exports = nextConfig;

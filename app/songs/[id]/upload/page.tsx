@@ -79,7 +79,7 @@ export default function UploadVersionPage() {
           return supabase.from('songs').select('title').eq('id', songId).single();
         }
 
-        router.push(`/?redirectTo=${encodeURIComponent(`/songs/${songId}/upload`)}`);
+        router.push(`/login?redirectTo=${encodeURIComponent(`/songs/${songId}/upload`)}`);
         return null;
       })
       .catch(() => {
@@ -88,7 +88,7 @@ export default function UploadVersionPage() {
           return supabase.from('songs').select('title').eq('id', songId).single();
         }
 
-        router.push(`/?redirectTo=${encodeURIComponent(`/songs/${songId}/upload`)}`);
+        router.push(`/login?redirectTo=${encodeURIComponent(`/songs/${songId}/upload`)}`);
         return null;
       })
       .then(result => {

@@ -992,7 +992,7 @@ function VersionPageInner() {
         }
 
         logVersionInit('bootstrap:missing-identity', { payload });
-        router.push(`/?redirectTo=${encodeURIComponent(`/songs/${songId}/versions/${versionId}`)}`);
+        router.push(`/login?redirectTo=${encodeURIComponent(`/songs/${songId}/versions/${versionId}`)}`);
       } catch (error) {
         console.error('Version page bootstrap error:', error);
         if (!mounted) return;
@@ -1009,7 +1009,7 @@ function VersionPageInner() {
         logVersionInit('bootstrap:failed-without-identity', {
           message: error instanceof Error ? error.message : String(error),
         });
-        router.push(`/?redirectTo=${encodeURIComponent(`/songs/${songId}/versions/${versionId}`)}`);
+        router.push(`/login?redirectTo=${encodeURIComponent(`/songs/${songId}/versions/${versionId}`)}`);
       }
     }
 
