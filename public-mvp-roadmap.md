@@ -2285,7 +2285,38 @@ has been **superseded** — do not build against it.
 
 ## Phase 8.5: Domain Routing & Deployment
 
-**Status: Queued**
+**Status: Implemented (2026-07-25)**
+
+### Update — 2026-07-25 (shipped)
+Cutover done via **Topology B — everything on Vercel (root)**. song-room.live now serves:
+`/` = marketing, `/login` = login, `/dashboard` etc. = app. The app and its Google/Supabase
+auth stayed on song-room.live (no subdomain move), which is why this carried low auth risk.
+
+What shipped (deviations from the original plan noted):
+- Login route is **`/login`** (not `/login-signup`). Moved `app/page.tsx` (+ CSS) → `app/login/`.
+- Marketing served at `/` from **`public/marketing.html`** via a `next.config.js` `beforeFiles`
+  rewrite (kept the hand-built HTML; did not port to React). This file is now the marketing
+  source of truth; the main-branch wireframe is a preview only.
+- `middleware.ts`: `/login` + `/marketing.html` public; unauth redirect → `/login`; `/blog`
+  whitelisted for the SEO engine.
+- All internal `'/?redirectTo='` links → `'/login?redirectTo='` (version, upload, dashboard,
+  useProtectedRoute, settingsContext, identify). Sign-out flows now land on marketing `/`.
+- OAuth post-auth redirect base (`app/auth/callback/route.ts`, `app/api/auth/bootstrap/route.ts`)
+  moved from `/` to `/login` so the login page's session-sync completes to the dashboard.
+- Marketing prod copy: `noindex` removed (**live + indexable** per decision), canonical + og:url →
+  `https://song-room.live/`, CTAs → `/login`, favicon/video/poster → absolute URLs.
+- **Supabase auth config did NOT need changing** — OAuth still routes through `/auth/callback`
+  (unchanged); only the post-callback *internal* redirect moved to `/login`. Google + email login
+  confirmed reaching the dashboard.
+
+Caveats / still open:
+- **Phase 10 (plan gating) has not shipped.** The marketing site went public/indexable per Coris's
+  explicit decision, so the pricing section currently advertises tier gates the app does not yet
+  enforce. Ship Phase 10 to close that gap.
+- apex vs www: song-room.live 308-redirects to www.song-room.live while canonical is set to the
+  apex — alignment still to be decided.
+- Blog (`/blog`) is whitelisted but not yet served; the SEO engine (PR #3) must publish into
+  `public/blog` on clone-clean before it works.
 
 ### Objective
 Move the marketing site from a GitHub Pages wireframe onto the live domain, and relocate the
