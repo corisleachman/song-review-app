@@ -15,8 +15,18 @@ const MAX_AUDIO_SIZE_BYTES = 200 * 1024 * 1024;
 interface Comment {
   id: string;
   author: string;
+  author_user_id?: string | null;
+  author_avatar_url?: string | null;
   body: string;
   created_at: string;
+}
+
+function getInitials(name: string | null | undefined) {
+  const trimmed = (name ?? '').trim();
+  if (!trimmed) return '?';
+  const parts = trimmed.split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
 interface Thread {
@@ -3001,28 +3011,53 @@ function VersionPageInner() {
                 </button>
               </div>
               <div className={styles.bubbleList}>
-                {selectedThread.comments?.map(c => (
-                  <div key={c.id} className={`${styles.bubbleWrap} ${c.author === identity ? styles.bubbleWrapOwn : styles.bubbleWrapOther}`}>
-                    {!c.author || c.author !== identity && <span className={styles.bubbleAuthor}>{c.author}</span>}
-                    <div
-                      className={`${styles.bubble} ${c.author === identity ? styles.bubbleOwn : styles.bubbleOther} ${animatedCommentId === c.id ? styles.bubbleGentlePop : ''}`}
-                    >
-                      {c.body}
+                {selectedThread.comments?.map((c, i, arr) => {
+                  const isOwn = (c.author_user_id && currentUserId)
+                    ? c.author_user_id === currentUserId
+                    : c.author === identity;
+                  const prev = arr[i - 1];
+                  const prevKey = prev ? (prev.author_user_id || prev.author) : null;
+                  const thisKey = c.author_user_id || c.author;
+                  const showMeta = prevKey !== thisKey;
+                  return (
+                    <div key={c.id} className={`${styles.bubbleRow} ${isOwn ? styles.bubbleRowOwn : styles.bubbleRowOther}`}>
+                      {showMeta ? (
+                        <div className={styles.bubbleAvatar}>
+                          <span className={styles.bubbleAvatarInitials}>{getInitials(c.author)}</span>
+                          {c.author_avatar_url && (
+                            <img
+                              src={c.author_avatar_url}
+                              alt=""
+                              referrerPolicy="no-referrer"
+                              onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                            />
+                          )}
+                        </div>
+                      ) : (
+                        <div className={`${styles.bubbleAvatar} ${styles.bubbleAvatarSpacer}`} aria-hidden="true" />
+                      )}
+                      <div className={styles.bubbleStack}>
+                        {showMeta && <span className={styles.bubbleAuthor}>{isOwn ? 'You' : c.author}</span>}
+                        <div
+                          className={`${styles.bubble} ${isOwn ? styles.bubbleOwn : styles.bubbleOther} ${animatedCommentId === c.id ? styles.bubbleGentlePop : ''}`}
+                        >
+                          {c.body}
+                        </div>
+                        {!actions.some(a => a.comment_id === c.id) && (
+                          <button className={styles.markActionBtn} onClick={() => {
+                            setActionModalCommentId(c.id);
+                            setEditingActionId(null);
+                            setActionText(c.body);
+                            setActionStatus('open');
+                            setActionAssignedToUserId('');
+                          }}>
+                            + Mark as action
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    {c.author === identity && <span className={styles.bubbleAuthor}>{c.author}</span>}
-                    {!actions.some(a => a.comment_id === c.id) && (
-                      <button className={styles.markActionBtn} onClick={() => {
-                        setActionModalCommentId(c.id);
-                        setEditingActionId(null);
-                        setActionText(c.body);
-                        setActionStatus('open');
-                        setActionAssignedToUserId('');
-                      }}>
-                        + Mark as action
-                      </button>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <div className={styles.replyRow}>
                 <div className={styles.replyDot} />
