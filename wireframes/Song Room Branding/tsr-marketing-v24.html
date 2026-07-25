@@ -954,6 +954,58 @@ a { color: inherit; text-decoration: none; }
   line-height: 1.6;
 }
 
+/* Billing period toggle */
+.billing-wrap {
+  text-align: center;
+  margin-bottom: clamp(36px, 4.5vw, 56px);
+}
+.billing-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border-m);
+  background: var(--surface);
+}
+.billing-opt {
+  font-family: var(--ui);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--dune);
+  background: transparent;
+  border: none;
+  padding: 13px 24px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  transition: color 150ms, background 150ms;
+}
+.billing-opt + .billing-opt { border-left: 1px solid var(--border-m); }
+.billing-opt:hover { color: var(--off-white); }
+.billing-opt.is-active { background: var(--red); color: var(--off-white); }
+.billing-save {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 3px 7px;
+  background: rgba(240,228,140,0.16);
+  border: 1px solid rgba(240,228,140,0.5);
+  color: var(--straw);
+}
+.billing-opt.is-active .billing-save {
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.45);
+  color: var(--off-white);
+}
+.tier-billing-note {
+  display: block;
+  font-family: var(--ui);
+  font-size: 11px;
+  font-style: italic;
+  color: var(--dune);
+  margin-top: 7px;
+}
+
 /* ═══════════════════════════════════
    SECTION 7 — FINAL CTA
 ═══════════════════════════════════ */
@@ -1897,6 +1949,13 @@ footer {
     </p>
   </div>
 
+  <div class="billing-wrap reveal">
+    <div class="billing-toggle" role="group" aria-label="Billing period">
+      <button type="button" class="billing-opt is-active" data-cycle="monthly" aria-pressed="true">Monthly</button>
+      <button type="button" class="billing-opt" data-cycle="annual" aria-pressed="false">Annual <span class="billing-save">Save 20%</span></button>
+    </div>
+  </div>
+
   <div class="pricing-grid reveal">
     <!-- Free -->
     <div class="tier">
@@ -1906,6 +1965,7 @@ footer {
           <span class="tier-price-amount">£0</span>
           <span class="tier-price-period">/ forever</span>
         </div>
+        <span class="tier-billing-note">No card required</span>
       </div>
       <p class="tier-for">For trying it out on a project or two.</p>
       <div class="tier-storage">
@@ -1931,9 +1991,10 @@ footer {
       <div>
         <div class="tier-name" style="color:var(--red)">Pro</div>
         <div class="tier-price">
-          <span class="tier-price-amount">£9</span>
+          <span class="tier-price-amount" data-monthly="£9" data-annual="£7.20">£9</span>
           <span class="tier-price-period">/ month</span>
         </div>
+        <span class="tier-billing-note" data-monthly="billed monthly" data-annual="£86.40 billed yearly · save £21.60">billed monthly</span>
       </div>
       <p class="tier-for">For working artists and bands finishing real records.</p>
       <div class="tier-storage">
@@ -1955,9 +2016,10 @@ footer {
       <div>
         <div class="tier-name">Studio</div>
         <div class="tier-price">
-          <span class="tier-price-amount">£19</span>
+          <span class="tier-price-amount" data-monthly="£19" data-annual="£15.20">£19</span>
           <span class="tier-price-period">/ month</span>
         </div>
+        <span class="tier-billing-note" data-monthly="billed monthly" data-annual="£182.40 billed yearly · save £45.60">billed monthly</span>
       </div>
       <p class="tier-for">For producers and studios running multiple acts.</p>
       <div class="tier-storage">
@@ -1974,7 +2036,7 @@ footer {
     </div>
   </div>
 
-  <p class="pricing-footnote reveal">No credit card required to start. Save 20% on annual billing. Upgrade or downgrade any time. All prices exclude VAT.</p>
+  <p class="pricing-footnote reveal">No credit card required to start. Upgrade or downgrade any time. All prices exclude VAT.</p>
 </section>
 
 <!-- ══ FINAL CTA ══ -->
@@ -2339,6 +2401,25 @@ reveals.forEach(el => observer.observe(el));
     else if (e.key === 'ArrowLeft') prev();
     else if (e.key === 'ArrowRight') next();
   });
+})();
+
+// ── PRICING: monthly / annual billing toggle ──
+(function(){
+  const opts = document.querySelectorAll('.billing-opt');
+  if (!opts.length) return;
+  const swap = document.querySelectorAll('[data-monthly], [data-annual]');
+  function setCycle(cycle){
+    swap.forEach(el => {
+      const v = el.getAttribute('data-' + cycle);
+      if (v !== null) el.textContent = v;
+    });
+    opts.forEach(b => {
+      const on = b.dataset.cycle === cycle;
+      b.classList.toggle('is-active', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+  opts.forEach(b => b.addEventListener('click', () => setCycle(b.dataset.cycle)));
 })();
 </script>
 
