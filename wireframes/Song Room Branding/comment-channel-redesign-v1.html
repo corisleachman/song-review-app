@@ -52,7 +52,6 @@
     background:var(--surface-3);color:var(--off-white);font-size:12px;font-weight:700;
     display:flex;align-items:center;justify-content:center;overflow:hidden}
   .avatar img{width:100%;height:100%;object-fit:cover;display:block}
-  .avatar.spacer{background:transparent;border-color:transparent}
 
   .stack{display:flex;flex-direction:column;gap:4px;min-width:0}
   .row.own .stack{align-items:flex-end}
@@ -80,14 +79,13 @@
 <body>
 <div class="page">
   <h1>Comment channel — redesign</h1>
-  <p class="sub">Avatars + names carry identity; no per-person colour. You sit on the right, everyone else on the left — purely by layout, so it scales from a 2-person back-and-forth to a full band. Red is reserved for the timestamp marker and actions, not bubbles.</p>
+  <p class="sub">Avatars + names carry identity; no per-person colour. Avatars use each person's Google profile photo, falling back to initials. You sit on the right, everyone else on the left — purely by layout, so it scales from a 2-person back-and-forth to a full band.</p>
 
   <div class="rules">
-    <span class="rule"><b>You</b> → right, neutral bubble</span>
-    <span class="rule"><b>Others</b> → left, neutral bubble</span>
-    <span class="rule">Identity = <b>avatar + name</b></span>
+    <span class="rule"><b>You</b> → right &nbsp;·&nbsp; <b>others</b> → left</span>
+    <span class="rule">Avatar = <b>Google profile photo</b></span>
+    <span class="rule">No photo → <b>initials fallback</b></span>
     <span class="rule">Match "you" by <b>user id</b>, not name</span>
-    <span class="rule">Repeated sender → avatar/name shown once per run</span>
   </div>
 
   <div class="grid">
@@ -109,7 +107,7 @@
         <div class="bubble-list">
 
           <div class="row other">
-            <div class="avatar">AL</div>
+            <div class="avatar"><img src="https://i.pravatar.cc/60?img=12" alt="Al"></div>
             <div class="stack">
               <span class="name"><b>Al</b></span>
               <div class="bubble other">The second verse needs something to lift it — it feels flat coming out of the chorus.</div>
@@ -117,7 +115,7 @@
           </div>
 
           <div class="row own">
-            <div class="avatar">CO</div>
+            <div class="avatar"><img src="https://i.pravatar.cc/60?img=13" alt="You"></div>
             <div class="stack">
               <span class="name"><b>You</b></span>
               <div class="bubble own">Agreed. I'll double the lead vocal and add a counter-melody on the synth.</div>
@@ -125,7 +123,7 @@
           </div>
 
           <div class="row other">
-            <div class="avatar">AL</div>
+            <div class="avatar"><img src="https://i.pravatar.cc/60?img=12" alt="Al"></div>
             <div class="stack">
               <span class="name"><b>Al</b></span>
               <div class="bubble other">Nice. Maybe pull the drums back a touch there too?</div>
@@ -133,7 +131,7 @@
           </div>
 
           <div class="row own">
-            <div class="avatar">CO</div>
+            <div class="avatar"><img src="https://i.pravatar.cc/60?img=13" alt="You"></div>
             <div class="stack">
               <span class="name"><b>You</b></span>
               <div class="bubble own">Good call — I'll bounce a new version tonight.</div>
@@ -148,12 +146,12 @@
           <button class="reply-btn">→</button>
         </div>
       </div>
-      <p class="note">Fixes the red screenshot: two accounts now sit on opposite sides, neutral bubbles, identified by avatar + name.</p>
+      <p class="note">Fixes the red screenshot: two accounts now sit on opposite sides, neutral bubbles, identified by photo + name.</p>
     </div>
 
     <!-- ── Thread 2: 5-member band ── -->
     <div>
-      <div class="caption">5 people — scales without colour</div>
+      <div class="caption">5 people — scales, mixed photos + initials</div>
       <div class="panel">
         <div class="thread-head">
           <div class="thread-meta">
@@ -169,7 +167,7 @@
         <div class="bubble-list">
 
           <div class="row other">
-            <div class="avatar">CA</div>
+            <div class="avatar"><img src="https://i.pravatar.cc/60?img=5" alt="Cat"></div>
             <div class="stack">
               <span class="name"><b>Cat</b></span>
               <div class="bubble other">Loving the intro, but the hats are a little harsh on headphones.</div>
@@ -185,7 +183,7 @@
           </div>
 
           <div class="row other">
-            <div class="avatar">PR</div>
+            <div class="avatar"><img src="https://i.pravatar.cc/60?img=9" alt="Priya"></div>
             <div class="stack">
               <span class="name"><b>Priya</b></span>
               <div class="bubble other">I can re-track the shaker to fill that space instead.</div>
@@ -193,7 +191,7 @@
           </div>
 
           <div class="row own">
-            <div class="avatar">CO</div>
+            <div class="avatar"><img src="https://i.pravatar.cc/60?img=13" alt="You"></div>
             <div class="stack">
               <span class="name"><b>You</b></span>
               <div class="bubble own">Let's do both. Priya, send me the shaker take and I'll rebalance.</div>
@@ -216,7 +214,7 @@
           <button class="reply-btn">→</button>
         </div>
       </div>
-      <p class="note">Five distinct members, no hues — avatar initials (or photos, when set) do the identifying.</p>
+      <p class="note">Cat, Priya and You show Google photos; Marcus and Al fall back to initials — five members, no hues needed.</p>
     </div>
   </div>
 </div>
