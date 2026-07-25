@@ -2853,3 +2853,63 @@ Desktop list view was checked and is unaffected — its equivalent meta pill ren
 - Confirmed working in production by Coris on `www.song-room.live` after deploy
 
 
+
+## 2026-07-25 — Double-post on thread replies (confirmed working)
+
+**What we were trying to achieve:**
+On the version page, hitting the reply send button posted the comment, but there was a network delay and no feedback that it was sending. Users (Coris) assumed it hadn't worked, clicked again, and the comment double-posted.
+
+**Root cause:**
+`submitReply` in the version page had no in-flight guard and its button was only disabled on empty text — so a second click during the request fired a second POST to `/api/threads/reply`. The new-thread path (`submitThread`) already guarded this with the `posting` state; replies didn't.
+
+**Fix:**
+Reused the existing `posting` state for replies: `submitReply` now early-returns if already posting, sets `posting` for the duration, disables the reply input and button, and shows "Posting…" in the reply row while sending. Added error handling with a toast on failure.
+
+**Files changed:**
+- `app/songs/[id]/versions/[versionId]/page.tsx`
+
+**Before/after:**
+- Before: rapid double-click on reply → two identical comments, no sending feedback.
+- After: button + input disable on submit, "Posting…" shows, second click is ignored — one comment per submit.
+
+**Tests run:**
+- Vercel production build passed (deploy READY).
+- Confirmed working in production by Coris.
+
+---
+
+## 2026-07-25 — Comment channel redesign: avatars + names, two-sided, reliable author identity (confirmed working)
+
+**What we were trying to achieve:**
+Comments rendered all in red and stacked on one side when two accounts talked, because "you vs them" was decided by a first-name string (`c.author === identity`) and both test accounts resolved to "Coris". Wanted a scalable channel that works from a 2-person back-and-forth to a 5-member band, identified by avatar (Google profile photo) + name, no per-person colour.
+
+**Root cause:**
+`comments` stored only an `author` name string (with `Coris`/`Al` hardcoded from email aliases), so identity collided and no stable per-user reference existed. `profiles` had no `avatar_url`, and only the live signed-in user carried a Google photo — other members' photos weren't persisted anywhere.
+
+**Fix (schema + code):**
+- SQL migration (run manually in Supabase, v2 project `xouiiaknskivrjvapdma`): added `profiles.avatar_url`, added `comments.author_user_id uuid references profiles(id)` + index, and best-effort backfilled `author_user_id` for existing Coris/Al comments by email alias.
+- `bootstrapAccount.ts`: persist the Google `avatar_url` to `profiles` on sign-in (only when present, never overwrite with null).
+- `threads/create` + `threads/reply`: stamp each new comment with `author_user_id`.
+- `versions/[versionId]/threads` GET: return each comment's `author_user_id` and resolved `author_avatar_url` (batch profile lookup).
+- Version page + CSS: avatar + name message rows, match "you" by `author_user_id === currentUserId` (falls back to name), neutral bubbles (dropped the red "own" fill), fixed an operator-precedence bug in the author label, grouped consecutive messages from the same sender, initials fallback avatar (and `onError` fallback if a photo fails to load). Mark-as-action button now sizes to content on both sides.
+
+**Files changed:**
+- `lib/bootstrapAccount.ts`
+- `app/api/threads/create/route.ts`
+- `app/api/threads/reply/route.ts`
+- `app/api/versions/[versionId]/threads/route.ts`
+- `app/songs/[id]/versions/[versionId]/page.tsx`
+- `app/songs/[id]/versions/[versionId]/version.module.css`
+- SQL migration run manually (profiles.avatar_url, comments.author_user_id + backfill)
+
+**Before/after:**
+- Before: two accounts both rendered as "Coris" in red, stacked on one side; no avatars.
+- After: you on the right, others on the left, neutral bubbles, avatar (Google photo, initials fallback) + name per run; own-match by stable user id. Other members' photos populate as they next sign in; until then, initials.
+
+**Notes for v2 consumer build:**
+- Google avatar URLs (`googleusercontent.com`) load with `referrerPolicy="no-referrer"` to avoid 403s; keep that if the img tag is refactored or moved to `next/image`.
+- Route reads/writes were written to tolerate the pre-migration schema, but the migration is now applied — new comments carry `author_user_id` going forward.
+
+**Tests run:**
+- Vercel production build passed (deploy READY) for each commit.
+- Confirmed working in production by Coris across two accounts.
