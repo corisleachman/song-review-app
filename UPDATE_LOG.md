@@ -2913,3 +2913,28 @@ Comments rendered all in red and stacked on one side when two accounts talked, b
 **Tests run:**
 - Vercel production build passed (deploy READY) for each commit.
 - Confirmed working in production by Coris across two accounts.
+
+## 2026-07-25 — Mobile lock-screen next/prev replayed the same track (confirmed working)
+
+**What we were trying to achieve:**
+Playing a song from the dashboard list, then using the phone's lock-screen media controls: pressing "next" restarted the current track instead of advancing to the next song.
+
+**Root cause:**
+The dashboard player tracks the current queue position in two places — `queueIndex` (React state) and `queueIndexRef` (a ref). The on-screen controls read the state; the Media Session lock-screen `nexttrack`/`previoustrack` handlers read the ref (via `skipTrack`). `queueIndexRef` was only updated by auto-advance (`handlePlayerEnded`) and `skipTrack` itself — **not** by `playSong` when a user taps a song. So after a manual tap the ref was stale (typically one behind the real position), and `skipTrack('next')` computed `queueIndexRef.current + 1`, which landed on the currently-playing song and reloaded it. Auto-advance on the open page worked because it updates the ref.
+
+**Fix:**
+`playSong` now sets `queueIndexRef.current` alongside `setQueueIndex(...)`, keeping the ref in sync with state so the lock-screen handlers read the correct index.
+
+**Files changed:**
+- `app/dashboard/page.tsx`
+
+**Before/after:**
+- Before: lock-screen "next" after tapping a song → restarts the same track.
+- After: lock-screen next/prev advance through the song queue correctly.
+
+**Scope note:**
+The queue is the songs list (next SONG, not next version) — behaviour was correct by design; only the index the lock-screen handlers read was stale.
+
+**Tests run:**
+- Vercel production build passed (deploy READY).
+- Confirmed working on device by Coris.
