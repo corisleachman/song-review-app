@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Comment channel — redesign wireframe</title>
+<style>
+  :root{
+    --black:#0E0A0A; --surface:#1C1515; --surface-2:#241C1C; --surface-3:#2A2020;
+    --off-white:#F4EDE4; --sand:#D4C4B0; --dune:#8C7B6B; --red:#C0392B;
+    --border:rgba(244,237,228,0.10); --border-m:rgba(244,237,228,0.18);
+    --ui:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--black);color:var(--off-white);font-family:var(--ui);
+    padding:40px 24px 80px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .page{max-width:1080px;margin:0 auto}
+  h1{font-size:26px;font-weight:700;letter-spacing:-0.01em}
+  .sub{color:var(--sand);font-size:14px;margin-top:8px;max-width:70ch}
+  .rules{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0 34px}
+  .rule{font-size:12px;color:var(--sand);border:1px solid var(--border-m);
+    padding:8px 12px;background:var(--surface)}
+  .rule b{color:var(--off-white);font-weight:600}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  @media(max-width:840px){.grid{grid-template-columns:1fr}}
+  .caption{font-size:12px;letter-spacing:0.14em;text-transform:uppercase;
+    color:var(--dune);font-weight:700;margin-bottom:10px}
+
+  /* ── Comment channel panel (mirrors the app) ── */
+  .panel{background:var(--surface);border:1px solid var(--border);display:flex;
+    flex-direction:column;height:520px}
+  .thread-head{display:flex;align-items:center;justify-content:space-between;
+    gap:10px;padding:14px 16px;border-bottom:1px solid var(--border)}
+  .thread-meta{display:flex;align-items:center;gap:10px}
+  .thread-dot{width:12px;height:12px;background:var(--red);flex-shrink:0}
+  .thread-time{font-weight:700;font-size:15px}
+  .thread-msgs{font-size:12px;color:var(--dune)}
+  .thread-actions{display:flex;gap:6px}
+  .ta-btn{font-size:11px;color:var(--sand);background:transparent;
+    border:1px solid var(--border-m);padding:6px 10px;cursor:pointer}
+
+  .bubble-list{flex:1;overflow-y:auto;padding:18px 18px;display:flex;
+    flex-direction:column;gap:16px}
+
+  /* message row */
+  .row{display:flex;gap:10px;align-items:flex-end;max-width:88%}
+  .row.other{align-self:flex-start}
+  .row.own{align-self:flex-end;flex-direction:row-reverse}
+
+  .avatar{width:30px;height:30px;flex-shrink:0;border:1px solid var(--border-m);
+    background:var(--surface-3);color:var(--off-white);font-size:12px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .avatar img{width:100%;height:100%;object-fit:cover;display:block}
+  .avatar.spacer{background:transparent;border-color:transparent}
+
+  .stack{display:flex;flex-direction:column;gap:4px;min-width:0}
+  .row.own .stack{align-items:flex-end}
+  .name{font-size:12px;color:var(--dune);padding:0 2px}
+  .name b{color:var(--sand);font-weight:600}
+
+  .bubble{padding:10px 14px;font-size:14px;line-height:1.45;
+    box-shadow:0 10px 24px rgba(0,0,0,0.16);max-width:100%}
+  .bubble.other{background:var(--surface-2);border-bottom-left-radius:0}
+  .bubble.own{background:var(--surface-3);border-bottom-right-radius:0}
+
+  .reply-row{display:flex;align-items:center;gap:10px;padding:12px 14px;
+    border-top:1px solid var(--border)}
+  .reply-dot{width:10px;height:10px;background:var(--sand);flex-shrink:0}
+  .reply-input{flex:1;background:transparent;border:none;color:var(--off-white);
+    font-family:var(--ui);font-size:14px;outline:none}
+  .reply-input::placeholder{color:var(--dune)}
+  .reply-time{font-size:12px;color:var(--dune)}
+  .reply-btn{width:30px;height:30px;background:var(--red);border:none;color:#fff;
+    display:flex;align-items:center;justify-content:center;cursor:pointer}
+
+  .note{margin-top:14px;font-size:12px;color:var(--dune);font-style:italic}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Comment channel — redesign</h1>
+  <p class="sub">Avatars + names carry identity; no per-person colour. You sit on the right, everyone else on the left — purely by layout, so it scales from a 2-person back-and-forth to a full band. Red is reserved for the timestamp marker and actions, not bubbles.</p>
+
+  <div class="rules">
+    <span class="rule"><b>You</b> → right, neutral bubble</span>
+    <span class="rule"><b>Others</b> → left, neutral bubble</span>
+    <span class="rule">Identity = <b>avatar + name</b></span>
+    <span class="rule">Match "you" by <b>user id</b>, not name</span>
+    <span class="rule">Repeated sender → avatar/name shown once per run</span>
+  </div>
+
+  <div class="grid">
+    <!-- ── Thread 1: 2-person back-and-forth ── -->
+    <div>
+      <div class="caption">2 people — the back-and-forth fix</div>
+      <div class="panel">
+        <div class="thread-head">
+          <div class="thread-meta">
+            <div class="thread-dot"></div>
+            <span class="thread-time">@ 1:17</span>
+            <span class="thread-msgs">4 messages</span>
+          </div>
+          <div class="thread-actions">
+            <button class="ta-btn">Jump to time</button>
+            <button class="ta-btn">Copy link</button>
+          </div>
+        </div>
+        <div class="bubble-list">
+
+          <div class="row other">
+            <div class="avatar">AL</div>
+            <div class="stack">
+              <span class="name"><b>Al</b></span>
+              <div class="bubble other">The second verse needs something to lift it — it feels flat coming out of the chorus.</div>
+            </div>
+          </div>
+
+          <div class="row own">
+            <div class="avatar">CO</div>
+            <div class="stack">
+              <span class="name"><b>You</b></span>
+              <div class="bubble own">Agreed. I'll double the lead vocal and add a counter-melody on the synth.</div>
+            </div>
+          </div>
+
+          <div class="row other">
+            <div class="avatar">AL</div>
+            <div class="stack">
+              <span class="name"><b>Al</b></span>
+              <div class="bubble other">Nice. Maybe pull the drums back a touch there too?</div>
+            </div>
+          </div>
+
+          <div class="row own">
+            <div class="avatar">CO</div>
+            <div class="stack">
+              <span class="name"><b>You</b></span>
+              <div class="bubble own">Good call — I'll bounce a new version tonight.</div>
+            </div>
+          </div>
+
+        </div>
+        <div class="reply-row">
+          <div class="reply-dot"></div>
+          <input class="reply-input" placeholder="Reply…" disabled>
+          <span class="reply-time">1:17</span>
+          <button class="reply-btn">→</button>
+        </div>
+      </div>
+      <p class="note">Fixes the red screenshot: two accounts now sit on opposite sides, neutral bubbles, identified by avatar + name.</p>
+    </div>
+
+    <!-- ── Thread 2: 5-member band ── -->
+    <div>
+      <div class="caption">5 people — scales without colour</div>
+      <div class="panel">
+        <div class="thread-head">
+          <div class="thread-meta">
+            <div class="thread-dot"></div>
+            <span class="thread-time">@ 0:48</span>
+            <span class="thread-msgs">5 messages</span>
+          </div>
+          <div class="thread-actions">
+            <button class="ta-btn">Jump to time</button>
+            <button class="ta-btn">Copy link</button>
+          </div>
+        </div>
+        <div class="bubble-list">
+
+          <div class="row other">
+            <div class="avatar">CA</div>
+            <div class="stack">
+              <span class="name"><b>Cat</b></span>
+              <div class="bubble other">Loving the intro, but the hats are a little harsh on headphones.</div>
+            </div>
+          </div>
+
+          <div class="row other">
+            <div class="avatar">MA</div>
+            <div class="stack">
+              <span class="name"><b>Marcus</b></span>
+              <div class="bubble other">Same here — could we soften the top end?</div>
+            </div>
+          </div>
+
+          <div class="row other">
+            <div class="avatar">PR</div>
+            <div class="stack">
+              <span class="name"><b>Priya</b></span>
+              <div class="bubble other">I can re-track the shaker to fill that space instead.</div>
+            </div>
+          </div>
+
+          <div class="row own">
+            <div class="avatar">CO</div>
+            <div class="stack">
+              <span class="name"><b>You</b></span>
+              <div class="bubble own">Let's do both. Priya, send me the shaker take and I'll rebalance.</div>
+            </div>
+          </div>
+
+          <div class="row other">
+            <div class="avatar">AL</div>
+            <div class="stack">
+              <span class="name"><b>Al</b></span>
+              <div class="bubble other">+1. This is sounding like the record now.</div>
+            </div>
+          </div>
+
+        </div>
+        <div class="reply-row">
+          <div class="reply-dot"></div>
+          <input class="reply-input" placeholder="Reply…" disabled>
+          <span class="reply-time">0:48</span>
+          <button class="reply-btn">→</button>
+        </div>
+      </div>
+      <p class="note">Five distinct members, no hues — avatar initials (or photos, when set) do the identifying.</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>
