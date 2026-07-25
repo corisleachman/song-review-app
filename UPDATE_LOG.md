@@ -2938,3 +2938,41 @@ The queue is the songs list (next SONG, not next version) — behaviour was corr
 **Tests run:**
 - Vercel production build passed (deploy READY).
 - Confirmed working on device by Coris.
+
+## 2026-07-25 — Go-live: marketing homepage at song-room.live, login moved to /login (confirmed working)
+
+**What we were trying to achieve:**
+Point song-room.live at the marketing site while keeping the app on the same domain. Chosen topology: everything served by Vercel (root). `/` = marketing, `/login` = login, `/dashboard` etc. = app. The app and its Google/Supabase auth stay on song-room.live (no subdomain migration).
+
+**Changes:**
+- **Login moved:** `app/page.tsx` + `app/page.module.css` → `app/login/`. Login now lives at `/login`.
+- **Marketing at `/`:** added `public/marketing.html` (production copy of the marketing page) + a `next.config.js` `beforeFiles` rewrite `{ source: '/', destination: '/marketing.html' }`. Production copy edits vs the main-branch wireframe: removed `noindex`, canonical + og:url → `https://song-room.live/`, CTAs `login-v17.html` → `/login`, favicon/apple-touch and Be-Kind.mp4/poster → absolute GitHub Pages URLs.
+- **Middleware:** `/login` and `/marketing.html` added to public routes; unauthenticated redirect target changed from `/` to `/login`; `/blog` whitelisted as public (ready for the SEO engine).
+- **Login-link repoints:** all client-side `'/?redirectTo='` → `'/login?redirectTo='` in `app/songs/[id]/versions/[versionId]/page.tsx` (x2), `app/songs/[id]/upload/page.tsx` (x2), `app/dashboard/page.tsx`, `lib/useProtectedRoute.ts`, `lib/settingsContext.tsx`; `app/identify/page.tsx` unauth push → `/login`. Sign-out flows (`window.location.assign('/')`) left as-is → now land on the marketing home.
+- **OAuth post-auth redirect base:** `app/auth/callback/route.ts` (x3) and `app/api/auth/bootstrap/route.ts` (x3) built `new URL('/', …)` with `google=success` — pointed at the old login at `/`. Changed to `/login` so the login page's session-sync handler runs and forwards to the requested route.
+- **Build fix:** `app/auth/reset-password/page.tsx` imported the login CSS via `../../page.module.css`; updated to `../../login/page.module.css` after the move.
+
+**Root cause of the two issues hit during cutover:**
+- First build ERROR: reset-password shared the login page's CSS module by relative path; moving the login file broke it. (Production never changed — the failed build didn't deploy.)
+- Google login landed on marketing: the OAuth callback still redirected to `/` (now static marketing) instead of the login page that completes the session sync. Fixed by repointing callback + bootstrap to `/login`.
+
+**Files changed:**
+- `app/login/page.tsx`, `app/login/page.module.css` (moved), removed `app/page.tsx` + `app/page.module.css`
+- `public/marketing.html` (new)
+- `next.config.js`, `middleware.ts`
+- `app/auth/callback/route.ts`, `app/api/auth/bootstrap/route.ts`
+- `app/auth/reset-password/page.tsx`
+- `app/songs/[id]/versions/[versionId]/page.tsx`, `app/songs/[id]/upload/page.tsx`, `app/dashboard/page.tsx`, `app/identify/page.tsx`, `lib/useProtectedRoute.ts`, `lib/settingsContext.tsx`
+
+**Before/after:**
+- Before: `song-room.live/` = login page (Next app); no public marketing; blog assumed to be served by GitHub Pages.
+- After: `song-room.live/` = indexable marketing page (canonical song-room.live), `/login` = login, protected routes → `/login?redirectTo=…`, Google + email login land on the dashboard, `/blog` pre-cleared for the SEO engine to publish into `public/blog`.
+
+**Notes for the marketing operating system / SEO engine (PR #3):**
+- Production host for song-room.live is now Vercel (clone-clean), not GitHub Pages. The marketing source of truth is `public/marketing.html` on clone-clean; the main-branch wireframe is now only a preview.
+- The blog must be served by Vercel: SEO engine should output to `public/blog` and open PRs against `clone-clean` (not main). `/blog` is already whitelisted in middleware. Fix blog nav links (brand → `/`, CTA → `/login`); keep canonical `https://song-room.live/blog/…` and `SITE_URL`.
+- Open: apex vs www — song-room.live 308-redirects to www.song-room.live while canonical is set to the apex; alignment still to be decided.
+
+**Tests run:**
+- Vercel production builds passed (deploys READY) for each commit.
+- Verified live: `/` serves marketing (indexable), `/login` serves login, `/dashboard` logged-out → `/login?redirectTo=%2Fdashboard`, `/auth/callback` (no code) → `/login?...`, and Google login confirmed reaching the dashboard by Coris.
