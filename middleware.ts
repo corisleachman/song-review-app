@@ -9,9 +9,10 @@ export async function middleware(request: NextRequest) {
   const isInviteRoute = pathname.startsWith('/invite/');
   const isReferralRoute = pathname.startsWith('/r/');
   const isListenRoute = pathname.startsWith('/listen/');
+  const isBlogRoute = pathname.startsWith('/blog');
   
   // Check if path is public
-  if (publicRoutes.includes(pathname) || isInviteRoute || isReferralRoute || isListenRoute) {
+  if (publicRoutes.includes(pathname) || isInviteRoute || isReferralRoute || isListenRoute || isBlogRoute) {
     return NextResponse.next();
   }
   
