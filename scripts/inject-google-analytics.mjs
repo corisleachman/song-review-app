@@ -1,18 +1,20 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-const MEASUREMENT_ID = 'G-8VW86YBN6C';
 const STATIC_FILES = ['public/marketing.html'];
 const BLOG_DIR = 'public/blog';
+const CONSENT_MARKER = 'data-tsr-cookie-consent';
 
-const snippet = `<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=${MEASUREMENT_ID}"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', '${MEASUREMENT_ID}');
-</script>`;
+const consentAssets = `<!-- Cookie consent and consent-gated analytics -->
+<link rel="stylesheet" href="/cookie-consent.css" ${CONSENT_MARKER}>
+<script defer src="/cookie-consent.js" ${CONSENT_MARKER}></script>`;
+
+function removeLegacyAnalytics(html) {
+  return html
+    .replace(/<!-- Google tag \(gtag\.js\) -->\s*/gi, '')
+    .replace(/<script\s+async\s+src="https:\/\/www\.googletagmanager\.com\/gtag\/js\?id=G-8VW86YBN6C"><\/script>\s*/gi, '')
+    .replace(/<script>\s*window\.dataLayer\s*=\s*window\.dataLayer\s*\|\|\s*\[\];[\s\S]*?gtag\('config',\s*'G-8VW86YBN6C'\);\s*<\/script>\s*/gi, '');
+}
 
 async function inject(filePath) {
   let html;
@@ -23,13 +25,17 @@ async function inject(filePath) {
     throw error;
   }
 
-  if (html.includes(MEASUREMENT_ID)) return;
+  html = removeLegacyAnalytics(html);
+  if (html.includes(CONSENT_MARKER)) {
+    await fs.writeFile(filePath, html);
+    return;
+  }
   if (!html.includes('</head>')) {
-    throw new Error(`Cannot inject Google Analytics: ${filePath} has no </head> tag.`);
+    throw new Error(`Cannot inject cookie consent: ${filePath} has no </head> tag.`);
   }
 
-  await fs.writeFile(filePath, html.replace('</head>', `${snippet}\n</head>`));
-  console.log(`Injected Google Analytics into ${filePath}`);
+  await fs.writeFile(filePath, html.replace('</head>', `${consentAssets}\n</head>`));
+  console.log(`Injected cookie consent into ${filePath}`);
 }
 
 async function main() {
