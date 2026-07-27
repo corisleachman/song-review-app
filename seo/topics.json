@@ -21,7 +21,12 @@
       "intent": "informational",
       "audience": "Artists, producers and bands",
       "priority": 2,
-      "status": "ready"
+      "status": "published",
+      "slug": "how-to-organise-song-versions-without-losing-track",
+      "generatedTitle": "How to Organise Song Versions Without Losing Track",
+      "excerpt": "A practical workflow for naming, storing and sharing demos, stems and mixes so you never lose track of the latest version.",
+      "publishedAt": "2026-07-25",
+      "model": "gpt-5-mini"
     },
     {
       "id": "share-demos",
