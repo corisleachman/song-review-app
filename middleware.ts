@@ -5,7 +5,18 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   
   // Public routes (no auth required)
-  const publicRoutes = ['/', '/login', '/marketing.html', '/identify', '/auth/callback', '/auth/reset-password', '/privacy', '/terms'];
+  const publicRoutes = [
+    '/',
+    '/login',
+    '/marketing.html',
+    '/identify',
+    '/auth/callback',
+    '/auth/reset-password',
+    '/privacy',
+    '/terms',
+    '/cookie-consent.js',
+    '/cookie-consent.css',
+  ];
   const isInviteRoute = pathname.startsWith('/invite/');
   const isReferralRoute = pathname.startsWith('/r/');
   const isListenRoute = pathname.startsWith('/listen/');

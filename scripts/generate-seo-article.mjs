@@ -6,7 +6,6 @@ const BRAND_PATH = 'seo/brand-context.md';
 const BLOG_DIR = 'public/blog';
 const SITE_URL = process.env.SITE_URL || 'https://song-room.live';
 const MODEL = process.env.OPENAI_MODEL || 'gpt-5-mini';
-const GA_MEASUREMENT_ID = 'G-8VW86YBN6C';
 
 function escapeHtml(value = '') {
   return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
@@ -16,15 +15,10 @@ function slugify(value) {
   return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
-function googleAnalyticsSnippet() {
-  return `<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', '${GA_MEASUREMENT_ID}');
-</script>`;
+function consentAssets() {
+  return `<!-- Cookie consent and consent-gated analytics -->
+<link rel="stylesheet" href="/cookie-consent.css" data-tsr-cookie-consent>
+<script defer src="/cookie-consent.js" data-tsr-cookie-consent></script>`;
 }
 
 function sanitiseBodyHtml(value = '') {
@@ -104,7 +98,7 @@ function renderArticle(article, topic, slug, publishedDate) {
 <meta property="og:type" content="article"><meta property="og:site_name" content="The Song Room"><meta property="og:title" content="${escapeHtml(article.seoTitle)}"><meta property="og:description" content="${escapeHtml(article.metaDescription)}"><meta property="og:url" content="${canonical}"><meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/blog/styles.css">
 <script type="application/ld+json">${JSON.stringify(articleSchema)}</script>${faqSchema ? `<script type="application/ld+json">${JSON.stringify(faqSchema)}</script>` : ''}
-${googleAnalyticsSnippet()}
+${consentAssets()}
 </head>
 <body>
 <header class="site-header"><a class="brand" href="/">THE SONG ROOM</a><nav><a href="/blog/">Guides</a><a class="button" href="/login">Open The Song Room</a></nav></header>
@@ -116,7 +110,7 @@ ${googleAnalyticsSnippet()}
 async function rebuildIndex(topics) {
   const published = topics.filter(t => t.status === 'published').sort((a, b) => String(b.publishedAt).localeCompare(String(a.publishedAt)));
   const cards = published.map(t => `<article class="guide-card"><p class="eyebrow">${escapeHtml(t.intent)}</p><h2><a href="/blog/${t.slug}.html">${escapeHtml(t.generatedTitle || t.title)}</a></h2><p>${escapeHtml(t.excerpt || '')}</p><a class="text-link" href="/blog/${t.slug}.html">Read guide →</a></article>`).join('\n');
-  const html = `<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Songwriting and collaboration guides | The Song Room</title><meta name="description" content="Practical guides for artists, producers, songwriters and bands working together on recorded music."><link rel="canonical" href="${SITE_URL}/blog/"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/blog/styles.css">${googleAnalyticsSnippet()}</head><body><header class="site-header"><a class="brand" href="/">THE SONG ROOM</a><nav><a href="/blog/">Guides</a><a class="button" href="/login">Open The Song Room</a></nav></header><main class="index-shell"><p class="eyebrow">The Song Room guides</p><h1>Better ways to finish songs together.</h1><p class="standfirst">Practical workflows for sharing demos, organising versions, giving useful feedback and moving music forward.</p><section class="guide-grid">${cards || '<p>The first guide is being prepared.</p>'}</section></main><footer><p>© ${new Date().getUTCFullYear()} The Song Room</p></footer></body></html>`;
+  const html = `<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Songwriting and collaboration guides | The Song Room</title><meta name="description" content="Practical guides for artists, producers, songwriters and bands working together on recorded music."><link rel="canonical" href="${SITE_URL}/blog/"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/blog/styles.css">${consentAssets()}</head><body><header class="site-header"><a class="brand" href="/">THE SONG ROOM</a><nav><a href="/blog/">Guides</a><a class="button" href="/login">Open The Song Room</a></nav></header><main class="index-shell"><p class="eyebrow">The Song Room guides</p><h1>Better ways to finish songs together.</h1><p class="standfirst">Practical workflows for sharing demos, organising versions, giving useful feedback and moving music forward.</p><section class="guide-grid">${cards || '<p>The first guide is being prepared.</p>'}</section></main><footer><p>© ${new Date().getUTCFullYear()} The Song Room</p></footer></body></html>`;
   await fs.writeFile(path.join(BLOG_DIR, 'index.html'), html);
 }
 
