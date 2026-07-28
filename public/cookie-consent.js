@@ -33,15 +33,22 @@
     }
   }
 
-  function loadAnalytics() {
-    if (document.querySelector(`script[data-tsr-ga="${MEASUREMENT_ID}"]`)) return;
-
+  function grantAnalyticsConsent() {
     window.gtag('consent', 'update', {
       analytics_storage: 'granted',
       ad_storage: 'denied',
       ad_user_data: 'denied',
       ad_personalization: 'denied',
     });
+  }
+
+  function loadAnalytics() {
+    grantAnalyticsConsent();
+
+    if (document.querySelector(`script[data-tsr-ga="${MEASUREMENT_ID}"]`)) {
+      return;
+    }
+
     window.gtag('js', new Date());
     window.gtag('config', MEASUREMENT_ID, { anonymize_ip: true });
 
@@ -109,12 +116,11 @@
     const banner = document.createElement('section');
     banner.id = BANNER_ID;
     banner.className = 'tsr-cookie-banner';
-    banner.setAttribute('role', 'dialog');
-    banner.setAttribute('aria-modal', 'true');
-    banner.setAttribute('aria-labelledby', 'tsr-cookie-title');
+    banner.setAttribute('role', 'region');
+    banner.setAttribute('aria-label', 'Cookie preferences');
     banner.innerHTML = `
       <div class="tsr-cookie-copy">
-        <h2 id="tsr-cookie-title">Analytics cookies</h2>
+        <h2>Analytics cookies</h2>
         <p>We use optional Google Analytics cookies to understand how people use The Song Room and improve the experience. They are off unless you accept.</p>
       </div>
       <div class="tsr-cookie-actions">
@@ -126,7 +132,6 @@
     banner.querySelector('[data-cookie-choice="reject"]')?.addEventListener('click', rejectAnalytics);
     banner.querySelector('[data-cookie-choice="accept"]')?.addEventListener('click', acceptAnalytics);
     document.body.appendChild(banner);
-    banner.querySelector('[data-cookie-choice="accept"]')?.focus();
   }
 
   function initialise() {
