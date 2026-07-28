@@ -1,3 +1,4 @@
+// Shared cookie consent controller for the marketing site, app and blog.
 (() => {
   const CONSENT_KEY = 'tsr_analytics_consent';
   const MEASUREMENT_ID = 'G-8VW86YBN6C';
