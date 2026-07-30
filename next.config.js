@@ -25,6 +25,15 @@ const nextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return {
+      beforeFiles: [
+        { source: '/', destination: '/marketing.html' },
+      ],
+      afterFiles: [],
+      fallback: [],
+    };
+  },
 };
 
 module.exports = nextConfig;

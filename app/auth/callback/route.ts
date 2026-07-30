@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     // We avoid a server-side redirect chain to bootstrap because browsers
     // (especially in incognito) may not persist Set-Cookie headers across
     // multiple 307 redirect hops before the cookies are stored.
-    const loginUrl = new URL('/', requestUrl.origin);
+    const loginUrl = new URL('/login', requestUrl.origin);
     loginUrl.searchParams.set('google', 'success');
     if (next && next !== '/') {
       loginUrl.searchParams.set('redirectTo', next);
@@ -42,7 +42,7 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
-      const errorUrl = new URL('/', requestUrl.origin);
+      const errorUrl = new URL('/login', requestUrl.origin);
       errorUrl.searchParams.set('google', 'error');
       errorUrl.searchParams.set('message', error.message);
       if (next && next !== '/') {
@@ -55,7 +55,7 @@ export async function GET(request: Request) {
   }
 
   // No code — redirect to login
-  const loginUrl = new URL('/', requestUrl.origin);
+  const loginUrl = new URL('/login', requestUrl.origin);
   loginUrl.searchParams.set('google', 'error');
   loginUrl.searchParams.set('message', 'No auth code received.');
   if (next && next !== '/') {

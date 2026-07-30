@@ -846,9 +846,32 @@
 .bubbleWrap { display: flex; flex-direction: column; gap: 4px; }
 .bubbleWrapOwn { align-items: flex-end; }
 .bubbleWrapOther { align-items: flex-start; }
-.bubbleAuthor { font-size: 0.72rem; color: rgba(244,237,228,0.35); padding: 0 4px; }
+
+/* Avatar + name message rows (avatars carry identity; no per-person colour) */
+.bubbleRow { display: flex; gap: 10px; align-items: flex-end; max-width: 88%; }
+.bubbleRowOther { align-self: flex-start; }
+.bubbleRowOwn { align-self: flex-end; flex-direction: row-reverse; }
+.bubbleStack { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
+.bubbleRowOwn .bubbleStack { align-items: flex-end; }
+.bubbleAvatar {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border: 1px solid rgba(244,237,228,0.18);
+  background: #2A2020;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bubbleAvatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.bubbleAvatarInitials { font-size: 0.72rem; font-weight: 700; color: #F4EDE4; }
+.bubbleAvatarSpacer { background: transparent; border-color: transparent; }
+
+.bubbleAuthor { font-size: 0.72rem; color: rgba(212,196,176,0.7); padding: 0 4px; }
 .bubble {
-  max-width: 80%;
+  max-width: 100%;
   padding: 10px 14px;
   border-radius: 0;
   font-size: 0.9rem;
@@ -856,16 +879,16 @@
   box-shadow: 0 10px 24px rgba(0,0,0,0.16);
 }
 .bubbleOwn {
-  background: #C0392B;
+  background: #2A2020;
   color: #F4EDE4;
   align-self: flex-end;
-  border-bottom-right-radius: 4px;
+  border-bottom-right-radius: 0;
 }
 .bubbleOther {
-  background: #1C1515;
+  background: #241C1C;
   color: #F4EDE4;
   align-self: flex-start;
-  border-bottom-left-radius: 4px;
+  border-bottom-left-radius: 0;
 }
 .bubbleGentlePop {
   animation: bubbleGentlePop 360ms cubic-bezier(0.16, 1, 0.3, 1);

@@ -5,13 +5,25 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   
   // Public routes (no auth required)
-  const publicRoutes = ['/', '/identify', '/auth/callback', '/auth/reset-password', '/privacy', '/terms'];
+  const publicRoutes = [
+    '/',
+    '/login',
+    '/marketing.html',
+    '/identify',
+    '/auth/callback',
+    '/auth/reset-password',
+    '/privacy',
+    '/terms',
+    '/cookie-consent.js',
+    '/cookie-consent.css',
+  ];
   const isInviteRoute = pathname.startsWith('/invite/');
   const isReferralRoute = pathname.startsWith('/r/');
   const isListenRoute = pathname.startsWith('/listen/');
+  const isBlogRoute = pathname.startsWith('/blog');
   
   // Check if path is public
-  if (publicRoutes.includes(pathname) || isInviteRoute || isReferralRoute || isListenRoute) {
+  if (publicRoutes.includes(pathname) || isInviteRoute || isReferralRoute || isListenRoute || isBlogRoute) {
     return NextResponse.next();
   }
   
@@ -50,7 +62,7 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  const loginUrl = new URL('/', request.url);
+  const loginUrl = new URL('/login', request.url);
   loginUrl.searchParams.set('redirectTo', pathname);
   return NextResponse.redirect(loginUrl);
 }

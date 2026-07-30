@@ -10,7 +10,7 @@ export default function IdentifyPage() {
 
   useEffect(() => {
     if (!getAuth()) {
-      router.push('/');
+      router.push('/login');
     }
   }, [router]);
 

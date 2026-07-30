@@ -91,10 +91,11 @@ export async function POST(req: NextRequest) {
         {
           thread_id: threadData.id,
           author,
+          author_user_id: resolved.identity.userId,
           body: trimmedComment,
         },
       ])
-      .select('id, author, body, created_at')
+      .select('id, author, body, created_at, author_user_id')
       .single();
 
     if (commentError) throw commentError;
@@ -128,7 +129,8 @@ export async function POST(req: NextRequest) {
           id,
           author,
           body,
-          created_at
+          created_at,
+          author_user_id
         )
       `)
       .eq('id', threadData.id)
@@ -136,10 +138,22 @@ export async function POST(req: NextRequest) {
 
     if (canonicalThreadError) throw canonicalThreadError;
 
+    // Attach the current user's avatar to their comments (others fill in via GET)
+    const enrichedThread = canonicalThread
+      ? {
+          ...canonicalThread,
+          comments: (((canonicalThread as { comments?: unknown }).comments as Array<Record<string, unknown>> | null) ?? []).map((cm) => ({
+            ...cm,
+            author_avatar_url:
+              cm.author_user_id === resolved.identity.userId ? resolved.identity.avatarUrl : null,
+          })),
+        }
+      : canonicalThread;
+
     return NextResponse.json({
       threadId: threadData.id,
       commentId: commentData.id,
-      thread: canonicalThread,
+      thread: enrichedThread,
     });
   } catch (error) {
     console.error('Error creating thread:', error);

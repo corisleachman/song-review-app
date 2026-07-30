@@ -11,7 +11,7 @@ export function useProtectedRoute() {
   useEffect(() => {
     if (!auth || !identity) {
       const redirectTo = searchParams.get('redirectTo') || '/dashboard';
-      router.push(`/?redirectTo=${encodeURIComponent(redirectTo)}`);
+      router.push(`/login?redirectTo=${encodeURIComponent(redirectTo)}`);
     }
   }, [router, auth, identity, searchParams]);
 

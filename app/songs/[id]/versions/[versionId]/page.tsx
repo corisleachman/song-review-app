@@ -15,8 +15,18 @@ const MAX_AUDIO_SIZE_BYTES = 200 * 1024 * 1024;
 interface Comment {
   id: string;
   author: string;
+  author_user_id?: string | null;
+  author_avatar_url?: string | null;
   body: string;
   created_at: string;
+}
+
+function getInitials(name: string | null | undefined) {
+  const trimmed = (name ?? '').trim();
+  if (!trimmed) return '?';
+  const parts = trimmed.split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
 interface Thread {
@@ -1013,7 +1023,7 @@ function VersionPageInner() {
         }
 
         logVersionInit('bootstrap:missing-identity', { payload });
-        router.push(`/?redirectTo=${encodeURIComponent(`/songs/${songId}/versions/${versionId}`)}`);
+        router.push(`/login?redirectTo=${encodeURIComponent(`/songs/${songId}/versions/${versionId}`)}`);
       } catch (error) {
         console.error('Version page bootstrap error:', error);
         if (!mounted) return;
@@ -1030,7 +1040,7 @@ function VersionPageInner() {
         logVersionInit('bootstrap:failed-without-identity', {
           message: error instanceof Error ? error.message : String(error),
         });
-        router.push(`/?redirectTo=${encodeURIComponent(`/songs/${songId}/versions/${versionId}`)}`);
+        router.push(`/login?redirectTo=${encodeURIComponent(`/songs/${songId}/versions/${versionId}`)}`);
       }
     }
 
@@ -1929,17 +1939,28 @@ function VersionPageInner() {
   };
 
   const submitReply = async (threadId: string) => {
-    if (!replyText.trim()) return;
-    const res = await fetch('/api/threads/reply', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ threadId, songId, versionId, text: replyText.trim() }),
-    });
-    if (res.ok) {
-      const { commentId } = await res.json();
+    if (!replyText.trim() || posting) return;
+    setPosting(true);
+    try {
+      const res = await fetch('/api/threads/reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ threadId, songId, versionId, text: replyText.trim() }),
+      });
+      const payload = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(
+          payload && typeof payload.error === 'string' ? payload.error : 'Could not post reply.'
+        );
+      }
       setReplyText('');
       await loadThreads();
-      triggerCommentAnimation(commentId ?? null);
+      triggerCommentAnimation(payload?.commentId ?? null);
+    } catch (error) {
+      console.error('Reply error:', error);
+      showStatusToast(error instanceof Error ? error.message : 'Could not post reply.');
+    } finally {
+      setPosting(false);
     }
   };
 
@@ -3031,28 +3052,53 @@ function VersionPageInner() {
                 </button>
               </div>
               <div className={styles.bubbleList}>
-                {selectedThread.comments?.map(c => (
-                  <div key={c.id} className={`${styles.bubbleWrap} ${c.author === identity ? styles.bubbleWrapOwn : styles.bubbleWrapOther}`}>
-                    {!c.author || c.author !== identity && <span className={styles.bubbleAuthor}>{c.author}</span>}
-                    <div
-                      className={`${styles.bubble} ${c.author === identity ? styles.bubbleOwn : styles.bubbleOther} ${animatedCommentId === c.id ? styles.bubbleGentlePop : ''}`}
-                    >
-                      {c.body}
+                {selectedThread.comments?.map((c, i, arr) => {
+                  const isOwn = (c.author_user_id && currentUserId)
+                    ? c.author_user_id === currentUserId
+                    : c.author === identity;
+                  const prev = arr[i - 1];
+                  const prevKey = prev ? (prev.author_user_id || prev.author) : null;
+                  const thisKey = c.author_user_id || c.author;
+                  const showMeta = prevKey !== thisKey;
+                  return (
+                    <div key={c.id} className={`${styles.bubbleRow} ${isOwn ? styles.bubbleRowOwn : styles.bubbleRowOther}`}>
+                      {showMeta ? (
+                        <div className={styles.bubbleAvatar}>
+                          <span className={styles.bubbleAvatarInitials}>{getInitials(c.author)}</span>
+                          {c.author_avatar_url && (
+                            <img
+                              src={c.author_avatar_url}
+                              alt=""
+                              referrerPolicy="no-referrer"
+                              onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                            />
+                          )}
+                        </div>
+                      ) : (
+                        <div className={`${styles.bubbleAvatar} ${styles.bubbleAvatarSpacer}`} aria-hidden="true" />
+                      )}
+                      <div className={styles.bubbleStack}>
+                        {showMeta && <span className={styles.bubbleAuthor}>{isOwn ? 'You' : c.author}</span>}
+                        <div
+                          className={`${styles.bubble} ${isOwn ? styles.bubbleOwn : styles.bubbleOther} ${animatedCommentId === c.id ? styles.bubbleGentlePop : ''}`}
+                        >
+                          {c.body}
+                        </div>
+                        {!actions.some(a => a.comment_id === c.id) && (
+                          <button className={styles.markActionBtn} onClick={() => {
+                            setActionModalCommentId(c.id);
+                            setEditingActionId(null);
+                            setActionText(c.body);
+                            setActionStatus('open');
+                            setActionAssignedToUserId('');
+                          }}>
+                            + Mark as action
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    {c.author === identity && <span className={styles.bubbleAuthor}>{c.author}</span>}
-                    {!actions.some(a => a.comment_id === c.id) && (
-                      <button className={styles.markActionBtn} onClick={() => {
-                        setActionModalCommentId(c.id);
-                        setEditingActionId(null);
-                        setActionText(c.body);
-                        setActionStatus('open');
-                        setActionAssignedToUserId('');
-                      }}>
-                        + Mark as action
-                      </button>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <div className={styles.replyRow}>
                 <div className={styles.replyDot} />
@@ -3062,9 +3108,10 @@ function VersionPageInner() {
                   value={replyText}
                   onChange={e => setReplyText(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') submitReply(selectedThread.id); }}
+                  disabled={posting}
                 />
-                <span className={styles.replyTime}>{formatTimestamp(Math.floor(currentTime))}</span>
-                <button className={styles.replyBtn} onClick={() => submitReply(selectedThread.id)} disabled={!replyText.trim()}>
+                <span className={styles.replyTime}>{posting ? 'Posting…' : formatTimestamp(Math.floor(currentTime))}</span>
+                <button className={styles.replyBtn} aria-label="Post reply" onClick={() => submitReply(selectedThread.id)} disabled={!replyText.trim() || posting}>
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M1 7h11M8 3l4 4-4 4"/>
                   </svg>

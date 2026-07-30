@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
-import styles from '../../page.module.css';
+import styles from '../../login/page.module.css';
 
 function ResetPasswordContent() {
   const searchParams = useSearchParams();

@@ -1,0 +1,86 @@
+{
+  "topics": [
+    {
+      "id": "remote-collaboration",
+      "keyword": "how to collaborate on a song remotely",
+      "title": "How to Collaborate on a Song Remotely",
+      "intent": "informational",
+      "audience": "Independent artists, songwriters and producers",
+      "priority": 1,
+      "status": "published",
+      "slug": "how-to-collaborate-on-a-song-remotely",
+      "generatedTitle": "How to Collaborate on a Song Remotely",
+      "excerpt": "A practical, step-by-step guide for independent artists, songwriters and producers to move songs from first demo to finished track while working remotely.",
+      "publishedAt": "2026-07-25",
+      "model": "gpt-5-mini"
+    },
+    {
+      "id": "song-versions",
+      "keyword": "how to organise song versions",
+      "title": "How to Organise Song Versions Without Losing Track",
+      "intent": "informational",
+      "audience": "Artists, producers and bands",
+      "priority": 2,
+      "status": "published",
+      "slug": "how-to-organise-song-versions-without-losing-track",
+      "generatedTitle": "How to Organise Song Versions Without Losing Track",
+      "excerpt": "A practical workflow for naming, storing and sharing demos, stems and mixes so you never lose track of the latest version.",
+      "publishedAt": "2026-07-25",
+      "model": "gpt-5-mini"
+    },
+    {
+      "id": "share-demos",
+      "keyword": "best way to share demos with collaborators",
+      "title": "The Best Way to Share Demos With Music Collaborators",
+      "intent": "commercial investigation",
+      "audience": "Artists, songwriters and producers",
+      "priority": 3,
+      "status": "ready"
+    },
+    {
+      "id": "song-feedback",
+      "keyword": "how to give feedback on a song",
+      "title": "How to Give Useful Feedback on a Song",
+      "intent": "informational",
+      "audience": "Bands, artists and producers",
+      "priority": 4,
+      "status": "ready"
+    },
+    {
+      "id": "remote-songwriting-workflow",
+      "keyword": "remote songwriting workflow",
+      "title": "A Practical Remote Songwriting Workflow",
+      "intent": "informational",
+      "audience": "Songwriters, artists and producers",
+      "priority": 5,
+      "status": "ready"
+    },
+    {
+      "id": "producer-revisions",
+      "keyword": "how producers manage client feedback and revisions",
+      "title": "How Producers Can Manage Feedback and Revisions",
+      "intent": "informational",
+      "audience": "Independent producers and engineers",
+      "priority": 6,
+      "status": "ready"
+    },
+    {
+      "id": "dropbox-alternatives",
+      "keyword": "Dropbox alternatives for musicians",
+      "title": "Dropbox Alternatives for Musicians and Producers",
+      "intent": "commercial investigation",
+      "audience": "Artists, bands and producers",
+      "priority": 7,
+      "status": "ready"
+    },
+    {
+      "id": "finish-unfinished-songs",
+      "keyword": "how to finish an unfinished song",
+      "title": "How to Move an Unfinished Song Towards Completion",
+      "intent": "informational",
+      "audience": "Songwriters and independent artists",
+      "priority": 8,
+      "status": "ready"
+    }
+  ]
+}

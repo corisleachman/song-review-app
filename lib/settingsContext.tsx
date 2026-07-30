@@ -155,7 +155,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
             return;
           }
           if (res.status === 401) {
-            router.push('/?redirectTo=%2Fsettings%2Fworkspace');
+            router.push('/login?redirectTo=%2Fsettings%2Fworkspace');
             return;
           }
           throw new Error(getPayloadError(payload) || 'Failed to load settings');

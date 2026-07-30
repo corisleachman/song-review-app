@@ -133,17 +133,20 @@ async function loadWorkspace(accountId: string): Promise<WorkspaceRecord> {
 }
 
 export async function bootstrapAccountForUser(user: AuthenticatedUser): Promise<BootstrapResult> {
+  const profilePayload: Record<string, unknown> = {
+    id: user.id,
+    email: user.email,
+    display_name: user.displayName,
+    updated_at: new Date().toISOString(),
+  };
+  // Persist the Google profile photo when we have one (never overwrite with null).
+  if (user.avatarUrl) {
+    profilePayload.avatar_url = user.avatarUrl;
+  }
+
   const { data: profile, error: profileError } = await supabaseServer
     .from('profiles')
-    .upsert(
-      {
-        id: user.id,
-        email: user.email,
-        display_name: user.displayName,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'id' }
-    )
+    .upsert(profilePayload, { onConflict: 'id' })
     .select('id, email, display_name, created_at, updated_at')
     .single();
 

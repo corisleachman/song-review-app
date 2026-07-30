@@ -262,6 +262,10 @@ Move the core song pages from legacy identity gating to real session/bootstrap.
 ### Status
 Implemented
 
+### Update — 2026-07-25
+- Comment authorship upgraded from temporary string author to a stable `comments.author_user_id` (FK to `profiles`); "you vs others" in threads now matches by user id, not display name.
+- `profiles.avatar_url` added and populated on sign-in; the comment channel now shows avatar (Google photo, initials fallback) + name, two-sided.
+
 ---
 
 ## Slice 3: Settings cutover
@@ -2232,20 +2236,123 @@ Rather than cash payouts (which require tax complexity) or feature unlocks (whic
 
 ## Phase 8: Marketing Site
 
-**Status: Queued**
+**Status: In Progress** — currently at `tsr-marketing-v20.html`
 
 ### Objective
 Build a public-facing marketing site for The Song Room.
 
+### Current state
+The page is built as a single-file HTML wireframe on GitHub Pages, iterated from v1 to v20:
+`wireframes/Song Room Branding/tsr-marketing-v20.html`
+Live preview: `https://corisleachman.github.io/song-review-app/wireframes/Song%20Room%20Branding/tsr-marketing-v20.html`
+
+Note: the design system reference below was corrected in July 2026. Earlier versions of this
+document described a TSR v2 palette (Impact/Haettenschweiler, `#111111`, pink/acid/blue) that
+has been **superseded** — do not build against it.
+
+### Design system in use (TSR v3 — authoritative)
+- Display type: **ThunderLC** (Black / Bold / Regular), served as **WOFF2** from `wireframes/fonts/` on GitHub Pages
+- UI type: **DM Sans**
+- Colours: background `#0E0A0A`, surface `#1C1515`, surface-2 `#261C1C`, red `#C0392B`, red-bright `#E8402E`, straw `#F0E48C`, off-white `#F4EDE4`, sand `#D4C4B0`, dune `#8C7B6B`
+- `border-radius: 0` by default. Exceptions: bento cells, screenshot frames and decorative image blocks at `20px`; avatar circles at `50%`
+
+### Done
+- Site structure and full single-page build: nav, hero, problem, artwork/colour section, three numbered features, product showcase, social proof, pricing, final CTA, footer
+- TSR v3 brand application throughout
+- Animated hero: SVG stroke-draw "CREATE TOGETHER" headline plus rotating bento image grid
+- WhatsApp-thread animation illustrating the problem section
+- Product showcase: real app screenshots (desktop + mobile + public sharing view) with a click-to-enlarge lightbox (keyboard, backdrop and arrow navigation)
+- Pricing section restructured — tiers differentiated by buyer type, storage expressed in song counts, WCAG-passing contrast, Pro-first ordering on mobile
+- Mobile fixes: hero headline restored (was hidden via `display: none`), bento reflowed to a 2x4 grid, phone screenshots in a scroll-snap row
+- Font delivery fixed for iOS (WOFF2, same-origin)
+- SEO basics: meta description, canonical, Open Graph and Twitter card tags
+
+### Remaining
+- **`og:image` asset** — `wireframes/Song Room Branding/tsr-og-image.jpg`, 1200x630, under 300 KB (owner to supply)
+- **Favicon** — none currently set
+- Final content review: decide whether to keep, replace or remove remaining decorative TSR imagery
+- Decide whether the artwork/colour-extraction section should sit lower in the page hierarchy
+- Sticky "Start for free" CTA on mobile (recommended, not yet built)
+- Full accessibility pass (contrast sweep beyond the pricing pills, focus states, alt text)
+- Sitemap and `robots.txt`
+- **Routing and deployment** — see Phase 8.5
+- Sign up / waitlist / invite flow from the marketing site into the app
+
+### Blocked by
+- **Phase 10 (Plan Gating)** — the pricing section advertises tier features that the app cannot yet enforce. The marketing site must not go public until those gates ship.
+
+---
+
+## Phase 8.5: Domain Routing & Deployment
+
+**Status: Implemented (2026-07-25)**
+
+### Update — 2026-07-25 (shipped)
+Cutover done via **Topology B — everything on Vercel (root)**. song-room.live now serves:
+`/` = marketing, `/login` = login, `/dashboard` etc. = app. The app and its Google/Supabase
+auth stayed on song-room.live (no subdomain move), which is why this carried low auth risk.
+
+What shipped (deviations from the original plan noted):
+- Login route is **`/login`** (not `/login-signup`). Moved `app/page.tsx` (+ CSS) → `app/login/`.
+- Marketing served at `/` from **`public/marketing.html`** via a `next.config.js` `beforeFiles`
+  rewrite (kept the hand-built HTML; did not port to React). This file is now the marketing
+  source of truth; the main-branch wireframe is a preview only.
+- `middleware.ts`: `/login` + `/marketing.html` public; unauth redirect → `/login`; `/blog`
+  whitelisted for the SEO engine.
+- All internal `'/?redirectTo='` links → `'/login?redirectTo='` (version, upload, dashboard,
+  useProtectedRoute, settingsContext, identify). Sign-out flows now land on marketing `/`.
+- OAuth post-auth redirect base (`app/auth/callback/route.ts`, `app/api/auth/bootstrap/route.ts`)
+  moved from `/` to `/login` so the login page's session-sync completes to the dashboard.
+- Marketing prod copy: `noindex` removed (**live + indexable** per decision), canonical + og:url →
+  `https://song-room.live/`, CTAs → `/login`, favicon/video/poster → absolute URLs.
+- **Supabase auth config did NOT need changing** — OAuth still routes through `/auth/callback`
+  (unchanged); only the post-callback *internal* redirect moved to `/login`. Google + email login
+  confirmed reaching the dashboard.
+
+Caveats / still open:
+- **Phase 10 (plan gating) has not shipped.** The marketing site went public/indexable per Coris's
+  explicit decision, so the pricing section currently advertises tier gates the app does not yet
+  enforce. Ship Phase 10 to close that gap.
+- apex vs www: song-room.live 308-redirects to www.song-room.live while canonical is set to the
+  apex — alignment still to be decided.
+- Blog (`/blog`) is whitelisted but not yet served; the SEO engine (PR #3) must publish into
+  `public/blog` on clone-clean before it works.
+
+### Objective
+Move the marketing site from a GitHub Pages wireframe onto the live domain, and relocate the
+existing login/signup page so the two can coexist.
+
+### Target routing
+| URL | Serves |
+|---|---|
+| `https://www.song-room.live/` | Marketing site |
+| `https://www.song-room.live/login-signup` | Login / signup |
+
+### Current routing
+| URL | Serves |
+|---|---|
+| `https://www.song-room.live/` | Login / signup — rendered by `app/page.tsx` on `clone-clean` |
+
+**Important:** there is no standalone HTML file behind the live login page. It is a Next.js
+route: `app/page.tsx` (~464 lines, React) plus `app/page.module.css`, compiled at build time.
+The `login-v*.html` files in `wireframes/Song Room Branding/` are **design wireframes only** and
+are not what is deployed.
+
 ### Workstreams
-- Define site structure: landing page, features, pricing, sign up CTA
-- Apply updated branding based on the new design system developed in parallel (TSR v2 design tokens, Impact/Haettenschweiler display type, DM Sans UI type, Georgia italic metadata)
-- Build landing page with hero, feature highlights, social proof section
-- Build pricing page reflecting the new model from Phase 5
-- Sign up / waitlist / invite flow from marketing site into the app
-- SEO basics: meta tags, og:image, sitemap
-- Domain setup: point `song-room.live` or a subdomain to the marketing site
-- Separate deployment from the app (Vercel project or subdirectory)
+- Create `app/login-signup/page.tsx` and move the current root page content into it (with its CSS module)
+- Decide how the marketing site is served at `/`: port the HTML into the Next.js app as the new root route, or deploy separately and route at the domain/proxy level
+- **Update `middleware.ts`** — unauthenticated users are currently redirected to `/`; that must become `/login-signup` or they will land on the marketing page instead of the login form
+- Audit and update every internal redirect that currently targets `/` (post-logout, auth guards, invite and referral flows)
+- **Update Supabase auth config** (project `xouiiaknskivrjvapdma`): Site URL and Redirect URLs currently point at `/`. Google OAuth will fail on the new path until these are updated. *Historically the single biggest cause of production login outages on this project — verify the correct project before editing.*
+- Update `NEXT_PUBLIC_APP_URL` if it encodes the root path
+- Update marketing site CTAs — all 7 currently point at the `login-v17.html` wireframe and must become `/login-signup`
+- Update `og:url`, `canonical` and `og:image` to the `song-room.live` domain (currently absolute GitHub Pages URLs — social previews will point at the wireframe until changed)
+- Confirm `www` vs apex domain handling and add a redirect for whichever is not canonical
+- Re-test: Google OAuth, email login, signup, password reset, invite acceptance, referral links
+
+### Open questions
+- Port the marketing HTML into Next.js, or keep it a separate deployment? Porting gives one domain, one deploy and shared analytics; separate keeps the marketing build independent of app releases.
+- Which login wireframe is current — `login-v17.html` or the newer `login-v18.html` (23 June)? Needed to confirm the deployed page matches the intended design.
 
 ---
 
@@ -2257,9 +2364,93 @@ Build a public-facing marketing site for The Song Room.
 Roll the new branding developed for the marketing site back into the app UI.
 
 ### Workstreams
-- Replace current Pulse-inspired aesthetic (hot pink / cyan / purple gradients) with the TSR v2 design system
-- Apply new typography hierarchy: Impact/Haettenschweiler display, DM Sans 600 uppercase UI labels, Georgia italic metadata
-- Update colour tokens: charcoal `#111111`, off-white `#F4F0E8`, sand `#D8CBB8`, pink `#FFB6C8`, acid `#E6FF3F`, blue `#2D7DFF`
-- `border-radius: 0` everywhere (exceptions: avatar circles, waveform dots)
+- Replace the remaining Pulse-inspired aesthetic (hot pink / cyan / purple gradients) with the **TSR v3** design system
+- Apply the typography hierarchy: **ThunderLC** display (Black / Bold / Regular, WOFF2), **DM Sans** for UI
+- Update colour tokens to TSR v3: background `#0E0A0A`, surface `#1C1515`, surface-2 `#261C1C`, red `#C0392B`, red-bright `#E8402E`, straw `#F0E48C`, off-white `#F4EDE4`, sand `#D4C4B0`, dune `#8C7B6B`
+- `border-radius: 0` by default (exceptions: avatar circles, waveform marker dots, and image/screenshot frames at `20px`)
 - Update dashboard, version page, settings, and invite flow
 - QA full app after rebrand
+
+**Correction (July 2026):** this phase previously specified a TSR v2 palette — Impact/Haettenschweiler
+display type and tokens `#111111` / `#F4F0E8` / `#D8CBB8` / pink `#FFB6C8` / acid `#E6FF3F` /
+blue `#2D7DFF`. That system was **superseded** by TSR v3 during the marketing site build and must
+not be used. Building against the old tokens would re-skin the app to a palette that has been abandoned.
+
+### Dependencies
+- Should not start until the marketing site's visual direction is locked (Phase 8), or the app gets re-skinned twice.
+
+---
+
+## Phase 10: Plan Gating & Pricing Enforcement (app)
+
+**Status: Queued**
+
+### Objective
+Build the feature gates that the v19 marketing site pricing now promises. The marketing page advertises tier differences that do not exist in the app yet — **the marketing site must not go public until this phase ships**, or we are advertising features we cannot enforce.
+
+### Background
+Pricing was restructured on the marketing site (`tsr-marketing-v19.html`) to differentiate tiers by **buyer type** rather than storage alone, because storage-only differentiation gave no compelling reason to upgrade from Free. Collaborators remain unlimited on every tier — that positioning is deliberate and should not change.
+
+**Advertised tiers:**
+
+| | Free (£0) | Pro (£9/mo) | Studio (£19/mo) |
+|---|---|---|---|
+| Who | Trying it out | Working artists & bands | Producers & studios, multiple acts |
+| Storage | 500 MB (~10 songs) | 10 GB (~200 songs) | 50 GB (~1,000 songs) |
+| Collaborators | Unlimited | Unlimited | Unlimited |
+| Songs | Unlimited | Unlimited | Unlimited |
+| Version history | Last 3 per song | Full — nothing dropped | Full |
+| Upload formats | MP3 only | Lossless WAV & FLAC | Lossless WAV & FLAC |
+| Public share links | 1 active | Unlimited | Unlimited |
+| Workspaces | 1 | 1 | Multiple (one per act/client) |
+| Public page branding | TSR branded | TSR branded | Unbranded / client-facing |
+| Support | Standard | Standard | Priority |
+
+### Workstreams
+
+**Plan-gating foundation**
+- Single source of truth for plan limits (shared constant/table) that both UI and API routes read — avoid duplicating limit logic per route
+- Plan resolution helper: given a workspace, return its current tier and limits
+- Consistent upgrade-prompt component for when a gate is hit
+
+**Storage enforcement**
+- Enforce 500 MB / 10 GB / 50 GB caps at upload time
+- Storage usage calculation per workspace
+- Usage indicator in settings (e.g. "3.2 GB of 10 GB used")
+- Graceful behaviour at limit: block new uploads, do not delete existing files
+
+**Version retention (Free tier)**
+- Cap Free workspaces at last 3 versions per song
+- Decide behaviour for versions beyond the cap: lock/hide vs prune (recommend **lock, not delete** — deleting user audio is hostile and unrecoverable)
+- Surface clearly on the song page when older versions are locked behind an upgrade
+
+**Upload format gating**
+- Restrict Free tier to MP3; block WAV/FLAC at upload with a clear upgrade message
+- Validate server-side, not just in the client picker
+
+**Public share links**
+- Cap Free at 1 active public link; unlimited on Pro/Studio
+- Handle the case where a Free user already has multiple public songs (grandfathering vs forced deactivation)
+- Studio: strip TSR branding from public listen pages (`/listen/[songId]`)
+
+**Multiple workspaces (Studio)**
+- Gate workspace creation to Studio tier
+- Workspace switcher already exists — needs plan-aware creation limits
+- Billing model: confirm whether Studio subscription covers all its workspaces, or bills per workspace
+
+**Stripe**
+- Three price points: Free (no charge), Pro £9/mo, Studio £19/mo
+- Annual variants at 20% discount for Pro and Studio
+- Upgrade/downgrade paths, including what happens on downgrade when usage exceeds the new tier's limits
+- Webhook handling to sync subscription state to workspace tier
+
+### Open questions before building
+- **Public share links on Free:** capping at 1 may throttle the viral loop, since public links are how non-users discover TSR. Consider unlimited public links on all tiers and gating only the *unbranded* version (Studio). **Needs a decision before build.**
+- Storage-to-song estimates on the marketing site assume ~50 MB per song across a few versions — validate against real usage data and adjust the marketing copy if it is materially off.
+- Downgrade behaviour: if a Pro user drops to Free with 8 GB stored and 12 versions per song, what happens? (Recommend: read-only over-limit state rather than deletion.)
+- Does version retention count *all* versions or only those with audio still attached?
+- Grandfathering: any existing users who should be exempt from new limits?
+
+### Dependencies
+- Blocks: Phase 8 (Marketing Site) public launch
+- Related: Phase 5 (Pricing Review & Stripe Rollout), Phase 6.5 (Referral Programme — "Referral rewards" is advertised as a Pro feature)

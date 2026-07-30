@@ -3190,3 +3190,163 @@ Finalized-version selection and response minimization for the public song endpoi
 - `npx tsc --noEmit --incremental false` — passed.
 - `RESEND_API_KEY= npm run build` — passed on Next.js 15.5.20.
 - A read-only local production-server check against the currently configured pre-migration Supabase schema returned `200` for an existing public song, supplied an audio URL, exercised the missing-column fallback, and confirmed `file_path` was absent from the public response.
+
+---
+
+## 2026-07-25 — Double-post on thread replies (confirmed working)
+
+**What we were trying to achieve:**
+On the version page, hitting the reply send button posted the comment, but there was a network delay and no feedback that it was sending. Users (Coris) assumed it hadn't worked, clicked again, and the comment double-posted.
+
+**Root cause:**
+`submitReply` in the version page had no in-flight guard and its button was only disabled on empty text — so a second click during the request fired a second POST to `/api/threads/reply`. The new-thread path (`submitThread`) already guarded this with the `posting` state; replies didn't.
+
+**Fix:**
+Reused the existing `posting` state for replies: `submitReply` now early-returns if already posting, sets `posting` for the duration, disables the reply input and button, and shows "Posting…" in the reply row while sending. Added error handling with a toast on failure.
+
+**Files changed:**
+- `app/songs/[id]/versions/[versionId]/page.tsx`
+
+**Before/after:**
+- Before: rapid double-click on reply → two identical comments, no sending feedback.
+- After: button + input disable on submit, "Posting…" shows, second click is ignored — one comment per submit.
+
+**Tests run:**
+- Vercel production build passed (deploy READY).
+- Confirmed working in production by Coris.
+
+---
+
+## 2026-07-25 — Comment channel redesign: avatars + names, two-sided, reliable author identity (confirmed working)
+
+**What we were trying to achieve:**
+Comments rendered all in red and stacked on one side when two accounts talked, because "you vs them" was decided by a first-name string (`c.author === identity`) and both test accounts resolved to "Coris". Wanted a scalable channel that works from a 2-person back-and-forth to a 5-member band, identified by avatar (Google profile photo) + name, no per-person colour.
+
+**Root cause:**
+`comments` stored only an `author` name string (with `Coris`/`Al` hardcoded from email aliases), so identity collided and no stable per-user reference existed. `profiles` had no `avatar_url`, and only the live signed-in user carried a Google photo — other members' photos weren't persisted anywhere.
+
+**Fix (schema + code):**
+- SQL migration (run manually in Supabase, v2 project `xouiiaknskivrjvapdma`): added `profiles.avatar_url`, added `comments.author_user_id uuid references profiles(id)` + index, and best-effort backfilled `author_user_id` for existing Coris/Al comments by email alias.
+- `bootstrapAccount.ts`: persist the Google `avatar_url` to `profiles` on sign-in (only when present, never overwrite with null).
+- `threads/create` + `threads/reply`: stamp each new comment with `author_user_id`.
+- `versions/[versionId]/threads` GET: return each comment's `author_user_id` and resolved `author_avatar_url` (batch profile lookup).
+- Version page + CSS: avatar + name message rows, match "you" by `author_user_id === currentUserId` (falls back to name), neutral bubbles (dropped the red "own" fill), fixed an operator-precedence bug in the author label, grouped consecutive messages from the same sender, initials fallback avatar (and `onError` fallback if a photo fails to load). Mark-as-action button now sizes to content on both sides.
+
+**Files changed:**
+- `lib/bootstrapAccount.ts`
+- `app/api/threads/create/route.ts`
+- `app/api/threads/reply/route.ts`
+- `app/api/versions/[versionId]/threads/route.ts`
+- `app/songs/[id]/versions/[versionId]/page.tsx`
+- `app/songs/[id]/versions/[versionId]/version.module.css`
+- SQL migration run manually (profiles.avatar_url, comments.author_user_id + backfill)
+
+**Before/after:**
+- Before: two accounts both rendered as "Coris" in red, stacked on one side; no avatars.
+- After: you on the right, others on the left, neutral bubbles, avatar (Google photo, initials fallback) + name per run; own-match by stable user id. Other members' photos populate as they next sign in; until then, initials.
+
+**Notes for v2 consumer build:**
+- Google avatar URLs (`googleusercontent.com`) load with `referrerPolicy="no-referrer"` to avoid 403s; keep that if the img tag is refactored or moved to `next/image`.
+- Route reads/writes were written to tolerate the pre-migration schema, but the migration is now applied — new comments carry `author_user_id` going forward.
+
+**Tests run:**
+- Vercel production build passed (deploy READY) for each commit.
+- Confirmed working in production by Coris across two accounts.
+
+## 2026-07-25 — Mobile lock-screen next/prev replayed the same track (confirmed working)
+
+**What we were trying to achieve:**
+Playing a song from the dashboard list, then using the phone's lock-screen media controls: pressing "next" restarted the current track instead of advancing to the next song.
+
+**Root cause:**
+The dashboard player tracks the current queue position in two places — `queueIndex` (React state) and `queueIndexRef` (a ref). The on-screen controls read the state; the Media Session lock-screen `nexttrack`/`previoustrack` handlers read the ref (via `skipTrack`). `queueIndexRef` was only updated by auto-advance (`handlePlayerEnded`) and `skipTrack` itself — **not** by `playSong` when a user taps a song. So after a manual tap the ref was stale (typically one behind the real position), and `skipTrack('next')` computed `queueIndexRef.current + 1`, which landed on the currently-playing song and reloaded it. Auto-advance on the open page worked because it updates the ref.
+
+**Fix:**
+`playSong` now sets `queueIndexRef.current` alongside `setQueueIndex(...)`, keeping the ref in sync with state so the lock-screen handlers read the correct index.
+
+**Files changed:**
+- `app/dashboard/page.tsx`
+
+**Before/after:**
+- Before: lock-screen "next" after tapping a song → restarts the same track.
+- After: lock-screen next/prev advance through the song queue correctly.
+
+**Scope note:**
+The queue is the songs list (next SONG, not next version) — behaviour was correct by design; only the index the lock-screen handlers read was stale.
+
+**Tests run:**
+- Vercel production build passed (deploy READY).
+- Confirmed working on device by Coris.
+
+## 2026-07-25 — Go-live: marketing homepage at song-room.live, login moved to /login (confirmed working)
+
+**What we were trying to achieve:**
+Point song-room.live at the marketing site while keeping the app on the same domain. Chosen topology: everything served by Vercel (root). `/` = marketing, `/login` = login, `/dashboard` etc. = app. The app and its Google/Supabase auth stay on song-room.live (no subdomain migration).
+
+**Changes:**
+- **Login moved:** `app/page.tsx` + `app/page.module.css` → `app/login/`. Login now lives at `/login`.
+- **Marketing at `/`:** added `public/marketing.html` (production copy of the marketing page) + a `next.config.js` `beforeFiles` rewrite `{ source: '/', destination: '/marketing.html' }`. Production copy edits vs the main-branch wireframe: removed `noindex`, canonical + og:url → `https://song-room.live/`, CTAs `login-v17.html` → `/login`, favicon/apple-touch and Be-Kind.mp4/poster → absolute GitHub Pages URLs.
+- **Middleware:** `/login` and `/marketing.html` added to public routes; unauthenticated redirect target changed from `/` to `/login`; `/blog` whitelisted as public (ready for the SEO engine).
+- **Login-link repoints:** all client-side `'/?redirectTo='` → `'/login?redirectTo='` in `app/songs/[id]/versions/[versionId]/page.tsx` (x2), `app/songs/[id]/upload/page.tsx` (x2), `app/dashboard/page.tsx`, `lib/useProtectedRoute.ts`, `lib/settingsContext.tsx`; `app/identify/page.tsx` unauth push → `/login`. Sign-out flows (`window.location.assign('/')`) left as-is → now land on the marketing home.
+- **OAuth post-auth redirect base:** `app/auth/callback/route.ts` (x3) and `app/api/auth/bootstrap/route.ts` (x3) built `new URL('/', …)` with `google=success` — pointed at the old login at `/`. Changed to `/login` so the login page's session-sync handler runs and forwards to the requested route.
+- **Build fix:** `app/auth/reset-password/page.tsx` imported the login CSS via `../../page.module.css`; updated to `../../login/page.module.css` after the move.
+
+**Root cause of the two issues hit during cutover:**
+- First build ERROR: reset-password shared the login page's CSS module by relative path; moving the login file broke it. (Production never changed — the failed build didn't deploy.)
+- Google login landed on marketing: the OAuth callback still redirected to `/` (now static marketing) instead of the login page that completes the session sync. Fixed by repointing callback + bootstrap to `/login`.
+
+**Files changed:**
+- `app/login/page.tsx`, `app/login/page.module.css` (moved), removed `app/page.tsx` + `app/page.module.css`
+- `public/marketing.html` (new)
+- `next.config.js`, `middleware.ts`
+- `app/auth/callback/route.ts`, `app/api/auth/bootstrap/route.ts`
+- `app/auth/reset-password/page.tsx`
+- `app/songs/[id]/versions/[versionId]/page.tsx`, `app/songs/[id]/upload/page.tsx`, `app/dashboard/page.tsx`, `app/identify/page.tsx`, `lib/useProtectedRoute.ts`, `lib/settingsContext.tsx`
+
+**Before/after:**
+- Before: `song-room.live/` = login page (Next app); no public marketing; blog assumed to be served by GitHub Pages.
+- After: `song-room.live/` = indexable marketing page (canonical song-room.live), `/login` = login, protected routes → `/login?redirectTo=…`, Google + email login land on the dashboard, `/blog` pre-cleared for the SEO engine to publish into `public/blog`.
+
+**Notes for the marketing operating system / SEO engine (PR #3):**
+- Production host for song-room.live is now Vercel (clone-clean), not GitHub Pages. The marketing source of truth is `public/marketing.html` on clone-clean; the main-branch wireframe is now only a preview.
+- The blog must be served by Vercel: SEO engine should output to `public/blog` and open PRs against `clone-clean` (not main). `/blog` is already whitelisted in middleware. Fix blog nav links (brand → `/`, CTA → `/login`); keep canonical `https://song-room.live/blog/…` and `SITE_URL`.
+- Open: apex vs www — song-room.live 308-redirects to www.song-room.live while canonical is set to the apex; alignment still to be decided.
+
+**Tests run:**
+- Vercel production builds passed (deploys READY) for each commit.
+- Verified live: `/` serves marketing (indexable), `/login` serves login, `/dashboard` logged-out → `/login?redirectTo=%2Fdashboard`, `/auth/callback` (no code) → `/login?...`, and Google login confirmed reaching the dashboard by Coris.
+
+---
+
+## 2026-07-30 — Refresh staged review against current clone-clean
+
+### What we were trying to achieve
+
+Bring the staged code-review PR up to date with the current `clone-clean` branch before applying its database migrations to the new Supabase staging environment.
+
+### Feature / change being made
+
+Base-branch reconciliation and newly published runtime dependency security patches.
+
+### Files changed
+
+- `package.json`
+- `package-lock.json`
+- `UPDATE_LOG.md`
+- Current `clone-clean` changes merged into `codex/staged-code-review-fixes`
+
+### Notes
+
+- Preserved both sides of the appended update log while merging the current base branch; all application-code changes merged automatically.
+- Updated the supported Next.js 15 line to a patched 15.5.21-or-newer release (resolved to 15.5.22), Sharp to 0.35.3, and PostCSS to 8.5.18.
+- Added a Node.js 20.9-or-newer engine requirement because Sharp 0.35 requires that runtime.
+- Forced Next.js's optional Sharp dependency to the same patched 0.35.3 version so the vulnerable nested copy is not installed.
+- The remaining full-audit findings are confined to ESLint's development-only legacy glob stack. Forcing its patched major glob dependency breaks ESLint's import contract, so that toolchain migration remains separate from runtime security.
+
+### Verification
+
+- `npm audit --omit=dev` — 0 vulnerabilities.
+- `npm run lint` — passed with 48 warnings and 0 errors.
+- `npx tsc --noEmit --incremental false` — passed.
+- Production build — passed on Next.js 15.5.22 with placeholder build-time service credentials.
+- Full `npm audit` — 9 high-severity development-only findings in the ESLint/minimatch/brace-expansion chain; no production dependencies affected.

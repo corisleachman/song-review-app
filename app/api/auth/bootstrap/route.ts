@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 function buildReturnUrl(request: NextRequest, next: string | null) {
-  const url = new URL('/', request.url);
+  const url = new URL('/login', request.url);
   url.searchParams.set('google', 'success');
 
   if (next && next !== '/') {
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
 
     if (!resolved) {
       if (shouldRedirect) {
-        const url = new URL('/', req.url);
+        const url = new URL('/login', req.url);
         url.searchParams.set('google', 'error');
         url.searchParams.set('message', 'No authenticated user found during bootstrap.');
         if (next && next !== '/') {
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
     console.error('Auth bootstrap error:', error);
 
     if (req.nextUrl.searchParams.get('redirect') === '1') {
-      const url = new URL('/', req.url);
+      const url = new URL('/login', req.url);
       url.searchParams.set('google', 'error');
       url.searchParams.set('message', 'Could not finish signing you in.');
       const next = req.nextUrl.searchParams.get('next');
