@@ -35,7 +35,12 @@
       "intent": "commercial investigation",
       "audience": "Artists, songwriters and producers",
       "priority": 3,
-      "status": "ready"
+      "status": "published",
+      "slug": "the-best-way-to-share-demos-with-music-collaborators",
+      "generatedTitle": "The Best Way to Share Demos With Music Collaborators",
+      "excerpt": "Clear, practical workflows for sending demos, choosing files, collecting timestamped feedback and keeping versions organised.",
+      "publishedAt": "2026-07-31",
+      "model": "gpt-5-mini"
     },
     {
       "id": "song-feedback",
