@@ -2389,7 +2389,7 @@ not be used. Building against the old tokens would re-skin the app to a palette 
 Build the feature gates that the v19 marketing site pricing now promises. The marketing page advertises tier differences that do not exist in the app yet — **the marketing site must not go public until this phase ships**, or we are advertising features we cannot enforce.
 
 ### Background
-Pricing was restructured on the marketing site (`tsr-marketing-v19.html`) to differentiate tiers by **buyer type** rather than storage alone, because storage-only differentiation gave no compelling reason to upgrade from Free. Collaborators remain unlimited on every tier — that positioning is deliberate and should not change.
+Pricing was restructured on the marketing site (`tsr-marketing-v19.html`) to differentiate tiers by **buyer type** rather than storage alone, because storage-only differentiation gave no compelling reason to upgrade from Free. The collaborator limits were subsequently set at 5 on Free and unlimited on Pro and Studio.
 
 **Advertised tiers:**
 
@@ -2397,7 +2397,7 @@ Pricing was restructured on the marketing site (`tsr-marketing-v19.html`) to dif
 |---|---|---|---|
 | Who | Trying it out | Working artists & bands | Producers & studios, multiple acts |
 | Storage | 500 MB (~10 songs) | 10 GB (~200 songs) | 50 GB (~1,000 songs) |
-| Collaborators | Unlimited | Unlimited | Unlimited |
+| Collaborators | Up to 5 | Unlimited | Unlimited |
 | Songs | Unlimited | Unlimited | Unlimited |
 | Version history | Last 3 per song | Full — nothing dropped | Full |
 | Upload formats | MP3 only | Lossless WAV & FLAC | Lossless WAV & FLAC |

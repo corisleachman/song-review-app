@@ -2976,3 +2976,21 @@ Point song-room.live at the marketing site while keeping the app on the same dom
 **Tests run:**
 - Vercel production builds passed (deploys READY) for each commit.
 - Verified live: `/` serves marketing (indexable), `/login` serves login, `/dashboard` logged-out → `/login?redirectTo=%2Fdashboard`, `/auth/callback` (no code) → `/login?...`, and Google login confirmed reaching the dashboard by Coris.
+
+## 2026-08-01 — Align collaborator limits across pricing tiers
+
+### What we were trying to achieve
+
+Make the collaborator offer consistent across the public pricing page, in-app upgrade flow, and server-side plan enforcement: Free supports up to 5 collaborators, while Pro and Studio support unlimited collaborators.
+
+### Feature or change
+
+Pricing tier and collaborator-limit alignment.
+
+### Changed files
+
+- `lib/plans.ts` — changed the canonical limits to 5 collaborators on Free and unlimited on Pro and Studio; simplified the limit message to the only capped plan.
+- `app/upgrade/page.tsx` — updated the Free and Pro pricing-card collaborator copy.
+- `public/marketing.html` — updated the public pricing cards to show 5 collaborators on Free and unlimited collaborators from Pro.
+- `public-mvp-roadmap.md` — recorded the agreed collaborator policy in the queued plan-gating specification.
+- `UPDATE_LOG.md` — documented this change.
