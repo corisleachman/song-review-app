@@ -27,8 +27,8 @@
 <body>
 <div class="page">
   <div class="page-head">
-    <h1>Song Room · Email Redesign Preview</h1>
-    <p>All four system emails re-skinned to the TSR v3 brand: near-black canvas, straw (acid-yellow) accent, off-white text, hard 1px borders, zero border-radius. Rendered with email-safe HTML (tables + inline styles). Display type uses a heavy web-safe fallback because email clients can't load ThunderLC — the wordmark keeps the brand feel via weight and letter-spacing. Review, then I'll wire the approved designs into the Resend routes and the Supabase templates.</p>
+    <h1>Song Room · Email Suite Preview</h1>
+    <p>All 13 emails in the TSR v3 brand: near-black canvas, straw (acid-yellow) accent, off-white text, hard 1px borders, zero border-radius. Rendered with email-safe HTML (tables + inline styles). Display type uses a heavy web-safe fallback because email clients can't load ThunderLC — the wordmark keeps the brand feel via weight and letter-spacing. Emails 1–4 exist today (2 Resend routes + 2 Supabase auth); 5–13 are proposed. Lifecycle nudges (6, 7, 9, 10, 11) need a scheduler + eligibility checks; marketing (12, 13) go out as Resend broadcasts. Marketing / lifecycle emails carry an unsubscribe footer.</p>
   </div>
 
   <div class="grid">
@@ -208,6 +208,328 @@
           </td></tr>
         </table>
         <!-- EMAIL END -->
+      </div>
+    </div>
+
+    <!-- ============ 5. WELCOME ============ -->
+    <div class="cell">
+      <div class="meta">
+        <div class="tag">5 · Welcome email · proposed</div>
+        <div class="subj">Welcome to Song Room — let's get your first track up</div>
+        <div class="src">Resend route · trigger: signup confirmed</div>
+      </div>
+      <div class="frame">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0E0A0A;border:1px solid #2A2A2A;">
+          <tr><td style="padding:26px 28px 22px;border-bottom:1px solid #2A2A2A;">
+            <span style="font-family:Arial,Helvetica,sans-serif;font-weight:800;font-size:20px;letter-spacing:.18em;color:#F4EDE4;text-transform:uppercase;">SONG&nbsp;ROOM</span>
+          </td></tr>
+          <tr><td style="padding:30px 28px 6px;">
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#F0E48C;font-weight:700;">Welcome</div>
+            <div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:19px;line-height:1.4;color:#F4EDE4;margin-top:12px;">
+              You're in. Song Room is where your tracks get better, take by take.
+            </div>
+          </td></tr>
+          <tr><td style="padding:18px 28px 0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #2A2A2A;background:#191919;">
+              <tr><td style="padding:14px 16px;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:13px;line-height:1.9;color:#9A968E;">
+                <span style="color:#F0E48C;">01</span> &nbsp; Upload a song version<br>
+                <span style="color:#F0E48C;">02</span> &nbsp; Drop timestamped comments on the waveform<br>
+                <span style="color:#F0E48C;">03</span> &nbsp; Invite collaborators and track every decision
+              </td></tr>
+            </table>
+          </td></tr>
+          <tr><td style="padding:24px 28px 8px;">
+            <table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background:#F0E48C;border:1px solid #F0E48C;">
+              <a href="#" style="display:inline-block;padding:12px 26px;font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#0E0A0A;text-decoration:none;">Upload your first track →</a>
+            </td></tr></table>
+          </td></tr>
+          <tr><td style="padding:22px 28px 26px;">
+            <div style="border-top:1px solid #2A2A2A;padding-top:16px;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:11px;line-height:1.6;color:#6E6A63;">Questions? Just reply to this email.</div>
+          </td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============ 6. FIRST-SONG REMINDER ============ -->
+    <div class="cell">
+      <div class="meta">
+        <div class="tag">6 · First-song reminder · proposed</div>
+        <div class="subj">Your Song Room is ready — add your first track</div>
+        <div class="src">Scheduled · signed up, no upload after N days</div>
+      </div>
+      <div class="frame">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0E0A0A;border:1px solid #2A2A2A;">
+          <tr><td style="padding:26px 28px 22px;border-bottom:1px solid #2A2A2A;">
+            <span style="font-family:Arial,Helvetica,sans-serif;font-weight:800;font-size:20px;letter-spacing:.18em;color:#F4EDE4;text-transform:uppercase;">SONG&nbsp;ROOM</span>
+          </td></tr>
+          <tr><td style="padding:30px 28px 6px;">
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#F0E48C;font-weight:700;">Get started</div>
+            <div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:19px;line-height:1.4;color:#F4EDE4;margin-top:12px;">
+              Your workspace is empty. Upload a track and hear it come together.
+            </div>
+          </td></tr>
+          <tr><td style="padding:16px 28px 0;">
+            <div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#9A968E;">Drag in a WAV or MP3 and you'll have a shareable, comment-ready waveform in seconds.</div>
+          </td></tr>
+          <tr><td style="padding:24px 28px 8px;">
+            <table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background:#F0E48C;border:1px solid #F0E48C;">
+              <a href="#" style="display:inline-block;padding:12px 26px;font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#0E0A0A;text-decoration:none;">Upload a track →</a>
+            </td></tr></table>
+          </td></tr>
+          <tr><td style="padding:22px 28px 26px;">
+            <div style="border-top:1px solid #2A2A2A;padding-top:16px;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:11px;line-height:1.6;color:#6E6A63;">You're receiving this because you signed up for Song Room. <a href="#" style="color:#9A968E;text-decoration:underline;">Unsubscribe</a></div>
+          </td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============ 7. INVITE-A-COLLABORATOR PROMPT ============ -->
+    <div class="cell">
+      <div class="meta">
+        <div class="tag">7 · Invite-a-collaborator prompt · proposed</div>
+        <div class="subj">Song Room is better with your collaborators</div>
+        <div class="src">Scheduled · active user, zero collaborators</div>
+      </div>
+      <div class="frame">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0E0A0A;border:1px solid #2A2A2A;">
+          <tr><td style="padding:26px 28px 22px;border-bottom:1px solid #2A2A2A;">
+            <span style="font-family:Arial,Helvetica,sans-serif;font-weight:800;font-size:20px;letter-spacing:.18em;color:#F4EDE4;text-transform:uppercase;">SONG&nbsp;ROOM</span>
+          </td></tr>
+          <tr><td style="padding:30px 28px 6px;">
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#F0E48C;font-weight:700;">Better together</div>
+            <div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:19px;line-height:1.4;color:#F4EDE4;margin-top:12px;">
+              Bring your band, producer or client into the room.
+            </div>
+          </td></tr>
+          <tr><td style="padding:16px 28px 0;">
+            <div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#9A968E;">Collaborators are unlimited on every plan. Invite anyone to leave feedback right on the waveform.</div>
+          </td></tr>
+          <tr><td style="padding:24px 28px 8px;">
+            <table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background:#F0E48C;border:1px solid #F0E48C;">
+              <a href="#" style="display:inline-block;padding:12px 26px;font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#0E0A0A;text-decoration:none;">Invite a collaborator →</a>
+            </td></tr></table>
+          </td></tr>
+          <tr><td style="padding:22px 28px 26px;">
+            <div style="border-top:1px solid #2A2A2A;padding-top:16px;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:11px;line-height:1.6;color:#6E6A63;">Tips like this help you get more from Song Room. <a href="#" style="color:#9A968E;text-decoration:underline;">Unsubscribe</a></div>
+          </td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============ 8. FEEDBACK-RECEIVED (PUBLIC LISTEN) ============ -->
+    <div class="cell">
+      <div class="meta">
+        <div class="tag">8 · Feedback received · proposed</div>
+        <div class="subj">New feedback on your shared track: Midnight Drive</div>
+        <div class="src">Resend route · trigger: comment on /listen share</div>
+      </div>
+      <div class="frame">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0E0A0A;border:1px solid #2A2A2A;">
+          <tr><td style="padding:26px 28px 22px;border-bottom:1px solid #2A2A2A;">
+            <span style="font-family:Arial,Helvetica,sans-serif;font-weight:800;font-size:20px;letter-spacing:.18em;color:#F4EDE4;text-transform:uppercase;">SONG&nbsp;ROOM</span>
+          </td></tr>
+          <tr><td style="padding:30px 28px 6px;">
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#F0E48C;font-weight:700;">New feedback</div>
+            <div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:19px;line-height:1.4;color:#F4EDE4;margin-top:12px;">
+              Someone left feedback on your shared track <strong style="color:#F0E48C;">Midnight Drive</strong>.
+            </div>
+          </td></tr>
+          <tr><td style="padding:18px 28px 0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+              <td width="3" style="background:#F0E48C;"></td>
+              <td style="padding:14px 16px;background:#141414;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.55;color:#F4EDE4;">
+                Loving this — the hook at 0:48 is huge. Would buy it today.
+              </td>
+            </tr></table>
+          </td></tr>
+          <tr><td style="padding:24px 28px 8px;">
+            <table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background:#F0E48C;border:1px solid #F0E48C;">
+              <a href="#" style="display:inline-block;padding:12px 26px;font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#0E0A0A;text-decoration:none;">View feedback →</a>
+            </td></tr></table>
+          </td></tr>
+          <tr><td style="padding:22px 28px 26px;">
+            <div style="border-top:1px solid #2A2A2A;padding-top:16px;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:11px;line-height:1.6;color:#6E6A63;">You get these because you shared a public listen link. Moderate or mute in your track settings.</div>
+          </td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============ 9. INACTIVITY REMINDER ============ -->
+    <div class="cell">
+      <div class="meta">
+        <div class="tag">9 · Inactivity reminder · proposed</div>
+        <div class="subj">Pick up where you left off in Song Room</div>
+        <div class="src">Scheduled · no activity in N days</div>
+      </div>
+      <div class="frame">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0E0A0A;border:1px solid #2A2A2A;">
+          <tr><td style="padding:26px 28px 22px;border-bottom:1px solid #2A2A2A;">
+            <span style="font-family:Arial,Helvetica,sans-serif;font-weight:800;font-size:20px;letter-spacing:.18em;color:#F4EDE4;text-transform:uppercase;">SONG&nbsp;ROOM</span>
+          </td></tr>
+          <tr><td style="padding:30px 28px 6px;">
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#F0E48C;font-weight:700;">Still here for you</div>
+            <div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:19px;line-height:1.4;color:#F4EDE4;margin-top:12px;">
+              It's been a while. Your tracks and comments are right where you left them.
+            </div>
+          </td></tr>
+          <tr><td style="padding:16px 28px 0;">
+            <div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#9A968E;">Jump back in to finish a mix, reply to feedback, or start something new.</div>
+          </td></tr>
+          <tr><td style="padding:24px 28px 8px;">
+            <table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background:#F0E48C;border:1px solid #F0E48C;">
+              <a href="#" style="display:inline-block;padding:12px 26px;font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#0E0A0A;text-decoration:none;">Open Song Room →</a>
+            </td></tr></table>
+          </td></tr>
+          <tr><td style="padding:22px 28px 26px;">
+            <div style="border-top:1px solid #2A2A2A;padding-top:16px;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:11px;line-height:1.6;color:#6E6A63;">Not making music right now? <a href="#" style="color:#9A968E;text-decoration:underline;">Unsubscribe</a></div>
+          </td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============ 10. UPGRADE PROMPT ============ -->
+    <div class="cell">
+      <div class="meta">
+        <div class="tag">10 · Upgrade prompt · proposed</div>
+        <div class="subj">You're outgrowing the free plan — unlock full version history</div>
+        <div class="src">Scheduled/triggered · free user near a limit</div>
+      </div>
+      <div class="frame">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0E0A0A;border:1px solid #2A2A2A;">
+          <tr><td style="padding:26px 28px 22px;border-bottom:1px solid #2A2A2A;">
+            <span style="font-family:Arial,Helvetica,sans-serif;font-weight:800;font-size:20px;letter-spacing:.18em;color:#F4EDE4;text-transform:uppercase;">SONG&nbsp;ROOM</span>
+          </td></tr>
+          <tr><td style="padding:30px 28px 6px;">
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#F0E48C;font-weight:700;">Upgrade</div>
+            <div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:19px;line-height:1.4;color:#F4EDE4;margin-top:12px;">
+              You're keeping only your last 3 versions. Pro keeps every take.
+            </div>
+          </td></tr>
+          <tr><td style="padding:18px 28px 0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #2A2A2A;background:#191919;">
+              <tr><td style="padding:14px 16px;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:13px;line-height:1.9;color:#9A968E;">
+                <span style="color:#F0E48C;">✓</span> Full version history<br>
+                <span style="color:#F0E48C;">✓</span> Lossless WAV / FLAC<br>
+                <span style="color:#F0E48C;">✓</span> From £9/month
+              </td></tr>
+            </table>
+          </td></tr>
+          <tr><td style="padding:24px 28px 8px;">
+            <table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background:#F0E48C;border:1px solid #F0E48C;">
+              <a href="#" style="display:inline-block;padding:12px 26px;font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#0E0A0A;text-decoration:none;">See plans →</a>
+            </td></tr></table>
+          </td></tr>
+          <tr><td style="padding:22px 28px 26px;">
+            <div style="border-top:1px solid #2A2A2A;padding-top:16px;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:11px;line-height:1.6;color:#6E6A63;">Happy on free? No pressure. <a href="#" style="color:#9A968E;text-decoration:underline;">Unsubscribe from upgrade tips</a></div>
+          </td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============ 11. FOUNDING-MEMBER CONVERSION ============ -->
+    <div class="cell">
+      <div class="meta">
+        <div class="tag">11 · Founding-member conversion · proposed</div>
+        <div class="subj">Lock in the founding-member rate — before it's gone</div>
+        <div class="src">Broadcast/segment · time-boxed offer</div>
+      </div>
+      <div class="frame">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0E0A0A;border:1px solid #2A2A2A;">
+          <tr><td style="padding:26px 28px 22px;border-bottom:1px solid #2A2A2A;">
+            <span style="font-family:Arial,Helvetica,sans-serif;font-weight:800;font-size:20px;letter-spacing:.18em;color:#F4EDE4;text-transform:uppercase;">SONG&nbsp;ROOM</span>
+          </td></tr>
+          <tr><td style="padding:30px 28px 6px;">
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#F0E48C;font-weight:700;">Founding offer</div>
+            <div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:19px;line-height:1.4;color:#F4EDE4;margin-top:12px;">
+              Become a founding member and lock your price for life.
+            </div>
+          </td></tr>
+          <tr><td style="padding:16px 28px 0;">
+            <div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#9A968E;">You were one of the first in the room. Upgrade now and your rate never rises — even as we add features.</div>
+          </td></tr>
+          <tr><td style="padding:18px 28px 0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #C0392B;background:#191919;"><tr>
+              <td style="padding:12px 16px;font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#F4EDE4;">
+                <span style="color:#C0392B;font-weight:700;">Ends 14 Aug</span> &nbsp;·&nbsp; founding rate closes for good
+              </td>
+            </tr></table>
+          </td></tr>
+          <tr><td style="padding:24px 28px 8px;">
+            <table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background:#F0E48C;border:1px solid #F0E48C;">
+              <a href="#" style="display:inline-block;padding:12px 26px;font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#0E0A0A;text-decoration:none;">Claim founding rate →</a>
+            </td></tr></table>
+          </td></tr>
+          <tr><td style="padding:22px 28px 26px;">
+            <div style="border-top:1px solid #2A2A2A;padding-top:16px;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:11px;line-height:1.6;color:#6E6A63;"><a href="#" style="color:#9A968E;text-decoration:underline;">Unsubscribe</a></div>
+          </td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============ 12. LAUNCH ANNOUNCEMENT ============ -->
+    <div class="cell">
+      <div class="meta">
+        <div class="tag">12 · Launch announcement · proposed</div>
+        <div class="subj">Song Room is officially live</div>
+        <div class="src">Broadcast · one-off to full audience</div>
+      </div>
+      <div class="frame">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0E0A0A;border:1px solid #2A2A2A;">
+          <tr><td style="padding:26px 28px 22px;border-bottom:1px solid #2A2A2A;">
+            <span style="font-family:Arial,Helvetica,sans-serif;font-weight:800;font-size:20px;letter-spacing:.18em;color:#F4EDE4;text-transform:uppercase;">SONG&nbsp;ROOM</span>
+          </td></tr>
+          <tr><td style="padding:34px 28px 6px;text-align:center;">
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#F0E48C;font-weight:700;">We're live</div>
+            <div style="font-family:Arial,Helvetica,sans-serif;font-weight:800;font-size:30px;line-height:1.1;color:#F4EDE4;margin-top:14px;letter-spacing:-.01em;">SONG ROOM IS HERE</div>
+          </td></tr>
+          <tr><td style="padding:16px 28px 0;text-align:center;">
+            <div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#9A968E;">A calmer place to share versions, collect feedback and finish your songs. Thanks for being early.</div>
+          </td></tr>
+          <tr><td style="padding:26px 28px 8px;text-align:center;">
+            <table role="presentation" cellpadding="0" cellspacing="0" align="center"><tr><td style="background:#F0E48C;border:1px solid #F0E48C;">
+              <a href="#" style="display:inline-block;padding:12px 26px;font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#0E0A0A;text-decoration:none;">Explore Song Room →</a>
+            </td></tr></table>
+          </td></tr>
+          <tr><td style="padding:22px 28px 26px;">
+            <div style="border-top:1px solid #2A2A2A;padding-top:16px;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:11px;line-height:1.6;color:#6E6A63;text-align:center;"><a href="#" style="color:#9A968E;text-decoration:underline;">Unsubscribe</a></div>
+          </td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============ 13. WEEKLY PRODUCT / CONTENT EMAIL ============ -->
+    <div class="cell">
+      <div class="meta">
+        <div class="tag">13 · Weekly product / content · proposed</div>
+        <div class="subj">This week in Song Room</div>
+        <div class="src">Broadcast · recurring newsletter</div>
+      </div>
+      <div class="frame">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0E0A0A;border:1px solid #2A2A2A;">
+          <tr><td style="padding:26px 28px 22px;border-bottom:1px solid #2A2A2A;">
+            <span style="font-family:Arial,Helvetica,sans-serif;font-weight:800;font-size:20px;letter-spacing:.18em;color:#F4EDE4;text-transform:uppercase;">SONG&nbsp;ROOM</span>
+          </td></tr>
+          <tr><td style="padding:28px 28px 4px;">
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#F0E48C;font-weight:700;">This week</div>
+          </td></tr>
+          <tr><td style="padding:14px 28px 0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #2A2A2A;"><tr>
+              <td style="padding:16px 0 4px;font-family:'DM Sans',Helvetica,Arial,sans-serif;">
+                <div style="font-size:15px;color:#F4EDE4;font-weight:600;">New: waveform region comments</div>
+                <div style="font-size:13px;color:#9A968E;line-height:1.55;margin-top:5px;">Highlight a whole section, not just a point, and comment on the range. <a href="#" style="color:#F0E48C;text-decoration:none;">Read more →</a></div>
+              </td>
+            </tr></table>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #2A2A2A;"><tr>
+              <td style="padding:16px 0 4px;font-family:'DM Sans',Helvetica,Arial,sans-serif;">
+                <div style="font-size:15px;color:#F4EDE4;font-weight:600;">Guide: getting clean client feedback</div>
+                <div style="font-size:13px;color:#9A968E;line-height:1.55;margin-top:5px;">Five prompts that turn "sounds good" into notes you can act on. <a href="#" style="color:#F0E48C;text-decoration:none;">Read more →</a></div>
+              </td>
+            </tr></table>
+          </td></tr>
+          <tr><td style="padding:22px 28px 26px;">
+            <div style="border-top:1px solid #2A2A2A;padding-top:16px;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:11px;line-height:1.6;color:#6E6A63;">You're on the Song Room weekly. <a href="#" style="color:#9A968E;text-decoration:underline;">Unsubscribe</a> · <a href="#" style="color:#9A968E;text-decoration:underline;">Manage preferences</a></div>
+          </td></tr>
+        </table>
       </div>
     </div>
 
