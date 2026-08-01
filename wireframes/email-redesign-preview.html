@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Song Room — Email Redesign Preview (TSR v3)</title>
+<style>
+  :root{
+    --bg:#0E0A0A; --surface:#191919; --straw:#F0E48C; --off:#F4EDE4; --red:#C0392B;
+    --line:#2A2A2A; --muted:#9A968E;
+  }
+  html,body{margin:0;padding:0;background:#050303;color:var(--off);
+    font-family:'DM Sans',-apple-system,Helvetica,Arial,sans-serif;}
+  .page{max-width:1180px;margin:0 auto;padding:40px 20px 80px;}
+  .page-head{border:1px solid var(--line);background:var(--bg);padding:28px 30px;margin-bottom:36px;}
+  .page-head h1{font-size:13px;letter-spacing:.32em;text-transform:uppercase;margin:0 0 10px;color:var(--straw);font-weight:700;}
+  .page-head p{margin:0;color:var(--muted);font-size:14px;line-height:1.6;max-width:760px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:34px;}
+  .cell{background:transparent;}
+  .cell .meta{border:1px solid var(--line);border-bottom:none;background:var(--bg);padding:14px 16px;}
+  .cell .meta .tag{font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--straw);font-weight:700;}
+  .cell .meta .subj{font-size:13px;color:var(--off);margin-top:7px;line-height:1.4;}
+  .cell .meta .src{font-size:11px;color:var(--muted);margin-top:6px;font-family:monospace;}
+  .frame{border:1px solid var(--line);background:#111;padding:22px;}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="page-head">
+    <h1>Song Room · Email Redesign Preview</h1>
+    <p>All four system emails re-skinned to the TSR v3 brand: near-black canvas, straw (acid-yellow) accent, off-white text, hard 1px borders, zero border-radius. Rendered with email-safe HTML (tables + inline styles). Display type uses a heavy web-safe fallback because email clients can't load ThunderLC — the wordmark keeps the brand feel via weight and letter-spacing. Review, then I'll wire the approved designs into the Resend routes and the Supabase templates.</p>
+  </div>
+
+  <div class="grid">
+
+    <!-- ============ 1. COMMENT NOTIFICATION ============ -->
+    <div class="cell">
+      <div class="meta">
+        <div class="tag">1 · Comment / reply notification</div>
+        <div class="subj">Al left a comment on Midnight Drive (Version 3 — Rough Mix) at 1:24</div>
+        <div class="src">Resend · app/api/email/notify-thread/route.ts</div>
+      </div>
+      <div class="frame">
+        <!-- EMAIL START -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0E0A0A;border:1px solid #2A2A2A;">
+          <tr><td style="padding:26px 28px 22px;border-bottom:1px solid #2A2A2A;">
+            <span style="font-family:Arial,Helvetica,sans-serif;font-weight:800;font-size:20px;letter-spacing:.18em;color:#F4EDE4;text-transform:uppercase;">SONG&nbsp;ROOM</span>
+          </td></tr>
+          <tr><td style="padding:30px 28px 6px;">
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#F0E48C;font-weight:700;">New comment</div>
+            <div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:19px;line-height:1.4;color:#F4EDE4;margin-top:12px;">
+              <strong style="color:#fff;">Al</strong> left a new comment on <strong style="color:#F0E48C;">Midnight Drive</strong>.
+            </div>
+          </td></tr>
+          <tr><td style="padding:20px 28px 0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #2A2A2A;background:#191919;">
+              <tr><td style="padding:14px 16px;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:13px;color:#9A968E;">
+                <span style="color:#F4EDE4;">Version 3 (Rough Mix)</span> &nbsp;·&nbsp; at <span style="color:#F4EDE4;">1:24</span>
+              </td></tr>
+            </table>
+          </td></tr>
+          <tr><td style="padding:18px 28px 0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td width="3" style="background:#F0E48C;"></td>
+                <td style="padding:14px 16px;background:#141414;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.55;color:#F4EDE4;">
+                  The low end feels a bit heavy in the second chorus — can we pull the sub back a touch?
+                </td>
+              </tr>
+            </table>
+          </td></tr>
+          <tr><td style="padding:26px 28px 8px;">
+            <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+              <td style="background:#F0E48C;border:1px solid #F0E48C;">
+                <a href="#" style="display:inline-block;padding:12px 26px;font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#0E0A0A;text-decoration:none;">Open comment →</a>
+              </td>
+            </tr></table>
+          </td></tr>
+          <tr><td style="padding:22px 28px 26px;">
+            <div style="border-top:1px solid #2A2A2A;padding-top:16px;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:11px;line-height:1.6;color:#6E6A63;">
+              You're receiving this because you collaborate in this Song Room workspace.<br>
+              <a href="#" style="color:#9A968E;text-decoration:underline;">Notification settings</a>
+            </div>
+          </td></tr>
+        </table>
+        <!-- EMAIL END -->
+      </div>
+    </div>
+
+    <!-- ============ 2. WORKSPACE INVITE ============ -->
+    <div class="cell">
+      <div class="meta">
+        <div class="tag">2 · Workspace invite</div>
+        <div class="subj">Coris invited you to join The Basement Sessions</div>
+        <div class="src">Resend · app/api/workspace/invites/route.ts</div>
+      </div>
+      <div class="frame">
+        <!-- EMAIL START -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0E0A0A;border:1px solid #2A2A2A;">
+          <tr><td style="padding:26px 28px 22px;border-bottom:1px solid #2A2A2A;">
+            <span style="font-family:Arial,Helvetica,sans-serif;font-weight:800;font-size:20px;letter-spacing:.18em;color:#F4EDE4;text-transform:uppercase;">SONG&nbsp;ROOM</span>
+          </td></tr>
+          <tr><td style="padding:30px 28px 6px;">
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#F0E48C;font-weight:700;">You're invited</div>
+            <div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:19px;line-height:1.4;color:#F4EDE4;margin-top:12px;">
+              <strong style="color:#fff;">Coris</strong> invited you to join <strong style="color:#F0E48C;">The Basement Sessions</strong> on Song Room.
+            </div>
+          </td></tr>
+          <tr><td style="padding:16px 28px 0;">
+            <div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#9A968E;">
+              Sign in with the invited email to accept and start collaborating on tracks, comments and versions.
+            </div>
+          </td></tr>
+          <tr><td style="padding:26px 28px 8px;">
+            <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+              <td style="background:#F0E48C;border:1px solid #F0E48C;">
+                <a href="#" style="display:inline-block;padding:12px 26px;font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#0E0A0A;text-decoration:none;">Accept invite →</a>
+              </td>
+            </tr></table>
+          </td></tr>
+          <tr><td style="padding:22px 28px 26px;">
+            <div style="border-top:1px solid #2A2A2A;padding-top:16px;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:11px;line-height:1.6;color:#6E6A63;">
+              If the button doesn't work, paste this link into your browser:<br>
+              <a href="#" style="color:#9A968E;text-decoration:underline;word-break:break-all;">https://song-room.live/invite/8f3a…c1</a>
+            </div>
+          </td></tr>
+        </table>
+        <!-- EMAIL END -->
+      </div>
+    </div>
+
+    <!-- ============ 3. SIGNUP CONFIRMATION ============ -->
+    <div class="cell">
+      <div class="meta">
+        <div class="tag">3 · Signup confirmation</div>
+        <div class="subj">Confirm your email to activate your Song Room account</div>
+        <div class="src">Supabase Auth · "Confirm signup" template</div>
+      </div>
+      <div class="frame">
+        <!-- EMAIL START -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0E0A0A;border:1px solid #2A2A2A;">
+          <tr><td style="padding:26px 28px 22px;border-bottom:1px solid #2A2A2A;">
+            <span style="font-family:Arial,Helvetica,sans-serif;font-weight:800;font-size:20px;letter-spacing:.18em;color:#F4EDE4;text-transform:uppercase;">SONG&nbsp;ROOM</span>
+          </td></tr>
+          <tr><td style="padding:30px 28px 6px;">
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#F0E48C;font-weight:700;">Confirm your email</div>
+            <div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:19px;line-height:1.4;color:#F4EDE4;margin-top:12px;">
+              Welcome to Song Room. Confirm your email to activate your account.
+            </div>
+          </td></tr>
+          <tr><td style="padding:16px 28px 0;">
+            <div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#9A968E;">
+              You're one step away from uploading tracks, leaving timestamped comments and inviting collaborators.
+            </div>
+          </td></tr>
+          <tr><td style="padding:26px 28px 8px;">
+            <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+              <td style="background:#F0E48C;border:1px solid #F0E48C;">
+                <a href="#" style="display:inline-block;padding:12px 26px;font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#0E0A0A;text-decoration:none;">Confirm email →</a>
+              </td>
+            </tr></table>
+          </td></tr>
+          <tr><td style="padding:22px 28px 26px;">
+            <div style="border-top:1px solid #2A2A2A;padding-top:16px;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:11px;line-height:1.6;color:#6E6A63;">
+              Didn't create an account? You can safely ignore this email.
+            </div>
+          </td></tr>
+        </table>
+        <!-- EMAIL END -->
+      </div>
+    </div>
+
+    <!-- ============ 4. PASSWORD RESET ============ -->
+    <div class="cell">
+      <div class="meta">
+        <div class="tag">4 · Password reset</div>
+        <div class="subj">Reset your Song Room password</div>
+        <div class="src">Supabase Auth · "Reset password" template</div>
+      </div>
+      <div class="frame">
+        <!-- EMAIL START -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0E0A0A;border:1px solid #2A2A2A;">
+          <tr><td style="padding:26px 28px 22px;border-bottom:1px solid #2A2A2A;">
+            <span style="font-family:Arial,Helvetica,sans-serif;font-weight:800;font-size:20px;letter-spacing:.18em;color:#F4EDE4;text-transform:uppercase;">SONG&nbsp;ROOM</span>
+          </td></tr>
+          <tr><td style="padding:30px 28px 6px;">
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#F0E48C;font-weight:700;">Password reset</div>
+            <div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:19px;line-height:1.4;color:#F4EDE4;margin-top:12px;">
+              Reset the password for your Song Room account.
+            </div>
+          </td></tr>
+          <tr><td style="padding:16px 28px 0;">
+            <div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#9A968E;">
+              Click below to choose a new password. This link expires in 60 minutes.
+            </div>
+          </td></tr>
+          <tr><td style="padding:26px 28px 8px;">
+            <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+              <td style="background:#F0E48C;border:1px solid #F0E48C;">
+                <a href="#" style="display:inline-block;padding:12px 26px;font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#0E0A0A;text-decoration:none;">Reset password →</a>
+              </td>
+            </tr></table>
+          </td></tr>
+          <tr><td style="padding:22px 28px 26px;">
+            <div style="border-top:1px solid #2A2A2A;padding-top:16px;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:11px;line-height:1.6;color:#6E6A63;">
+              Didn't request this? Ignore this email and your password stays unchanged.
+            </div>
+          </td></tr>
+        </table>
+        <!-- EMAIL END -->
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
