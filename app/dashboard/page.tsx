@@ -91,6 +91,10 @@ function DashboardContent() {
   // Dashboard audio player
   const audioRef = useRef<HTMLAudioElement>(null);
   const queueRef = useRef<Song[]>([]);
+  // Live copy of the queue index for Media Session / lock-screen handlers.
+  // The next/prev handlers close over this ref (always current) instead of the
+  // queueIndex state (which would be stale inside the once-registered closure).
+  const queueIndexRef = useRef(0);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [queueIndex, setQueueIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -331,6 +335,7 @@ function DashboardContent() {
     if (!song.latestVersionFilePath || !audioRef.current) return;
     queueRef.current = queue;
     const idx = queue.findIndex(s => s.id === song.id);
+    queueIndexRef.current = idx >= 0 ? idx : 0;
     setQueueIndex(idx >= 0 ? idx : 0);
     setPlayingId(song.id);
     setIsPlaying(true);
@@ -341,10 +346,11 @@ function DashboardContent() {
 
   function handlePlayerEnded() {
     const queue = queueRef.current;
-    const nextIdx = queueIndex + 1;
+    const nextIdx = queueIndexRef.current + 1;
     if (nextIdx < queue.length) {
       const next = queue[nextIdx];
       if (next.latestVersionFilePath && audioRef.current) {
+        queueIndexRef.current = nextIdx;
         setQueueIndex(nextIdx);
         setPlayingId(next.id);
         audioRef.current.src = getAudioUrl(next.latestVersionFilePath);
@@ -360,10 +366,11 @@ function DashboardContent() {
 
   function skipTrack(direction: 'prev' | 'next') {
     const queue = queueRef.current;
-    const targetIdx = direction === 'next' ? queueIndex + 1 : queueIndex - 1;
+    const targetIdx = direction === 'next' ? queueIndexRef.current + 1 : queueIndexRef.current - 1;
     if (targetIdx < 0 || targetIdx >= queue.length) return;
     const target = queue[targetIdx];
     if (target.latestVersionFilePath && audioRef.current) {
+      queueIndexRef.current = targetIdx;
       setQueueIndex(targetIdx);
       setPlayingId(target.id);
       audioRef.current.src = getAudioUrl(target.latestVersionFilePath);
