@@ -8,6 +8,30 @@ For audio player architecture fixes (mobile background audio, WaveSurfer iOS rul
 
 ---
 
+## [2026-08-05] Lock-screen next/previous track navigation not working on dashboard
+
+**Commit:** `86a1035`
+**Files:** `app/dashboard/page.tsx`
+
+### What changed
+Introduced a `queueIndexRef` (`useRef`) that holds the live queue position. All dashboard playback logic (`playSong`, `handlePlayerEnded`, `skipTrack`) now reads and writes this ref; the `queueIndex` state is retained solely for rendering the mini-player ("X of Y", disabled prev/next buttons). Ported from the equivalent fix already applied on `clone-clean` (v2).
+
+### Root cause
+`setMediaSession()` registers the lock-screen `nexttrack`/`previoustrack` handlers once when a song starts playing. Those handlers call `skipTrack()`, which computed the target index from `queueIndex` — a React **state** value captured in the handler's closure at registration time. Because the closure never updated, every lock-screen skip recomputed from the same frozen index and got stuck. (`queueRef` was already a ref and stayed current; `queueIndex` was the lagging value.)
+
+### Before
+Playing a song from the dashboard, then locking the phone and pressing next/previous on the lock screen, did nothing — playback stayed on the same track.
+
+### After
+Lock-screen next/previous advance through the dashboard queue correctly, because the handlers read the live `queueIndexRef.current` on every press.
+
+### Notes for v2
+- This same fix already exists on `clone-clean`; this entry records the back-port to `main`.
+- General principle: any callback registered once and invoked later (Media Session handlers, event listeners, timers) must read mutable position/queue values from a **ref**, never from state captured in the closure — the state value will be stale.
+- Keep the state variable only for what needs to trigger a re-render (the mini-player UI here).
+
+---
+
 ## [2026-05-20] v2 — Proper RLS policies applied to all Supabase tables
 
 **Branch:** `clone-clean` (v2 build)
