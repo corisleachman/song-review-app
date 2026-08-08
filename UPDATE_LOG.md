@@ -2994,3 +2994,31 @@ Pricing tier and collaborator-limit alignment.
 - `public/marketing.html` — updated the public pricing cards to show 5 collaborators on Free and unlimited collaborators from Pro.
 - `public-mvp-roadmap.md` — recorded the agreed collaborator policy in the queued plan-gating specification.
 - `UPDATE_LOG.md` — documented this change.
+
+---
+
+## 2026-08-07 — Beta feedback: database layer (beta_feedback table)
+
+### What we were trying to achieve
+
+Lay the foundation for open-beta feedback capture and the Founding Tester reward programme ahead of the song-room.live launch. This slice creates only the database table; the `/api/feedback` route and the banner + feedback FAB UI are the next slices.
+
+### Feature / change being made
+
+New `beta_feedback` table on the v2 consumer Supabase project (`xouiiaknskivrjvapdma`). One row per submission; the table doubles as the triage queue (`status`) and the Founding Tester reward ledger (`reward_*` columns).
+
+### Files changed
+
+- [migrations/20260807_beta_feedback_up.sql](/Users/impero/song-review-app/migrations/20260807_beta_feedback_up.sql)
+- [migrations/20260807_beta_feedback_down.sql](/Users/impero/song-review-app/migrations/20260807_beta_feedback_down.sql)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+
+### Notes
+
+- Migration written by Claude, run manually by Coris in the Supabase SQL Editor against the v2 project. Confirmed run successfully.
+- RLS enabled deny-all (no policies): anon/authenticated cannot read or write; the service-role client used by `/api/feedback` bypasses RLS. Public feedback is write-only through the API.
+- `message` has a DB-level length floor (10–2000 chars) so low-effort junk can't land.
+- `ip_hash` stores sha256(ip + salt) for per-IP rate limiting of logged-out submissions; the raw IP is never stored. Requires a `FEEDBACK_IP_SALT` env var when the API route is built.
+- Reward is two-phase: `reward_eligible` is set on admin approval during beta (issues nothing); unique Stripe promo codes (coupon `founding_tester_6mo`) are batch-issued at launch when plan gating (Phase 10) ships.
+- Founding Tester cap = 100, enforced in the admin approval route (count of `reward_eligible = true`), not as a DB constraint, so the ceiling can be raised without a migration.
+- Next slices: `/api/feedback` route (honeypot, length + rate-limit guards), then the permanent beta top banner and the position-flipping feedback FAB/panel.
