@@ -2887,7 +2887,7 @@ Comments rendered all in red and stacked on one side when two accounts talked, b
 `comments` stored only an `author` name string (with `Coris`/`Al` hardcoded from email aliases), so identity collided and no stable per-user reference existed. `profiles` had no `avatar_url`, and only the live signed-in user carried a Google photo — other members' photos weren't persisted anywhere.
 
 **Fix (schema + code):**
-- SQL migration (run manually in Supabase, v2 project `xouiiaknskivrjvapdma`): added `profiles.avatar_url`, added `comments.author_user_id uuid references profiles(id)` + index, and best-effort backfilled `author_user_id` for existing Coris/Al comments by email alias.
+- SQL migration (run manually in Supabase, v2 project `hxtsuhmqrufcdplidtov`): added `profiles.avatar_url`, added `comments.author_user_id uuid references profiles(id)` + index, and best-effort backfilled `author_user_id` for existing Coris/Al comments by email alias.
 - `bootstrapAccount.ts`: persist the Google `avatar_url` to `profiles` on sign-in (only when present, never overwrite with null).
 - `threads/create` + `threads/reply`: stamp each new comment with `author_user_id`.
 - `versions/[versionId]/threads` GET: return each comment's `author_user_id` and resolved `author_avatar_url` (batch profile lookup).
@@ -3005,7 +3005,7 @@ Lay the foundation for open-beta feedback capture and the Founding Tester reward
 
 ### Feature / change being made
 
-New `beta_feedback` table on the v2 consumer Supabase project (`xouiiaknskivrjvapdma`). One row per submission; the table doubles as the triage queue (`status`) and the Founding Tester reward ledger (`reward_*` columns).
+New `beta_feedback` table on the v2 consumer Supabase project (`hxtsuhmqrufcdplidtov`). One row per submission; the table doubles as the triage queue (`status`) and the Founding Tester reward ledger (`reward_*` columns).
 
 ### Files changed
 
