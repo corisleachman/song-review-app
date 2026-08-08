@@ -340,11 +340,20 @@
   /* Nav — pinned top-left */
   .nav {
     position: absolute;
-    top: 0;
+    top: 35px;
     left: 0;
     right: 0;
     padding: 20px 24px;
     z-index: 2;
+  }
+
+  /* Beta banner pinned above the nav on mobile (grid is abandoned here) */
+  .betaBannerRow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 3;
   }
 
   /* SVG headline — centred, positioned in upper-middle zone, 50% bigger */
