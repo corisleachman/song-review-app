@@ -3022,3 +3022,29 @@ New `beta_feedback` table on the v2 consumer Supabase project (`hxtsuhmqrufcdpli
 - Reward is two-phase: `reward_eligible` is set on admin approval during beta (issues nothing); unique Stripe promo codes (coupon `founding_tester_6mo`) are batch-issued at launch when plan gating (Phase 10) ships.
 - Founding Tester cap = 100, enforced in the admin approval route (count of `reward_eligible = true`), not as a DB constraint, so the ceiling can be raised without a migration.
 - Next slices: `/api/feedback` route (honeypot, length + rate-limit guards), then the permanent beta top banner and the position-flipping feedback FAB/panel.
+
+---
+
+## 2026-08-07 — Beta feedback: submission route (/api/feedback)
+
+### What we were trying to achieve
+
+Give the beta banner and feedback FAB something to post to: a public submission endpoint that writes into the `beta_feedback` table with anti-spam guards, and without emailing the admin on every submission (the table is the triage queue).
+
+### Feature / change being made
+
+New `POST /api/feedback` route on the public build. Validates a submission, rate-limits it, captures silent context, and inserts one `beta_feedback` row.
+
+### Files changed
+
+- [app/api/feedback/route.ts](/Users/impero/song-review-app/app/api/feedback/route.ts)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+
+### Notes
+
+- Confirmed working: production build READY (commit `d2e502d`) plus live smoke tests — short message → 400, bad type → 400, honeypot filled → 200 with no DB write. None of the tests wrote a row.
+- Guards: honeypot (hidden `website` field → silent fake success), message length 10–2000, type allowlist (bug|idea|other), and a per-identity rate limit of 5/hour (by `user_id` when logged in, else by salted IP hash).
+- Logged-out submitters must supply an email; logged-in users are resolved via `getCurrentAuthenticatedUser()` (session).
+- Silent context captured: `page_url`, `user_agent`, `viewport` (from client), plus `app_version` from `VERCEL_GIT_COMMIT_SHA` and a salted `ip_hash` (needs `FEEDBACK_IP_SALT` — now set in the clone-clean Vercel project).
+- Uses the shared module-level `supabaseServer` (service-role) client, matching repo convention. No admin email is sent — feedback is reviewed from the `beta_feedback` table.
+- Next: the permanent beta top banner and the feedback FAB + panel that POST here (FAB flips bottom-left on the waveform/player route); then the admin triage/approve action (sets `reward_eligible`, cap 100); then launch-time batch issue of `founding_tester_6mo` Stripe codes.
