@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import '../styles/globals.css';
+import BetaFeedback from '../components/BetaFeedback';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -23,7 +24,10 @@ export default function RootLayout({
       <head>
         <link rel="stylesheet" href="/cookie-consent.css" />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <BetaFeedback />
+      </body>
       <Script src="/cookie-consent.js" strategy="beforeInteractive" />
     </html>
   );
