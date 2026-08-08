@@ -2454,3 +2454,20 @@ Pricing was restructured on the marketing site (`tsr-marketing-v19.html`) to dif
 ### Dependencies
 - Blocks: Phase 8 (Marketing Site) public launch
 - Related: Phase 5 (Pricing Review & Stripe Rollout), Phase 6.5 (Referral Programme — "Referral rewards" is advertised as a Pro feature)
+
+## 2026-08-07 — Beta feedback database layer
+
+- Slice / change name: Beta feedback + Founding Tester capture — database layer
+- Status: Implemented (table created and confirmed in the v2 Supabase project); wider feature in progress
+- Exact files changed or audited:
+  - `migrations/20260807_beta_feedback_up.sql`
+  - `migrations/20260807_beta_feedback_down.sql`
+- Outcome:
+  - created the `beta_feedback` table on the v2 consumer project (`xouiiaknskivrjvapdma`) to back open-beta feedback capture and the Founding Tester reward programme
+  - table doubles as the triage queue (`status`) and the reward ledger (`reward_eligible` / `reward_issued` / `reward_code`)
+  - enabled RLS deny-all so public feedback can only be written through the service-role `/api/feedback` route, never directly from the browser
+  - added anti-spam foundations: a DB-level message length check and an `ip_hash` column/index to support per-IP rate limiting
+- Next follow-up:
+  - build the `/api/feedback` submission route with honeypot, message-length, and per-identity rate-limit guards (needs a `FEEDBACK_IP_SALT` env var)
+  - build the permanent beta top banner and the feedback FAB + panel (FAB flips to bottom-left on the waveform/player route to avoid the transport controls)
+  - at launch (Phase 10 plan gating), batch-issue unique `founding_tester_6mo` Stripe promo codes to approved, reward-eligible testers, capped at 100
