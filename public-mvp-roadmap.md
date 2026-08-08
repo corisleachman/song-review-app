@@ -2343,7 +2343,7 @@ are not what is deployed.
 - Decide how the marketing site is served at `/`: port the HTML into the Next.js app as the new root route, or deploy separately and route at the domain/proxy level
 - **Update `middleware.ts`** — unauthenticated users are currently redirected to `/`; that must become `/login-signup` or they will land on the marketing page instead of the login form
 - Audit and update every internal redirect that currently targets `/` (post-logout, auth guards, invite and referral flows)
-- **Update Supabase auth config** (project `xouiiaknskivrjvapdma`): Site URL and Redirect URLs currently point at `/`. Google OAuth will fail on the new path until these are updated. *Historically the single biggest cause of production login outages on this project — verify the correct project before editing.*
+- **Update Supabase auth config** (project `hxtsuhmqrufcdplidtov`): Site URL and Redirect URLs currently point at `/`. Google OAuth will fail on the new path until these are updated. *Historically the single biggest cause of production login outages on this project — verify the correct project before editing.*
 - Update `NEXT_PUBLIC_APP_URL` if it encodes the root path
 - Update marketing site CTAs — all 7 currently point at the `login-v17.html` wireframe and must become `/login-signup`
 - Update `og:url`, `canonical` and `og:image` to the `song-room.live` domain (currently absolute GitHub Pages URLs — social previews will point at the wireframe until changed)
@@ -2463,7 +2463,7 @@ Pricing was restructured on the marketing site (`tsr-marketing-v19.html`) to dif
   - `migrations/20260807_beta_feedback_up.sql`
   - `migrations/20260807_beta_feedback_down.sql`
 - Outcome:
-  - created the `beta_feedback` table on the v2 consumer project (`xouiiaknskivrjvapdma`) to back open-beta feedback capture and the Founding Tester reward programme
+  - created the `beta_feedback` table on the v2 consumer project (`hxtsuhmqrufcdplidtov`) to back open-beta feedback capture and the Founding Tester reward programme
   - table doubles as the triage queue (`status`) and the reward ledger (`reward_eligible` / `reward_issued` / `reward_code`)
   - enabled RLS deny-all so public feedback can only be written through the service-role `/api/feedback` route, never directly from the browser
   - added anti-spam foundations: a DB-level message length check and an `ip_hash` column/index to support per-IP rate limiting
