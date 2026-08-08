@@ -125,7 +125,7 @@ a { color: inherit; text-decoration: none; }
 ═══════════════════════════════════ */
 .nav {
   position: fixed;
-  top: 0; left: 0; right: 0;
+  top: 34px; left: 0; right: 0;
   z-index: 100;
   height: 64px;
   display: flex;
@@ -1609,8 +1609,23 @@ footer {
 }
 
 </style>
+<style id="beta-strip-style">
+  .beta-strip{position:fixed;top:0;left:0;right:0;height:34px;z-index:200;display:flex;align-items:center;justify-content:center;gap:9px;background:var(--straw);color:var(--black);border-bottom:1px solid var(--black);font-family:var(--ui);font-size:12.5px;line-height:1;white-space:nowrap;overflow:hidden;padding:0 12px;}
+  .beta-strip .beta-pill{font-family:var(--ui);font-weight:700;font-size:10px;letter-spacing:.14em;text-transform:uppercase;background:var(--black);color:var(--straw);padding:4px 6px;}
+  .beta-strip .beta-msg-short{display:none;}
+  @media (max-width:600px){
+    .beta-strip{font-size:11px;gap:7px;}
+    .beta-strip .beta-msg-long{display:none;}
+    .beta-strip .beta-msg-short{display:inline;}
+  }
+</style>
 </head>
 <body>
+<div class="beta-strip" role="status">
+  <span class="beta-pill">Beta</span>
+  <span class="beta-msg-long">The Song Room is in open beta — we're still polishing things.</span>
+  <span class="beta-msg-short">Open beta</span>
+</div>
 
 <!-- ══ NAV ══ -->
 <nav class="nav" id="nav">

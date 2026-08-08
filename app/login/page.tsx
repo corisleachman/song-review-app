@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useState, useRef, Suspense } from 'react';
 import { createClient } from '@/lib/supabase';
 import styles from './page.module.css';
+import BetaBanner from '@/components/BetaBanner';
 
 const POST_LOGIN_INVITE_PATH_KEY = 'song_review_post_login_invite_path';
 
@@ -261,6 +262,9 @@ function LoginContent() {
 
       {/* Page */}
       <div className={styles.page}>
+        <div className={styles.betaBannerRow}>
+          <BetaBanner />
+        </div>
         <nav className={styles.nav}>
           <div className={styles.navBrand}>The Song Room</div>
         </nav>
