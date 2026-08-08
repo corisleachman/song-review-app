@@ -2487,3 +2487,21 @@ Pricing was restructured on the marketing site (`tsr-marketing-v19.html`) to dif
   - build the permanent beta top banner and the feedback FAB + panel that POST here (FAB flips to bottom-left on the waveform/player route)
   - build the admin triage/approve action that sets `reward_eligible` under the 100-tester cap
   - at launch (Phase 10), batch-issue unique `founding_tester_6mo` Stripe promo codes to approved testers
+
+
+## 2026-08-07 — Beta feedback banner + FAB UI
+
+- Slice / change name: Beta feedback — banner + FAB/panel UI
+- Status: Implemented and confirmed (production build READY, live checks pass, Coris-confirmed visual)
+- Exact files changed or audited:
+  - `components/BetaFeedback.tsx` / `.module.css`
+  - `components/BetaBanner.tsx` / `.module.css`
+  - `app/layout.tsx`
+  - `components/AppShell.tsx`
+- Outcome:
+  - app-wide feedback FAB + panel posting to `/api/feedback`; flips to bottom-left on the waveform/player route
+  - permanent straw beta banner scoped to the authenticated shell (absent on public `/listen`, login, and the marketing surface)
+  - banner + FAB share one panel via a window event; panel has type chips, message, honeypot, and progressive email disclosure for logged-out submitters
+- Next follow-up:
+  - admin triage view: list submissions + one-click Approve that sets `reward_eligible` under the 100-tester cap
+  - optional weekly digest email so the queue does not go stale

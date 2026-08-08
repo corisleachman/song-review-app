@@ -3048,3 +3048,34 @@ New `POST /api/feedback` route on the public build. Validates a submission, rate
 - Silent context captured: `page_url`, `user_agent`, `viewport` (from client), plus `app_version` from `VERCEL_GIT_COMMIT_SHA` and a salted `ip_hash` (needs `FEEDBACK_IP_SALT` — now set in the clone-clean Vercel project).
 - Uses the shared module-level `supabaseServer` (service-role) client, matching repo convention. No admin email is sent — feedback is reviewed from the `beta_feedback` table.
 - Next: the permanent beta top banner and the feedback FAB + panel that POST here (FAB flips bottom-left on the waveform/player route); then the admin triage/approve action (sets `reward_eligible`, cap 100); then launch-time batch issue of `founding_tester_6mo` Stripe codes.
+
+---
+
+## 2026-08-07 — Beta feedback: banner + FAB/panel UI
+
+### What we were trying to achieve
+
+Surface the beta context and a one-tap feedback path in the live app, wired to `/api/feedback`, without disrupting the public artist-share experience.
+
+### Feature / change being made
+
+Two client components: an app-wide feedback FAB + panel, and a permanent beta banner scoped to the authenticated shell.
+
+### Files changed
+
+- [components/BetaFeedback.tsx](/Users/impero/song-review-app/components/BetaFeedback.tsx)
+- [components/BetaFeedback.module.css](/Users/impero/song-review-app/components/BetaFeedback.module.css)
+- [components/BetaBanner.tsx](/Users/impero/song-review-app/components/BetaBanner.tsx)
+- [components/BetaBanner.module.css](/Users/impero/song-review-app/components/BetaBanner.module.css)
+- [app/layout.tsx](/Users/impero/song-review-app/app/layout.tsx) (mount FAB app-wide)
+- [components/AppShell.tsx](/Users/impero/song-review-app/components/AppShell.tsx) (mount banner in content)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+
+### Notes
+
+- Confirmed: production build READY (commit `8654b64`); FAB verified rendering on `/login`; banner correctly absent on login/public; Coris confirmed the visual in the authenticated shell.
+- FAB mounted in root layout → appears on all app-router pages (login, dashboard, listen, songs). Flips to bottom-left on the `/songs/[id]/versions/[versionId]` player route to clear the transport. The static landing page at `/` (served from `public/`) is outside the app router, so no FAB there.
+- Banner mounted as the first child of AppShell content → authenticated shell only; NOT on public `/listen`, login, or the marketing surface. Straw `#F0E48C` (no global token exists — kept local), black text, hard bottom border, zero radius. Sticky on desktop, static on mobile (avoids colliding with the sticky mobile workspace bar). Spans the content column, not across the 76px sidebar rail.
+- Banner "send us feedback →" link and the FAB open the same panel via a window CustomEvent (`song-room:open-feedback`) — no app-wide context provider needed.
+- Panel: Bug/Idea/Other chips, message textarea, honeypot, and progressive email disclosure (email field appears only when the API signals it's needed, i.e. logged-out submitters). Posts to `/api/feedback`.
+- No admin email on submission, by design — feedback is reviewed from the `beta_feedback` table / the upcoming admin triage view.
