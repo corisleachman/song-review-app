@@ -2471,3 +2471,19 @@ Pricing was restructured on the marketing site (`tsr-marketing-v19.html`) to dif
   - build the `/api/feedback` submission route with honeypot, message-length, and per-identity rate-limit guards (needs a `FEEDBACK_IP_SALT` env var)
   - build the permanent beta top banner and the feedback FAB + panel (FAB flips to bottom-left on the waveform/player route to avoid the transport controls)
   - at launch (Phase 10 plan gating), batch-issue unique `founding_tester_6mo` Stripe promo codes to approved, reward-eligible testers, capped at 100
+
+## 2026-08-07 — Beta feedback submission route
+
+- Slice / change name: Beta feedback — /api/feedback submission route
+- Status: Implemented and confirmed (production build READY, live smoke tests pass)
+- Exact files changed or audited:
+  - `app/api/feedback/route.ts`
+- Outcome:
+  - added `POST /api/feedback`: validates and inserts one `beta_feedback` row on the public app
+  - anti-spam: honeypot, message length (10–2000), type allowlist, and a 5/hour per-identity rate limit (by user when logged in, else by salted IP hash)
+  - captures silent context (page URL, user agent, viewport, deploy commit) so bugs are reproducible; sends no admin email (the table is the triage queue)
+  - requires the `FEEDBACK_IP_SALT` env var, now set in the clone-clean Vercel project
+- Next follow-up:
+  - build the permanent beta top banner and the feedback FAB + panel that POST here (FAB flips to bottom-left on the waveform/player route)
+  - build the admin triage/approve action that sets `reward_eligible` under the 100-tester cap
+  - at launch (Phase 10), batch-issue unique `founding_tester_6mo` Stripe promo codes to approved testers
