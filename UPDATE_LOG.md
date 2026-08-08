@@ -3079,3 +3079,30 @@ Two client components: an app-wide feedback FAB + panel, and a permanent beta ba
 - Banner "send us feedback →" link and the FAB open the same panel via a window CustomEvent (`song-room:open-feedback`) — no app-wide context provider needed.
 - Panel: Bug/Idea/Other chips, message textarea, honeypot, and progressive email disclosure (email field appears only when the API signals it's needed, i.e. logged-out submitters). Posts to `/api/feedback`.
 - No admin email on submission, by design — feedback is reviewed from the `beta_feedback` table / the upcoming admin triage view.
+
+---
+
+## 2026-08-07 — Beta banner on front-door surfaces (login + marketing)
+
+### What we were trying to achieve
+
+Make open-beta status visible to logged-out visitors — on the marketing landing page and the login page — so people know it's beta before they sign in. The artist-share `/listen` surface is deliberately left clean.
+
+### Feature / change being made
+
+Added the beta banner to the two front-door surfaces, with different mounts because they're built differently.
+
+### Files changed
+
+- [app/login/page.tsx](/Users/impero/song-review-app/app/login/page.tsx)
+- [app/login/page.module.css](/Users/impero/song-review-app/app/login/page.module.css)
+- [public/marketing.html](/Users/impero/song-review-app/public/marketing.html)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+
+### Notes
+
+- Confirmed by Coris on desktop + mobile after a mobile-overlap fix.
+- Login: BetaBanner added as a new first grid row (`grid-template-rows` gained a row). On mobile the login page abandons the grid for absolute positioning, so the banner wrapper is pinned `position:absolute; top:0; z-index:3` and the nav dropped to `top:35px` to avoid overlap (this was the mobile bug Coris caught).
+- Marketing (static `public/marketing.html`): informational straw strip (BETA pill + "open beta" message), fixed at `top:0`, with the fixed nav moved from `top:0` to `top:34px`. No feedback link there — the app FAB/panel doesn't run on the static page; can be linked to `/login` later if wanted.
+- Banner still NOT shown on `/listen` (artist-share) — intentional.
+- Commits: `d60949bd` (add), `ac376690` (mobile fix).

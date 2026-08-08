@@ -2505,3 +2505,19 @@ Pricing was restructured on the marketing site (`tsr-marketing-v19.html`) to dif
 - Next follow-up:
   - admin triage view: list submissions + one-click Approve that sets `reward_eligible` under the 100-tester cap
   - optional weekly digest email so the queue does not go stale
+
+
+## 2026-08-07 — Beta banner on front-door surfaces
+
+- Slice / change name: Beta banner — login + marketing landing
+- Status: Implemented and confirmed (Coris-confirmed desktop + mobile)
+- Exact files changed or audited:
+  - `app/login/page.tsx` / `page.module.css`
+  - `public/marketing.html`
+- Outcome:
+  - open-beta banner now shows on the login page and the marketing landing page so logged-out visitors see beta status immediately
+  - marketing banner is informational (static page has no feedback panel); the login banner opens the feedback panel via the shared window event
+  - fixed the mobile overlap between the login banner and nav (banner pinned above the absolutely-positioned mobile nav)
+  - `/listen` artist-share surface intentionally left clean
+- Next follow-up:
+  - admin triage view (`/admin/feedback`) with `ADMIN_EMAILS` gating and one-click Approve under the 100-tester cap
