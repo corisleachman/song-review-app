@@ -13,11 +13,6 @@ function audioUrlFor(filePath: string | null | undefined): string | null {
   const { data } = supabaseServer.storage.from('song-files').getPublicUrl(normalizeStoragePath(filePath));
   return data?.publicUrl ?? null;
 }
-function pick<T>(rel: unknown, key: string): T | null {
-  const o = Array.isArray(rel) ? rel[0] : rel;
-  if (o && typeof o === 'object' && key in o) return (o as Record<string, T>)[key];
-  return null;
-}
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -42,17 +37,25 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
       workspaceName = account?.name ?? null;
     }
 
+    // Ordered membership. NOTE: do NOT embed songs(...) here — a to-one FK embed
+    // inner-joins and can silently drop rows. Fetch the membership plainly, then
+    // resolve song meta separately with a direct .in(...).
     const { data: rows } = await supabaseServer
       .from('playlist_songs')
-      .select('song_id, position, songs(id, title, image_url)')
+      .select('song_id, position')
       .eq('playlist_id', playlist.id)
       .order('position', { ascending: true });
-
     const ordered = rows ?? [];
     const songIds = ordered.map((r) => r.song_id);
 
-    // Latest version per song — one small query each (reliable; not subject to a
-    // combined row limit the way a single .in(...) over all versions would be).
+    // Song meta (title, artwork).
+    const songMeta = new Map<string, { title: string; image_url: string | null }>();
+    if (songIds.length) {
+      const { data: songs } = await supabaseServer.from('songs').select('id, title, image_url').in('id', songIds);
+      for (const s of songs ?? []) songMeta.set(s.id, { title: s.title ?? 'Untitled', image_url: s.image_url ?? null });
+    }
+
+    // Latest version per song (per-song; reliable, not subject to a combined row limit).
     const latestBySong = new Map<string, string | null>();
     await Promise.all(
       songIds.map(async (sid) => {
@@ -67,23 +70,16 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
       }),
     );
 
-    if (new URL(_req.url).searchParams.get('debug') === '1') {
-      const rawNoEmbed = await supabaseServer.from('playlist_songs').select('id, song_id, position').eq('playlist_id', playlist.id).order('position', { ascending: true });
-      const rawEmbed = await supabaseServer.from('playlist_songs').select('song_id, position, songs(id, title, image_url)').eq('playlist_id', playlist.id).order('position', { ascending: true });
-      return NextResponse.json({
-        withEmbedCount: ordered.length,
-        rawNoEmbed: { count: (rawNoEmbed.data ?? []).length, rows: rawNoEmbed.data, error: rawNoEmbed.error?.message ?? null },
-        rawEmbed: { count: (rawEmbed.data ?? []).length, rows: (rawEmbed.data ?? []).map((r: any) => ({ song_id: r.song_id, position: r.position, song: r.songs })), error: rawEmbed.error?.message ?? null },
-      });
-    }
-
     const tracks = ordered
-      .map((r) => ({
-        id: r.song_id,
-        title: pick<string>(r.songs, 'title') ?? 'Untitled',
-        image_url: pick<string>(r.songs, 'image_url') ?? null,
-        audioUrl: audioUrlFor(latestBySong.get(r.song_id) ?? null),
-      }))
+      .map((r) => {
+        const meta = songMeta.get(r.song_id);
+        return {
+          id: r.song_id,
+          title: meta?.title ?? 'Untitled',
+          image_url: meta?.image_url ?? null,
+          audioUrl: audioUrlFor(latestBySong.get(r.song_id) ?? null),
+        };
+      })
       .filter((t) => t.audioUrl);
 
     return NextResponse.json(
