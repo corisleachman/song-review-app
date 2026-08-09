@@ -672,13 +672,6 @@ function DashboardContent() {
     return `${song.unresolvedActionCount} action${song.unresolvedActionCount !== 1 ? 's' : ''}`;
   }
 
-  function statusPillClass(status: SongStatus) {
-    if (status === 'writing') return styles.cardStatusWriting;
-    if (status === 'in_progress') return styles.cardStatusInProgress;
-    if (status === 'mixing') return styles.cardStatusMixing;
-    if (status === 'mastering') return styles.cardStatusMastering;
-    return styles.cardStatusFinished;
-  }
 
   function handleSongInfoClick(event: React.MouseEvent<HTMLButtonElement>, songId: string, isListView: boolean) {
     event.stopPropagation();
@@ -1713,9 +1706,6 @@ function DashboardContent() {
                           )}
                         </div>
                         <div className={styles.cardStatusRow}>
-                          <span className={`${styles.cardStatusPill} ${statusPillClass(song.status)}`}>
-                            {getSongStatusLabel(song.status)}
-                          </span>
                           <select
                             id={`song-status-grid-${song.id}`}
                             className={styles.cardStatusSelect}
