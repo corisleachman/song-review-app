@@ -68,10 +68,12 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     );
 
     if (new URL(_req.url).searchParams.get('debug') === '1') {
+      const rawNoEmbed = await supabaseServer.from('playlist_songs').select('id, song_id, position').eq('playlist_id', playlist.id).order('position', { ascending: true });
+      const rawEmbed = await supabaseServer.from('playlist_songs').select('song_id, position, songs(id, title, image_url)').eq('playlist_id', playlist.id).order('position', { ascending: true });
       return NextResponse.json({
-        orderedCount: ordered.length,
-        ordered: ordered.map((r) => ({ song_id: r.song_id, position: r.position, title: pick<string>(r.songs, 'title') })),
-        latest: Array.from(latestBySong.entries()).map(([sid, fp]) => ({ sid, hasFile: Boolean(fp), fp })),
+        withEmbedCount: ordered.length,
+        rawNoEmbed: { count: (rawNoEmbed.data ?? []).length, rows: rawNoEmbed.data, error: rawNoEmbed.error?.message ?? null },
+        rawEmbed: { count: (rawEmbed.data ?? []).length, rows: (rawEmbed.data ?? []).map((r: any) => ({ song_id: r.song_id, position: r.position, song: r.songs })), error: rawEmbed.error?.message ?? null },
       });
     }
 
