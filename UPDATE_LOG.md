@@ -3192,3 +3192,31 @@ A per-user `visualizer_enabled` preference (in `profile_settings`), a dedicated 
 - Player gates the 3 reactive hero canvases on the preference (default true until the fetch resolves; the visualizer only animates during playback, so no flash in practice). When off, the canvases aren't rendered → `getReactiveCanvasEntries` returns `[]` → the draw loop no-ops. Waveform + transport untouched.
 - Not gated: the reactive analyser/audio-graph setup still runs when off (harmless; possible future perf optimisation).
 - Commit: `0ef7554a`.
+
+---
+
+## 2026-08-09 — Playlist sharing (surface 1): in-app manage flow + APIs
+
+### What we were trying to achieve
+
+Backlog "public sharing - sequential playlists": build the in-app half first (create/manage/publish playlists) before the public player.
+
+### Feature / change being made
+
+Playlist CRUD APIs + a Playlists area (list + manage) + a sidebar link.
+
+### Files changed
+
+- `lib/playlistAccess.ts` (new)
+- `app/api/playlists/route.ts`, `app/api/playlists/[id]/route.ts`, `app/api/playlists/[id]/songs/route.ts`, `app/api/playlists/[id]/songs/[songId]/route.ts`
+- `app/playlists/layout.tsx`, `app/playlists/page.tsx`, `app/playlists/[id]/page.tsx`, `app/playlists/playlists.module.css`
+- `components/AppSidebar.tsx` (Playlists link)
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Confirmed working by Coris (create, name, add/reorder/remove songs, publish, share link).
+- Backed by the `playlists` + `playlist_songs` tables (migration run 2026-08-09). Account-scoped: routes resolve the caller's account (`resolved.identity.workspaceId`) and verify the playlist belongs to it via `lib/playlistAccess` (defence beyond RLS). Added songs must belong to the same account.
+- Reorder = PATCH `/songs` with `orderedSongIds`; add appends at `max(position)+1`; remove deletes the join row; `updated_at` bumped on mutations.
+- Publish = PATCH `is_public`; the share link shown is `/listen/playlist/[id]`. The public PLAYER (surface 2) is not built yet, so the link does not play.
+- Commit: `7f8fd520`.

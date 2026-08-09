@@ -2540,3 +2540,19 @@ Pricing was restructured on the marketing site (`tsr-marketing-v19.html`) to dif
 - Next follow-up:
   - (Phase 10 / launch) batch-issue unique `founding_tester_6mo` Stripe codes to `reward_eligible` testers and email them
   - optional: weekly digest of new feedback; expand into the fuller admin console (account-level overrides, code assignment) per `PRODUCT_BACKLOG.md`
+
+
+## 2026-08-09 — Playlist sharing: in-app manage (surface 1 of 2)
+
+- Slice / change name: Playlist sharing - in-app manage flow + APIs
+- Status: Implemented and confirmed (Coris-confirmed). Surface 1 of 2.
+- Exact files changed or audited:
+  - `lib/playlistAccess.ts`
+  - `app/api/playlists/**` (list/create, detail/patch/delete, songs add/reorder/remove)
+  - `app/playlists/**` (layout, list, manage, css)
+  - `components/AppSidebar.tsx`
+- Outcome:
+  - create/name/populate/reorder/publish playlists in-app; account-scoped and ownership-verified
+  - publish sets is_public and surfaces the `/listen/playlist/[id]` share link
+- Next follow-up:
+  - surface 2: `/api/public/playlist/[id]` + `/listen/playlist/[id]` sequential player (auto-advance, track list), gated on is_public, serving each song's latest version through the playlist
