@@ -2572,3 +2572,17 @@ Pricing was restructured on the marketing site (`tsr-marketing-v19.html`) to dif
 - Next follow-up:
   - polish: song artwork + graphic equaliser in the public player (in progress)
   - optional: per-track waveform; revocable share token
+
+
+## 2026-08-09 — Playlist sharing: COMPLETE (immersive public player)
+
+- Slice / change name: Playlist sharing - immersive public player + fixes
+- Status: DONE - Coris-confirmed end to end (desktop + mobile + lock screen). Completes the feature.
+- Exact files changed or audited:
+  - `app/listen/playlist/[id]/page.tsx` / `listen-playlist.module.css`
+  - `app/api/public/playlist/[id]/route.ts`
+  - `app/api/playlists/[id]/route.ts`
+- Outcome:
+  - public `/listen/playlist/[id]` mirrors the single-song page: immersive artwork-coloured player, reactive equaliser, lock-screen playback with background auto-advance through all tracks
+  - fixed per-track audio switching + the FK-embed track-drop (public + in-app)
+- Playlist sharing (in-app manage + public immersive player) is now complete end to end.

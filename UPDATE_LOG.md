@@ -3246,3 +3246,32 @@ The public API + the `/listen/playlist/[id]` sequential player.
 - Player: plain `<audio>` (no WaveSurfer/analyser — avoids the `createMediaElementSource`/`crossOrigin` mobile pitfalls). `play()` called inside the tap gesture (mobile-safe). Track list, transport, click-to-seek progress bar, auto-advance on `ended`. Middleware already treats `/listen/*` as public.
 - Metadata layout gives link previews without leaking private playlist titles.
 - Commit: `e12e2dc4`.
+
+---
+
+## 2026-08-09 — Playlist sharing: immersive public player + fixes
+
+### What we were trying to achieve
+
+Make the public playlist player match the single-song share page (big artwork, artwork-coloured background, reactive equaliser, lock-screen playback with background auto-advance), and fix bugs found in testing.
+
+### Feature / change being made
+
+Rebuilt the public playlist player to mirror `/listen/[songId]`, plus three fixes.
+
+### Files changed
+
+- `app/listen/playlist/[id]/page.tsx` (immersive rebuild)
+- `app/listen/playlist/[id]/listen-playlist.module.css` (single-song styling base + EQ sizing)
+- `app/api/public/playlist/[id]/route.ts` (embed-drop fix)
+- `app/api/playlists/[id]/route.ts` (in-app detail hardened)
+- `UPDATE_LOG.md`, `public-mvp-roadmap.md`, `PRODUCT_BACKLOG.md`
+
+### Notes
+
+- Confirmed working by Coris (desktop + mobile: audio, reactive EQ, per-track artwork/background, lock-screen artwork/controls + background auto-advance through all tracks, EQ sizing).
+- **Immersive player** mirrors the single-song page's proven engine: WaveSurfer owns the audio element (no `crossOrigin` — Supabase CORS headers suffice, per `AUDIO_PLAYER_FIXES.md`), desktop live `AnalyserNode`, mobile `OfflineAudioContext` precompute from `ws.getDecodedData()`. Media Session gives per-track artwork/title + play/pause/next/previous so a shared playlist cycles in the background / on the lock screen. Reused the single-song `listen.module.css` as the styling base. Did NOT touch the working single-song page. Commit `c4cc132d`.
+- **Fix — track switching:** reusing one WaveSurfer + `ws.load()` while playing kept track 1 audible. Now tear down + recreate the engine (and reset the analyser source) per track / next / prev / auto-advance. Commit `47a871dc`.
+- **Fix — newest track missing from the public player:** the `playlist_songs -> songs(...)` FK embed inner-joins and silently dropped a membership row (confirmed via debug: raw membership = 6 rows, embed = 5). Now fetch membership plainly + resolve song meta via a direct `.in(id)`; latest version resolved per song. Applied to the public API and hardened the in-app detail API against the same risk. Commits `26d3867d` (public), `fc371874` (manage).
+- **EQ sizing:** taller (160px), flush to the bottom of the player block (`playerContent`/`waveformWrap` bottom padding -> 0). Commit `caf49a25`.
+- **Key learning:** avoid PostgREST to-one FK embeds (`parent.select('..., child(...)')`) when you need the full parent row set — they can inner-join-drop rows. Fetch the parent plainly and resolve related rows with a direct `.in(...)`.

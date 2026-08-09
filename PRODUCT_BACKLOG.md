@@ -19,9 +19,10 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 - Logged: 2026-08-07 · Shipped: 2026-08-09 (commit 0ef7554a) — per-user toggle in Settings > Appearance
 - Add a control to disable the waveform / frequency visualiser on the song/player page (for performance, preference, or distraction-free listening).
 
-### Public sharing — sequential playlists
+### Public sharing — sequential playlists  ✅ DONE (2026-08-09)
 - Logged: 2026-08-07
 - Today a single song can be shared publicly. Add the ability to share a **playlist** that plays through in sequence.
+- Shipped 2026-08-09: in-app playlist manager + public `/listen/playlist/[id]` immersive player (WaveSurfer, reactive EQ, lock-screen background auto-advance). Commits: manage 7f8fd520, public player c4cc132d, fixes 47a871dc/26d3867d/fc371874/caf49a25.
 
 ---
 
