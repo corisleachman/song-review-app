@@ -80,6 +80,15 @@ export default function AppSidebar({
           <span className={styles.brandMark} aria-hidden="true">⌂</span>
         </Link>
 
+        <Link
+          href="/playlists"
+          className={`${styles.navButton} ${pathname?.startsWith('/playlists') ? styles.active : ''}`}
+          title="Playlists"
+          aria-label="Playlists"
+        >
+          <span className={styles.icon} aria-hidden="true">≡</span>
+        </Link>
+
         {workspaceName && (
           <WorkspaceSwitcher
             userLabel={label}
