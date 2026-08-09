@@ -15,8 +15,8 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 
 ## Features
 
-### Turn off the audio visualiser on the song page
-- Logged: 2026-08-07
+### Turn off the audio visualiser on the song page  ✅ DONE (2026-08-09)
+- Logged: 2026-08-07 · Shipped: 2026-08-09 (commit 0ef7554a) — per-user toggle in Settings > Appearance
 - Add a control to disable the waveform / frequency visualiser on the song/player page (for performance, preference, or distraction-free listening).
 
 ### Public sharing — sequential playlists

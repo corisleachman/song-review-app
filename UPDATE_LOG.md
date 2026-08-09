@@ -3163,3 +3163,32 @@ Ported the list-view status `<select>` into the grid card, then dropped the read
 - Root cause: the grid branch of the song card rendered only a read-only `.cardStatusPill`; the status `<select>` existed solely in the list branch (and the info sheet). Not a styling bug — the control was never added to grid.
 - Fix: reused the existing `updateSongStatus` handler + `SONG_STATUS_VALUES` + `.cardStatusSelect` in the grid `.cardStatusRow`. Then removed the pill span and the now-unused `statusPillClass` helper so the build stays clean.
 - Confirmed working by Coris (dropdown changes status in card view; wanted the pill dropped). Commits: `b9c03461` (add dropdown), `be268dce` (drop pill).
+
+---
+
+## 2026-08-09 — Feature: per-user audio visualizer toggle
+
+### What we were trying to achieve
+
+Backlog: let users turn off the reactive audio visualizer on the song player, as a persisted per-user preference in Settings.
+
+### Feature / change being made
+
+A per-user `visualizer_enabled` preference (in `profile_settings`), a dedicated API, an Appearance toggle, and player gating.
+
+### Files changed
+
+- [migrations/20260809_profile_settings_visualizer_up.sql](/Users/impero/song-review-app/migrations/20260809_profile_settings_visualizer_up.sql) / `_down.sql` (run 2026-08-09)
+- [app/api/profile/visualizer/route.ts](/Users/impero/song-review-app/app/api/profile/visualizer/route.ts) (new)
+- [app/settings/appearance/page.tsx](/Users/impero/song-review-app/app/settings/appearance/page.tsx)
+- [app/songs/[id]/versions/[versionId]/page.tsx](/Users/impero/song-review-app/app/songs/%5Bid%5D/versions/%5BversionId%5D/page.tsx)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md) / [PRODUCT_BACKLOG.md](/Users/impero/song-review-app/PRODUCT_BACKLOG.md)
+
+### Notes
+
+- Confirmed working by Coris (toggle saves; player honours it).
+- `profile_settings` gained `visualizer_enabled BOOLEAN NOT NULL DEFAULT true` (migration run in the public DB `hxtsuhmqrufcdplidtov`).
+- Dedicated `/api/profile/visualizer` GET/POST, kept separate from the theme system. The POST re-loads the user's current theme and includes it in the upsert, so a first-time row gets correct colours and existing rows are never altered.
+- Player gates the 3 reactive hero canvases on the preference (default true until the fetch resolves; the visualizer only animates during playback, so no flash in practice). When off, the canvases aren't rendered → `getReactiveCanvasEntries` returns `[]` → the draw loop no-ops. Waveform + transport untouched.
+- Not gated: the reactive analyser/audio-graph setup still runs when off (harmless; possible future perf optimisation).
+- Commit: `0ef7554a`.
