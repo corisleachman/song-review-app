@@ -106,8 +106,22 @@ export default function PublicPlaylistPage() {
         ) : (
           <>
             <div className={styles.now}>
-              <div className={styles.nowLbl}>Now playing</div>
-              <div className={styles.nowTitle}>{current?.title ?? '—'}</div>
+              <div className={styles.nowMain}>
+                <div className={styles.art}>
+                  {current?.image_url ? (
+                    <img className={styles.artImg} src={current.image_url} alt="" />
+                  ) : (
+                    <span className={styles.artPlaceholder} aria-hidden="true">♫</span>
+                  )}
+                  <div className={`${styles.eq} ${playing ? styles.eqPlaying : ''}`} aria-hidden="true">
+                    <span /><span /><span /><span /><span /><span />
+                  </div>
+                </div>
+                <div className={styles.nowInfo}>
+                  <div className={styles.nowLbl}>Now playing</div>
+                  <div className={styles.nowTitle}>{current?.title ?? '—'}</div>
+                </div>
+              </div>
               <div className={styles.progress} onClick={seek}><div className={styles.progressFill} style={{ width: `${pct}%` }} /></div>
               <div className={styles.transport}>
                 <button className={styles.tbtn} onClick={prev} aria-label="Previous"><Icon d={PREV} /></button>
@@ -122,6 +136,9 @@ export default function PublicPlaylistPage() {
               {tracks.map((t, i) => (
                 <li key={t.id} className={`${styles.track} ${i === cur ? styles.active : ''}`} onClick={() => playIndex(i)}>
                   <span className={styles.idx}>{i === cur && playing ? '♪' : i + 1}</span>
+                  <span className={styles.trackArt}>
+                    {t.image_url ? <img className={styles.trackArtImg} src={t.image_url} alt="" /> : null}
+                  </span>
                   <span className={styles.tt}>{t.title}</span>
                 </li>
               ))}
