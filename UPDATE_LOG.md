@@ -3106,3 +3106,36 @@ Added the beta banner to the two front-door surfaces, with different mounts beca
 - Marketing (static `public/marketing.html`): informational straw strip (BETA pill + "open beta" message), fixed at `top:0`, with the fixed nav moved from `top:0` to `top:34px`. No feedback link there — the app FAB/panel doesn't run on the static page; can be linked to `/login` later if wanted.
 - Banner still NOT shown on `/listen` (artist-share) — intentional.
 - Commits: `d60949bd` (add), `ac376690` (mobile fix).
+
+---
+
+## 2026-08-07 — Admin beta-feedback triage view (/admin/feedback)
+
+### What we were trying to achieve
+
+Give the creator a place to read incoming beta feedback and approve quality submissions, with approval doubling as the Founding Tester reward gate — no per-submission emails.
+
+### Feature / change being made
+
+An `ADMIN_EMAILS`-gated triage page plus two admin API routes.
+
+### Files changed
+
+- [lib/isAdmin.ts](/Users/impero/song-review-app/lib/isAdmin.ts)
+- [app/api/admin/feedback/route.ts](/Users/impero/song-review-app/app/api/admin/feedback/route.ts)
+- [app/api/admin/feedback/[id]/route.ts](/Users/impero/song-review-app/app/api/admin/feedback/%5Bid%5D/route.ts)
+- [app/admin/feedback/page.tsx](/Users/impero/song-review-app/app/admin/feedback/page.tsx)
+- [app/admin/feedback/FeedbackTriage.tsx](/Users/impero/song-review-app/app/admin/feedback/FeedbackTriage.tsx)
+- [app/admin/feedback/feedback.module.css](/Users/impero/song-review-app/app/admin/feedback/feedback.module.css)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+
+### Notes
+
+- Confirmed working by Coris — the triage view renders live feedback with the cap counter, filters, and Approve/Reject/Spam.
+- Gate: `ADMIN_EMAILS` env var (comma-separated, case-insensitive), checked in the page (`notFound()` for non-admins) and both API routes (404). Deny-all if unset. Auth middleware also redirects anon → `/login?redirectTo=/admin/feedback`. Verified anon denied (307/404), admin allowed.
+- **`ADMIN_EMAILS` must match the user's SESSION email exactly.** Coris's is `corisleachman@googlemail.com`; set both the `@googlemail.com` and `@gmail.com` variants if unsure (Google alias). A temporary diagnostic page was used to surface the session email, then removed.
+- GET lists `beta_feedback` (status filter: new/approved/rejected/spam/all) plus a "Founding Testers N/100 eligible" counter. PATCH `approve` sets `status=approved`, stamps `reviewed_at/by`, and sets `reward_eligible=true` only while under the 100 cap (past the cap it approves without a slot). Reject/Spam set status only.
+- No Stripe code issuance here — approval only flags `reward_eligible`. Unique `founding_tester_6mo` code issuance is the launch-time batch job (Phase 10).
+- Commits: `26a54aff` (build), `66312cec` (temp diagnostic), `d770fedd` (diagnostic removed).
+
+This completes the open-beta feedback + Founding Tester capture workstream for the beta phase; the remaining reward issuance is gated to Phase 10 (plan gating).

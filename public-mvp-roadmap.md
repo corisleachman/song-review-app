@@ -2521,3 +2521,22 @@ Pricing was restructured on the marketing site (`tsr-marketing-v19.html`) to dif
   - `/listen` artist-share surface intentionally left clean
 - Next follow-up:
   - admin triage view (`/admin/feedback`) with `ADMIN_EMAILS` gating and one-click Approve under the 100-tester cap
+
+
+## 2026-08-07 — Admin beta-feedback triage view
+
+- Slice / change name: Beta feedback — admin triage view (/admin/feedback)
+- Status: Implemented and confirmed (Coris-confirmed; renders live feedback)
+- Exact files changed or audited:
+  - `lib/isAdmin.ts`
+  - `app/api/admin/feedback/route.ts`
+  - `app/api/admin/feedback/[id]/route.ts`
+  - `app/admin/feedback/page.tsx` / `FeedbackTriage.tsx` / `feedback.module.css`
+- Outcome:
+  - creator-only triage view (`ADMIN_EMAILS`-gated) listing `beta_feedback` with status filters and a Founding Testers N/100 counter
+  - one-click Approve / Reject / Spam; Approve flags `reward_eligible` under the 100 cap
+  - no Stripe issuance yet — eligibility only; code issuance is the launch-time (Phase 10) batch job
+  - completes the open-beta feedback + Founding Tester capture workstream for the beta phase
+- Next follow-up:
+  - (Phase 10 / launch) batch-issue unique `founding_tester_6mo` Stripe codes to `reward_eligible` testers and email them
+  - optional: weekly digest of new feedback; expand into the fuller admin console (account-level overrides, code assignment) per `PRODUCT_BACKLOG.md`
