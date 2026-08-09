@@ -237,14 +237,15 @@ export default function PublicPlaylistPage() {
     navigator.mediaSession.playbackState = 'playing';
   }, []);
 
-  const initWaveSurfer = useCallback(async (container: HTMLDivElement) => {
-    if (wsRef.current) return wsRef.current;
+  const spinUpTrack = useCallback(async (url: string) => {
+    const host = waveHostRef.current; if (!host) return;
     const WaveSurfer = (await import('wavesurfer.js')).default;
     const ws = WaveSurfer.create({
-      container, waveColor: 'rgba(244,237,228,0.18)', progressColor: '#C0392B',
+      container: host, waveColor: 'rgba(244,237,228,0.18)', progressColor: '#C0392B',
       cursorColor: 'transparent', barWidth: 2, barGap: 1, height: 80, normalize: true,
       interact: false, fetchParams: { credentials: 'omit' },
     });
+    wsRef.current = ws;
     ws.on('ready', () => { setDuration(ws.getDuration()); });
     ws.on('audioprocess', (t: number) => setCurrentTime(t));
     ws.on('play', () => {
@@ -256,30 +257,34 @@ export default function PublicPlaylistPage() {
     ws.on('pause', () => { setIsPlaying(false); stopReactiveDrawing(); drawReactiveIdle(); if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused'; });
     ws.on('finish', () => { goNextRef.current(); });
     ws.on('error', () => {});
-    wsRef.current = ws;
-    return ws;
-  }, [ensureReactiveAudioGraph, startReactiveDrawing, stopReactiveDrawing, drawReactiveIdle, setMediaSession]);
-
-  const loadTrack = useCallback((i: number) => {
-    const track = tracksRef.current[i];
-    const ws = wsRef.current;
-    if (!track?.audioUrl || !ws) return;
-    curRef.current = i; setCur(i);
-    titleRef.current = track.title; imageRef.current = track.image_url ?? '';
-    audioLoadedRef.current = true;
-    setCurrentTime(0); setIsPlaying(true);
-    precomputedRef.current = null;
     ws.once('ready', () => {
       void ws.play();
       if (isMobileUA()) {
         try {
           const buf = (ws as any).getDecodedData?.();
-          if (buf) void precomputeFrequencyFrames(buf).then((f) => { precomputedRef.current = f; if (wsRef.current?.isPlaying?.()) startReactiveDrawing(); });
+          if (buf) void precomputeFrequencyFrames(buf).then((f) => { precomputedRef.current = f; if (wsRef.current === ws && ws.isPlaying?.()) startReactiveDrawing(); });
         } catch { /* ignore */ }
       }
     });
-    void ws.load(track.audioUrl).catch(() => {});
-  }, [startReactiveDrawing]);
+    void ws.load(url).catch(() => {});
+  }, [ensureReactiveAudioGraph, startReactiveDrawing, stopReactiveDrawing, drawReactiveIdle, setMediaSession]);
+
+  const loadTrack = useCallback((i: number) => {
+    const track = tracksRef.current[i];
+    if (!track?.audioUrl) return;
+    curRef.current = i; setCur(i);
+    titleRef.current = track.title; imageRef.current = track.image_url ?? '';
+    setCurrentTime(0); setDuration(0);
+    audioLoadedRef.current = true; setIsPlaying(true);
+    stopReactiveDrawing();
+    precomputedRef.current = null;
+    // tear down the previous track completely, then spin up a fresh engine
+    if (wsRef.current) { try { wsRef.current.destroy(); } catch { /* ignore */ } wsRef.current = null; }
+    try { sourceRef.current?.disconnect(); } catch { /* ignore */ }
+    try { analyserRef.current?.disconnect(); } catch { /* ignore */ }
+    sourceRef.current = null; analyserRef.current = null;
+    void spinUpTrack(track.audioUrl);
+  }, [spinUpTrack, stopReactiveDrawing]);
 
   // keep nav handlers current for WaveSurfer/media-session callbacks
   useEffect(() => {
@@ -296,19 +301,14 @@ export default function PublicPlaylistPage() {
     };
   }, [loadTrack, stopReactiveDrawing, drawReactiveIdle]);
 
-  // create WaveSurfer once the host + data are ready
-  useEffect(() => {
-    if (!waveHostRef.current || !data) return;
-    void initWaveSurfer(waveHostRef.current);
-    return () => { try { wsRef.current?.destroy(); } catch { /* ignore */ } wsRef.current = null; stopReactiveDrawing(); };
-  }, [data, initWaveSurfer, stopReactiveDrawing]);
+  // tear down the audio engine on unmount
+  useEffect(() => () => { try { wsRef.current?.destroy(); } catch { /* ignore */ } wsRef.current = null; stopReactiveDrawing(); }, [stopReactiveDrawing]);
 
   useEffect(() => () => { if (animRef.current !== null) cancelAnimationFrame(animRef.current); try { void ctxRef.current?.close(); } catch { /* ignore */ } }, []);
 
   const handlePlay = useCallback(() => {
-    const ws = wsRef.current;
-    if (!ws) return;
     if (!audioLoadedRef.current) { loadTrack(curRef.current || 0); return; }
+    const ws = wsRef.current; if (!ws) return;
     void ws.playPause();
   }, [loadTrack]);
 
