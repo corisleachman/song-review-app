@@ -1716,6 +1716,23 @@ function DashboardContent() {
                           <span className={`${styles.cardStatusPill} ${statusPillClass(song.status)}`}>
                             {getSongStatusLabel(song.status)}
                           </span>
+                          <select
+                            id={`song-status-grid-${song.id}`}
+                            className={styles.cardStatusSelect}
+                            value={song.status}
+                            onClick={e => e.stopPropagation()}
+                            onChange={e => {
+                              e.stopPropagation();
+                              void updateSongStatus(song.id, e.target.value as SongStatus);
+                            }}
+                            aria-label="Change stage"
+                          >
+                            {SONG_STATUS_VALUES.map(status => (
+                              <option key={status} value={status}>
+                                {getSongStatusLabel(status)}
+                              </option>
+                            ))}
+                          </select>
                         </div>
                         <div className={styles.cardBodyDivider} />
                         <div className={styles.cardMetaRow}>
