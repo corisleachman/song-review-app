@@ -3220,3 +3220,29 @@ Playlist CRUD APIs + a Playlists area (list + manage) + a sidebar link.
 - Reorder = PATCH `/songs` with `orderedSongIds`; add appends at `max(position)+1`; remove deletes the join row; `updated_at` bumped on mutations.
 - Publish = PATCH `is_public`; the share link shown is `/listen/playlist/[id]`. The public PLAYER (surface 2) is not built yet, so the link does not play.
 - Commit: `7f8fd520`.
+
+---
+
+## 2026-08-09 — Playlist sharing (surface 2): public sequential player
+
+### What we were trying to achieve
+
+Complete playlist sharing: a public, no-login page that plays a published playlist's songs in sequence.
+
+### Feature / change being made
+
+The public API + the `/listen/playlist/[id]` sequential player.
+
+### Files changed
+
+- `app/api/public/playlist/[id]/route.ts` (new)
+- `app/listen/playlist/[id]/page.tsx`, `listen-playlist.module.css`, `layout.tsx` (new)
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Confirmed working by Coris (real share link plays + auto-advances, logged out).
+- `/api/public/playlist/[id]`: service role + explicit `is_public` check (404 if not public, no existence leak). Serves each song's LATEST version audio via `getPublicUrl` on `song-files` — songs play through the playlist even if not individually `is_public` (decision #2). Latest-version-per-song resolved in one query.
+- Player: plain `<audio>` (no WaveSurfer/analyser — avoids the `createMediaElementSource`/`crossOrigin` mobile pitfalls). `play()` called inside the tap gesture (mobile-safe). Track list, transport, click-to-seek progress bar, auto-advance on `ended`. Middleware already treats `/listen/*` as public.
+- Metadata layout gives link previews without leaking private playlist titles.
+- Commit: `e12e2dc4`.

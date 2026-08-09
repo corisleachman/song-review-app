@@ -2556,3 +2556,19 @@ Pricing was restructured on the marketing site (`tsr-marketing-v19.html`) to dif
   - publish sets is_public and surfaces the `/listen/playlist/[id]` share link
 - Next follow-up:
   - surface 2: `/api/public/playlist/[id]` + `/listen/playlist/[id]` sequential player (auto-advance, track list), gated on is_public, serving each song's latest version through the playlist
+
+
+## 2026-08-09 — Playlist sharing: public player (surface 2 of 2)
+
+- Slice / change name: Playlist sharing - public sequential player
+- Status: Implemented and confirmed (Coris-confirmed end to end)
+- Exact files changed or audited:
+  - `app/api/public/playlist/[id]/route.ts`
+  - `app/listen/playlist/[id]/page.tsx` / `listen-playlist.module.css` / `layout.tsx`
+- Outcome:
+  - public `/listen/playlist/[id]` plays a published playlist in sequence with auto-advance; no login
+  - is_public-gated public API serving each song's latest version through the playlist
+  - completes the playlist sharing feature (manage + public player)
+- Next follow-up:
+  - polish: song artwork + graphic equaliser in the public player (in progress)
+  - optional: per-track waveform; revocable share token
