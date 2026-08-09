@@ -6,8 +6,8 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 
 ## Bugs
 
-### Desktop card view — status dropdown missing
-- Logged: 2026-08-07
+### Desktop card view — status dropdown missing  ✅ DONE (2026-08-09)
+- Logged: 2026-08-07 · Shipped: 2026-08-09 (commits b9c03461, be268dce)
 - On the dashboard **card view** (desktop), the dropdown to change a track's status (In progress / Mixing / Mastered / Completed, etc.) does not appear the way it does in **list view**.
 - Expected: the status dropdown should be available in card view, matching list-view behaviour.
 

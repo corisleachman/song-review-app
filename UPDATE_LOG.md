@@ -3139,3 +3139,27 @@ An `ADMIN_EMAILS`-gated triage page plus two admin API routes.
 - Commits: `26a54aff` (build), `66312cec` (temp diagnostic), `d770fedd` (diagnostic removed).
 
 This completes the open-beta feedback + Founding Tester capture workstream for the beta phase; the remaining reward issuance is gated to Phase 10 (plan gating).
+
+---
+
+## 2026-08-09 — Fix: status dropdown in desktop card (grid) view
+
+### What we were trying to achieve
+
+Backlog bug: in desktop card/grid view, the track status dropdown (writing / in progress / mixing / mastering / finished) was missing — it only appeared in list view.
+
+### Feature / change being made
+
+Ported the list-view status `<select>` into the grid card, then dropped the read-only pill so grid matches list (dropdown only).
+
+### Files changed
+
+- [app/dashboard/page.tsx](/Users/impero/song-review-app/app/dashboard/page.tsx)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [PRODUCT_BACKLOG.md](/Users/impero/song-review-app/PRODUCT_BACKLOG.md)
+
+### Notes
+
+- Root cause: the grid branch of the song card rendered only a read-only `.cardStatusPill`; the status `<select>` existed solely in the list branch (and the info sheet). Not a styling bug — the control was never added to grid.
+- Fix: reused the existing `updateSongStatus` handler + `SONG_STATUS_VALUES` + `.cardStatusSelect` in the grid `.cardStatusRow`. Then removed the pill span and the now-unused `statusPillClass` helper so the build stays clean.
+- Confirmed working by Coris (dropdown changes status in card view; wanted the pill dropped). Commits: `b9c03461` (add dropdown), `be268dce` (drop pill).
