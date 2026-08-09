@@ -4,14 +4,6 @@ import { resolvePlaylistAccess } from '@/lib/playlistAccess';
 
 export const dynamic = 'force-dynamic';
 
-type SongRow = { id: string; title: string | null; status: string | null };
-
-function unwrapSong(rel: unknown): SongRow | null {
-  const s = Array.isArray(rel) ? rel[0] : rel;
-  if (s && typeof s === 'object' && 'id' in s) return s as SongRow;
-  return null;
-}
-
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const access = await resolvePlaylistAccess(params.id);
   if ('error' in access) {
@@ -19,15 +11,25 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
       { status: access.error === 'unauthorized' ? 401 : 404 });
   }
   try {
+    // Plain membership (no FK embed — a to-one embed can inner-join-drop rows).
     const { data: rows } = await supabaseServer
       .from('playlist_songs')
-      .select('song_id, position, songs(id, title, status)')
+      .select('song_id, position')
       .eq('playlist_id', access.playlist.id)
       .order('position', { ascending: true });
+    const orderedRows = rows ?? [];
+    const inSongIds = orderedRows.map((r) => r.song_id);
 
-    const songs = (rows ?? [])
-      .map((r) => { const s = unwrapSong(r.songs); return s ? { id: s.id, title: s.title ?? 'Untitled', status: s.status ?? null, position: r.position } : null; })
-      .filter((s): s is { id: string; title: string; status: string | null; position: number } => s !== null);
+    const metaMap = new Map<string, { title: string; status: string | null }>();
+    if (inSongIds.length) {
+      const { data: inSongs } = await supabaseServer.from('songs').select('id, title, status').in('id', inSongIds);
+      for (const s of inSongs ?? []) metaMap.set(s.id, { title: s.title ?? 'Untitled', status: s.status ?? null });
+    }
+
+    const songs = orderedRows.map((r) => {
+      const m = metaMap.get(r.song_id);
+      return { id: r.song_id, title: m?.title ?? 'Untitled', status: m?.status ?? null, position: r.position };
+    });
 
     const inIds = new Set(songs.map((s) => s.id));
 
