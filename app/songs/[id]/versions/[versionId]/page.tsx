@@ -478,6 +478,16 @@ function VersionPageInner() {
   const reactiveAnimationFrameRef = useRef<number | null>(null);
   const reactiveRefreshTimeoutRef = useRef<number | null>(null);
   const reactivePlayingRef = useRef(false);
+  const [visualizerEnabled, setVisualizerEnabled] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/profile/visualizer', { cache: 'no-store' })
+      .then(res => res.json())
+      .then(data => { if (active) setVisualizerEnabled(data?.visualizer_enabled !== false); })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
   const startReactiveDrawingRef = useRef<(() => void) | null>(null);
 
   const [identity, setIdentity] = useState('');
@@ -2343,6 +2353,7 @@ function VersionPageInner() {
           backgroundImage: `url(${song.image_url})`,
         } : undefined}
       >
+        {visualizerEnabled && (
         <canvas
           ref={mobileReactiveCanvasRef}
           className={styles.heroReactiveCanvasMobile}
@@ -2350,8 +2361,10 @@ function VersionPageInner() {
           height={560}
           aria-hidden="true"
         />
+        )}
         {/* Gradient overlay so text is always readable */}
         <div ref={heroOverlayRef} className={styles.heroOverlay}>
+          {visualizerEnabled && (
           <canvas
             ref={desktopReactiveCanvasRef}
             className={styles.heroReactiveCanvasDesktop}
@@ -2359,6 +2372,7 @@ function VersionPageInner() {
             height={560}
             aria-hidden="true"
           />
+          )}
 
           {/* Nav row */}
           <div className={styles.heroNav}>
@@ -2400,6 +2414,7 @@ function VersionPageInner() {
 
           {/* Main hero content */}
           <div ref={heroContentRef} className={styles.heroContent}>
+            {visualizerEnabled && (
             <canvas
               ref={mobileReactiveStripRef}
               className={styles.mobileReactiveStrip}
@@ -2408,6 +2423,7 @@ function VersionPageInner() {
               style={{ width: `${mobileReactiveStripWidth}px` }}
               aria-hidden="true"
             />
+            )}
 
             {/* Left: title, controls, waveform */}
             <div className={styles.heroLeft}>

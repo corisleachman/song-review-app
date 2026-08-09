@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSettingsData, useSettingsActions } from '@/lib/settingsContext';
 import type { Theme } from '@/lib/settingsContext';
 import styles from '../settings.module.css';
@@ -23,6 +23,35 @@ export default function AppearancePage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  const [visualizerEnabled, setVisualizerEnabled] = useState<boolean | null>(null);
+  const [vizError, setVizError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/profile/visualizer', { cache: 'no-store' })
+      .then(r => r.json())
+      .then(d => { if (active) setVisualizerEnabled(d?.visualizer_enabled !== false); })
+      .catch(() => { if (active) setVisualizerEnabled(true); });
+    return () => { active = false; };
+  }, []);
+
+  const setVisualizer = async (val: boolean) => {
+    setVizError(null);
+    const prev = visualizerEnabled;
+    setVisualizerEnabled(val);
+    try {
+      const res = await fetch('/api/profile/visualizer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ visualizer_enabled: val }),
+      });
+      if (!res.ok) throw new Error('save failed');
+    } catch {
+      setVisualizerEnabled(prev ?? true);
+      setVizError('Could not save. Please try again.');
+    }
+  };
 
   const handleChange = (key: keyof Theme, value: string) => {
     setTheme({ ...theme, [key]: value });
@@ -147,6 +176,35 @@ export default function AppearancePage() {
             </button>
           </div>
           {saveError && <p className={styles.blockError}>{saveError}</p>}
+        </div>
+      </div>
+
+      {/* ── Audio visualizer ── */}
+      <div className={styles.settingsBlock}>
+        <div className={styles.blockLabel}>
+          <h3>Audio visualizer</h3>
+          <p>Show the reactive frequency visualizer on the song player. Turning it off keeps the waveform and playback controls. Saves automatically.</p>
+        </div>
+        <div className={styles.blockControl}>
+          <div className={styles.appearanceActions}>
+            <button
+              type="button"
+              className={visualizerEnabled === true ? styles.primaryButton : styles.ghostButton}
+              onClick={() => void setVisualizer(true)}
+              disabled={visualizerEnabled === null || visualizerEnabled === true}
+            >
+              On
+            </button>
+            <button
+              type="button"
+              className={visualizerEnabled === false ? styles.primaryButton : styles.ghostButton}
+              onClick={() => void setVisualizer(false)}
+              disabled={visualizerEnabled === null || visualizerEnabled === false}
+            >
+              Off
+            </button>
+          </div>
+          {vizError && <p className={styles.blockError}>{vizError}</p>}
         </div>
       </div>
     </div>
