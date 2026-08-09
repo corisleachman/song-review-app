@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Song Room — Playlist Sharing (Wireframe v1)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+@font-face { font-family:'ThunderBlack'; src:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-BlackLC.otf') format('opentype'); font-display:swap; }
+@font-face { font-family:'ThunderBold';  src:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-BoldLC.ttf') format('truetype'); font-display:swap; }
+
+:root{
+  --t-black:'ThunderBlack',Impact,'Arial Narrow Bold',sans-serif;
+  --t-bold:'ThunderBold',Impact,'Arial Narrow Bold',sans-serif;
+  --black:#0E0A0A; --surface:#1C1515; --surface-2:#261C1C; --surface-3:#2E2222;
+  --red:#C0392B; --red-bright:#E8402E; --red-dim:rgba(192,57,43,0.14);
+  --straw:#F0E48C; --off-white:#F4EDE4; --sand:#D4C4B0; --dune:#8C7B6B;
+  --text:#F4EDE4; --text-2:rgba(244,237,228,0.62); --text-3:rgba(244,237,228,0.34);
+  --border:rgba(244,237,228,0.10); --border-mid:rgba(244,237,228,0.18); --border-hi:rgba(244,237,228,0.30);
+  --fast:150ms cubic-bezier(.4,0,.2,1); --base:260ms cubic-bezier(.4,0,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--black);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:90px}
+.mono{font-weight:600;text-transform:uppercase;letter-spacing:.16em;font-size:10px}
+button{font-family:inherit;cursor:pointer}
+.hidden{display:none!important}
+
+/* ===== shared page frame ===== */
+.stage{max-width:960px;margin:0 auto;padding:34px 24px}
+.brandbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:30px}
+.brand{font-family:var(--t-black);font-size:22px;letter-spacing:.02em}
+.brand .dot{color:var(--red)}
+.viewnote{font-size:11px;color:var(--straw);text-transform:uppercase;letter-spacing:.14em}
+
+/* ===== PUBLIC PLAYER ===== */
+.plHead{display:flex;gap:22px;align-items:flex-end;padding-bottom:22px;border-bottom:1px solid var(--border);margin-bottom:22px}
+.plArt{width:132px;height:132px;flex-shrink:0;background:
+   repeating-linear-gradient(135deg,var(--surface-2) 0 12px,var(--surface) 12px 24px);
+   border:1px solid var(--border);position:relative}
+.plArt::after{content:'♫';position:absolute;inset:0;display:grid;place-items:center;font-size:42px;color:var(--dune)}
+.plHead h1{font-family:var(--t-black);font-size:clamp(34px,6vw,52px);line-height:.9;margin-bottom:6px}
+.plHead .by{color:var(--sand);font-style:italic;font-size:14px;margin-bottom:8px}
+.plHead .cnt{font-size:12px;color:var(--text-2)}
+
+/* now playing */
+.now{background:var(--surface);border:1px solid var(--border);padding:18px 20px;margin-bottom:22px}
+.now .lbl{color:var(--straw);margin-bottom:10px}
+.now .nowtitle{font-family:var(--t-bold);font-size:26px;line-height:1;margin-bottom:14px}
+.wave{height:74px;display:flex;align-items:center;gap:2px;margin-bottom:14px;cursor:pointer}
+.wave i{flex:1;background:var(--dune);opacity:.45;display:block;transition:opacity .1s,background .1s}
+.wave i.on{background:var(--straw);opacity:1}
+.transport{display:flex;align-items:center;gap:14px}
+.tbtn{width:40px;height:40px;background:transparent;border:1px solid var(--border-mid);color:var(--off-white);display:grid;place-items:center}
+.tbtn:hover{border-color:var(--border-hi)}
+.tbtn.play{width:52px;height:52px;background:var(--red);border-color:#0E0A0A}
+.tbtn.play:hover{background:var(--red-bright)}
+.tbtn svg{fill:currentColor}
+.time{font-style:italic;color:var(--sand);font-size:13px;margin-left:auto}
+.upnext{font-size:11px;color:var(--text-3);margin-top:12px}
+.upnext b{color:var(--text-2);font-style:normal}
+
+/* track list */
+.tl-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.tl-head .mono{color:var(--text-2)}
+.track{display:flex;align-items:center;gap:14px;padding:12px 12px;border:1px solid transparent;border-bottom:1px solid var(--border);cursor:pointer;transition:background var(--fast)}
+.track:hover{background:var(--surface)}
+.track.active{background:var(--surface-2);border-color:var(--border-mid)}
+.track .idx{width:22px;text-align:center;color:var(--text-3);font-size:13px;font-variant-numeric:tabular-nums}
+.track.active .idx{color:var(--straw)}
+.track .eq{display:none;gap:2px;align-items:flex-end;width:22px;height:16px;justify-content:center}
+.track.active.playing .idx{display:none}
+.track.active.playing .eq{display:flex}
+.track .eq span{width:3px;background:var(--straw);animation:eq .7s ease-in-out infinite}
+.track .eq span:nth-child(2){animation-delay:.2s}.track .eq span:nth-child(3){animation-delay:.4s}
+@keyframes eq{0%,100%{height:4px}50%{height:15px}}
+.track .tt{flex:1;font-weight:500}
+.track .td{color:var(--text-3);font-size:12px;font-variant-numeric:tabular-nums}
+
+.footer-note{margin-top:26px;font-size:11px;color:var(--text-3);text-align:center}
+
+/* ===== MANAGE VIEW ===== */
+.appwrap{display:flex;gap:0;border:1px solid var(--border);background:var(--surface)}
+.rail{width:60px;flex-shrink:0;background:var(--black);border-right:1px solid var(--border);padding:16px 0;display:flex;flex-direction:column;align-items:center;gap:18px}
+.rail .ico{width:26px;height:26px;border:1px solid var(--border-mid);display:grid;place-items:center;color:var(--text-3);font-size:12px}
+.rail .ico.act{border-color:var(--straw);color:var(--straw)}
+.mgmt{flex:1;padding:24px 26px;min-width:0}
+.mgmt h2{font-family:var(--t-black);font-size:34px;line-height:1;margin-bottom:4px}
+.mgmt .sub{color:var(--sand);font-style:italic;font-size:13px;margin-bottom:22px}
+
+.titlerow{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.titlerow input{flex:1;background:var(--black);border:1px solid var(--border-mid);color:var(--off-white);font-family:var(--t-bold);font-size:22px;padding:8px 12px;outline:none}
+.titlerow input:focus{border-color:var(--straw)}
+
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.col h3{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--text-2);margin-bottom:10px;display:flex;justify-content:space-between}
+.col h3 .n{color:var(--text-3)}
+.plist,.lib{border:1px solid var(--border);min-height:60px}
+.row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border);background:var(--surface)}
+.row:last-child{border-bottom:0}
+.row .rt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.row .rd{color:var(--text-3);font-size:11px;font-variant-numeric:tabular-nums}
+.row .pos{width:18px;color:var(--text-3);font-size:12px;text-align:center;font-variant-numeric:tabular-nums}
+.mini{width:24px;height:24px;background:transparent;border:1px solid var(--border-mid);color:var(--text-2);display:grid;place-items:center;font-size:12px;line-height:1}
+.mini:hover{border-color:var(--border-hi);color:var(--off-white)}
+.mini:disabled{opacity:.3;cursor:default}
+.addbtn{background:var(--straw);border:1px solid var(--straw);color:#0E0A0A;font-weight:600;font-size:11px;padding:5px 10px;text-transform:uppercase;letter-spacing:.06em}
+.empty{padding:18px 12px;color:var(--text-3);font-size:12px;font-style:italic;text-align:center}
+
+/* publish */
+.publish{margin-top:24px;padding-top:20px;border-top:1px solid var(--border)}
+.publish .r1{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.seg{display:flex;border:1px solid var(--border-mid)}
+.seg button{background:transparent;color:var(--text-2);border:0;padding:8px 16px;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.1em}
+.seg button.on{background:var(--straw);color:#0E0A0A}
+.pubhint{font-size:12px;color:var(--text-2)}
+.sharebox{display:flex;gap:8px;align-items:center;background:var(--black);border:1px solid var(--border-mid);padding:8px 8px 8px 12px}
+.sharebox code{flex:1;font-family:'DM Sans';font-size:12.5px;color:var(--sand);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.copy{background:var(--red);border:1px solid #0E0A0A;color:#fff;font-weight:600;font-size:11px;padding:7px 12px;text-transform:uppercase;letter-spacing:.06em}
+.copy:hover{background:var(--red-bright)}
+
+/* ===== controls + annotations ===== */
+.controls{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:70;display:flex;gap:6px;background:var(--surface-2);border:1px solid var(--border-hi);padding:6px;box-shadow:0 8px 24px rgba(0,0,0,.6)}
+.controls button{background:transparent;border:1px solid var(--border-mid);color:var(--text-2);font-weight:600;text-transform:uppercase;letter-spacing:.1em;font-size:9.5px;padding:8px 12px}
+.controls button.active{background:var(--straw);color:#0E0A0A;border-color:var(--straw)}
+.controls .lbl{align-self:center;font-size:8.5px;color:var(--text-3);text-transform:uppercase;letter-spacing:.14em;padding:0 4px}
+.controls .grp{display:flex;gap:6px;padding-right:6px;border-right:1px solid var(--border)}
+.anno{background:var(--surface-2);border-left:2px solid var(--straw);padding:10px 14px;margin:16px 0;font-size:12px;color:var(--text-2)}
+.anno b{color:var(--straw);font-weight:600}
+.anno.off{display:none}
+
+@media(max-width:720px){.cols{grid-template-columns:1fr}.plHead{flex-direction:column;align-items:flex-start;gap:14px}.plArt{width:96px;height:96px}}
+</style>
+</head>
+<body>
+
+<!-- ===================== PUBLIC PLAYER ===================== -->
+<div class="stage" id="view-public">
+  <div class="brandbar">
+    <div class="brand">SONG ROOM<span class="dot">.</span></div>
+    <div class="viewnote">Public · /listen/playlist/[id]</div>
+  </div>
+
+  <div class="anno" data-anno><b>Public sequential player.</b> No login. No beta banner (artist-share surface). Songs play in order and auto-advance. No comments in v1.</div>
+
+  <div class="plHead">
+    <div class="plArt"></div>
+    <div>
+      <h1>MIDNIGHT SESSIONS</h1>
+      <div class="by">shared by Coris · The Song Room</div>
+      <div class="cnt" id="plCount">4 tracks · 13:57</div>
+    </div>
+  </div>
+
+  <div class="now">
+    <div class="mono lbl">Now playing</div>
+    <div class="nowtitle" id="nowTitle">Midnight Demo</div>
+    <div class="wave" id="wave"></div>
+    <div class="transport">
+      <button class="tbtn" onclick="prev()" title="Previous"><svg width="16" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+      <button class="tbtn play" id="playBtn" onclick="togglePlay()" title="Play"><svg width="20" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+      <button class="tbtn" onclick="next()" title="Next"><svg width="16" viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+      <span class="time" id="time">0:00 / 3:42</span>
+    </div>
+    <div class="upnext" id="upnext">Up next: <b>Polka (rough)</b></div>
+  </div>
+
+  <div class="tl-head"><span class="mono">Tracklist</span></div>
+  <div id="tracklist"></div>
+
+  <div class="footer-note">Powered by Song Room · a place to finish songs together</div>
+</div>
+
+<!-- ===================== MANAGE VIEW ===================== -->
+<div class="stage hidden" id="view-manage">
+  <div class="brandbar">
+    <div class="brand">SONG ROOM<span class="dot">.</span></div>
+    <div class="viewnote">In-app · Playlists</div>
+  </div>
+
+  <div class="anno" data-anno><b>In-app manage.</b> A dedicated Playlists area: name it, add songs from your workspace, reorder, then publish to get a shareable link. Also reachable via "Add to playlist" on a song.</div>
+
+  <div class="appwrap">
+    <div class="rail">
+      <div class="ico" title="Dashboard">▤</div>
+      <div class="ico act" title="Playlists">≡</div>
+      <div class="ico" title="Settings">⚙</div>
+    </div>
+    <div class="mgmt">
+      <h2>PLAYLIST</h2>
+      <div class="sub">Build a set, order it, share one link.</div>
+
+      <div class="titlerow">
+        <input id="plTitle" value="Midnight Sessions" aria-label="Playlist title">
+      </div>
+
+      <div class="cols">
+        <div class="col">
+          <h3>In this playlist <span class="n" id="inCount">4 songs</span></h3>
+          <div class="plist" id="pl"></div>
+        </div>
+        <div class="col">
+          <h3>Add from your songs <span class="n" id="libCount">3 available</span></h3>
+          <div class="lib" id="lib"></div>
+        </div>
+      </div>
+
+      <div class="publish">
+        <div class="r1">
+          <div class="seg">
+            <button id="segDraft" class="on" onclick="setPublic(false)">Draft</button>
+            <button id="segPublic" onclick="setPublic(true)">Public</button>
+          </div>
+          <span class="pubhint" id="pubHint">Only you can see this. Publish to get a share link.</span>
+        </div>
+        <div id="shareWrap" class="hidden">
+          <div class="sharebox">
+            <code id="shareUrl">song-room.live/listen/playlist/9f3a-midnight</code>
+            <button class="copy" onclick="copyLink(this)">Copy link</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== CONTROLS ===================== -->
+<div class="controls">
+  <div class="grp">
+    <span class="lbl">View</span>
+    <button class="active" id="btnPub" onclick="setView('public')">Public player</button>
+    <button id="btnMan" onclick="setView('manage')">Manage</button>
+  </div>
+  <span class="lbl">Notes</span>
+  <button class="active" id="btnAnno" onclick="toggleAnno()">On</button>
+</div>
+
+<script>
+/* ---------- shared mock data ---------- */
+const secs = s => `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+let tracks = [
+  {t:'Midnight Demo', d:222},
+  {t:'Polka (rough)', d:198},
+  {t:'Dorian', d:171},
+  {t:'Keep Running', d:246},
+];
+let library = [
+  {t:'Solenor', d:203},
+  {t:'Zen Mode', d:184},
+  {t:'Empire II', d:229},
+];
+
+/* ---------- PUBLIC PLAYER ---------- */
+let cur=0, playing=false, prog=0, timer=null;
+const wave=document.getElementById('wave');
+for(let i=0;i<80;i++){const b=document.createElement('i');b.style.height=(20+Math.abs(Math.sin(i*.6))*70*Math.random()+8)+'%';wave.appendChild(b);}
+const bars=[...wave.children];
+wave.onclick=e=>{const r=wave.getBoundingClientRect();prog=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width));paint();};
+
+function renderTracks(){
+  const tl=document.getElementById('tracklist');tl.innerHTML='';
+  tracks.forEach((tr,i)=>{
+    const el=document.createElement('div');
+    el.className='track'+(i===cur?' active':'')+(i===cur&&playing?' playing':'');
+    el.onclick=()=>{cur=i;prog=0;play();};
+    el.innerHTML=`<span class="idx">${i+1}</span>
+      <span class="eq"><span></span><span></span><span></span></span>
+      <span class="tt">${tr.t}</span><span class="td">${secs(tr.d)}</span>`;
+    tl.appendChild(el);
+  });
+  const total=tracks.reduce((a,b)=>a+b.d,0);
+  document.getElementById('plCount').textContent=`${tracks.length} tracks · ${secs(total)}`;
+  document.getElementById('nowTitle').textContent=tracks[cur]?.t||'—';
+  const nx=tracks[cur+1];
+  document.getElementById('upnext').innerHTML = nx?`Up next: <b>${nx.t}</b>`:'Last track — playlist ends here.';
+}
+function paint(){
+  const d=tracks[cur].d, on=Math.floor(prog*bars.length);
+  bars.forEach((b,i)=>b.classList.toggle('on',i<on));
+  document.getElementById('time').textContent=`${secs(Math.floor(prog*d))} / ${secs(d)}`;
+}
+function tick(){
+  if(!playing)return;
+  prog+=0.5/tracks[cur].d;              // demo speed
+  if(prog>=1){                          // auto-advance
+    if(cur<tracks.length-1){cur++;prog=0;renderTracks();paint();}
+    else{playing=false;prog=1;setPlayIcon();renderTracks();paint();clearInterval(timer);return;}
+  }
+  paint();
+}
+function setPlayIcon(){document.getElementById('playBtn').innerHTML=playing
+  ?'<svg width="20" viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>'
+  :'<svg width="20" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';}
+function play(){playing=true;setPlayIcon();renderTracks();paint();clearInterval(timer);timer=setInterval(tick,100);}
+function togglePlay(){playing?pause():play();}
+function pause(){playing=false;setPlayIcon();renderTracks();clearInterval(timer);}
+function next(){if(cur<tracks.length-1){cur++;prog=0;renderTracks();paint();if(playing)play();}}
+function prev(){if(prog>0.03){prog=0;paint();}else if(cur>0){cur--;prog=0;renderTracks();paint();if(playing)play();}}
+
+/* ---------- MANAGE ---------- */
+function renderManage(){
+  const pl=document.getElementById('pl');pl.innerHTML='';
+  if(!tracks.length)pl.innerHTML='<div class="empty">No songs yet — add some from the right.</div>';
+  tracks.forEach((tr,i)=>{
+    const el=document.createElement('div');el.className='row';
+    el.innerHTML=`<span class="pos">${i+1}</span><span class="rt">${tr.t}</span><span class="rd">${secs(tr.d)}</span>
+      <button class="mini" ${i===0?'disabled':''} onclick="move(${i},-1)" title="Up">↑</button>
+      <button class="mini" ${i===tracks.length-1?'disabled':''} onclick="move(${i},1)" title="Down">↓</button>
+      <button class="mini" onclick="removeSong(${i})" title="Remove">✕</button>`;
+    pl.appendChild(el);
+  });
+  const lib=document.getElementById('lib');lib.innerHTML='';
+  if(!library.length)lib.innerHTML='<div class="empty">All your songs are in the playlist.</div>';
+  library.forEach((tr,i)=>{
+    const el=document.createElement('div');el.className='row';
+    el.innerHTML=`<span class="rt">${tr.t}</span><span class="rd">${secs(tr.d)}</span>
+      <button class="addbtn" onclick="addSong(${i})">+ Add</button>`;
+    lib.appendChild(el);
+  });
+  document.getElementById('inCount').textContent=`${tracks.length} songs`;
+  document.getElementById('libCount').textContent=`${library.length} available`;
+}
+function move(i,d){const j=i+d;if(j<0||j>=tracks.length)return;[tracks[i],tracks[j]]=[tracks[j],tracks[i]];renderManage();}
+function removeSong(i){library.push(tracks[i]);tracks.splice(i,1);renderManage();}
+function addSong(i){tracks.push(library[i]);library.splice(i,1);renderManage();}
+function setPublic(pub){
+  document.getElementById('segPublic').classList.toggle('on',pub);
+  document.getElementById('segDraft').classList.toggle('on',!pub);
+  document.getElementById('shareWrap').classList.toggle('hidden',!pub);
+  document.getElementById('pubHint').textContent=pub
+    ?'Anyone with the link can listen. Songs play through the playlist.'
+    :'Only you can see this. Publish to get a share link.';
+}
+function copyLink(btn){
+  const t=document.getElementById('shareUrl').textContent;
+  navigator.clipboard?.writeText('https://'+t).catch(()=>{});
+  const o=btn.textContent;btn.textContent='Copied ✓';setTimeout(()=>btn.textContent=o,1400);
+}
+
+/* ---------- view + anno ---------- */
+function setView(v){
+  const pub=v==='public';
+  document.getElementById('view-public').classList.toggle('hidden',!pub);
+  document.getElementById('view-manage').classList.toggle('hidden',pub);
+  document.getElementById('btnPub').classList.toggle('active',pub);
+  document.getElementById('btnMan').classList.toggle('active',!pub);
+  if(pub){renderTracks();paint();}else{pause();renderManage();}
+}
+let anno=true;
+function toggleAnno(){anno=!anno;document.querySelectorAll('[data-anno]').forEach(a=>a.classList.toggle('off',!anno));
+  document.getElementById('btnAnno').textContent=anno?'On':'Off';document.getElementById('btnAnno').classList.toggle('active',anno);}
+
+renderTracks();paint();renderManage();
+</script>
+</body>
+</html>
