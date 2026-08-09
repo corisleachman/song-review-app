@@ -51,18 +51,21 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     const ordered = rows ?? [];
     const songIds = ordered.map((r) => r.song_id);
 
-    // Latest version per song in one query (public playlist plays its songs' latest version).
+    // Latest version per song — one small query each (reliable; not subject to a
+    // combined row limit the way a single .in(...) over all versions would be).
     const latestBySong = new Map<string, string | null>();
-    if (songIds.length) {
-      const { data: versions } = await supabaseServer
-        .from('song_versions')
-        .select('song_id, version_number, file_path')
-        .in('song_id', songIds)
-        .order('version_number', { ascending: false });
-      for (const v of versions ?? []) {
-        if (!latestBySong.has(v.song_id)) latestBySong.set(v.song_id, v.file_path ?? null);
-      }
-    }
+    await Promise.all(
+      songIds.map(async (sid) => {
+        const { data: v } = await supabaseServer
+          .from('song_versions')
+          .select('file_path')
+          .eq('song_id', sid)
+          .order('version_number', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        latestBySong.set(sid, v?.file_path ?? null);
+      }),
+    );
 
     const tracks = ordered
       .map((r) => ({
