@@ -67,6 +67,14 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
       }),
     );
 
+    if (new URL(_req.url).searchParams.get('debug') === '1') {
+      return NextResponse.json({
+        orderedCount: ordered.length,
+        ordered: ordered.map((r) => ({ song_id: r.song_id, position: r.position, title: pick<string>(r.songs, 'title') })),
+        latest: Array.from(latestBySong.entries()).map(([sid, fp]) => ({ sid, hasFile: Boolean(fp), fp })),
+      });
+    }
+
     const tracks = ordered
       .map((r) => ({
         id: r.song_id,
