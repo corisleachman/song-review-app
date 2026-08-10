@@ -29,6 +29,32 @@ function cleanTitle(name: string) {
 let counter = 0;
 const uid = () => `u${++counter}`;
 
+function contentTypeFor(file: File): string {
+  if (file.type && file.type.startsWith('audio/')) return file.type;
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  const map: Record<string, string> = {
+    mp3: 'audio/mpeg', wav: 'audio/wav', wave: 'audio/wav',
+    aiff: 'audio/aiff', aif: 'audio/aiff', aifc: 'audio/aiff',
+    m4a: 'audio/mp4', mp4: 'audio/mp4', flac: 'audio/flac',
+    ogg: 'audio/ogg', oga: 'audio/ogg', aac: 'audio/aac',
+  };
+  return map[ext] || file.type || 'application/octet-stream';
+}
+
+// Confirm the uploaded audio actually landed in storage (mirrors the single-song
+// uploader). Prevents a broken/partial upload being silently accepted.
+async function verifyVersion(versionId: string) {
+  for (let i = 0; i < 3; i += 1) {
+    if (i > 0) await new Promise((r) => setTimeout(r, 450));
+    try {
+      const res = await fetch(`/api/versions/${versionId}`, { cache: 'no-store' });
+      const p = await res.json().catch(() => null);
+      if (res.ok && p?.version?.audioUrl && !p?.version?.audioMissing) return;
+    } catch { /* retry */ }
+  }
+  throw new Error('Uploaded file could not be verified — please retry this track.');
+}
+
 export default function UploadPage() {
   const router = useRouter();
   const [items, setItems] = useState<Item[]>([]);
@@ -67,9 +93,10 @@ export default function UploadPage() {
         xhr.addEventListener('load', () => (xhr.status < 300 ? resolve() : reject(new Error('Upload failed'))));
         xhr.addEventListener('error', () => reject(new Error('Network error')));
         xhr.open('PUT', uploadUrl);
-        xhr.setRequestHeader('Content-Type', item.file.type || 'audio/mpeg');
+        xhr.setRequestHeader('Content-Type', contentTypeFor(item.file));
         xhr.send(item.file);
       });
+      await verifyVersion(versionId);
       update(item.id, { progress: 1, status: 'done' });
     } catch (err) {
       update(item.id, { status: 'error', error: err instanceof Error ? err.message : 'Upload failed' });
