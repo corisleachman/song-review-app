@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase';
 import { clearAuth, clearIdentity } from '@/lib/auth';
-import { isPlanAtLeast, getPlanDisplayName } from '@/lib/plans';
 import type { AccountPlan } from '@/lib/plans';
 import WorkspaceSwitcher from './WorkspaceSwitcher';
 import styles from './AppSidebar.module.css';
@@ -99,13 +98,6 @@ export default function AppSidebar({
             membershipRole={membershipRole}
             variant="rail"
           />
-        )}
-
-        {isPlanAtLeast(plan, 'pro') && (
-          <div className={styles.planLockup} aria-label={`${getPlanDisplayName(plan)} plan active`} title={`${getPlanDisplayName(plan)} plan active`}>
-            <span className={styles.planPill}>{getPlanDisplayName(plan)}</span>
-            <span className={styles.planCaption}>Active</span>
-          </div>
         )}
 
         <div className={styles.spacer} />

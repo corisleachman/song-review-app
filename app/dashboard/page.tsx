@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { ActionStatus, getActionStatusLabel, getNextActionStatus, isOpenAction } from '@/lib/actionWorkflow';
 import { type AwaitingResponseState, getAwaitingResponseLabel, type SongActivityItem } from '@/lib/collaborationSignals';
-import { type AccountPlan, type PlanLimitType } from '@/lib/plans';
+import { type AccountPlan, type PlanLimitType, isPlanAtLeast, getPlanDisplayName } from '@/lib/plans';
 import { SongStatus, SONG_STATUS_VALUES, getSongStatusLabel } from '@/lib/songWorkflow';
 import { getIdentity, clearAuth, clearIdentity } from '@/lib/auth';
 import { createClient } from '@/lib/supabase';
@@ -1157,6 +1157,9 @@ function DashboardContent() {
               identity?.[0]?.toUpperCase() || 'U'
             )}
           </div>
+          {isPlanAtLeast(workspacePlan, 'pro') && (
+            <span className={styles.planBadge} title={`${getPlanDisplayName(workspacePlan)} plan`}>{getPlanDisplayName(workspacePlan)}</span>
+          )}
         </div>
       </header>
 

@@ -6,7 +6,7 @@
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
-  z-index: 40;
+  z-index: 50;
 }
 
 .inner {
@@ -136,7 +136,7 @@
 
 /* Consistent grouping for the top (primary) nav icons. */
 .navTop {
-  margin-bottom: 22px;
+  margin-bottom: 18px;
 }
 
 /* Instant, styled tooltip to the right of each nav icon. */
