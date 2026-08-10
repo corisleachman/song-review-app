@@ -1242,7 +1242,7 @@ function DashboardContent() {
                   </svg>
                 </button>
               </div>
-              <button className={styles.newBtn} onClick={() => setShowNewModal(true)}>
+              <button className={styles.newBtn} onClick={() => router.push('/upload')}>
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                   <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
@@ -1803,7 +1803,7 @@ function DashboardContent() {
               })}
 
               {/* Ghost add card */}
-              <div className={styles.cardGhost} onClick={() => setShowNewModal(true)}>
+              <div className={styles.cardGhost} onClick={() => router.push('/upload')}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M8 2v12M2 8h12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
                 </svg>
@@ -1820,7 +1820,7 @@ function DashboardContent() {
             <div className={styles.emptyStateCard}>
               <div className={styles.emptyStateTitle}>{songEmptyTitle}</div>
               <p className={styles.emptyStateText}>{songEmptyMessage}</p>
-              <button className={styles.emptyStateAction} onClick={() => setShowNewModal(true)}>
+              <button className={styles.emptyStateAction} onClick={() => router.push('/upload')}>
                 Create your first song
               </button>
             </div>
