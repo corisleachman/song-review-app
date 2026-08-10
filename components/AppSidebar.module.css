@@ -89,6 +89,7 @@
 }
 
 .navButton {
+  position: relative;
   width: 44px;
   height: 44px;
   border-radius: 0;
@@ -131,4 +132,62 @@
   .rail {
     display: none;
   }
+}
+
+/* Consistent grouping for the top (primary) nav icons. */
+.navTop {
+  margin-bottom: 22px;
+}
+
+/* Instant, styled tooltip to the right of each nav icon. */
+.navButton::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 7px 11px;
+  background: #1C1515;
+  border: 1px solid rgba(244, 237, 228, 0.20);
+  color: #F4EDE4;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 90ms ease;
+  z-index: 60;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5);
+}
+
+.navButton::before {
+  content: '';
+  position: absolute;
+  left: calc(100% + 7px);
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  background: #1C1515;
+  border-left: 1px solid rgba(244, 237, 228, 0.20);
+  border-bottom: 1px solid rgba(244, 237, 228, 0.20);
+  transform: translateY(-50%) rotate(45deg);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 90ms ease;
+  z-index: 60;
+}
+
+.navButton:hover::after,
+.navButton:hover::before,
+.navButton:focus-visible::after,
+.navButton:focus-visible::before {
+  opacity: 1;
+}
+
+.navButton:disabled::after,
+.navButton:disabled::before {
+  display: none;
 }

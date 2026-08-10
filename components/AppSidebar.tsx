@@ -71,23 +71,25 @@ export default function AppSidebar({
   return (
     <aside className={styles.rail} aria-label="Authenticated app navigation">
       <div className={styles.inner}>
-        <Link
-          href="/dashboard"
-          className={`${styles.brand} ${pathname === '/dashboard' ? styles.active : ''}`}
-          title="Dashboard"
-          aria-label="Dashboard"
-        >
-          <span className={styles.brandMark} aria-hidden="true">⌂</span>
-        </Link>
+        <nav className={`${styles.navGroup} ${styles.navTop}`} aria-label="Primary">
+          <Link
+            href="/dashboard"
+            className={`${styles.navButton} ${pathname === '/dashboard' ? styles.active : ''}`}
+            aria-label="Dashboard"
+            data-tip="Dashboard"
+          >
+            <span className={styles.icon} aria-hidden="true">⌂</span>
+          </Link>
 
-        <Link
-          href="/playlists"
-          className={`${styles.navButton} ${pathname?.startsWith('/playlists') ? styles.active : ''}`}
-          title="Playlists"
-          aria-label="Playlists"
-        >
-          <span className={styles.icon} aria-hidden="true">≡</span>
-        </Link>
+          <Link
+            href="/playlists"
+            className={`${styles.navButton} ${pathname?.startsWith('/playlists') ? styles.active : ''}`}
+            aria-label="Playlists"
+            data-tip="Playlists"
+          >
+            <span className={styles.icon} aria-hidden="true">≡</span>
+          </Link>
+        </nav>
 
         {workspaceName && (
           <WorkspaceSwitcher
@@ -119,7 +121,7 @@ export default function AppSidebar({
                   href={item.href!}
                   className={`${styles.navButton} ${active ? styles.active : ''}`}
                   aria-label={item.label}
-                  title={item.label}
+                  data-tip={item.label}
                 >
                   <span className={styles.icon} aria-hidden="true">{item.icon}</span>
                 </Link>
@@ -133,7 +135,7 @@ export default function AppSidebar({
                 onClick={() => void item.action?.()}
                 className={styles.navButton}
                 aria-label={item.label}
-                title={item.label}
+                data-tip={item.label}
                 disabled={item.disabled}
               >
                 <span className={styles.icon} aria-hidden="true">{item.icon}</span>
