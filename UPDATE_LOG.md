@@ -3302,3 +3302,31 @@ Layout + styling polish across the playlist manager, the app sidebar, and the da
 - **Sidebar:** Dashboard icon now uses the same `navButton` treatment as the rest (was a permanent red-filled brand box); top icons grouped for consistent spacing. Slow browser `title` tooltips replaced with instant (~90ms), styled tooltips (surface panel, hard border, caret, right-aligned). Rail `z-index` 40 -> 50 so tooltips render above the beta banner (z-index 45). Workspace rail avatar 38 -> 44px to match the nav buttons; navTop gap 18px. Commits `7dd39ca2`, `12bf43a3`.
 - **Plan sticker:** removed from the left nav; now a small tier badge in the dashboard header beside the profile avatar (shown for pro+). NOTE: only appears on the dashboard for now (that's where the top-right avatar lives) — to be revisited when the free/pro/studio tier lockup is designed, likely into a shared top bar for cross-page consistency. Commit `12bf43a3`.
 - Kept the unicode nav glyphs (⌂ ≡ ⚙ ⎋); swapping to SVG icons is a possible follow-up.
+
+---
+
+## 2026-08-10 — Feature: multi-uploader (batch create-on-drop)
+
+### What we were trying to achieve
+
+Replace the slow, multi-step single-song uploader with a fast batch flow: drop several tracks, they upload in parallel in the background while you tidy names, then optional per-track artwork.
+
+### Feature / change being made
+
+New `/upload` flow (two steps) wired into the dashboard "New song" entry points.
+
+### Files changed
+
+- `app/upload/layout.tsx`, `app/upload/page.tsx`, `app/upload/upload.module.css` (new)
+- `app/dashboard/page.tsx` (New-song entry points -> `/upload`)
+- `UPDATE_LOG.md`, `public-mvp-roadmap.md`, `PRODUCT_BACKLOG.md`
+
+### Notes
+
+- Confirmed working by Coris (multiple batches upload fine).
+- Model: **create-on-drop**. Per dropped audio file, in parallel: `POST /api/songs/create` -> `POST /api/versions/create` (signed URL) -> `XHR PUT` direct to storage with live progress. Reuses existing endpoints; no new infra, no migration.
+- Titles auto-cleaned from filename (strip ext, `_`/`-` -> spaces, title-case), editable inline, saved via `PATCH /api/songs/[id]` on blur + on continue.
+- Step 2: per-track artwork via `/api/songs/upload-image` (Sharp); local preview for instant feedback.
+- Hardening: per-file **Retry** (deletes the half-made song, re-runs fresh), **Discard** (deletes all created songs), unsupported-file notice, correct `Content-Type` per format, and a post-upload **verify** (mirrors the single-song uploader) so a broken/partial upload errors for retry instead of silently succeeding.
+- NOTE: one specific pre-existing MP3 plays with warped timing in its first ~30s. Confirmed **file-specific** (other tracks fine; the issue follows that one file across re-uploads) — a VBR-MP3 / player-decoding quirk, NOT an uploader or data-integrity problem.
+- Commits: `3531ce2f` (slice 1), `028ed943` (slice 2), `a2ab133f` (hardening).

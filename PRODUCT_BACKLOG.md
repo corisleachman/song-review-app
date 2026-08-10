@@ -28,7 +28,7 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 
 ## Future / larger efforts
 
-### Multi-upload + revamped uploader
+### Multi-upload + revamped uploader  ✅ DONE (2026-08-10)
 - Logged: 2026-08-07
 - A faster, easier uploader that supports multiple files at once (multi-upload). Larger rework of the current upload flow.
 

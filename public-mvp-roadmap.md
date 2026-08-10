@@ -2586,3 +2586,14 @@ Pricing was restructured on the marketing site (`tsr-marketing-v19.html`) to dif
   - public `/listen/playlist/[id]` mirrors the single-song page: immersive artwork-coloured player, reactive equaliser, lock-screen playback with background auto-advance through all tracks
   - fixed per-track audio switching + the FK-embed track-drop (public + in-app)
 - Playlist sharing (in-app manage + public immersive player) is now complete end to end.
+
+
+## 2026-08-10 — Multi-uploader: DONE
+
+- Slice / change name: Multi-upload + revamped uploader
+- Status: DONE - Coris-confirmed (multiple batch uploads work).
+- Files: `app/upload/**`, `app/dashboard/page.tsx`
+- Outcome:
+  - fast batch uploader at `/upload`: parallel create-on-drop with live progress, inline auto-cleaned titles, optional per-track artwork, retry/discard, verify
+  - replaces the old single-song "New song" modal on the dashboard
+- Note: a warped-timing MP3 was traced to that specific (VBR) file, not the uploader.
