@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Song Room — Multi-uploader (Wireframe v1)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+@font-face { font-family:'ThunderBlack'; src:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-BlackLC.otf') format('opentype'); font-display:swap; }
+
+:root{
+  --t-black:'ThunderBlack',Impact,'Arial Narrow Bold',sans-serif;
+  --black:#0E0A0A; --surface:#1C1515; --surface-2:#261C1C; --surface-3:#2E2222;
+  --red:#C0392B; --red-bright:#E8402E; --straw:#F0E48C; --off-white:#F4EDE4;
+  --sand:#D4C4B0; --dune:#8C7B6B; --green:#7FBF6A;
+  --text:#F4EDE4; --text-2:rgba(244,237,228,0.60); --text-3:rgba(244,237,228,0.34);
+  --border:rgba(244,237,228,0.10); --border-mid:rgba(244,237,228,0.18); --border-hi:rgba(244,237,228,0.30);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--black);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:96px}
+button,input{font-family:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+.mono{font-weight:600;text-transform:uppercase;letter-spacing:.16em;font-size:10px}
+
+.stage{max-width:760px;margin:0 auto;padding:34px 24px}
+.brandbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:26px}
+.brand{font-family:var(--t-black);font-size:22px;letter-spacing:.02em}
+.brand .dot{color:var(--red)}
+.viewnote{font-size:11px;color:var(--straw);text-transform:uppercase;letter-spacing:.14em}
+
+/* steps */
+.steps{display:flex;gap:10px;align-items:center;margin-bottom:22px;font-size:11px;text-transform:uppercase;letter-spacing:.14em}
+.step{color:var(--text-3)}
+.step.active{color:var(--straw)}
+.step.done{color:var(--sand)}
+.stepbar{flex:1;height:1px;background:var(--border)}
+
+h1.title{font-family:var(--t-black);font-size:clamp(34px,6vw,50px);line-height:.92;text-transform:uppercase;margin-bottom:6px}
+.sub{color:var(--sand);font-style:italic;font-size:14px;margin-bottom:24px}
+
+/* drop zone */
+.drop{border:1.5px dashed var(--border-hi);background:var(--surface);padding:40px 24px;text-align:center;cursor:pointer;transition:background .15s,border-color .15s;margin-bottom:18px}
+.drop:hover{background:var(--surface-2);border-color:var(--straw)}
+.drop .big{font-family:var(--t-black);font-size:26px;text-transform:uppercase;margin-bottom:6px}
+.drop .small{font-size:12.5px;color:var(--text-2)}
+.dropMini{border:1px dashed var(--border-mid);background:transparent;padding:12px;text-align:center;cursor:pointer;color:var(--text-2);font-size:12px;text-transform:uppercase;letter-spacing:.1em;margin-top:12px}
+.dropMini:hover{border-color:var(--straw);color:var(--off-white)}
+
+/* rows */
+.list{border:1px solid var(--border)}
+.row{display:flex;align-items:center;gap:14px;padding:12px 14px;border-bottom:1px solid var(--border);position:relative;overflow:hidden}
+.row:last-child{border-bottom:0}
+.row .grip{color:var(--text-3);font-size:14px;cursor:grab}
+.thumb{width:42px;height:42px;flex-shrink:0;background:var(--surface-2);border:1px solid var(--border);display:grid;place-items:center;color:var(--dune);font-size:16px;position:relative;overflow:hidden}
+.thumb.art{border-color:var(--border-mid)}
+.rowmain{flex:1;min-width:0}
+.tin{width:100%;background:transparent;border:1px solid transparent;color:var(--off-white);font-size:15px;font-weight:500;padding:5px 7px;outline:none;margin-left:-7px}
+.tin:hover{border-color:var(--border)}
+.tin:focus{border-color:var(--straw);background:var(--black)}
+.meta{font-size:11px;color:var(--text-3);margin-top:1px;padding-left:0;display:flex;gap:8px;align-items:center}
+.fname{color:var(--text-3)}
+.pct{color:var(--straw);font-variant-numeric:tabular-nums}
+.pct.done{color:var(--green)}
+.remove{width:26px;height:26px;background:transparent;border:1px solid var(--border-mid);color:var(--text-2);display:grid;place-items:center;font-size:12px;flex-shrink:0}
+.remove:hover{border-color:var(--red);color:var(--red-bright)}
+/* progress underline */
+.prog{position:absolute;left:0;bottom:0;height:2px;background:var(--straw);width:0;transition:width .2s linear}
+.row.complete .prog{background:var(--green)}
+
+/* artwork step */
+.artslot{cursor:pointer}
+.artslot:hover{border-color:var(--straw)}
+.artset{color:var(--off-white);font-size:20px}
+
+.foot{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(to top,var(--black) 60%,transparent);padding:18px 24px 22px}
+.footinner{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:14px}
+.status{font-size:12px;color:var(--text-2);display:flex;align-items:center;gap:8px}
+.dot2{width:7px;height:7px;border-radius:50%;background:var(--straw);animation:pulse 1s infinite}
+.dot2.done{background:var(--green);animation:none}
+@keyframes pulse{50%{opacity:.35}}
+.spacer{flex:1}
+.btn{padding:12px 20px;font-weight:600;font-size:13px;border:1px solid var(--border-mid);background:transparent;color:var(--off-white);text-transform:uppercase;letter-spacing:.04em}
+.btn:hover{border-color:var(--border-hi)}
+.btn.primary{background:var(--red);border-color:#0E0A0A;color:#fff}
+.btn.primary:hover{background:var(--red-bright)}
+.btn.primary:disabled{opacity:.45;cursor:default;background:var(--surface-3);color:var(--text-3)}
+.btn.ghost{border-color:transparent;color:var(--text-2)}
+.btn.ghost:hover{color:var(--off-white)}
+
+.done-card{border:1px solid var(--border);background:var(--surface);padding:40px;text-align:center}
+.done-card .big{font-family:var(--t-black);font-size:40px;text-transform:uppercase;margin-bottom:8px}
+.done-card .small{color:var(--text-2);font-size:13px}
+
+.anno{background:var(--surface-2);border-left:2px solid var(--straw);padding:10px 14px;margin:0 0 18px;font-size:12px;color:var(--text-2)}
+.anno b{color:var(--straw);font-weight:600}
+.anno.off{display:none}
+
+.controls{position:fixed;bottom:84px;left:50%;transform:translateX(-50%);z-index:70;display:flex;gap:6px;background:var(--surface-2);border:1px solid var(--border-hi);padding:6px;box-shadow:0 8px 24px rgba(0,0,0,.6)}
+.controls button{background:transparent;border:1px solid var(--border-mid);color:var(--text-2);font-weight:600;text-transform:uppercase;letter-spacing:.1em;font-size:9px;padding:7px 10px}
+.controls button.active{background:var(--straw);color:#0E0A0A;border-color:var(--straw)}
+.controls .lbl{align-self:center;font-size:8px;color:var(--text-3);text-transform:uppercase;letter-spacing:.14em;padding:0 4px}
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="brandbar">
+    <div class="brand">SONG ROOM<span class="dot">.</span></div>
+    <div class="viewnote" id="viewnote">In-app · New songs</div>
+  </div>
+
+  <div class="steps">
+    <span class="step active" id="s1">1 · Upload &amp; name</span>
+    <span class="stepbar"></span>
+    <span class="step" id="s2">2 · Artwork (optional)</span>
+  </div>
+
+  <!-- ============ STEP 1: UPLOAD ============ -->
+  <div id="step1">
+    <h1 class="title" id="t1">ADD SONGS</h1>
+    <div class="sub">Drop your tracks in — they start uploading straight away while you tidy the names.</div>
+
+    <div class="anno" data-anno><b>The whole point.</b> Files upload in the background the instant they land. No submit-and-wait between steps. Titles auto-fill from the filename and are editable on the spot. By the time you've tidied names, the bytes are usually already there.</div>
+
+    <div class="drop" id="drop">
+      <div class="big">Drop your tracks here</div>
+      <div class="small">WAV, MP3, AIFF, M4A · or click to browse &nbsp;·&nbsp; <em>(this mock drops 5 tracks)</em></div>
+    </div>
+
+    <div id="listWrap" class="hidden">
+      <div class="mono" style="color:var(--text-2);margin:6px 0 8px">Uploading <span id="count">0</span> tracks</div>
+      <div class="list" id="list1"></div>
+      <div class="dropMini" id="dropMore">＋ Add more tracks</div>
+    </div>
+  </div>
+
+  <!-- ============ STEP 2: ARTWORK ============ -->
+  <div id="step2" class="hidden">
+    <h1 class="title">ADD ARTWORK</h1>
+    <div class="sub">Optional — give each track a cover, or skip and add it later.</div>
+    <div class="anno" data-anno><b>No mapping headache.</b> Art is set <b>per track</b>, so each image attaches to a specific song by construction — no guessing which cover belongs to which file.</div>
+    <div class="list" id="list2"></div>
+  </div>
+
+  <!-- ============ DONE ============ -->
+  <div id="done" class="hidden">
+    <div class="done-card">
+      <div class="big" id="doneMsg">5 songs added</div>
+      <div class="small">They're in your dashboard, ready to review and version up.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ FOOTER BAR ============ -->
+<div class="foot" id="foot">
+  <div class="footinner">
+    <div class="status" id="status"><span class="dot2" id="statusDot"></span><span id="statusText">Waiting for files…</span></div>
+    <div class="spacer"></div>
+    <div id="footBtns">
+      <button class="btn primary" id="toArt" disabled onclick="goArt()">Continue to artwork →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CONTROLS ============ -->
+<div class="controls">
+  <span class="lbl">Notes</span>
+  <button class="active" id="btnAnno" onclick="toggleAnno()">On</button>
+  <span class="lbl">Reset</span>
+  <button onclick="resetAll()">↺</button>
+</div>
+
+<script>
+const MOCK = [
+  {f:'polite_rebels_fake_it.wav', size:'38.2 MB'},
+  {f:'cant-stop-letting-go.wav',  size:'41.7 MB'},
+  {f:'Dying Time (rough).wav',     size:'29.9 MB'},
+  {f:'rejuvenation_master_v2.wav', size:'44.1 MB'},
+  {f:'just_us_baby.mp3',           size:'9.4 MB'},
+];
+const ART = ['#C0392B','#7A4FC0','#3E8E6B','#C8A23A','#B0506E'];
+let tracks = [];
+
+function cleanTitle(fname){
+  let t = fname.replace(/\.[^.]+$/,'');          // strip extension
+  t = t.replace(/[_-]+/g,' ').replace(/\s+/g,' ').trim();
+  t = t.replace(/\b\w/g, c => c.toUpperCase());  // light title-case
+  return t;
+}
+const uid = (()=>{let n=0;return()=>'t'+(++n);})();
+
+function addFiles(){
+  document.getElementById('listWrap').classList.remove('hidden');
+  document.getElementById('drop').classList.add('hidden');
+  MOCK.forEach((m,i)=>{
+    setTimeout(()=>{
+      const t={id:uid(), f:m.f, size:m.size, title:cleanTitle(m.f), progress:0, done:false, art:null};
+      tracks.push(t);
+      renderList1(); startUpload(t);
+      updateFooter();
+    }, i*220);   // staggered "drop" feel
+  });
+}
+
+function startUpload(t){
+  const dur = 2600 + Math.random()*2600;
+  const start = performance.now();
+  const tick=(now)=>{
+    const p = Math.min(1,(now-start)/dur);
+    t.progress = p;
+    const el = document.querySelector(`[data-prog="${t.id}"]`);
+    const pct = document.querySelector(`[data-pct="${t.id}"]`);
+    const row = document.querySelector(`[data-row="${t.id}"]`);
+    if(el) el.style.width = (p*100)+'%';
+    if(pct){ pct.textContent = p>=1 ? 'Uploaded ✓' : Math.round(p*100)+'%'; pct.classList.toggle('done',p>=1); }
+    if(p>=1){ t.done=true; if(row) row.classList.add('complete'); updateFooter(); return; }
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+function renderList1(){
+  const L=document.getElementById('list1'); L.innerHTML='';
+  tracks.forEach(t=>{
+    const row=document.createElement('div'); row.className='row'+(t.done?' complete':''); row.setAttribute('data-row',t.id);
+    row.innerHTML=`
+      <span class="grip">⋮⋮</span>
+      <span class="thumb">♪</span>
+      <div class="rowmain">
+        <input class="tin" value="${t.title.replace(/"/g,'&quot;')}" data-in="${t.id}" aria-label="Track title">
+        <div class="meta"><span class="fname">${t.f} · ${t.size}</span><span class="pct" data-pct="${t.id}">${t.done?'Uploaded ✓':Math.round(t.progress*100)+'%'}</span></div>
+      </div>
+      <button class="remove" title="Remove" data-rm="${t.id}">✕</button>
+      <span class="prog" data-prog="${t.id}" style="width:${t.progress*100}%"></span>`;
+    L.appendChild(row);
+  });
+  document.getElementById('count').textContent=tracks.length;
+  L.querySelectorAll('[data-in]').forEach(inp=>inp.oninput=e=>{const t=tracks.find(x=>x.id===inp.getAttribute('data-in'));if(t)t.title=e.target.value;});
+  L.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{tracks=tracks.filter(x=>x.id!==b.getAttribute('data-rm'));renderList1();updateFooter();});
+}
+
+function updateFooter(){
+  const n=tracks.length, up=tracks.filter(t=>t.done).length;
+  const dot=document.getElementById('statusDot'), txt=document.getElementById('statusText');
+  if(n===0){ txt.textContent='Waiting for files…'; dot.classList.remove('done'); document.getElementById('toArt').disabled=true; return; }
+  document.getElementById('toArt').disabled=false;   // can proceed while uploads finish in background
+  if(up<n){ txt.textContent=`Uploading… ${up} of ${n} done`; dot.classList.remove('done'); }
+  else { txt.textContent=`All ${n} uploads complete`; dot.classList.add('done'); }
+}
+
+/* ---- step 2 ---- */
+function goArt(){
+  document.getElementById('step1').classList.add('hidden');
+  document.getElementById('step2').classList.remove('hidden');
+  document.getElementById('s1').className='step done'; document.getElementById('s2').className='step active';
+  document.getElementById('footBtns').innerHTML=`
+    <button class="btn ghost" onclick="finish(true)">Skip &amp; create</button>
+    <button class="btn primary" onclick="finish(false)">Create ${tracks.length} songs</button>`;
+  renderList2();
+}
+function renderList2(){
+  const L=document.getElementById('list2'); L.innerHTML='';
+  tracks.forEach((t,i)=>{
+    const row=document.createElement('div'); row.className='row';
+    const art = t.art ? `style="background:${t.art}"` : '';
+    row.innerHTML=`
+      <span class="thumb artslot ${t.art?'art':''}" ${art} data-art="${t.id}">${t.art?'<span class=\\'artset\\'>✓</span>':'＋'}</span>
+      <div class="rowmain">
+        <div style="font-weight:500">${t.title||'Untitled'}</div>
+        <div class="meta"><span class="fname">${t.art?'Cover added':'Click the square to add a cover'}</span></div>
+      </div>`;
+    L.appendChild(row);
+  });
+  L.querySelectorAll('[data-art]').forEach((sq,i)=>sq.onclick=()=>{const t=tracks.find(x=>x.id===sq.getAttribute('data-art'));t.art=t.art?null:ART[i%ART.length];renderList2();});
+}
+function finish(skipped){
+  document.getElementById('step2').classList.add('hidden');
+  document.getElementById('done').classList.remove('hidden');
+  document.getElementById('s2').className='step done';
+  document.getElementById('doneMsg').textContent=`${tracks.length} song${tracks.length===1?'':'s'} added`;
+  document.getElementById('foot').classList.add('hidden');
+}
+
+/* ---- wiring ---- */
+document.getElementById('drop').onclick=addFiles;
+document.getElementById('dropMore').onclick=()=>{ // add one more mock
+  const m={f:'new_take_'+(tracks.length+1)+'.wav',size:'22.0 MB'};
+  const t={id:uid(),f:m.f,size:m.size,title:cleanTitle(m.f),progress:0,done:false,art:null};
+  tracks.push(t);renderList1();startUpload(t);updateFooter();
+};
+
+let anno=true;
+function toggleAnno(){anno=!anno;document.querySelectorAll('[data-anno]').forEach(a=>a.classList.toggle('off',!anno));
+  const b=document.getElementById('btnAnno');b.textContent=anno?'On':'Off';b.classList.toggle('active',anno);}
+function resetAll(){
+  tracks=[];
+  document.getElementById('step1').classList.remove('hidden');
+  document.getElementById('step2').classList.add('hidden');
+  document.getElementById('done').classList.add('hidden');
+  document.getElementById('foot').classList.remove('hidden');
+  document.getElementById('listWrap').classList.add('hidden');
+  document.getElementById('drop').classList.remove('hidden');
+  document.getElementById('s1').className='step active'; document.getElementById('s2').className='step';
+  document.getElementById('footBtns').innerHTML=`<button class="btn primary" id="toArt" disabled onclick="goArt()">Continue to artwork →</button>`;
+  updateFooter();
+}
+</script>
+</body>
+</html>
