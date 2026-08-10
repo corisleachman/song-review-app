@@ -267,7 +267,7 @@ function renderList2(){
     const row=document.createElement('div'); row.className='row';
     const art = t.art ? `style="background:${t.art}"` : '';
     row.innerHTML=`
-      <span class="thumb artslot ${t.art?'art':''}" ${art} data-art="${t.id}">${t.art?'<span class=\\'artset\\'>✓</span>':'＋'}</span>
+      <span class="thumb artslot ${t.art?'art':''}" ${art} data-art="${t.id}">${t.art?'<span class="artset">✓</span>':'＋'}</span>
       <div class="rowmain">
         <div style="font-weight:500">${t.title||'Untitled'}</div>
         <div class="meta"><span class="fname">${t.art?'Cover added':'Click the square to add a cover'}</span></div>
