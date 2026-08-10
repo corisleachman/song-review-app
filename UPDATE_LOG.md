@@ -3275,3 +3275,30 @@ Rebuilt the public playlist player to mirror `/listen/[songId]`, plus three fixe
 - **Fix — newest track missing from the public player:** the `playlist_songs -> songs(...)` FK embed inner-joins and silently dropped a membership row (confirmed via debug: raw membership = 6 rows, embed = 5). Now fetch membership plainly + resolve song meta via a direct `.in(id)`; latest version resolved per song. Applied to the public API and hardened the in-app detail API against the same risk. Commits `26d3867d` (public), `fc371874` (manage).
 - **EQ sizing:** taller (160px), flush to the bottom of the player block (`playerContent`/`waveformWrap` bottom padding -> 0). Commit `caf49a25`.
 - **Key learning:** avoid PostgREST to-one FK embeds (`parent.select('..., child(...)')`) when you need the full parent row set — they can inner-join-drop rows. Fetch the parent plainly and resolve related rows with a direct `.in(...)`.
+
+---
+
+## 2026-08-09 — UI polish: playlist manager layout + sidebar/header tidy-up
+
+### What we were trying to achieve
+
+Tidy several rough edges after the playlist work: the manager's publish placement and title field, the left sidebar's consistency/tooltips, and relocating the plan sticker.
+
+### Feature / change being made
+
+Layout + styling polish across the playlist manager, the app sidebar, and the dashboard header.
+
+### Files changed
+
+- `app/playlists/[id]/page.tsx`, `app/playlists/playlists.module.css`
+- `components/AppSidebar.tsx`, `components/AppSidebar.module.css`
+- `components/WorkspaceSwitcher.module.css`
+- `app/dashboard/page.tsx`, `app/dashboard/dashboard.module.css`
+
+### Notes
+
+- Confirmed working by Coris.
+- **Playlist manager:** publish block (Draft/Public + share link) moved directly under the title row, above the song columns, with a 30px bottom margin. Title input's 1px border removed (reads as editable heading; no focus outline, per request). Commits `5ee7917b`, `b9518ce8`, `7dd39ca2`.
+- **Sidebar:** Dashboard icon now uses the same `navButton` treatment as the rest (was a permanent red-filled brand box); top icons grouped for consistent spacing. Slow browser `title` tooltips replaced with instant (~90ms), styled tooltips (surface panel, hard border, caret, right-aligned). Rail `z-index` 40 -> 50 so tooltips render above the beta banner (z-index 45). Workspace rail avatar 38 -> 44px to match the nav buttons; navTop gap 18px. Commits `7dd39ca2`, `12bf43a3`.
+- **Plan sticker:** removed from the left nav; now a small tier badge in the dashboard header beside the profile avatar (shown for pro+). NOTE: only appears on the dashboard for now (that's where the top-right avatar lives) — to be revisited when the free/pro/studio tier lockup is designed, likely into a shared top bar for cross-page consistency. Commit `12bf43a3`.
+- Kept the unicode nav glyphs (⌂ ≡ ⚙ ⎋); swapping to SVG icons is a possible follow-up.
