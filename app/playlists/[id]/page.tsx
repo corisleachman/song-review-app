@@ -116,6 +116,26 @@ export default function ManagePlaylistPage() {
         />
       </div>
 
+      <div className={styles.publish}>
+        <div className={styles.pubRow}>
+          <div className={styles.seg}>
+            <button className={!isPublic ? styles.segOn : ''} onClick={() => void togglePublic(false)}>Draft</button>
+            <button className={isPublic ? styles.segOn : ''} onClick={() => void togglePublic(true)}>Public</button>
+          </div>
+          <span className={styles.pubHint}>
+            {isPublic
+              ? 'Anyone with the link can listen. Songs play through the playlist.'
+              : 'Only your workspace can see this. Publish to get a share link.'}
+          </span>
+        </div>
+        {isPublic && (
+          <div className={styles.shareBox}>
+            <code className={styles.shareUrl}>{shareUrl}</code>
+            <button className={styles.copy} onClick={() => void copyLink()}>{copied ? 'Copied ✓' : 'Copy link'}</button>
+          </div>
+        )}
+      </div>
+
       <div className={styles.cols}>
         <div className={styles.col}>
           <h3 className={styles.colHead}>In this playlist
@@ -151,26 +171,6 @@ export default function ManagePlaylistPage() {
             ))}
           </div>
         </div>
-      </div>
-
-      <div className={styles.publish}>
-        <div className={styles.pubRow}>
-          <div className={styles.seg}>
-            <button className={!isPublic ? styles.segOn : ''} onClick={() => void togglePublic(false)}>Draft</button>
-            <button className={isPublic ? styles.segOn : ''} onClick={() => void togglePublic(true)}>Public</button>
-          </div>
-          <span className={styles.pubHint}>
-            {isPublic
-              ? 'Anyone with the link can listen. Songs play through the playlist.'
-              : 'Only your workspace can see this. Publish to get a share link.'}
-          </span>
-        </div>
-        {isPublic && (
-          <div className={styles.shareBox}>
-            <code className={styles.shareUrl}>{shareUrl}</code>
-            <button className={styles.copy} onClick={() => void copyLink()}>{copied ? 'Copied ✓' : 'Copy link'}</button>
-          </div>
-        )}
       </div>
     </div>
   );
