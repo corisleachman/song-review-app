@@ -18,16 +18,32 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     workspaceName = account?.name ?? null;
   }
 
+  // Share preview image: default to the first track's artwork.
+  // (A custom playlist cover will override this once that column ships.)
+  let ogImage: string | null = null;
+  const { data: firstRow } = await supabaseServer
+    .from('playlist_songs')
+    .select('song_id')
+    .eq('playlist_id', playlist.id)
+    .order('position', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (firstRow?.song_id) {
+    const { data: song } = await supabaseServer.from('songs').select('image_url').eq('id', firstRow.song_id).maybeSingle();
+    ogImage = song?.image_url ?? null;
+  }
+
   const title = playlist.title ?? 'Playlist';
   const description = workspaceName
     ? `A playlist shared by ${workspaceName} on The Song Room.`
     : 'A playlist on The Song Room.';
+  const images = ogImage ? [ogImage] : undefined;
 
   return {
     title: `${title} · The Song Room`,
     description,
-    openGraph: { title, description },
-    twitter: { card: 'summary', title, description },
+    openGraph: { title, description, images },
+    twitter: { card: ogImage ? 'summary_large_image' : 'summary', title, description, images },
   };
 }
 
