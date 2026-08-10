@@ -4,7 +4,7 @@ import { supabaseServer } from '@/lib/supabaseServer';
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const { data: playlist } = await supabaseServer
     .from('playlists')
-    .select('id, title, is_public, account_id')
+    .select('id, title, is_public, account_id, image_url')
     .eq('id', params.id)
     .maybeSingle();
 
@@ -18,19 +18,20 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     workspaceName = account?.name ?? null;
   }
 
-  // Share preview image: default to the first track's artwork.
-  // (A custom playlist cover will override this once that column ships.)
-  let ogImage: string | null = null;
-  const { data: firstRow } = await supabaseServer
-    .from('playlist_songs')
-    .select('song_id')
-    .eq('playlist_id', playlist.id)
-    .order('position', { ascending: true })
-    .limit(1)
-    .maybeSingle();
-  if (firstRow?.song_id) {
-    const { data: song } = await supabaseServer.from('songs').select('image_url').eq('id', firstRow.song_id).maybeSingle();
-    ogImage = song?.image_url ?? null;
+  // Share preview image: the playlist's custom cover, falling back to the first track's artwork.
+  let ogImage: string | null = playlist.image_url ?? null;
+  if (!ogImage) {
+    const { data: firstRow } = await supabaseServer
+      .from('playlist_songs')
+      .select('song_id')
+      .eq('playlist_id', playlist.id)
+      .order('position', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (firstRow?.song_id) {
+      const { data: song } = await supabaseServer.from('songs').select('image_url').eq('id', firstRow.song_id).maybeSingle();
+      ogImage = song?.image_url ?? null;
+    }
   }
 
   const title = playlist.title ?? 'Playlist';

@@ -43,7 +43,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
       .map((s) => ({ id: s.id, title: s.title ?? 'Untitled', status: s.status ?? null }));
 
     return NextResponse.json({
-      playlist: { id: access.playlist.id, title: access.playlist.title, is_public: access.playlist.is_public },
+      playlist: { id: access.playlist.id, title: access.playlist.title, is_public: access.playlist.is_public, image_url: access.playlist.image_url },
       songs, available,
     });
   } catch (err) {

@@ -1,12 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import styles from '../playlists.module.css';
 
 type Song = { id: string; title: string; status: string | null; position?: number };
-type Detail = { playlist: { id: string; title: string; is_public: boolean }; songs: Song[]; available: Song[] };
+type Detail = { playlist: { id: string; title: string; is_public: boolean; image_url: string | null }; songs: Song[]; available: Song[] };
 
 export default function ManagePlaylistPage() {
   const params = useParams<{ id: string }>();
@@ -17,6 +17,10 @@ export default function ManagePlaylistPage() {
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const [coverError, setCoverError] = useState<string | null>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -101,6 +105,26 @@ export default function ManagePlaylistPage() {
     ? `${window.location.origin}/listen/playlist/${id}`
     : `/listen/playlist/${id}`;
 
+  const uploadCover = async (file: File) => {
+    setCoverPreview(URL.createObjectURL(file)); setCoverUploading(true); setCoverError(null);
+    try {
+      const fd = new FormData(); fd.append('file', file);
+      const res = await fetch(`/api/playlists/${id}/image`, { method: 'POST', body: fd });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Upload failed'); }
+      const data = await res.json();
+      setDetail((d) => (d ? { ...d, playlist: { ...d.playlist, image_url: data.imageUrl } } : d));
+      setCoverUploading(false);
+    } catch (err) { setCoverUploading(false); setCoverError(err instanceof Error ? err.message : 'Cover upload failed'); }
+  };
+  const removeCover = async () => {
+    setCoverError(null);
+    try { await fetch(`/api/playlists/${id}/image`, { method: 'DELETE' }); } catch { /* ignore */ }
+    setCoverPreview(null);
+    setDetail((d) => (d ? { ...d, playlist: { ...d.playlist, image_url: null } } : d));
+  };
+
+  const coverUrl = coverPreview || detail?.playlist.image_url || null;
+
   return (
     <div className={styles.wrap}>
       <div className={styles.crumb}><Link href="/playlists" className={styles.back}>← Playlists</Link></div>
@@ -115,6 +139,25 @@ export default function ManagePlaylistPage() {
           maxLength={200}
         />
       </div>
+
+      <div className={styles.coverRow}>
+        <div
+          className={styles.coverSlot}
+          onClick={() => coverInputRef.current?.click()}
+          style={coverUrl ? { backgroundImage: `url(${coverUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+          title="Playlist cover"
+        >
+          {coverUploading ? <span className={styles.coverBusy}>…</span> : !coverUrl ? '＋' : null}
+        </div>
+        <div className={styles.coverText}>
+          <div className={styles.coverLabel}>Playlist cover</div>
+          <div className={styles.coverHint}>
+            {coverError ? coverError : coverUrl ? 'Custom cover set — used as the share preview.' : 'Optional. Defaults to the first track’s artwork. Click to upload.'}
+          </div>
+          {coverUrl && <button type="button" className={styles.coverRemove} onClick={() => void removeCover()}>Remove cover</button>}
+        </div>
+      </div>
+      <input ref={coverInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadCover(f); e.target.value = ''; }} />
 
       <div className={styles.publish}>
         <div className={styles.pubRow}>
@@ -175,3 +218,4 @@ export default function ManagePlaylistPage() {
     </div>
   );
 }
+
