@@ -583,6 +583,7 @@ function VersionPageInner() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareToggling, setShareToggling] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const [shareUrl, setShareUrl] = useState(`/listen/${songId}`);
   const [publicComments, setPublicComments] = useState<Array<{ id: string; author_name: string; body: string; is_hidden: boolean; created_at: string }>>([]);
   const [publicCommentsLoaded, setPublicCommentsLoaded] = useState(false);
   const [reactivePalette, setReactivePalette] = useState(() => ({
@@ -596,6 +597,10 @@ function VersionPageInner() {
   const dragTaskId = useRef<string | null>(null);
 
   const supabase = createClient();
+
+  useEffect(() => {
+    setShareUrl(`${window.location.origin}/listen/${songId}`);
+  }, [songId]);
 
   const clearWaveTimers = useCallback(() => {
     if (waveRetryTimerRef.current) {
@@ -2827,13 +2832,13 @@ function VersionPageInner() {
                           className={styles.shareLinkUrl}
                           type="text"
                           readOnly
-                          value={`https://song-room.live/listen/${songId}`}
+                          value={shareUrl}
                           onFocus={e => e.target.select()}
                         />
                         <button
                           className={`${styles.shareCopyBtn} ${shareCopied ? styles.shareCopyBtnDone : ''}`}
                           onClick={() => {
-                            void navigator.clipboard.writeText(`https://song-room.live/listen/${songId}`);
+                            void navigator.clipboard.writeText(shareUrl);
                             setShareCopied(true);
                             setTimeout(() => setShareCopied(false), 2000);
                           }}

@@ -3848,3 +3848,26 @@ Canonical staged-review migrations, database verification, and a referral-code f
 - Updated the pinned PostCSS override to its patched release, which also removes the vulnerable transitive Nano ID release from the production dependency tree.
 - Updated the recent feedback and playlist routes to Next 15's asynchronous route-parameter contract so production builds can validate them.
 - Hosted Auth and API configuration is intentionally absent from `supabase/config.toml`; don't run `supabase config push` until production settings have been captured and reviewed.
+
+---
+
+## 2026-08-11 - Environment-aware public song links
+
+### What we were trying to achieve
+
+Allow public song sharing to be tested against an isolated preview database without sending listeners to the production application, where the staging song does not exist.
+
+### Feature / change being made
+
+The song share modal now builds its listen URL from the hostname currently serving the app, matching the existing public-playlist behaviour.
+
+### Files changed
+
+- `app/songs/[id]/versions/[versionId]/page.tsx`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Production visitors still receive a production-domain link.
+- Preview visitors now receive a preview-domain link, keeping the application and Supabase environment paired correctly.
+- No database, storage, authentication, or production configuration was changed.
