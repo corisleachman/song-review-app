@@ -3894,3 +3894,31 @@ Workspace invitation emails now build their acceptance URL from the current requ
 - Removed the localhost fallback from emailed invite links.
 - Production requests still generate production links, while preview requests generate preview links.
 - Manual invite-link copying already used the current browser origin and was unchanged.
+
+---
+
+## 2026-08-11 - Reliable environment-aware comment notifications
+
+### What we were trying to achieve
+
+Ensure timestamped comments and replies send collaborator notifications from protected staging deployments without trying to contact localhost or delaying the comment response.
+
+### Feature / change being made
+
+Comment notification delivery now runs directly as supported post-response work instead of making a fragile HTTP request back into the same deployment.
+
+### Files changed
+
+- `app/api/threads/create/route.ts`
+- `app/api/threads/reply/route.ts`
+- `app/api/email/notify-thread/route.ts`
+- `lib/threadNotifications.ts`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Removed the localhost fallback from comment and reply notification delivery.
+- Kept the signed internal notification endpoint for authenticated HTTP callers.
+- Preserved the existing recipient, membership, and notification-mode checks.
+- Notification links now use the environment where the comment or reply was posted.
+- Resend API errors are treated as delivery failures instead of being logged as successful sends.

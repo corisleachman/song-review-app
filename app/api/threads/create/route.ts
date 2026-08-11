@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
-import { INTERNAL_REQUEST_SIGNATURE_HEADER, signInternalRequest } from '@/lib/internalRequestAuth';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { scheduleThreadNotification } from '@/lib/threadNotifications';
 
 function getErrorMessage(error: unknown) {
   if (error instanceof Error && error.message) {
@@ -100,23 +100,13 @@ export async function POST(req: NextRequest) {
 
     if (commentError) throw commentError;
 
-    // Send email notification (fire and forget, but with error handling)
-    const notificationBody = JSON.stringify({
+    scheduleThreadNotification({
       threadId: threadData.id,
       commentId: commentData.id,
       songId,
       versionId,
       actorUserId: resolved.identity.userId,
-    });
-
-    fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/email/notify-thread`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        [INTERNAL_REQUEST_SIGNATURE_HEADER]: signInternalRequest(notificationBody),
-      },
-      body: notificationBody,
-    }).catch(err => console.error('Error sending email notification:', err));
+    }, req.nextUrl.origin);
 
     const { data: canonicalThread, error: canonicalThreadError } = await supabaseServer
       .from('comment_threads')
