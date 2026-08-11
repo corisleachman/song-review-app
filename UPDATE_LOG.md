@@ -3922,3 +3922,28 @@ Comment notification delivery now runs directly as supported post-response work 
 - Preserved the existing recipient, membership, and notification-mode checks.
 - Notification links now use the environment where the comment or reply was posted.
 - Resend API errors are treated as delivery failures instead of being logged as successful sends.
+
+---
+
+## 2026-08-11 - Workspace-aware song access message
+
+### What we were trying to achieve
+
+Explain a deliberate workspace permission denial clearly when someone opens a song notification while a different workspace is selected.
+
+### Feature / change being made
+
+The version page now distinguishes a workspace access denial from a temporary loading failure and gives the user a useful recovery instruction.
+
+### Files changed
+
+- `.impeccable.md`
+- `app/songs/[id]/versions/[versionId]/page.tsx`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Preserved the HTTP status from failed initial version-page requests so a 403 can be rendered intentionally.
+- Replaced the generic loading-failure heading with workspace-specific access copy for 403 responses.
+- Removed the ineffective Retry action from this permission state. Other loading failures retain Retry.
+- Saved the project's design context for future interface work.

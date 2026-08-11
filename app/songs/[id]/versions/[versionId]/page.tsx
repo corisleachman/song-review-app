@@ -278,6 +278,16 @@ function logVersionInit(event: string, details?: Record<string, unknown>) {
   console.info(`[version-init] ${event}${payload}`);
 }
 
+class VersionPageRequestError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'VersionPageRequestError';
+    this.status = status;
+  }
+}
+
 async function fetchJsonWithTimeout<T>(
   input: RequestInfo | URL,
   init: RequestInit,
@@ -304,7 +314,7 @@ async function fetchJsonWithTimeout<T>(
       const message = payload && typeof payload.error === 'string'
         ? payload.error
         : `${label} failed with status ${response.status}`;
-      throw new Error(message);
+      throw new VersionPageRequestError(message, response.status);
     }
 
     return payload as T;
@@ -539,7 +549,7 @@ function VersionPageInner() {
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initError, setInitError] = useState<string | null>(null);
+  const [initError, setInitError] = useState<{ message: string; status: number | null } | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -1342,10 +1352,11 @@ function VersionPageInner() {
     } catch (error) {
       console.error('Version page load error:', error);
       const message = error instanceof Error ? error.message : 'Could not load this version.';
+      const status = error instanceof VersionPageRequestError ? error.status : null;
       loadErrorMessage = message;
-      setInitError(message);
+      setInitError({ message, status });
       showStatusToast(message);
-      logVersionInit('load:failed', { message });
+      logVersionInit('load:failed', { message, status });
       setLoading(false);
       logVersionInit('load:complete', {
         loadingCleared: true,
@@ -2302,19 +2313,31 @@ function VersionPageInner() {
   );
 
   if (initError) {
+    const isWorkspaceAccessDenied = initError.status === 403;
+
     return (
       <div className={styles.loading}>
         <div className={styles.initErrorCard}>
-          <h1 className={styles.initErrorTitle}>This version did not finish loading</h1>
-          <p className={styles.initErrorText}>{initError}</p>
+          <h1 className={styles.initErrorTitle}>
+            {isWorkspaceAccessDenied
+              ? 'You do not have access to this song from this workspace'
+              : 'This version did not finish loading'}
+          </h1>
+          <p className={styles.initErrorText}>
+            {isWorkspaceAccessDenied
+              ? 'Switch to the workspace where this song was shared, then open this link again.'
+              : initError.message}
+          </p>
           <div className={styles.initErrorActions}>
-            <button
-              type="button"
-              className={styles.waveRetryBtn}
-              onClick={() => setInitialLoadNonce(count => count + 1)}
-            >
-              Retry
-            </button>
+            {!isWorkspaceAccessDenied && (
+              <button
+                type="button"
+                className={styles.waveRetryBtn}
+                onClick={() => setInitialLoadNonce(count => count + 1)}
+              >
+                Retry
+              </button>
+            )}
             <button
               type="button"
               className={styles.songsBtn}
