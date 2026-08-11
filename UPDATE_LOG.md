@@ -3871,3 +3871,26 @@ The song share modal now builds its listen URL from the hostname currently servi
 - Production visitors still receive a production-domain link.
 - Preview visitors now receive a preview-domain link, keeping the application and Supabase environment paired correctly.
 - No database, storage, authentication, or production configuration was changed.
+
+---
+
+## 2026-08-11 - Environment-aware workspace invite links
+
+### What we were trying to achieve
+
+Keep emailed collaborator invites in the environment where they were created, so staging invitations do not point recipients to localhost or production.
+
+### Feature / change being made
+
+Workspace invitation emails now build their acceptance URL from the current request origin for both new and resent invitations.
+
+### Files changed
+
+- `app/api/workspace/invites/route.ts`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Removed the localhost fallback from emailed invite links.
+- Production requests still generate production links, while preview requests generate preview links.
+- Manual invite-link copying already used the current browser origin and was unchanged.
