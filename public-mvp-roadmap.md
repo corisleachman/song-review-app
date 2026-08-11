@@ -2343,7 +2343,7 @@ are not what is deployed.
 - Decide how the marketing site is served at `/`: port the HTML into the Next.js app as the new root route, or deploy separately and route at the domain/proxy level
 - **Update `middleware.ts`** — unauthenticated users are currently redirected to `/`; that must become `/login-signup` or they will land on the marketing page instead of the login form
 - Audit and update every internal redirect that currently targets `/` (post-logout, auth guards, invite and referral flows)
-- **Update Supabase auth config** (project `xouiiaknskivrjvapdma`): Site URL and Redirect URLs currently point at `/`. Google OAuth will fail on the new path until these are updated. *Historically the single biggest cause of production login outages on this project — verify the correct project before editing.*
+- **Update Supabase auth config** (project `hxtsuhmqrufcdplidtov`): Site URL and Redirect URLs currently point at `/`. Google OAuth will fail on the new path until these are updated. *Historically the single biggest cause of production login outages on this project — verify the correct project before editing.*
 - Update `NEXT_PUBLIC_APP_URL` if it encodes the root path
 - Update marketing site CTAs — all 7 currently point at the `login-v17.html` wireframe and must become `/login-signup`
 - Update `og:url`, `canonical` and `og:image` to the `song-room.live` domain (currently absolute GitHub Pages URLs — social previews will point at the wireframe until changed)
@@ -2389,7 +2389,7 @@ not be used. Building against the old tokens would re-skin the app to a palette 
 Build the feature gates that the v19 marketing site pricing now promises. The marketing page advertises tier differences that do not exist in the app yet — **the marketing site must not go public until this phase ships**, or we are advertising features we cannot enforce.
 
 ### Background
-Pricing was restructured on the marketing site (`tsr-marketing-v19.html`) to differentiate tiers by **buyer type** rather than storage alone, because storage-only differentiation gave no compelling reason to upgrade from Free. Collaborators remain unlimited on every tier — that positioning is deliberate and should not change.
+Pricing was restructured on the marketing site (`tsr-marketing-v19.html`) to differentiate tiers by **buyer type** rather than storage alone, because storage-only differentiation gave no compelling reason to upgrade from Free. The collaborator limits were subsequently set at 5 on Free and unlimited on Pro and Studio.
 
 **Advertised tiers:**
 
@@ -2397,7 +2397,7 @@ Pricing was restructured on the marketing site (`tsr-marketing-v19.html`) to dif
 |---|---|---|---|
 | Who | Trying it out | Working artists & bands | Producers & studios, multiple acts |
 | Storage | 500 MB (~10 songs) | 10 GB (~200 songs) | 50 GB (~1,000 songs) |
-| Collaborators | Unlimited | Unlimited | Unlimited |
+| Collaborators | Up to 5 | Unlimited | Unlimited |
 | Songs | Unlimited | Unlimited | Unlimited |
 | Version history | Last 3 per song | Full — nothing dropped | Full |
 | Upload formats | MP3 only | Lossless WAV & FLAC | Lossless WAV & FLAC |
@@ -2454,3 +2454,157 @@ Pricing was restructured on the marketing site (`tsr-marketing-v19.html`) to dif
 ### Dependencies
 - Blocks: Phase 8 (Marketing Site) public launch
 - Related: Phase 5 (Pricing Review & Stripe Rollout), Phase 6.5 (Referral Programme — "Referral rewards" is advertised as a Pro feature)
+
+## 2026-08-07 — Beta feedback database layer
+
+- Slice / change name: Beta feedback + Founding Tester capture — database layer
+- Status: Implemented (table created and confirmed in the v2 Supabase project); wider feature in progress
+- Exact files changed or audited:
+  - `migrations/20260807_beta_feedback_up.sql`
+  - `migrations/20260807_beta_feedback_down.sql`
+- Outcome:
+  - created the `beta_feedback` table on the v2 consumer project (`hxtsuhmqrufcdplidtov`) to back open-beta feedback capture and the Founding Tester reward programme
+  - table doubles as the triage queue (`status`) and the reward ledger (`reward_eligible` / `reward_issued` / `reward_code`)
+  - enabled RLS deny-all so public feedback can only be written through the service-role `/api/feedback` route, never directly from the browser
+  - added anti-spam foundations: a DB-level message length check and an `ip_hash` column/index to support per-IP rate limiting
+- Next follow-up:
+  - build the `/api/feedback` submission route with honeypot, message-length, and per-identity rate-limit guards (needs a `FEEDBACK_IP_SALT` env var)
+  - build the permanent beta top banner and the feedback FAB + panel (FAB flips to bottom-left on the waveform/player route to avoid the transport controls)
+  - at launch (Phase 10 plan gating), batch-issue unique `founding_tester_6mo` Stripe promo codes to approved, reward-eligible testers, capped at 100
+
+## 2026-08-07 — Beta feedback submission route
+
+- Slice / change name: Beta feedback — /api/feedback submission route
+- Status: Implemented and confirmed (production build READY, live smoke tests pass)
+- Exact files changed or audited:
+  - `app/api/feedback/route.ts`
+- Outcome:
+  - added `POST /api/feedback`: validates and inserts one `beta_feedback` row on the public app
+  - anti-spam: honeypot, message length (10–2000), type allowlist, and a 5/hour per-identity rate limit (by user when logged in, else by salted IP hash)
+  - captures silent context (page URL, user agent, viewport, deploy commit) so bugs are reproducible; sends no admin email (the table is the triage queue)
+  - requires the `FEEDBACK_IP_SALT` env var, now set in the clone-clean Vercel project
+- Next follow-up:
+  - build the permanent beta top banner and the feedback FAB + panel that POST here (FAB flips to bottom-left on the waveform/player route)
+  - build the admin triage/approve action that sets `reward_eligible` under the 100-tester cap
+  - at launch (Phase 10), batch-issue unique `founding_tester_6mo` Stripe promo codes to approved testers
+
+
+## 2026-08-07 — Beta feedback banner + FAB UI
+
+- Slice / change name: Beta feedback — banner + FAB/panel UI
+- Status: Implemented and confirmed (production build READY, live checks pass, Coris-confirmed visual)
+- Exact files changed or audited:
+  - `components/BetaFeedback.tsx` / `.module.css`
+  - `components/BetaBanner.tsx` / `.module.css`
+  - `app/layout.tsx`
+  - `components/AppShell.tsx`
+- Outcome:
+  - app-wide feedback FAB + panel posting to `/api/feedback`; flips to bottom-left on the waveform/player route
+  - permanent straw beta banner scoped to the authenticated shell (absent on public `/listen`, login, and the marketing surface)
+  - banner + FAB share one panel via a window event; panel has type chips, message, honeypot, and progressive email disclosure for logged-out submitters
+- Next follow-up:
+  - admin triage view: list submissions + one-click Approve that sets `reward_eligible` under the 100-tester cap
+  - optional weekly digest email so the queue does not go stale
+
+
+## 2026-08-07 — Beta banner on front-door surfaces
+
+- Slice / change name: Beta banner — login + marketing landing
+- Status: Implemented and confirmed (Coris-confirmed desktop + mobile)
+- Exact files changed or audited:
+  - `app/login/page.tsx` / `page.module.css`
+  - `public/marketing.html`
+- Outcome:
+  - open-beta banner now shows on the login page and the marketing landing page so logged-out visitors see beta status immediately
+  - marketing banner is informational (static page has no feedback panel); the login banner opens the feedback panel via the shared window event
+  - fixed the mobile overlap between the login banner and nav (banner pinned above the absolutely-positioned mobile nav)
+  - `/listen` artist-share surface intentionally left clean
+- Next follow-up:
+  - admin triage view (`/admin/feedback`) with `ADMIN_EMAILS` gating and one-click Approve under the 100-tester cap
+
+
+## 2026-08-07 — Admin beta-feedback triage view
+
+- Slice / change name: Beta feedback — admin triage view (/admin/feedback)
+- Status: Implemented and confirmed (Coris-confirmed; renders live feedback)
+- Exact files changed or audited:
+  - `lib/isAdmin.ts`
+  - `app/api/admin/feedback/route.ts`
+  - `app/api/admin/feedback/[id]/route.ts`
+  - `app/admin/feedback/page.tsx` / `FeedbackTriage.tsx` / `feedback.module.css`
+- Outcome:
+  - creator-only triage view (`ADMIN_EMAILS`-gated) listing `beta_feedback` with status filters and a Founding Testers N/100 counter
+  - one-click Approve / Reject / Spam; Approve flags `reward_eligible` under the 100 cap
+  - no Stripe issuance yet — eligibility only; code issuance is the launch-time (Phase 10) batch job
+  - completes the open-beta feedback + Founding Tester capture workstream for the beta phase
+- Next follow-up:
+  - (Phase 10 / launch) batch-issue unique `founding_tester_6mo` Stripe codes to `reward_eligible` testers and email them
+  - optional: weekly digest of new feedback; expand into the fuller admin console (account-level overrides, code assignment) per `PRODUCT_BACKLOG.md`
+
+
+## 2026-08-09 — Playlist sharing: in-app manage (surface 1 of 2)
+
+- Slice / change name: Playlist sharing - in-app manage flow + APIs
+- Status: Implemented and confirmed (Coris-confirmed). Surface 1 of 2.
+- Exact files changed or audited:
+  - `lib/playlistAccess.ts`
+  - `app/api/playlists/**` (list/create, detail/patch/delete, songs add/reorder/remove)
+  - `app/playlists/**` (layout, list, manage, css)
+  - `components/AppSidebar.tsx`
+- Outcome:
+  - create/name/populate/reorder/publish playlists in-app; account-scoped and ownership-verified
+  - publish sets is_public and surfaces the `/listen/playlist/[id]` share link
+- Next follow-up:
+  - surface 2: `/api/public/playlist/[id]` + `/listen/playlist/[id]` sequential player (auto-advance, track list), gated on is_public, serving each song's latest version through the playlist
+
+
+## 2026-08-09 — Playlist sharing: public player (surface 2 of 2)
+
+- Slice / change name: Playlist sharing - public sequential player
+- Status: Implemented and confirmed (Coris-confirmed end to end)
+- Exact files changed or audited:
+  - `app/api/public/playlist/[id]/route.ts`
+  - `app/listen/playlist/[id]/page.tsx` / `listen-playlist.module.css` / `layout.tsx`
+- Outcome:
+  - public `/listen/playlist/[id]` plays a published playlist in sequence with auto-advance; no login
+  - is_public-gated public API serving each song's latest version through the playlist
+  - completes the playlist sharing feature (manage + public player)
+- Next follow-up:
+  - polish: song artwork + graphic equaliser in the public player (in progress)
+  - optional: per-track waveform; revocable share token
+
+
+## 2026-08-09 — Playlist sharing: COMPLETE (immersive public player)
+
+- Slice / change name: Playlist sharing - immersive public player + fixes
+- Status: DONE - Coris-confirmed end to end (desktop + mobile + lock screen). Completes the feature.
+- Exact files changed or audited:
+  - `app/listen/playlist/[id]/page.tsx` / `listen-playlist.module.css`
+  - `app/api/public/playlist/[id]/route.ts`
+  - `app/api/playlists/[id]/route.ts`
+- Outcome:
+  - public `/listen/playlist/[id]` mirrors the single-song page: immersive artwork-coloured player, reactive equaliser, lock-screen playback with background auto-advance through all tracks
+  - fixed per-track audio switching + the FK-embed track-drop (public + in-app)
+- Playlist sharing (in-app manage + public immersive player) is now complete end to end.
+
+
+## 2026-08-10 — Multi-uploader: DONE
+
+- Slice / change name: Multi-upload + revamped uploader
+- Status: DONE - Coris-confirmed (multiple batch uploads work).
+- Files: `app/upload/**`, `app/dashboard/page.tsx`
+- Outcome:
+  - fast batch uploader at `/upload`: parallel create-on-drop with live progress, inline auto-cleaned titles, optional per-track artwork, retry/discard, verify
+  - replaces the old single-song "New song" modal on the dashboard
+- Note: a warped-timing MP3 was traced to that specific (VBR) file, not the uploader.
+
+
+## 2026-08-10 — Share previews + launch-readiness polish
+
+- Slice / change name: Share previews (site + playlist) + em-dash copy cleanup
+- Status: DONE — Coris-confirmed.
+- Outcome:
+  - Playlist share preview + optional custom cover (upload on manage page; overrides first-track artwork)
+  - Site social preview image for `song-room.live` shares (served from the app domain via middleware `publicRoutes`)
+  - Em dashes replaced with regular dashes across marketing + login (one decorative pricing bullet preserved)
+- Files: `app/listen/playlist/[id]/**`, `app/api/playlists/[id]/image`, `app/playlists/[id]/**`, `public/marketing.html`, `middleware.ts`, `app/layout.tsx`, `public/song-room-preview.jpg`

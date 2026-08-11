@@ -35,7 +35,12 @@
       "intent": "commercial investigation",
       "audience": "Artists, songwriters and producers",
       "priority": 3,
-      "status": "ready"
+      "status": "published",
+      "slug": "the-best-way-to-share-demos-with-music-collaborators",
+      "generatedTitle": "The Best Way to Share Demos With Music Collaborators",
+      "excerpt": "Clear, practical workflows for sending demos, choosing files, collecting timestamped feedback and keeping versions organised.",
+      "publishedAt": "2026-07-31",
+      "model": "gpt-5-mini"
     },
     {
       "id": "song-feedback",
@@ -44,7 +49,12 @@
       "intent": "informational",
       "audience": "Bands, artists and producers",
       "priority": 4,
-      "status": "ready"
+      "status": "published",
+      "slug": "how-to-give-useful-feedback-on-a-song",
+      "generatedTitle": "How to Give Useful Feedback on a Song",
+      "excerpt": "A practical, musician-first guide to giving feedback that moves songs forward—specific examples, a step-by-step method and file-checklist.",
+      "publishedAt": "2026-08-02",
+      "model": "gpt-5-mini"
     },
     {
       "id": "remote-songwriting-workflow",

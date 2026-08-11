@@ -64,7 +64,7 @@
   height: 100vh;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto 1fr auto auto;
+  grid-template-rows: auto auto 1fr auto auto;
   overflow: hidden;
   min-height: 0;
 }
@@ -85,7 +85,7 @@
   color: #F4F0E8;
 }
 
-/* Left — auth panel */
+/* Left - auth panel */
 .left {
   display: flex;
   flex-direction: column;
@@ -266,7 +266,7 @@
   padding: 4px 2px;
 }
 
-/* Right — SVG headline */
+/* Right - SVG headline */
 .right {
   display: flex;
   flex-direction: column;
@@ -349,7 +349,7 @@
   }
 
   .page {
-    display: block;  /* Abandon grid on mobile — use absolute children */
+    display: block;  /* Abandon grid on mobile - use absolute children */
     position: relative;
     min-height: 100dvh;
     height: 100%;
@@ -361,17 +361,26 @@
     height: max(100dvh, 900px);
   }
 
-  /* Nav — pinned top-left */
+  /* Nav - pinned top-left */
   .nav {
     position: absolute;
-    top: 0;
+    top: 35px;
     left: 0;
     right: 0;
     padding: 20px 24px;
     z-index: 2;
   }
 
-  /* SVG headline — centred, positioned in upper-middle zone, 50% bigger */
+  /* Beta banner pinned above the nav on mobile (grid is abandoned here) */
+  .betaBannerRow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 3;
+  }
+
+  /* SVG headline - centred, positioned in upper-middle zone, 50% bigger */
   .right {
     position: absolute;
     top: 0;
@@ -396,7 +405,7 @@
   }
   .heroTagline { display: none; }
 
-  /* Auth panel — pinned to a fixed vertical position in the dark lower zone */
+  /* Auth panel - pinned to a fixed vertical position in the dark lower zone */
   .left {
     position: absolute;
     left: 0;
@@ -407,14 +416,14 @@
     flex-direction: column;
     align-items: center;
     padding: 0 24px;
-    /* No bottom padding needed — content just flows downward and is clipped by .root overflow:hidden */
+    /* No bottom padding needed - content just flows downward and is clipped by .root overflow:hidden */
     z-index: 2;
     /* Remove the animation so it doesn't interact with absolute position */
     animation: none;
     overflow: visible;
   }
 
-  /* Footer — pinned to bottom */
+  /* Footer - pinned to bottom */
   .footer {
     position: absolute;
     bottom: 0;
@@ -447,7 +456,7 @@
     margin-top: 0;
   }
 
-  /* Email fields expand downward in-place — nothing above shifts */
+  /* Email fields expand downward in-place - nothing above shifts */
   .emailFields {
     overflow: hidden;
     max-height: 0;
@@ -461,4 +470,6 @@
   }
 }
 
-
+.betaBannerRow {
+  grid-column: 1 / -1;
+}

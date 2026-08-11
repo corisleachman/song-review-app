@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { ActionStatus, getActionStatusLabel, getNextActionStatus, isOpenAction } from '@/lib/actionWorkflow';
 import { type AwaitingResponseState, getAwaitingResponseLabel, type SongActivityItem } from '@/lib/collaborationSignals';
-import { type AccountPlan, type PlanLimitType } from '@/lib/plans';
+import { type AccountPlan, type PlanLimitType, isPlanAtLeast, getPlanDisplayName } from '@/lib/plans';
 import { SongStatus, SONG_STATUS_VALUES, getSongStatusLabel } from '@/lib/songWorkflow';
 import { getIdentity, clearAuth, clearIdentity } from '@/lib/auth';
 import { createClient } from '@/lib/supabase';
@@ -723,13 +723,6 @@ function DashboardContent() {
     return `${song.unresolvedActionCount} action${song.unresolvedActionCount !== 1 ? 's' : ''}`;
   }
 
-  function statusPillClass(status: SongStatus) {
-    if (status === 'writing') return styles.cardStatusWriting;
-    if (status === 'in_progress') return styles.cardStatusInProgress;
-    if (status === 'mixing') return styles.cardStatusMixing;
-    if (status === 'mastering') return styles.cardStatusMastering;
-    return styles.cardStatusFinished;
-  }
 
   function handleSongInfoClick(event: React.MouseEvent<HTMLButtonElement>, songId: string, isListView: boolean) {
     event.stopPropagation();
@@ -1215,6 +1208,9 @@ function DashboardContent() {
               identity?.[0]?.toUpperCase() || 'U'
             )}
           </div>
+          {isPlanAtLeast(workspacePlan, 'pro') && (
+            <span className={styles.planBadge} title={`${getPlanDisplayName(workspacePlan)} plan`}>{getPlanDisplayName(workspacePlan)}</span>
+          )}
         </div>
       </header>
 
@@ -1297,7 +1293,7 @@ function DashboardContent() {
                   </svg>
                 </button>
               </div>
-              <button className={styles.newBtn} onClick={() => setShowNewModal(true)}>
+              <button className={styles.newBtn} onClick={() => router.push('/upload')}>
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                   <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
@@ -1764,9 +1760,23 @@ function DashboardContent() {
                           )}
                         </div>
                         <div className={styles.cardStatusRow}>
-                          <span className={`${styles.cardStatusPill} ${statusPillClass(song.status)}`}>
-                            {getSongStatusLabel(song.status)}
-                          </span>
+                          <select
+                            id={`song-status-grid-${song.id}`}
+                            className={styles.cardStatusSelect}
+                            value={song.status}
+                            onClick={e => e.stopPropagation()}
+                            onChange={e => {
+                              e.stopPropagation();
+                              void updateSongStatus(song.id, e.target.value as SongStatus);
+                            }}
+                            aria-label="Change stage"
+                          >
+                            {SONG_STATUS_VALUES.map(status => (
+                              <option key={status} value={status}>
+                                {getSongStatusLabel(status)}
+                              </option>
+                            ))}
+                          </select>
                         </div>
                         <div className={styles.cardBodyDivider} />
                         <div className={styles.cardMetaRow}>
@@ -1844,7 +1854,7 @@ function DashboardContent() {
               })}
 
               {/* Ghost add card */}
-              <div className={styles.cardGhost} onClick={() => setShowNewModal(true)}>
+              <div className={styles.cardGhost} onClick={() => router.push('/upload')}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M8 2v12M2 8h12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
                 </svg>
@@ -1861,7 +1871,7 @@ function DashboardContent() {
             <div className={styles.emptyStateCard}>
               <div className={styles.emptyStateTitle}>{songEmptyTitle}</div>
               <p className={styles.emptyStateText}>{songEmptyMessage}</p>
-              <button className={styles.emptyStateAction} onClick={() => setShowNewModal(true)}>
+              <button className={styles.emptyStateAction} onClick={() => router.push('/upload')}>
                 Create your first song
               </button>
             </div>

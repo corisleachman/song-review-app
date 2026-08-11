@@ -3226,7 +3226,7 @@ Comments rendered all in red and stacked on one side when two accounts talked, b
 `comments` stored only an `author` name string (with `Coris`/`Al` hardcoded from email aliases), so identity collided and no stable per-user reference existed. `profiles` had no `avatar_url`, and only the live signed-in user carried a Google photo — other members' photos weren't persisted anywhere.
 
 **Fix (schema + code):**
-- SQL migration (run manually in Supabase, v2 project `xouiiaknskivrjvapdma`): added `profiles.avatar_url`, added `comments.author_user_id uuid references profiles(id)` + index, and best-effort backfilled `author_user_id` for existing Coris/Al comments by email alias.
+- SQL migration (run manually in Supabase, v2 project `hxtsuhmqrufcdplidtov`): added `profiles.avatar_url`, added `comments.author_user_id uuid references profiles(id)` + index, and best-effort backfilled `author_user_id` for existing Coris/Al comments by email alias.
 - `bootstrapAccount.ts`: persist the Google `avatar_url` to `profiles` on sign-in (only when present, never overwrite with null).
 - `threads/create` + `threads/reply`: stamp each new comment with `author_user_id`.
 - `versions/[versionId]/threads` GET: return each comment's `author_user_id` and resolved `author_avatar_url` (batch profile lookup).
@@ -3350,3 +3350,420 @@ Base-branch reconciliation and newly published runtime dependency security patch
 - `npx tsc --noEmit --incremental false` — passed.
 - Production build — passed on Next.js 15.5.22 with placeholder build-time service credentials.
 - Full `npm audit` — 9 high-severity development-only findings in the ESLint/minimatch/brace-expansion chain; no production dependencies affected.
+
+---
+
+## 2026-08-01 — Align collaborator limits across pricing tiers
+
+### What we were trying to achieve
+
+Make the collaborator offer consistent across the public pricing page, in-app upgrade flow, and server-side plan enforcement: Free supports up to 5 collaborators, while Pro and Studio support unlimited collaborators.
+
+### Feature or change
+
+Pricing tier and collaborator-limit alignment.
+
+### Changed files
+
+- `lib/plans.ts` — changed the canonical limits to 5 collaborators on Free and unlimited on Pro and Studio; simplified the limit message to the only capped plan.
+- `app/upgrade/page.tsx` — updated the Free and Pro pricing-card collaborator copy.
+- `public/marketing.html` — updated the public pricing cards to show 5 collaborators on Free and unlimited collaborators from Pro.
+- `public-mvp-roadmap.md` — recorded the agreed collaborator policy in the queued plan-gating specification.
+- `UPDATE_LOG.md` — documented this change.
+
+---
+
+## 2026-08-07 — Beta feedback: database layer (beta_feedback table)
+
+### What we were trying to achieve
+
+Lay the foundation for open-beta feedback capture and the Founding Tester reward programme ahead of the song-room.live launch. This slice creates only the database table; the `/api/feedback` route and the banner + feedback FAB UI are the next slices.
+
+### Feature / change being made
+
+New `beta_feedback` table on the v2 consumer Supabase project (`hxtsuhmqrufcdplidtov`). One row per submission; the table doubles as the triage queue (`status`) and the Founding Tester reward ledger (`reward_*` columns).
+
+### Files changed
+
+- [migrations/20260807_beta_feedback_up.sql](/Users/impero/song-review-app/migrations/20260807_beta_feedback_up.sql)
+- [migrations/20260807_beta_feedback_down.sql](/Users/impero/song-review-app/migrations/20260807_beta_feedback_down.sql)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+
+### Notes
+
+- Migration written by Claude, run manually by Coris in the Supabase SQL Editor against the v2 project. Confirmed run successfully.
+- RLS enabled deny-all (no policies): anon/authenticated cannot read or write; the service-role client used by `/api/feedback` bypasses RLS. Public feedback is write-only through the API.
+- `message` has a DB-level length floor (10–2000 chars) so low-effort junk can't land.
+- `ip_hash` stores sha256(ip + salt) for per-IP rate limiting of logged-out submissions; the raw IP is never stored. Requires a `FEEDBACK_IP_SALT` env var when the API route is built.
+- Reward is two-phase: `reward_eligible` is set on admin approval during beta (issues nothing); unique Stripe promo codes (coupon `founding_tester_6mo`) are batch-issued at launch when plan gating (Phase 10) ships.
+- Founding Tester cap = 100, enforced in the admin approval route (count of `reward_eligible = true`), not as a DB constraint, so the ceiling can be raised without a migration.
+- Next slices: `/api/feedback` route (honeypot, length + rate-limit guards), then the permanent beta top banner and the position-flipping feedback FAB/panel.
+
+---
+
+## 2026-08-07 — Beta feedback: submission route (/api/feedback)
+
+### What we were trying to achieve
+
+Give the beta banner and feedback FAB something to post to: a public submission endpoint that writes into the `beta_feedback` table with anti-spam guards, and without emailing the admin on every submission (the table is the triage queue).
+
+### Feature / change being made
+
+New `POST /api/feedback` route on the public build. Validates a submission, rate-limits it, captures silent context, and inserts one `beta_feedback` row.
+
+### Files changed
+
+- [app/api/feedback/route.ts](/Users/impero/song-review-app/app/api/feedback/route.ts)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+
+### Notes
+
+- Confirmed working: production build READY (commit `d2e502d`) plus live smoke tests — short message → 400, bad type → 400, honeypot filled → 200 with no DB write. None of the tests wrote a row.
+- Guards: honeypot (hidden `website` field → silent fake success), message length 10–2000, type allowlist (bug|idea|other), and a per-identity rate limit of 5/hour (by `user_id` when logged in, else by salted IP hash).
+- Logged-out submitters must supply an email; logged-in users are resolved via `getCurrentAuthenticatedUser()` (session).
+- Silent context captured: `page_url`, `user_agent`, `viewport` (from client), plus `app_version` from `VERCEL_GIT_COMMIT_SHA` and a salted `ip_hash` (needs `FEEDBACK_IP_SALT` — now set in the clone-clean Vercel project).
+- Uses the shared module-level `supabaseServer` (service-role) client, matching repo convention. No admin email is sent — feedback is reviewed from the `beta_feedback` table.
+- Next: the permanent beta top banner and the feedback FAB + panel that POST here (FAB flips bottom-left on the waveform/player route); then the admin triage/approve action (sets `reward_eligible`, cap 100); then launch-time batch issue of `founding_tester_6mo` Stripe codes.
+
+---
+
+## 2026-08-07 — Beta feedback: banner + FAB/panel UI
+
+### What we were trying to achieve
+
+Surface the beta context and a one-tap feedback path in the live app, wired to `/api/feedback`, without disrupting the public artist-share experience.
+
+### Feature / change being made
+
+Two client components: an app-wide feedback FAB + panel, and a permanent beta banner scoped to the authenticated shell.
+
+### Files changed
+
+- [components/BetaFeedback.tsx](/Users/impero/song-review-app/components/BetaFeedback.tsx)
+- [components/BetaFeedback.module.css](/Users/impero/song-review-app/components/BetaFeedback.module.css)
+- [components/BetaBanner.tsx](/Users/impero/song-review-app/components/BetaBanner.tsx)
+- [components/BetaBanner.module.css](/Users/impero/song-review-app/components/BetaBanner.module.css)
+- [app/layout.tsx](/Users/impero/song-review-app/app/layout.tsx) (mount FAB app-wide)
+- [components/AppShell.tsx](/Users/impero/song-review-app/components/AppShell.tsx) (mount banner in content)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+
+### Notes
+
+- Confirmed: production build READY (commit `8654b64`); FAB verified rendering on `/login`; banner correctly absent on login/public; Coris confirmed the visual in the authenticated shell.
+- FAB mounted in root layout → appears on all app-router pages (login, dashboard, listen, songs). Flips to bottom-left on the `/songs/[id]/versions/[versionId]` player route to clear the transport. The static landing page at `/` (served from `public/`) is outside the app router, so no FAB there.
+- Banner mounted as the first child of AppShell content → authenticated shell only; NOT on public `/listen`, login, or the marketing surface. Straw `#F0E48C` (no global token exists — kept local), black text, hard bottom border, zero radius. Sticky on desktop, static on mobile (avoids colliding with the sticky mobile workspace bar). Spans the content column, not across the 76px sidebar rail.
+- Banner "send us feedback →" link and the FAB open the same panel via a window CustomEvent (`song-room:open-feedback`) — no app-wide context provider needed.
+- Panel: Bug/Idea/Other chips, message textarea, honeypot, and progressive email disclosure (email field appears only when the API signals it's needed, i.e. logged-out submitters). Posts to `/api/feedback`.
+- No admin email on submission, by design — feedback is reviewed from the `beta_feedback` table / the upcoming admin triage view.
+
+---
+
+## 2026-08-07 — Beta banner on front-door surfaces (login + marketing)
+
+### What we were trying to achieve
+
+Make open-beta status visible to logged-out visitors — on the marketing landing page and the login page — so people know it's beta before they sign in. The artist-share `/listen` surface is deliberately left clean.
+
+### Feature / change being made
+
+Added the beta banner to the two front-door surfaces, with different mounts because they're built differently.
+
+### Files changed
+
+- [app/login/page.tsx](/Users/impero/song-review-app/app/login/page.tsx)
+- [app/login/page.module.css](/Users/impero/song-review-app/app/login/page.module.css)
+- [public/marketing.html](/Users/impero/song-review-app/public/marketing.html)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+
+### Notes
+
+- Confirmed by Coris on desktop + mobile after a mobile-overlap fix.
+- Login: BetaBanner added as a new first grid row (`grid-template-rows` gained a row). On mobile the login page abandons the grid for absolute positioning, so the banner wrapper is pinned `position:absolute; top:0; z-index:3` and the nav dropped to `top:35px` to avoid overlap (this was the mobile bug Coris caught).
+- Marketing (static `public/marketing.html`): informational straw strip (BETA pill + "open beta" message), fixed at `top:0`, with the fixed nav moved from `top:0` to `top:34px`. No feedback link there — the app FAB/panel doesn't run on the static page; can be linked to `/login` later if wanted.
+- Banner still NOT shown on `/listen` (artist-share) — intentional.
+- Commits: `d60949bd` (add), `ac376690` (mobile fix).
+
+---
+
+## 2026-08-07 — Admin beta-feedback triage view (/admin/feedback)
+
+### What we were trying to achieve
+
+Give the creator a place to read incoming beta feedback and approve quality submissions, with approval doubling as the Founding Tester reward gate — no per-submission emails.
+
+### Feature / change being made
+
+An `ADMIN_EMAILS`-gated triage page plus two admin API routes.
+
+### Files changed
+
+- [lib/isAdmin.ts](/Users/impero/song-review-app/lib/isAdmin.ts)
+- [app/api/admin/feedback/route.ts](/Users/impero/song-review-app/app/api/admin/feedback/route.ts)
+- [app/api/admin/feedback/[id]/route.ts](/Users/impero/song-review-app/app/api/admin/feedback/%5Bid%5D/route.ts)
+- [app/admin/feedback/page.tsx](/Users/impero/song-review-app/app/admin/feedback/page.tsx)
+- [app/admin/feedback/FeedbackTriage.tsx](/Users/impero/song-review-app/app/admin/feedback/FeedbackTriage.tsx)
+- [app/admin/feedback/feedback.module.css](/Users/impero/song-review-app/app/admin/feedback/feedback.module.css)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+
+### Notes
+
+- Confirmed working by Coris — the triage view renders live feedback with the cap counter, filters, and Approve/Reject/Spam.
+- Gate: `ADMIN_EMAILS` env var (comma-separated, case-insensitive), checked in the page (`notFound()` for non-admins) and both API routes (404). Deny-all if unset. Auth middleware also redirects anon → `/login?redirectTo=/admin/feedback`. Verified anon denied (307/404), admin allowed.
+- **`ADMIN_EMAILS` must match the user's SESSION email exactly.** Coris's is `corisleachman@googlemail.com`; set both the `@googlemail.com` and `@gmail.com` variants if unsure (Google alias). A temporary diagnostic page was used to surface the session email, then removed.
+- GET lists `beta_feedback` (status filter: new/approved/rejected/spam/all) plus a "Founding Testers N/100 eligible" counter. PATCH `approve` sets `status=approved`, stamps `reviewed_at/by`, and sets `reward_eligible=true` only while under the 100 cap (past the cap it approves without a slot). Reject/Spam set status only.
+- No Stripe code issuance here — approval only flags `reward_eligible`. Unique `founding_tester_6mo` code issuance is the launch-time batch job (Phase 10).
+- Commits: `26a54aff` (build), `66312cec` (temp diagnostic), `d770fedd` (diagnostic removed).
+
+This completes the open-beta feedback + Founding Tester capture workstream for the beta phase; the remaining reward issuance is gated to Phase 10 (plan gating).
+
+---
+
+## 2026-08-09 — Fix: status dropdown in desktop card (grid) view
+
+### What we were trying to achieve
+
+Backlog bug: in desktop card/grid view, the track status dropdown (writing / in progress / mixing / mastering / finished) was missing — it only appeared in list view.
+
+### Feature / change being made
+
+Ported the list-view status `<select>` into the grid card, then dropped the read-only pill so grid matches list (dropdown only).
+
+### Files changed
+
+- [app/dashboard/page.tsx](/Users/impero/song-review-app/app/dashboard/page.tsx)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md)
+- [PRODUCT_BACKLOG.md](/Users/impero/song-review-app/PRODUCT_BACKLOG.md)
+
+### Notes
+
+- Root cause: the grid branch of the song card rendered only a read-only `.cardStatusPill`; the status `<select>` existed solely in the list branch (and the info sheet). Not a styling bug — the control was never added to grid.
+- Fix: reused the existing `updateSongStatus` handler + `SONG_STATUS_VALUES` + `.cardStatusSelect` in the grid `.cardStatusRow`. Then removed the pill span and the now-unused `statusPillClass` helper so the build stays clean.
+- Confirmed working by Coris (dropdown changes status in card view; wanted the pill dropped). Commits: `b9c03461` (add dropdown), `be268dce` (drop pill).
+
+---
+
+## 2026-08-09 — Feature: per-user audio visualizer toggle
+
+### What we were trying to achieve
+
+Backlog: let users turn off the reactive audio visualizer on the song player, as a persisted per-user preference in Settings.
+
+### Feature / change being made
+
+A per-user `visualizer_enabled` preference (in `profile_settings`), a dedicated API, an Appearance toggle, and player gating.
+
+### Files changed
+
+- [migrations/20260809_profile_settings_visualizer_up.sql](/Users/impero/song-review-app/migrations/20260809_profile_settings_visualizer_up.sql) / `_down.sql` (run 2026-08-09)
+- [app/api/profile/visualizer/route.ts](/Users/impero/song-review-app/app/api/profile/visualizer/route.ts) (new)
+- [app/settings/appearance/page.tsx](/Users/impero/song-review-app/app/settings/appearance/page.tsx)
+- [app/songs/[id]/versions/[versionId]/page.tsx](/Users/impero/song-review-app/app/songs/%5Bid%5D/versions/%5BversionId%5D/page.tsx)
+- [UPDATE_LOG.md](/Users/impero/song-review-app/UPDATE_LOG.md) / [PRODUCT_BACKLOG.md](/Users/impero/song-review-app/PRODUCT_BACKLOG.md)
+
+### Notes
+
+- Confirmed working by Coris (toggle saves; player honours it).
+- `profile_settings` gained `visualizer_enabled BOOLEAN NOT NULL DEFAULT true` (migration run in the public DB `hxtsuhmqrufcdplidtov`).
+- Dedicated `/api/profile/visualizer` GET/POST, kept separate from the theme system. The POST re-loads the user's current theme and includes it in the upsert, so a first-time row gets correct colours and existing rows are never altered.
+- Player gates the 3 reactive hero canvases on the preference (default true until the fetch resolves; the visualizer only animates during playback, so no flash in practice). When off, the canvases aren't rendered → `getReactiveCanvasEntries` returns `[]` → the draw loop no-ops. Waveform + transport untouched.
+- Not gated: the reactive analyser/audio-graph setup still runs when off (harmless; possible future perf optimisation).
+- Commit: `0ef7554a`.
+
+---
+
+## 2026-08-09 — Playlist sharing (surface 1): in-app manage flow + APIs
+
+### What we were trying to achieve
+
+Backlog "public sharing - sequential playlists": build the in-app half first (create/manage/publish playlists) before the public player.
+
+### Feature / change being made
+
+Playlist CRUD APIs + a Playlists area (list + manage) + a sidebar link.
+
+### Files changed
+
+- `lib/playlistAccess.ts` (new)
+- `app/api/playlists/route.ts`, `app/api/playlists/[id]/route.ts`, `app/api/playlists/[id]/songs/route.ts`, `app/api/playlists/[id]/songs/[songId]/route.ts`
+- `app/playlists/layout.tsx`, `app/playlists/page.tsx`, `app/playlists/[id]/page.tsx`, `app/playlists/playlists.module.css`
+- `components/AppSidebar.tsx` (Playlists link)
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Confirmed working by Coris (create, name, add/reorder/remove songs, publish, share link).
+- Backed by the `playlists` + `playlist_songs` tables (migration run 2026-08-09). Account-scoped: routes resolve the caller's account (`resolved.identity.workspaceId`) and verify the playlist belongs to it via `lib/playlistAccess` (defence beyond RLS). Added songs must belong to the same account.
+- Reorder = PATCH `/songs` with `orderedSongIds`; add appends at `max(position)+1`; remove deletes the join row; `updated_at` bumped on mutations.
+- Publish = PATCH `is_public`; the share link shown is `/listen/playlist/[id]`. The public PLAYER (surface 2) is not built yet, so the link does not play.
+- Commit: `7f8fd520`.
+
+---
+
+## 2026-08-09 — Playlist sharing (surface 2): public sequential player
+
+### What we were trying to achieve
+
+Complete playlist sharing: a public, no-login page that plays a published playlist's songs in sequence.
+
+### Feature / change being made
+
+The public API + the `/listen/playlist/[id]` sequential player.
+
+### Files changed
+
+- `app/api/public/playlist/[id]/route.ts` (new)
+- `app/listen/playlist/[id]/page.tsx`, `listen-playlist.module.css`, `layout.tsx` (new)
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Confirmed working by Coris (real share link plays + auto-advances, logged out).
+- `/api/public/playlist/[id]`: service role + explicit `is_public` check (404 if not public, no existence leak). Serves each song's LATEST version audio via `getPublicUrl` on `song-files` — songs play through the playlist even if not individually `is_public` (decision #2). Latest-version-per-song resolved in one query.
+- Player: plain `<audio>` (no WaveSurfer/analyser — avoids the `createMediaElementSource`/`crossOrigin` mobile pitfalls). `play()` called inside the tap gesture (mobile-safe). Track list, transport, click-to-seek progress bar, auto-advance on `ended`. Middleware already treats `/listen/*` as public.
+- Metadata layout gives link previews without leaking private playlist titles.
+- Commit: `e12e2dc4`.
+
+---
+
+## 2026-08-09 — Playlist sharing: immersive public player + fixes
+
+### What we were trying to achieve
+
+Make the public playlist player match the single-song share page (big artwork, artwork-coloured background, reactive equaliser, lock-screen playback with background auto-advance), and fix bugs found in testing.
+
+### Feature / change being made
+
+Rebuilt the public playlist player to mirror `/listen/[songId]`, plus three fixes.
+
+### Files changed
+
+- `app/listen/playlist/[id]/page.tsx` (immersive rebuild)
+- `app/listen/playlist/[id]/listen-playlist.module.css` (single-song styling base + EQ sizing)
+- `app/api/public/playlist/[id]/route.ts` (embed-drop fix)
+- `app/api/playlists/[id]/route.ts` (in-app detail hardened)
+- `UPDATE_LOG.md`, `public-mvp-roadmap.md`, `PRODUCT_BACKLOG.md`
+
+### Notes
+
+- Confirmed working by Coris (desktop + mobile: audio, reactive EQ, per-track artwork/background, lock-screen artwork/controls + background auto-advance through all tracks, EQ sizing).
+- **Immersive player** mirrors the single-song page's proven engine: WaveSurfer owns the audio element (no `crossOrigin` — Supabase CORS headers suffice, per `AUDIO_PLAYER_FIXES.md`), desktop live `AnalyserNode`, mobile `OfflineAudioContext` precompute from `ws.getDecodedData()`. Media Session gives per-track artwork/title + play/pause/next/previous so a shared playlist cycles in the background / on the lock screen. Reused the single-song `listen.module.css` as the styling base. Did NOT touch the working single-song page. Commit `c4cc132d`.
+- **Fix — track switching:** reusing one WaveSurfer + `ws.load()` while playing kept track 1 audible. Now tear down + recreate the engine (and reset the analyser source) per track / next / prev / auto-advance. Commit `47a871dc`.
+- **Fix — newest track missing from the public player:** the `playlist_songs -> songs(...)` FK embed inner-joins and silently dropped a membership row (confirmed via debug: raw membership = 6 rows, embed = 5). Now fetch membership plainly + resolve song meta via a direct `.in(id)`; latest version resolved per song. Applied to the public API and hardened the in-app detail API against the same risk. Commits `26d3867d` (public), `fc371874` (manage).
+- **EQ sizing:** taller (160px), flush to the bottom of the player block (`playerContent`/`waveformWrap` bottom padding -> 0). Commit `caf49a25`.
+- **Key learning:** avoid PostgREST to-one FK embeds (`parent.select('..., child(...)')`) when you need the full parent row set — they can inner-join-drop rows. Fetch the parent plainly and resolve related rows with a direct `.in(...)`.
+
+---
+
+## 2026-08-09 — UI polish: playlist manager layout + sidebar/header tidy-up
+
+### What we were trying to achieve
+
+Tidy several rough edges after the playlist work: the manager's publish placement and title field, the left sidebar's consistency/tooltips, and relocating the plan sticker.
+
+### Feature / change being made
+
+Layout + styling polish across the playlist manager, the app sidebar, and the dashboard header.
+
+### Files changed
+
+- `app/playlists/[id]/page.tsx`, `app/playlists/playlists.module.css`
+- `components/AppSidebar.tsx`, `components/AppSidebar.module.css`
+- `components/WorkspaceSwitcher.module.css`
+- `app/dashboard/page.tsx`, `app/dashboard/dashboard.module.css`
+
+### Notes
+
+- Confirmed working by Coris.
+- **Playlist manager:** publish block (Draft/Public + share link) moved directly under the title row, above the song columns, with a 30px bottom margin. Title input's 1px border removed (reads as editable heading; no focus outline, per request). Commits `5ee7917b`, `b9518ce8`, `7dd39ca2`.
+- **Sidebar:** Dashboard icon now uses the same `navButton` treatment as the rest (was a permanent red-filled brand box); top icons grouped for consistent spacing. Slow browser `title` tooltips replaced with instant (~90ms), styled tooltips (surface panel, hard border, caret, right-aligned). Rail `z-index` 40 -> 50 so tooltips render above the beta banner (z-index 45). Workspace rail avatar 38 -> 44px to match the nav buttons; navTop gap 18px. Commits `7dd39ca2`, `12bf43a3`.
+- **Plan sticker:** removed from the left nav; now a small tier badge in the dashboard header beside the profile avatar (shown for pro+). NOTE: only appears on the dashboard for now (that's where the top-right avatar lives) — to be revisited when the free/pro/studio tier lockup is designed, likely into a shared top bar for cross-page consistency. Commit `12bf43a3`.
+- Kept the unicode nav glyphs (⌂ ≡ ⚙ ⎋); swapping to SVG icons is a possible follow-up.
+
+---
+
+## 2026-08-10 — Feature: multi-uploader (batch create-on-drop)
+
+### What we were trying to achieve
+
+Replace the slow, multi-step single-song uploader with a fast batch flow: drop several tracks, they upload in parallel in the background while you tidy names, then optional per-track artwork.
+
+### Feature / change being made
+
+New `/upload` flow (two steps) wired into the dashboard "New song" entry points.
+
+### Files changed
+
+- `app/upload/layout.tsx`, `app/upload/page.tsx`, `app/upload/upload.module.css` (new)
+- `app/dashboard/page.tsx` (New-song entry points -> `/upload`)
+- `UPDATE_LOG.md`, `public-mvp-roadmap.md`, `PRODUCT_BACKLOG.md`
+
+### Notes
+
+- Confirmed working by Coris (multiple batches upload fine).
+- Model: **create-on-drop**. Per dropped audio file, in parallel: `POST /api/songs/create` -> `POST /api/versions/create` (signed URL) -> `XHR PUT` direct to storage with live progress. Reuses existing endpoints; no new infra, no migration.
+- Titles auto-cleaned from filename (strip ext, `_`/`-` -> spaces, title-case), editable inline, saved via `PATCH /api/songs/[id]` on blur + on continue.
+- Step 2: per-track artwork via `/api/songs/upload-image` (Sharp); local preview for instant feedback.
+- Hardening: per-file **Retry** (deletes the half-made song, re-runs fresh), **Discard** (deletes all created songs), unsupported-file notice, correct `Content-Type` per format, and a post-upload **verify** (mirrors the single-song uploader) so a broken/partial upload errors for retry instead of silently succeeding.
+- NOTE: one specific pre-existing MP3 plays with warped timing in its first ~30s. Confirmed **file-specific** (other tracks fine; the issue follows that one file across re-uploads) — a VBR-MP3 / player-decoding quirk, NOT an uploader or data-integrity problem.
+- Commits: `3531ce2f` (slice 1), `028ed943` (slice 2), `a2ab133f` (hardening).
+
+---
+
+## 2026-08-10 — Playlist share preview + custom cover
+
+### What we were trying to achieve
+Give shared playlists a social preview image, and let artists set a custom cover (e.g. EP art) that represents the playlist.
+
+### Feature / change being made
+Playlist share metadata now carries an image; a custom cover can be uploaded on the manage page and overrides the default.
+
+### Files changed
+- `migrations/20260810_playlists_image_up.sql` / `_down.sql` (adds `playlists.image_url`; Coris ran UP against `hxtsuhmqrufcdplidtov`)
+- `app/listen/playlist/[id]/layout.tsx` (OG/Twitter image)
+- `app/api/playlists/[id]/image/route.ts` (new — POST upload / DELETE remove, Sharp)
+- `lib/playlistAccess.ts`, `app/api/playlists/[id]/route.ts` (expose `image_url`)
+- `app/playlists/[id]/page.tsx`, `app/playlists/playlists.module.css` (cover control)
+
+### Notes
+- Confirmed working by Coris.
+- Share image resolves as: custom cover (`playlists.image_url`) if set, else the first track's artwork. Twitter card = `summary_large_image` when an image exists.
+- Upload reuses the Sharp pipeline (1200px fit-inside, JPEG 85%, `song-images` bucket, `playlist-{id}-{ts}.jpg`); manage page has a cover slot + "Remove cover" (reverts to first-track art).
+- Commits: `93e6d2a8` (first-track default), `2515012a` (custom cover).
+
+---
+
+## 2026-08-10 — Site social preview image
+
+### What we were trying to achieve
+Shares of `song-room.live` should show a branded preview image (brand name + what the app does).
+
+### Feature / change being made
+Added `song-room-preview.jpg` (1200x630) and wired Open Graph / Twitter tags.
+
+### Files changed
+- `public/song-room-preview.jpg` (new, 1200x630)
+- `middleware.ts` (serve the image publicly — added to `publicRoutes`)
+- `public/marketing.html` (OG/Twitter image -> the new image)
+- `app/layout.tsx` (`metadataBase` + OG/Twitter; brand title "The Song Room" replacing the stale "Song Review")
+
+### Notes
+- Confirmed working by Coris. Image serves 200 at `https://www.song-room.live/song-room-preview.jpg`.
+- The app gates `public/` files by default (why the old OG image lived on GitHub Pages); added the path to the middleware `publicRoutes` so it serves from the app domain. Tags use the direct `www` URL to avoid the apex->www redirect for scrapers.
+- Reminder: social platforms cache OG data; a re-scrape (e.g. Facebook Sharing Debugger) is needed to refresh a previously-shared link.
+- Commits: `e277bf9b`, `ec7602ae`, `d16dd044`, `48c7356c`.
+
+---
+
+## 2026-08-10 — Copy: em dashes -> regular dashes (marketing + login)
+
+### What we were trying to achieve
+Coris prefers regular dashes over em dashes in the preview text and across the marketing + login pages.
+
+### Files changed
+- `public/marketing.html` (37 — preview meta + visible copy)
+- `app/layout.tsx` (2 — app-route preview description)
+- `app/login/page.tsx` (5), `app/login/page.module.css` (9) — all code comments
+
+### Notes
+- Confirmed by Coris. Preserved one decorative pricing-list bullet (`.tier-features li::before { content: '—' }`); flagged for a future call.
+- Commit: `a25d00f5`.

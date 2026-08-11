@@ -2243,3 +2243,20 @@
 /* ── Play button icon colour — dark on white button ── */
 .thumbPlayBtn svg { fill: #0E0A0A !important; color: #0E0A0A !important; }
 .thumbPlayBtn svg path { fill: #0E0A0A !important; }
+
+/* Account tier sticker, beside the profile avatar (moved out of the left nav). */
+.planBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  background: rgba(244, 237, 228, 0.08);
+  border: 1px solid rgba(244, 237, 228, 0.16);
+  border-radius: 0;
+  color: var(--color-text);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+}

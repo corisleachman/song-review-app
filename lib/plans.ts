@@ -10,8 +10,8 @@ export const STUDIO_STORAGE_LIMIT_BYTES = 50  * 1024 * 1024 * 1024;  // 50 GB
 // ---------------------------------------------------------------------------
 // Collaborator limits (null = unlimited)
 // ---------------------------------------------------------------------------
-export const FREE_COLLABORATOR_LIMIT   = 3;
-export const PRO_COLLABORATOR_LIMIT    = 10;
+export const FREE_COLLABORATOR_LIMIT   = 5;
+export const PRO_COLLABORATOR_LIMIT    = null;
 export const STUDIO_COLLABORATOR_LIMIT = null;
 
 // ---------------------------------------------------------------------------
@@ -100,10 +100,7 @@ export function createPlanLimitPayload(
       limitType,
       limit,
       cta: 'upgrade',
-      message:
-        plan === 'free'
-          ? `Free plan supports up to ${FREE_COLLABORATOR_LIMIT} collaborators. Upgrade to Pro to invite more people.`
-          : `Pro plan supports up to ${PRO_COLLABORATOR_LIMIT} collaborators. Upgrade to Studio for unlimited collaborators.`,
+      message: `Free plan supports up to ${FREE_COLLABORATOR_LIMIT} collaborators. Upgrade to Pro to invite more people.`,
     };
   }
 
