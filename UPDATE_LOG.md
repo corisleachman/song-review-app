@@ -3391,3 +3391,33 @@ Coris prefers regular dashes over em dashes in the preview text and across the m
 ### Notes
 - Confirmed by Coris. Preserved one decorative pricing-list bullet (`.tier-features li::before { content: '—' }`); flagged for a future call.
 - Commit: `a25d00f5`.
+
+---
+
+## 2026-08-11 - Supabase migration baseline and staging repair
+
+### What we were trying to achieve
+
+Make Supabase branches reproduce the real production schema and storage setup instead of starting with only a small subset of the application's tables.
+
+### Feature / change being made
+
+Canonical Supabase migration history under `supabase/migrations`, plus reproducible public media buckets for staging and future preview branches.
+
+### Files changed
+
+- `supabase/migrations/20260730171202_remote_schema.sql`
+- `supabase/migrations/20260807090000_beta_feedback.sql`
+- `supabase/migrations/20260809100000_profile_settings_visualizer.sql`
+- `supabase/migrations/20260809110000_playlists.sql`
+- `supabase/migrations/20260810100000_playlists_image.sql`
+- `supabase/migrations/20260811080000_storage_buckets.sql`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Fetched the existing 30 July production baseline from Supabase migration history. It contains all 18 core public tables, functions, constraints, indexes, grants, and RLS policies.
+- Copied the four August migrations that had been run manually in production into the canonical Supabase migration directory, then recorded their complete SQL as applied in production migration history without rerunning them.
+- Added an idempotent storage migration for the public `song-files` and `song-images` buckets. Their public status preserves single-song links, public playlists, artwork, and social share images.
+- Recreated `code-review-staging` as a persistent, data-free branch. The replacement branch has all 21 production tables and both public storage buckets.
+- Production application data and schema objects were not changed. Only migration-history metadata was repaired.
