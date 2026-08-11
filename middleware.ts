@@ -16,6 +16,7 @@ export async function middleware(request: NextRequest) {
     '/terms',
     '/cookie-consent.js',
     '/cookie-consent.css',
+    '/song-room-preview.jpg',
   ];
   const isInviteRoute = pathname.startsWith('/invite/');
   const isReferralRoute = pathname.startsWith('/r/');
