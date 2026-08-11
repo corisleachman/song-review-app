@@ -1,0 +1,16 @@
+# Local migration tooling only. Hosted Auth and API settings are intentionally
+# omitted. Do not run `supabase config push` until those settings have been
+# captured and reviewed against production.
+
+project_id = "song-review-app"
+
+[db]
+major_version = 17
+
+[db.migrations]
+enabled = true
+schema_paths = []
+
+[db.seed]
+enabled = false
+sql_paths = []

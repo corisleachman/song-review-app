@@ -84,6 +84,7 @@ export async function GET() {
         .from('song_versions')
         .select('id, song_id, version_number, label, created_at, created_by')
         .in('song_id', songIds)
+        .not('upload_finalized_at', 'is', null)
         .order('version_number', { ascending: false }),
       supabaseServer
         .from('actions')

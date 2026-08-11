@@ -25,6 +25,7 @@ export default async function SongEntryPage(props: SongEntryPageProps) {
       .from('song_versions')
       .select('id')
       .eq('song_id', songId)
+      .not('upload_finalized_at', 'is', null)
       .order('version_number', { ascending: false })
       .limit(1)
       .maybeSingle(),

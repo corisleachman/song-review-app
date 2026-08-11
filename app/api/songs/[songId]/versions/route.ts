@@ -57,6 +57,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ songId: s
       .from('song_versions')
       .select('id, song_id, version_number, label, notes, file_path, file_name, created_by, created_at')
       .eq('song_id', songId)
+      .not('upload_finalized_at', 'is', null)
       .order('version_number', { ascending: false });
 
     if (error) throw error;

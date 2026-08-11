@@ -37,6 +37,7 @@ export async function GET() {
           .from('song_versions')
           .select('id, song_id, version_number, label, created_at, file_path')
           .in('song_id', songIds)
+          .not('upload_finalized_at', 'is', null)
           .order('version_number', { ascending: false })
       : { data: [], error: null };
 

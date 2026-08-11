@@ -3797,3 +3797,54 @@ Canonical Supabase migration history under `supabase/migrations`, plus reproduci
 - Added an idempotent storage migration for the public `song-files` and `song-images` buckets. Their public status preserves single-song links, public playlists, artwork, and social share images.
 - Recreated `code-review-staging` as a persistent, data-free branch. The replacement branch has all 21 production tables and both public storage buckets.
 - Production application data and schema objects were not changed. Only migration-history metadata was repaired.
+
+---
+
+## 2026-08-11 - Staged code-review database rollout
+
+### What we were trying to achieve
+
+Apply the reviewed security, upload-integrity, and query-performance changes to an isolated Supabase branch before they reach production.
+
+### Feature / change being made
+
+Canonical staged-review migrations, database verification, and a referral-code function repair found by Supabase lint.
+
+### Files changed
+
+- `supabase/config.toml`
+- `supabase/migrations/20260811100000_public_comments_hardening.sql`
+- `supabase/migrations/20260811110000_stripe_webhook_idempotency.sql`
+- `supabase/migrations/20260811120000_account_storage_schema.sql`
+- `supabase/migrations/20260811130000_version_upload_integrity.sql`
+- `supabase/migrations/20260811140000_dashboard_query_indexes.sql`
+- `supabase/migrations/20260811150000_fix_generate_referral_code.sql`
+- `app/upload/page.tsx`
+- `app/api/public/playlist/[id]/route.ts`
+- `app/api/dashboard/route.ts`
+- `app/api/dashboard/summary/route.ts`
+- `app/songs/[id]/page.tsx`
+- `app/api/songs/[songId]/versions/route.ts`
+- `app/api/admin/feedback/[id]/route.ts`
+- `app/api/playlists/[id]/route.ts`
+- `app/api/playlists/[id]/image/route.ts`
+- `app/api/playlists/[id]/songs/route.ts`
+- `app/api/playlists/[id]/songs/[songId]/route.ts`
+- `app/listen/playlist/[id]/layout.tsx`
+- `package.json`
+- `package-lock.json`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Applied each migration to `code-review-staging` separately and checked its security or data-integrity behavior before continuing.
+- Confirmed Stripe webhook claiming is idempotent and version upload finalisation only increments storage once.
+- Added seven indexes for common dashboard, version, action, comment, and membership reads.
+- Fixed the ambiguous `code` variable in `generate_referral_code()`, which caused the function to fail database lint and could fail at runtime if called.
+- Updated the multi-uploader to finalise each uploaded object before verification, and to cancel pending version rows after a failed upload.
+- Public playlists now ignore pending versions, while retaining a compatibility fallback for environments where the finalisation column has not been deployed yet.
+- Public playlist song lookups are constrained to the playlist workspace, protecting against accidental cross-workspace membership data when the service role reads the public feed.
+- Dashboard, song entry, and version-list reads ignore interrupted pending uploads so users aren't sent to incomplete audio records.
+- Updated the pinned PostCSS override to its patched release, which also removes the vulnerable transitive Nano ID release from the production dependency tree.
+- Updated the recent feedback and playlist routes to Next 15's asynchronous route-parameter contract so production builds can validate them.
+- Hosted Auth and API configuration is intentionally absent from `supabase/config.toml`; don't run `supabase config push` until production settings have been captured and reviewed.
