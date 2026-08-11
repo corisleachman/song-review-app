@@ -3330,3 +3330,64 @@ New `/upload` flow (two steps) wired into the dashboard "New song" entry points.
 - Hardening: per-file **Retry** (deletes the half-made song, re-runs fresh), **Discard** (deletes all created songs), unsupported-file notice, correct `Content-Type` per format, and a post-upload **verify** (mirrors the single-song uploader) so a broken/partial upload errors for retry instead of silently succeeding.
 - NOTE: one specific pre-existing MP3 plays with warped timing in its first ~30s. Confirmed **file-specific** (other tracks fine; the issue follows that one file across re-uploads) — a VBR-MP3 / player-decoding quirk, NOT an uploader or data-integrity problem.
 - Commits: `3531ce2f` (slice 1), `028ed943` (slice 2), `a2ab133f` (hardening).
+
+---
+
+## 2026-08-10 — Playlist share preview + custom cover
+
+### What we were trying to achieve
+Give shared playlists a social preview image, and let artists set a custom cover (e.g. EP art) that represents the playlist.
+
+### Feature / change being made
+Playlist share metadata now carries an image; a custom cover can be uploaded on the manage page and overrides the default.
+
+### Files changed
+- `migrations/20260810_playlists_image_up.sql` / `_down.sql` (adds `playlists.image_url`; Coris ran UP against `hxtsuhmqrufcdplidtov`)
+- `app/listen/playlist/[id]/layout.tsx` (OG/Twitter image)
+- `app/api/playlists/[id]/image/route.ts` (new — POST upload / DELETE remove, Sharp)
+- `lib/playlistAccess.ts`, `app/api/playlists/[id]/route.ts` (expose `image_url`)
+- `app/playlists/[id]/page.tsx`, `app/playlists/playlists.module.css` (cover control)
+
+### Notes
+- Confirmed working by Coris.
+- Share image resolves as: custom cover (`playlists.image_url`) if set, else the first track's artwork. Twitter card = `summary_large_image` when an image exists.
+- Upload reuses the Sharp pipeline (1200px fit-inside, JPEG 85%, `song-images` bucket, `playlist-{id}-{ts}.jpg`); manage page has a cover slot + "Remove cover" (reverts to first-track art).
+- Commits: `93e6d2a8` (first-track default), `2515012a` (custom cover).
+
+---
+
+## 2026-08-10 — Site social preview image
+
+### What we were trying to achieve
+Shares of `song-room.live` should show a branded preview image (brand name + what the app does).
+
+### Feature / change being made
+Added `song-room-preview.jpg` (1200x630) and wired Open Graph / Twitter tags.
+
+### Files changed
+- `public/song-room-preview.jpg` (new, 1200x630)
+- `middleware.ts` (serve the image publicly — added to `publicRoutes`)
+- `public/marketing.html` (OG/Twitter image -> the new image)
+- `app/layout.tsx` (`metadataBase` + OG/Twitter; brand title "The Song Room" replacing the stale "Song Review")
+
+### Notes
+- Confirmed working by Coris. Image serves 200 at `https://www.song-room.live/song-room-preview.jpg`.
+- The app gates `public/` files by default (why the old OG image lived on GitHub Pages); added the path to the middleware `publicRoutes` so it serves from the app domain. Tags use the direct `www` URL to avoid the apex->www redirect for scrapers.
+- Reminder: social platforms cache OG data; a re-scrape (e.g. Facebook Sharing Debugger) is needed to refresh a previously-shared link.
+- Commits: `e277bf9b`, `ec7602ae`, `d16dd044`, `48c7356c`.
+
+---
+
+## 2026-08-10 — Copy: em dashes -> regular dashes (marketing + login)
+
+### What we were trying to achieve
+Coris prefers regular dashes over em dashes in the preview text and across the marketing + login pages.
+
+### Files changed
+- `public/marketing.html` (37 — preview meta + visible copy)
+- `app/layout.tsx` (2 — app-route preview description)
+- `app/login/page.tsx` (5), `app/login/page.module.css` (9) — all code comments
+
+### Notes
+- Confirmed by Coris. Preserved one decorative pricing-list bullet (`.tier-features li::before { content: '—' }`); flagged for a future call.
+- Commit: `a25d00f5`.

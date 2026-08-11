@@ -2597,3 +2597,14 @@ Pricing was restructured on the marketing site (`tsr-marketing-v19.html`) to dif
   - fast batch uploader at `/upload`: parallel create-on-drop with live progress, inline auto-cleaned titles, optional per-track artwork, retry/discard, verify
   - replaces the old single-song "New song" modal on the dashboard
 - Note: a warped-timing MP3 was traced to that specific (VBR) file, not the uploader.
+
+
+## 2026-08-10 — Share previews + launch-readiness polish
+
+- Slice / change name: Share previews (site + playlist) + em-dash copy cleanup
+- Status: DONE — Coris-confirmed.
+- Outcome:
+  - Playlist share preview + optional custom cover (upload on manage page; overrides first-track artwork)
+  - Site social preview image for `song-room.live` shares (served from the app domain via middleware `publicRoutes`)
+  - Em dashes replaced with regular dashes across marketing + login (one decorative pricing bullet preserved)
+- Files: `app/listen/playlist/[id]/**`, `app/api/playlists/[id]/image`, `app/playlists/[id]/**`, `public/marketing.html`, `middleware.ts`, `app/layout.tsx`, `public/song-room-preview.jpg`
