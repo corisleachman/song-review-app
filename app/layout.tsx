@@ -13,13 +13,13 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://www.song-room.live'),
   title: 'The Song Room',
   description:
-    'A collaboration space for artists, bands and producers. Upload song versions, drop timestamped comments on the waveform, and track every action and decision across a record’s lifecycle — all in one shared workspace.',
+    'A collaboration space for artists, bands and producers. Upload song versions, drop timestamped comments on the waveform, and track every action and decision across a record’s lifecycle - all in one shared workspace.',
   openGraph: {
     type: 'website',
     siteName: 'The Song Room',
     title: 'The Song Room',
     description:
-      'A collaboration space for artists, bands and producers — upload song versions, drop timestamped comments on the waveform, and track every decision in one shared workspace.',
+      'A collaboration space for artists, bands and producers - upload song versions, drop timestamped comments on the waveform, and track every decision in one shared workspace.',
     url: '/',
     images: [{ url: '/song-room-preview.jpg', width: 1200, height: 630, alt: 'The Song Room' }],
   },

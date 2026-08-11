@@ -42,7 +42,7 @@ async function resolvePostLoginRedirect(redirectTo: string) {
 }
 
 // ── SVG draw paths (Thunder BlackLC letterforms) ──
-// ── SVG draw paths — real Thunder BlackLC letterforms extracted via fonttools ──
+// ── SVG draw paths - real Thunder BlackLC letterforms extracted via fonttools ──
 // Same paths as headline-svg-v5.html (the signed-off wireframe). Flat array, y=0 for CREATE, y=144 for TOGETHER.
 const SVG_PATHS = [
   { y: 0,   d: "M37.2 56.39999999999999C37.2 54.0 37.6 53.19999999999999 38.400000000000006 53.19999999999999C39.2 53.19999999999999 39.6 54.0 39.6 56.39999999999999V92.0H75.60000000000001V59.0C75.60000000000001 35.400000000000006 61.800000000000004 22.0 37.800000000000004 22.0C14.200000000000001 22.0 1.2000000000000002 34.79999999999998 1.2000000000000002 59.0V128.8C1.2000000000000002 153.0 14.200000000000001 166.0 37.800000000000004 166.0C61.800000000000004 166.0 75.60000000000001 152.6 75.60000000000001 128.8V96.0H39.6V131.6C39.6 133.8 39.2 134.8 38.400000000000006 134.8C37.6 134.8 37.2 133.8 37.2 131.6Z", len: 810, delay: 0.179 },
@@ -192,7 +192,7 @@ function LoginContent() {
     };
   }, []);
 
-  // Auth handlers — unchanged from original
+  // Auth handlers - unchanged from original
   const handleGoogleSignIn = async () => {
     setError('');
     setGoogleLoading(true);
@@ -269,7 +269,7 @@ function LoginContent() {
           <div className={styles.navBrand}>The Song Room</div>
         </nav>
 
-        {/* Left — auth */}
+        {/* Left - auth */}
         <div className={styles.left}>
           {/* Tabs */}
           <div className={styles.tabs}>
@@ -381,7 +381,7 @@ function LoginContent() {
               )}
             </div>
 
-            {/* Forgot password — show when mode is forgot */}
+            {/* Forgot password - show when mode is forgot */}
             {mode === 'forgot' && (
               <div className={styles.forgotPanel}>
                 <input
@@ -416,7 +416,7 @@ function LoginContent() {
           </div>
         </div>
 
-        {/* Right — SVG headline */}
+        {/* Right - SVG headline */}
         <div className={styles.right}>
           <div className={styles.headlineSvgWrap}>
             <svg
