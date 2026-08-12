@@ -4121,3 +4121,28 @@ Fifth measured Stage 4 performance batch for the authenticated dashboard request
 - The traced cold visit contained one dashboard request and no bootstrap request. Compared with the closest preceding preview, total server work fell from about 2,825 ms across two requests to 1,750 ms in one request, a 38% reduction.
 - The browser reported songs visible at 3,084 ms on that cache-bypassed visit. The request returned four songs, five versions, two threads, and three comments.
 - No database schema, permission rule, cache scope, or production configuration was changed.
+
+---
+
+## 2026-08-12 - Concurrent active-workspace bootstrap
+
+### What we were trying to achieve
+
+Remove a remaining sequential database wait from canonical identity resolution after the dashboard switched to one request.
+
+### Feature / change being made
+
+Sixth measured Stage 4 performance batch for authenticated workspace bootstrap.
+
+### Files changed
+
+- `lib/bootstrapAccount.ts`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- When the HTTP-only active-workspace cookie is present, candidate workspace loading now starts alongside membership validation and the existing profile sync.
+- Candidate workspace data is used only after the user's membership in that exact workspace has passed validation.
+- A stale or invalid cookie still falls back to the user's canonical membership selection. First-account creation remains ordered after membership checks.
+- No database schema, permission rule, cookie format, or production configuration was changed.

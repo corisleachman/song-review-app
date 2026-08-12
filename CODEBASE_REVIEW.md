@@ -39,13 +39,13 @@ The cold dashboard trace at 13:33:41 UTC used anonymous trace `94bee373-a5f4-458
 ### PERF-002: Repeated and sequential account bootstrap work
 
 - Severity: High
-- Evidence: `lib/bootstrapAccount.ts:151-202` writes the profile and resolves membership on every canonical identity call. Before this batch those independent operations ran serially. A valid active membership was followed by a second all-memberships query.
-- User impact: Every authenticated route pays avoidable database latency. The dashboard pays it in both bootstrap and data requests.
-- Recommended fix: Run independent reads concurrently and stop once a valid active workspace membership has been found. Keep account creation ordered after both checks finish.
-- Fix risk: Low for the implemented change. Query error handling and default workspace selection must remain identical.
-- Status: Implemented in the current batch.
-- Verification: Targeted lint, TypeScript, production build, both Vercel checks, and preview runtime traces passed. Each after trace shows profile and membership stages overlapping.
-- Before and after: The new overlap removed 125 to 312 ms of serialized database waiting from each canonical identity call in the sampled traces. Because the dashboard calls identity twice, that removed 307 to 425 ms of serialized work per initial visit. Infrastructure variability masked that saving in some whole-page samples.
+- Evidence: `lib/bootstrapAccount.ts` writes the profile and resolves membership on every canonical identity call. The first concurrency batch overlapped those operations and stopped the all-memberships fallback after a valid active membership. Preview switching then showed active membership validation and workspace loading still taking consecutive 112 to 117 ms waits.
+- User impact: Every authenticated route pays the canonical identity cost. After the dashboard waterfall fix, it accounted for 1,063 ms of the 1,750 ms cold server response and about 350 ms of warm active-workspace responses.
+- Recommended fix: Use the HTTP-only active-workspace cookie to start the candidate workspace read alongside membership validation, but do not use or return that workspace until membership passes. Keep invalid-cookie fallback and first-account creation ordered.
+- Fix risk: Low to medium. A stale or invalid cookie may cause one discarded workspace read, but must still fall back to the user's valid memberships without exposing candidate workspace data.
+- Status: The profile/membership overlap is implemented and verified. Concurrent active-workspace validation and loading is in local verification.
+- Verification: The first batch passed targeted lint, TypeScript, production build, both Vercel checks, and preview runtime traces. The user's workspace-switch test passed and supplied the active-workspace baseline for this follow-up.
+- Before and after: The first overlap removed 125 to 312 ms of serialized database waiting per canonical identity call in the sampled traces. The active-workspace baseline is 350 ms for identity, including consecutive 117 ms membership and 116 ms workspace stages. The follow-up result is not yet measured.
 
 ### PERF-003: Dashboard data is assembled in multiple dependent query waves
 

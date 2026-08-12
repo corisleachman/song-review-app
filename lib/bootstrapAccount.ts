@@ -39,6 +39,11 @@ interface MembershipRecord {
   joined_at: string;
 }
 
+interface WorkspaceLoadAttempt {
+  workspace: WorkspaceRecord | null;
+  error: unknown | null;
+}
+
 export interface BootstrapResult {
   user: AuthenticatedUser;
   profile: ProfileRecord;
@@ -133,6 +138,21 @@ async function loadWorkspace(accountId: string): Promise<WorkspaceRecord> {
   };
 }
 
+async function loadActiveWorkspaceCandidate(
+  accountId: string,
+  timing?: RequestTiming
+): Promise<WorkspaceLoadAttempt> {
+  try {
+    const workspace = timing
+      ? await timing.measure('active-workspace', () => loadWorkspace(accountId))
+      : await loadWorkspace(accountId);
+
+    return { workspace, error: null };
+  } catch (error) {
+    return { workspace: null, error };
+  }
+}
+
 export async function bootstrapAccountForUser(
   user: AuthenticatedUser,
   timing?: RequestTiming
@@ -163,6 +183,10 @@ export async function bootstrapAccountForUser(
   const activeWorkspaceId = timing
     ? await timing.measure('workspace-cookie', readActiveWorkspaceCookie)
     : await readActiveWorkspaceCookie();
+
+  const activeWorkspacePromise = activeWorkspaceId
+    ? loadActiveWorkspaceCandidate(activeWorkspaceId, timing)
+    : Promise.resolve(null);
 
   const membershipPromise = (async (): Promise<MembershipRecord | null> => {
     if (activeWorkspaceId) {
@@ -196,9 +220,14 @@ export async function bootstrapAccountForUser(
     return chooseDefaultMembership(existingMemberships ?? []);
   })();
 
-  const [{ data: profile, error: profileError }, existingMembership] = await Promise.all([
+  const [
+    { data: profile, error: profileError },
+    existingMembership,
+    activeWorkspaceAttempt,
+  ] = await Promise.all([
     profilePromise,
     membershipPromise,
+    activeWorkspacePromise,
   ]);
 
   if (profileError) throw profileError;
@@ -241,9 +270,19 @@ export async function bootstrapAccountForUser(
     throw new Error('No workspace membership found for authenticated user.');
   }
 
-  const workspace = timing
-    ? await timing.measure('workspace', () => loadWorkspace(membership.account_id))
-    : await loadWorkspace(membership.account_id);
+  let workspace: WorkspaceRecord;
+
+  if (activeWorkspaceId && membership.account_id === activeWorkspaceId && activeWorkspaceAttempt) {
+    if (activeWorkspaceAttempt.error) throw activeWorkspaceAttempt.error;
+    if (!activeWorkspaceAttempt.workspace) {
+      throw new Error('Active workspace could not be loaded.');
+    }
+    workspace = activeWorkspaceAttempt.workspace;
+  } else {
+    workspace = timing
+      ? await timing.measure('workspace', () => loadWorkspace(membership.account_id))
+      : await loadWorkspace(membership.account_id);
+  }
 
   // ── Referral attribution (best-effort, non-blocking) ───────────────────────
   // Only runs when a brand-new account was just created (first-ever sign-in).
