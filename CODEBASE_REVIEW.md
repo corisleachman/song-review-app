@@ -69,6 +69,84 @@ The cold dashboard trace at 13:33:41 UTC used anonymous trace `94bee373-a5f4-458
 - Verification: Targeted lint, TypeScript, production build, both Vercel checks, preview deployment, direct API verification, and the user's first/last-track playback check passed. All three tracks remained present and ordered. The replacement paginates in 500-row pages and batches long song-ID lists.
 - Before and after: The two baseline responses took 1,240 ms and 1,409 ms and made three latest-version requests. The verified optimized response took 1,278 ms and made one version request, a 67% query-count reduction and about 9% response-time reduction against the comparable 1,409 ms sample. Similar per-query latency limited the end-to-end change on this three-track playlist.
 
+## Stage 5 production-readiness audit
+
+### Readiness decision
+
+The draft PR is not ready to merge or deploy to production yet. The final audit found two permissive database policies and a song-deletion accounting gap. Both are now fixed in the branch and applied to the staging Supabase branch, but production remains unchanged and the fixes still need preview application verification before rollout approval.
+
+The API authorization review did not find a route-level cross-workspace bypass. Authenticated service-role routes resolve the Supabase user server-side, derive the active workspace from validated membership, and compare the target record's workspace before reading or mutating it. Public song and playlist routes keep explicit sharing checks. Stripe events are signature-verified, and internal notification requests use a time-limited HMAC.
+
+### Fixed release blockers
+
+#### SEC-001: Permissive policies overrode scoped song and settings access
+
+- Priority: P1
+- Evidence: `supabase/migrations/20260730171202_remote_schema.sql:523` contained a song `SELECT` policy with `USING (true)`. Line 630 contained an authenticated settings policy with unrestricted `USING` and `WITH CHECK` rules. PostgreSQL combines permissive policies with OR, so these rules bypassed the newer member and public-share policies.
+- Production evidence: A read-only anonymous Data API check returned an `is_public = false` song row before remediation. No identifiers or song content were logged.
+- Fix: `20260812200000_remove_permissive_rls_policies.sql` removes both policies. The earlier policy migration now recreates only workspace-scoped settings policies and explicitly drops the legacy song policy.
+- Verification: The migration is applied on staging. A service-role check confirmed a private fixture exists, while the same anonymous query now returns no rows.
+- Rollout status: Staging complete. Production is still affected until the migration is explicitly approved and applied.
+
+#### DATA-001: Song deletion left storage usage and objects behind
+
+- Priority: P1
+- Evidence: `app/api/songs/[songId]/route.ts` deleted relational rows but did not remove audio or cover objects and did not decrement `accounts.storage_bytes_used`. Upload finalisation increments that counter in `20260811130000_version_upload_integrity.sql`.
+- User impact: Deleting songs could leave paid storage consumed and make a workspace hit its quota even though the songs had gone. Copied raw media URLs could also remain reachable.
+- Fix: `20260812201000_song_deletion_storage_accounting.sql` adds a service-role-only transaction that locks the song, versions, and account; releases only finalized bytes; deletes the song through database cascades; and returns the object paths. The API removes those audio paths and the current cover in bounded batches after the transaction.
+- Verification: An isolated staging fixture started at 123 bytes. The transaction returned one path and 123 released bytes, deleted the song, and left the temporary workspace at zero bytes. Cleanup removed the temporary workspace afterward.
+- Remaining risk: Database deletion and object removal cannot share one transaction. A storage failure is logged and returned as `storageCleanupPending`; the database and user quota still remain correct.
+
+#### OPS-001: The historical RLS rollback restored blanket access
+
+- Priority: P1
+- Evidence: `migrations/20260520_rls_policies_down.sql` removed named policies and recreated `Allow all` rules across core workspace tables. Its ungrouped predicate could also select policies outside the intended schema.
+- Fix: The rollback is now an explicit no-op with a notice. Security-policy regressions must be repaired with a forward migration.
+- Verification: SQL diff review and linked staging database lint passed.
+
+### Remaining findings
+
+#### P2
+
+- TEST-001: There is no application test command or automated unit, integration, browser, or accessibility suite. The only GitHub checks on the current head are the two successful Vercel deployment checks. The extensive manual staging checks reduce risk but do not protect future changes.
+- PRIV-001: Both media buckets remain public by design. Turning off an app share link blocks the app route, but a raw storage URL copied earlier remains reachable. Private media delivery needs a separate migration and rollout.
+- ABUSE-001: Public comment throttling is stored in process memory. It limits a single serverless instance but can be bypassed across instances or cold starts. Database constraints, a honeypot, and length validation still apply.
+- UPLOAD-001: Playlist-cover upload reads the complete request into memory before checking file size, MIME type, or decoded pixel count. The song-cover route already has the safer 5 MB, accepted-type, and pixel-limit pattern.
+- A11Y-001: Some clickable `div` and `span` controls remain unavailable to keyboard users, including batch-upload add/artwork controls, the dashboard add-song card, and public-playlist track rows. Several dashboard and feedback dialogs also lack the shared focus trap and complete dialog semantics. Small brand-red text measures about 3.62:1 against the darkest background, below the 4.5:1 target for normal text.
+- CONFIG-001: Baseline response headers cover HSTS, framing, referrers, permissions, and MIME sniffing, but there is no Content Security Policy. Adding one needs a report-only pass first because the app uses inline styles and external media.
+
+#### P3
+
+- PERF-005: The dashboard and authenticated version route still ship about 193 kB and 194 kB of first-load JavaScript. Their client components are 2,406 and 3,509 lines, and 16 raw image elements remain. The measured request-path work is much better, but component splitting and image loading remain useful follow-ups.
+- THEME-001: The brand is consistent, but CSS contains substantially more literal color declarations than token references. This makes contrast fixes and future theme changes harder to apply consistently.
+
+### Interface audit score
+
+| Dimension | Score | Evidence |
+| --- | ---: | --- |
+| Accessibility | 2/4 | Strong global focus and reduced-motion foundations, but keyboard controls, dialog focus, and small-text contrast still have gaps. |
+| Performance | 3/4 | Dashboard and public-playlist query waves were measured and reduced; large client routes and raw images remain. |
+| Theming | 2/4 | Distinctive shared palette and typography, with extensive literal color duplication. |
+| Responsive design | 3/4 | Eighteen CSS modules include mobile breakpoints and the staged mobile journeys passed; a few compact targets and fixed-size controls remain. |
+| Anti-pattern resistance | 4/4 | Pass. The industrial music-workspace character, typography, squared geometry, and waveform-led interaction feel specific to Song Room rather than generic template UI. |
+| **Total** | **14/20** | **Good foundation, with the P1 rollout blockers above requiring production completion.** |
+
+### Positive findings
+
+- Workspace ownership checks are consistently enforced before service-role mutations.
+- Upload allocation and finalisation are idempotent, quota-aware, and hide pending uploads from normal reads.
+- Public responses return narrow fields, preserve explicit share gates, and do not expose private comment or version history through app routes.
+- Reduced-motion support is global, key modal components use a reusable focus trap, and mobile layouts exist for every main user journey reviewed.
+- `npm audit --omit=dev` reports zero known production dependency vulnerabilities.
+
+### PR, rollout, and rollback state
+
+- Draft PR #2 is open, unmerged, and targets `clone-clean`. The branch and remote head matched at the start of this audit, and both Vercel checks passed on that head.
+- The two new database migrations are applied only to `code-review-staging`. Production application code and schema have not been changed by this batch.
+- Production rollout must be migration-first, then application deployment. The policy removal is compatible with the current server routes, and the deletion function is additive until the new route uses it.
+- Application rollback uses the previous Vercel deployment. Leave the two security migrations applied during an app rollback. Restoring the permissive policies is not a safe rollback.
+- The song-deletion function has a down migration, but it should be dropped only after the application has been rolled back to code that does not call it.
+
 ## Console observations
 
 - `Could not establish connection. Receiving end does not exist.` does not come from the app code found in this repository and is consistent with a browser extension messaging failure. The traced application requests still returned 200.
@@ -80,4 +158,4 @@ The cold dashboard trace at 13:33:41 UTC used anonymous trace `94bee373-a5f4-458
 - Stage 2 functional safety checks: passed, including collaboration notifications and workspace access separation.
 - Stage 3 baseline: captured for public routes and the authenticated dashboard request chain. Authenticated song/version journey timings still need to be captured during later batches.
 - Stage 4 fixes: account bootstrap, active-workspace identity, all four dashboard query batches, and single-request dashboard initialization are implemented and measured. The public-playlist query pattern is next; the assigned-action name path still needs a data-backed regression check.
-- Stage 5 regression and production readiness: in progress. Public playlist playback passed after query consolidation; the wider code, security, dependency, accessibility, responsive, and rollout audit remains.
+- Stage 5 regression and production readiness: audit complete; remediation and rollout verification in progress. Public playlist playback passed after query consolidation. The permissive policy and song-deletion accounting fixes are applied on staging. Production remains unchanged, the PR stays draft, and the remaining P2/P3 findings are recorded above.

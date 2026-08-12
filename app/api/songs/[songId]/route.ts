@@ -6,6 +6,8 @@ import { supabaseServer } from '@/lib/supabaseServer';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+const STORAGE_DELETE_BATCH_SIZE = 100;
+
 function getErrorMessage(error: unknown) {
   if (error instanceof Error && error.message) {
     return error.message;
@@ -19,6 +21,41 @@ function getErrorMessage(error: unknown) {
   }
 
   return 'Song request failed.';
+}
+
+function normalizeStorageObjectPath(value: string | null | undefined, bucket: string) {
+  const trimmed = value?.trim() ?? '';
+  if (!trimmed) return null;
+
+  const marker = `/storage/v1/object/public/${bucket}/`;
+  try {
+    if (/^https?:\/\//i.test(trimmed)) {
+      const pathname = new URL(trimmed).pathname;
+      const markerIndex = pathname.indexOf(marker);
+      if (markerIndex < 0) return null;
+      return decodeURIComponent(pathname.slice(markerIndex + marker.length)) || null;
+    }
+  } catch {
+    return null;
+  }
+
+  const bucketPrefix = `${bucket}/`;
+  return trimmed.startsWith(bucketPrefix) ? trimmed.slice(bucketPrefix.length) : trimmed;
+}
+
+async function removeStorageObjects(bucket: string, paths: string[]) {
+  let cleanupPending = false;
+
+  for (let index = 0; index < paths.length; index += STORAGE_DELETE_BATCH_SIZE) {
+    const batch = paths.slice(index, index + STORAGE_DELETE_BATCH_SIZE);
+    const { error } = await supabaseServer.storage.from(bucket).remove(batch);
+    if (error) {
+      cleanupPending = true;
+      console.warn(`[songs/delete] ${bucket} cleanup will need retry:`, error.message);
+    }
+  }
+
+  return cleanupPending;
 }
 
 export async function GET(req: NextRequest, props: { params: Promise<{ songId: string }> }) {
@@ -138,7 +175,7 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ songId
 
     const { data: song, error: songLookupError } = await supabaseServer
       .from('songs')
-      .select('id, account_id')
+      .select('id, account_id, image_url')
       .eq('id', songId)
       .maybeSingle();
 
@@ -159,35 +196,39 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ songId
       );
     }
 
-    // Delete actions
-    await supabaseServer.from('actions').delete().eq('song_id', songId);
+    const deleteResult = await supabaseServer.rpc('delete_song_and_release_storage', {
+      p_song_id: songId,
+      p_account_id: resolved.identity.workspaceId,
+    });
 
-    // Get version IDs to delete threads
-    const { data: versions } = await supabaseServer
-      .from('song_versions')
-      .select('id')
-      .eq('song_id', songId);
+    if (deleteResult.error) throw deleteResult.error;
 
-    if (versions && versions.length > 0) {
-      const versionIds = versions.map((v: { id: string }) => v.id);
-      // Get thread IDs
-      const { data: threads } = await supabaseServer
-        .from('comment_threads')
-        .select('id')
-        .in('song_version_id', versionIds);
-      if (threads && threads.length > 0) {
-        const threadIds = threads.map((t: { id: string }) => t.id);
-        await supabaseServer.from('comments').delete().in('thread_id', threadIds);
-      }
-      await supabaseServer.from('comment_threads').delete().in('song_version_id', versionIds);
-      await supabaseServer.from('song_versions').delete().eq('song_id', songId);
-    }
+    const deleteRows = Array.isArray(deleteResult.data)
+      ? deleteResult.data as Array<{ file_paths?: unknown; released_bytes?: unknown }>
+      : [];
+    const rawFilePaths = deleteRows[0]?.file_paths;
+    const audioPaths = Array.isArray(rawFilePaths)
+      ? Array.from(new Set(
+          rawFilePaths
+            .filter((path): path is string => typeof path === 'string')
+            .map(path => normalizeStorageObjectPath(path, 'song-files'))
+            .filter((path): path is string => Boolean(path))
+        ))
+      : [];
+    const coverPath = normalizeStorageObjectPath(song.image_url, 'song-images');
 
-    // Delete song
-    const { error } = await supabaseServer.from('songs').delete().eq('id', songId);
-    if (error) throw error;
+    const [audioCleanupPending, imageCleanupPending] = await Promise.all([
+      removeStorageObjects('song-files', audioPaths),
+      removeStorageObjects('song-images', coverPath ? [coverPath] : []),
+    ]);
 
-    return NextResponse.json({ success: true }, { status: 200 });
+    return NextResponse.json(
+      {
+        success: true,
+        storageCleanupPending: audioCleanupPending || imageCleanupPending,
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error('Error deleting song:', error);
     return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });

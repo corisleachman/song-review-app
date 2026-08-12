@@ -4205,3 +4205,42 @@ Measured Stage 4 performance batch for the public playlist API.
 - The verified response took 1,278 ms versus the comparable 1,409 ms baseline, about 9% faster. Latest-version query count fell 67%.
 - The user's public-player check confirmed that the first and last tracks both play.
 - No database schema, permission rule, cache policy, or production configuration was changed.
+
+---
+
+## 2026-08-12 - Final readiness audit security and deletion hardening
+
+### What we were trying to achieve
+
+Finish the Stage 5 production-readiness audit, close any release-blocking permission or data-integrity gaps, and keep all verification isolated to staging.
+
+### Feature / change being made
+
+Remove permissive RLS policies, make song deletion release storage usage atomically, clean up deleted media objects, and record the final audit and rollout state.
+
+### Files changed
+
+- `app/api/songs/[songId]/route.ts`
+- `migrations/20260520_rls_policies_up.sql`
+- `migrations/20260520_rls_policies_down.sql`
+- `migrations/20260812_remove_permissive_rls_policies_up.sql`
+- `migrations/20260812_remove_permissive_rls_policies_down.sql`
+- `migrations/20260812_song_deletion_storage_accounting_up.sql`
+- `migrations/20260812_song_deletion_storage_accounting_down.sql`
+- `supabase/migrations/20260812200000_remove_permissive_rls_policies.sql`
+- `supabase/migrations/20260812201000_song_deletion_storage_accounting.sql`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Removed the legacy song policy that allowed every role to read every song row and the authenticated settings policy that overrode workspace-scoped access.
+- Changed the historical RLS rollback into a deliberate no-op because restoring blanket access is unsafe.
+- Added a service-role-only song-deletion transaction that locks the affected records, subtracts finalized audio bytes from workspace usage, uses database cascades for related rows, and returns storage paths for object cleanup.
+- The API removes returned audio paths and the current cover in batches. If object cleanup fails after the database transaction, the response reports pending cleanup while the deleted rows and workspace quota remain correct.
+- Applied both new canonical migrations only to `code-review-staging`; all 14 local and staging migration versions now align.
+- Verified that staging contains a private-song fixture and anonymous access to that fixture is blocked after the policy migration.
+- A rollback-safe deletion fixture released exactly 123 bytes, returned one audio path, deleted the song, and left its temporary workspace at zero bytes. The temporary workspace was removed.
+- `supabase db lint --linked --level warning` reported no schema errors.
+- `npm audit --omit=dev` reported zero known production dependency vulnerabilities.
+- Production remains unchanged. The draft PR must stay open and unmerged until the preview build and a user-facing deletion regression pass.
