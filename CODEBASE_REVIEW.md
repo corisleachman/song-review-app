@@ -63,11 +63,11 @@ The cold dashboard trace at 13:33:41 UTC used anonymous trace `94bee373-a5f4-458
 - Severity: Medium
 - Evidence: `app/api/public/playlist/[id]/route.ts:97-105` calls `getLatestPlayableVersion` once per playlist song. The calls run concurrently but still create one database request per song.
 - User impact: Larger public playlists create more database traffic and can become slower or less reliable under load.
-- Recommended fix: Replace the per-song lookups with one workspace-constrained latest-version query that preserves pending-upload filtering and song order.
+- Recommended fix: Replace the per-song lookups with a paginated, workspace-constrained version read that preserves pending-upload filtering and song order without relying on the server response row limit.
 - Fix risk: Medium. A combined limit or incorrect grouping could select the wrong version or expose a cross-workspace song.
-- Status: Open. Privacy-safe route timing is in local verification so the current per-song query wave can be measured before replacement.
-- Verification: Static data-flow review confirmed the per-song query pattern. The original combined read previously dropped a newest track after hitting the response row limit, so that implementation must not be restored. No fix measured yet.
-- Before and after: Warm public playlist content readiness is 1,470 ms. No fix measured yet.
+- Status: Baseline measured. The paginated combined version read and independent metadata-read overlap are in local verification.
+- Verification: The user's cold and warm public playlist checks retained three ordered, playable tracks. The original combined read previously dropped a newest track after hitting the response row limit, so the replacement paginates in 500-row pages and batches long song-ID lists.
+- Before and after: The two baseline responses took 1,240 ms and 1,409 ms. Each made three latest-version requests and spent 319 ms in that stage. The optimized result is not yet measured.
 
 ## Console observations
 

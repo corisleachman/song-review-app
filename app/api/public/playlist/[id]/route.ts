@@ -4,6 +4,21 @@ import { supabaseServer } from '@/lib/supabaseServer';
 
 export const dynamic = 'force-dynamic';
 
+const VERSION_PAGE_SIZE = 500;
+const VERSION_SONG_BATCH_SIZE = 100;
+
+interface PlayableVersionRecord {
+  song_id: string;
+  version_number: number | null;
+  file_path: string | null;
+}
+
+interface VersionPageResult {
+  versions: PlayableVersionRecord[];
+  error: unknown | null;
+  requestCount: number;
+}
+
 function normalizeStoragePath(value: string | null | undefined) {
   const trimmed = value?.trim() ?? '';
   const prefix = 'song-files/';
@@ -27,26 +42,69 @@ function isMissingUploadFinalizedColumn(error: unknown) {
     && message.includes('upload_finalized_at');
 }
 
-async function getLatestPlayableVersion(songId: string) {
-  const finalizedResult = await supabaseServer
-    .from('song_versions')
-    .select('file_path')
-    .eq('song_id', songId)
-    .not('upload_finalized_at', 'is', null)
-    .order('version_number', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+async function listPlayableVersionPages(
+  songIds: string[],
+  finalizedOnly: boolean
+): Promise<VersionPageResult> {
+  const versions: PlayableVersionRecord[] = [];
+  let requestCount = 0;
 
-  if (!finalizedResult.error) return finalizedResult;
-  if (!isMissingUploadFinalizedColumn(finalizedResult.error)) return finalizedResult;
+  for (let batchStart = 0; batchStart < songIds.length; batchStart += VERSION_SONG_BATCH_SIZE) {
+    const songIdBatch = songIds.slice(batchStart, batchStart + VERSION_SONG_BATCH_SIZE);
 
-  return supabaseServer
-    .from('song_versions')
-    .select('file_path')
-    .eq('song_id', songId)
-    .order('version_number', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    for (let pageStart = 0; ; pageStart += VERSION_PAGE_SIZE) {
+      let query = supabaseServer
+        .from('song_versions')
+        .select('song_id, version_number, file_path')
+        .in('song_id', songIdBatch)
+        .order('song_id', { ascending: true })
+        .order('version_number', { ascending: false })
+        .range(pageStart, pageStart + VERSION_PAGE_SIZE - 1);
+
+      if (finalizedOnly) {
+        query = query.not('upload_finalized_at', 'is', null);
+      }
+
+      requestCount += 1;
+      const { data, error } = await query.returns<PlayableVersionRecord[]>();
+
+      if (error) {
+        return { versions: [], error, requestCount };
+      }
+
+      const page = data ?? [];
+      versions.push(...page);
+
+      if (page.length < VERSION_PAGE_SIZE) break;
+    }
+  }
+
+  return { versions, error: null, requestCount };
+}
+
+async function getLatestPlayableVersions(songIds: string[]) {
+  if (songIds.length === 0) {
+    return { latestBySong: new Map<string, string | null>(), requestCount: 0 };
+  }
+
+  let result = await listPlayableVersionPages(songIds, true);
+  let requestCount = result.requestCount;
+
+  if (result.error && isMissingUploadFinalizedColumn(result.error)) {
+    result = await listPlayableVersionPages(songIds, false);
+    requestCount += result.requestCount;
+  }
+
+  if (result.error) throw result.error;
+
+  const latestBySong = new Map<string, string | null>();
+  for (const version of result.versions) {
+    if (!latestBySong.has(version.song_id)) {
+      latestBySong.set(version.song_id, version.file_path ?? null);
+    }
+  }
+
+  return { latestBySong, requestCount };
 }
 
 export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
@@ -84,23 +142,21 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
       return respond({ error: 'Not found' }, 404);
     }
 
-    let workspaceName: string | null = null;
-    if (playlist.account_id) {
-      const { data: account } = await timing.measure(
-        'workspace',
-        async () => await supabaseServer
-          .from('accounts')
-          .select('name')
-          .eq('id', playlist.account_id)
-          .maybeSingle()
-      );
-      workspaceName = account?.name ?? null;
-    }
+    const workspaceNamePromise: Promise<string | null> = playlist.account_id
+      ? timing.measure('workspace', async () => {
+          const { data: account } = await supabaseServer
+            .from('accounts')
+            .select('name')
+            .eq('id', playlist.account_id)
+            .maybeSingle();
+          return account?.name ?? null;
+        })
+      : Promise.resolve(null);
 
     // Ordered membership. NOTE: do NOT embed songs(...) here — a to-one FK embed
     // inner-joins and can silently drop rows. Fetch the membership plainly, then
     // resolve song meta separately with a direct .in(...).
-    const { data: rows } = await timing.measure(
+    const playlistSongsPromise = timing.measure(
       'playlist-songs',
       async () => await supabaseServer
         .from('playlist_songs')
@@ -108,6 +164,10 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
         .eq('playlist_id', playlist.id)
         .order('position', { ascending: true })
     );
+    const [workspaceName, { data: rows }] = await Promise.all([
+      workspaceNamePromise,
+      playlistSongsPromise,
+    ]);
     const ordered = rows ?? [];
     const songIds = ordered.map((r) => r.song_id);
 
@@ -126,18 +186,12 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
       for (const s of songs ?? []) songMeta.set(s.id, { title: s.title ?? 'Untitled', image_url: s.image_url ?? null });
     }
 
-    // Latest version per song (per-song; reliable, not subject to a combined row limit).
-    const latestBySong = new Map<string, string | null>();
+    // Paginated combined read avoids one request per song without restoring the
+    // response-row truncation that previously dropped newer playlist tracks.
     const scopedSongIds = songIds.filter((songId) => songMeta.has(songId));
-    await timing.measure(
+    const { latestBySong, requestCount: versionQueryCount } = await timing.measure(
       'versions',
-      () => Promise.all(
-        scopedSongIds.map(async (songId) => {
-          const { data: version, error: versionError } = await getLatestPlayableVersion(songId);
-          if (versionError) throw versionError;
-          latestBySong.set(songId, version?.file_path ?? null);
-        })
-      )
+      () => getLatestPlayableVersions(scopedSongIds)
     );
 
     const tracks = ordered
@@ -159,7 +213,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
       {
         playlistSongCount: ordered.length,
         scopedSongCount: scopedSongIds.length,
-        versionQueryCount: scopedSongIds.length,
+        versionQueryCount,
         trackCount: tracks.length,
       }
     );

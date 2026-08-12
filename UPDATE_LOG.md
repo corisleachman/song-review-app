@@ -4173,4 +4173,32 @@ Stage 4 baseline instrumentation for the public playlist API.
 - Preview logs now report playlist lookup, workspace lookup, ordered membership, scoped songs, and latest-version stage durations.
 - Logs contain only response status, anonymous request timing, and record/query counts. Public identifiers and content are excluded.
 - Playlist authorization, track order, pending-upload filtering, storage URLs, and fallback behavior are unchanged.
+- The user's cold and warm public playlist checks both retained three ordered, playable tracks.
+- Baseline responses took 1,240 ms and 1,409 ms. Each used three latest-version requests and spent 319 ms in that stage.
+- No database schema, permission rule, cache policy, or production configuration was changed.
+
+---
+
+## 2026-08-12 - Public playlist query consolidation
+
+### What we were trying to achieve
+
+Reduce public playlist database requests without restoring the earlier response-row truncation that caused a newest track to disappear.
+
+### Feature / change being made
+
+Measured Stage 4 performance batch for the public playlist API.
+
+### Files changed
+
+- `app/api/public/playlist/[id]/route.ts`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Latest playable versions now load through one combined query for ordinary playlists instead of one query per song.
+- Version results paginate in 500-row pages and long song-ID lists split into bounded batches, so playlists with extensive version history do not depend on the server response row limit.
+- Workspace-name and ordered playlist-membership reads now overlap after the playlist's public status has passed validation.
+- Pending-upload filtering, missing-column fallback, cross-workspace song filtering, track order, and storage URL behavior are preserved.
 - No database schema, permission rule, cache policy, or production configuration was changed.
