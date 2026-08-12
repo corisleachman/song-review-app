@@ -4059,4 +4059,6 @@ Third measured Stage 4 performance batch for the authenticated dashboard query p
 - The dashboard no longer performs a separate thread query after loading versions.
 - Comments remain a separate, workspace-constrained lookup using only thread IDs returned with finalized versions.
 - The previous trace showed that the removed thread stage cost 310 ms.
+- The preview response retained four songs, five versions, two threads, and three comments, with no separate `threads` timing stage.
+- On latency-matched samples, the whole dashboard route fell from 2,236 ms to 1,980 ms, an 11% reduction, while identity timing stayed within 10 ms.
 - No database schema, permission rule, cache scope, or production configuration was changed.

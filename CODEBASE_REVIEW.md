@@ -52,9 +52,9 @@ The cold dashboard trace at 13:33:41 UTC used anonymous trace `94bee373-a5f4-458
 - User impact: Database round trips accumulate even though only four songs, five versions, two threads, and three comments were returned.
 - Recommended fix: Avoid loading the full workspace directory when the initial dashboard needs names only for assigned actions. Continue reducing dependent comment query waves after measuring that change.
 - Fix risk: Medium. Activity, action, version, and workspace boundaries must stay intact.
-- Status: Partially implemented and measured. The member-query reduction is verified. A third batch now embeds threads in the existing finalized-version query, removing the separate thread request while preserving the later comments lookup.
-- Verification: The member batch passed targeted lint, TypeScript, production build, both Vercel checks, preview deployment, and an authenticated zero-action response. The embedded-thread batch passes targeted lint and TypeScript locally; preview verification is pending. The assigned-action name path still needs a staging regression.
-- Before and after: On comparable samples where other database stages were about 300 ms, `related` fell from 606 ms to 360 ms, a 41% reduction. The separate `threads` stage still cost 310 ms in that after trace and is the target of the current batch.
+- Status: Partially implemented and measured. The member-query reduction and embedded-thread read are verified. Comments remain the final sequential dashboard data request.
+- Verification: Targeted lint, TypeScript, production builds, Vercel checks, preview deployments, and authenticated responses passed. The combined version/thread response retained four songs, five versions, two threads, and three comments, with no separate `threads` stage. The assigned-action name path still needs a staging regression.
+- Before and after: The member batch reduced a comparable `related` stage from 606 ms to 360 ms, or 41%. Embedding threads then reduced a comparable whole dashboard route from 2,236 ms to 1,980 ms, or 11%, while identity time stayed within 10 ms. The removed `threads` stage had cost 310 ms; the larger embedded `related` query absorbed about 43 ms of that work.
 
 ### PERF-004: Public playlist latest-version lookup scales with song count
 
