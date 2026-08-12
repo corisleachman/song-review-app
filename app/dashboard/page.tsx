@@ -117,6 +117,7 @@ interface CachedDashboardSongs {
 interface DashboardPerformanceTrace {
   id: string;
   startedAt: number;
+  bypassCache: boolean;
 }
 
 const DASHBOARD_CACHE_TTL_MS = 5 * 60 * 1000;
@@ -130,6 +131,7 @@ function createDashboardPerformanceTrace(): DashboardPerformanceTrace | null {
       ? window.crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
     startedAt: performance.now(),
+    bypassCache: new URLSearchParams(window.location.search).get('cache') === 'skip',
   };
 }
 
@@ -144,6 +146,7 @@ function logDashboardPerformance(
     traceId: trace.id,
     event,
     elapsedMs: Math.round((performance.now() - trace.startedAt) * 10) / 10,
+    cacheBypassed: trace.bypassCache,
     ...details,
   }));
 }
@@ -469,7 +472,7 @@ function DashboardContent() {
 
     // Stale-while-revalidate: show cached songs instantly, fetch fresh in background
     const cacheKey = currentIdentity ? getSongCacheKey(currentIdentity, currentWorkspaceId) : null;
-    const cached = cacheKey && typeof window !== 'undefined'
+    const cached = !performanceTrace?.bypassCache && cacheKey && typeof window !== 'undefined'
       ? window.localStorage.getItem(cacheKey)
       : null;
 

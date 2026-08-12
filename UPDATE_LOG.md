@@ -3975,4 +3975,5 @@ Preview-safe request timing for authentication, workspace bootstrap, dashboard q
 - Added `Server-Timing` headers to the authenticated bootstrap and dashboard endpoints.
 - Preview logs report only timing stages, response status, request identifiers, and record counts. They do not include user IDs, emails, workspace IDs, song titles, or comment text.
 - Dashboard visits with `?perf=1` use one anonymous trace identifier across bootstrap and dashboard requests and log when songs become visible.
-- Query order, caching, authorization, database schema, and production configuration are unchanged.
+- Adding `cache=skip` to the trace URL bypasses the dashboard's local read cache for one cold-load measurement without deleting browser data; the fresh response still seeds the next warm run.
+- Normal dashboard query order and caching are unchanged. Authorization, database schema, and production configuration are also unchanged.
