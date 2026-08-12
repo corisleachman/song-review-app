@@ -65,9 +65,9 @@ The cold dashboard trace at 13:33:41 UTC used anonymous trace `94bee373-a5f4-458
 - User impact: Larger public playlists create more database traffic and can become slower or less reliable under load.
 - Recommended fix: Replace the per-song lookups with a paginated, workspace-constrained version read that preserves pending-upload filtering and song order without relying on the server response row limit.
 - Fix risk: Medium. A combined limit or incorrect grouping could select the wrong version or expose a cross-workspace song.
-- Status: Baseline measured. The paginated combined version read and independent metadata-read overlap are in local verification.
-- Verification: The user's cold and warm public playlist checks retained three ordered, playable tracks. The original combined read previously dropped a newest track after hitting the response row limit, so the replacement paginates in 500-row pages and batches long song-ID lists.
-- Before and after: The two baseline responses took 1,240 ms and 1,409 ms. Each made three latest-version requests and spent 319 ms in that stage. The optimized result is not yet measured.
+- Status: Implemented and measured. The route now uses a paginated combined version read and overlaps independent workspace-name and ordered-membership reads.
+- Verification: Targeted lint, TypeScript, production build, both Vercel checks, preview deployment, direct API verification, and the user's first/last-track playback check passed. All three tracks remained present and ordered. The replacement paginates in 500-row pages and batches long song-ID lists.
+- Before and after: The two baseline responses took 1,240 ms and 1,409 ms and made three latest-version requests. The verified optimized response took 1,278 ms and made one version request, a 67% query-count reduction and about 9% response-time reduction against the comparable 1,409 ms sample. Similar per-query latency limited the end-to-end change on this three-track playlist.
 
 ## Console observations
 
@@ -80,4 +80,4 @@ The cold dashboard trace at 13:33:41 UTC used anonymous trace `94bee373-a5f4-458
 - Stage 2 functional safety checks: passed, including collaboration notifications and workspace access separation.
 - Stage 3 baseline: captured for public routes and the authenticated dashboard request chain. Authenticated song/version journey timings still need to be captured during later batches.
 - Stage 4 fixes: account bootstrap, active-workspace identity, all four dashboard query batches, and single-request dashboard initialization are implemented and measured. The public-playlist query pattern is next; the assigned-action name path still needs a data-backed regression check.
-- Stage 5 regression and production readiness: not started.
+- Stage 5 regression and production readiness: in progress. Public playlist playback passed after query consolidation; the wider code, security, dependency, accessibility, responsive, and rollout audit remains.

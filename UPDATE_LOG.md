@@ -4201,4 +4201,7 @@ Measured Stage 4 performance batch for the public playlist API.
 - Version results paginate in 500-row pages and long song-ID lists split into bounded batches, so playlists with extensive version history do not depend on the server response row limit.
 - Workspace-name and ordered playlist-membership reads now overlap after the playlist's public status has passed validation.
 - Pending-upload filtering, missing-column fallback, cross-workspace song filtering, track order, and storage URL behavior are preserved.
+- Direct preview verification returned the same three ordered tracks with one version query instead of three.
+- The verified response took 1,278 ms versus the comparable 1,409 ms baseline, about 9% faster. Latest-version query count fell 67%.
+- The user's public-player check confirmed that the first and last tracks both play.
 - No database schema, permission rule, cache policy, or production configuration was changed.
