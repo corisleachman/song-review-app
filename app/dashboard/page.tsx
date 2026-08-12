@@ -73,7 +73,7 @@ interface BootstrapPayload {
   };
 }
 
-interface DashboardSongsPayload {
+interface DashboardSongsPayload extends BootstrapPayload {
   songs: Array<{
     id: string;
     title: string;
@@ -285,19 +285,20 @@ function DashboardContent() {
       const performanceTrace = createDashboardPerformanceTrace();
 
       try {
-        logDashboardPerformance(performanceTrace, 'bootstrap-start');
-        const response = await fetch('/api/auth/bootstrap', {
+        logDashboardPerformance(performanceTrace, 'dashboard-request-start');
+        const response = await fetch('/api/dashboard', {
+          cache: 'no-store',
           headers: performanceTrace
             ? { 'x-song-room-performance-trace': performanceTrace.id }
             : undefined,
         });
-        logDashboardPerformance(performanceTrace, 'bootstrap-finish', {
+        logDashboardPerformance(performanceTrace, 'dashboard-request-finish', {
           status: response.status,
           serverTiming: response.headers.get('server-timing'),
         });
+        const payload = await response.json().catch(() => null) as DashboardSongsPayload | null;
 
-        if (response.ok) {
-          const payload = await response.json() as BootstrapPayload;
+        if (response.ok && payload && Array.isArray(payload.songs)) {
           if (!mounted) return;
 
           setIdentity(payload.identity.authorName || payload.identity.displayName || 'U');
@@ -309,7 +310,12 @@ function DashboardContent() {
           setWorkspaceImageUrl(payload.identity.workspaceImageUrl ?? null);
           setMembershipRole(payload.identity.membershipRole);
           setBootstrapError(null);
-          await loadAll(payload.identity.userId, payload.identity.workspaceId, performanceTrace);
+          await loadAll(
+            payload.identity.userId,
+            payload.identity.workspaceId,
+            performanceTrace,
+            payload
+          );
           return;
         }
 
@@ -463,7 +469,8 @@ function DashboardContent() {
   async function loadAll(
     currentIdentity: string | null = viewerKey,
     currentWorkspaceId: string | null = workspaceId,
-    performanceTrace: DashboardPerformanceTrace | null = createDashboardPerformanceTrace()
+    performanceTrace: DashboardPerformanceTrace | null = createDashboardPerformanceTrace(),
+    prefetchedPayload: DashboardSongsPayload | null = null
   ) {
     if (currentIdentity && currentWorkspaceId && typeof window !== 'undefined') {
       window.localStorage.removeItem(`song_review_song_cache_${currentIdentity}`);
@@ -472,7 +479,7 @@ function DashboardContent() {
 
     // Stale-while-revalidate: show cached songs instantly, fetch fresh in background
     const cacheKey = currentIdentity ? getSongCacheKey(currentIdentity, currentWorkspaceId) : null;
-    const cached = !performanceTrace?.bypassCache && cacheKey && typeof window !== 'undefined'
+    const cached = !prefetchedPayload && !performanceTrace?.bypassCache && cacheKey && typeof window !== 'undefined'
       ? window.localStorage.getItem(cacheKey)
       : null;
 
@@ -498,7 +505,14 @@ function DashboardContent() {
 
     // No cache — show loading, fetch fresh
     setLoading(true);
-    await loadSongs(currentIdentity, currentWorkspaceId, undefined, cacheKey, performanceTrace);
+    await loadSongs(
+      currentIdentity,
+      currentWorkspaceId,
+      undefined,
+      cacheKey,
+      performanceTrace,
+      prefetchedPayload
+    );
     setLoading(false);
     logDashboardVisible(performanceTrace, 'network');
   }
@@ -508,22 +522,32 @@ function DashboardContent() {
     currentWorkspaceId: string | null = workspaceId,
     endpoint = '/api/dashboard',
     cacheKey: string | null = null,
-    performanceTrace: DashboardPerformanceTrace | null = null
+    performanceTrace: DashboardPerformanceTrace | null = null,
+    prefetchedPayload: DashboardSongsPayload | null = null
   ) {
-    logDashboardPerformance(performanceTrace, 'dashboard-request-start');
-    const response = await fetch(endpoint, {
-      cache: 'no-store',
-      headers: performanceTrace
-        ? { 'x-song-room-performance-trace': performanceTrace.id }
-        : undefined,
-    });
-    logDashboardPerformance(performanceTrace, 'dashboard-request-finish', {
-      status: response.status,
-      serverTiming: response.headers.get('server-timing'),
-    });
-    const payload = await response.json().catch(() => null) as DashboardSongsPayload | null;
+    let payload = prefetchedPayload;
 
-    if (!response.ok || !Array.isArray(payload?.songs)) {
+    if (!payload) {
+      logDashboardPerformance(performanceTrace, 'dashboard-request-start');
+      const response = await fetch(endpoint, {
+        cache: 'no-store',
+        headers: performanceTrace
+          ? { 'x-song-room-performance-trace': performanceTrace.id }
+          : undefined,
+      });
+      logDashboardPerformance(performanceTrace, 'dashboard-request-finish', {
+        status: response.status,
+        serverTiming: response.headers.get('server-timing'),
+      });
+      payload = await response.json().catch(() => null) as DashboardSongsPayload | null;
+
+      if (!response.ok) {
+        console.error('Dashboard songs load error:', payload);
+        return false;
+      }
+    }
+
+    if (!Array.isArray(payload?.songs)) {
       console.error('Dashboard songs load error:', payload);
       return false;
     }

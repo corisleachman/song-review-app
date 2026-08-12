@@ -93,9 +93,15 @@ export async function GET(req: NextRequest) {
     if (songsError) throw songsError;
 
     const songIds = (songs ?? []).map(song => song.id);
+    const dashboardSession = {
+      identity: resolved.identity,
+      workspace: {
+        plan: resolved.bootstrap.workspace.plan,
+      },
+    };
 
     if (songIds.length === 0) {
-      return respond({ songs: [] }, 200, { songCount: 0 });
+      return respond({ ...dashboardSession, songs: [], actions: [] }, 200, { songCount: 0 });
     }
 
     const [{ data: versions, error: versionsError }, { data: actions, error: actionsError }] = await timing.measure(
@@ -421,7 +427,7 @@ export async function GET(req: NextRequest) {
     timing.record('assemble', assemblyStartedAt);
 
     return respond(
-      { songs: dashboardSongs, actions: dashboardActions },
+      { ...dashboardSession, songs: dashboardSongs, actions: dashboardActions },
       200,
       {
         songCount: dashboardSongs.length,

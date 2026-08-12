@@ -4091,3 +4091,30 @@ Fourth measured Stage 4 performance batch for the authenticated dashboard query 
 - The comparable post-identity dashboard data path fell from about 1,027 ms to 617 ms, a 40% reduction. The whole route reached 1,366 ms in that sample, but identity variability means the data-path comparison is the reliable result.
 - The user's cold dashboard check passed, and the preview runtime error scan remained clean.
 - No database schema, permission rule, cache scope, or production configuration was changed.
+
+---
+
+## 2026-08-12 - Single-request dashboard initialization
+
+### What we were trying to achieve
+
+Remove the repeated authenticated identity and account-bootstrap work from the initial dashboard journey without racing first-account creation or weakening workspace validation.
+
+### Feature / change being made
+
+Fifth measured Stage 4 performance batch for the authenticated dashboard request path.
+
+### Files changed
+
+- `app/api/dashboard/route.ts`
+- `app/dashboard/page.tsx`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The authorized dashboard response now includes the canonical identity and workspace plan it already resolved.
+- Initial dashboard loading uses that one response for session state and dashboard content instead of calling `/api/auth/bootstrap` and then `/api/dashboard` in series.
+- First-account creation remains inside one canonical server request, so the unsafe parallel-request race is not introduced.
+- Focus refreshes and other authenticated screens keep their existing behavior.
+- No database schema, permission rule, cache scope, or production configuration was changed.

@@ -31,9 +31,9 @@ The cold dashboard trace at 13:33:41 UTC used anonymous trace `94bee373-a5f4-458
 - User impact: A routine dashboard visit waits for two authenticated server operations in series before fresh songs can appear.
 - Recommended fix: Reduce the repeated canonical identity cost first. Then test a combined or safely coordinated response that cannot race first-account creation and does not weaken workspace validation.
 - Fix risk: Starting both current routes together can create two initial workspaces during a first-ever login. A combined response can also delay the existing workspace-scoped warm cache if implemented carelessly.
-- Status: Partially implemented. The shared bootstrap now overlaps independent profile and membership work. The client request waterfall remains.
-- Verification: Targeted lint, TypeScript, production build, preview deployment, and authenticated 200 responses passed. The first-login creation path was preserved in code but was not exercised with a new account.
-- Before and after: Before was 2,349 ms for the cold request chain. After traces ranged from 2,124 to 4,146 ms, so no stable whole-page percentage is claimed. The client request waterfall remains the larger problem.
+- Status: The account-bootstrap overlap is verified. A fifth batch now returns canonical identity with the authorized dashboard payload, removing the initial client request waterfall without starting competing account-bootstrap requests.
+- Verification: The earlier bootstrap change passed targeted lint, TypeScript, production build, preview deployment, and authenticated 200 responses. The single-request client change is in local verification. The first-login creation path remains ordered inside one request but has not been exercised with a new account.
+- Before and after: Before was 2,349 ms for the cold request chain. Bootstrap-concurrency traces ranged from 2,124 to 4,146 ms, so no stable whole-page percentage is claimed for that batch. The single-request result is not yet measured.
 
 ### PERF-002: Repeated and sequential account bootstrap work
 
