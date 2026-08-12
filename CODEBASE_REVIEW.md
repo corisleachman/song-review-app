@@ -65,8 +65,8 @@ The cold dashboard trace at 13:33:41 UTC used anonymous trace `94bee373-a5f4-458
 - User impact: Larger public playlists create more database traffic and can become slower or less reliable under load.
 - Recommended fix: Replace the per-song lookups with one workspace-constrained latest-version query that preserves pending-upload filtering and song order.
 - Fix risk: Medium. A combined limit or incorrect grouping could select the wrong version or expose a cross-workspace song.
-- Status: Open.
-- Verification: Static data-flow review confirmed the per-song query pattern. No fix measured yet.
+- Status: Open. Privacy-safe route timing is in local verification so the current per-song query wave can be measured before replacement.
+- Verification: Static data-flow review confirmed the per-song query pattern. The original combined read previously dropped a newest track after hitting the response row limit, so that implementation must not be restored. No fix measured yet.
 - Before and after: Warm public playlist content readiness is 1,470 ms. No fix measured yet.
 
 ## Console observations

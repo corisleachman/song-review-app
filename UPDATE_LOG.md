@@ -4149,3 +4149,28 @@ Sixth measured Stage 4 performance batch for authenticated workspace bootstrap.
 - On that cold active-workspace trace, identity fell from 1,063 ms to 652 ms, a 39% reduction, and the full dashboard response fell from 1,750 ms to 1,188 ms, a 32% reduction.
 - Warm samples remain variable because one concurrent Supabase read sometimes queues, so this is recorded as a cold-path improvement rather than a universal response-time percentage.
 - No database schema, permission rule, cookie format, or production configuration was changed.
+
+---
+
+## 2026-08-12 - Public playlist performance instrumentation
+
+### What we were trying to achieve
+
+Measure the public playlist's per-song latest-version query wave before replacing it, without logging public IDs, titles, or song names.
+
+### Feature / change being made
+
+Stage 4 baseline instrumentation for the public playlist API.
+
+### Files changed
+
+- `app/api/public/playlist/[id]/route.ts`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Preview logs now report playlist lookup, workspace lookup, ordered membership, scoped songs, and latest-version stage durations.
+- Logs contain only response status, anonymous request timing, and record/query counts. Public identifiers and content are excluded.
+- Playlist authorization, track order, pending-upload filtering, storage URLs, and fallback behavior are unchanged.
+- No database schema, permission rule, cache policy, or production configuration was changed.
