@@ -114,7 +114,52 @@ interface CachedDashboardSongs {
   songs: Song[];
 }
 
+interface DashboardPerformanceTrace {
+  id: string;
+  startedAt: number;
+}
+
 const DASHBOARD_CACHE_TTL_MS = 5 * 60 * 1000;
+
+function createDashboardPerformanceTrace(): DashboardPerformanceTrace | null {
+  if (typeof window === 'undefined') return null;
+  if (new URLSearchParams(window.location.search).get('perf') !== '1') return null;
+
+  return {
+    id: typeof window.crypto?.randomUUID === 'function'
+      ? window.crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    startedAt: performance.now(),
+  };
+}
+
+function logDashboardPerformance(
+  trace: DashboardPerformanceTrace | null,
+  event: string,
+  details: Record<string, number | string | boolean | null> = {}
+) {
+  if (!trace) return;
+
+  console.info('[dashboard-performance]', JSON.stringify({
+    traceId: trace.id,
+    event,
+    elapsedMs: Math.round((performance.now() - trace.startedAt) * 10) / 10,
+    ...details,
+  }));
+}
+
+function logDashboardVisible(
+  trace: DashboardPerformanceTrace | null,
+  source: 'cache' | 'network'
+) {
+  if (!trace) return;
+
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      logDashboardPerformance(trace, 'songs-visible', { source });
+    });
+  });
+}
 
 function getWorkspaceScope(viewerKey: string, workspaceId: string | null) {
   return `${viewerKey}:${workspaceId ?? 'legacy'}`;
@@ -234,8 +279,19 @@ function DashboardContent() {
     let mounted = true;
 
     async function initializeDashboard() {
+      const performanceTrace = createDashboardPerformanceTrace();
+
       try {
-        const response = await fetch('/api/auth/bootstrap');
+        logDashboardPerformance(performanceTrace, 'bootstrap-start');
+        const response = await fetch('/api/auth/bootstrap', {
+          headers: performanceTrace
+            ? { 'x-song-room-performance-trace': performanceTrace.id }
+            : undefined,
+        });
+        logDashboardPerformance(performanceTrace, 'bootstrap-finish', {
+          status: response.status,
+          serverTiming: response.headers.get('server-timing'),
+        });
 
         if (response.ok) {
           const payload = await response.json() as BootstrapPayload;
@@ -250,7 +306,7 @@ function DashboardContent() {
           setWorkspaceImageUrl(payload.identity.workspaceImageUrl ?? null);
           setMembershipRole(payload.identity.membershipRole);
           setBootstrapError(null);
-          await loadAll(payload.identity.userId, payload.identity.workspaceId);
+          await loadAll(payload.identity.userId, payload.identity.workspaceId, performanceTrace);
           return;
         }
 
@@ -403,7 +459,8 @@ function DashboardContent() {
 
   async function loadAll(
     currentIdentity: string | null = viewerKey,
-    currentWorkspaceId: string | null = workspaceId
+    currentWorkspaceId: string | null = workspaceId,
+    performanceTrace: DashboardPerformanceTrace | null = createDashboardPerformanceTrace()
   ) {
     if (currentIdentity && currentWorkspaceId && typeof window !== 'undefined') {
       window.localStorage.removeItem(`song_review_song_cache_${currentIdentity}`);
@@ -425,8 +482,9 @@ function DashboardContent() {
         if (isFresh && Array.isArray(cachedPayload.songs) && cachedPayload.songs.length > 0) {
           setSongs(cachedPayload.songs);
           setLoading(false); // show cached songs immediately
+          logDashboardVisible(performanceTrace, 'cache');
           // Fetch fresh in background — no loading spinner
-          void loadSongs(currentIdentity, currentWorkspaceId, undefined, cacheKey);
+          void loadSongs(currentIdentity, currentWorkspaceId, undefined, cacheKey, performanceTrace);
           return;
         }
         if (cacheKey) window.localStorage.removeItem(cacheKey);
@@ -437,17 +495,29 @@ function DashboardContent() {
 
     // No cache — show loading, fetch fresh
     setLoading(true);
-    await loadSongs(currentIdentity, currentWorkspaceId, undefined, cacheKey);
+    await loadSongs(currentIdentity, currentWorkspaceId, undefined, cacheKey, performanceTrace);
     setLoading(false);
+    logDashboardVisible(performanceTrace, 'network');
   }
 
   async function loadSongs(
     currentIdentity: string | null = viewerKey,
     currentWorkspaceId: string | null = workspaceId,
     endpoint = '/api/dashboard',
-    cacheKey: string | null = null
+    cacheKey: string | null = null,
+    performanceTrace: DashboardPerformanceTrace | null = null
   ) {
-    const response = await fetch(endpoint, { cache: 'no-store' });
+    logDashboardPerformance(performanceTrace, 'dashboard-request-start');
+    const response = await fetch(endpoint, {
+      cache: 'no-store',
+      headers: performanceTrace
+        ? { 'x-song-room-performance-trace': performanceTrace.id }
+        : undefined,
+    });
+    logDashboardPerformance(performanceTrace, 'dashboard-request-finish', {
+      status: response.status,
+      serverTiming: response.headers.get('server-timing'),
+    });
     const payload = await response.json().catch(() => null) as DashboardSongsPayload | null;
 
     if (!response.ok || !Array.isArray(payload?.songs)) {

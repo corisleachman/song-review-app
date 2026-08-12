@@ -1,5 +1,6 @@
 import { bootstrapAccountForUser, type BootstrapResult } from '@/lib/bootstrapAccount';
 import { getCurrentAuthenticatedUser } from '@/lib/currentUser';
+import { RequestTiming } from '@/lib/requestTiming';
 
 export interface CanonicalIdentity {
   userId: string;
@@ -67,12 +68,16 @@ export function buildCanonicalIdentity(bootstrap: BootstrapResult): CanonicalIde
   };
 }
 
-export async function resolveCanonicalIdentity() {
-  const user = await getCurrentAuthenticatedUser();
+export async function resolveCanonicalIdentity(timing?: RequestTiming) {
+  const user = timing
+    ? await timing.measure('auth-user', getCurrentAuthenticatedUser)
+    : await getCurrentAuthenticatedUser();
 
   if (!user) return null;
 
-  const bootstrap = await bootstrapAccountForUser(user);
+  const bootstrap = timing
+    ? await timing.measure('account-bootstrap', () => bootstrapAccountForUser(user, timing))
+    : await bootstrapAccountForUser(user);
 
   return {
     bootstrap,

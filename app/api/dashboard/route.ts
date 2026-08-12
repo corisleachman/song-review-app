@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { normalizeActionStatus, isOpenAction } from '@/lib/actionWorkflow';
@@ -8,6 +8,7 @@ import { normalizeSongStatus } from '@/lib/songWorkflow';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { getVersionDisplayLabel } from '@/lib/versionDisplay';
 import { listWorkspaceMembers } from '@/lib/workspaceMembers';
+import { RequestTiming } from '@/lib/requestTiming';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -52,67 +53,88 @@ function matchesActorName(author: string | null | undefined, actorNames: Set<str
   return normalized ? actorNames.has(normalized) : false;
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const timing = new RequestTiming();
+
+  function respond(
+    body: unknown,
+    status: number,
+    details: Record<string, number | string | boolean | null> = {}
+  ) {
+    const response = timing.attach(NextResponse.json(body, {
+      status,
+      headers: { 'Cache-Control': 'no-store, max-age=0' },
+    }));
+    timing.logPreview('/api/dashboard', req, status, details);
+    return response;
+  }
+
   try {
     noStore();
 
-    const resolved = await resolveCanonicalIdentity();
+    const resolved = await timing.measure(
+      'identity',
+      () => resolveCanonicalIdentity(timing)
+    );
 
     if (!resolved) {
-      return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+      return respond({ error: 'Unauthenticated' }, 401);
     }
 
-    const { data: songs, error: songsError } = await supabaseServer
-      .from('songs')
-      .select('id, title, image_url, created_at, status')
-      .eq('account_id', resolved.identity.workspaceId)
-      .order('created_at', { ascending: false });
+    const { data: songs, error: songsError } = await timing.measure(
+      'songs',
+      async () => await supabaseServer
+        .from('songs')
+        .select('id, title, image_url, created_at, status')
+        .eq('account_id', resolved.identity.workspaceId)
+        .order('created_at', { ascending: false })
+    );
 
     if (songsError) throw songsError;
 
     const songIds = (songs ?? []).map(song => song.id);
 
     if (songIds.length === 0) {
-      return NextResponse.json(
-        { songs: [] },
-        { status: 200, headers: { 'Cache-Control': 'no-store, max-age=0' } }
-      );
+      return respond({ songs: [] }, 200, { songCount: 0 });
     }
 
-    const [{ data: versions, error: versionsError }, { data: actions, error: actionsError }, members] = await Promise.all([
-      supabaseServer
-        .from('song_versions')
-        .select('id, song_id, version_number, label, created_at, created_by')
-        .in('song_id', songIds)
-        .not('upload_finalized_at', 'is', null)
-        .order('version_number', { ascending: false }),
-      supabaseServer
-        .from('actions')
-        .select('id, song_id, comment_id, description, suggested_by, status, timestamp_seconds, created_at, updated_at, assigned_to_user_id, resolved_in_version_id')
-        .in('song_id', songIds)
-        .order('created_at', { ascending: false }),
-      listWorkspaceMembers(resolved.identity.workspaceId),
-    ]);
+    const [{ data: versions, error: versionsError }, { data: actions, error: actionsError }, members] = await timing.measure(
+      'related',
+      () => Promise.all([
+        supabaseServer
+          .from('song_versions')
+          .select('id, song_id, version_number, label, created_at, created_by')
+          .in('song_id', songIds)
+          .not('upload_finalized_at', 'is', null)
+          .order('version_number', { ascending: false }),
+        supabaseServer
+          .from('actions')
+          .select('id, song_id, comment_id, description, suggested_by, status, timestamp_seconds, created_at, updated_at, assigned_to_user_id, resolved_in_version_id')
+          .in('song_id', songIds)
+          .order('created_at', { ascending: false }),
+        listWorkspaceMembers(resolved.identity.workspaceId),
+      ])
+    );
 
     if (versionsError) throw versionsError;
     if (actionsError) throw actionsError;
 
     const versionIds = Array.from(new Set((versions ?? []).map(version => version.id)));
     const { data: threads, error: threadsError } = versionIds.length
-      ? await supabaseServer
+      ? await timing.measure('threads', async () => await supabaseServer
           .from('comment_threads')
           .select('id, song_version_id, timestamp_seconds, created_at, updated_at, created_by')
-          .in('song_version_id', versionIds)
+          .in('song_version_id', versionIds))
       : { data: [], error: null };
 
     if (threadsError) throw threadsError;
 
     const threadIds = Array.from(new Set((threads ?? []).map(thread => thread.id)));
     const { data: comments, error: commentsError } = threadIds.length
-      ? await supabaseServer
+      ? await timing.measure('comments', async () => await supabaseServer
           .from('comments')
           .select('id, thread_id, author, body, created_at')
-          .in('thread_id', threadIds)
+          .in('thread_id', threadIds))
       : { data: [], error: null };
 
     if (commentsError) throw commentsError;
@@ -204,6 +226,7 @@ export async function GET() {
       currentMember?.email?.split('@')[0] ?? '',
     ].map(value => value.trim().toLowerCase()).filter(Boolean));
 
+    const assemblyStartedAt = performance.now();
     const dashboardSongs = (songs ?? []).map(song => {
       const songVersions = versionsBySongId.get(song.id) ?? [];
       const latest = songVersions[0] ?? null;
@@ -382,13 +405,21 @@ export async function GET() {
           })()
         : null,
     }));
+    timing.record('assemble', assemblyStartedAt);
 
-    return NextResponse.json(
+    return respond(
       { songs: dashboardSongs, actions: dashboardActions },
-      { status: 200, headers: { 'Cache-Control': 'no-store, max-age=0' } }
+      200,
+      {
+        songCount: dashboardSongs.length,
+        versionCount: versions?.length ?? 0,
+        actionCount: dashboardActions.length,
+        threadCount: threads?.length ?? 0,
+        commentCount: comments?.length ?? 0,
+      }
     );
   } catch (error) {
     console.error('Error loading dashboard data:', error);
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    return respond({ error: getErrorMessage(error) }, 500);
   }
 }

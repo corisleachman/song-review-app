@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
+import { RequestTiming } from '@/lib/requestTiming';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -17,11 +18,22 @@ function buildReturnUrl(request: NextRequest, next: string | null) {
 }
 
 export async function GET(req: NextRequest) {
+  const timing = new RequestTiming();
+
+  function respond(body: unknown, status: number) {
+    const response = timing.attach(NextResponse.json(body, { status }));
+    timing.logPreview('/api/auth/bootstrap', req, status);
+    return response;
+  }
+
   try {
     noStore();
     const next = req.nextUrl.searchParams.get('next');
     const shouldRedirect = req.nextUrl.searchParams.get('redirect') === '1';
-    const resolved = await resolveCanonicalIdentity();
+    const resolved = await timing.measure(
+      'identity',
+      () => resolveCanonicalIdentity(timing)
+    );
 
     if (!resolved) {
       if (shouldRedirect) {
@@ -34,17 +46,17 @@ export async function GET(req: NextRequest) {
         return NextResponse.redirect(url);
       }
 
-      return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+      return respond({ error: 'Unauthenticated' }, 401);
     }
 
     if (shouldRedirect) {
       return NextResponse.redirect(buildReturnUrl(req, next));
     }
 
-    return NextResponse.json({
+    return respond({
       ...resolved.bootstrap,
       identity: resolved.identity,
-    });
+    }, 200);
   } catch (error) {
     console.error('Auth bootstrap error:', error);
 
@@ -59,9 +71,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    return NextResponse.json(
-      { error: 'Could not load the authenticated session.' },
-      { status: 500 }
-    );
+    return respond({ error: 'Could not load the authenticated session.' }, 500);
   }
 }

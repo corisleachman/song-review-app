@@ -3,6 +3,7 @@ import { attributeReferralOnSignup, REFERRAL_COOKIE_NAME } from '@/lib/referrals
 import type { AuthenticatedUser } from '@/lib/currentUser';
 import { normalizeAccountPlan, isMissingPlanColumnError, type AccountPlan } from '@/lib/plans';
 import { findValidActiveWorkspaceMembership, readActiveWorkspaceCookie } from '@/lib/activeWorkspace';
+import { RequestTiming } from '@/lib/requestTiming';
 
 interface ProfileRecord {
   id: string;
@@ -132,7 +133,10 @@ async function loadWorkspace(accountId: string): Promise<WorkspaceRecord> {
   };
 }
 
-export async function bootstrapAccountForUser(user: AuthenticatedUser): Promise<BootstrapResult> {
+export async function bootstrapAccountForUser(
+  user: AuthenticatedUser,
+  timing?: RequestTiming
+): Promise<BootstrapResult> {
   const profilePayload: Record<string, unknown> = {
     id: user.id,
     email: user.email,
@@ -144,25 +148,45 @@ export async function bootstrapAccountForUser(user: AuthenticatedUser): Promise<
     profilePayload.avatar_url = user.avatarUrl;
   }
 
-  const { data: profile, error: profileError } = await supabaseServer
-    .from('profiles')
-    .upsert(profilePayload, { onConflict: 'id' })
-    .select('id, email, display_name, created_at, updated_at')
-    .single();
+  const { data: profile, error: profileError } = timing
+    ? await timing.measure('profile', async () => await supabaseServer
+        .from('profiles')
+        .upsert(profilePayload, { onConflict: 'id' })
+        .select('id, email, display_name, created_at, updated_at')
+        .single())
+    : await supabaseServer
+        .from('profiles')
+        .upsert(profilePayload, { onConflict: 'id' })
+        .select('id, email, display_name, created_at, updated_at')
+        .single();
 
   if (profileError) throw profileError;
 
-  const activeWorkspaceId = await readActiveWorkspaceCookie();
+  const activeWorkspaceId = timing
+    ? await timing.measure('workspace-cookie', readActiveWorkspaceCookie)
+    : await readActiveWorkspaceCookie();
   const activeWorkspaceMembership = activeWorkspaceId
-    ? await findValidActiveWorkspaceMembership(user.id, activeWorkspaceId)
+    ? timing
+      ? await timing.measure(
+          'active-membership',
+          () => findValidActiveWorkspaceMembership(user.id, activeWorkspaceId)
+        )
+      : await findValidActiveWorkspaceMembership(user.id, activeWorkspaceId)
     : null;
 
-  const { data: existingMemberships, error: membershipLookupError } = await supabaseServer
-    .from('account_members')
-    .select('account_id, user_id, role, joined_at')
-    .eq('user_id', user.id)
-    .order('joined_at', { ascending: true })
-    .returns<MembershipRecord[]>();
+  const { data: existingMemberships, error: membershipLookupError } = timing
+    ? await timing.measure('memberships', async () => await supabaseServer
+        .from('account_members')
+        .select('account_id, user_id, role, joined_at')
+        .eq('user_id', user.id)
+        .order('joined_at', { ascending: true })
+        .returns<MembershipRecord[]>())
+    : await supabaseServer
+        .from('account_members')
+        .select('account_id, user_id, role, joined_at')
+        .eq('user_id', user.id)
+        .order('joined_at', { ascending: true })
+        .returns<MembershipRecord[]>();
 
   if (membershipLookupError) throw membershipLookupError;
 
@@ -205,7 +229,9 @@ export async function bootstrapAccountForUser(user: AuthenticatedUser): Promise<
     throw new Error('No workspace membership found for authenticated user.');
   }
 
-  const workspace = await loadWorkspace(membership.account_id);
+  const workspace = timing
+    ? await timing.measure('workspace', () => loadWorkspace(membership.account_id))
+    : await loadWorkspace(membership.account_id);
 
   // ── Referral attribution (best-effort, non-blocking) ───────────────────────
   // Only runs when a brand-new account was just created (first-ever sign-in).

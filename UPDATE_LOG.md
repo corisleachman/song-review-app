@@ -3947,3 +3947,32 @@ The version page now distinguishes a workspace access denial from a temporary lo
 - Replaced the generic loading-failure heading with workspace-specific access copy for 403 responses.
 - Removed the ineffective Retry action from this permission state. Other loading failures retain Retry.
 - Saved the project's design context for future interface work.
+
+---
+
+## 2026-08-12 - Authenticated dashboard performance instrumentation
+
+### What we were trying to achieve
+
+Establish a trustworthy Stage 3 baseline for the slow authenticated dashboard before changing its data flow.
+
+### Feature / change being made
+
+Preview-safe request timing for authentication, workspace bootstrap, dashboard queries, response assembly, and opt-in client readiness measurements.
+
+### Files changed
+
+- `app/api/auth/bootstrap/route.ts`
+- `app/api/dashboard/route.ts`
+- `app/dashboard/page.tsx`
+- `lib/bootstrapAccount.ts`
+- `lib/canonicalIdentity.ts`
+- `lib/requestTiming.ts`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Added `Server-Timing` headers to the authenticated bootstrap and dashboard endpoints.
+- Preview logs report only timing stages, response status, request identifiers, and record counts. They do not include user IDs, emails, workspace IDs, song titles, or comment text.
+- Dashboard visits with `?perf=1` use one anonymous trace identifier across bootstrap and dashboard requests and log when songs become visible.
+- Query order, caching, authorization, database schema, and production configuration are unchanged.
