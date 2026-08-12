@@ -4145,4 +4145,7 @@ Sixth measured Stage 4 performance batch for authenticated workspace bootstrap.
 - When the HTTP-only active-workspace cookie is present, candidate workspace loading now starts alongside membership validation and the existing profile sync.
 - Candidate workspace data is used only after the user's membership in that exact workspace has passed validation.
 - A stale or invalid cookie still falls back to the user's canonical membership selection. First-account creation remains ordered after membership checks.
+- The user's cold four-song dashboard check passed with the same five versions, two threads, and three comments.
+- On that cold active-workspace trace, identity fell from 1,063 ms to 652 ms, a 39% reduction, and the full dashboard response fell from 1,750 ms to 1,188 ms, a 32% reduction.
+- Warm samples remain variable because one concurrent Supabase read sometimes queues, so this is recorded as a cold-path improvement rather than a universal response-time percentage.
 - No database schema, permission rule, cookie format, or production configuration was changed.

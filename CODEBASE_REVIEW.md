@@ -43,9 +43,9 @@ The cold dashboard trace at 13:33:41 UTC used anonymous trace `94bee373-a5f4-458
 - User impact: Every authenticated route pays the canonical identity cost. After the dashboard waterfall fix, it accounted for 1,063 ms of the 1,750 ms cold server response and about 350 ms of warm active-workspace responses.
 - Recommended fix: Use the HTTP-only active-workspace cookie to start the candidate workspace read alongside membership validation, but do not use or return that workspace until membership passes. Keep invalid-cookie fallback and first-account creation ordered.
 - Fix risk: Low to medium. A stale or invalid cookie may cause one discarded workspace read, but must still fall back to the user's valid memberships without exposing candidate workspace data.
-- Status: The profile/membership overlap is implemented and verified. Concurrent active-workspace validation and loading is in local verification.
-- Verification: The first batch passed targeted lint, TypeScript, production build, both Vercel checks, and preview runtime traces. The user's workspace-switch test passed and supplied the active-workspace baseline for this follow-up.
-- Before and after: The first overlap removed 125 to 312 ms of serialized database waiting per canonical identity call in the sampled traces. The active-workspace baseline is 350 ms for identity, including consecutive 117 ms membership and 116 ms workspace stages. The follow-up result is not yet measured.
+- Status: Implemented and measured. Profile sync, active membership validation, and candidate workspace loading now overlap. Candidate workspace data remains gated behind successful membership validation.
+- Verification: Targeted lint, TypeScript, production build, both Vercel checks, preview deployment, runtime error scan, workspace switching, and the user's cold four-song dashboard check passed. The verified response retained four songs, five versions, two threads, and three comments.
+- Before and after: The first overlap removed 125 to 312 ms of serialized database waiting per canonical identity call. On the verified cold active-workspace trace, identity fell from 1,063 ms to 652 ms, a 39% reduction, and the full dashboard response fell from 1,750 ms to 1,188 ms, a 32% reduction. Warm traces are more variable because one concurrent Supabase read sometimes queues, so no universal warm percentage is claimed.
 
 ### PERF-003: Dashboard data is assembled in multiple dependent query waves
 
@@ -79,5 +79,5 @@ The cold dashboard trace at 13:33:41 UTC used anonymous trace `94bee373-a5f4-458
 - Stage 1 foundation checks: passed.
 - Stage 2 functional safety checks: passed, including collaboration notifications and workspace access separation.
 - Stage 3 baseline: captured for public routes and the authenticated dashboard request chain. Authenticated song/version journey timings still need to be captured during later batches.
-- Stage 4 fixes: account bootstrap, all four dashboard query batches, and single-request dashboard initialization are implemented and measured. Active-workspace identity remains the next measured target; the assigned-action name path still needs a data-backed regression check.
+- Stage 4 fixes: account bootstrap, active-workspace identity, all four dashboard query batches, and single-request dashboard initialization are implemented and measured. The public-playlist query pattern is next; the assigned-action name path still needs a data-backed regression check.
 - Stage 5 regression and production readiness: not started.
