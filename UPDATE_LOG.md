@@ -4087,4 +4087,7 @@ Fourth measured Stage 4 performance batch for the authenticated dashboard query 
 - The dashboard no longer performs a separate comments query after versions and threads have loaded.
 - Comment and thread IDs still drive the same in-memory action, activity, count, and awaiting-response assembly.
 - The previous comparable trace showed that the removed comments stage cost 313 ms.
+- The deployed preview retained four songs, five versions, two threads, and three comments, with no separate `threads` or `comments` timing stage.
+- The comparable post-identity dashboard data path fell from about 1,027 ms to 617 ms, a 40% reduction. The whole route reached 1,366 ms in that sample, but identity variability means the data-path comparison is the reliable result.
+- The user's cold dashboard check passed, and the preview runtime error scan remained clean.
 - No database schema, permission rule, cache scope, or production configuration was changed.

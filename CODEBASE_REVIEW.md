@@ -13,6 +13,7 @@ Measurements used the protected Vercel preview backed by the staging Supabase br
 | Dashboard | Signed in, local dashboard cache bypassed | 2,349 ms request chain | Bootstrap finished before the dashboard request started |
 | Dashboard after bootstrap concurrency | Signed in, repeated preview visits | 2,124 to 4,146 ms request chain | The targeted database wait fell, but total time remains variable |
 | Dashboard API revalidation | Signed in, three traced requests | 1,637 ms median, 1,308 to 2,383 ms | Server and database work dominate |
+| Dashboard data path after query consolidation | Signed in, same four-song preview workspace | 617 ms after identity | Down from 1,027 ms on the closest comparable trace |
 | Public song | Warm navigation | 697 ms navigation, 1,260 ms until Play was visibly ready | Usable readiness trails navigation |
 | Public playlist | Warm navigation | 1,118 ms navigation, 1,470 ms until content was ready | Server data assembly is the likely next target |
 | Login | Warm navigation | 595 ms | Not a current priority |
@@ -52,9 +53,9 @@ The cold dashboard trace at 13:33:41 UTC used anonymous trace `94bee373-a5f4-458
 - User impact: Database round trips accumulate even though only four songs, five versions, two threads, and three comments were returned.
 - Recommended fix: Avoid loading the full workspace directory when the initial dashboard needs names only for assigned actions. Continue reducing dependent comment query waves after measuring that change.
 - Fix risk: Medium. Activity, action, version, and workspace boundaries must stay intact.
-- Status: Partially implemented and measured. The member-query reduction and embedded-thread read are verified. A fourth batch now embeds comments under those threads, removing the final sequential dashboard data request.
-- Verification: Targeted lint, TypeScript, production builds, Vercel checks, preview deployments, and authenticated responses passed through the version/thread batch. The nested-comment batch passes targeted lint and TypeScript locally; preview verification is pending. The assigned-action name path still needs a staging regression.
-- Before and after: The member batch reduced a comparable `related` stage from 606 ms to 360 ms, or 41%. Embedding threads then reduced a comparable whole dashboard route from 2,236 ms to 1,980 ms, or 11%, while identity time stayed within 10 ms. The removed `threads` stage had cost 310 ms; the larger embedded `related` query absorbed about 43 ms of that work.
+- Status: Implemented and measured for the current zero-action staging workspace. Full member loading is skipped when it is not needed, and finalized versions now carry their threads and comments in one related-data request.
+- Verification: Targeted lint, TypeScript, production builds, both Vercel checks, preview deployments, authenticated responses, and the user's cold dashboard check passed. The final trace retained four songs, five versions, two threads, and three comments. It contained no separate `threads` or `comments` timing stage. The assigned-action name path still needs a staging regression when suitable data is available.
+- Before and after: The member batch reduced a comparable `related` stage from 606 ms to 360 ms, or 41%. Embedding threads then reduced a comparable whole dashboard route from 2,236 ms to 1,980 ms, or 11%, while identity time stayed within 10 ms. After comments were embedded as well, the comparable post-identity data path fell from about 1,027 ms to 617 ms, a 40% reduction. The whole route was 1,366 ms in that sample, but identity variability means the data-path comparison is the reliable result.
 
 ### PERF-004: Public playlist latest-version lookup scales with song count
 
@@ -77,5 +78,5 @@ The cold dashboard trace at 13:33:41 UTC used anonymous trace `94bee373-a5f4-458
 - Stage 1 foundation checks: passed.
 - Stage 2 functional safety checks: passed, including collaboration notifications and workspace access separation.
 - Stage 3 baseline: captured for public routes and the authenticated dashboard request chain. Authenticated song/version journey timings still need to be captured during later batches.
-- Stage 4 fixes: account bootstrap, member lookup, and version/thread batches implemented and measured. The nested-comment dashboard batch is in local verification.
+- Stage 4 fixes: account bootstrap and all four dashboard query batches are implemented and measured. Identity remains the next measured target; the assigned-action name path still needs a data-backed regression check.
 - Stage 5 regression and production readiness: not started.
