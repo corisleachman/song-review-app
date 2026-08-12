@@ -50,11 +50,11 @@ The cold dashboard trace at 13:33:41 UTC used anonymous trace `94bee373-a5f4-458
 - Severity: High
 - Evidence: `app/api/dashboard/route.ts:84-138` loads songs, then versions/actions/members, then threads, then comments. The measured route spent 479 ms on identity, 120 ms on songs, 621 ms on related data, 307 ms on threads, and 110 ms on comments in the cold trace.
 - User impact: Database round trips accumulate even though only four songs, five versions, two threads, and three comments were returned.
-- Recommended fix: Measure the member subquery separately, reduce dependent query waves, and return only data the initial dashboard needs.
+- Recommended fix: Avoid loading the full workspace directory when the initial dashboard needs names only for assigned actions. Continue reducing dependent comment query waves after measuring that change.
 - Fix risk: Medium. Activity, action, version, and workspace boundaries must stay intact.
-- Status: Open.
-- Verification: Structured route timings reproduce the delay across multiple 200 responses.
-- Before and after: Dashboard API median 1,637 ms across the three traced revalidations. No fix measured yet.
+- Status: Partially implemented in the current batch. The dashboard now skips member queries when no action is assigned and restricts the lookup to assigned workspace members otherwise. Thread loading overlaps that lookup.
+- Verification: Structured route timings reproduce the delay across multiple 200 responses. Targeted lint and TypeScript checks pass for the member-query change; preview measurement is pending.
+- Before and after: Dashboard API median was 1,637 ms across the original three traced revalidations. Recent `related` stages took 306 to 606 ms while returning zero actions. After measurement is pending.
 
 ### PERF-004: Public playlist latest-version lookup scales with song count
 

@@ -4005,3 +4005,30 @@ First measured Stage 4 performance batch for the canonical account bootstrap.
 - Preview traces confirmed that profile and membership stages overlap, removing 307 to 425 ms of serialized database waiting across the two identity calls made by an initial dashboard visit.
 - End-to-end request chains still varied from 2.12 to 4.15 seconds, so no stable whole-page percentage improvement is claimed from this batch.
 - No database schema, cache scope, authentication rule, or production configuration was changed.
+
+---
+
+## 2026-08-12 - Dashboard member-query reduction
+
+### What we were trying to achieve
+
+Remove database work that delays every dashboard response even when no assigned actions need collaborator names.
+
+### Feature / change being made
+
+Second measured Stage 4 performance batch for the authenticated dashboard query path.
+
+### Files changed
+
+- `app/api/dashboard/route.ts`
+- `lib/workspaceMembers.ts`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The dashboard no longer loads the entire workspace member directory alongside every versions and actions query.
+- With no assigned actions, member and profile queries are skipped entirely.
+- When actions are assigned, the lookup is restricted to those user IDs, still checks workspace membership, and runs alongside thread loading.
+- Settings, collaborator management, invitations, and other routes retain the existing full workspace-member behavior.
+- No database schema, permission rule, cache scope, or production configuration was changed.

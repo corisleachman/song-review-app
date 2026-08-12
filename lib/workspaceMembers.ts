@@ -13,30 +13,47 @@ function getFallbackDisplayName(email: string | null | undefined) {
   return trimmed.split('@')[0]?.trim() || 'Collaborator';
 }
 
-export async function listWorkspaceMembers(workspaceId: string): Promise<WorkspaceMember[]> {
-  const { data: memberships, error: membershipsError } = await supabaseServer
+export async function listWorkspaceMembers(
+  workspaceId: string,
+  requestedUserIds?: string[]
+): Promise<WorkspaceMember[]> {
+  const scopedUserIds = requestedUserIds
+    ? Array.from(new Set(requestedUserIds.filter(Boolean)))
+    : null;
+
+  if (scopedUserIds?.length === 0) {
+    return [];
+  }
+
+  let membershipsQuery = supabaseServer
     .from('account_members')
     .select('user_id, role')
     .eq('account_id', workspaceId);
 
+  if (scopedUserIds) {
+    membershipsQuery = membershipsQuery.in('user_id', scopedUserIds);
+  }
+
+  const { data: memberships, error: membershipsError } = await membershipsQuery;
+
   if (membershipsError) throw membershipsError;
 
-  const userIds = Array.from(new Set((memberships ?? []).map(member => member.user_id).filter(Boolean)));
+  const memberUserIds = Array.from(new Set((memberships ?? []).map(member => member.user_id).filter(Boolean)));
 
-  if (userIds.length === 0) {
+  if (memberUserIds.length === 0) {
     return [];
   }
 
   const { data: profiles, error: profilesError } = await supabaseServer
     .from('profiles')
     .select('id, email, display_name')
-    .in('id', userIds);
+    .in('id', memberUserIds);
 
   if (profilesError) throw profilesError;
 
   const profileById = new Map((profiles ?? []).map(profile => [profile.id, profile]));
 
-  return userIds
+  return memberUserIds
     .map(userId => {
       const membership = (memberships ?? []).find(member => member.user_id === userId);
       const profile = profileById.get(userId);

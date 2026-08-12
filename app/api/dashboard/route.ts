@@ -98,7 +98,7 @@ export async function GET(req: NextRequest) {
       return respond({ songs: [] }, 200, { songCount: 0 });
     }
 
-    const [{ data: versions, error: versionsError }, { data: actions, error: actionsError }, members] = await timing.measure(
+    const [{ data: versions, error: versionsError }, { data: actions, error: actionsError }] = await timing.measure(
       'related',
       () => Promise.all([
         supabaseServer
@@ -112,7 +112,6 @@ export async function GET(req: NextRequest) {
           .select('id, song_id, comment_id, description, suggested_by, status, timestamp_seconds, created_at, updated_at, assigned_to_user_id, resolved_in_version_id')
           .in('song_id', songIds)
           .order('created_at', { ascending: false }),
-        listWorkspaceMembers(resolved.identity.workspaceId),
       ])
     );
 
@@ -120,12 +119,26 @@ export async function GET(req: NextRequest) {
     if (actionsError) throw actionsError;
 
     const versionIds = Array.from(new Set((versions ?? []).map(version => version.id)));
-    const { data: threads, error: threadsError } = versionIds.length
-      ? await timing.measure('threads', async () => await supabaseServer
-          .from('comment_threads')
-          .select('id, song_version_id, timestamp_seconds, created_at, updated_at, created_by')
-          .in('song_version_id', versionIds))
-      : { data: [], error: null };
+    const assignedUserIds = Array.from(new Set(
+      (actions ?? [])
+        .map(action => action.assigned_to_user_id)
+        .filter((userId): userId is string => Boolean(userId))
+    ));
+    const [threadsResult, members] = await Promise.all([
+      versionIds.length
+        ? timing.measure('threads', async () => await supabaseServer
+            .from('comment_threads')
+            .select('id, song_version_id, timestamp_seconds, created_at, updated_at, created_by')
+            .in('song_version_id', versionIds))
+        : Promise.resolve({ data: [], error: null }),
+      assignedUserIds.length
+        ? timing.measure(
+            'assigned-members',
+            () => listWorkspaceMembers(resolved.identity.workspaceId, assignedUserIds)
+          )
+        : Promise.resolve([]),
+    ]);
+    const { data: threads, error: threadsError } = threadsResult;
 
     if (threadsError) throw threadsError;
 
@@ -218,12 +231,10 @@ export async function GET(req: NextRequest) {
       actionsByCommentId.set(action.comment_id, existing);
     }
 
-    const currentMember = members.find(member => member.userId === resolved.identity.userId);
     const actorNames = new Set([
       resolved.identity.authorName,
       resolved.identity.displayName,
-      currentMember?.displayName ?? '',
-      currentMember?.email?.split('@')[0] ?? '',
+      resolved.identity.email?.split('@')[0] ?? '',
     ].map(value => value.trim().toLowerCase()).filter(Boolean));
 
     const assemblyStartedAt = performance.now();
