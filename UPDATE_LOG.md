@@ -4062,3 +4062,29 @@ Third measured Stage 4 performance batch for the authenticated dashboard query p
 - The preview response retained four songs, five versions, two threads, and three comments, with no separate `threads` timing stage.
 - On latency-matched samples, the whole dashboard route fell from 2,236 ms to 1,980 ms, an 11% reduction, while identity timing stayed within 10 ms.
 - No database schema, permission rule, cache scope, or production configuration was changed.
+
+---
+
+## 2026-08-12 - Dashboard thread and comment query consolidation
+
+### What we were trying to achieve
+
+Remove the final sequential comment round trip from the authenticated dashboard while preserving comment counts, activity summaries, and awaiting-response signals.
+
+### Feature / change being made
+
+Fourth measured Stage 4 performance batch for the authenticated dashboard query path.
+
+### Files changed
+
+- `app/api/dashboard/route.ts`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Comment fields now load under their existing comment threads inside the finalized-version query.
+- The dashboard no longer performs a separate comments query after versions and threads have loaded.
+- Comment and thread IDs still drive the same in-memory action, activity, count, and awaiting-response assembly.
+- The previous comparable trace showed that the removed comments stage cost 313 ms.
+- No database schema, permission rule, cache scope, or production configuration was changed.

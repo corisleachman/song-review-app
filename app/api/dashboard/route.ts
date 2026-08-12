@@ -116,7 +116,14 @@ export async function GET(req: NextRequest) {
               timestamp_seconds,
               created_at,
               updated_at,
-              created_by
+              created_by,
+              comments (
+                id,
+                thread_id,
+                author,
+                body,
+                created_at
+              )
             )
           `)
           .in('song_id', songIds)
@@ -139,24 +146,13 @@ export async function GET(req: NextRequest) {
         .filter((userId): userId is string => Boolean(userId))
     ));
     const threads = (versions ?? []).flatMap(version => version.comment_threads ?? []);
-    const threadIds = Array.from(new Set(threads.map(thread => thread.id)));
-    const [commentsResult, members] = await Promise.all([
-      threadIds.length
-        ? timing.measure('comments', async () => await supabaseServer
-            .from('comments')
-            .select('id, thread_id, author, body, created_at')
-            .in('thread_id', threadIds))
-        : Promise.resolve({ data: [], error: null }),
-      assignedUserIds.length
-        ? timing.measure(
-            'assigned-members',
-            () => listWorkspaceMembers(resolved.identity.workspaceId, assignedUserIds)
-          )
-        : Promise.resolve([]),
-    ]);
-    const { data: comments, error: commentsError } = commentsResult;
-
-    if (commentsError) throw commentsError;
+    const comments = threads.flatMap(thread => thread.comments ?? []);
+    const members = assignedUserIds.length
+      ? await timing.measure(
+          'assigned-members',
+          () => listWorkspaceMembers(resolved.identity.workspaceId, assignedUserIds)
+        )
+      : [];
 
     const versionsBySongId = new Map<string, Array<{
       id: string;

@@ -52,8 +52,8 @@ The cold dashboard trace at 13:33:41 UTC used anonymous trace `94bee373-a5f4-458
 - User impact: Database round trips accumulate even though only four songs, five versions, two threads, and three comments were returned.
 - Recommended fix: Avoid loading the full workspace directory when the initial dashboard needs names only for assigned actions. Continue reducing dependent comment query waves after measuring that change.
 - Fix risk: Medium. Activity, action, version, and workspace boundaries must stay intact.
-- Status: Partially implemented and measured. The member-query reduction and embedded-thread read are verified. Comments remain the final sequential dashboard data request.
-- Verification: Targeted lint, TypeScript, production builds, Vercel checks, preview deployments, and authenticated responses passed. The combined version/thread response retained four songs, five versions, two threads, and three comments, with no separate `threads` stage. The assigned-action name path still needs a staging regression.
+- Status: Partially implemented and measured. The member-query reduction and embedded-thread read are verified. A fourth batch now embeds comments under those threads, removing the final sequential dashboard data request.
+- Verification: Targeted lint, TypeScript, production builds, Vercel checks, preview deployments, and authenticated responses passed through the version/thread batch. The nested-comment batch passes targeted lint and TypeScript locally; preview verification is pending. The assigned-action name path still needs a staging regression.
 - Before and after: The member batch reduced a comparable `related` stage from 606 ms to 360 ms, or 41%. Embedding threads then reduced a comparable whole dashboard route from 2,236 ms to 1,980 ms, or 11%, while identity time stayed within 10 ms. The removed `threads` stage had cost 310 ms; the larger embedded `related` query absorbed about 43 ms of that work.
 
 ### PERF-004: Public playlist latest-version lookup scales with song count
@@ -77,5 +77,5 @@ The cold dashboard trace at 13:33:41 UTC used anonymous trace `94bee373-a5f4-458
 - Stage 1 foundation checks: passed.
 - Stage 2 functional safety checks: passed, including collaboration notifications and workspace access separation.
 - Stage 3 baseline: captured for public routes and the authenticated dashboard request chain. Authenticated song/version journey timings still need to be captured during later batches.
-- Stage 4 fixes: shared dashboard bootstrap concurrency implemented and measured. The dashboard query waterfall is next.
+- Stage 4 fixes: account bootstrap, member lookup, and version/thread batches implemented and measured. The nested-comment dashboard batch is in local verification.
 - Stage 5 regression and production readiness: not started.
