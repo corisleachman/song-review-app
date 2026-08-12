@@ -11,6 +11,7 @@ Measurements used the protected Vercel preview backed by the staging Supabase br
 | Journey | Condition | Measured result | Main observation |
 | --- | --- | ---: | --- |
 | Dashboard | Signed in, local dashboard cache bypassed | 2,349 ms request chain | Bootstrap finished before the dashboard request started |
+| Dashboard after bootstrap concurrency | Signed in, repeated preview visits | 2,124 to 4,146 ms request chain | The targeted database wait fell, but total time remains variable |
 | Dashboard API revalidation | Signed in, three traced requests | 1,637 ms median, 1,308 to 2,383 ms | Server and database work dominate |
 | Public song | Warm navigation | 697 ms navigation, 1,260 ms until Play was visibly ready | Usable readiness trails navigation |
 | Public playlist | Warm navigation | 1,118 ms navigation, 1,470 ms until content was ready | Server data assembly is the likely next target |
@@ -30,8 +31,8 @@ The cold dashboard trace at 13:33:41 UTC used anonymous trace `94bee373-a5f4-458
 - Recommended fix: Reduce the repeated canonical identity cost first. Then test a combined or safely coordinated response that cannot race first-account creation and does not weaken workspace validation.
 - Fix risk: Starting both current routes together can create two initial workspaces during a first-ever login. A combined response can also delay the existing workspace-scoped warm cache if implemented carelessly.
 - Status: Partially implemented. The shared bootstrap now overlaps independent profile and membership work. The client request waterfall remains.
-- Verification: Targeted lint and TypeScript checks passed locally. Preview after-measurement is pending.
-- Before and after: Before is 2,349 ms for the cold request chain. After is pending deployment measurement.
+- Verification: Targeted lint, TypeScript, production build, preview deployment, and authenticated 200 responses passed. The first-login creation path was preserved in code but was not exercised with a new account.
+- Before and after: Before was 2,349 ms for the cold request chain. After traces ranged from 2,124 to 4,146 ms, so no stable whole-page percentage is claimed. The client request waterfall remains the larger problem.
 
 ### PERF-002: Repeated and sequential account bootstrap work
 
@@ -41,8 +42,8 @@ The cold dashboard trace at 13:33:41 UTC used anonymous trace `94bee373-a5f4-458
 - Recommended fix: Run independent reads concurrently and stop once a valid active workspace membership has been found. Keep account creation ordered after both checks finish.
 - Fix risk: Low for the implemented change. Query error handling and default workspace selection must remain identical.
 - Status: Implemented in the current batch.
-- Verification: Targeted lint and TypeScript checks passed. Preview runtime timing and first-login regression checks remain.
-- Before and after: Before, account bootstrap took 337 to 951 ms in sampled dashboard requests. After is pending deployment measurement.
+- Verification: Targeted lint, TypeScript, production build, both Vercel checks, and preview runtime traces passed. Each after trace shows profile and membership stages overlapping.
+- Before and after: The new overlap removed 125 to 312 ms of serialized database waiting from each canonical identity call in the sampled traces. Because the dashboard calls identity twice, that removed 307 to 425 ms of serialized work per initial visit. Infrastructure variability masked that saving in some whole-page samples.
 
 ### PERF-003: Dashboard data is assembled in multiple dependent query waves
 
@@ -76,5 +77,5 @@ The cold dashboard trace at 13:33:41 UTC used anonymous trace `94bee373-a5f4-458
 - Stage 1 foundation checks: passed.
 - Stage 2 functional safety checks: passed, including collaboration notifications and workspace access separation.
 - Stage 3 baseline: captured for public routes and the authenticated dashboard request chain. Authenticated song/version journey timings still need to be captured during later batches.
-- Stage 4 fixes: first safe dashboard bootstrap batch in progress.
+- Stage 4 fixes: shared dashboard bootstrap concurrency implemented and measured. The dashboard query waterfall is next.
 - Stage 5 regression and production readiness: not started.

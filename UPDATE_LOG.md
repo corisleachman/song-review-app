@@ -4002,4 +4002,6 @@ First measured Stage 4 performance batch for the canonical account bootstrap.
 - A valid active-workspace membership now avoids the redundant query for every membership belonging to the user.
 - New-account creation still waits until both profile and membership checks finish, preserving the existing first-login sequence.
 - The measured dashboard baseline and active review findings are recorded in `CODEBASE_REVIEW.md`.
+- Preview traces confirmed that profile and membership stages overlap, removing 307 to 425 ms of serialized database waiting across the two identity calls made by an initial dashboard visit.
+- End-to-end request chains still varied from 2.12 to 4.15 seconds, so no stable whole-page percentage improvement is claimed from this batch.
 - No database schema, cache scope, authentication rule, or production configuration was changed.
