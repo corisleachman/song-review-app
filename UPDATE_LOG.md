@@ -4034,3 +4034,29 @@ Second measured Stage 4 performance batch for the authenticated dashboard query 
 - In a comparable high-latency preview sample, the dashboard `related` stage fell from 606 ms to 360 ms, a 41% reduction, and no assigned-member lookup ran for the zero-action workspace.
 - Whole-route time remained dominated by variable identity and later comment-query stages, so this batch is recorded as a stage improvement rather than a stable page-load percentage.
 - No database schema, permission rule, cache scope, or production configuration was changed.
+
+---
+
+## 2026-08-12 - Dashboard version and thread query consolidation
+
+### What we were trying to achieve
+
+Remove another sequential database round trip from the authenticated dashboard without changing which versions, threads, or comments are displayed.
+
+### Feature / change being made
+
+Third measured Stage 4 performance batch for the authenticated dashboard query path.
+
+### Files changed
+
+- `app/api/dashboard/route.ts`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Finalized song versions now include their comment-thread fields through the existing database relationship.
+- The dashboard no longer performs a separate thread query after loading versions.
+- Comments remain a separate, workspace-constrained lookup using only thread IDs returned with finalized versions.
+- The previous trace showed that the removed thread stage cost 310 ms.
+- No database schema, permission rule, cache scope, or production configuration was changed.

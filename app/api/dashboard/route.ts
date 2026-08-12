@@ -103,7 +103,22 @@ export async function GET(req: NextRequest) {
       () => Promise.all([
         supabaseServer
           .from('song_versions')
-          .select('id, song_id, version_number, label, created_at, created_by')
+          .select(`
+            id,
+            song_id,
+            version_number,
+            label,
+            created_at,
+            created_by,
+            comment_threads (
+              id,
+              song_version_id,
+              timestamp_seconds,
+              created_at,
+              updated_at,
+              created_by
+            )
+          `)
           .in('song_id', songIds)
           .not('upload_finalized_at', 'is', null)
           .order('version_number', { ascending: false }),
@@ -118,18 +133,19 @@ export async function GET(req: NextRequest) {
     if (versionsError) throw versionsError;
     if (actionsError) throw actionsError;
 
-    const versionIds = Array.from(new Set((versions ?? []).map(version => version.id)));
     const assignedUserIds = Array.from(new Set(
       (actions ?? [])
         .map(action => action.assigned_to_user_id)
         .filter((userId): userId is string => Boolean(userId))
     ));
-    const [threadsResult, members] = await Promise.all([
-      versionIds.length
-        ? timing.measure('threads', async () => await supabaseServer
-            .from('comment_threads')
-            .select('id, song_version_id, timestamp_seconds, created_at, updated_at, created_by')
-            .in('song_version_id', versionIds))
+    const threads = (versions ?? []).flatMap(version => version.comment_threads ?? []);
+    const threadIds = Array.from(new Set(threads.map(thread => thread.id)));
+    const [commentsResult, members] = await Promise.all([
+      threadIds.length
+        ? timing.measure('comments', async () => await supabaseServer
+            .from('comments')
+            .select('id, thread_id, author, body, created_at')
+            .in('thread_id', threadIds))
         : Promise.resolve({ data: [], error: null }),
       assignedUserIds.length
         ? timing.measure(
@@ -138,17 +154,7 @@ export async function GET(req: NextRequest) {
           )
         : Promise.resolve([]),
     ]);
-    const { data: threads, error: threadsError } = threadsResult;
-
-    if (threadsError) throw threadsError;
-
-    const threadIds = Array.from(new Set((threads ?? []).map(thread => thread.id)));
-    const { data: comments, error: commentsError } = threadIds.length
-      ? await timing.measure('comments', async () => await supabaseServer
-          .from('comments')
-          .select('id, thread_id, author, body, created_at')
-          .in('thread_id', threadIds))
-      : { data: [], error: null };
+    const { data: comments, error: commentsError } = commentsResult;
 
     if (commentsError) throw commentsError;
 
