@@ -148,51 +148,63 @@ export async function bootstrapAccountForUser(
     profilePayload.avatar_url = user.avatarUrl;
   }
 
-  const { data: profile, error: profileError } = timing
-    ? await timing.measure('profile', async () => await supabaseServer
+  const profilePromise = timing
+    ? timing.measure('profile', async () => await supabaseServer
         .from('profiles')
         .upsert(profilePayload, { onConflict: 'id' })
         .select('id, email, display_name, created_at, updated_at')
         .single())
-    : await supabaseServer
+    : supabaseServer
         .from('profiles')
         .upsert(profilePayload, { onConflict: 'id' })
         .select('id, email, display_name, created_at, updated_at')
         .single();
 
-  if (profileError) throw profileError;
-
   const activeWorkspaceId = timing
     ? await timing.measure('workspace-cookie', readActiveWorkspaceCookie)
     : await readActiveWorkspaceCookie();
-  const activeWorkspaceMembership = activeWorkspaceId
-    ? timing
-      ? await timing.measure(
-          'active-membership',
-          () => findValidActiveWorkspaceMembership(user.id, activeWorkspaceId)
-        )
-      : await findValidActiveWorkspaceMembership(user.id, activeWorkspaceId)
-    : null;
 
-  const { data: existingMemberships, error: membershipLookupError } = timing
-    ? await timing.measure('memberships', async () => await supabaseServer
-        .from('account_members')
-        .select('account_id, user_id, role, joined_at')
-        .eq('user_id', user.id)
-        .order('joined_at', { ascending: true })
-        .returns<MembershipRecord[]>())
-    : await supabaseServer
-        .from('account_members')
-        .select('account_id, user_id, role, joined_at')
-        .eq('user_id', user.id)
-        .order('joined_at', { ascending: true })
-        .returns<MembershipRecord[]>();
+  const membershipPromise = (async (): Promise<MembershipRecord | null> => {
+    if (activeWorkspaceId) {
+      const activeWorkspaceMembership = timing
+        ? await timing.measure(
+            'active-membership',
+            () => findValidActiveWorkspaceMembership(user.id, activeWorkspaceId)
+          )
+        : await findValidActiveWorkspaceMembership(user.id, activeWorkspaceId);
 
-  if (membershipLookupError) throw membershipLookupError;
+      if (activeWorkspaceMembership) {
+        return activeWorkspaceMembership as MembershipRecord;
+      }
+    }
+
+    const { data: existingMemberships, error: membershipLookupError } = timing
+      ? await timing.measure('memberships', async () => await supabaseServer
+          .from('account_members')
+          .select('account_id, user_id, role, joined_at')
+          .eq('user_id', user.id)
+          .order('joined_at', { ascending: true })
+          .returns<MembershipRecord[]>())
+      : await supabaseServer
+          .from('account_members')
+          .select('account_id, user_id, role, joined_at')
+          .eq('user_id', user.id)
+          .order('joined_at', { ascending: true })
+          .returns<MembershipRecord[]>();
+
+    if (membershipLookupError) throw membershipLookupError;
+    return chooseDefaultMembership(existingMemberships ?? []);
+  })();
+
+  const [{ data: profile, error: profileError }, existingMembership] = await Promise.all([
+    profilePromise,
+    membershipPromise,
+  ]);
+
+  if (profileError) throw profileError;
 
   let newAccountId: string | null = null;
-  let membership = (activeWorkspaceMembership as MembershipRecord | null)
-    ?? chooseDefaultMembership(existingMemberships ?? []);
+  let membership = existingMembership;
 
   if (!membership) {
     const { data: account, error: accountError } = await supabaseServer

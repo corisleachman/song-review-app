@@ -3977,3 +3977,29 @@ Preview-safe request timing for authentication, workspace bootstrap, dashboard q
 - Dashboard visits with `?perf=1` use one anonymous trace identifier across bootstrap and dashboard requests and log when songs become visible.
 - Adding `cache=skip` to the trace URL bypasses the dashboard's local read cache for one cold-load measurement without deleting browser data; the fresh response still seeds the next warm run.
 - Normal dashboard query order and caching are unchanged. Authorization, database schema, and production configuration are also unchanged.
+
+---
+
+## 2026-08-12 - Shared account bootstrap concurrency
+
+### What we were trying to achieve
+
+Reduce the repeated server and database delay paid by authenticated dashboard requests without changing account creation, authentication, or workspace selection rules.
+
+### Feature / change being made
+
+First measured Stage 4 performance batch for the canonical account bootstrap.
+
+### Files changed
+
+- `lib/bootstrapAccount.ts`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Profile persistence and membership resolution now run concurrently because neither depends on the other.
+- A valid active-workspace membership now avoids the redundant query for every membership belonging to the user.
+- New-account creation still waits until both profile and membership checks finish, preserving the existing first-login sequence.
+- The measured dashboard baseline and active review findings are recorded in `CODEBASE_REVIEW.md`.
+- No database schema, cache scope, authentication rule, or production configuration was changed.
