@@ -4117,4 +4117,7 @@ Fifth measured Stage 4 performance batch for the authenticated dashboard request
 - Initial dashboard loading uses that one response for session state and dashboard content instead of calling `/api/auth/bootstrap` and then `/api/dashboard` in series.
 - First-account creation remains inside one canonical server request, so the unsafe parallel-request race is not introduced.
 - Focus refreshes and other authenticated screens keep their existing behavior.
+- The user's cold preview check and workspace switching both passed. Each switch returned 200 and showed the correct zero-song or four-song workspace.
+- The traced cold visit contained one dashboard request and no bootstrap request. Compared with the closest preceding preview, total server work fell from about 2,825 ms across two requests to 1,750 ms in one request, a 38% reduction.
+- The browser reported songs visible at 3,084 ms on that cache-bypassed visit. The request returned four songs, five versions, two threads, and three comments.
 - No database schema, permission rule, cache scope, or production configuration was changed.

@@ -14,6 +14,7 @@ Measurements used the protected Vercel preview backed by the staging Supabase br
 | Dashboard after bootstrap concurrency | Signed in, repeated preview visits | 2,124 to 4,146 ms request chain | The targeted database wait fell, but total time remains variable |
 | Dashboard API revalidation | Signed in, three traced requests | 1,637 ms median, 1,308 to 2,383 ms | Server and database work dominate |
 | Dashboard data path after query consolidation | Signed in, same four-song preview workspace | 617 ms after identity | Down from 1,027 ms on the closest comparable trace |
+| Dashboard after single-request initialization | Signed in, local dashboard cache bypassed | 1,750 ms server, 3,084 ms until songs visible | One dashboard request; no separate bootstrap request |
 | Public song | Warm navigation | 697 ms navigation, 1,260 ms until Play was visibly ready | Usable readiness trails navigation |
 | Public playlist | Warm navigation | 1,118 ms navigation, 1,470 ms until content was ready | Server data assembly is the likely next target |
 | Login | Warm navigation | 595 ms | Not a current priority |
@@ -31,9 +32,9 @@ The cold dashboard trace at 13:33:41 UTC used anonymous trace `94bee373-a5f4-458
 - User impact: A routine dashboard visit waits for two authenticated server operations in series before fresh songs can appear.
 - Recommended fix: Reduce the repeated canonical identity cost first. Then test a combined or safely coordinated response that cannot race first-account creation and does not weaken workspace validation.
 - Fix risk: Starting both current routes together can create two initial workspaces during a first-ever login. A combined response can also delay the existing workspace-scoped warm cache if implemented carelessly.
-- Status: The account-bootstrap overlap is verified. A fifth batch now returns canonical identity with the authorized dashboard payload, removing the initial client request waterfall without starting competing account-bootstrap requests.
-- Verification: The earlier bootstrap change passed targeted lint, TypeScript, production build, preview deployment, and authenticated 200 responses. The single-request client change is in local verification. The first-login creation path remains ordered inside one request but has not been exercised with a new account.
-- Before and after: Before was 2,349 ms for the cold request chain. Bootstrap-concurrency traces ranged from 2,124 to 4,146 ms, so no stable whole-page percentage is claimed for that batch. The single-request result is not yet measured.
+- Status: Implemented and measured. The authorized dashboard response carries the canonical identity and workspace plan it already resolved, removing the initial client request waterfall without starting competing account-bootstrap requests.
+- Verification: Targeted lint, TypeScript, production build, both Vercel checks, preview deployment, the user's cold dashboard check, and switching into both preview workspaces passed. The trace contained one dashboard request and no bootstrap request. The first-login creation path remains ordered inside one request but has not been exercised with a new account.
+- Before and after: The closest preceding preview spent about 2,825 ms of server time across bootstrap and dashboard requests. The verified single request took 1,750 ms, a 38% reduction in total server work. The browser reported songs visible at 3,084 ms on that cold, cache-bypassed visit; network and cold-start variability mean this isn't compared directly with the older request-chain figure.
 
 ### PERF-002: Repeated and sequential account bootstrap work
 
@@ -78,5 +79,5 @@ The cold dashboard trace at 13:33:41 UTC used anonymous trace `94bee373-a5f4-458
 - Stage 1 foundation checks: passed.
 - Stage 2 functional safety checks: passed, including collaboration notifications and workspace access separation.
 - Stage 3 baseline: captured for public routes and the authenticated dashboard request chain. Authenticated song/version journey timings still need to be captured during later batches.
-- Stage 4 fixes: account bootstrap and all four dashboard query batches are implemented and measured. Identity remains the next measured target; the assigned-action name path still needs a data-backed regression check.
+- Stage 4 fixes: account bootstrap, all four dashboard query batches, and single-request dashboard initialization are implemented and measured. Active-workspace identity remains the next measured target; the assigned-action name path still needs a data-backed regression check.
 - Stage 5 regression and production readiness: not started.
