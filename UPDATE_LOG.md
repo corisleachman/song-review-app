@@ -4031,4 +4031,6 @@ Second measured Stage 4 performance batch for the authenticated dashboard query 
 - With no assigned actions, member and profile queries are skipped entirely.
 - When actions are assigned, the lookup is restricted to those user IDs, still checks workspace membership, and runs alongside thread loading.
 - Settings, collaborator management, invitations, and other routes retain the existing full workspace-member behavior.
+- In a comparable high-latency preview sample, the dashboard `related` stage fell from 606 ms to 360 ms, a 41% reduction, and no assigned-member lookup ran for the zero-action workspace.
+- Whole-route time remained dominated by variable identity and later comment-query stages, so this batch is recorded as a stage improvement rather than a stable page-load percentage.
 - No database schema, permission rule, cache scope, or production configuration was changed.
