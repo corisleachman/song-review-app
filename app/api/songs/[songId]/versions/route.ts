@@ -22,10 +22,8 @@ function getErrorMessage(error: unknown) {
   return 'Could not load versions.';
 }
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { songId: string } }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ songId: string }> }) {
+  const params = await props.params;
   try {
     noStore();
     const { songId } = params;
@@ -59,6 +57,7 @@ export async function GET(
       .from('song_versions')
       .select('id, song_id, version_number, label, notes, file_path, file_name, created_by, created_at')
       .eq('song_id', songId)
+      .not('upload_finalized_at', 'is', null)
       .order('version_number', { ascending: false });
 
     if (error) throw error;

@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import { supabaseServer } from '@/lib/supabaseServer';
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await props.params;
   const { data: playlist } = await supabaseServer
     .from('playlists')
     .select('id, title, is_public, account_id, image_url')
-    .eq('id', params.id)
+    .eq('id', id)
     .maybeSingle();
 
   if (!playlist || !playlist.is_public) {

@@ -50,9 +50,8 @@ function escapeHtml(value: string) {
     .replace(/'/g, '&#39;');
 }
 
-function buildInviteLink(inviteToken: string) {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-  return `${baseUrl}/invite/${inviteToken}`;
+function buildInviteLink(inviteToken: string, requestOrigin: string) {
+  return new URL(`/invite/${encodeURIComponent(inviteToken)}`, requestOrigin).toString();
 }
 
 function getInviteEmailHtml(params: {
@@ -215,7 +214,7 @@ export async function POST(req: NextRequest) {
         to: existingInvite.email,
         inviterName: resolved.identity.displayName,
         workspaceName: resolved.identity.workspaceName,
-        inviteLink: buildInviteLink(existingInvite.invite_token),
+        inviteLink: buildInviteLink(existingInvite.invite_token, req.nextUrl.origin),
       });
 
       return NextResponse.json(
@@ -273,7 +272,7 @@ export async function POST(req: NextRequest) {
       to: invite.email,
       inviterName: resolved.identity.displayName,
       workspaceName: resolved.identity.workspaceName,
-      inviteLink: buildInviteLink(invite.invite_token),
+      inviteLink: buildInviteLink(invite.invite_token, req.nextUrl.origin),
     });
 
     return NextResponse.json(

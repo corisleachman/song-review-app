@@ -130,7 +130,7 @@ async function precomputeFrequencyFrames(audioBuffer: AudioBuffer) {
 
 interface PublicSongData {
   song: { id: string; title: string; image_url: string | null; workspace_name: string | null; comments_enabled: boolean };
-  version: { id: string; version_number: number; label: string | null; display_name?: string; file_path: string; audioUrl: string | null };
+  version: { id: string; version_number: number; label: string | null; display_name?: string; audioUrl: string | null };
 }
 
 interface PublicComment {

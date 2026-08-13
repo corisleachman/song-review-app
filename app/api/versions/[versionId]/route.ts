@@ -77,10 +77,8 @@ async function storageObjectExists(path: string) {
   return (data ?? []).some(item => item.name === fileName);
 }
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { versionId: string } }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ versionId: string }> }) {
+  const params = await props.params;
   try {
     const { versionId } = params;
     const resolved = await resolveCanonicalIdentity();
@@ -105,8 +103,10 @@ export async function GET(
 
     let audioUrl: string | null = null;
     let audioMissing = false;
+    const uploadIsPending = Object.prototype.hasOwnProperty.call(version, 'upload_finalized_at')
+      && !version.upload_finalized_at;
 
-    if (version.file_path) {
+    if (version.file_path && !uploadIsPending) {
       const normalizedFilePath = normalizeStoragePath(version.file_path);
       const hasAudioObject = await storageObjectExists(normalizedFilePath);
 
@@ -121,6 +121,8 @@ export async function GET(
       } else {
         audioMissing = true;
       }
+    } else if (uploadIsPending) {
+      audioMissing = true;
     }
 
     return NextResponse.json(
@@ -138,10 +140,8 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { versionId: string } }
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ versionId: string }> }) {
+  const params = await props.params;
   try {
     const { label, notes } = await req.json();
     const resolved = await resolveCanonicalIdentity();

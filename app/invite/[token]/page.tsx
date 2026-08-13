@@ -4,9 +4,9 @@ import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import InviteActions from './InviteActions';
 
 interface InvitePageProps {
-  params: {
+  params: Promise<{
     token: string;
-  };
+  }>;
 }
 
 function formatDate(value: string) {
@@ -49,7 +49,8 @@ function getStateMessage(state: PublicInviteState) {
   }
 }
 
-export default async function InvitePage({ params }: InvitePageProps) {
+export default async function InvitePage(props: InvitePageProps) {
+  const params = await props.params;
   const result = await getPublicInviteByToken(params.token);
 
   const state = result.state;

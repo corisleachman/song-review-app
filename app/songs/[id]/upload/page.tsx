@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase';
 import styles from '../song.module.css';
 
 const supabase = createClient();
+const MAX_AUDIO_SIZE_BYTES = 200 * 1024 * 1024;
 
 function getUploadErrorMessage(value: unknown, fallback: string) {
   if (typeof value === 'string') return value;
@@ -19,6 +20,43 @@ function getUploadErrorMessage(value: unknown, fallback: string) {
 
 function getMissingAudioMessage() {
   return 'This version was created, but its audio file was not found in storage. Please upload the version again.';
+}
+
+function validateAudioFile(file: File) {
+  const isAudio = file.type.startsWith('audio/')
+    || /\.(mp3|wav|m4a|aac|flac|ogg|aif|aiff)$/i.test(file.name);
+
+  if (!isAudio) return 'Choose an MP3, WAV, M4A, AAC, FLAC, OGG, AIF, or AIFF audio file.';
+  if (file.size <= 0) return 'That audio file is empty.';
+  if (file.size > MAX_AUDIO_SIZE_BYTES) return 'Choose an audio file no larger than 200MB.';
+  return null;
+}
+
+async function finalizeUploadedVersion(versionId: string) {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    if (attempt > 0) await new Promise(resolve => window.setTimeout(resolve, 450));
+
+    let response: Response;
+    try {
+      response = await fetch(`/api/versions/${versionId}/finalize`, { method: 'POST' });
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error('Could not finish the upload.');
+      continue;
+    }
+
+    const payload = await response.json().catch(() => null);
+    if (response.ok) return;
+
+    const responseError = new Error(getUploadErrorMessage(payload?.error, 'Could not finish the upload.'));
+    if (response.status < 500 && response.status !== 409) {
+      throw responseError;
+    }
+    lastError = responseError;
+  }
+
+  throw lastError ?? new Error('Could not finish the upload.');
 }
 
 async function verifyUploadedVersion(versionId: string) {
@@ -106,11 +144,20 @@ export default function UploadVersionPage() {
     e.preventDefault();
     setDragging(false);
     const f = e.dataTransfer.files[0];
-    if (f && f.type.startsWith('audio/')) setFile(f);
+    if (!f) return;
+    const validationError = validateAudioFile(f);
+    if (validationError) {
+      setError(validationError);
+      setFile(null);
+      return;
+    }
+    setError('');
+    setFile(f);
   }
 
   async function handleUpload() {
     if (!file) return;
+    let createdVersionId: string | null = null;
     setUploading(true);
     setProgress(0);
     setError('');
@@ -132,6 +179,7 @@ export default function UploadVersionPage() {
         throw new Error(getUploadErrorMessage(e.error, `HTTP ${res.status}`));
       }
       const { versionId, uploadUrl } = await res.json();
+      createdVersionId = versionId;
 
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -145,10 +193,14 @@ export default function UploadVersionPage() {
         xhr.send(file);
       });
 
+      await finalizeUploadedVersion(versionId);
       await verifyUploadedVersion(versionId);
 
       router.push(`/songs/${songId}/versions/${versionId}`);
     } catch (e: any) {
+      if (createdVersionId) {
+        await fetch(`/api/versions/${createdVersionId}/finalize`, { method: 'DELETE' }).catch(() => null);
+      }
       setError(e.message || 'Upload failed. Please try again.');
       setUploading(false);
     }
@@ -157,8 +209,8 @@ export default function UploadVersionPage() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <button className={styles.backBtn} onClick={() => router.back()}>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <button type="button" className={styles.backBtn} onClick={() => router.back()}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
             <path d="M9 11L5 7l4-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           Back
@@ -173,10 +225,19 @@ export default function UploadVersionPage() {
 
           <div
             className={`${styles.dropZone} ${dragging ? styles.dropZoneActive : ''} ${file ? styles.dropZoneHasFile : ''}`}
+            role={!file ? 'button' : undefined}
+            tabIndex={!file ? 0 : -1}
+            aria-label={!file ? 'Choose an audio file to upload' : undefined}
             onDragOver={e => { e.preventDefault(); setDragging(true); }}
             onDragLeave={() => setDragging(false)}
             onDrop={handleDrop}
             onClick={() => !file && fileInputRef.current?.click()}
+            onKeyDown={event => {
+              if (!file && (event.key === 'Enter' || event.key === ' ')) {
+                event.preventDefault();
+                fileInputRef.current?.click();
+              }
+            }}
           >
             {file ? (
               <div className={styles.fileInfo}>
@@ -187,6 +248,8 @@ export default function UploadVersionPage() {
                 <span className={styles.fileName}>{file.name}</span>
                 <span className={styles.fileSize}>{(file.size / 1024 / 1024).toFixed(1)} MB</span>
                 <button
+                  type="button"
+                  aria-label="Remove selected audio file"
                   className={styles.removeFile}
                   onClick={e => { e.stopPropagation(); setFile(null); setProgress(0); }}
                 >✕</button>
@@ -205,13 +268,26 @@ export default function UploadVersionPage() {
           <input
             ref={fileInputRef}
             type="file"
-            accept="audio/*"
+            accept="audio/*,.mp3,.wav,.m4a,.aac,.flac,.ogg,.aif,.aiff"
             style={{ display: 'none' }}
-            onChange={e => { const f = e.target.files?.[0]; if (f) setFile(f); }}
+            onChange={e => {
+              const f = e.target.files?.[0];
+              if (!f) return;
+              const validationError = validateAudioFile(f);
+              if (validationError) {
+                setError(validationError);
+                setFile(null);
+                e.target.value = '';
+                return;
+              }
+              setError('');
+              setFile(f);
+            }}
           />
 
           <input
             className={styles.labelInput}
+            aria-label="Version label"
             placeholder='Version label (optional, e.g. "Rough mix")'
             value={label}
             onChange={e => setLabel(e.target.value)}
@@ -220,6 +296,7 @@ export default function UploadVersionPage() {
 
           <textarea
             className={styles.notesInput}
+            aria-label="Version notes"
             placeholder='What changed in this version? (optional)'
             value={notes}
             onChange={e => setNotes(e.target.value)}
@@ -236,9 +313,10 @@ export default function UploadVersionPage() {
             </div>
           )}
 
-          {error && <div className={styles.errorMsg}>{error}</div>}
+          {error && <div className={styles.errorMsg} role="alert">{error}</div>}
 
           <button
+            type="button"
             className={styles.uploadBtn}
             onClick={handleUpload}
             disabled={!file || uploading}

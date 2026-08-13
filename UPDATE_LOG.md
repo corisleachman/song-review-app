@@ -2852,7 +2852,346 @@ Desktop list view was checked and is unaffected — its equivalent meta pill ren
 - `npx next build` — passed locally
 - Confirmed working in production by Coris on `www.song-room.live` after deploy
 
+---
 
+## 2026-07-18 — Stage 1 code-review security hardening
+
+### What we were trying to achieve
+
+Close the highest-confidence authorization, information-disclosure, and unsafe image-processing gaps identified by the full `clone-clean` code review without changing storage architecture, framework versions, or database schema.
+
+### Feature / change being made
+
+First staged security hardening pass for comment notifications, action creation, and cover-art uploads.
+
+### Files changed
+
+- `app/api/actions/create/route.ts`
+- `app/api/email/notify-thread/route.ts`
+- `app/api/songs/upload-image/route.ts`
+- `app/api/threads/create/route.ts`
+- `app/api/threads/reply/route.ts`
+- `app/dashboard/page.tsx`
+- `app/songs/[id]/versions/[versionId]/page.tsx`
+- `lib/internalRequestAuth.ts`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Notification requests now require a short-lived server-generated HMAC signature and validate the comment, thread, version, song, actor membership, and workspace relationship before sending.
+- Notification content is read from canonical database records; recipient email addresses and raw membership/profile data are no longer returned or logged.
+- Action creation now proves that its source comment belongs to the selected song before the service-role client links or later exposes it.
+- Cover-art processing now authenticates before multipart parsing, enforces a 5MB JPEG/PNG/WebP limit, caps decoded pixel count, and returns safe errors.
+- Client-side cover-art pickers mirror the server constraints for faster feedback.
+
+### Verification
+
+- `npx tsc --noEmit --incremental false` — passed.
+- `npm run build` — passed; the pre-existing `/api/auth/bootstrap` dynamic-render warning remains for a later stage.
+
+---
+
+## 2026-07-18 — Stage 2A schema reproducibility and Stripe idempotency
+
+### What we were trying to achieve
+
+Make the public-comments feature reproducible from migrations and prevent Stripe webhook retries or partial failures from applying referral credit more than once.
+
+### Feature / change being made
+
+Migration-backed database integrity and payment-webhook idempotency.
+
+### Files changed
+
+- `app/api/stripe/webhook/route.ts`
+- `lib/referrals.ts`
+- `migrations/20260718_public_comments_up.sql`
+- `migrations/20260718_public_comments_down.sql`
+- `migrations/20260718_stripe_webhook_idempotency_up.sql`
+- `migrations/20260718_stripe_webhook_idempotency_down.sql`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Added the missing song visibility columns, public comments table, validation constraints, index, RLS enablement, and service-role-only grants.
+- Added an atomic Stripe event ledger that rejects concurrent/processed duplicates and permits failed or abandoned work to retry.
+- Referral customer creation and balance credits now use deterministic Stripe idempotency keys.
+- Failed Stripe or database writes now fail the webhook so Stripe can retry instead of silently marking incomplete work successful.
+- The webhook temporarily falls back to Stripe operation-level idempotency if the ledger migration has not yet been applied, allowing a migration-first rollout.
+
+### Verification
+
+- `npx tsc --noEmit --incremental false` — passed.
+- SQL was reviewed statically; no local PostgreSQL/Supabase CLI is available to execute the migrations against a disposable database.
+
+---
+
+## 2026-07-18 — Stage 2B version upload integrity
+
+### What we were trying to achieve
+
+Prevent quota bypass, unsafe object names, duplicate version numbers, inaccurate storage totals, and common orphan rows in the signed audio-upload flow.
+
+### Feature / change being made
+
+Two-phase version uploads with database-backed allocation and finalization.
+
+### Files changed
+
+- `app/api/versions/create/route.ts`
+- `app/api/versions/[versionId]/finalize/route.ts`
+- `app/api/versions/[versionId]/route.ts`
+- `app/songs/[id]/upload/page.tsx`
+- `app/songs/[id]/versions/[versionId]/page.tsx`
+- `migrations/20260718_account_storage_schema_up.sql`
+- `migrations/20260718_account_storage_schema_down.sql`
+- `migrations/20260718_version_upload_integrity_up.sql`
+- `migrations/20260718_version_upload_integrity_down.sql`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Added the previously undocumented storage counter, version file-size column, and current free/pro/studio plan constraint to migration history.
+- Version numbers are allocated while locking the parent song, eliminating concurrent count-plus-one races.
+- Storage paths are generated server-side with random object IDs rather than embedding user-supplied filenames.
+- File size and extension are validated before issuing a signed URL; the stored object is then inspected for actual size and audio content type.
+- Storage usage and upload finalization are committed atomically after object verification and a second quota check.
+- Failed client uploads attempt to remove their pending row/object, and pending versions cannot be played as completed uploads.
+- Compatibility fallbacks keep the existing path working if application code reaches production before PostgREST has refreshed the new functions, but migration-first deployment remains required.
+
+### Verification
+
+- `npx tsc --noEmit --incremental false` — passed.
+- SQL was reviewed statically; migration execution still requires a disposable Supabase/PostgreSQL environment.
+
+---
+
+## 2026-07-18 — Stage 3 dashboard and landing-page performance
+
+### What we were trying to achieve
+
+Reduce duplicate dashboard work, prevent cross-workspace cache reuse, and lower the landing page's initial network and per-frame rendering cost.
+
+### Feature / change being made
+
+Page-load, refresh, caching, query-index, and animation performance improvements.
+
+### Files changed
+
+- `app/api/auth/bootstrap/route.ts`
+- `app/api/dashboard/route.ts`
+- `app/dashboard/page.tsx`
+- `app/page.tsx`
+- `app/page.module.css`
+- `migrations/20260718_dashboard_query_indexes_up.sql`
+- `migrations/20260718_dashboard_query_indexes_down.sql`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The dashboard response now includes its action list, removing the duplicate `/api/actions` request on initial load and focus refresh.
+- Dashboard song/activity caches are scoped by user and workspace, expire after five minutes, remove the old unscoped keys, and are cleared for the current workspace on sign-out.
+- Focus and visibility events within one second are coalesced so a tab return does not immediately issue the same reload twice.
+- Added composite indexes matching the dashboard's workspace, version, action, thread, comment, and membership lookups.
+- The landing page initially references one background image and preloads each next slide only when it is needed instead of causing all six to download at once.
+- The equalizer uses 72 transform/opacity animations instead of 120 height/background writes, stops in hidden tabs, and renders a static reduced-motion variant.
+- Auth bootstrap is now explicitly dynamic/no-store, removing the production-build static-generation warning and avoiding raw bootstrap errors in responses.
+
+### Verification
+
+- `npx tsc --noEmit --incremental false` — passed.
+- `npm run build` — passed, and the previous `/api/auth/bootstrap` dynamic-server warning is gone.
+- First-load JavaScript remained effectively flat: landing page 158kB before/after; dashboard 180kB → 181kB after adding scoped cache/action response handling.
+- Static call-path inspection confirms initial/focus dashboard loading no longer calls `loadActions()` separately; it remains only for targeted action mutations.
+
+---
+
+## 2026-07-18 — Stage 4 accessibility and responsive resilience
+
+### What we were trying to achieve
+
+Remove the highest-confidence keyboard, focus, zoom, motion, form-label, and small-screen usability barriers identified during the code review without redesigning the interface.
+
+### Feature / change being made
+
+Standards-based accessibility and responsive hardening for authentication, menus, dialogs, workspace switching, and version uploads.
+
+### Files changed
+
+- `app/layout.tsx`
+- `app/page.tsx`
+- `app/page.module.css`
+- `app/songs/[id]/upload/page.tsx`
+- `components/AccountMenu.tsx`
+- `components/UpgradeModal.tsx`
+- `components/UpgradeSuccessModal.tsx`
+- `components/WorkspaceSwitcher.tsx`
+- `components/WorkspaceSwitcher.module.css`
+- `lib/useDialogFocus.ts`
+- `styles/globals.css`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Restored browser pinch zoom and added a consistent visible keyboard-focus treatment.
+- Added reduced-motion behavior for global CSS animation and the landing-page SVG headline.
+- Authentication fields now have programmatic labels, status/error announcements, real terms/privacy links, and a mobile layout that can scroll when forms expand.
+- Upgrade dialogs and the mobile workspace sheet now trap focus, close with Escape, and restore the prior focus target.
+- The account menu supports keyboard entry, arrow-key navigation, Home/End, and Escape.
+- The version upload drop zone is keyboard-operable, form controls are labelled, and upload errors are announced.
+- Mobile sign-out uses a 44px target; tightly packed dashboard card actions retain their existing 24px target to avoid creating overlap at narrow widths.
+
+### Verification
+
+- `npx tsc --noEmit --incremental false` — passed.
+- `npm run build` — passed; landing first-load JavaScript remains 158kB and dashboard remains 181kB.
+- Headless Chrome at 1440×900 and 375×667 — home page returned 200 with no framework error overlay, labelled email/password fields rendered, keyboard focus had a visible 2px outline, and the expanded login/forgot-password flows had no horizontal overflow.
+- Reduced-motion emulation rendered no SVG animation elements or running document animations.
+
+---
+
+## 2026-07-18 — Stage 5 supported framework, dependency, and response hardening
+
+### What we were trying to achieve
+
+Remove known dependency vulnerabilities, restore an executable lint check, and add safe baseline browser-response protections without combining the change with a React major upgrade or storage-privacy migration.
+
+### Feature / change being made
+
+Dedicated Next.js 15 security upgrade and compatibility checkpoint.
+
+### Files changed
+
+- `package.json`
+- `package-lock.json`
+- `next.config.js`
+- `next-env.d.ts`
+- `eslint.config.mjs`
+- `app/icon.svg`
+- Dynamic route handlers under `app/api/**/[parameter]/route.ts`
+- `app/auth/callback/route.ts`
+- `app/invite/[token]/page.tsx`
+- `app/invite/[token]/InviteActions.tsx`
+- `app/listen/[songId]/layout.tsx`
+- `app/r/[code]/route.ts`
+- `app/songs/[id]/page.tsx`
+- `app/songs/[id]/versions/[versionId]/page.tsx`
+- `app/privacy/page.tsx`
+- `app/terms/page.tsx`
+- `lib/currentUser.ts`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Upgraded unsupported Next.js 14.2.35 to the supported 15.5.20 backport and migrated dynamic route parameters and cookie reads to the asynchronous request API.
+- Kept React at 18.3.1, which Next.js 15.5 supports, so framework security work is not combined with a separate React major-version migration.
+- Updated Supabase, Stripe, Wavesurfer, and Resend; removed the unused deprecated Supabase auth-helper package.
+- Overrode Next.js's vulnerable PostCSS transitive version with patched PostCSS 8.5.10.
+- Added ESLint 9 with the Next.js Core Web Vitals/TypeScript configuration. Existing explicit-`any` debt is reported as warnings so the new check is usable without an unrelated type refactor.
+- Added `nosniff`, frame denial, strict referrer, limited browser permissions, and one-year HSTS headers; disabled the framework disclosure header. A restrictive CSP remains a separate report-only rollout because the app currently uses inline styles and external fonts/images.
+- Replaced broken legal-page font URLs and added the missing application icon, eliminating their 404 requests.
+- The supported Next.js runtime increases shared first-load JavaScript: landing 158kB → 175kB and dashboard 181kB → 193kB. This is recorded as a known security-versus-payload tradeoff for later measurement.
+
+### Verification
+
+- `npm audit` — 0 vulnerabilities (previously 1 moderate and 3 high across four vulnerable packages).
+- `npm run lint` — passed with 46 existing warnings and 0 errors.
+- `npx tsc --noEmit --incremental false` — passed.
+- `npm run build` — passed on Next.js 15.5.20.
+- Headless Chrome verified `/`, `/privacy`, and `/terms` at a 375×667 viewport with 200 responses, no framework error overlay, and no horizontal overflow.
+- Runtime header inspection confirmed all configured security headers and confirmed `X-Powered-By` is absent.
+
+---
+
+## 2026-07-18 — Mandatory post-update handoff protocol
+
+### What we were trying to achieve
+
+Make every substantial implementation handoff tell the user exactly what they need to do, where to do it, how to verify it, when to stop, and what should happen next.
+
+### Feature / change being made
+
+Repository-level agent workflow and rollout-reporting protocol.
+
+### Files changed
+
+- `AGENTS.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Added mandatory `Your Actions` and `Next Step` sections to every completed-task response.
+- Added a major-update protocol that distinguishes code-complete, preview/staging, deployed, and production-complete states.
+- Required exact external-service instructions, expected results, failure evidence, rollout order, rollback guidance, stop conditions, and explicit user/agent ownership.
+- Required each handoff to end with one recommended next step and to verify external work before describing production as complete.
+
+### Verification
+
+- Documentation was reviewed against the existing required workflow and output format.
+- No application code, schema, dependencies, environment variables, or deployment settings were changed.
+
+---
+
+## 2026-07-18 — Preview-safe notification email initialization
+
+### What we were trying to achieve
+
+Allow preview builds to compile when notification email delivery is intentionally not configured, while preserving the route's existing runtime skip behavior.
+
+### Feature / change being made
+
+Lazy Resend client initialization in the thread-notification API route.
+
+### Files changed
+
+- `app/api/email/notify-thread/route.ts`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Resend 4 rejects a missing API key when its client is constructed. The notification route constructed that client at module scope, so Next.js failed while collecting route data before the existing missing-key fallback could run.
+- The route now trims and validates `RESEND_API_KEY` before constructing the client only when an email is actually ready to send.
+- Missing preview configuration continues to return the existing `missing-resend-api-key` skip response; configured environments keep the same delivery path.
+
+### Verification
+
+- `npm run lint` — passed with 46 existing warnings and 0 errors.
+- `npx tsc --noEmit --incremental false` — passed.
+- `RESEND_API_KEY= npm run build` — passed, including page-data collection for `/api/email/notify-thread`.
+
+---
+
+## 2026-07-18 — Preserve public listening during two-phase uploads
+
+### What we were trying to achieve
+
+Keep existing public song URLs playable while the upload-integrity migration introduces pending version rows.
+
+### Feature / change being made
+
+Finalized-version selection and response minimization for the public song endpoint.
+
+### Files changed
+
+- `app/api/public/song/[songId]/route.ts`
+- `app/listen/[songId]/page.tsx`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Public URLs remain keyed by song ID and the `song-files` bucket/path contract is unchanged.
+- After the upload-integrity migration, the public endpoint ignores versions whose audio upload has not been finalized, so an interrupted upload cannot replace the last playable public version.
+- A legacy query fallback keeps the endpoint compatible before the new column exists during the migration-first rollout.
+- The public response now returns only the version fields used by the listener instead of exposing the complete database row and storage path.
+
+### Verification
+
+- `npm run lint` — passed with 46 existing warnings and 0 errors.
+- `npx tsc --noEmit --incremental false` — passed.
+- `RESEND_API_KEY= npm run build` — passed on Next.js 15.5.20.
+- A read-only local production-server check against the currently configured pre-migration Supabase schema returned `200` for an existing public song, supplied an audio URL, exercised the missing-column fallback, and confirmed `file_path` was absent from the public response.
+
+---
 
 ## 2026-07-25 — Double-post on thread replies (confirmed working)
 
@@ -2976,6 +3315,43 @@ Point song-room.live at the marketing site while keeping the app on the same dom
 **Tests run:**
 - Vercel production builds passed (deploys READY) for each commit.
 - Verified live: `/` serves marketing (indexable), `/login` serves login, `/dashboard` logged-out → `/login?redirectTo=%2Fdashboard`, `/auth/callback` (no code) → `/login?...`, and Google login confirmed reaching the dashboard by Coris.
+
+---
+
+## 2026-07-30 — Refresh staged review against current clone-clean
+
+### What we were trying to achieve
+
+Bring the staged code-review PR up to date with the current `clone-clean` branch before applying its database migrations to the new Supabase staging environment.
+
+### Feature / change being made
+
+Base-branch reconciliation and newly published runtime dependency security patches.
+
+### Files changed
+
+- `package.json`
+- `package-lock.json`
+- `UPDATE_LOG.md`
+- Current `clone-clean` changes merged into `codex/staged-code-review-fixes`
+
+### Notes
+
+- Preserved both sides of the appended update log while merging the current base branch; all application-code changes merged automatically.
+- Updated the supported Next.js 15 line to a patched 15.5.21-or-newer release (resolved to 15.5.22), Sharp to 0.35.3, and PostCSS to 8.5.18.
+- Added a Node.js 20.9-or-newer engine requirement because Sharp 0.35 requires that runtime.
+- Forced Next.js's optional Sharp dependency to the same patched 0.35.3 version so the vulnerable nested copy is not installed.
+- The remaining full-audit findings are confined to ESLint's development-only legacy glob stack. Forcing its patched major glob dependency breaks ESLint's import contract, so that toolchain migration remains separate from runtime security.
+
+### Verification
+
+- `npm audit --omit=dev` — 0 vulnerabilities.
+- `npm run lint` — passed with 48 warnings and 0 errors.
+- `npx tsc --noEmit --incremental false` — passed.
+- Production build — passed on Next.js 15.5.22 with placeholder build-time service credentials.
+- Full `npm audit` — 9 high-severity development-only findings in the ESLint/minimatch/brace-expansion chain; no production dependencies affected.
+
+---
 
 ## 2026-08-01 — Align collaborator limits across pricing tiers
 
@@ -3391,3 +3767,482 @@ Coris prefers regular dashes over em dashes in the preview text and across the m
 ### Notes
 - Confirmed by Coris. Preserved one decorative pricing-list bullet (`.tier-features li::before { content: '—' }`); flagged for a future call.
 - Commit: `a25d00f5`.
+
+---
+
+## 2026-08-11 - Supabase migration baseline and staging repair
+
+### What we were trying to achieve
+
+Make Supabase branches reproduce the real production schema and storage setup instead of starting with only a small subset of the application's tables.
+
+### Feature / change being made
+
+Canonical Supabase migration history under `supabase/migrations`, plus reproducible public media buckets for staging and future preview branches.
+
+### Files changed
+
+- `supabase/migrations/20260730171202_remote_schema.sql`
+- `supabase/migrations/20260807090000_beta_feedback.sql`
+- `supabase/migrations/20260809100000_profile_settings_visualizer.sql`
+- `supabase/migrations/20260809110000_playlists.sql`
+- `supabase/migrations/20260810100000_playlists_image.sql`
+- `supabase/migrations/20260811080000_storage_buckets.sql`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Fetched the existing 30 July production baseline from Supabase migration history. It contains all 18 core public tables, functions, constraints, indexes, grants, and RLS policies.
+- Copied the four August migrations that had been run manually in production into the canonical Supabase migration directory, then recorded their complete SQL as applied in production migration history without rerunning them.
+- Added an idempotent storage migration for the public `song-files` and `song-images` buckets. Their public status preserves single-song links, public playlists, artwork, and social share images.
+- Recreated `code-review-staging` as a persistent, data-free branch. The replacement branch has all 21 production tables and both public storage buckets.
+- Production application data and schema objects were not changed. Only migration-history metadata was repaired.
+
+---
+
+## 2026-08-11 - Staged code-review database rollout
+
+### What we were trying to achieve
+
+Apply the reviewed security, upload-integrity, and query-performance changes to an isolated Supabase branch before they reach production.
+
+### Feature / change being made
+
+Canonical staged-review migrations, database verification, and a referral-code function repair found by Supabase lint.
+
+### Files changed
+
+- `supabase/config.toml`
+- `supabase/migrations/20260811100000_public_comments_hardening.sql`
+- `supabase/migrations/20260811110000_stripe_webhook_idempotency.sql`
+- `supabase/migrations/20260811120000_account_storage_schema.sql`
+- `supabase/migrations/20260811130000_version_upload_integrity.sql`
+- `supabase/migrations/20260811140000_dashboard_query_indexes.sql`
+- `supabase/migrations/20260811150000_fix_generate_referral_code.sql`
+- `app/upload/page.tsx`
+- `app/api/public/playlist/[id]/route.ts`
+- `app/api/dashboard/route.ts`
+- `app/api/dashboard/summary/route.ts`
+- `app/songs/[id]/page.tsx`
+- `app/api/songs/[songId]/versions/route.ts`
+- `app/api/admin/feedback/[id]/route.ts`
+- `app/api/playlists/[id]/route.ts`
+- `app/api/playlists/[id]/image/route.ts`
+- `app/api/playlists/[id]/songs/route.ts`
+- `app/api/playlists/[id]/songs/[songId]/route.ts`
+- `app/listen/playlist/[id]/layout.tsx`
+- `package.json`
+- `package-lock.json`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Applied each migration to `code-review-staging` separately and checked its security or data-integrity behavior before continuing.
+- Confirmed Stripe webhook claiming is idempotent and version upload finalisation only increments storage once.
+- Added seven indexes for common dashboard, version, action, comment, and membership reads.
+- Fixed the ambiguous `code` variable in `generate_referral_code()`, which caused the function to fail database lint and could fail at runtime if called.
+- Updated the multi-uploader to finalise each uploaded object before verification, and to cancel pending version rows after a failed upload.
+- Public playlists now ignore pending versions, while retaining a compatibility fallback for environments where the finalisation column has not been deployed yet.
+- Public playlist song lookups are constrained to the playlist workspace, protecting against accidental cross-workspace membership data when the service role reads the public feed.
+- Dashboard, song entry, and version-list reads ignore interrupted pending uploads so users aren't sent to incomplete audio records.
+- Updated the pinned PostCSS override to its patched release, which also removes the vulnerable transitive Nano ID release from the production dependency tree.
+- Updated the recent feedback and playlist routes to Next 15's asynchronous route-parameter contract so production builds can validate them.
+- Hosted Auth and API configuration is intentionally absent from `supabase/config.toml`; don't run `supabase config push` until production settings have been captured and reviewed.
+
+---
+
+## 2026-08-11 - Environment-aware public song links
+
+### What we were trying to achieve
+
+Allow public song sharing to be tested against an isolated preview database without sending listeners to the production application, where the staging song does not exist.
+
+### Feature / change being made
+
+The song share modal now builds its listen URL from the hostname currently serving the app, matching the existing public-playlist behaviour.
+
+### Files changed
+
+- `app/songs/[id]/versions/[versionId]/page.tsx`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Production visitors still receive a production-domain link.
+- Preview visitors now receive a preview-domain link, keeping the application and Supabase environment paired correctly.
+- No database, storage, authentication, or production configuration was changed.
+
+---
+
+## 2026-08-11 - Environment-aware workspace invite links
+
+### What we were trying to achieve
+
+Keep emailed collaborator invites in the environment where they were created, so staging invitations do not point recipients to localhost or production.
+
+### Feature / change being made
+
+Workspace invitation emails now build their acceptance URL from the current request origin for both new and resent invitations.
+
+### Files changed
+
+- `app/api/workspace/invites/route.ts`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Removed the localhost fallback from emailed invite links.
+- Production requests still generate production links, while preview requests generate preview links.
+- Manual invite-link copying already used the current browser origin and was unchanged.
+
+---
+
+## 2026-08-11 - Reliable environment-aware comment notifications
+
+### What we were trying to achieve
+
+Ensure timestamped comments and replies send collaborator notifications from protected staging deployments without trying to contact localhost or delaying the comment response.
+
+### Feature / change being made
+
+Comment notification delivery now runs directly as supported post-response work instead of making a fragile HTTP request back into the same deployment.
+
+### Files changed
+
+- `app/api/threads/create/route.ts`
+- `app/api/threads/reply/route.ts`
+- `app/api/email/notify-thread/route.ts`
+- `lib/threadNotifications.ts`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Removed the localhost fallback from comment and reply notification delivery.
+- Kept the signed internal notification endpoint for authenticated HTTP callers.
+- Preserved the existing recipient, membership, and notification-mode checks.
+- Notification links now use the environment where the comment or reply was posted.
+- Resend API errors are treated as delivery failures instead of being logged as successful sends.
+
+---
+
+## 2026-08-11 - Workspace-aware song access message
+
+### What we were trying to achieve
+
+Explain a deliberate workspace permission denial clearly when someone opens a song notification while a different workspace is selected.
+
+### Feature / change being made
+
+The version page now distinguishes a workspace access denial from a temporary loading failure and gives the user a useful recovery instruction.
+
+### Files changed
+
+- `.impeccable.md`
+- `app/songs/[id]/versions/[versionId]/page.tsx`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Preserved the HTTP status from failed initial version-page requests so a 403 can be rendered intentionally.
+- Replaced the generic loading-failure heading with workspace-specific access copy for 403 responses.
+- Removed the ineffective Retry action from this permission state. Other loading failures retain Retry.
+- Saved the project's design context for future interface work.
+
+---
+
+## 2026-08-12 - Authenticated dashboard performance instrumentation
+
+### What we were trying to achieve
+
+Establish a trustworthy Stage 3 baseline for the slow authenticated dashboard before changing its data flow.
+
+### Feature / change being made
+
+Preview-safe request timing for authentication, workspace bootstrap, dashboard queries, response assembly, and opt-in client readiness measurements.
+
+### Files changed
+
+- `app/api/auth/bootstrap/route.ts`
+- `app/api/dashboard/route.ts`
+- `app/dashboard/page.tsx`
+- `lib/bootstrapAccount.ts`
+- `lib/canonicalIdentity.ts`
+- `lib/requestTiming.ts`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Added `Server-Timing` headers to the authenticated bootstrap and dashboard endpoints.
+- Preview logs report only timing stages, response status, request identifiers, and record counts. They do not include user IDs, emails, workspace IDs, song titles, or comment text.
+- Dashboard visits with `?perf=1` use one anonymous trace identifier across bootstrap and dashboard requests and log when songs become visible.
+- Adding `cache=skip` to the trace URL bypasses the dashboard's local read cache for one cold-load measurement without deleting browser data; the fresh response still seeds the next warm run.
+- Normal dashboard query order and caching are unchanged. Authorization, database schema, and production configuration are also unchanged.
+
+---
+
+## 2026-08-12 - Shared account bootstrap concurrency
+
+### What we were trying to achieve
+
+Reduce the repeated server and database delay paid by authenticated dashboard requests without changing account creation, authentication, or workspace selection rules.
+
+### Feature / change being made
+
+First measured Stage 4 performance batch for the canonical account bootstrap.
+
+### Files changed
+
+- `lib/bootstrapAccount.ts`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Profile persistence and membership resolution now run concurrently because neither depends on the other.
+- A valid active-workspace membership now avoids the redundant query for every membership belonging to the user.
+- New-account creation still waits until both profile and membership checks finish, preserving the existing first-login sequence.
+- The measured dashboard baseline and active review findings are recorded in `CODEBASE_REVIEW.md`.
+- Preview traces confirmed that profile and membership stages overlap, removing 307 to 425 ms of serialized database waiting across the two identity calls made by an initial dashboard visit.
+- End-to-end request chains still varied from 2.12 to 4.15 seconds, so no stable whole-page percentage improvement is claimed from this batch.
+- No database schema, cache scope, authentication rule, or production configuration was changed.
+
+---
+
+## 2026-08-12 - Dashboard member-query reduction
+
+### What we were trying to achieve
+
+Remove database work that delays every dashboard response even when no assigned actions need collaborator names.
+
+### Feature / change being made
+
+Second measured Stage 4 performance batch for the authenticated dashboard query path.
+
+### Files changed
+
+- `app/api/dashboard/route.ts`
+- `lib/workspaceMembers.ts`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The dashboard no longer loads the entire workspace member directory alongside every versions and actions query.
+- With no assigned actions, member and profile queries are skipped entirely.
+- When actions are assigned, the lookup is restricted to those user IDs, still checks workspace membership, and runs alongside thread loading.
+- Settings, collaborator management, invitations, and other routes retain the existing full workspace-member behavior.
+- In a comparable high-latency preview sample, the dashboard `related` stage fell from 606 ms to 360 ms, a 41% reduction, and no assigned-member lookup ran for the zero-action workspace.
+- Whole-route time remained dominated by variable identity and later comment-query stages, so this batch is recorded as a stage improvement rather than a stable page-load percentage.
+- No database schema, permission rule, cache scope, or production configuration was changed.
+
+---
+
+## 2026-08-12 - Dashboard version and thread query consolidation
+
+### What we were trying to achieve
+
+Remove another sequential database round trip from the authenticated dashboard without changing which versions, threads, or comments are displayed.
+
+### Feature / change being made
+
+Third measured Stage 4 performance batch for the authenticated dashboard query path.
+
+### Files changed
+
+- `app/api/dashboard/route.ts`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Finalized song versions now include their comment-thread fields through the existing database relationship.
+- The dashboard no longer performs a separate thread query after loading versions.
+- Comments remain a separate, workspace-constrained lookup using only thread IDs returned with finalized versions.
+- The previous trace showed that the removed thread stage cost 310 ms.
+- The preview response retained four songs, five versions, two threads, and three comments, with no separate `threads` timing stage.
+- On latency-matched samples, the whole dashboard route fell from 2,236 ms to 1,980 ms, an 11% reduction, while identity timing stayed within 10 ms.
+- No database schema, permission rule, cache scope, or production configuration was changed.
+
+---
+
+## 2026-08-12 - Dashboard thread and comment query consolidation
+
+### What we were trying to achieve
+
+Remove the final sequential comment round trip from the authenticated dashboard while preserving comment counts, activity summaries, and awaiting-response signals.
+
+### Feature / change being made
+
+Fourth measured Stage 4 performance batch for the authenticated dashboard query path.
+
+### Files changed
+
+- `app/api/dashboard/route.ts`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Comment fields now load under their existing comment threads inside the finalized-version query.
+- The dashboard no longer performs a separate comments query after versions and threads have loaded.
+- Comment and thread IDs still drive the same in-memory action, activity, count, and awaiting-response assembly.
+- The previous comparable trace showed that the removed comments stage cost 313 ms.
+- The deployed preview retained four songs, five versions, two threads, and three comments, with no separate `threads` or `comments` timing stage.
+- The comparable post-identity dashboard data path fell from about 1,027 ms to 617 ms, a 40% reduction. The whole route reached 1,366 ms in that sample, but identity variability means the data-path comparison is the reliable result.
+- The user's cold dashboard check passed, and the preview runtime error scan remained clean.
+- No database schema, permission rule, cache scope, or production configuration was changed.
+
+---
+
+## 2026-08-12 - Single-request dashboard initialization
+
+### What we were trying to achieve
+
+Remove the repeated authenticated identity and account-bootstrap work from the initial dashboard journey without racing first-account creation or weakening workspace validation.
+
+### Feature / change being made
+
+Fifth measured Stage 4 performance batch for the authenticated dashboard request path.
+
+### Files changed
+
+- `app/api/dashboard/route.ts`
+- `app/dashboard/page.tsx`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The authorized dashboard response now includes the canonical identity and workspace plan it already resolved.
+- Initial dashboard loading uses that one response for session state and dashboard content instead of calling `/api/auth/bootstrap` and then `/api/dashboard` in series.
+- First-account creation remains inside one canonical server request, so the unsafe parallel-request race is not introduced.
+- Focus refreshes and other authenticated screens keep their existing behavior.
+- The user's cold preview check and workspace switching both passed. Each switch returned 200 and showed the correct zero-song or four-song workspace.
+- The traced cold visit contained one dashboard request and no bootstrap request. Compared with the closest preceding preview, total server work fell from about 2,825 ms across two requests to 1,750 ms in one request, a 38% reduction.
+- The browser reported songs visible at 3,084 ms on that cache-bypassed visit. The request returned four songs, five versions, two threads, and three comments.
+- No database schema, permission rule, cache scope, or production configuration was changed.
+
+---
+
+## 2026-08-12 - Concurrent active-workspace bootstrap
+
+### What we were trying to achieve
+
+Remove a remaining sequential database wait from canonical identity resolution after the dashboard switched to one request.
+
+### Feature / change being made
+
+Sixth measured Stage 4 performance batch for authenticated workspace bootstrap.
+
+### Files changed
+
+- `lib/bootstrapAccount.ts`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- When the HTTP-only active-workspace cookie is present, candidate workspace loading now starts alongside membership validation and the existing profile sync.
+- Candidate workspace data is used only after the user's membership in that exact workspace has passed validation.
+- A stale or invalid cookie still falls back to the user's canonical membership selection. First-account creation remains ordered after membership checks.
+- The user's cold four-song dashboard check passed with the same five versions, two threads, and three comments.
+- On that cold active-workspace trace, identity fell from 1,063 ms to 652 ms, a 39% reduction, and the full dashboard response fell from 1,750 ms to 1,188 ms, a 32% reduction.
+- Warm samples remain variable because one concurrent Supabase read sometimes queues, so this is recorded as a cold-path improvement rather than a universal response-time percentage.
+- No database schema, permission rule, cookie format, or production configuration was changed.
+
+---
+
+## 2026-08-12 - Public playlist performance instrumentation
+
+### What we were trying to achieve
+
+Measure the public playlist's per-song latest-version query wave before replacing it, without logging public IDs, titles, or song names.
+
+### Feature / change being made
+
+Stage 4 baseline instrumentation for the public playlist API.
+
+### Files changed
+
+- `app/api/public/playlist/[id]/route.ts`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Preview logs now report playlist lookup, workspace lookup, ordered membership, scoped songs, and latest-version stage durations.
+- Logs contain only response status, anonymous request timing, and record/query counts. Public identifiers and content are excluded.
+- Playlist authorization, track order, pending-upload filtering, storage URLs, and fallback behavior are unchanged.
+- The user's cold and warm public playlist checks both retained three ordered, playable tracks.
+- Baseline responses took 1,240 ms and 1,409 ms. Each used three latest-version requests and spent 319 ms in that stage.
+- No database schema, permission rule, cache policy, or production configuration was changed.
+
+---
+
+## 2026-08-12 - Public playlist query consolidation
+
+### What we were trying to achieve
+
+Reduce public playlist database requests without restoring the earlier response-row truncation that caused a newest track to disappear.
+
+### Feature / change being made
+
+Measured Stage 4 performance batch for the public playlist API.
+
+### Files changed
+
+- `app/api/public/playlist/[id]/route.ts`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Latest playable versions now load through one combined query for ordinary playlists instead of one query per song.
+- Version results paginate in 500-row pages and long song-ID lists split into bounded batches, so playlists with extensive version history do not depend on the server response row limit.
+- Workspace-name and ordered playlist-membership reads now overlap after the playlist's public status has passed validation.
+- Pending-upload filtering, missing-column fallback, cross-workspace song filtering, track order, and storage URL behavior are preserved.
+- Direct preview verification returned the same three ordered tracks with one version query instead of three.
+- The verified response took 1,278 ms versus the comparable 1,409 ms baseline, about 9% faster. Latest-version query count fell 67%.
+- The user's public-player check confirmed that the first and last tracks both play.
+- No database schema, permission rule, cache policy, or production configuration was changed.
+
+---
+
+## 2026-08-12 - Final readiness audit security and deletion hardening
+
+### What we were trying to achieve
+
+Finish the Stage 5 production-readiness audit, close any release-blocking permission or data-integrity gaps, and keep all verification isolated to staging.
+
+### Feature / change being made
+
+Remove permissive RLS policies, make song deletion release storage usage atomically, clean up deleted media objects, and record the final audit and rollout state.
+
+### Files changed
+
+- `app/api/songs/[songId]/route.ts`
+- `migrations/20260520_rls_policies_up.sql`
+- `migrations/20260520_rls_policies_down.sql`
+- `migrations/20260812_remove_permissive_rls_policies_up.sql`
+- `migrations/20260812_remove_permissive_rls_policies_down.sql`
+- `migrations/20260812_song_deletion_storage_accounting_up.sql`
+- `migrations/20260812_song_deletion_storage_accounting_down.sql`
+- `supabase/migrations/20260812200000_remove_permissive_rls_policies.sql`
+- `supabase/migrations/20260812201000_song_deletion_storage_accounting.sql`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Removed the legacy song policy that allowed every role to read every song row and the authenticated settings policy that overrode workspace-scoped access.
+- Changed the historical RLS rollback into a deliberate no-op because restoring blanket access is unsafe.
+- Added a service-role-only song-deletion transaction that locks the affected records, subtracts finalized audio bytes from workspace usage, uses database cascades for related rows, and returns storage paths for object cleanup.
+- The API removes returned audio paths and the current cover in batches. If object cleanup fails after the database transaction, the response reports pending cleanup while the deleted rows and workspace quota remain correct.
+- Applied both new canonical migrations only to `code-review-staging`; all 14 local and staging migration versions now align.
+- Verified that staging contains a private-song fixture and anonymous access to that fixture is blocked after the policy migration.
+- A rollback-safe deletion fixture released exactly 123 bytes, returned one audio path, deleted the song, and left its temporary workspace at zero bytes. The temporary workspace was removed.
+- `supabase db lint --linked --level warning` reported no schema errors.
+- `npm audit --omit=dev` reported zero known production dependency vulnerabilities.
+- Both Vercel checks passed for commit `30dd23b0`.
+- The user-facing preview regression passed: a disposable uploaded song deleted normally, remained absent after refresh, and was also removed from the playlist that contained it.
+- Production remains unchanged. Code and staging gates are complete; the draft PR stays open and unmerged pending explicit approval for the migration-first production rollout.

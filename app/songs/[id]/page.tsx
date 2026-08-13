@@ -5,12 +5,13 @@ import { supabaseServer } from '@/lib/supabaseServer';
 export const dynamic = 'force-dynamic';
 
 interface SongEntryPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default async function SongEntryPage({ params }: SongEntryPageProps) {
+export default async function SongEntryPage(props: SongEntryPageProps) {
+  const params = await props.params;
   noStore();
   const songId = params.id;
 
@@ -24,6 +25,7 @@ export default async function SongEntryPage({ params }: SongEntryPageProps) {
       .from('song_versions')
       .select('id')
       .eq('song_id', songId)
+      .not('upload_finalized_at', 'is', null)
       .order('version_number', { ascending: false })
       .limit(1)
       .maybeSingle(),

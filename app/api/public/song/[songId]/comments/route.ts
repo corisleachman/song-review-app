@@ -41,10 +41,8 @@ async function songAllowsComments(songId: string): Promise<boolean> {
 }
 
 // ── GET — list visible comments ─────────────────────────────────────────────
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { songId: string } }
-) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ songId: string }> }) {
+  const params = await props.params;
   try {
     const { songId } = params;
 
@@ -74,10 +72,8 @@ export async function GET(
 }
 
 // ── POST — add a comment ────────────────────────────────────────────────────
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { songId: string } }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ songId: string }> }) {
+  const params = await props.params;
   try {
     const { songId } = params;
     const body = await req.json() as {

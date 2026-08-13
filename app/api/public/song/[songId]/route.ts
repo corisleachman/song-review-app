@@ -10,10 +10,43 @@ function normalizeStoragePath(value: string | null | undefined) {
   return trimmed.startsWith(prefix) ? trimmed.slice(prefix.length) : trimmed;
 }
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { songId: string } }
-) {
+function isMissingUploadFinalizedColumn(error: unknown) {
+  if (!error || typeof error !== 'object') return false;
+
+  const code = 'code' in error && typeof error.code === 'string' ? error.code : '';
+  const message = 'message' in error && typeof error.message === 'string'
+    ? error.message.toLowerCase()
+    : '';
+
+  return (code === '42703' || code === 'PGRST204')
+    && message.includes('upload_finalized_at');
+}
+
+async function getLatestPublicVersion(songId: string) {
+  const finalizedResult = await supabaseServer
+    .from('song_versions')
+    .select('id, version_number, label, file_path')
+    .eq('song_id', songId)
+    .not('upload_finalized_at', 'is', null)
+    .order('version_number', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!finalizedResult.error) return finalizedResult;
+  if (!isMissingUploadFinalizedColumn(finalizedResult.error)) return finalizedResult;
+
+  // Compatibility while the upload-integrity migration is being rolled out.
+  return supabaseServer
+    .from('song_versions')
+    .select('id, version_number, label, file_path')
+    .eq('song_id', songId)
+    .order('version_number', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+}
+
+export async function GET(_req: NextRequest, props: { params: Promise<{ songId: string }> }) {
+  const params = await props.params;
   try {
     const { songId } = params;
 
@@ -51,13 +84,7 @@ export async function GET(
     }
 
     // Fetch latest version
-    const { data: version, error: versionError } = await supabaseServer
-      .from('song_versions')
-      .select('*')
-      .eq('song_id', songId)
-      .order('version_number', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const { data: version, error: versionError } = await getLatestPublicVersion(songId);
 
     if (versionError) throw versionError;
 
@@ -85,7 +112,10 @@ export async function GET(
           comments_enabled: song.public_comments_enabled ?? false,
         },
         version: {
-          ...withVersionDisplayName(version),
+          id: version.id,
+          version_number: version.version_number,
+          label: version.label,
+          display_name: withVersionDisplayName(version).display_name,
           audioUrl,
         },
       },

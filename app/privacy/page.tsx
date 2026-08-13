@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Privacy Policy — The Song Room",
@@ -11,14 +12,14 @@ export default function PrivacyPage() {
       <style>{`
         @font-face {
           font-family: "ThunderLC";
-          src: url("https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-BoldLC.ttf") format("truetype");
+          src: url("https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-LC.ttf") format("truetype");
           font-weight: 700;
           font-style: normal;
           font-display: swap;
         }
         @font-face {
           font-family: "ThunderLC";
-          src: url("https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-BlackLC.ttf") format("truetype");
+          src: url("https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-LC.ttf") format("truetype");
           font-weight: 900;
           font-style: normal;
           font-display: swap;
@@ -117,8 +118,8 @@ export default function PrivacyPage() {
       `}</style>
 
       <nav className="legal-nav">
-        <a className="legal-nav-logo" href="/">The <em>Song</em> Room</a>
-        <a className="legal-nav-back" href="/">← Home</a>
+        <Link className="legal-nav-logo" href="/">The <em>Song</em> Room</Link>
+        <Link className="legal-nav-back" href="/">← Home</Link>
       </nav>
 
       <main className="legal-main">
@@ -224,9 +225,9 @@ export default function PrivacyPage() {
       <footer className="legal-footer">
         <p className="legal-footer-logo">The <em>Song</em> Room</p>
         <nav className="legal-footer-links">
-          <a href="/privacy">Privacy</a>
-          <a href="/terms">Terms</a>
-          <a href="/">Home</a>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
+          <Link href="/">Home</Link>
         </nav>
       </footer>
     </>

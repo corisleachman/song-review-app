@@ -9,14 +9,14 @@ const FOUNDING_TESTER_CAP = 100;
 const ACTIONS = ['approve', 'reject', 'spam'] as const;
 type Action = (typeof ACTIONS)[number];
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, props: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await props.params;
     const user = await getCurrentAuthenticatedUser();
     if (!isAdminEmail(user?.email)) {
       return NextResponse.json({ ok: false, error: 'Not found.' }, { status: 404 });
     }
 
-    const { id } = params;
     const body = (await req.json().catch(() => null)) as { action?: string } | null;
     const action = body?.action as Action | undefined;
     if (!action || !ACTIONS.includes(action)) {

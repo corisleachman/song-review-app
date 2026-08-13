@@ -307,7 +307,7 @@ export default function InviteActions({ token, inviteEmail }: InviteActionsProps
       {actionState === 'matched' && (
         <>
           <p style={{ margin: 0, color: 'rgba(255,255,255,0.76)', lineHeight: 1.6 }}>
-            You're signed in as <strong>{signedInEmail}</strong>. You can join this workspace now.
+            You&apos;re signed in as <strong>{signedInEmail}</strong>. You can join this workspace now.
           </p>
           <button
             type="button"

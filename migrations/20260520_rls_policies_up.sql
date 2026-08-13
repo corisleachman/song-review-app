@@ -39,6 +39,9 @@ DROP POLICY IF EXISTS "profile_settings_insert_own" ON profile_settings;
 DROP POLICY IF EXISTS "profile_settings_update_own" ON profile_settings;
 
 DROP POLICY IF EXISTS "settings_authenticated_all" ON settings;
+DROP POLICY IF EXISTS "settings_select_member" ON settings;
+DROP POLICY IF EXISTS "settings_insert_member" ON settings;
+DROP POLICY IF EXISTS "settings_update_member" ON settings;
 
 DROP POLICY IF EXISTS "accounts_select_member" ON accounts;
 DROP POLICY IF EXISTS "accounts_insert_own" ON accounts;
@@ -53,6 +56,7 @@ DROP POLICY IF EXISTS "songs_select_member" ON songs;
 DROP POLICY IF EXISTS "songs_insert_member" ON songs;
 DROP POLICY IF EXISTS "songs_update_member" ON songs;
 DROP POLICY IF EXISTS "songs_delete_owner" ON songs;
+DROP POLICY IF EXISTS "Enable read access for all users" ON songs;
 
 DROP POLICY IF EXISTS "song_versions_select_member" ON song_versions;
 DROP POLICY IF EXISTS "song_versions_insert_member" ON song_versions;
@@ -104,9 +108,24 @@ CREATE POLICY "profile_settings_update_own"
   WITH CHECK (user_id = auth.uid());
 
 -- ─── settings (legacy) ──────────────────────────────────────
-CREATE POLICY "settings_authenticated_all"
-  ON settings FOR ALL TO authenticated
-  USING (true) WITH CHECK (true);
+CREATE POLICY "settings_select_member"
+  ON settings FOR SELECT TO authenticated
+  USING (public.is_account_member(account_id));
+
+CREATE POLICY "settings_insert_member"
+  ON settings FOR INSERT TO authenticated
+  WITH CHECK (
+    public.is_account_member(account_id)
+    AND (user_id IS NULL OR user_id = auth.uid())
+  );
+
+CREATE POLICY "settings_update_member"
+  ON settings FOR UPDATE TO authenticated
+  USING (public.is_account_member(account_id))
+  WITH CHECK (
+    public.is_account_member(account_id)
+    AND (user_id IS NULL OR user_id = auth.uid())
+  );
 
 -- ─── accounts ───────────────────────────────────────────────
 CREATE POLICY "accounts_select_member"

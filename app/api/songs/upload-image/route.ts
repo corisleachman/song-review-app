@@ -5,23 +5,47 @@ import { supabaseServer } from '@/lib/supabaseServer';
 
 const IMAGE_MAX_PX = 1200;
 const IMAGE_QUALITY = 85;
+const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+const IMAGE_MAX_REQUEST_BYTES = IMAGE_MAX_BYTES + 1024 * 1024;
+const IMAGE_MAX_INPUT_PIXELS = 40_000_000;
+const ACCEPTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 export async function POST(req: NextRequest) {
   try {
-    const formData = await req.formData();
-    const songId = formData.get('songId') as string;
-    const file = formData.get('file') as File;
     const resolved = await resolveCanonicalIdentity();
 
-    if (!songId || !file) {
+    if (!resolved) {
+      return NextResponse.json({ error: 'You must be signed in to upload cover art.' }, { status: 401 });
+    }
+
+    const contentLength = Number(req.headers.get('content-length') ?? 0);
+    if (Number.isFinite(contentLength) && contentLength > IMAGE_MAX_REQUEST_BYTES) {
+      return NextResponse.json({ error: 'Cover art must be 5MB or smaller.' }, { status: 413 });
+    }
+
+    const formData = await req.formData();
+    const songIdValue = formData.get('songId');
+    const fileValue = formData.get('file');
+    const songId = typeof songIdValue === 'string' ? songIdValue.trim() : '';
+
+    if (!songId || !(fileValue instanceof File)) {
       return NextResponse.json(
         { error: 'Missing songId or file' },
         { status: 400 }
       );
     }
 
-    if (!resolved) {
-      return NextResponse.json({ error: 'You must be signed in to upload cover art.' }, { status: 401 });
+    const file = fileValue;
+
+    if (file.size === 0 || file.size > IMAGE_MAX_BYTES) {
+      return NextResponse.json({ error: 'Cover art must be between 1 byte and 5MB.' }, { status: 400 });
+    }
+
+    if (!ACCEPTED_IMAGE_TYPES.has(file.type.toLowerCase())) {
+      return NextResponse.json(
+        { error: 'Cover art must be a JPEG, PNG, or WebP file.' },
+        { status: 400 }
+      );
     }
 
     const { data: song, error: songError } = await supabaseServer
@@ -44,7 +68,10 @@ export async function POST(req: NextRequest) {
     const rawBuffer = Buffer.from(await file.arrayBuffer());
     let optimisedBuffer: Buffer;
     try {
-      optimisedBuffer = await sharp(rawBuffer)
+      optimisedBuffer = await sharp(rawBuffer, {
+        failOn: 'error',
+        limitInputPixels: IMAGE_MAX_INPUT_PIXELS,
+      })
         .resize(IMAGE_MAX_PX, IMAGE_MAX_PX, {
           fit: 'inside',
           withoutEnlargement: true,
@@ -98,7 +125,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('Error uploading image:', error);
     return NextResponse.json(
-      { error: String(error) },
+      { error: 'That image could not be uploaded. Please try again.' },
       { status: 500 }
     );
   }

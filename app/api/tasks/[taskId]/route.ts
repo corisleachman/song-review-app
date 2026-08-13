@@ -26,7 +26,8 @@ async function loadTaskWorkspace(taskId: string) {
   return { task, workspaceId: song?.account_id ?? null };
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { taskId: string } }) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ taskId: string }> }) {
+  const params = await props.params;
   try {
     const resolved = await resolveCanonicalIdentity();
 
@@ -68,7 +69,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { taskId: st
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { taskId: string } }) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ taskId: string }> }) {
+  const params = await props.params;
   try {
     const resolved = await resolveCanonicalIdentity();
 

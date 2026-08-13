@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { scheduleThreadNotification } from '@/lib/threadNotifications';
 
 export async function POST(req: NextRequest) {
   try {
@@ -91,22 +92,13 @@ export async function POST(req: NextRequest) {
       .update({ updated_at: new Date().toISOString() })
       .eq('id', threadId);
 
-    // Send email notification
-    await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/email/notify-thread`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        threadId,
-        songId: version.song_id,
-        versionId: thread.song_version_id,
-        timestamp: thread.timestamp_seconds,
-        author,
-        commentText: trimmedText,
-        isReply: true,
-        actorUserId: resolved.identity.userId,
-        workspaceId: resolved.identity.workspaceId,
-      }),
-    }).catch(err => console.error('Error sending email:', err));
+    scheduleThreadNotification({
+      threadId,
+      commentId: commentData.id,
+      songId: version.song_id,
+      versionId: thread.song_version_id,
+      actorUserId: resolved.identity.userId,
+    }, req.nextUrl.origin);
 
     return NextResponse.json({ commentId: commentData.id });
   } catch (error) {

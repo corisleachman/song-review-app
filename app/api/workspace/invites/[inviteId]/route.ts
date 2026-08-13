@@ -19,10 +19,8 @@ function getErrorMessage(error: unknown) {
   return 'Could not update workspace invite.';
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { inviteId: string } }
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ inviteId: string }> }) {
+  const params = await props.params;
   try {
     const resolved = await resolveCanonicalIdentity();
     const ownerError = requireOwner(resolved);

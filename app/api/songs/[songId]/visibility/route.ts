@@ -4,10 +4,8 @@ import { supabaseServer } from '@/lib/supabaseServer';
 
 export const dynamic = 'force-dynamic';
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { songId: string } }
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ songId: string }> }) {
+  const params = await props.params;
   try {
     const { songId } = params;
     const resolved = await resolveCanonicalIdentity();

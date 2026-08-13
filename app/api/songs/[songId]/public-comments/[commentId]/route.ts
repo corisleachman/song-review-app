@@ -24,8 +24,9 @@ async function assertSongAccess(songId: string) {
 // ── DELETE — permanently remove a public comment ────────────────────────────
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { songId: string; commentId: string } }
+  props: { params: Promise<{ songId: string; commentId: string }> }
 ) {
+  const params = await props.params;
   try {
     const access = await assertSongAccess(params.songId);
     if ('error' in access) {

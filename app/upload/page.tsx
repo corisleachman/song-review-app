@@ -55,6 +55,31 @@ async function verifyVersion(versionId: string) {
   throw new Error('Uploaded file could not be verified — please retry this track.');
 }
 
+async function finalizeVersion(versionId: string) {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    if (attempt > 0) await new Promise((resolve) => setTimeout(resolve, 450));
+
+    let res: Response;
+    try {
+      res = await fetch(`/api/versions/${versionId}/finalize`, { method: 'POST' });
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error('Could not finish the upload.');
+      continue;
+    }
+
+    const payload = await res.json().catch(() => null);
+    if (res.ok) return;
+
+    const responseError = new Error(payload?.error || 'Could not finish the upload.');
+    if (res.status < 500 && res.status !== 409) throw responseError;
+    lastError = responseError;
+  }
+
+  throw lastError ?? new Error('Could not finish the upload.');
+}
+
 export default function UploadPage() {
   const router = useRouter();
   const [items, setItems] = useState<Item[]>([]);
@@ -70,6 +95,8 @@ export default function UploadPage() {
     setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)));
 
   const uploadOne = useCallback(async (item: Item) => {
+    let createdVersionId: string | null = null;
+
     try {
       const s = await fetch('/api/songs/create', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -85,6 +112,7 @@ export default function UploadPage() {
       });
       if (!v.ok) { const e = await v.json().catch(() => ({})); throw new Error(e.error || 'Could not start upload'); }
       const { versionId, uploadUrl } = await v.json();
+      createdVersionId = versionId;
       update(item.id, { versionId });
 
       await new Promise<void>((resolve, reject) => {
@@ -96,9 +124,13 @@ export default function UploadPage() {
         xhr.setRequestHeader('Content-Type', contentTypeFor(item.file));
         xhr.send(item.file);
       });
+      await finalizeVersion(versionId);
       await verifyVersion(versionId);
       update(item.id, { progress: 1, status: 'done' });
     } catch (err) {
+      if (createdVersionId) {
+        await fetch(`/api/versions/${createdVersionId}/finalize`, { method: 'DELETE' }).catch(() => null);
+      }
       update(item.id, { status: 'error', error: err instanceof Error ? err.message : 'Upload failed' });
     }
   }, []);

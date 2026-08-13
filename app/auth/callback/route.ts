@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   const next = requestUrl.searchParams.get('next') || '/';
 
   if (code) {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
 
     // Redirect to login page with google=success so the client-side
     // session sync can pick up the session and redirect appropriately.

@@ -4,10 +4,8 @@ import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { listWorkspaceMembers } from '@/lib/workspaceMembers';
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { actionId: string } }
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ actionId: string }> }) {
+  const params = await props.params;
   try {
     const actionId = params.actionId;
     const body = await req.json();

@@ -278,6 +278,16 @@ function logVersionInit(event: string, details?: Record<string, unknown>) {
   console.info(`[version-init] ${event}${payload}`);
 }
 
+class VersionPageRequestError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'VersionPageRequestError';
+    this.status = status;
+  }
+}
+
 async function fetchJsonWithTimeout<T>(
   input: RequestInfo | URL,
   init: RequestInit,
@@ -304,7 +314,7 @@ async function fetchJsonWithTimeout<T>(
       const message = payload && typeof payload.error === 'string'
         ? payload.error
         : `${label} failed with status ${response.status}`;
-      throw new Error(message);
+      throw new VersionPageRequestError(message, response.status);
     }
 
     return payload as T;
@@ -320,17 +330,48 @@ async function fetchJsonWithTimeout<T>(
 }
 
 function validateAudioFile(file: File) {
-  const isAudio = file.type.startsWith('audio/') || /\.(mp3|wav|m4a|aac|flac|ogg)$/i.test(file.name);
+  const isAudio = file.type.startsWith('audio/') || /\.(mp3|wav|m4a|aac|flac|ogg|aif|aiff)$/i.test(file.name);
 
   if (!isAudio) {
-    return 'Choose an audio file such as MP3, WAV, M4A, FLAC, or OGG.';
+    return 'Choose an audio file such as MP3, WAV, M4A, AAC, FLAC, OGG, AIF, or AIFF.';
   }
+
+  if (file.size <= 0) return 'That audio file is empty.';
 
   if (file.size > MAX_AUDIO_SIZE_BYTES) {
     return 'That file is too large for the current upload flow. Try a file under 200 MB.';
   }
 
   return null;
+}
+
+async function finalizeUploadedVersion(versionIdToFinalize: string) {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    if (attempt > 0) {
+      await new Promise(resolve => window.setTimeout(resolve, 450));
+    }
+
+    let response: Response;
+    try {
+      response = await fetch(`/api/versions/${versionIdToFinalize}/finalize`, { method: 'POST' });
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error('Could not finish the upload.');
+      continue;
+    }
+
+    const payload = await response.json().catch(() => null);
+    if (response.ok) return;
+
+    const responseError = new Error(getUploadErrorMessage(payload?.error));
+    if (response.status < 500 && response.status !== 409) {
+      throw responseError;
+    }
+    lastError = responseError;
+  }
+
+  throw lastError ?? new Error('Could not finish the upload.');
 }
 
 async function verifyUploadedVersion(versionIdToVerify: string) {
@@ -508,7 +549,7 @@ function VersionPageInner() {
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initError, setInitError] = useState<string | null>(null);
+  const [initError, setInitError] = useState<{ message: string; status: number | null } | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -552,6 +593,7 @@ function VersionPageInner() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareToggling, setShareToggling] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const [shareUrl, setShareUrl] = useState(`/listen/${songId}`);
   const [publicComments, setPublicComments] = useState<Array<{ id: string; author_name: string; body: string; is_hidden: boolean; created_at: string }>>([]);
   const [publicCommentsLoaded, setPublicCommentsLoaded] = useState(false);
   const [reactivePalette, setReactivePalette] = useState(() => ({
@@ -565,6 +607,10 @@ function VersionPageInner() {
   const dragTaskId = useRef<string | null>(null);
 
   const supabase = createClient();
+
+  useEffect(() => {
+    setShareUrl(`${window.location.origin}/listen/${songId}`);
+  }, [songId]);
 
   const clearWaveTimers = useCallback(() => {
     if (waveRetryTimerRef.current) {
@@ -1306,10 +1352,11 @@ function VersionPageInner() {
     } catch (error) {
       console.error('Version page load error:', error);
       const message = error instanceof Error ? error.message : 'Could not load this version.';
+      const status = error instanceof VersionPageRequestError ? error.status : null;
       loadErrorMessage = message;
-      setInitError(message);
+      setInitError({ message, status });
       showStatusToast(message);
-      logVersionInit('load:failed', { message });
+      logVersionInit('load:failed', { message, status });
       setLoading(false);
       logVersionInit('load:complete', {
         loadingCleared: true,
@@ -1674,7 +1721,6 @@ function VersionPageInner() {
     setIsRetryingWave(false);
     setDuration(0);
 
-    let debounceTimer: ReturnType<typeof setTimeout>;
     let attempts = 0;
 
     const tryInit = () => {
@@ -1685,7 +1731,7 @@ function VersionPageInner() {
       }
     };
 
-    debounceTimer = setTimeout(tryInit, 80);
+    const debounceTimer = setTimeout(tryInit, 80);
 
     return () => {
       clearTimeout(debounceTimer);
@@ -2103,6 +2149,7 @@ function VersionPageInner() {
 
   async function uploadNewVersion() {
     if (!pendingVersionFile || !identity) return;
+    let createdVersionId: string | null = null;
 
     setUploadingVersion(true);
     setVersionUploadError('');
@@ -2126,6 +2173,7 @@ function VersionPageInner() {
       if (!res.ok || !data.uploadUrl || !data.versionId) {
         throw new Error(getUploadErrorMessage(data.error));
       }
+      createdVersionId = data.versionId;
 
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -2141,6 +2189,7 @@ function VersionPageInner() {
         xhr.send(pendingVersionFile);
       });
 
+      await finalizeUploadedVersion(data.versionId);
       await verifyUploadedVersion(data.versionId);
 
       setShowUploadVersionModal(false);
@@ -2150,6 +2199,9 @@ function VersionPageInner() {
       showStatusToast('Version uploaded');
       router.push(`/songs/${songId}/versions/${data.versionId}`);
     } catch (error) {
+      if (createdVersionId) {
+        await fetch(`/api/versions/${createdVersionId}/finalize`, { method: 'DELETE' }).catch(() => null);
+      }
       setVersionUploadError(error instanceof Error ? error.message : 'Upload failed. Please try again.');
     } finally {
       setUploadingVersion(false);
@@ -2261,19 +2313,31 @@ function VersionPageInner() {
   );
 
   if (initError) {
+    const isWorkspaceAccessDenied = initError.status === 403;
+
     return (
       <div className={styles.loading}>
         <div className={styles.initErrorCard}>
-          <h1 className={styles.initErrorTitle}>This version did not finish loading</h1>
-          <p className={styles.initErrorText}>{initError}</p>
+          <h1 className={styles.initErrorTitle}>
+            {isWorkspaceAccessDenied
+              ? 'You do not have access to this song from this workspace'
+              : 'This version did not finish loading'}
+          </h1>
+          <p className={styles.initErrorText}>
+            {isWorkspaceAccessDenied
+              ? 'Switch to the workspace where this song was shared, then open this link again.'
+              : initError.message}
+          </p>
           <div className={styles.initErrorActions}>
-            <button
-              type="button"
-              className={styles.waveRetryBtn}
-              onClick={() => setInitialLoadNonce(count => count + 1)}
-            >
-              Retry
-            </button>
+            {!isWorkspaceAccessDenied && (
+              <button
+                type="button"
+                className={styles.waveRetryBtn}
+                onClick={() => setInitialLoadNonce(count => count + 1)}
+              >
+                Retry
+              </button>
+            )}
             <button
               type="button"
               className={styles.songsBtn}
@@ -2586,11 +2650,16 @@ function VersionPageInner() {
               <label className={styles.heroArtworkUpload} title="Upload cover art">
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
                   style={{ display: 'none' }}
                   onChange={async e => {
                     const file = e.target.files?.[0];
                     if (!file) return;
+                    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+                      window.alert('Choose a JPEG, PNG, or WebP image that is 5MB or smaller.');
+                      e.target.value = '';
+                      return;
+                    }
                     const fd = new FormData();
                     fd.append('songId', songId);
                     fd.append('file', file);
@@ -2786,13 +2855,13 @@ function VersionPageInner() {
                           className={styles.shareLinkUrl}
                           type="text"
                           readOnly
-                          value={`https://song-room.live/listen/${songId}`}
+                          value={shareUrl}
                           onFocus={e => e.target.select()}
                         />
                         <button
                           className={`${styles.shareCopyBtn} ${shareCopied ? styles.shareCopyBtnDone : ''}`}
                           onClick={() => {
-                            void navigator.clipboard.writeText(`https://song-room.live/listen/${songId}`);
+                            void navigator.clipboard.writeText(shareUrl);
                             setShareCopied(true);
                             setTimeout(() => setShareCopied(false), 2000);
                           }}
@@ -3353,7 +3422,7 @@ function VersionPageInner() {
       <input
         ref={versionFileInputRef}
         type="file"
-        accept="audio/*,.mp3,.wav,.m4a,.aac,.flac,.ogg"
+        accept="audio/*,.mp3,.wav,.m4a,.aac,.flac,.ogg,.aif,.aiff"
         style={{ display: 'none' }}
         onChange={e => {
           handleVersionFilePicked(e.target.files?.[0]);
@@ -3438,4 +3507,3 @@ export default function VersionPage() {
     </Suspense>
   );
 }
-

@@ -1,6 +1,7 @@
 'use client';
 
 import { type FormEvent, useEffect, useRef, useState } from 'react';
+import { useDialogFocus } from '@/lib/useDialogFocus';
 import styles from './WorkspaceSwitcher.module.css';
 
 type WorkspaceRole = 'owner' | 'member';
@@ -77,6 +78,7 @@ export default function WorkspaceSwitcher({
   onSignOut,
 }: WorkspaceSwitcherProps) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const mobileSheetRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(forceOpen ?? false);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -88,6 +90,12 @@ export default function WorkspaceSwitcher({
   const [newWorkspaceName, setNewWorkspaceName] = useState(() => getDefaultWorkspaceName(userLabel));
   const roleLabel = formatRole(membershipRole);
   const hasOwnedWorkspace = workspaces.some(workspace => workspace.role === 'owner');
+
+  useDialogFocus(
+    Boolean(open && variant === 'mobile' && !forceOpen),
+    () => setOpen(false),
+    mobileSheetRef
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -221,6 +229,7 @@ export default function WorkspaceSwitcher({
             className={styles.mobileButton}
             onClick={() => setOpen(value => !value)}
             aria-expanded={open}
+            aria-controls="mobile-workspace-switcher"
             aria-label={`Current workspace: ${workspaceName}. Tap to switch workspace.`}
           >
             <div className={styles.mobileButtonLeft}>
@@ -259,7 +268,16 @@ export default function WorkspaceSwitcher({
         </div>
         {open && (
           <div className={styles.mobileOverlay} onClick={() => setOpen(false)}>
-            <div className={styles.mobileSheet} onClick={e => e.stopPropagation()}>
+            <div
+              ref={mobileSheetRef}
+              id="mobile-workspace-switcher"
+              className={styles.mobileSheet}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Switch workspace"
+              tabIndex={-1}
+              onClick={e => e.stopPropagation()}
+            >
               {renderPanel()}
             </div>
           </div>

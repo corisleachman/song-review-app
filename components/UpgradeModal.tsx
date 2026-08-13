@@ -1,6 +1,8 @@
 'use client';
 
+import { useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useDialogFocus } from '@/lib/useDialogFocus';
 import styles from './UpgradeModal.module.css';
 import type { PlanLimitType } from '@/lib/plans';
 
@@ -35,6 +37,8 @@ export default function UpgradeModal({
   onClose,
 }: UpgradeModalProps) {
   const router = useRouter();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(isOpen, onClose, dialogRef);
 
   if (!isOpen) return null;
 
@@ -57,15 +61,18 @@ export default function UpgradeModal({
       }}
     >
       <div
+        ref={dialogRef}
         className={styles.modal}
         role="dialog"
         aria-modal="true"
         aria-labelledby="upgrade-modal-title"
+        aria-describedby="upgrade-modal-description"
+        tabIndex={-1}
       >
         <h2 id="upgrade-modal-title" className={styles.title}>
           {copy.title}
         </h2>
-        <p className={styles.body}>{copy.body}</p>
+        <p id="upgrade-modal-description" className={styles.body}>{copy.body}</p>
         <div className={styles.actions}>
           <button
             type="button"
