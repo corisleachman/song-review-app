@@ -3,10 +3,27 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useDialogFocus } from '@/lib/useDialogFocus';
 import styles from '../playlists.module.css';
 
 type Song = { id: string; title: string; status: string | null; position?: number };
 type Detail = { playlist: { id: string; title: string; is_public: boolean; image_url: string | null }; songs: Song[]; available: Song[] };
+
+const PLAYLIST_COVER_MAX_BYTES = 5 * 1024 * 1024;
+const PLAYLIST_COVER_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+
+function getPlaylistCoverValidationError(file: File) {
+  if (file.size === 0) {
+    return 'That file is empty. Choose a JPEG, PNG, or WebP image under 5MB.';
+  }
+  if (file.size > PLAYLIST_COVER_MAX_BYTES) {
+    return 'That image is larger than 5MB. Choose a smaller JPEG, PNG, or WebP file.';
+  }
+  if (!PLAYLIST_COVER_TYPES.has(file.type.toLowerCase())) {
+    return 'That file type is not supported. Choose a JPEG, PNG, or WebP image under 5MB.';
+  }
+  return null;
+}
 
 export default function ManagePlaylistPage() {
   const params = useParams<{ id: string }>();
@@ -17,10 +34,12 @@ export default function ManagePlaylistPage() {
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [coverUploading, setCoverUploading] = useState(false);
   const [coverError, setCoverError] = useState<string | null>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
+  const coverErrorDialogRef = useRef<HTMLDivElement>(null);
+  const closeCoverError = useCallback(() => setCoverError(null), []);
+  useDialogFocus(Boolean(coverError), closeCoverError, coverErrorDialogRef);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -106,24 +125,42 @@ export default function ManagePlaylistPage() {
     : `/listen/playlist/${id}`;
 
   const uploadCover = async (file: File) => {
-    setCoverPreview(URL.createObjectURL(file)); setCoverUploading(true); setCoverError(null);
+    const validationError = getPlaylistCoverValidationError(file);
+    if (validationError) {
+      setCoverError(validationError);
+      return;
+    }
+
+    setCoverUploading(true);
+    setCoverError(null);
     try {
       const fd = new FormData(); fd.append('file', file);
       const res = await fetch(`/api/playlists/${id}/image`, { method: 'POST', body: fd });
-      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Upload failed'); }
-      const data = await res.json();
+      const data = await res.json().catch(() => null) as { imageUrl?: string; error?: string } | null;
+      if (!res.ok || !data?.imageUrl) {
+        const fallback = res.status === 413
+          ? 'That image is larger than 5MB. Choose a smaller JPEG, PNG, or WebP file.'
+          : 'We could not upload that image. Choose a JPEG, PNG, or WebP file under 5MB and try again.';
+        throw new Error(data?.error || fallback);
+      }
       setDetail((d) => (d ? { ...d, playlist: { ...d.playlist, image_url: data.imageUrl } } : d));
+    } catch (err) {
+      setCoverError(
+        err instanceof Error
+          ? err.message
+          : 'We could not upload that image. Choose a JPEG, PNG, or WebP file under 5MB and try again.'
+      );
+    } finally {
       setCoverUploading(false);
-    } catch (err) { setCoverUploading(false); setCoverError(err instanceof Error ? err.message : 'Cover upload failed'); }
+    }
   };
   const removeCover = async () => {
     setCoverError(null);
     try { await fetch(`/api/playlists/${id}/image`, { method: 'DELETE' }); } catch { /* ignore */ }
-    setCoverPreview(null);
     setDetail((d) => (d ? { ...d, playlist: { ...d.playlist, image_url: null } } : d));
   };
 
-  const coverUrl = coverPreview || detail?.playlist.image_url || null;
+  const coverUrl = detail?.playlist.image_url || null;
 
   return (
     <div className={styles.wrap}>
@@ -152,12 +189,54 @@ export default function ManagePlaylistPage() {
         <div className={styles.coverText}>
           <div className={styles.coverLabel}>Playlist cover</div>
           <div className={styles.coverHint}>
-            {coverError ? coverError : coverUrl ? 'Custom cover set — used as the share preview.' : 'Optional. Defaults to the first track’s artwork. Click to upload.'}
+            {coverUrl ? 'Custom cover set — used as the share preview.' : 'Optional. Defaults to the first track’s artwork. Click to upload.'}
           </div>
           {coverUrl && <button type="button" className={styles.coverRemove} onClick={() => void removeCover()}>Remove cover</button>}
         </div>
       </div>
-      <input ref={coverInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadCover(f); e.target.value = ''; }} />
+      <input ref={coverInputRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadCover(f); e.target.value = ''; }} />
+
+      {coverError && (
+        <div
+          className={styles.coverErrorOverlay}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) closeCoverError();
+          }}
+        >
+          <div
+            ref={coverErrorDialogRef}
+            className={styles.coverErrorDialog}
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="playlist-cover-error-title"
+            aria-describedby="playlist-cover-error-description"
+            tabIndex={-1}
+          >
+            <div className={styles.coverErrorLabel}>Playlist cover</div>
+            <h2 id="playlist-cover-error-title" className={styles.coverErrorTitle}>
+              That image wasn’t uploaded
+            </h2>
+            <p id="playlist-cover-error-description" className={styles.coverErrorBody}>
+              {coverError} Your current cover is unchanged.
+            </p>
+            <div className={styles.coverErrorActions}>
+              <button type="button" className={styles.coverErrorDismiss} onClick={closeCoverError}>
+                Close
+              </button>
+              <button
+                type="button"
+                className={styles.coverErrorChoose}
+                onClick={() => {
+                  closeCoverError();
+                  coverInputRef.current?.click();
+                }}
+              >
+                Choose another image
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className={styles.publish}>
         <div className={styles.pubRow}>
@@ -218,4 +297,3 @@ export default function ManagePlaylistPage() {
     </div>
   );
 }
-

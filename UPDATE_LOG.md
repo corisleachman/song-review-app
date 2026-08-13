@@ -4304,3 +4304,36 @@ Add a dependency-free Node test command covering authentication routing, workspa
 - Upload and deletion checks guard row locking, quota accounting, finalized-byte handling, storage cleanup reporting, and service-role-only RPC access.
 - The unsafe RLS rollback is checked to ensure it cannot recreate blanket policies.
 - These are source-level contract tests. Live database, browser, and accessibility behavior still require separate integration coverage.
+
+---
+
+## 2026-08-13 - Playlist cover upload hardening
+
+### What we were trying to achieve
+
+Prevent oversized, unsupported, or extreme-resolution playlist covers from consuming avoidable server memory and image-decoding work.
+
+### Feature / change being made
+
+Bring playlist-cover validation in line with the established song-cover upload boundary.
+
+### Files changed
+
+- `app/api/playlists/[id]/image/route.ts`
+- `app/playlists/[id]/page.tsx`
+- `tests/critical-contracts.test.mjs`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Requests over the multipart allowance are rejected before `formData()` parsing.
+- Empty files, files over 5 MB, and MIME types other than JPEG, PNG, or WebP are rejected before creating the input buffer.
+- Sharp now fails on decode errors and refuses inputs over 40 megapixels before resizing to the existing 1200-pixel JPEG output.
+- The playlist file picker now advertises only the server-supported formats.
+- The deployment-gated contract suite checks the limits and validation order so future edits cannot silently remove them.
+- Preview verification confirmed that a normal JPEG persisted after refresh and appeared on the public share page.
+- The oversized-file check exposed misleading optimistic feedback: the rejected local image remained in the thumbnail and the inline message only said `Upload failed`. Client validation now runs before upload, rejected files never replace the displayed cover, and an accessible dialog explains the limit and offers to choose another image.
+- The final preview recheck passed: the saved cover remained unchanged, the prominent size dialog appeared, Escape closed it, and `Choose another image` reopened the picker.
+- Google preview sign-in required the exact temporary Vercel hostname in Supabase Auth Redirect URLs. Once allowed, OAuth stayed on the preview host and the corrected build could be tested.
+- No database schema, storage policy, dependency, or deployment configuration changed.

@@ -20,6 +20,16 @@ function assertIncludesAll(source, expected, context) {
   }
 }
 
+function assertOrdered(source, expected, context) {
+  let previousIndex = -1;
+
+  for (const value of expected) {
+    const currentIndex = source.indexOf(value, previousIndex + 1);
+    assert.ok(currentIndex > previousIndex, `${context}: expected ${JSON.stringify(value)} in order`);
+    previousIndex = currentIndex;
+  }
+}
+
 test('auth middleware applies to pages but skips APIs and static files', () => {
   const middleware = read('middleware.ts');
   const literal = middleware.match(/matcher:\s*\[\s*'((?:\\.|[^'])+)'/u)?.[1];
@@ -69,6 +79,45 @@ test('authenticated playlist access stays inside the active workspace', () => {
     "data.account_id !== accountId",
     "return { error: 'notfound', accountId, userId }",
   ], 'playlist workspace boundary');
+});
+
+test('playlist cover uploads validate size and type before buffering or decoding', () => {
+  const route = read('app/api/playlists/[id]/image/route.ts');
+  const page = read('app/playlists/[id]/page.tsx');
+
+  assertIncludesAll(route, [
+    'const IMAGE_MAX_BYTES = 5 * 1024 * 1024',
+    'const IMAGE_MAX_REQUEST_BYTES = IMAGE_MAX_BYTES + 1024 * 1024',
+    'const IMAGE_MAX_INPUT_PIXELS = 40_000_000',
+    "new Set(['image/jpeg', 'image/png', 'image/webp'])",
+    "failOn: 'error'",
+    'limitInputPixels: IMAGE_MAX_INPUT_PIXELS',
+  ], 'playlist cover upload limits');
+  assertOrdered(route, [
+    "const contentLength = Number(req.headers.get('content-length') ?? 0)",
+    'contentLength > IMAGE_MAX_REQUEST_BYTES',
+    'const formData = await req.formData()',
+  ], 'playlist request size validation');
+  assertOrdered(route, [
+    'file.size === 0 || file.size > IMAGE_MAX_BYTES',
+    '!ACCEPTED_IMAGE_TYPES.has(file.type.toLowerCase())',
+    'Buffer.from(await file.arrayBuffer())',
+    'sharp(rawBuffer, {',
+  ], 'playlist file validation');
+  assert.match(page, /accept="image\/jpeg,image\/png,image\/webp"/u);
+  assertOrdered(page, [
+    'getPlaylistCoverValidationError(file)',
+    'setCoverUploading(true)',
+    'new FormData()',
+  ], 'playlist client validation');
+  assert.doesNotMatch(page, /URL\.createObjectURL/u);
+  assertIncludesAll(page, [
+    'role="alertdialog"',
+    'useDialogFocus(Boolean(coverError), closeCoverError, coverErrorDialogRef)',
+    'That image wasn’t uploaded',
+    'Your current cover is unchanged.',
+    'Choose another image',
+  ], 'playlist cover error dialog');
 });
 
 test('public song reads expose only public songs with finalized audio', () => {
