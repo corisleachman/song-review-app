@@ -59,3 +59,24 @@
 .coverHint { font-size: 12.5px; color: var(--color-text-tertiary, rgba(244,237,228,.5)); }
 .coverRemove { margin-top: 8px; background: transparent; border: 1px solid var(--color-border-mid, rgba(244,237,228,.18)); color: var(--color-text-secondary, rgba(244,237,228,.6)); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; padding: 5px 10px; cursor: pointer; }
 .coverRemove:hover { border-color: var(--color-primary, #C0392B); color: var(--color-primary-bright, #E8402E); }
+
+.coverErrorOverlay { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; padding: 24px; background: rgba(14,10,10,.88); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.coverErrorDialog { width: min(460px, 100%); background: var(--color-surface); border: 1px solid var(--color-border-mid); box-shadow: var(--shadow-xl); padding: 28px; }
+.coverErrorLabel { margin-bottom: 12px; color: var(--color-primary-bright); font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+.coverErrorTitle { margin: 0; color: var(--color-text); font-family: 'ThunderLC', Impact, sans-serif; font-size: 38px; font-weight: 400; line-height: 1; text-transform: uppercase; }
+.coverErrorBody { margin: 16px 0 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.6; }
+.coverErrorActions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+.coverErrorDismiss,
+.coverErrorChoose { min-height: 44px; padding: 0 16px; font-size: 13px; font-weight: 700; }
+.coverErrorDismiss { background: transparent; border: 1px solid var(--color-border-mid); color: var(--color-text-secondary); }
+.coverErrorDismiss:hover { border-color: var(--color-text-secondary); color: var(--color-text); }
+.coverErrorChoose { background: var(--color-primary); border: 1px solid var(--color-primary); color: var(--color-text); }
+.coverErrorChoose:hover { background: var(--color-primary-bright); border-color: var(--color-primary-bright); }
+
+@media (max-width: 520px) {
+  .coverErrorOverlay { padding: 16px; }
+  .coverErrorDialog { padding: 24px 20px 20px; }
+  .coverErrorActions { flex-direction: column-reverse; }
+  .coverErrorDismiss,
+  .coverErrorChoose { width: 100%; }
+}

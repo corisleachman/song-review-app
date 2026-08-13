@@ -105,6 +105,19 @@ test('playlist cover uploads validate size and type before buffering or decoding
     'sharp(rawBuffer, {',
   ], 'playlist file validation');
   assert.match(page, /accept="image\/jpeg,image\/png,image\/webp"/u);
+  assertOrdered(page, [
+    'getPlaylistCoverValidationError(file)',
+    'setCoverUploading(true)',
+    'new FormData()',
+  ], 'playlist client validation');
+  assert.doesNotMatch(page, /URL\.createObjectURL/u);
+  assertIncludesAll(page, [
+    'role="alertdialog"',
+    'useDialogFocus(Boolean(coverError), closeCoverError, coverErrorDialogRef)',
+    'That image wasn’t uploaded',
+    'Your current cover is unchanged.',
+    'Choose another image',
+  ], 'playlist cover error dialog');
 });
 
 test('public song reads expose only public songs with finalized audio', () => {

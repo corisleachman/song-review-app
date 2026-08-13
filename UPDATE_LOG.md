@@ -4332,4 +4332,6 @@ Bring playlist-cover validation in line with the established song-cover upload b
 - Sharp now fails on decode errors and refuses inputs over 40 megapixels before resizing to the existing 1200-pixel JPEG output.
 - The playlist file picker now advertises only the server-supported formats.
 - The deployment-gated contract suite checks the limits and validation order so future edits cannot silently remove them.
+- Preview verification confirmed that a normal JPEG persisted after refresh and appeared on the public share page.
+- The oversized-file check exposed misleading optimistic feedback: the rejected local image remained in the thumbnail and the inline message only said `Upload failed`. Client validation now runs before upload, rejected files never replace the displayed cover, and an accessible dialog explains the limit and offers to choose another image.
 - No database schema, storage policy, dependency, or deployment configuration changed.
