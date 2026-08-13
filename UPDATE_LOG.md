@@ -4334,4 +4334,6 @@ Bring playlist-cover validation in line with the established song-cover upload b
 - The deployment-gated contract suite checks the limits and validation order so future edits cannot silently remove them.
 - Preview verification confirmed that a normal JPEG persisted after refresh and appeared on the public share page.
 - The oversized-file check exposed misleading optimistic feedback: the rejected local image remained in the thumbnail and the inline message only said `Upload failed`. Client validation now runs before upload, rejected files never replace the displayed cover, and an accessible dialog explains the limit and offers to choose another image.
+- The final preview recheck passed: the saved cover remained unchanged, the prominent size dialog appeared, Escape closed it, and `Choose another image` reopened the picker.
+- Google preview sign-in required the exact temporary Vercel hostname in Supabase Auth Redirect URLs. Once allowed, OAuth stayed on the preview host and the corrected build could be tested.
 - No database schema, storage policy, dependency, or deployment configuration changed.
