@@ -73,7 +73,7 @@ The cold dashboard trace at 13:33:41 UTC used anonymous trace `94bee373-a5f4-458
 
 ### Readiness decision
 
-The draft PR is not ready to merge or deploy to production yet. The final audit found two permissive database policies and a song-deletion accounting gap. Both are now fixed in the branch and applied to the staging Supabase branch, but production remains unchanged and the fixes still need preview application verification before rollout approval.
+The code and staging rollout gates are complete. The final audit found two permissive database policies and a song-deletion accounting gap; both are fixed in the branch, applied to the staging Supabase branch, and verified through the preview application. Production remains unchanged, and the draft PR must stay unmerged until a migration-first production rollout is explicitly approved.
 
 The API authorization review did not find a route-level cross-workspace bypass. Authenticated service-role routes resolve the Supabase user server-side, derive the active workspace from validated membership, and compare the target record's workspace before reading or mutating it. Public song and playlist routes keep explicit sharing checks. Stripe events are signature-verified, and internal notification requests use a time-limited HMAC.
 
@@ -94,7 +94,7 @@ The API authorization review did not find a route-level cross-workspace bypass. 
 - Evidence: `app/api/songs/[songId]/route.ts` deleted relational rows but did not remove audio or cover objects and did not decrement `accounts.storage_bytes_used`. Upload finalisation increments that counter in `20260811130000_version_upload_integrity.sql`.
 - User impact: Deleting songs could leave paid storage consumed and make a workspace hit its quota even though the songs had gone. Copied raw media URLs could also remain reachable.
 - Fix: `20260812201000_song_deletion_storage_accounting.sql` adds a service-role-only transaction that locks the song, versions, and account; releases only finalized bytes; deletes the song through database cascades; and returns the object paths. The API removes those audio paths and the current cover in bounded batches after the transaction.
-- Verification: An isolated staging fixture started at 123 bytes. The transaction returned one path and 123 released bytes, deleted the song, and left the temporary workspace at zero bytes. Cleanup removed the temporary workspace afterward.
+- Verification: An isolated staging fixture started at 123 bytes. The transaction returned one path and 123 released bytes, deleted the song, and left the temporary workspace at zero bytes. Cleanup removed the temporary workspace afterward. A user-facing preview test then uploaded and deleted a disposable song successfully; the dashboard stayed correct and the song's playlist membership was removed by the database cascade.
 - Remaining risk: Database deletion and object removal cannot share one transaction. A storage failure is logged and returned as `storageCleanupPending`; the database and user quota still remain correct.
 
 #### OPS-001: The historical RLS rollback restored blanket access
@@ -141,7 +141,7 @@ The API authorization review did not find a route-level cross-workspace bypass. 
 
 ### PR, rollout, and rollback state
 
-- Draft PR #2 is open, unmerged, and targets `clone-clean`. The branch and remote head matched at the start of this audit, and both Vercel checks passed on that head.
+- Draft PR #2 is open, unmerged, and targets `clone-clean`. The branch and remote head match at commit `30dd23b0`, and both Vercel checks passed on that head.
 - The two new database migrations are applied only to `code-review-staging`. Production application code and schema have not been changed by this batch.
 - Production rollout must be migration-first, then application deployment. The policy removal is compatible with the current server routes, and the deletion function is additive until the new route uses it.
 - Application rollback uses the previous Vercel deployment. Leave the two security migrations applied during an app rollback. Restoring the permissive policies is not a safe rollback.
@@ -157,5 +157,5 @@ The API authorization review did not find a route-level cross-workspace bypass. 
 - Stage 1 foundation checks: passed.
 - Stage 2 functional safety checks: passed, including collaboration notifications and workspace access separation.
 - Stage 3 baseline: captured for public routes and the authenticated dashboard request chain. Authenticated song/version journey timings still need to be captured during later batches.
-- Stage 4 fixes: account bootstrap, active-workspace identity, all four dashboard query batches, and single-request dashboard initialization are implemented and measured. The public-playlist query pattern is next; the assigned-action name path still needs a data-backed regression check.
-- Stage 5 regression and production readiness: audit complete; remediation and rollout verification in progress. Public playlist playback passed after query consolidation. The permissive policy and song-deletion accounting fixes are applied on staging. Production remains unchanged, the PR stays draft, and the remaining P2/P3 findings are recorded above.
+- Stage 4 fixes: account bootstrap, active-workspace identity, all four dashboard query batches, single-request dashboard initialization, and public-playlist query consolidation are implemented and measured. Assigned-action and playlist playback regression checks passed in preview.
+- Stage 5 regression and production readiness: code and staging gates complete. Public playlist playback and user-facing song deletion passed; deleting the disposable song also removed its playlist membership. The permissive policy and song-deletion accounting fixes are applied on staging. Production remains unchanged, the PR stays draft pending explicit rollout approval, and the remaining P2/P3 findings are recorded above.

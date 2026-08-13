@@ -4243,4 +4243,6 @@ Remove permissive RLS policies, make song deletion release storage usage atomica
 - A rollback-safe deletion fixture released exactly 123 bytes, returned one audio path, deleted the song, and left its temporary workspace at zero bytes. The temporary workspace was removed.
 - `supabase db lint --linked --level warning` reported no schema errors.
 - `npm audit --omit=dev` reported zero known production dependency vulnerabilities.
-- Production remains unchanged. The draft PR must stay open and unmerged until the preview build and a user-facing deletion regression pass.
+- Both Vercel checks passed for commit `30dd23b0`.
+- The user-facing preview regression passed: a disposable uploaded song deleted normally, remained absent after refresh, and was also removed from the playlist that contained it.
+- Production remains unchanged. Code and staging gates are complete; the draft PR stays open and unmerged pending explicit approval for the migration-first production rollout.
