@@ -4275,3 +4275,32 @@ Record the completed migration-first production rollout and narrow the auth midd
 - The middleware remains defense in depth. API routes continue to enforce their own authorization.
 - Eleven focused matcher cases passed, covering protected pages, API paths, Next.js assets, the app icon, and ordinary static files.
 - Targeted middleware lint, full TypeScript checking, the placeholder-environment production build, and `npm audit --omit=dev` passed. Existing repository-wide lint warnings remain non-blocking and unchanged.
+
+---
+
+## 2026-08-13 - Critical regression contract suite
+
+### What we were trying to achieve
+
+Turn the highest-risk security and data-integrity checks from the staged review into an executable safety net for future changes.
+
+### Feature / change being made
+
+Add a dependency-free Node test command covering authentication routing, workspace boundaries, public sharing, upload integrity, privileged database functions, RLS cleanup, and deletion accounting.
+
+### Files changed
+
+- `package.json`
+- `tests/critical-contracts.test.mjs`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- `npm test` now validates the actual middleware matcher against protected, API, Next.js asset, and ordinary static-file paths.
+- The existing `prebuild` step runs the suite before deployment assets are prepared, so a broken contract fails the Vercel build.
+- Invite-email tests prevent localhost links by requiring both invite paths to use the incoming request origin.
+- Workspace and public-sharing checks guard active-workspace ownership, explicit public status, finalized uploads, comment permission, and batched public-playlist version reads.
+- Upload and deletion checks guard row locking, quota accounting, finalized-byte handling, storage cleanup reporting, and service-role-only RPC access.
+- The unsafe RLS rollback is checked to ensure it cannot recreate blanket policies.
+- These are source-level contract tests. Live database, browser, and accessibility behavior still require separate integration coverage.
