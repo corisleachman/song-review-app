@@ -1,8 +1,8 @@
 # Staged Codebase Review Record
 
-Last updated: 12 August 2026
+Last updated: 13 August 2026
 
-This is the working evidence record for the staged review on `codex/staged-code-review-fixes`. Findings stay here until they are verified, deferred with a reason, or closed. Production has not been changed.
+This is the working evidence record for the staged review that began on `codex/staged-code-review-fixes`. Findings stay here until they are verified, deferred with a reason, or closed. The main review rollout reached production on 13 August 2026; focused follow-up batches continue from that deployed base.
 
 ## Performance baseline
 
@@ -111,7 +111,7 @@ The API authorization review did not find a route-level cross-workspace bypass. 
 - TEST-001: `npm test` now runs a dependency-free Node contract suite around middleware routing, invite origins, workspace ownership, public sharing, upload finalization, privileged RPC grants, RLS cleanup, and deletion accounting. Production builds run the suite automatically. This closes the immediate regression gap, but there is still no behavioral unit, database-integration, browser, or automated accessibility suite.
 - PRIV-001: Both media buckets remain public by design. Turning off an app share link blocks the app route, but a raw storage URL copied earlier remains reachable. Private media delivery needs a separate migration and rollout.
 - ABUSE-001: Public comment throttling is stored in process memory. It limits a single serverless instance but can be bypassed across instances or cold starts. Database constraints, a honeypot, and length validation still apply.
-- UPLOAD-001: Playlist-cover upload reads the complete request into memory before checking file size, MIME type, or decoded pixel count. The song-cover route already has the safer 5 MB, accepted-type, and pixel-limit pattern.
+- UPLOAD-001: Code complete locally. Playlist-cover upload now rejects oversized requests before multipart parsing, rejects empty, over-5 MB, and non-JPEG/PNG/WebP files before buffering, and caps Sharp decoding at 40 megapixels. The file picker advertises the same accepted formats. Preview rollout and browser verification remain pending.
 - A11Y-001: Some clickable `div` and `span` controls remain unavailable to keyboard users, including batch-upload add/artwork controls, the dashboard add-song card, and public-playlist track rows. Several dashboard and feedback dialogs also lack the shared focus trap and complete dialog semantics. Small brand-red text measures about 3.62:1 against the darkest background, below the 4.5:1 target for normal text.
 - CONFIG-001: Baseline response headers cover HSTS, framing, referrers, permissions, and MIME sniffing, but there is no Content Security Policy. Adding one needs a report-only pass first because the app uses inline styles and external media.
 

@@ -4304,3 +4304,32 @@ Add a dependency-free Node test command covering authentication routing, workspa
 - Upload and deletion checks guard row locking, quota accounting, finalized-byte handling, storage cleanup reporting, and service-role-only RPC access.
 - The unsafe RLS rollback is checked to ensure it cannot recreate blanket policies.
 - These are source-level contract tests. Live database, browser, and accessibility behavior still require separate integration coverage.
+
+---
+
+## 2026-08-13 - Playlist cover upload hardening
+
+### What we were trying to achieve
+
+Prevent oversized, unsupported, or extreme-resolution playlist covers from consuming avoidable server memory and image-decoding work.
+
+### Feature / change being made
+
+Bring playlist-cover validation in line with the established song-cover upload boundary.
+
+### Files changed
+
+- `app/api/playlists/[id]/image/route.ts`
+- `app/playlists/[id]/page.tsx`
+- `tests/critical-contracts.test.mjs`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Requests over the multipart allowance are rejected before `formData()` parsing.
+- Empty files, files over 5 MB, and MIME types other than JPEG, PNG, or WebP are rejected before creating the input buffer.
+- Sharp now fails on decode errors and refuses inputs over 40 megapixels before resizing to the existing 1200-pixel JPEG output.
+- The playlist file picker now advertises only the server-supported formats.
+- The deployment-gated contract suite checks the limits and validation order so future edits cannot silently remove them.
+- No database schema, storage policy, dependency, or deployment configuration changed.

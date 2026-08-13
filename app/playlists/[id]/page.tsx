@@ -157,7 +157,7 @@ export default function ManagePlaylistPage() {
           {coverUrl && <button type="button" className={styles.coverRemove} onClick={() => void removeCover()}>Remove cover</button>}
         </div>
       </div>
-      <input ref={coverInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadCover(f); e.target.value = ''; }} />
+      <input ref={coverInputRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadCover(f); e.target.value = ''; }} />
 
       <div className={styles.publish}>
         <div className={styles.pubRow}>
@@ -218,4 +218,3 @@ export default function ManagePlaylistPage() {
     </div>
   );
 }
-
