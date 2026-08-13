@@ -4246,3 +4246,32 @@ Remove permissive RLS policies, make song deletion release storage usage atomica
 - Both Vercel checks passed for commit `30dd23b0`.
 - The user-facing preview regression passed: a disposable uploaded song deleted normally, remained absent after refresh, and was also removed from the playlist that contained it.
 - Production remains unchanged. Code and staging gates are complete; the draft PR stays open and unmerged pending explicit approval for the migration-first production rollout.
+
+---
+
+## 2026-08-13 - Production rollout record and static-asset middleware exclusion
+
+### What we were trying to achieve
+
+Close the staged review rollout accurately and prevent authentication middleware from refreshing stale sessions for static files such as `/icon.svg`.
+
+### Feature / change being made
+
+Record the completed migration-first production rollout and narrow the auth middleware matcher to application page routes.
+
+### Files changed
+
+- `middleware.ts`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Applied all eight pending canonical migrations to production before merging application code; all 14 local and production migration versions align and linked database lint reports no schema errors.
+- Anonymous production reads return no private songs, and privileged deletion and Stripe RPCs reject anonymous callers.
+- Squash-merged PR #2 as `648019f9` and promoted the identical validated preview tree as production deployment `dpl_Eo9XPBCMdnxLUXJFYxwHMHcuiLXj`.
+- Live homepage, login, protected dashboard, public song, public playlist, signed-in dashboard, song-open, and playback checks passed. Vercel reported no `5xx` entries.
+- One already-used refresh token was logged for `/icon.svg` with a `307` response and no user-facing failure. The matcher now excludes any path ending in a file extension, avoiding authentication work for icons, scripts, stylesheets, images, and similar static assets.
+- The middleware remains defense in depth. API routes continue to enforce their own authorization.
+- Eleven focused matcher cases passed, covering protected pages, API paths, Next.js assets, the app icon, and ordinary static files.
+- Targeted middleware lint, full TypeScript checking, the placeholder-environment production build, and `npm audit --omit=dev` passed. Existing repository-wide lint warnings remain non-blocking and unchanged.
