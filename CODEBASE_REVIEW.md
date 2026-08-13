@@ -108,7 +108,7 @@ The API authorization review did not find a route-level cross-workspace bypass. 
 
 #### P2
 
-- TEST-001: There is no application test command or automated unit, integration, browser, or accessibility suite. The only GitHub checks on the current head are the two successful Vercel deployment checks. The extensive manual staging checks reduce risk but do not protect future changes.
+- TEST-001: `npm test` now runs a dependency-free Node contract suite around middleware routing, invite origins, workspace ownership, public sharing, upload finalization, privileged RPC grants, RLS cleanup, and deletion accounting. Production builds run the suite automatically. This closes the immediate regression gap, but there is still no behavioral unit, database-integration, browser, or automated accessibility suite.
 - PRIV-001: Both media buckets remain public by design. Turning off an app share link blocks the app route, but a raw storage URL copied earlier remains reachable. Private media delivery needs a separate migration and rollout.
 - ABUSE-001: Public comment throttling is stored in process memory. It limits a single serverless instance but can be bypassed across instances or cold starts. Database constraints, a honeypot, and length validation still apply.
 - UPLOAD-001: Playlist-cover upload reads the complete request into memory before checking file size, MIME type, or decoded pixel count. The song-cover route already has the safer 5 MB, accepted-type, and pixel-limit pattern.
