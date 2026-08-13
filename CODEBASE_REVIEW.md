@@ -73,7 +73,7 @@ The cold dashboard trace at 13:33:41 UTC used anonymous trace `94bee373-a5f4-458
 
 ### Readiness decision
 
-The code and staging rollout gates are complete. The final audit found two permissive database policies and a song-deletion accounting gap; both are fixed in the branch, applied to the staging Supabase branch, and verified through the preview application. Production remains unchanged, and the draft PR must stay unmerged until a migration-first production rollout is explicitly approved.
+The review rollout is production-complete. The final audit found two permissive database policies and a song-deletion accounting gap; both were fixed, verified on staging, applied migration-first to production, and verified again on the live application before and after PR #2 merged.
 
 The API authorization review did not find a route-level cross-workspace bypass. Authenticated service-role routes resolve the Supabase user server-side, derive the active workspace from validated membership, and compare the target record's workspace before reading or mutating it. Public song and playlist routes keep explicit sharing checks. Stripe events are signature-verified, and internal notification requests use a time-limited HMAC.
 
@@ -85,8 +85,8 @@ The API authorization review did not find a route-level cross-workspace bypass. 
 - Evidence: `supabase/migrations/20260730171202_remote_schema.sql:523` contained a song `SELECT` policy with `USING (true)`. Line 630 contained an authenticated settings policy with unrestricted `USING` and `WITH CHECK` rules. PostgreSQL combines permissive policies with OR, so these rules bypassed the newer member and public-share policies.
 - Production evidence: A read-only anonymous Data API check returned an `is_public = false` song row before remediation. No identifiers or song content were logged.
 - Fix: `20260812200000_remove_permissive_rls_policies.sql` removes both policies. The earlier policy migration now recreates only workspace-scoped settings policies and explicitly drops the legacy song policy.
-- Verification: The migration is applied on staging. A service-role check confirmed a private fixture exists, while the same anonymous query now returns no rows.
-- Rollout status: Staging complete. Production is still affected until the migration is explicitly approved and applied.
+- Verification: The migration is applied on staging and production. A service-role check confirmed a private fixture exists, while the same anonymous query returns no rows. Production migration history aligns with all 14 canonical migrations.
+- Rollout status: Production complete on 13 August 2026.
 
 #### DATA-001: Song deletion left storage usage and objects behind
 
@@ -141,9 +141,9 @@ The API authorization review did not find a route-level cross-workspace bypass. 
 
 ### PR, rollout, and rollback state
 
-- Draft PR #2 is open, unmerged, and targets `clone-clean`. The branch and remote head match at commit `30dd23b0`, and both Vercel checks passed on that head.
-- The two new database migrations are applied only to `code-review-staging`. Production application code and schema have not been changed by this batch.
-- Production rollout must be migration-first, then application deployment. The policy removal is compatible with the current server routes, and the deletion function is additive until the new route uses it.
+- PR #2 was squash-merged into `clone-clean` as `648019f9` after both Vercel checks passed.
+- All eight pending migrations were applied to production in timestamp order before the application deployment. Production and local migration history now align.
+- The validated preview tree matched the squash-merge tree exactly and was promoted as production deployment `dpl_Eo9XPBCMdnxLUXJFYxwHMHcuiLXj`.
 - Application rollback uses the previous Vercel deployment. Leave the two security migrations applied during an app rollback. Restoring the permissive policies is not a safe rollback.
 - The song-deletion function has a down migration, but it should be dropped only after the application has been rolled back to code that does not call it.
 
@@ -151,6 +151,7 @@ The API authorization review did not find a route-level cross-workspace bypass. 
 
 - `Could not establish connection. Receiving end does not exist.` does not come from the app code found in this repository and is consistent with a browser extension messaging failure. The traced application requests still returned 200.
 - The generated Next.js CSS preload warning did not correspond to a failed stylesheet request or a blocked dashboard render. There is no manual dashboard CSS preload in the repository. It is being tracked as low-priority console noise, not as the cause of the delay.
+- The first post-release log scan found one already-used Supabase refresh token on `/icon.svg`. It returned `307`, caused no `5xx`, and did not interrupt the successful signed-in smoke test. The middleware matcher now excludes paths ending in a file extension, keeping authentication work on application routes rather than static assets.
 
 ## Verification status
 
@@ -158,4 +159,4 @@ The API authorization review did not find a route-level cross-workspace bypass. 
 - Stage 2 functional safety checks: passed, including collaboration notifications and workspace access separation.
 - Stage 3 baseline: captured for public routes and the authenticated dashboard request chain. Authenticated song/version journey timings still need to be captured during later batches.
 - Stage 4 fixes: account bootstrap, active-workspace identity, all four dashboard query batches, single-request dashboard initialization, and public-playlist query consolidation are implemented and measured. Assigned-action and playlist playback regression checks passed in preview.
-- Stage 5 regression and production readiness: code and staging gates complete. Public playlist playback and user-facing song deletion passed; deleting the disposable song also removed its playlist membership. The permissive policy and song-deletion accounting fixes are applied on staging. Production remains unchanged, the PR stays draft pending explicit rollout approval, and the remaining P2/P3 findings are recorded above.
+- Stage 5 regression and production readiness: production complete. Public playlist playback, song deletion, playlist cascade cleanup, signed-in dashboard loading, song opening, and playback all passed. The database and application rollout checks are recorded above, and the remaining P2/P3 findings stay documented for focused follow-up work.
