@@ -193,6 +193,56 @@ test('feedback and initial cookie consent clear the player while preferences liv
   ], 'settings-only cookie preference control');
 });
 
+test('dashboard mini-player gives transport and timeline the primary space', () => {
+  const dashboard = read('app/dashboard/page.tsx');
+  const dashboardCss = read('app/dashboard/dashboard.module.css');
+
+  assertIncludesAll(dashboard, [
+    'className={styles.miniPlayerTransport}',
+    'className={styles.miniPlayerTimeline}',
+    'const sourceQueueRef = useRef<Song[]>([])',
+    'const shuffleEnabledRef = useRef(false)',
+    'const [shuffleEnabled, setShuffleEnabled] = useState(false)',
+    'const [loopEnabled, setLoopEnabled] = useState(false)',
+    'function buildShuffledQueue(queue: Song[], currentSongId: string)',
+    'const nextEnabled = !shuffleEnabledRef.current',
+    'const playbackQueue = shuffleEnabledRef.current',
+    'loop={loopEnabled}',
+    'aria-label="Previous song"',
+    'aria-label="Next song"',
+    'aria-label="Playback position"',
+    'aria-label="Close player"',
+    "aria-label={shuffleEnabled ? 'Turn shuffle off' : 'Turn shuffle on'}",
+    "aria-label={loopEnabled ? 'Turn loop off' : 'Loop current song'}",
+    'aria-pressed={shuffleEnabled}',
+    'aria-pressed={loopEnabled}',
+    '{formatTime(playerCurrentTime)}',
+    '{formatTime(playerDuration)}',
+    'in queue',
+  ], 'prominent dashboard player controls');
+  assert.match(
+    dashboardCss,
+    /\.miniPlayerRow\s*\{[^}]*grid-template-columns:\s*minmax\(220px, 320px\) minmax\(320px, 1fr\) 44px;/u
+  );
+  assert.match(
+    dashboardCss,
+    /\.miniPlayerTransport\s*\{[^}]*grid-template-columns:\s*auto 40px minmax\(120px, 1fr\) 40px;/u
+  );
+  assert.match(
+    dashboardCss,
+    /\.miniPlayerPlayBtn\s*\{[^}]*width:\s*52px;[^}]*height:\s*52px;/u
+  );
+  assert.match(
+    dashboardCss,
+    /grid-template-areas:\s*'identity close'\s*'transport transport';/u
+  );
+  assert.match(
+    dashboardCss,
+    /grid-template-areas:\s*'controls controls controls'\s*'current timeline duration';/u
+  );
+  assert.match(dashboardCss, /\.miniPlayerModeBtnActive[^}]*color:\s*#f0e48c;/u);
+});
+
 test('mobile marketing description occupies a separate row from the hero headline', () => {
   const marketing = read('public/marketing.html');
   const responsiveStart = marketing.indexOf('@media (max-width: 900px) {', marketing.indexOf('RESPONSIVE'));

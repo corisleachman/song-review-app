@@ -4522,3 +4522,33 @@ Populate the dashboard playback queue before the first `playingId` render so the
 - The existing mini-player measurement, resize observation, and Feedback positioning remain unchanged.
 - Regression coverage now protects the queue-before-render ordering required on first playback.
 - All 19 contract tests, TypeScript checking, focused lint, and the placeholder-environment production build passed. Existing repository lint warnings remain unchanged.
+
+---
+
+## 2026-08-14 - Prominent dashboard mini-player
+
+### What we were trying to achieve
+
+Make the dashboard player easier to notice and operate by using the empty middle of the bar instead of concentrating track information at one edge and controls at the other.
+
+### Feature / change being made
+
+Recompose the mini-player into a track identity area, a central transport and scrubber area, and a separate close control.
+
+### Files changed
+
+- `app/dashboard/page.tsx`
+- `app/dashboard/dashboard.module.css`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Artwork, track title, and queue position form the left identity group.
+- Previous, play or pause, next, Shuffle, Loop, elapsed time, total time, and the scrubber now occupy the centre of the desktop player.
+- The play control, artwork, contrast, and timeline have stronger visual weight while preserving Song Room's existing palette.
+- Mobile uses a separate identity row above the transport and timeline so no playback control is removed.
+- Shuffle randomises the player queue while leaving the dashboard song order unchanged, and restores the original queue when switched off.
+- Loop repeats the current song through the native audio loop behaviour.
+- Core playback, ordinary queue progression, Media Session handling, and safe-area measurement remain on their existing paths.
+- All 20 contract tests, TypeScript checking, focused lint, and the placeholder-environment production build passed. Existing repository lint warnings remain unchanged.
