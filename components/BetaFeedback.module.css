@@ -11,6 +11,10 @@
 .wrap.left {
   right: auto;
   left: 22px;
+  bottom: calc(
+    var(--tsr-player-safe-area, 0px) +
+    var(--tsr-cookie-settings-clearance, 56px)
+  );
   align-items: flex-start;
 }
 

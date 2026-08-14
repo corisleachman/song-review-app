@@ -4434,3 +4434,32 @@ Use Google as the only login and account-creation path during beta.
 - Email/username accounts and additional providers such as Microsoft are recorded in `PRODUCT_BACKLOG.md` for post-beta evaluation.
 - Contract coverage guards the Google-only invite and login boundary.
 - All 19 contract tests, TypeScript checking, focused lint, and the placeholder-environment production build passed. Existing repository warnings remain unchanged.
+
+---
+
+## 2026-08-14 - Song page floating-control clearance
+
+### What we were trying to achieve
+
+Prevent Cookie settings and Beta Feedback from overlapping in the bottom-left corner of song-version pages.
+
+### Feature / change being made
+
+Give the left-positioned song-page Feedback control a shared Cookie settings clearance on desktop and mobile.
+
+### Files changed
+
+- `components/BetaFeedback.tsx`
+- `components/BetaFeedback.module.css`
+- `public/cookie-consent.css`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Feedback remains on the left of song-version pages so it still clears the player transport area.
+- Feedback now stacks above Cookie settings instead of occupying the same fixed corner.
+- The shared clearance is 56 pixels on desktop and 52 pixels on screens up to 720 pixels wide, matching the Cookie settings spacing in each context.
+- Other routes keep Feedback in its existing bottom-right position.
+- Contract coverage guards the shared desktop and mobile clearance values.
+- All 19 contract tests, TypeScript checking, focused lint, and the placeholder-environment production build passed. Existing repository warnings remain unchanged.

@@ -155,9 +155,17 @@ test('fixed feedback and cookie controls clear the measured dashboard player', (
     /bottom:\s*calc\(var\(--tsr-player-safe-area, 0px\) \+ (?:16|22)px\)/u
   );
   assert.match(
+    feedbackCss,
+    /\.wrap\.left\s*\{[^}]*var\(--tsr-cookie-settings-clearance, 56px\)/u
+  );
+  assert.match(
     cookieCss,
     /bottom:\s*calc\(var\(--tsr-player-safe-area, 0px\) \+ (?:8|10|12|18)px\)/u
   );
+  assertIncludesAll(cookieCss, [
+    '--tsr-cookie-settings-clearance: 56px',
+    '--tsr-cookie-settings-clearance: 52px',
+  ], 'cookie settings desktop and mobile clearance');
   assert.match(dashboardCss, /\.miniPlayer\s*\{[^}]*left:\s*76px;/u);
   assert.match(
     dashboardCss,

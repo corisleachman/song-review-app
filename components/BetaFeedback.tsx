@@ -10,7 +10,7 @@ const OPEN_EVENT = 'song-room:open-feedback';
 
 export default function BetaFeedback() {
   const pathname = usePathname() ?? '';
-  // Flip to bottom-left on the waveform/player route so the FAB clears the transport controls.
+  // Move above Cookie settings on the left so both controls clear the player transport area.
   const onPlayerRoute = /\/songs\/[^/]+\/versions\/[^/]+/.test(pathname);
 
   const [open, setOpen] = useState(false);
