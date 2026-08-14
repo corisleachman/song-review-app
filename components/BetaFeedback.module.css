@@ -1,6 +1,6 @@
 .wrap {
   position: fixed;
-  bottom: 22px;
+  bottom: calc(var(--tsr-player-safe-area, 0px) + 22px);
   right: 22px;
   z-index: 1000;
   display: flex;
@@ -8,12 +8,6 @@
   align-items: flex-end;
   gap: 12px;
 }
-.wrap.left {
-  right: auto;
-  left: 22px;
-  align-items: flex-start;
-}
-
 /* FAB */
 .fab {
   display: inline-flex;
@@ -185,12 +179,8 @@
 
 @media (max-width: 768px) {
   .wrap {
-    bottom: 16px;
+    bottom: calc(var(--tsr-player-safe-area, 0px) + 16px);
     right: 16px;
-  }
-  .wrap.left {
-    left: 16px;
-    right: auto;
   }
   .panel {
     width: min(320px, calc(100vw - 32px));

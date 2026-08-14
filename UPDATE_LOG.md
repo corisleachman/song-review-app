@@ -4337,3 +4337,218 @@ Bring playlist-cover validation in line with the established song-cover upload b
 - The final preview recheck passed: the saved cover remained unchanged, the prominent size dialog appeared, Escape closed it, and `Choose another image` reopened the picker.
 - Google preview sign-in required the exact temporary Vercel hostname in Supabase Auth Redirect URLs. Once allowed, OAuth stayed on the preview host and the corrected build could be tested.
 - No database schema, storage policy, dependency, or deployment configuration changed.
+
+---
+
+## 2026-08-13 - Backlog gate responsive layout fixes
+
+### What we were trying to achieve
+
+Keep persistent beta and privacy controls clear of dashboard playback, and make the homepage description readable on phones without obscuring the animated headline.
+
+### Feature / change being made
+
+Responsive safe-area coordination for the dashboard mini-player and a mobile-specific hero-grid composition.
+
+### Files changed
+
+- `app/dashboard/page.tsx`
+- `components/BetaFeedback.module.css`
+- `public/cookie-consent.css`
+- `public/marketing.html`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The dashboard measures the rendered mini-player and publishes its height through the shared `--tsr-player-safe-area` CSS property.
+- Cookie consent and beta feedback controls add that safe area to their normal bottom spacing, including mobile spacing and the expanded cookie banner.
+- Closing the player or leaving the dashboard removes the temporary CSS property so other pages retain their existing positions.
+- On screens up to 900 pixels wide, the descriptive bento panel now occupies row 2 and the decorative image cells move to row 3, separating the copy from the bottom-aligned animated headline.
+- Contract tests guard the shared offset and mobile grid placement.
+- Source-path verification confirmed that public playlists advance when a track finishes, the desktop card status selector uses the canonical status update handler, the visualizer preference is persisted and respected by the song player, and the email login controls call Supabase sign-in, sign-up, and password-reset methods.
+- Responsive browser checks at 390 by 844 and 1440 by 900 found zero overlap between the description and headline, no error overlay, and no console errors.
+- All 18 contract tests, TypeScript checking, focused lint, and the placeholder-environment production build passed. Existing lint warnings remain unchanged.
+- No database, authentication, billing, storage, dependency, or deployment configuration changed.
+
+---
+
+## 2026-08-14 - Desktop player rail clearance
+
+### What we were trying to achieve
+
+Keep the desktop Settings and Sign out controls accessible when the dashboard mini-player is open.
+
+### Feature / change being made
+
+Keep the dashboard player clear of the persistent 76-pixel desktop navigation rail and move Cookie settings into that rail.
+
+### Files changed
+
+- `components/AppShell.tsx`
+- `components/AppSidebar.tsx`
+- `app/dashboard/dashboard.module.css`
+- `public/cookie-consent.css`
+- `public/cookie-consent.js`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The desktop mini-player now begins at the right edge of the navigation rail instead of covering it.
+- Cookie settings is now a labelled desktop sidebar action, so it no longer covers the sidebar or song-card controls.
+- The consent controller listens for the sidebar action and opens the existing cookie preferences banner without duplicating consent logic.
+- Mobile and public pages keep the existing floating Cookie settings control. The mobile player remains full-width because the desktop rail is hidden there.
+- Contract coverage checks the desktop player offset, mobile fallback, and shared cookie-settings action.
+- All 18 contract tests, TypeScript checking, and focused lint passed.
+
+---
+
+## 2026-08-14 - Google-only beta authentication
+
+### What we were trying to achieve
+
+Stop first-time workspace invitees from mistaking an existing-account email login form for account creation.
+
+### Feature / change being made
+
+Use Google as the only login and account-creation path during beta.
+
+### Files changed
+
+- `app/invite/[token]/InviteActions.tsx`
+- `app/invite/[token]/page.tsx`
+- `app/login/page.tsx`
+- `app/login/page.module.css`
+- `PRODUCT_BACKLOG.md`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Signed-out invitees now see one Google action and an explanation that Song Room creates a new account automatically when needed.
+- The invite-specific email/password form and its existing-user authentication call were removed.
+- The login page now has one Continue with Google action for both returning and first-time users.
+- Email/password login, email signup, password reset, and their unused interface styles were removed from the beta login page.
+- The invite OAuth callback still returns users to the original invite before acceptance.
+- Email/username accounts and additional providers such as Microsoft are recorded in `PRODUCT_BACKLOG.md` for post-beta evaluation.
+- Contract coverage guards the Google-only invite and login boundary.
+- All 19 contract tests, TypeScript checking, focused lint, and the placeholder-environment production build passed. Existing repository warnings remain unchanged.
+
+---
+
+## 2026-08-14 - Song page floating-control clearance
+
+### What we were trying to achieve
+
+Prevent Cookie settings and Beta Feedback from overlapping in the bottom-left corner of song-version pages.
+
+### Feature / change being made
+
+Give the left-positioned song-page Feedback control a shared Cookie settings clearance on desktop and mobile.
+
+### Files changed
+
+- `components/BetaFeedback.tsx`
+- `components/BetaFeedback.module.css`
+- `public/cookie-consent.css`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Feedback remains on the left of song-version pages so it still clears the player transport area.
+- Feedback now stacks above Cookie settings instead of occupying the same fixed corner.
+- The shared clearance is 56 pixels on desktop and 52 pixels on screens up to 720 pixels wide, matching the Cookie settings spacing in each context.
+- Other routes keep Feedback in its existing bottom-right position.
+- Contract coverage guards the shared desktop and mobile clearance values.
+- All 19 contract tests, TypeScript checking, focused lint, and the placeholder-environment production build passed. Existing repository warnings remain unchanged.
+
+---
+
+## 2026-08-14 - Cookie preferences moved into Settings
+
+### What we were trying to achieve
+
+Remove the permanent Cookie settings control from the product interface after a visitor has accepted or rejected analytics cookies.
+
+### Feature / change being made
+
+Keep the initial consent banner, move later preference changes into Settings, and return Beta Feedback to the bottom-right position.
+
+### Files changed
+
+- `app/settings/layout.tsx`
+- `app/settings/privacy/page.tsx`
+- `components/AppShell.tsx`
+- `components/AppSidebar.tsx`
+- `components/BetaFeedback.tsx`
+- `components/BetaFeedback.module.css`
+- `public/cookie-consent.js`
+- `public/cookie-consent.css`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- First-time visitors still receive the existing analytics accept-or-reject banner.
+- Accepting or rejecting no longer creates a permanent floating Cookie settings button.
+- The always-visible Cookie settings action was removed from the authenticated app sidebar.
+- Settings now includes a Privacy & cookies page whose Cookie settings button opens the canonical consent panel.
+- Beta Feedback now uses its established bottom-right position on song pages and other routes.
+- No consent storage key, Google Analytics loading behaviour, or saved preference semantics changed.
+- All 19 contract tests, TypeScript checking, focused lint, JavaScript syntax checking, and the placeholder-environment production build passed. Existing repository lint warnings remain unchanged.
+
+---
+
+## 2026-08-14 - Feedback clears the mini-player on first playback
+
+### What we were trying to achieve
+
+Keep the fixed Feedback control above the dashboard mini-player from the first song selected, rather than only after switching to another song.
+
+### Feature / change being made
+
+Populate the dashboard playback queue before the first `playingId` render so the mini-player mounts in time for the existing safe-area measurement effect.
+
+### Files changed
+
+- `app/dashboard/page.tsx`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The existing mini-player measurement, resize observation, and Feedback positioning remain unchanged.
+- Regression coverage now protects the queue-before-render ordering required on first playback.
+- All 19 contract tests, TypeScript checking, focused lint, and the placeholder-environment production build passed. Existing repository lint warnings remain unchanged.
+
+---
+
+## 2026-08-14 - Prominent dashboard mini-player
+
+### What we were trying to achieve
+
+Make the dashboard player easier to notice and operate by using the empty middle of the bar instead of concentrating track information at one edge and controls at the other.
+
+### Feature / change being made
+
+Recompose the mini-player into a track identity area, a central transport and scrubber area, and a separate close control.
+
+### Files changed
+
+- `app/dashboard/page.tsx`
+- `app/dashboard/dashboard.module.css`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Artwork, track title, and queue position form the left identity group.
+- Previous, play or pause, next, Shuffle, Loop, elapsed time, total time, and the scrubber now occupy the centre of the desktop player.
+- The play control, artwork, contrast, and timeline have stronger visual weight while preserving Song Room's existing palette.
+- Mobile uses a separate identity row above the transport and timeline so no playback control is removed.
+- Shuffle randomises the player queue while leaving the dashboard song order unchanged, and restores the original queue when switched off.
+- Loop repeats the current song through the native audio loop behaviour.
+- Core playback, ordinary queue progression, Media Session handling, and safe-area measurement remain on their existing paths.
+- All 20 contract tests, TypeScript checking, focused lint, and the placeholder-environment production build passed. Existing repository lint warnings remain unchanged.

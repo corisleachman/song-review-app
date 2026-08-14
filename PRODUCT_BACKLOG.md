@@ -28,6 +28,13 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 
 ## Future / larger efforts
 
+### Authentication options beyond Google
+- Logged: 2026-08-14
+- Beta uses Google as the only login and account-creation method.
+- Reassess whether Song Room needs email/username and password accounts after beta feedback.
+- Consider additional single sign-on providers, especially Microsoft, for collaborators who do not use Google accounts.
+- Plan account linking and recovery before adding another provider so existing users do not create duplicate Song Room identities.
+
 ### Multi-upload + revamped uploader  ✅ DONE (2026-08-10)
 - Logged: 2026-08-07
 - A faster, easier uploader that supports multiple files at once (multi-upload). Larger rework of the current upload flow.

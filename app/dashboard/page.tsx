@@ -180,6 +180,18 @@ function getComparableTime(value?: string | null) {
   return value ? new Date(value).getTime() : 0;
 }
 
+function buildShuffledQueue(queue: Song[], currentSongId: string) {
+  const currentSong = queue.find(song => song.id === currentSongId);
+  const remainingSongs = queue.filter(song => song.id !== currentSongId);
+
+  for (let index = remainingSongs.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [remainingSongs[index], remainingSongs[swapIndex]] = [remainingSongs[swapIndex], remainingSongs[index]];
+  }
+
+  return currentSong ? [currentSong, ...remainingSongs] : remainingSongs;
+}
+
 function formatActivityTime(value: string | null) {
   if (!value) return '';
 
@@ -251,13 +263,46 @@ function DashboardContent() {
 
   // Dashboard audio player
   const audioRef = useRef<HTMLAudioElement>(null);
+  const miniPlayerRef = useRef<HTMLDivElement>(null);
   const queueRef = useRef<Song[]>([]);
+  const sourceQueueRef = useRef<Song[]>([]);
   const queueIndexRef = useRef(0);
+  const shuffleEnabledRef = useRef(false);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [queueIndex, setQueueIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [shuffleEnabled, setShuffleEnabled] = useState(false);
+  const [loopEnabled, setLoopEnabled] = useState(false);
   const [playerCurrentTime, setPlayerCurrentTime] = useState(0);
   const [playerDuration, setPlayerDuration] = useState(0);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const miniPlayer = miniPlayerRef.current;
+
+    if (!playingId || !miniPlayer) {
+      root.style.removeProperty('--tsr-player-safe-area');
+      return;
+    }
+
+    const updatePlayerSafeArea = () => {
+      const height = Math.ceil(miniPlayer.getBoundingClientRect().height);
+      root.style.setProperty('--tsr-player-safe-area', `${height}px`);
+    };
+
+    updatePlayerSafeArea();
+    const observer = typeof ResizeObserver === 'undefined'
+      ? null
+      : new ResizeObserver(updatePlayerSafeArea);
+    observer?.observe(miniPlayer);
+    window.addEventListener('resize', updatePlayerSafeArea);
+
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', updatePlayerSafeArea);
+      root.style.removeProperty('--tsr-player-safe-area');
+    };
+  }, [playingId]);
   const [billingError, setBillingError] = useState<string | null>(null);
   const [showUpgradeSuccessModal, setShowUpgradeSuccessModal] = useState(false);
   const [acceptedInviteWorkspaceName, setAcceptedInviteWorkspaceName] = useState<string | null>(null);
@@ -949,6 +994,11 @@ function DashboardContent() {
           ? { ...existing, latestVersionFilePath: filePath, latestVersionAudioUrl: audioUrl }
           : existing
       ));
+      sourceQueueRef.current = sourceQueueRef.current.map(existing => (
+        existing.id === song.id
+          ? { ...existing, latestVersionFilePath: filePath, latestVersionAudioUrl: audioUrl }
+          : existing
+      ));
 
       return audioUrl;
     } catch (error) {
@@ -961,7 +1011,12 @@ function DashboardContent() {
   async function playSong(song: Song, queue: Song[]) {
     if (!song.latestVersionId || !audioRef.current) return;
 
-    // Set playingId immediately so artwork shows loading state on first tap
+    // Seed the queue before the first render so the mini player mounts with
+    // playingId and its safe area can be measured immediately.
+    sourceQueueRef.current = queue;
+    queueRef.current = queue;
+
+    // Set playingId immediately so artwork shows loading state on first tap.
     setPlayingId(song.id);
 
     const audioUrl = await resolveLatestVersionAudioUrl(song);
@@ -977,9 +1032,13 @@ function DashboardContent() {
       return latestVersionAudioUrl ? { ...item, latestVersionAudioUrl } : item;
     }));
 
-    queueRef.current = hydratedQueue;
-    const hydratedSong = hydratedQueue.find(item => item.id === song.id) ?? { ...song, latestVersionAudioUrl: audioUrl };
-    const idx = hydratedQueue.findIndex(item => item.id === song.id);
+    sourceQueueRef.current = hydratedQueue;
+    const playbackQueue = shuffleEnabledRef.current
+      ? buildShuffledQueue(hydratedQueue, song.id)
+      : hydratedQueue;
+    queueRef.current = playbackQueue;
+    const hydratedSong = playbackQueue.find(item => item.id === song.id) ?? { ...song, latestVersionAudioUrl: audioUrl };
+    const idx = playbackQueue.findIndex(item => item.id === song.id);
 
     // Keep the ref in sync with state so Media Session next/prev (lock screen)
     // read the correct current index, not a stale one from the last auto-advance.
@@ -1007,6 +1066,9 @@ function DashboardContent() {
       if (audioUrl && audioRef.current) {
         const hydratedNext = { ...next, latestVersionAudioUrl: audioUrl };
         queueRef.current = queue.map((item, index) => index === nextIdx ? hydratedNext : item);
+        sourceQueueRef.current = sourceQueueRef.current.map(item => (
+          item.id === hydratedNext.id ? hydratedNext : item
+        ));
         queueIndexRef.current = nextIdx;
         setQueueIndex(nextIdx);
         setPlayingId(next.id);
@@ -1038,6 +1100,9 @@ function DashboardContent() {
     if (audioUrl && audioRef.current) {
       const hydratedTarget = { ...target, latestVersionAudioUrl: audioUrl };
       queueRef.current = queue.map((item, index) => index === targetIdx ? hydratedTarget : item);
+      sourceQueueRef.current = sourceQueueRef.current.map(item => (
+        item.id === hydratedTarget.id ? hydratedTarget : item
+      ));
       queueIndexRef.current = targetIdx;
       setQueueIndex(targetIdx);
       setPlayingId(target.id);
@@ -1066,6 +1131,25 @@ function DashboardContent() {
         navigator.mediaSession.playbackState = 'playing';
       }
     }
+  }
+
+  function toggleShuffle() {
+    if (!playingId) return;
+
+    const nextEnabled = !shuffleEnabledRef.current;
+    const sourceQueue = sourceQueueRef.current.length > 0
+      ? sourceQueueRef.current
+      : queueRef.current;
+    const nextQueue = nextEnabled
+      ? buildShuffledQueue(sourceQueue, playingId)
+      : sourceQueue;
+    const nextIndex = Math.max(0, nextQueue.findIndex(song => song.id === playingId));
+
+    queueRef.current = nextQueue;
+    queueIndexRef.current = nextIndex;
+    shuffleEnabledRef.current = nextEnabled;
+    setQueueIndex(nextIndex);
+    setShuffleEnabled(nextEnabled);
   }
 
   function handleArtworkPlayClick(event: React.MouseEvent<HTMLDivElement>, song: Song, queue: Song[]) {
@@ -2254,6 +2338,7 @@ function DashboardContent() {
 
       <audio
         ref={audioRef}
+        loop={loopEnabled}
         onEnded={() => {
           void handlePlayerEnded();
         }}
@@ -2270,25 +2355,7 @@ function DashboardContent() {
         const progressPercent = playerDuration > 0 ? (playerCurrentTime / playerDuration) * 100 : 0;
 
         return (
-          <div className={styles.miniPlayer}>
-            <div className={styles.miniPlayerProgress}>
-              <div className={styles.miniPlayerFill} style={{ width: `${progressPercent}%` }} />
-              <input
-                type="range"
-                min={0}
-                max={playerDuration || 100}
-                step={0.1}
-                value={playerCurrentTime}
-                className={styles.miniPlayerScrubber}
-                onChange={event => {
-                  const nextTime = parseFloat(event.target.value);
-                  if (audioRef.current) {
-                    audioRef.current.currentTime = nextTime;
-                  }
-                  setPlayerCurrentTime(nextTime);
-                }}
-              />
-            </div>
+          <div ref={miniPlayerRef} className={styles.miniPlayer}>
             <div className={styles.miniPlayerRow}>
               <div
                 className={styles.miniPlayerLeft}
@@ -2302,79 +2369,143 @@ function DashboardContent() {
                 <div className={styles.miniPlayerInfo}>
                   <div className={styles.miniPlayerTitle}>{playingSong.title}</div>
                   <div className={styles.miniPlayerMeta}>
-                    {formatTime(playerCurrentTime)} / {formatTime(playerDuration)} · {queueIndex + 1} of {queueRef.current.length}
+                    {queueIndex + 1} of {queueRef.current.length} in queue
                   </div>
                 </div>
               </div>
-              <div className={styles.miniPlayerControls}>
-                <button
-                  type="button"
-                  className={styles.miniPlayerBtn}
-                  onClick={() => {
-                    void skipTrack('prev');
-                  }}
-                  disabled={queueIndex === 0}
-                  title="Previous"
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M12 2L5 8l7 6V2z" fill="currentColor" />
-                    <rect x="2" y="2" width="2" height="12" rx="1" fill="currentColor" />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  className={styles.miniPlayerPlayBtn}
-                  onClick={togglePlayPause}
-                  title={isPlaying ? 'Pause' : 'Play'}
-                >
-                  {isPlaying ? (
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="white">
-                      <rect x="1" y="1" width="4.5" height="12" rx="1.5" />
-                      <rect x="8.5" y="1" width="4.5" height="12" rx="1.5" />
+
+              <div className={styles.miniPlayerTransport}>
+                <div className={styles.miniPlayerControls}>
+                  <button
+                    type="button"
+                    className={styles.miniPlayerBtn}
+                    onClick={() => {
+                      void skipTrack('prev');
+                    }}
+                    disabled={queueIndex === 0}
+                    aria-label="Previous song"
+                    title="Previous song"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M12 2L5 8l7 6V2z" fill="currentColor" />
+                      <rect x="2" y="2" width="2" height="12" rx="1" fill="currentColor" />
                     </svg>
-                  ) : (
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="white">
-                      <path d="M2 1l11 6-11 6z" />
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.miniPlayerPlayBtn}
+                    onClick={togglePlayPause}
+                    aria-label={isPlaying ? 'Pause' : 'Play'}
+                    title={isPlaying ? 'Pause' : 'Play'}
+                  >
+                    {isPlaying ? (
+                      <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
+                        <rect x="1" y="1" width="4.5" height="12" rx="1.5" fill="currentColor" />
+                        <rect x="8.5" y="1" width="4.5" height="12" rx="1.5" fill="currentColor" />
+                      </svg>
+                    ) : (
+                      <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
+                        <path d="M2 1l11 6-11 6z" fill="currentColor" />
+                      </svg>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.miniPlayerBtn}
+                    onClick={() => {
+                      void skipTrack('next');
+                    }}
+                    disabled={queueIndex >= queueRef.current.length - 1}
+                    aria-label="Next song"
+                    title="Next song"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M4 2l7 6-7 6V2z" fill="currentColor" />
+                      <rect x="12" y="2" width="2" height="12" rx="1" fill="currentColor" />
                     </svg>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  className={styles.miniPlayerBtn}
-                  onClick={() => {
-                    void skipTrack('next');
-                  }}
-                  disabled={queueIndex >= queueRef.current.length - 1}
-                  title="Next"
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M4 2l7 6-7 6V2z" fill="currentColor" />
-                    <rect x="12" y="2" width="2" height="12" rx="1" fill="currentColor" />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  className={styles.miniPlayerBtn}
-                  onClick={() => {
-                    setPlayingId(null);
-                    setIsPlaying(false);
-                    setPlayerCurrentTime(0);
-                    setPlayerDuration(0);
-                    audioRef.current?.pause();
-                    if (audioRef.current) {
-                      audioRef.current.src = '';
-                    }
-                    if ('mediaSession' in navigator) {
-                      navigator.mediaSession.playbackState = 'none';
-                    }
-                  }}
-                  title="Close"
-                >
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
-                </button>
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.miniPlayerBtn} ${styles.miniPlayerModeBtn} ${shuffleEnabled ? styles.miniPlayerModeBtnActive : ''}`}
+                    onClick={toggleShuffle}
+                    aria-label={shuffleEnabled ? 'Turn shuffle off' : 'Turn shuffle on'}
+                    aria-pressed={shuffleEnabled}
+                    title={shuffleEnabled ? 'Shuffle on' : 'Shuffle off'}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                      <path d="M3 5h2.5c4.5 0 4.5 10 9 10H17" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                      <path d="m14.5 12.5 2.5 2.5-2.5 2.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M3 15h2.5c1.7 0 2.8-1.4 3.8-3.2M10.7 8.2C11.7 6.4 12.8 5 14.5 5H17" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                      <path d="m14.5 2.5 2.5 2.5-2.5 2.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.miniPlayerBtn} ${styles.miniPlayerModeBtn} ${loopEnabled ? styles.miniPlayerModeBtnActive : ''}`}
+                    onClick={() => setLoopEnabled(enabled => !enabled)}
+                    aria-label={loopEnabled ? 'Turn loop off' : 'Loop current song'}
+                    aria-pressed={loopEnabled}
+                    title={loopEnabled ? 'Loop on' : 'Loop off'}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                      <path d="M5 6h9.5L12 3.5M15 14H5.5L8 16.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M15 6c1.1 0 2 .9 2 2v1M5 14c-1.1 0-2-.9-2-2v-1" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                    </svg>
+                  </button>
+                </div>
+
+                <span className={`${styles.miniPlayerTime} ${styles.miniPlayerCurrentTime}`}>
+                  {formatTime(playerCurrentTime)}
+                </span>
+                <div className={styles.miniPlayerTimeline}>
+                  <div className={styles.miniPlayerProgress}>
+                    <div className={styles.miniPlayerFill} style={{ width: `${progressPercent}%` }} />
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={playerDuration || 100}
+                    step={0.1}
+                    value={playerCurrentTime}
+                    className={styles.miniPlayerScrubber}
+                    aria-label="Playback position"
+                    onChange={event => {
+                      const nextTime = parseFloat(event.target.value);
+                      if (audioRef.current) {
+                        audioRef.current.currentTime = nextTime;
+                      }
+                      setPlayerCurrentTime(nextTime);
+                    }}
+                  />
+                </div>
+                <span className={`${styles.miniPlayerTime} ${styles.miniPlayerDuration}`}>
+                  {formatTime(playerDuration)}
+                </span>
               </div>
+
+              <button
+                type="button"
+                className={`${styles.miniPlayerBtn} ${styles.miniPlayerCloseBtn}`}
+                onClick={() => {
+                  setPlayingId(null);
+                  setIsPlaying(false);
+                  setPlayerCurrentTime(0);
+                  setPlayerDuration(0);
+                  audioRef.current?.pause();
+                  if (audioRef.current) {
+                    audioRef.current.src = '';
+                  }
+                  if ('mediaSession' in navigator) {
+                    navigator.mediaSession.playbackState = 'none';
+                  }
+                }}
+                aria-label="Close player"
+                title="Close player"
+              >
+                <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
+                  <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
             </div>
           </div>
         );

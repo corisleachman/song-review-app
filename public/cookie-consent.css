@@ -1,1 +1,97 @@
-.tsr-cookie-banner{position:fixed;left:18px;right:18px;bottom:18px;z-index:10000;display:flex;align-items:center;justify-content:space-between;gap:24px;max-width:920px;margin:0 auto;padding:20px 22px;background:#1c1515;color:#f4ede4;border:1px solid rgba(244,237,228,.18);box-shadow:0 18px 60px rgba(0,0,0,.45);font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}.tsr-cookie-copy{max-width:620px}.tsr-cookie-copy h2{margin:0 0 6px;font:700 18px/1.2 'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}.tsr-cookie-copy p{margin:0;color:#d4c4b0;font-size:14px;line-height:1.5}.tsr-cookie-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}.tsr-cookie-button,.tsr-cookie-settings{border:0;cursor:pointer;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:700}.tsr-cookie-button{padding:11px 15px;font-size:12px;letter-spacing:.04em}.tsr-cookie-button-primary{background:#c0392b;color:#fff}.tsr-cookie-button-primary:hover{background:#e8402e}.tsr-cookie-button-secondary{background:transparent;color:#f4ede4;border:1px solid rgba(244,237,228,.3)}.tsr-cookie-button-secondary:hover{border-color:#f4ede4}.tsr-cookie-button:focus-visible,.tsr-cookie-settings:focus-visible{outline:3px solid #f0e48c;outline-offset:3px}.tsr-cookie-settings{position:fixed;left:12px;bottom:12px;z-index:9999;padding:8px 10px;background:#1c1515;color:#d4c4b0;border:1px solid rgba(244,237,228,.18);font-size:11px}.tsr-cookie-settings:hover{color:#f4ede4;border-color:rgba(244,237,228,.35)}@media(max-width:720px){.tsr-cookie-banner{left:10px;right:10px;bottom:10px;display:block;padding:18px}.tsr-cookie-actions{margin-top:16px}.tsr-cookie-button{flex:1}.tsr-cookie-actions{display:flex}.tsr-cookie-settings{left:8px;bottom:8px}}
+.tsr-cookie-banner {
+  position: fixed;
+  left: 18px;
+  right: 18px;
+  bottom: calc(var(--tsr-player-safe-area, 0px) + 18px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 20px 22px;
+  background: #1c1515;
+  color: #f4ede4;
+  border: 1px solid rgba(244, 237, 228, 0.18);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.tsr-cookie-copy {
+  max-width: 620px;
+}
+
+.tsr-cookie-copy h2 {
+  margin: 0 0 6px;
+  font: 700 18px/1.2 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.tsr-cookie-copy p {
+  margin: 0;
+  color: #d4c4b0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.tsr-cookie-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.tsr-cookie-button {
+  border: 0;
+  cursor: pointer;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 700;
+}
+
+.tsr-cookie-button {
+  padding: 11px 15px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.tsr-cookie-button-primary {
+  background: #c0392b;
+  color: #fff;
+}
+
+.tsr-cookie-button-primary:hover {
+  background: #e8402e;
+}
+
+.tsr-cookie-button-secondary {
+  background: transparent;
+  color: #f4ede4;
+  border: 1px solid rgba(244, 237, 228, 0.3);
+}
+
+.tsr-cookie-button-secondary:hover {
+  border-color: #f4ede4;
+}
+
+.tsr-cookie-button:focus-visible {
+  outline: 3px solid #f0e48c;
+  outline-offset: 3px;
+}
+
+@media (max-width: 720px) {
+  .tsr-cookie-banner {
+    left: 10px;
+    right: 10px;
+    bottom: calc(var(--tsr-player-safe-area, 0px) + 10px);
+    display: block;
+    padding: 18px;
+  }
+
+  .tsr-cookie-actions {
+    margin-top: 16px;
+  }
+
+  .tsr-cookie-button {
+    flex: 1;
+  }
+}

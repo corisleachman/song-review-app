@@ -70,6 +70,20 @@ test('workspace invite emails build links from the request origin', () => {
   assert.doesNotMatch(route, /localhost(?::\d+)?/iu);
 });
 
+test('pending workspace invites use Google-only account entry during beta', () => {
+  const actions = read('app/invite/[token]/InviteActions.tsx');
+  const page = read('app/invite/[token]/page.tsx');
+
+  assertIncludesAll(actions, [
+    'supabase.auth.signInWithOAuth({',
+    "provider: 'google'",
+    'Continue with Google',
+    'we&apos;ll create your account automatically',
+  ], 'invite Google account entry');
+  assert.match(page, /Continue with Google using the invited email address/u);
+  assert.doesNotMatch(actions, /signInWithPassword|Sign in with email|invite-password/u);
+});
+
 test('authenticated playlist access stays inside the active workspace', () => {
   const access = read('lib/playlistAccess.ts');
 
@@ -118,6 +132,188 @@ test('playlist cover uploads validate size and type before buffering or decoding
     'Your current cover is unchanged.',
     'Choose another image',
   ], 'playlist cover error dialog');
+});
+
+test('feedback and initial cookie consent clear the player while preferences live in settings', () => {
+  const dashboard = read('app/dashboard/page.tsx');
+  const dashboardCss = read('app/dashboard/dashboard.module.css');
+  const appShell = read('components/AppShell.tsx');
+  const appSidebar = read('components/AppSidebar.tsx');
+  const feedback = read('components/BetaFeedback.tsx');
+  const feedbackCss = read('components/BetaFeedback.module.css');
+  const cookieController = read('public/cookie-consent.js');
+  const cookieCss = read('public/cookie-consent.css');
+  const settingsLayout = read('app/settings/layout.tsx');
+  const privacySettings = read('app/settings/privacy/page.tsx');
+
+  assertIncludesAll(dashboard, [
+    'const miniPlayerRef = useRef<HTMLDivElement>(null)',
+    "root.style.setProperty('--tsr-player-safe-area', `${height}px`)",
+    "root.style.removeProperty('--tsr-player-safe-area')",
+    'new ResizeObserver(updatePlayerSafeArea)',
+    '<div ref={miniPlayerRef} className={styles.miniPlayer}>',
+  ], 'dashboard player safe area');
+  const playSongStart = dashboard.indexOf('async function playSong');
+  const queueSeed = dashboard.indexOf('queueRef.current = queue;', playSongStart);
+  const firstPlayingIdUpdate = dashboard.indexOf('setPlayingId(song.id);', playSongStart);
+  assert.ok(
+    playSongStart >= 0 && queueSeed > playSongStart && queueSeed < firstPlayingIdUpdate,
+    'the queue must exist before the first playingId render so the mini player can be measured'
+  );
+  assert.match(
+    feedbackCss,
+    /bottom:\s*calc\(var\(--tsr-player-safe-area, 0px\) \+ (?:16|22)px\)/u
+  );
+  assert.match(feedbackCss, /\.wrap\s*\{[^}]*right:\s*22px;/u);
+  assert.doesNotMatch(feedback, /usePathname|onPlayerRoute|styles\.left/u);
+  assert.doesNotMatch(feedbackCss, /\.wrap\.left/u);
+  assert.match(
+    cookieCss,
+    /bottom:\s*calc\(var\(--tsr-player-safe-area, 0px\) \+ (?:8|10|12|18)px\)/u
+  );
+  assert.match(dashboardCss, /\.miniPlayer\s*\{[^}]*left:\s*76px;/u);
+  assert.match(
+    dashboardCss,
+    /@media \(max-width:\s*768px\)\s*\{\s*\.miniPlayer\s*\{[^}]*left:\s*0;/u
+  );
+  assert.doesNotMatch(appShell, /data-tsr-app-shell/u);
+  assert.doesNotMatch(appSidebar, /label: 'Cookie settings'|handleCookieSettings/u);
+  assert.doesNotMatch(cookieController, /SETTINGS_ID|showSettingsButton|className = 'tsr-cookie-settings'/u);
+  assert.doesNotMatch(cookieCss, /\.tsr-cookie-settings/u);
+  assertIncludesAll(cookieController, [
+    "const OPEN_SETTINGS_EVENT = 'tsr:open-cookie-settings'",
+    'window.addEventListener(OPEN_SETTINGS_EVENT, showBanner)',
+  ], 'cookie settings event controller');
+  assert.match(settingsLayout, /label: 'Privacy & cookies'.*href: '\/settings\/privacy'/u);
+  assertIncludesAll(privacySettings, [
+    "const OPEN_COOKIE_SETTINGS_EVENT = 'tsr:open-cookie-settings'",
+    'window.dispatchEvent(new Event(OPEN_COOKIE_SETTINGS_EVENT))',
+    '<h2>Privacy & cookies</h2>',
+    'Cookie settings',
+  ], 'settings-only cookie preference control');
+});
+
+test('dashboard mini-player gives transport and timeline the primary space', () => {
+  const dashboard = read('app/dashboard/page.tsx');
+  const dashboardCss = read('app/dashboard/dashboard.module.css');
+
+  assertIncludesAll(dashboard, [
+    'className={styles.miniPlayerTransport}',
+    'className={styles.miniPlayerTimeline}',
+    'const sourceQueueRef = useRef<Song[]>([])',
+    'const shuffleEnabledRef = useRef(false)',
+    'const [shuffleEnabled, setShuffleEnabled] = useState(false)',
+    'const [loopEnabled, setLoopEnabled] = useState(false)',
+    'function buildShuffledQueue(queue: Song[], currentSongId: string)',
+    'const nextEnabled = !shuffleEnabledRef.current',
+    'const playbackQueue = shuffleEnabledRef.current',
+    'loop={loopEnabled}',
+    'aria-label="Previous song"',
+    'aria-label="Next song"',
+    'aria-label="Playback position"',
+    'aria-label="Close player"',
+    "aria-label={shuffleEnabled ? 'Turn shuffle off' : 'Turn shuffle on'}",
+    "aria-label={loopEnabled ? 'Turn loop off' : 'Loop current song'}",
+    'aria-pressed={shuffleEnabled}',
+    'aria-pressed={loopEnabled}',
+    '{formatTime(playerCurrentTime)}',
+    '{formatTime(playerDuration)}',
+    'in queue',
+  ], 'prominent dashboard player controls');
+  assert.match(
+    dashboardCss,
+    /\.miniPlayerRow\s*\{[^}]*grid-template-columns:\s*minmax\(220px, 320px\) minmax\(320px, 1fr\) 44px;/u
+  );
+  assert.match(
+    dashboardCss,
+    /\.miniPlayerTransport\s*\{[^}]*grid-template-columns:\s*auto 40px minmax\(120px, 1fr\) 40px;/u
+  );
+  assert.match(
+    dashboardCss,
+    /\.miniPlayerPlayBtn\s*\{[^}]*width:\s*52px;[^}]*height:\s*52px;/u
+  );
+  assert.match(
+    dashboardCss,
+    /grid-template-areas:\s*'identity close'\s*'transport transport';/u
+  );
+  assert.match(
+    dashboardCss,
+    /grid-template-areas:\s*'controls controls controls'\s*'current timeline duration';/u
+  );
+  assert.match(dashboardCss, /\.miniPlayerModeBtnActive[^}]*color:\s*#f0e48c;/u);
+});
+
+test('mobile marketing description occupies a separate row from the hero headline', () => {
+  const marketing = read('public/marketing.html');
+  const responsiveStart = marketing.indexOf('@media (max-width: 900px) {', marketing.indexOf('RESPONSIVE'));
+  const responsiveEnd = marketing.indexOf('@media (prefers-reduced-motion: reduce)', responsiveStart);
+  const responsiveCss = marketing.slice(responsiveStart, responsiveEnd);
+
+  assert.match(responsiveCss, /\.cell-d\s*\{[^}]*grid-row:\s*2;/u);
+  assert.match(responsiveCss, /\.cell-b\s*\{[^}]*grid-row:\s*3;/u);
+  assert.match(responsiveCss, /\.cell-c\s*\{[^}]*grid-row:\s*3;/u);
+  assert.match(responsiveCss, /\.bento-cell-text p\s*\{[^}]*font-size:\s*clamp\(15px, 4vw, 18px\);/u);
+});
+
+test('public playlist playback advances through its ordered tracks', () => {
+  const player = read('app/listen/playlist/[id]/page.tsx');
+
+  assertIncludesAll(player, [
+    "ws.on('finish', () => { goNextRef.current(); })",
+    "navigator.mediaSession.setActionHandler('nexttrack', () => goNextRef.current())",
+    'const i = curRef.current + 1',
+    'if (i < tracksRef.current.length) loadTrack(i)',
+  ], 'public playlist sequence');
+});
+
+test('desktop card view exposes the same song-stage update path', () => {
+  const dashboard = read('app/dashboard/page.tsx');
+
+  assertIncludesAll(dashboard, [
+    'id={`song-status-grid-${song.id}`}',
+    'value={song.status}',
+    'void updateSongStatus(song.id, e.target.value as SongStatus)',
+    '{SONG_STATUS_VALUES.map(status => (',
+    'aria-label="Change stage"',
+  ], 'desktop card stage control');
+});
+
+test('visualizer preference is editable, persisted, and respected by the song player', () => {
+  const settings = read('app/settings/appearance/page.tsx');
+  const route = read('app/api/profile/visualizer/route.ts');
+  const player = read('app/songs/[id]/versions/[versionId]/page.tsx');
+
+  assertIncludesAll(settings, [
+    '<h3>Audio visualizer</h3>',
+    "fetch('/api/profile/visualizer'",
+    'body: JSON.stringify({ visualizer_enabled: val })',
+    'onClick={() => void setVisualizer(false)}',
+  ], 'visualizer setting');
+  assertIncludesAll(route, [
+    ".select('visualizer_enabled')",
+    'visualizer_enabled: body.visualizer_enabled',
+    "return NextResponse.json({ visualizer_enabled: body.visualizer_enabled })",
+  ], 'visualizer persistence');
+  assertIncludesAll(player, [
+    "fetch('/api/profile/visualizer'",
+    'setVisualizerEnabled(data?.visualizer_enabled !== false)',
+    '{visualizerEnabled && (',
+  ], 'song player visualizer preference');
+});
+
+test('beta login and signup use a single Google account path', () => {
+  const login = read('app/login/page.tsx');
+
+  assertIncludesAll(login, [
+    'Use Google to log in or create your Song Room account.',
+    "provider: 'google'",
+    "googleLoading ? 'Connecting...' : 'Continue with Google'",
+    'During beta, Google is the only account option.',
+  ], 'Google-only authentication controls');
+  assert.doesNotMatch(
+    login,
+    /signInWithPassword|resetPasswordForEmail|\.auth\.signUp|Continue with email|Forgot password|type="password"/u
+  );
 });
 
 test('public song reads expose only public songs with finalized audio', () => {
