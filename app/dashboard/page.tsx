@@ -251,6 +251,7 @@ function DashboardContent() {
 
   // Dashboard audio player
   const audioRef = useRef<HTMLAudioElement>(null);
+  const miniPlayerRef = useRef<HTMLDivElement>(null);
   const queueRef = useRef<Song[]>([]);
   const queueIndexRef = useRef(0);
   const [playingId, setPlayingId] = useState<string | null>(null);
@@ -258,6 +259,34 @@ function DashboardContent() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playerCurrentTime, setPlayerCurrentTime] = useState(0);
   const [playerDuration, setPlayerDuration] = useState(0);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const miniPlayer = miniPlayerRef.current;
+
+    if (!playingId || !miniPlayer) {
+      root.style.removeProperty('--tsr-player-safe-area');
+      return;
+    }
+
+    const updatePlayerSafeArea = () => {
+      const height = Math.ceil(miniPlayer.getBoundingClientRect().height);
+      root.style.setProperty('--tsr-player-safe-area', `${height}px`);
+    };
+
+    updatePlayerSafeArea();
+    const observer = typeof ResizeObserver === 'undefined'
+      ? null
+      : new ResizeObserver(updatePlayerSafeArea);
+    observer?.observe(miniPlayer);
+    window.addEventListener('resize', updatePlayerSafeArea);
+
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', updatePlayerSafeArea);
+      root.style.removeProperty('--tsr-player-safe-area');
+    };
+  }, [playingId]);
   const [billingError, setBillingError] = useState<string | null>(null);
   const [showUpgradeSuccessModal, setShowUpgradeSuccessModal] = useState(false);
   const [acceptedInviteWorkspaceName, setAcceptedInviteWorkspaceName] = useState<string | null>(null);
@@ -2270,7 +2299,7 @@ function DashboardContent() {
         const progressPercent = playerDuration > 0 ? (playerCurrentTime / playerDuration) * 100 : 0;
 
         return (
-          <div className={styles.miniPlayer}>
+          <div ref={miniPlayerRef} className={styles.miniPlayer}>
             <div className={styles.miniPlayerProgress}>
               <div className={styles.miniPlayerFill} style={{ width: `${progressPercent}%` }} />
               <input

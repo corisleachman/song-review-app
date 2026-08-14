@@ -120,6 +120,98 @@ test('playlist cover uploads validate size and type before buffering or decoding
   ], 'playlist cover error dialog');
 });
 
+test('fixed feedback and cookie controls clear the measured dashboard player', () => {
+  const dashboard = read('app/dashboard/page.tsx');
+  const feedbackCss = read('components/BetaFeedback.module.css');
+  const cookieCss = read('public/cookie-consent.css');
+
+  assertIncludesAll(dashboard, [
+    'const miniPlayerRef = useRef<HTMLDivElement>(null)',
+    "root.style.setProperty('--tsr-player-safe-area', `${height}px`)",
+    "root.style.removeProperty('--tsr-player-safe-area')",
+    'new ResizeObserver(updatePlayerSafeArea)',
+    '<div ref={miniPlayerRef} className={styles.miniPlayer}>',
+  ], 'dashboard player safe area');
+  assert.match(
+    feedbackCss,
+    /bottom:\s*calc\(var\(--tsr-player-safe-area, 0px\) \+ (?:16|22)px\)/u
+  );
+  assert.match(
+    cookieCss,
+    /bottom:\s*calc\(var\(--tsr-player-safe-area, 0px\) \+ (?:8|10|12|18)px\)/u
+  );
+});
+
+test('mobile marketing description occupies a separate row from the hero headline', () => {
+  const marketing = read('public/marketing.html');
+  const responsiveStart = marketing.indexOf('@media (max-width: 900px) {', marketing.indexOf('RESPONSIVE'));
+  const responsiveEnd = marketing.indexOf('@media (prefers-reduced-motion: reduce)', responsiveStart);
+  const responsiveCss = marketing.slice(responsiveStart, responsiveEnd);
+
+  assert.match(responsiveCss, /\.cell-d\s*\{[^}]*grid-row:\s*2;/u);
+  assert.match(responsiveCss, /\.cell-b\s*\{[^}]*grid-row:\s*3;/u);
+  assert.match(responsiveCss, /\.cell-c\s*\{[^}]*grid-row:\s*3;/u);
+  assert.match(responsiveCss, /\.bento-cell-text p\s*\{[^}]*font-size:\s*clamp\(15px, 4vw, 18px\);/u);
+});
+
+test('public playlist playback advances through its ordered tracks', () => {
+  const player = read('app/listen/playlist/[id]/page.tsx');
+
+  assertIncludesAll(player, [
+    "ws.on('finish', () => { goNextRef.current(); })",
+    "navigator.mediaSession.setActionHandler('nexttrack', () => goNextRef.current())",
+    'const i = curRef.current + 1',
+    'if (i < tracksRef.current.length) loadTrack(i)',
+  ], 'public playlist sequence');
+});
+
+test('desktop card view exposes the same song-stage update path', () => {
+  const dashboard = read('app/dashboard/page.tsx');
+
+  assertIncludesAll(dashboard, [
+    'id={`song-status-grid-${song.id}`}',
+    'value={song.status}',
+    'void updateSongStatus(song.id, e.target.value as SongStatus)',
+    '{SONG_STATUS_VALUES.map(status => (',
+    'aria-label="Change stage"',
+  ], 'desktop card stage control');
+});
+
+test('visualizer preference is editable, persisted, and respected by the song player', () => {
+  const settings = read('app/settings/appearance/page.tsx');
+  const route = read('app/api/profile/visualizer/route.ts');
+  const player = read('app/songs/[id]/versions/[versionId]/page.tsx');
+
+  assertIncludesAll(settings, [
+    '<h3>Audio visualizer</h3>',
+    "fetch('/api/profile/visualizer'",
+    'body: JSON.stringify({ visualizer_enabled: val })',
+    'onClick={() => void setVisualizer(false)}',
+  ], 'visualizer setting');
+  assertIncludesAll(route, [
+    ".select('visualizer_enabled')",
+    'visualizer_enabled: body.visualizer_enabled',
+    "return NextResponse.json({ visualizer_enabled: body.visualizer_enabled })",
+  ], 'visualizer persistence');
+  assertIncludesAll(player, [
+    "fetch('/api/profile/visualizer'",
+    'setVisualizerEnabled(data?.visualizer_enabled !== false)',
+    '{visualizerEnabled && (',
+  ], 'song player visualizer preference');
+});
+
+test('email authentication controls call sign-in, sign-up, and reset handlers', () => {
+  const login = read('app/login/page.tsx');
+
+  assertIncludesAll(login, [
+    'supabase.auth.signInWithPassword({ email: email.trim(), password })',
+    'supabase.auth.signUp({',
+    'supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: redirectUrl.toString() })',
+    'onClick={isSignup ? handleEmailSignUp : handleEmailSignIn}',
+    "onClick={() => { setMode('forgot'); setEmailOpen(true); }}",
+  ], 'email authentication controls');
+});
+
 test('public song reads expose only public songs with finalized audio', () => {
   const route = read('app/api/public/song/[songId]/route.ts');
 

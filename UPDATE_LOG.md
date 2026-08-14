@@ -4337,3 +4337,36 @@ Bring playlist-cover validation in line with the established song-cover upload b
 - The final preview recheck passed: the saved cover remained unchanged, the prominent size dialog appeared, Escape closed it, and `Choose another image` reopened the picker.
 - Google preview sign-in required the exact temporary Vercel hostname in Supabase Auth Redirect URLs. Once allowed, OAuth stayed on the preview host and the corrected build could be tested.
 - No database schema, storage policy, dependency, or deployment configuration changed.
+
+---
+
+## 2026-08-13 - Backlog gate responsive layout fixes
+
+### What we were trying to achieve
+
+Keep persistent beta and privacy controls clear of dashboard playback, and make the homepage description readable on phones without obscuring the animated headline.
+
+### Feature / change being made
+
+Responsive safe-area coordination for the dashboard mini-player and a mobile-specific hero-grid composition.
+
+### Files changed
+
+- `app/dashboard/page.tsx`
+- `components/BetaFeedback.module.css`
+- `public/cookie-consent.css`
+- `public/marketing.html`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The dashboard measures the rendered mini-player and publishes its height through the shared `--tsr-player-safe-area` CSS property.
+- Cookie consent and beta feedback controls add that safe area to their normal bottom spacing, including mobile spacing and the expanded cookie banner.
+- Closing the player or leaving the dashboard removes the temporary CSS property so other pages retain their existing positions.
+- On screens up to 900 pixels wide, the descriptive bento panel now occupies row 2 and the decorative image cells move to row 3, separating the copy from the bottom-aligned animated headline.
+- Contract tests guard the shared offset and mobile grid placement.
+- Source-path verification confirmed that public playlists advance when a track finishes, the desktop card status selector uses the canonical status update handler, the visualizer preference is persisted and respected by the song player, and the email login controls call Supabase sign-in, sign-up, and password-reset methods.
+- Responsive browser checks at 390 by 844 and 1440 by 900 found zero overlap between the description and headline, no error overlay, and no console errors.
+- All 18 contract tests, TypeScript checking, focused lint, and the placeholder-environment production build passed. Existing lint warnings remain unchanged.
+- No database, authentication, billing, storage, dependency, or deployment configuration changed.

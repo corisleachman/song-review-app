@@ -1,6 +1,6 @@
 .wrap {
   position: fixed;
-  bottom: 22px;
+  bottom: calc(var(--tsr-player-safe-area, 0px) + 22px);
   right: 22px;
   z-index: 1000;
   display: flex;
@@ -185,7 +185,7 @@
 
 @media (max-width: 768px) {
   .wrap {
-    bottom: 16px;
+    bottom: calc(var(--tsr-player-safe-area, 0px) + 16px);
     right: 16px;
   }
   .wrap.left {
