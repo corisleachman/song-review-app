@@ -990,7 +990,11 @@ function DashboardContent() {
   async function playSong(song: Song, queue: Song[]) {
     if (!song.latestVersionId || !audioRef.current) return;
 
-    // Set playingId immediately so artwork shows loading state on first tap
+    // Seed the queue before the first render so the mini player mounts with
+    // playingId and its safe area can be measured immediately.
+    queueRef.current = queue;
+
+    // Set playingId immediately so artwork shows loading state on first tap.
     setPlayingId(song.id);
 
     const audioUrl = await resolveLatestVersionAudioUrl(song);

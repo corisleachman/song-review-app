@@ -4498,3 +4498,27 @@ Keep the initial consent banner, move later preference changes into Settings, an
 - Beta Feedback now uses its established bottom-right position on song pages and other routes.
 - No consent storage key, Google Analytics loading behaviour, or saved preference semantics changed.
 - All 19 contract tests, TypeScript checking, focused lint, JavaScript syntax checking, and the placeholder-environment production build passed. Existing repository lint warnings remain unchanged.
+
+---
+
+## 2026-08-14 - Feedback clears the mini-player on first playback
+
+### What we were trying to achieve
+
+Keep the fixed Feedback control above the dashboard mini-player from the first song selected, rather than only after switching to another song.
+
+### Feature / change being made
+
+Populate the dashboard playback queue before the first `playingId` render so the mini-player mounts in time for the existing safe-area measurement effect.
+
+### Files changed
+
+- `app/dashboard/page.tsx`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The existing mini-player measurement, resize observation, and Feedback positioning remain unchanged.
+- Regression coverage now protects the queue-before-render ordering required on first playback.
+- All 19 contract tests, TypeScript checking, focused lint, and the placeholder-environment production build passed. Existing repository lint warnings remain unchanged.

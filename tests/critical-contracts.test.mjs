@@ -153,6 +153,13 @@ test('feedback and initial cookie consent clear the player while preferences liv
     'new ResizeObserver(updatePlayerSafeArea)',
     '<div ref={miniPlayerRef} className={styles.miniPlayer}>',
   ], 'dashboard player safe area');
+  const playSongStart = dashboard.indexOf('async function playSong');
+  const queueSeed = dashboard.indexOf('queueRef.current = queue;', playSongStart);
+  const firstPlayingIdUpdate = dashboard.indexOf('setPlayingId(song.id);', playSongStart);
+  assert.ok(
+    playSongStart >= 0 && queueSeed > playSongStart && queueSeed < firstPlayingIdUpdate,
+    'the queue must exist before the first playingId render so the mini player can be measured'
+  );
   assert.match(
     feedbackCss,
     /bottom:\s*calc\(var\(--tsr-player-safe-area, 0px\) \+ (?:16|22)px\)/u
