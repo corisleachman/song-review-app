@@ -2035,12 +2035,12 @@ function DashboardContent() {
               })}
 
               {/* Ghost add card */}
-              <div className={styles.cardGhost} onClick={() => router.push('/upload')}>
+              <button type="button" className={styles.cardGhost} onClick={() => router.push('/upload')}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M8 2v12M2 8h12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
                 </svg>
                 Add song
-              </div>
+              </button>
             </div>
             ) : (
               <div className={styles.emptyStateCard}>
@@ -2357,22 +2357,24 @@ function DashboardContent() {
         return (
           <div ref={miniPlayerRef} className={styles.miniPlayer}>
             <div className={styles.miniPlayerRow}>
-              <div
+              <button
+                type="button"
                 className={styles.miniPlayerLeft}
                 onClick={() => openSongContext(playingSong)}
+                aria-label={`Open ${playingSong.title}`}
               >
                 {playingSong.image_url ? (
                   <img src={playingSong.image_url} alt={playingSong.title} className={styles.miniPlayerArt} />
                 ) : (
-                  <div className={styles.miniPlayerArtPlaceholder} />
+                  <span className={styles.miniPlayerArtPlaceholder} aria-hidden="true" />
                 )}
-                <div className={styles.miniPlayerInfo}>
-                  <div className={styles.miniPlayerTitle}>{playingSong.title}</div>
-                  <div className={styles.miniPlayerMeta}>
+                <span className={styles.miniPlayerInfo}>
+                  <span className={styles.miniPlayerTitle}>{playingSong.title}</span>
+                  <span className={styles.miniPlayerMeta}>
                     {queueIndex + 1} of {queueRef.current.length} in queue
-                  </div>
-                </div>
-              </div>
+                  </span>
+                </span>
+              </button>
 
               <div className={styles.miniPlayerTransport}>
                 <div className={styles.miniPlayerControls}>

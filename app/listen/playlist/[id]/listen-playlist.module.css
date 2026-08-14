@@ -491,7 +491,7 @@
 .trackListSection { background: #0E0A0A; padding: 28px 28px 90px; }
 .trackListInner { max-width: 1100px; margin: 0 auto; }
 .trackListHeading { font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; color: rgba(244,237,228,0.55); margin: 0 0 12px; }
-.trackRow { display: flex; align-items: center; gap: 14px; padding: 12px 12px; border-bottom: 1px solid rgba(244,237,228,0.08); cursor: pointer; }
+.trackRow { width: 100%; display: flex; align-items: center; gap: 14px; padding: 12px 12px; border: 0; border-bottom: 1px solid rgba(244,237,228,0.08); background: transparent; color: #F4EDE4; font: inherit; text-align: left; cursor: pointer; }
 .trackRow:hover { background: rgba(244,237,228,0.04); }
 .trackRowActive { background: rgba(244,237,228,0.07); }
 .trackNum { width: 22px; text-align: center; color: rgba(244,237,228,0.4); font-size: 13px; font-variant-numeric: tabular-nums; }

@@ -243,6 +243,30 @@ test('dashboard mini-player gives transport and timeline the primary space', () 
   assert.match(dashboardCss, /\.miniPlayerModeBtnActive[^}]*color:\s*#f0e48c;/u);
 });
 
+test('primary upload, navigation, and playlist controls use native buttons', () => {
+  const upload = read('app/upload/page.tsx');
+  const playlistManager = read('app/playlists/[id]/page.tsx');
+  const dashboard = read('app/dashboard/page.tsx');
+  const publicPlaylist = read('app/listen/playlist/[id]/page.tsx');
+
+  assert.match(upload, /<button[^>]*className=\{`\$\{styles\.drop\}/u);
+  assert.match(upload, /<button[^>]*className=\{styles\.dropMini\}/u);
+  assert.match(upload, /<button[^>]*className=\{`\$\{styles\.thumb\} \$\{styles\.artSlot\}`\}/u);
+  assertIncludesAll(upload, [
+    'aria-label="Choose audio tracks to upload"',
+    "aria-label={`${it.artPreview ? 'Replace' : 'Add'} cover for ${it.title || 'Untitled'}`}",
+  ], 'keyboard-accessible upload controls');
+
+  assert.match(playlistManager, /<button[^>]*className=\{styles\.coverSlot\}/u);
+  assert.match(dashboard, /<button type="button" className=\{styles\.cardGhost\}/u);
+  assert.match(dashboard, /<button[^>]*className=\{styles\.miniPlayerLeft\}/u);
+  assert.match(publicPlaylist, /<button[^>]*className=\{`\$\{styles\.trackRow\}/u);
+  assertIncludesAll(publicPlaylist, [
+    "aria-current={i === cur ? 'true' : undefined}",
+    'aria-label={`Play ${t.title}, track ${i + 1} of ${tracks.length}`}',
+  ], 'keyboard-accessible public playlist tracks');
+});
+
 test('mobile marketing description occupies a separate row from the hero headline', () => {
   const marketing = read('public/marketing.html');
   const responsiveStart = marketing.indexOf('@media (max-width: 900px) {', marketing.indexOf('RESPONSIVE'));

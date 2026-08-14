@@ -377,11 +377,18 @@ export default function PublicPlaylistPage() {
         <div className={styles.trackListInner}>
           <h2 className={styles.trackListHeading}>{tracks.length} {tracks.length === 1 ? 'track' : 'tracks'}</h2>
           {tracks.map((t, i) => (
-            <div key={t.id} className={`${styles.trackRow} ${i === cur ? styles.trackRowActive : ''}`} onClick={() => loadTrack(i)}>
+            <button
+              type="button"
+              key={t.id}
+              className={`${styles.trackRow} ${i === cur ? styles.trackRowActive : ''}`}
+              onClick={() => loadTrack(i)}
+              aria-current={i === cur ? 'true' : undefined}
+              aria-label={`Play ${t.title}, track ${i + 1} of ${tracks.length}`}
+            >
               <span className={styles.trackNum}>{i === cur && isPlaying ? '♪' : i + 1}</span>
               <span className={styles.trackThumb}>{t.image_url ? <img src={t.image_url} alt="" /> : null}</span>
               <span className={styles.trackName}>{t.title}</span>
-            </div>
+            </button>
           ))}
         </div>
       </div>

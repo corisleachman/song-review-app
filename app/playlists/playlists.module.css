@@ -51,8 +51,9 @@
 
 
 .coverRow { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
-.coverSlot { width: 72px; height: 72px; flex-shrink: 0; background: var(--color-surface-2, #261C1C); border: 1px solid var(--color-border-mid, rgba(244,237,228,.18)); display: grid; place-items: center; color: var(--color-dune, #8C7B6B); font-size: 22px; cursor: pointer; overflow: hidden; }
+.coverSlot { width: 72px; height: 72px; flex-shrink: 0; padding: 0; background: var(--color-surface-2, #261C1C); border: 1px solid var(--color-border-mid, rgba(244,237,228,.18)); display: grid; place-items: center; color: var(--color-dune, #8C7B6B); font-family: inherit; font-size: 22px; cursor: pointer; overflow: hidden; }
 .coverSlot:hover { border-color: #F0E48C; }
+.coverSlot:disabled { cursor: wait; opacity: .7; }
 .coverBusy { color: #F0E48C; font-size: 18px; }
 .coverText { min-width: 0; }
 .coverLabel { font-size: 11px; text-transform: uppercase; letter-spacing: .14em; color: var(--color-text-secondary, rgba(244,237,228,.6)); margin-bottom: 4px; }

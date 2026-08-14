@@ -1,6 +1,6 @@
 # Staged Codebase Review Record
 
-Last updated: 13 August 2026
+Last updated: 14 August 2026
 
 This is the working evidence record for the staged review that began on `codex/staged-code-review-fixes`. Findings stay here until they are verified, deferred with a reason, or closed. The main review rollout reached production on 13 August 2026; focused follow-up batches continue from that deployed base.
 
@@ -112,7 +112,7 @@ The API authorization review did not find a route-level cross-workspace bypass. 
 - PRIV-001: Both media buckets remain public by design. Turning off an app share link blocks the app route, but a raw storage URL copied earlier remains reachable. Private media delivery needs a separate migration and rollout.
 - ABUSE-001: Public comment throttling is stored in process memory. It limits a single serverless instance but can be bypassed across instances or cold starts. Database constraints, a honeypot, and length validation still apply.
 - UPLOAD-001: Preview complete. Playlist-cover upload now rejects oversized requests before multipart parsing, rejects empty, over-5 MB, and non-JPEG/PNG/WebP files before buffering, and caps Sharp decoding at 40 megapixels. A normal JPEG persisted after refresh and appeared on the shared preview. The oversized-file rejection initially showed a misleading local thumbnail and discreet generic error; the follow-up now validates before upload, preserves the saved cover, and presents a focus-managed dialog with a specific recovery action. The user confirmed the corrected dialog, unchanged thumbnail, Escape dismissal, and choose-another-image flow. Production rollout remains pending.
-- A11Y-001: Some clickable `div` and `span` controls remain unavailable to keyboard users, including batch-upload add/artwork controls, the dashboard add-song card, and public-playlist track rows. Several dashboard and feedback dialogs also lack the shared focus trap and complete dialog semantics. Small brand-red text measures about 3.62:1 against the darkest background, below the 4.5:1 target for normal text.
+- A11Y-001: Partially implemented in the semantic-controls follow-up. Batch-upload selection and artwork controls, playlist-cover selection, the dashboard add-song card and mini-player identity, and public-playlist track rows now use native buttons with existing visible focus treatment. The public playlist also exposes the current track and descriptive track-position labels. Contract coverage prevents these primary surfaces from returning to pointer-only elements. Several dashboard, feedback, share, action, upload-version, and version-picker dialogs still need the shared focus trap and complete dialog semantics. Some controls remain below the recommended 44-pixel target, and small brand-red text measures about 3.62:1 against the darkest background, below the 4.5:1 target for normal text.
 - CONFIG-001: Baseline response headers cover HSTS, framing, referrers, permissions, and MIME sniffing, but there is no Content Security Policy. Adding one needs a report-only pass first because the app uses inline styles and external media.
 
 #### P3

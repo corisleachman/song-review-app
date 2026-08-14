@@ -4552,3 +4552,37 @@ Recompose the mini-player into a track identity area, a central transport and sc
 - Loop repeats the current song through the native audio loop behaviour.
 - Core playback, ordinary queue progression, Media Session handling, and safe-area measurement remain on their existing paths.
 - All 20 contract tests, TypeScript checking, focused lint, and the placeholder-environment production build passed. Existing repository lint warnings remain unchanged.
+
+---
+
+## 2026-08-14 - Keyboard-accessible primary controls
+
+### What we were trying to achieve
+
+Make important upload, navigation, artwork, and public-playlist actions operable without a mouse or touchscreen.
+
+### Feature / change being made
+
+First focused follow-up for `A11Y-001`, replacing confirmed pointer-only surfaces with native buttons while preserving their existing application handlers.
+
+### Files changed
+
+- `app/upload/page.tsx`
+- `app/upload/upload.module.css`
+- `app/playlists/[id]/page.tsx`
+- `app/playlists/playlists.module.css`
+- `app/dashboard/page.tsx`
+- `app/dashboard/dashboard.module.css`
+- `app/listen/playlist/[id]/page.tsx`
+- `app/listen/playlist/[id]/listen-playlist.module.css`
+- `tests/critical-contracts.test.mjs`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The initial uploader, add-more control, per-song artwork picker, and playlist-cover picker now use native buttons that activate with Enter or Space and retain drag-and-drop where applicable.
+- The dashboard Add song card and mini-player song identity now use native buttons without changing their existing routes.
+- Public-playlist track rows now use native buttons, identify the current track, and announce each track's playlist position.
+- Existing upload, playback, and navigation handlers are unchanged. Browser-default button styling is reset only on the converted controls.
+- Contract coverage guards each converted surface. Modal focus management, compact touch targets, and normal-text contrast remain separate follow-ups.
