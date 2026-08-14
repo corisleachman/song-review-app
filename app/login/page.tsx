@@ -10,8 +10,6 @@ import BetaBanner from '@/components/BetaBanner';
 
 const POST_LOGIN_INVITE_PATH_KEY = 'song_review_post_login_invite_path';
 
-type AuthMode = 'idle' | 'signin' | 'signup' | 'forgot';
-
 function normalizeRedirectTarget(value: string | null) {
   if (!value) return '/dashboard';
   if (!value.startsWith('/') || value.startsWith('//')) return '/dashboard';
@@ -74,19 +72,8 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const [supabase] = useState(() => createClient());
   const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
-  const [mode, setMode] = useState<AuthMode>('idle');
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [emailLoading, setEmailLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
-  const [emailOpen, setEmailOpen] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-
-  // Form fields
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
 
   // BG slideshow
   const [bgIndex, setBgIndex] = useState(0);
@@ -260,48 +247,8 @@ function LoginContent() {
     if (signInError) { setError(signInError.message); setGoogleLoading(false); }
   };
 
-  const handleEmailSignIn = async () => {
-    setError(''); setNotice('');
-    if (!email.trim() || !password) { setError('Please enter your email and password.'); return; }
-    setEmailLoading(true);
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-    if (signInError) { setError(signInError.message); setEmailLoading(false); return; }
-    const redirectTo = searchParams.get('redirectTo') || '/dashboard';
-    const resolved = await resolvePostLoginRedirect(redirectTo);
-    window.location.assign(resolved);
-  };
-
-  const handleEmailSignUp = async () => {
-    setError(''); setNotice('');
-    if (!email.trim() || !password || !displayName.trim()) { setError('Please fill in all fields.'); return; }
-    if (password !== confirmPassword) { setError('Passwords do not match.'); return; }
-    if (password.length < 8) { setError('Password must be at least 8 characters.'); return; }
-    setEmailLoading(true);
-    const { error: signUpError } = await supabase.auth.signUp({
-      email: email.trim(), password,
-      options: { data: { full_name: displayName.trim(), display_name: displayName.trim() } },
-    });
-    if (signUpError) { setError(signUpError.message); setEmailLoading(false); return; }
-    setNotice('Check your email for a confirmation link to activate your account.');
-    setEmailLoading(false); setMode('idle'); setEmail(''); setPassword(''); setConfirmPassword(''); setDisplayName('');
-  };
-
-  const handleForgotPassword = async () => {
-    setError(''); setNotice('');
-    if (!email.trim()) { setError('Please enter your email address.'); return; }
-    setEmailLoading(true);
-    const redirectUrl = new URL('/auth/reset-password', window.location.origin);
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: redirectUrl.toString() });
-    setEmailLoading(false);
-    if (resetError) { setError(resetError.message); return; }
-    setNotice("If that email is registered, you'll receive a reset link shortly.");
-    setMode('idle'); setEmail('');
-  };
-
-  const isSignup = activeTab === 'signup';
-
   return (
-    <div className={`${styles.root} ${(emailOpen || mode === 'forgot') ? styles.rootFormOpen : ''}`}>
+    <div className={styles.root}>
       {/* Background slides */}
       <div className={styles.bg} aria-hidden="true">
         {(previousBgIndex === null || previousBgIndex === bgIndex
@@ -328,28 +275,17 @@ function LoginContent() {
 
         {/* Left - auth */}
         <div className={styles.left}>
-          {/* Tabs */}
-          <div className={styles.tabs} aria-label="Authentication method">
-            <button
-              className={`${styles.tabBtn} ${!isSignup ? styles.tabBtnActive : ''}`}
-              aria-pressed={!isSignup}
-              onClick={() => { setActiveTab('login'); setMode('idle'); setError(''); setNotice(''); setEmailOpen(false); }}
-            >Log in</button>
-            <button
-              className={`${styles.tabBtn} ${isSignup ? styles.tabBtnActive : ''}`}
-              aria-pressed={isSignup}
-              onClick={() => { setActiveTab('signup'); setMode('signup'); setError(''); setNotice(''); setEmailOpen(false); }}
-            >Sign up</button>
-          </div>
-
           {/* Auth panel */}
           <div className={styles.authPanel}>
+            <p className={styles.authIntro}>
+              Use Google to log in or create your Song Room account.
+            </p>
 
             {/* Google */}
             <button
               className={styles.btnGoogle}
               onClick={handleGoogleSignIn}
-              disabled={googleLoading || emailLoading}
+              disabled={googleLoading}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -357,142 +293,18 @@ function LoginContent() {
                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
               </svg>
-              {googleLoading ? 'Connecting...' : isSignup ? 'Sign up with Google' : 'Log in with Google'}
+              {googleLoading ? 'Connecting...' : 'Continue with Google'}
             </button>
 
-            {/* Email toggle */}
-            <button
-              className={styles.btnEmailToggle}
-              onClick={() => setEmailOpen(o => !o)}
-              aria-expanded={emailOpen && mode !== 'forgot'}
-              aria-controls="email-auth-fields"
-            >
-              <span>{isSignup ? 'Sign up with email' : 'Continue with email'}</span>
-              <svg
-                className={`${styles.chevron} ${emailOpen ? styles.chevronOpen : ''}`}
-                width="10" height="6" viewBox="0 0 10 6" fill="none"
-              >
-                <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square"/>
-              </svg>
-            </button>
+            <div className={styles.formFooter}>
+              <span>During beta, Google is the only account option. </span>
+              <a className={styles.formLink} href="/terms">Terms</a>
+              <span className={styles.formSeparator} aria-hidden="true"> · </span>
+              <a className={styles.formLink} href="/privacy">Privacy</a>
+            </div>
 
-            {/* Email fields */}
-            {mode !== 'forgot' && <div
-              id="email-auth-fields"
-              className={`${styles.emailFields} ${emailOpen ? styles.emailFieldsOpen : ''}`}
-            >
-              {isSignup && (
-                <>
-                  <label className={styles.srOnly} htmlFor="auth-display-name">Your name</label>
-                  <input
-                    id="auth-display-name"
-                    className={styles.fieldInput}
-                    type="text"
-                    placeholder="Your name"
-                    value={displayName}
-                    onChange={e => setDisplayName(e.target.value)}
-                    autoComplete="name"
-                    disabled={emailLoading}
-                  />
-                </>
-              )}
-              <label className={styles.srOnly} htmlFor="auth-email">Email address</label>
-              <input
-                id="auth-email"
-                className={styles.fieldInput}
-                type="email"
-                placeholder="Email address"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                autoComplete="email"
-                disabled={emailLoading}
-                onKeyDown={e => { if (e.key === 'Enter' && !isSignup) void handleEmailSignIn(); }}
-              />
-              <label className={styles.srOnly} htmlFor="auth-password">
-                {isSignup ? 'Password, minimum 8 characters' : 'Password'}
-              </label>
-              <input
-                id="auth-password"
-                className={styles.fieldInput}
-                type="password"
-                placeholder={isSignup ? 'Password (min 8 characters)' : 'Password'}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                autoComplete={isSignup ? 'new-password' : 'current-password'}
-                disabled={emailLoading}
-                onKeyDown={e => { if (e.key === 'Enter' && !isSignup) void handleEmailSignIn(); }}
-              />
-              {isSignup && (
-                <>
-                  <label className={styles.srOnly} htmlFor="auth-confirm-password">Confirm password</label>
-                  <input
-                    id="auth-confirm-password"
-                    className={styles.fieldInput}
-                    type="password"
-                    placeholder="Confirm password"
-                    value={confirmPassword}
-                    onChange={e => setConfirmPassword(e.target.value)}
-                    autoComplete="new-password"
-                    disabled={emailLoading}
-                    onKeyDown={e => { if (e.key === 'Enter') void handleEmailSignUp(); }}
-                  />
-                </>
-              )}
-              <button
-                className={styles.btnSubmit}
-                onClick={isSignup ? handleEmailSignUp : handleEmailSignIn}
-                disabled={emailLoading}
-              >
-                {emailLoading ? (isSignup ? 'Creating account...' : 'Signing in...') : (isSignup ? 'Create account' : 'Log in')}
-              </button>
-              {!isSignup && (
-                <div className={styles.formFooter}>
-                  <button
-                    className={styles.formLink}
-                    onClick={() => { setMode('forgot'); setEmailOpen(true); }}
-                  >Forgot password?</button>
-                </div>
-              )}
-              {isSignup && (
-                <div className={styles.formFooter}>
-                  <a className={styles.formLink} href="/terms">Terms</a>
-                  <span className={styles.formSeparator} aria-hidden="true"> · </span>
-                  <a className={styles.formLink} href="/privacy">Privacy</a>
-                </div>
-              )}
-            </div>}
-
-            {/* Forgot password - show when mode is forgot */}
-            {mode === 'forgot' && (
-              <div className={styles.forgotPanel}>
-                <label className={styles.srOnly} htmlFor="forgot-email">Email address</label>
-                <input
-                  id="forgot-email"
-                  className={styles.fieldInput}
-                  type="email"
-                  placeholder="Email address"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  autoComplete="email"
-                  disabled={emailLoading}
-                  onKeyDown={e => { if (e.key === 'Enter') void handleForgotPassword(); }}
-                />
-                <button
-                  className={styles.btnSubmit}
-                  onClick={handleForgotPassword}
-                  disabled={emailLoading}
-                >
-                  {emailLoading ? 'Sending...' : 'Send reset link'}
-                </button>
-                <div className={styles.formFooter}>
-                  <button className={styles.formLink} onClick={() => setMode('idle')}>Back to sign in</button>
-                </div>
-              </div>
-            )}
-
-            {/* Error / notice */}
+            {/* Error */}
             {error && <div className={styles.fieldError} role="alert">{error}</div>}
-            {notice && <div className={styles.fieldNotice} role="status">{notice}</div>}
             {googleStatus === 'error' && !error && (
               <div className={styles.fieldError} role="alert">{googleMessage || 'Sign-in could not be completed. Please try again.'}</div>
             )}

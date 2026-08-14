@@ -4401,3 +4401,36 @@ Keep the dashboard player clear of the persistent 76-pixel desktop navigation ra
 - Mobile and public pages keep the existing floating Cookie settings control. The mobile player remains full-width because the desktop rail is hidden there.
 - Contract coverage checks the desktop player offset, mobile fallback, and shared cookie-settings action.
 - All 18 contract tests, TypeScript checking, and focused lint passed.
+
+---
+
+## 2026-08-14 - Google-only beta authentication
+
+### What we were trying to achieve
+
+Stop first-time workspace invitees from mistaking an existing-account email login form for account creation.
+
+### Feature / change being made
+
+Use Google as the only login and account-creation path during beta.
+
+### Files changed
+
+- `app/invite/[token]/InviteActions.tsx`
+- `app/invite/[token]/page.tsx`
+- `app/login/page.tsx`
+- `app/login/page.module.css`
+- `PRODUCT_BACKLOG.md`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Signed-out invitees now see one Google action and an explanation that Song Room creates a new account automatically when needed.
+- The invite-specific email/password form and its existing-user authentication call were removed.
+- The login page now has one Continue with Google action for both returning and first-time users.
+- Email/password login, email signup, password reset, and their unused interface styles were removed from the beta login page.
+- The invite OAuth callback still returns users to the original invite before acceptance.
+- Email/username accounts and additional providers such as Microsoft are recorded in `PRODUCT_BACKLOG.md` for post-beta evaluation.
+- Contract coverage guards the Google-only invite and login boundary.
+- All 19 contract tests, TypeScript checking, focused lint, and the placeholder-environment production build passed. Existing repository warnings remain unchanged.

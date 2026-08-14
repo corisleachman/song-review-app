@@ -70,6 +70,20 @@ test('workspace invite emails build links from the request origin', () => {
   assert.doesNotMatch(route, /localhost(?::\d+)?/iu);
 });
 
+test('pending workspace invites use Google-only account entry during beta', () => {
+  const actions = read('app/invite/[token]/InviteActions.tsx');
+  const page = read('app/invite/[token]/page.tsx');
+
+  assertIncludesAll(actions, [
+    'supabase.auth.signInWithOAuth({',
+    "provider: 'google'",
+    'Continue with Google',
+    'we&apos;ll create your account automatically',
+  ], 'invite Google account entry');
+  assert.match(page, /Continue with Google using the invited email address/u);
+  assert.doesNotMatch(actions, /signInWithPassword|Sign in with email|invite-password/u);
+});
+
 test('authenticated playlist access stays inside the active workspace', () => {
   const access = read('lib/playlistAccess.ts');
 
@@ -222,16 +236,19 @@ test('visualizer preference is editable, persisted, and respected by the song pl
   ], 'song player visualizer preference');
 });
 
-test('email authentication controls call sign-in, sign-up, and reset handlers', () => {
+test('beta login and signup use a single Google account path', () => {
   const login = read('app/login/page.tsx');
 
   assertIncludesAll(login, [
-    'supabase.auth.signInWithPassword({ email: email.trim(), password })',
-    'supabase.auth.signUp({',
-    'supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: redirectUrl.toString() })',
-    'onClick={isSignup ? handleEmailSignUp : handleEmailSignIn}',
-    "onClick={() => { setMode('forgot'); setEmailOpen(true); }}",
-  ], 'email authentication controls');
+    'Use Google to log in or create your Song Room account.',
+    "provider: 'google'",
+    "googleLoading ? 'Connecting...' : 'Continue with Google'",
+    'During beta, Google is the only account option.',
+  ], 'Google-only authentication controls');
+  assert.doesNotMatch(
+    login,
+    /signInWithPassword|resetPasswordForEmail|\.auth\.signUp|Continue with email|Forgot password|type="password"/u
+  );
 });
 
 test('public song reads expose only public songs with finalized audio', () => {
