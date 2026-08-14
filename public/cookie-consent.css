@@ -1,7 +1,3 @@
-:root {
-  --tsr-cookie-settings-clearance: 56px;
-}
-
 .tsr-cookie-banner {
   position: fixed;
   left: 18px;
@@ -45,8 +41,7 @@
   flex-shrink: 0;
 }
 
-.tsr-cookie-button,
-.tsr-cookie-settings {
+.tsr-cookie-button {
   border: 0;
   cursor: pointer;
   font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -78,40 +73,12 @@
   border-color: #f4ede4;
 }
 
-.tsr-cookie-button:focus-visible,
-.tsr-cookie-settings:focus-visible {
+.tsr-cookie-button:focus-visible {
   outline: 3px solid #f0e48c;
   outline-offset: 3px;
 }
 
-.tsr-cookie-settings {
-  position: fixed;
-  left: 12px;
-  bottom: calc(var(--tsr-player-safe-area, 0px) + 12px);
-  z-index: 9999;
-  padding: 8px 10px;
-  background: #1c1515;
-  color: #d4c4b0;
-  border: 1px solid rgba(244, 237, 228, 0.18);
-  font-size: 11px;
-}
-
-.tsr-cookie-settings:hover {
-  color: #f4ede4;
-  border-color: rgba(244, 237, 228, 0.35);
-}
-
-@media (min-width: 769px) {
-  body:has([data-tsr-app-shell]) .tsr-cookie-settings {
-    display: none;
-  }
-}
-
 @media (max-width: 720px) {
-  :root {
-    --tsr-cookie-settings-clearance: 52px;
-  }
-
   .tsr-cookie-banner {
     left: 10px;
     right: 10px;
@@ -126,10 +93,5 @@
 
   .tsr-cookie-button {
     flex: 1;
-  }
-
-  .tsr-cookie-settings {
-    left: 8px;
-    bottom: calc(var(--tsr-player-safe-area, 0px) + 8px);
   }
 }

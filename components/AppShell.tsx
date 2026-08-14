@@ -18,7 +18,7 @@ interface AppShellProps {
 
 export default function AppShell({ children, label, plan, workspaceName, workspaceImageUrl, membershipRole, avatarUrl, onSignOut }: AppShellProps) {
   return (
-    <div className={styles.shell} data-tsr-app-shell="true">
+    <div className={styles.shell}>
       <AppSidebar
         label={label}
         plan={plan}

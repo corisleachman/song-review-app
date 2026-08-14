@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { usePathname } from 'next/navigation';
 import styles from './BetaFeedback.module.css';
 
 type FeedbackType = 'bug' | 'idea' | 'other';
@@ -9,10 +8,6 @@ type FeedbackType = 'bug' | 'idea' | 'other';
 const OPEN_EVENT = 'song-room:open-feedback';
 
 export default function BetaFeedback() {
-  const pathname = usePathname() ?? '';
-  // Move above Cookie settings on the left so both controls clear the player transport area.
-  const onPlayerRoute = /\/songs\/[^/]+\/versions\/[^/]+/.test(pathname);
-
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<FeedbackType>('bug');
   const [message, setMessage] = useState('');
@@ -97,7 +92,7 @@ export default function BetaFeedback() {
   }, [type, message, email, status, reset]);
 
   return (
-    <div className={`${styles.wrap} ${onPlayerRoute ? styles.left : ''}`}>
+    <div className={styles.wrap}>
       {open && (
         <div className={styles.panel} role="dialog" aria-label="Send feedback">
           <div className={styles.head}>

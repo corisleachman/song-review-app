@@ -4463,3 +4463,38 @@ Give the left-positioned song-page Feedback control a shared Cookie settings cle
 - Other routes keep Feedback in its existing bottom-right position.
 - Contract coverage guards the shared desktop and mobile clearance values.
 - All 19 contract tests, TypeScript checking, focused lint, and the placeholder-environment production build passed. Existing repository warnings remain unchanged.
+
+---
+
+## 2026-08-14 - Cookie preferences moved into Settings
+
+### What we were trying to achieve
+
+Remove the permanent Cookie settings control from the product interface after a visitor has accepted or rejected analytics cookies.
+
+### Feature / change being made
+
+Keep the initial consent banner, move later preference changes into Settings, and return Beta Feedback to the bottom-right position.
+
+### Files changed
+
+- `app/settings/layout.tsx`
+- `app/settings/privacy/page.tsx`
+- `components/AppShell.tsx`
+- `components/AppSidebar.tsx`
+- `components/BetaFeedback.tsx`
+- `components/BetaFeedback.module.css`
+- `public/cookie-consent.js`
+- `public/cookie-consent.css`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- First-time visitors still receive the existing analytics accept-or-reject banner.
+- Accepting or rejecting no longer creates a permanent floating Cookie settings button.
+- The always-visible Cookie settings action was removed from the authenticated app sidebar.
+- Settings now includes a Privacy & cookies page whose Cookie settings button opens the canonical consent panel.
+- Beta Feedback now uses its established bottom-right position on song pages and other routes.
+- No consent storage key, Google Analytics loading behaviour, or saved preference semantics changed.
+- All 19 contract tests, TypeScript checking, focused lint, JavaScript syntax checking, and the placeholder-environment production build passed. Existing repository lint warnings remain unchanged.

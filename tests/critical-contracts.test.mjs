@@ -134,14 +134,17 @@ test('playlist cover uploads validate size and type before buffering or decoding
   ], 'playlist cover error dialog');
 });
 
-test('fixed feedback and cookie controls clear the measured dashboard player', () => {
+test('feedback and initial cookie consent clear the player while preferences live in settings', () => {
   const dashboard = read('app/dashboard/page.tsx');
   const dashboardCss = read('app/dashboard/dashboard.module.css');
   const appShell = read('components/AppShell.tsx');
   const appSidebar = read('components/AppSidebar.tsx');
+  const feedback = read('components/BetaFeedback.tsx');
   const feedbackCss = read('components/BetaFeedback.module.css');
   const cookieController = read('public/cookie-consent.js');
   const cookieCss = read('public/cookie-consent.css');
+  const settingsLayout = read('app/settings/layout.tsx');
+  const privacySettings = read('app/settings/privacy/page.tsx');
 
   assertIncludesAll(dashboard, [
     'const miniPlayerRef = useRef<HTMLDivElement>(null)',
@@ -154,36 +157,33 @@ test('fixed feedback and cookie controls clear the measured dashboard player', (
     feedbackCss,
     /bottom:\s*calc\(var\(--tsr-player-safe-area, 0px\) \+ (?:16|22)px\)/u
   );
-  assert.match(
-    feedbackCss,
-    /\.wrap\.left\s*\{[^}]*var\(--tsr-cookie-settings-clearance, 56px\)/u
-  );
+  assert.match(feedbackCss, /\.wrap\s*\{[^}]*right:\s*22px;/u);
+  assert.doesNotMatch(feedback, /usePathname|onPlayerRoute|styles\.left/u);
+  assert.doesNotMatch(feedbackCss, /\.wrap\.left/u);
   assert.match(
     cookieCss,
     /bottom:\s*calc\(var\(--tsr-player-safe-area, 0px\) \+ (?:8|10|12|18)px\)/u
   );
-  assertIncludesAll(cookieCss, [
-    '--tsr-cookie-settings-clearance: 56px',
-    '--tsr-cookie-settings-clearance: 52px',
-  ], 'cookie settings desktop and mobile clearance');
   assert.match(dashboardCss, /\.miniPlayer\s*\{[^}]*left:\s*76px;/u);
   assert.match(
     dashboardCss,
     /@media \(max-width:\s*768px\)\s*\{\s*\.miniPlayer\s*\{[^}]*left:\s*0;/u
   );
-  assert.match(appShell, /data-tsr-app-shell/u);
-  assert.match(
-    cookieCss,
-    /body:has\(\[data-tsr-app-shell\]\) \.tsr-cookie-settings\s*\{[^}]*display:\s*none;/u
-  );
-  assertIncludesAll(appSidebar, [
-    "window.dispatchEvent(new Event('tsr:open-cookie-settings'))",
-    "label: 'Cookie settings'",
-  ], 'desktop cookie settings navigation action');
+  assert.doesNotMatch(appShell, /data-tsr-app-shell/u);
+  assert.doesNotMatch(appSidebar, /label: 'Cookie settings'|handleCookieSettings/u);
+  assert.doesNotMatch(cookieController, /SETTINGS_ID|showSettingsButton|className = 'tsr-cookie-settings'/u);
+  assert.doesNotMatch(cookieCss, /\.tsr-cookie-settings/u);
   assertIncludesAll(cookieController, [
     "const OPEN_SETTINGS_EVENT = 'tsr:open-cookie-settings'",
     'window.addEventListener(OPEN_SETTINGS_EVENT, showBanner)',
   ], 'cookie settings event controller');
+  assert.match(settingsLayout, /label: 'Privacy & cookies'.*href: '\/settings\/privacy'/u);
+  assertIncludesAll(privacySettings, [
+    "const OPEN_COOKIE_SETTINGS_EVENT = 'tsr:open-cookie-settings'",
+    'window.dispatchEvent(new Event(OPEN_COOKIE_SETTINGS_EVENT))',
+    '<h2>Privacy & cookies</h2>',
+    'Cookie settings',
+  ], 'settings-only cookie preference control');
 });
 
 test('mobile marketing description occupies a separate row from the hero headline', () => {

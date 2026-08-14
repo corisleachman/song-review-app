@@ -8,16 +8,6 @@
   align-items: flex-end;
   gap: 12px;
 }
-.wrap.left {
-  right: auto;
-  left: 22px;
-  bottom: calc(
-    var(--tsr-player-safe-area, 0px) +
-    var(--tsr-cookie-settings-clearance, 56px)
-  );
-  align-items: flex-start;
-}
-
 /* FAB */
 .fab {
   display: inline-flex;
@@ -191,10 +181,6 @@
   .wrap {
     bottom: calc(var(--tsr-player-safe-area, 0px) + 16px);
     right: 16px;
-  }
-  .wrap.left {
-    left: 16px;
-    right: auto;
   }
   .panel {
     width: min(320px, calc(100vw - 32px));

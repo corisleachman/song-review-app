@@ -3,7 +3,6 @@
   const CONSENT_KEY = 'tsr_analytics_consent';
   const MEASUREMENT_ID = 'G-8VW86YBN6C';
   const BANNER_ID = 'tsr-cookie-banner';
-  const SETTINGS_ID = 'tsr-cookie-settings';
   const OPEN_SETTINGS_EVENT = 'tsr:open-cookie-settings';
 
   window.dataLayer = window.dataLayer || [];
@@ -85,7 +84,6 @@
 
   function hideBanner() {
     document.getElementById(BANNER_ID)?.remove();
-    showSettingsButton();
   }
 
   function acceptAnalytics() {
@@ -100,20 +98,8 @@
     hideBanner();
   }
 
-  function showSettingsButton() {
-    if (document.getElementById(SETTINGS_ID)) return;
-    const button = document.createElement('button');
-    button.id = SETTINGS_ID;
-    button.type = 'button';
-    button.className = 'tsr-cookie-settings';
-    button.textContent = 'Cookie settings';
-    button.addEventListener('click', showBanner);
-    document.body.appendChild(button);
-  }
-
   function showBanner() {
     document.getElementById(BANNER_ID)?.remove();
-    document.getElementById(SETTINGS_ID)?.remove();
 
     const banner = document.createElement('section');
     banner.id = BANNER_ID;
@@ -140,12 +126,10 @@
     const choice = getChoice();
     if (choice === 'accepted') {
       loadAnalytics();
-      showSettingsButton();
       return;
     }
     if (choice === 'rejected') {
       denyAnalytics();
-      showSettingsButton();
       return;
     }
     showBanner();

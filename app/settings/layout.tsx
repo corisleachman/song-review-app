@@ -22,6 +22,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Collaborators', href: '/settings/collaborators', ownerOnly: true  },
   { label: 'Referrals',     href: '/settings/referrals',    ownerOnly: false },
   { label: 'Appearance',    href: '/settings/appearance',   ownerOnly: false },
+  { label: 'Privacy & cookies', href: '/settings/privacy',  ownerOnly: false },
 ];
 
 // ── Inner layout (has access to context) ─────────────────────────
