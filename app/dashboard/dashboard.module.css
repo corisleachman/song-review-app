@@ -2115,7 +2115,7 @@
 .miniPlayer {
   position: fixed;
   bottom: 0;
-  left: 0;
+  left: 76px;
   right: 0;
   background: rgba(14,10,10,0.97);
   backdrop-filter: blur(16px);
@@ -2238,6 +2238,12 @@
 /* Push page body up when mini player is visible */
 .pageWithPlayer {
   padding-bottom: 80px;
+}
+
+@media (max-width: 768px) {
+  .miniPlayer {
+    left: 0;
+  }
 }
 
 /* ── Play button icon colour — dark on white button ── */

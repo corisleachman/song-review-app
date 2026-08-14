@@ -122,7 +122,11 @@ test('playlist cover uploads validate size and type before buffering or decoding
 
 test('fixed feedback and cookie controls clear the measured dashboard player', () => {
   const dashboard = read('app/dashboard/page.tsx');
+  const dashboardCss = read('app/dashboard/dashboard.module.css');
+  const appShell = read('components/AppShell.tsx');
+  const appSidebar = read('components/AppSidebar.tsx');
   const feedbackCss = read('components/BetaFeedback.module.css');
+  const cookieController = read('public/cookie-consent.js');
   const cookieCss = read('public/cookie-consent.css');
 
   assertIncludesAll(dashboard, [
@@ -140,6 +144,24 @@ test('fixed feedback and cookie controls clear the measured dashboard player', (
     cookieCss,
     /bottom:\s*calc\(var\(--tsr-player-safe-area, 0px\) \+ (?:8|10|12|18)px\)/u
   );
+  assert.match(dashboardCss, /\.miniPlayer\s*\{[^}]*left:\s*76px;/u);
+  assert.match(
+    dashboardCss,
+    /@media \(max-width:\s*768px\)\s*\{\s*\.miniPlayer\s*\{[^}]*left:\s*0;/u
+  );
+  assert.match(appShell, /data-tsr-app-shell/u);
+  assert.match(
+    cookieCss,
+    /body:has\(\[data-tsr-app-shell\]\) \.tsr-cookie-settings\s*\{[^}]*display:\s*none;/u
+  );
+  assertIncludesAll(appSidebar, [
+    "window.dispatchEvent(new Event('tsr:open-cookie-settings'))",
+    "label: 'Cookie settings'",
+  ], 'desktop cookie settings navigation action');
+  assertIncludesAll(cookieController, [
+    "const OPEN_SETTINGS_EVENT = 'tsr:open-cookie-settings'",
+    'window.addEventListener(OPEN_SETTINGS_EVENT, showBanner)',
+  ], 'cookie settings event controller');
 });
 
 test('mobile marketing description occupies a separate row from the hero headline', () => {

@@ -4370,3 +4370,34 @@ Responsive safe-area coordination for the dashboard mini-player and a mobile-spe
 - Responsive browser checks at 390 by 844 and 1440 by 900 found zero overlap between the description and headline, no error overlay, and no console errors.
 - All 18 contract tests, TypeScript checking, focused lint, and the placeholder-environment production build passed. Existing lint warnings remain unchanged.
 - No database, authentication, billing, storage, dependency, or deployment configuration changed.
+
+---
+
+## 2026-08-14 - Desktop player rail clearance
+
+### What we were trying to achieve
+
+Keep the desktop Settings and Sign out controls accessible when the dashboard mini-player is open.
+
+### Feature / change being made
+
+Keep the dashboard player clear of the persistent 76-pixel desktop navigation rail and move Cookie settings into that rail.
+
+### Files changed
+
+- `components/AppShell.tsx`
+- `components/AppSidebar.tsx`
+- `app/dashboard/dashboard.module.css`
+- `public/cookie-consent.css`
+- `public/cookie-consent.js`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The desktop mini-player now begins at the right edge of the navigation rail instead of covering it.
+- Cookie settings is now a labelled desktop sidebar action, so it no longer covers the sidebar or song-card controls.
+- The consent controller listens for the sidebar action and opens the existing cookie preferences banner without duplicating consent logic.
+- Mobile and public pages keep the existing floating Cookie settings control. The mobile player remains full-width because the desktop rail is hidden there.
+- Contract coverage checks the desktop player offset, mobile fallback, and shared cookie-settings action.
+- All 18 contract tests, TypeScript checking, and focused lint passed.

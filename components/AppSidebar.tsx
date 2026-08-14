@@ -51,7 +51,17 @@ export default function AppSidebar({
     }
   };
 
+  const handleCookieSettings = () => {
+    window.dispatchEvent(new Event('tsr:open-cookie-settings'));
+  };
+
   const bottomItems: NavItem[] = [
+    {
+      label: 'Cookie settings',
+      icon: '◐',
+      kind: 'action',
+      action: handleCookieSettings,
+    },
     {
       href: '/settings',
       label: 'Settings',

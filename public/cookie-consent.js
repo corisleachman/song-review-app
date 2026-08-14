@@ -4,6 +4,7 @@
   const MEASUREMENT_ID = 'G-8VW86YBN6C';
   const BANNER_ID = 'tsr-cookie-banner';
   const SETTINGS_ID = 'tsr-cookie-settings';
+  const OPEN_SETTINGS_EVENT = 'tsr:open-cookie-settings';
 
   window.dataLayer = window.dataLayer || [];
   window.gtag = window.gtag || function gtag() {
@@ -149,6 +150,8 @@
     }
     showBanner();
   }
+
+  window.addEventListener(OPEN_SETTINGS_EVENT, showBanner);
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initialise, { once: true });

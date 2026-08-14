@@ -97,6 +97,12 @@
   border-color: rgba(244, 237, 228, 0.35);
 }
 
+@media (min-width: 769px) {
+  body:has([data-tsr-app-shell]) .tsr-cookie-settings {
+    display: none;
+  }
+}
+
 @media (max-width: 720px) {
   .tsr-cookie-banner {
     left: 10px;
