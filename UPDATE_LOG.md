@@ -4552,3 +4552,39 @@ Recompose the mini-player into a track identity area, a central transport and sc
 - Loop repeats the current song through the native audio loop behaviour.
 - Core playback, ordinary queue progression, Media Session handling, and safe-area measurement remain on their existing paths.
 - All 20 contract tests, TypeScript checking, focused lint, and the placeholder-environment production build passed. Existing repository lint warnings remain unchanged.
+
+---
+
+## 2026-08-16 - Embeddable playlist player (Pro/Studio)
+
+### What we were trying to achieve
+
+Let Pro and Studio workspaces put a public playlist on their own websites, so a shared playlist can live inside a blog post, artist site, or press page rather than only behind a song-room.live link.
+
+### Feature / change being made
+
+New frameable `/embed/playlist/[id]` route rendering a self-contained, branded WaveSurfer player that reflows to its container width. Gated to Pro/Studio server-side; the manager share box now offers the copy-paste iframe snippet (or an upgrade prompt on Free).
+
+### Files changed
+
+- `next.config.js`
+- `middleware.ts`
+- `app/embed/playlist/[id]/page.tsx` (new)
+- `app/embed/playlist/[id]/layout.tsx` (new)
+- `app/embed/playlist/[id]/EmbedPlayer.tsx` (new)
+- `app/embed/playlist/[id]/embed.module.css` (new)
+- `app/api/playlists/[id]/route.ts`
+- `app/playlists/[id]/page.tsx`
+- `app/playlists/playlists.module.css`
+- `UPDATE_LOG.md`
+- `public-mvp-roadmap.md`
+
+### Notes
+
+- Framing: split the security headers so `/embed/*` omits `X-Frame-Options` and sends `Content-Security-Policy: frame-ancestors *`, making it embeddable on any site; every other route keeps `X-Frame-Options: DENY`. Verified in production (embed route 200 + CSP present + no XFO; `/dashboard` still 307 to login with XFO DENY).
+- Middleware: `/embed/` added to the public bypass (mirrors `/listen/`) so third-party frames are not redirected to login.
+- Gating is enforced server-side on the route (public + account plan at least pro), not just hidden in the UI, so the iframe URL cannot be hand-crafted to bypass it. Free/private playlists get a branded locked/unavailable card. Route is `noindex`.
+- Manager: GET now returns the workspace plan; the Public share box shows the iframe copy block directly under the Copy-link row for Pro/Studio, or an "Embedding is a Pro feature" upgrade prompt (to `/settings/plan`) for Free.
+- Default snippet is `width="100%" height="240"`; the player reflows via CSS container queries (drops thumbnails and footer link in narrow sidebars).
+- Engine was ported faithfully from the `/listen` immersive player (destroy+recreate per track, desktop live Web Audio / mobile OfflineAudioContext precompute, Media Session) into a standalone `EmbedPlayer` rather than refactored into a shared hook, to avoid regressing the shipped player. Follow-up: extract a shared `usePlaylistPlayer` hook as the single source of truth.
+- Verification: local `tsc --noEmit` clean, all 20 contract tests pass, focused lint 0 errors (2 pre-existing `<img>` warnings consistent with the listen player). Production build READY; Coris-confirmed the embed works end to end.
