@@ -1,0 +1,206 @@
+/* Embeddable playlist player — compact, fluid-width, reflows to its container
+   (not the viewport) so it works in a full-width slot or a narrow sidebar. */
+
+.embed {
+  container-type: inline-size;
+  min-height: 100vh;
+  background: #0E0A0A;
+  color: #F4EDE4;
+  font-family: 'DM Sans', sans-serif;
+  border: 1px solid rgba(244, 237, 228, 0.14);
+  display: flex;
+  flex-direction: column;
+}
+
+.loading {
+  padding: 40px 16px;
+  text-align: center;
+  color: rgba(244, 237, 228, 0.55);
+  font-size: 14px;
+}
+
+/* ── Gate / unavailable states (also used by the server page) ── */
+.gate {
+  min-height: 100vh;
+  background: #0E0A0A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  font-family: 'DM Sans', sans-serif;
+}
+.gateInner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  max-width: 320px;
+}
+.gateWordmark {
+  font-family: 'ThunderLC', 'DM Sans', sans-serif;
+  font-weight: 900;
+  font-size: 16px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #F0E48C;
+}
+.gateMsg { font-size: 0.92rem; color: rgba(244, 237, 228, 0.6); line-height: 1.5; }
+.gateCta { color: #F0E48C; font-size: 0.82rem; font-weight: 600; text-decoration: none; letter-spacing: 0.04em; }
+.gateCta:hover { opacity: 0.75; }
+
+/* ── Main row: artwork + meta + controls ── */
+.main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px 12px;
+}
+.art {
+  position: relative;
+  width: 74px;
+  height: 74px;
+  flex-shrink: 0;
+  background: #2E2222;
+  border: 1px solid rgba(244, 237, 228, 0.14);
+  overflow: hidden;
+}
+.artImg { width: 100%; height: 100%; object-fit: cover; display: block; }
+.artPlaceholder { width: 100%; height: 100%; display: grid; place-items: center; }
+.np {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  width: 16px;
+  height: 16px;
+  background: #C0392B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: #fff;
+}
+
+.mid { flex: 1; min-width: 0; }
+.wtag { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: #D4C4B0; margin-bottom: 4px; }
+.wdot { width: 7px; height: 7px; background: #C0392B; flex-shrink: 0; }
+.title {
+  font-family: 'ThunderLC', 'DM Sans', sans-serif;
+  font-weight: 900;
+  font-size: 26px;
+  line-height: 0.98;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sub {
+  font-size: 12px;
+  color: rgba(244, 237, 228, 0.4);
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pill { color: #D4C4B0; }
+
+.controls { display: flex; align-items: center; gap: 8px; margin-top: 9px; }
+.navBtn, .playBtn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 1px solid rgba(244, 237, 228, 0.14);
+  background: transparent;
+  color: #F4EDE4;
+  transition: background 0.15s;
+}
+.navBtn { width: 30px; height: 30px; }
+.navBtn:hover:not(:disabled) { background: #261C1C; }
+.navBtn:disabled { opacity: 0.35; cursor: default; }
+.playBtn { width: 38px; height: 38px; background: #C0392B; border-color: #C0392B; color: #fff; }
+.playBtn:hover { background: #E8402E; }
+.time { font-size: 12px; color: rgba(244, 237, 228, 0.4); margin-left: 6px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.time b { color: #D4C4B0; font-weight: 600; }
+
+/* ── Reactive EQ ── */
+.eq {
+  display: block;
+  width: 100%;
+  height: 66px;
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.35));
+}
+
+/* ── Tracklist ── */
+.tracklist {
+  border-top: 1px solid rgba(244, 237, 228, 0.08);
+  max-height: 168px;
+  overflow-y: auto;
+  flex: 1;
+}
+.trackRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(244, 237, 228, 0.08);
+}
+.trackRow:last-child { border-bottom: none; }
+.trackRow:hover { background: #1C1515; }
+.trackRowActive { background: #261C1C; }
+.trackNum { width: 16px; flex-shrink: 0; text-align: center; font-size: 12px; color: rgba(244, 237, 228, 0.4); font-variant-numeric: tabular-nums; }
+.trackRowActive .trackNum { color: #C0392B; }
+.trackThumb { width: 30px; height: 30px; flex-shrink: 0; background: #2E2222; border: 1px solid rgba(244, 237, 228, 0.08); overflow: hidden; }
+.trackThumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.trackName { flex: 1; min-width: 0; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── Footer branding ── */
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 16px;
+  border-top: 1px solid rgba(244, 237, 228, 0.08);
+  background: #1C1515;
+}
+.footWordmark {
+  font-family: 'ThunderLC', 'DM Sans', sans-serif;
+  font-weight: 900;
+  font-size: 16px;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: #F4EDE4;
+}
+.footLink {
+  font-size: 11.5px;
+  color: #D4C4B0;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(244, 237, 228, 0.28);
+  padding-bottom: 1px;
+}
+.footLink:hover { color: #F0E48C; border-color: #F0E48C; }
+
+/* Hidden WaveSurfer host — audio engine + decoded data only; visible bars are
+   drawn on the EQ canvas above. */
+.wsHost { position: absolute; width: 0; height: 0; overflow: hidden; opacity: 0; pointer-events: none; }
+
+/* ── Narrow (sidebar) reflow — driven by container width, not viewport ── */
+@container (max-width: 430px) {
+  .main { align-items: flex-start; padding: 13px 13px 10px; gap: 11px; }
+  .art { width: 56px; height: 56px; }
+  .title { font-size: 20px; white-space: normal; }
+  .eq { height: 52px; }
+  .tracklist { max-height: 132px; }
+  .trackRow { padding: 8px 13px; gap: 10px; }
+  .trackThumb { display: none; }
+  .foot { padding: 9px 13px; }
+  .timeSep, .time { display: none; }
+}
+@container (max-width: 340px) {
+  .sub { white-space: normal; }
+  .footLink { display: none; }
+}

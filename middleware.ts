@@ -21,10 +21,11 @@ export async function middleware(request: NextRequest) {
   const isInviteRoute = pathname.startsWith('/invite/');
   const isReferralRoute = pathname.startsWith('/r/');
   const isListenRoute = pathname.startsWith('/listen/');
+  const isEmbedRoute = pathname.startsWith('/embed/');
   const isBlogRoute = pathname.startsWith('/blog');
   
   // Check if path is public
-  if (publicRoutes.includes(pathname) || isInviteRoute || isReferralRoute || isListenRoute || isBlogRoute) {
+  if (publicRoutes.includes(pathname) || isInviteRoute || isReferralRoute || isListenRoute || isEmbedRoute || isBlogRoute) {
     return NextResponse.next();
   }
   
