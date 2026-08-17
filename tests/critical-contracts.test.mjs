@@ -280,14 +280,26 @@ test('mobile marketing description occupies a separate row from the hero headlin
 });
 
 test('public playlist playback advances through its ordered tracks', () => {
-  const player = read('app/listen/playlist/[id]/page.tsx');
+  // The audio engine (auto-advance, media-session next, queue progression) lives
+  // in the shared hook consumed by both public players.
+  const engine = read('lib/usePlaylistPlayer.ts');
 
-  assertIncludesAll(player, [
+  assertIncludesAll(engine, [
     "ws.on('finish', () => { goNextRef.current(); })",
     "navigator.mediaSession.setActionHandler('nexttrack', () => goNextRef.current())",
     'const i = curRef.current + 1',
     'if (i < tracksRef.current.length) loadTrack(i)',
   ], 'public playlist sequence');
+
+  // Both public surfaces must drive that shared engine rather than forking it.
+  assert.ok(
+    read('app/listen/playlist/[id]/page.tsx').includes('usePlaylistPlayer(id)'),
+    'immersive listen player must use the shared usePlaylistPlayer engine',
+  );
+  assert.ok(
+    read('app/embed/playlist/[id]/EmbedPlayer.tsx').includes('usePlaylistPlayer(id)'),
+    'embed player must use the shared usePlaylistPlayer engine',
+  );
 });
 
 test('desktop card view exposes the same song-stage update path', () => {

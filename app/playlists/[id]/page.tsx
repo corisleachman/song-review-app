@@ -4,10 +4,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useDialogFocus } from '@/lib/useDialogFocus';
+import { type AccountPlan, isPlanAtLeast } from '@/lib/plans';
 import styles from '../playlists.module.css';
 
 type Song = { id: string; title: string; status: string | null; position?: number };
-type Detail = { playlist: { id: string; title: string; is_public: boolean; image_url: string | null }; songs: Song[]; available: Song[] };
+type Detail = { playlist: { id: string; title: string; is_public: boolean; image_url: string | null }; songs: Song[]; available: Song[]; plan?: AccountPlan };
 
 const PLAYLIST_COVER_MAX_BYTES = 5 * 1024 * 1024;
 const PLAYLIST_COVER_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -33,6 +34,7 @@ export default function ManagePlaylistPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [embedCopied, setEmbedCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [coverUploading, setCoverUploading] = useState(false);
   const [coverError, setCoverError] = useState<string | null>(null);
@@ -116,13 +118,22 @@ export default function ManagePlaylistPage() {
     } catch { /* ignore */ }
   };
 
+  const copyEmbed = async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setEmbedCopied(true);
+      setTimeout(() => setEmbedCopied(false), 1400);
+    } catch { /* ignore */ }
+  };
+
   if (loading) return <div className={styles.wrap}><div className={styles.empty}>Loading…</div></div>;
   if (!detail) return <div className={styles.wrap}><div className={styles.empty}>{error ?? 'Not found.'}</div></div>;
 
   const isPublic = detail.playlist.is_public;
-  const shareUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/listen/playlist/${id}`
-    : `/listen/playlist/${id}`;
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://song-room.live';
+  const shareUrl = `${origin}/listen/playlist/${id}`;
+  const canEmbed = isPlanAtLeast(detail.plan ?? 'free', 'pro');
+  const embedCode = `<iframe src="${origin}/embed/playlist/${id}" width="100%" height="240" style="border:0" loading="lazy" allow="autoplay; encrypted-media"></iframe>`;
 
   const uploadCover = async (file: File) => {
     const validationError = getPlaylistCoverValidationError(file);
@@ -254,10 +265,37 @@ export default function ManagePlaylistPage() {
           </span>
         </div>
         {isPublic && (
-          <div className={styles.shareBox}>
-            <code className={styles.shareUrl}>{shareUrl}</code>
-            <button className={styles.copy} onClick={() => void copyLink()}>{copied ? 'Copied ✓' : 'Copy link'}</button>
-          </div>
+          <>
+            <div className={styles.shareBox}>
+              <code className={styles.shareUrl}>{shareUrl}</code>
+              <button className={styles.copy} onClick={() => void copyLink()}>{copied ? 'Copied ✓' : 'Copy link'}</button>
+            </div>
+
+            <div className={styles.embedBlock}>
+              <div className={styles.embedLabel}>
+                Embed
+                {!canEmbed && <span className={styles.embedBadge}>Pro</span>}
+              </div>
+              {canEmbed ? (
+                <>
+                  <code className={styles.embedCode}>{embedCode}</code>
+                  <button className={styles.embedCopy} onClick={() => void copyEmbed(embedCode)}>
+                    {embedCopied ? 'Copied ✓' : 'Copy embed code'}
+                  </button>
+                  <p className={styles.embedHint}>
+                    Paste into any website. The player fills its container width — a full column or a narrow sidebar.
+                  </p>
+                </>
+              ) : (
+                <div className={styles.embedLocked}>
+                  <p className={styles.embedLockedMsg}>
+                    Put this playlist on your own site with a branded player. Available on Pro and Studio.
+                  </p>
+                  <Link href="/settings/plan" className={styles.embedUpgrade}>Upgrade to Pro</Link>
+                </div>
+              )}
+            </div>
+          </>
         )}
       </div>
 

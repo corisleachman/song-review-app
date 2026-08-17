@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { resolvePlaylistAccess } from '@/lib/playlistAccess';
+import { normalizeAccountPlan } from '@/lib/plans';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,9 +44,18 @@ export async function GET(_req: NextRequest, props: { params: Promise<{ id: stri
       .filter((s) => !inIds.has(s.id))
       .map((s) => ({ id: s.id, title: s.title ?? 'Untitled', status: s.status ?? null }));
 
+    // Workspace plan gates the embed feature (Pro/Studio). Default to 'free' on any
+    // read error so a transient failure never silently unlocks a gated feature.
+    const { data: account } = await supabaseServer
+      .from('accounts')
+      .select('plan')
+      .eq('id', access.accountId)
+      .maybeSingle();
+    const plan = normalizeAccountPlan(account?.plan);
+
     return NextResponse.json({
       playlist: { id: access.playlist.id, title: access.playlist.title, is_public: access.playlist.is_public, image_url: access.playlist.image_url },
-      songs, available,
+      songs, available, plan,
     });
   } catch (err) {
     console.error('[playlists/:id] get error:', err);

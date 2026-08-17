@@ -2608,3 +2608,22 @@ Pricing was restructured on the marketing site (`tsr-marketing-v19.html`) to dif
   - Site social preview image for `song-room.live` shares (served from the app domain via middleware `publicRoutes`)
   - Em dashes replaced with regular dashes across marketing + login (one decorative pricing bullet preserved)
 - Files: `app/listen/playlist/[id]/**`, `app/api/playlists/[id]/image`, `app/playlists/[id]/**`, `public/marketing.html`, `middleware.ts`, `app/layout.tsx`, `public/song-room-preview.jpg`
+
+
+## 2026-08-16 — Embeddable playlist player (Pro/Studio)
+
+- Slice / change name: Embeddable playlist player + first per-feature plan gating
+- Status: DONE — Coris-confirmed (embed works end to end in production).
+- Exact files changed or audited:
+  - `next.config.js`, `middleware.ts`
+  - `app/embed/playlist/[id]/` — new (page gate, layout noindex, `EmbedPlayer` client, `embed.module.css`)
+  - `app/api/playlists/[id]/route.ts`
+  - `app/playlists/[id]/page.tsx` / `playlists.module.css`
+- Outcome:
+  - public `/embed/playlist/[id]` renders a self-contained, branded WaveSurfer player that reflows to its container width, embeddable on any site via `frame-ancestors *` (all other routes keep `X-Frame-Options: DENY`)
+  - gated to Pro/Studio server-side (public + account plan at least pro); Free/private get a locked/unavailable card; route is `noindex`
+  - manager Public share box surfaces the copy-paste iframe under the Copy-link row for Pro/Studio, or an upgrade prompt (to `/settings/plan`) for Free
+- Relationship to Phase 10 (Plan Gating): this ships the first real per-feature plan enforcement (embedding = Pro/Studio) ahead of the broader Phase 10 work. It does NOT complete Phase 10, which still needs full tier enforcement + Stripe before all the marketing-advertised gates are live.
+- Next follow-up:
+  - extract a shared `usePlaylistPlayer` hook so the immersive `/listen` player and the embed player share one audio engine
+  - optional: taller (420px) height preset in the share box; a per-plan embed allowlist instead of `frame-ancestors *` if ever needed
