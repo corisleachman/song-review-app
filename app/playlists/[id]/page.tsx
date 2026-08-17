@@ -189,14 +189,17 @@ export default function ManagePlaylistPage() {
       </div>
 
       <div className={styles.coverRow}>
-        <div
+        <button
+          type="button"
           className={styles.coverSlot}
           onClick={() => coverInputRef.current?.click()}
           style={coverUrl ? { backgroundImage: `url(${coverUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
-          title="Playlist cover"
+          title={coverUrl ? 'Replace playlist cover' : 'Add playlist cover'}
+          aria-label={coverUrl ? 'Replace playlist cover' : 'Add playlist cover'}
+          disabled={coverUploading}
         >
           {coverUploading ? <span className={styles.coverBusy}>…</span> : !coverUrl ? '＋' : null}
-        </div>
+        </button>
         <div className={styles.coverText}>
           <div className={styles.coverLabel}>Playlist cover</div>
           <div className={styles.coverHint}>

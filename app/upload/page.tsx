@@ -221,16 +221,18 @@ export default function UploadPage() {
           {notice && <div className={styles.notice}>{notice}</div>}
 
           {!anyItems && (
-            <div
+            <button
+              type="button"
               className={`${styles.drop} ${dragging ? styles.dropActive : ''}`}
               onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
               onDragLeave={() => setDragging(false)}
               onDrop={onDrop}
               onClick={() => inputRef.current?.click()}
+              aria-label="Choose audio tracks to upload"
             >
-              <div className={styles.dropBig}>Drop your tracks here</div>
-              <div className={styles.dropSmall}>WAV, MP3, AIFF, M4A · or click to browse</div>
-            </div>
+              <span className={styles.dropBig}>Drop your tracks here</span>
+              <span className={styles.dropSmall}>WAV, MP3, AIFF, M4A · or click to browse</span>
+            </button>
           )}
 
           {anyItems && (
@@ -255,7 +257,7 @@ export default function UploadPage() {
                   </div>
                 ))}
               </div>
-              <div className={styles.dropMini} onClick={() => inputRef.current?.click()} onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>＋ Add more tracks</div>
+              <button type="button" className={styles.dropMini} onClick={() => inputRef.current?.click()} onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>＋ Add more tracks</button>
             </>
           )}
         </>
@@ -268,9 +270,17 @@ export default function UploadPage() {
           <div className={styles.list}>
             {items.map((it) => (
               <div key={it.id} className={styles.row}>
-                <span className={`${styles.thumb} ${styles.artSlot}`} onClick={() => pickArt(it)} title="Add cover" style={it.artPreview ? { backgroundImage: `url(${it.artPreview})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}>
+                <button
+                  type="button"
+                  className={`${styles.thumb} ${styles.artSlot}`}
+                  onClick={() => pickArt(it)}
+                  title={it.artPreview ? 'Replace cover' : 'Add cover'}
+                  aria-label={`${it.artPreview ? 'Replace' : 'Add'} cover for ${it.title || 'Untitled'}`}
+                  disabled={it.artUploading}
+                  style={it.artPreview ? { backgroundImage: `url(${it.artPreview})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+                >
                   {!it.artPreview && '＋'}
-                </span>
+                </button>
                 <div className={styles.rowMain}>
                   <div className={styles.artTitle}>{it.title || 'Untitled'}</div>
                   <div className={styles.meta}>
