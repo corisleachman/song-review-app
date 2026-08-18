@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useState, Suspense } from 'react';
+import { useCallback, useEffect, useRef, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { ActionStatus, getActionStatusLabel, getNextActionStatus, isOpenAction } from '@/lib/actionWorkflow';
 import { type AwaitingResponseState, getAwaitingResponseLabel, type SongActivityItem } from '@/lib/collaborationSignals';
 import { type AccountPlan, type PlanLimitType, isPlanAtLeast, getPlanDisplayName } from '@/lib/plans';
 import { SongStatus, SONG_STATUS_VALUES, getSongStatusLabel } from '@/lib/songWorkflow';
 import { getIdentity, clearAuth, clearIdentity } from '@/lib/auth';
+import { useDialogFocus } from '@/lib/useDialogFocus';
 import { createClient } from '@/lib/supabase';
 import AppShell from '@/components/AppShell';
 import UpgradeModal from '@/components/UpgradeModal';
@@ -256,6 +257,10 @@ function DashboardContent() {
   const [deletingSongId, setDeletingSongId] = useState<string | null>(null);
   const [fadingSongIds, setFadingSongIds] = useState<string[]>([]);
   const [upgradeModalType, setUpgradeModalType] = useState<PlanLimitType | null>(null);
+  const newSongDialogRef = useRef<HTMLDivElement>(null);
+  const deleteSongDialogRef = useRef<HTMLDivElement>(null);
+  const inviteAcceptedDialogRef = useRef<HTMLDivElement>(null);
+  const songSheetDialogRef = useRef<HTMLDivElement>(null);
 
   // Cover art uploads
   const coverInputRef = useRef<HTMLInputElement>(null);
@@ -306,6 +311,22 @@ function DashboardContent() {
   const [billingError, setBillingError] = useState<string | null>(null);
   const [showUpgradeSuccessModal, setShowUpgradeSuccessModal] = useState(false);
   const [acceptedInviteWorkspaceName, setAcceptedInviteWorkspaceName] = useState<string | null>(null);
+
+  const closeNewSongDialog = useCallback(() => setShowNewModal(false), []);
+  const closeDeleteSongDialog = useCallback(() => {
+    if (deletingSongId !== deletingId) setDeletingId(null);
+  }, [deletingId, deletingSongId]);
+  const closeInviteAcceptedDialog = useCallback(() => setAcceptedInviteWorkspaceName(null), []);
+  const closeSongSheetDialog = useCallback(() => setSheetSongId(null), []);
+
+  useDialogFocus(showNewModal, closeNewSongDialog, newSongDialogRef);
+  useDialogFocus(Boolean(deletingId), closeDeleteSongDialog, deleteSongDialogRef);
+  useDialogFocus(
+    Boolean(acceptedInviteWorkspaceName),
+    closeInviteAcceptedDialog,
+    inviteAcceptedDialogRef
+  );
+  useDialogFocus(Boolean(sheetSongId), closeSongSheetDialog, songSheetDialogRef);
 
   const handleSignOut = async () => {
     try {
@@ -2120,21 +2141,28 @@ function DashboardContent() {
       {/* New song modal */}
       {showNewModal && (
         <div className={styles.modalOverlay} onClick={e => { if (e.target === e.currentTarget) setShowNewModal(false); }}>
-          <div className={styles.modal}>
-            <div className={styles.modalTitle}>New song</div>
+          <div
+            ref={newSongDialogRef}
+            className={styles.modal}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="dashboard-new-song-title"
+            tabIndex={-1}
+          >
+            <h2 id="dashboard-new-song-title" className={styles.modalTitle}>New song</h2>
             <input
               className={styles.modalInput}
               placeholder="Song title"
+              aria-label="Song title"
               value={newTitle}
               onChange={e => setNewTitle(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') createSong(); if (e.key === 'Escape') setShowNewModal(false); }}
-              autoFocus
             />
             <div className={styles.modalActions}>
-              <button className={styles.modalCancel} onClick={() => { setShowNewModal(false); setNewTitle(''); }}>
+              <button type="button" className={styles.modalCancel} onClick={() => { setShowNewModal(false); setNewTitle(''); }}>
                 Cancel
               </button>
-              <button className={styles.modalConfirm} onClick={createSong} disabled={creating || !newTitle.trim()}>
+              <button type="button" className={styles.modalConfirm} onClick={createSong} disabled={creating || !newTitle.trim()}>
                 {creating ? 'Creating…' : 'Create'}
               </button>
             </div>
@@ -2145,16 +2173,25 @@ function DashboardContent() {
       {/* Delete confirm modal */}
       {deletingId && (
         <div className={styles.modalOverlay} onClick={e => { if (e.target === e.currentTarget && deletingSongId !== deletingId) setDeletingId(null); }}>
-          <div className={styles.modal}>
-            <div className={styles.modalTitle}>Delete song?</div>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 20 }}>
+          <div
+            ref={deleteSongDialogRef}
+            className={styles.modal}
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="dashboard-delete-song-title"
+            aria-describedby="dashboard-delete-song-description"
+            tabIndex={-1}
+          >
+            <h2 id="dashboard-delete-song-title" className={styles.modalTitle}>Delete song?</h2>
+            <p id="dashboard-delete-song-description" style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 20 }}>
               This will permanently delete the song, all versions, comments, and actions. This cannot be undone.
             </p>
             <div className={styles.modalActions}>
-              <button className={styles.modalCancel} onClick={() => setDeletingId(null)} disabled={deletingSongId === deletingId}>
+              <button type="button" className={styles.modalCancel} onClick={() => setDeletingId(null)} disabled={deletingSongId === deletingId}>
                 Cancel
               </button>
               <button
+                type="button"
                 className={styles.modalConfirm}
                 style={{ background: '#e53e3e' }}
                 onClick={() => deleteSong(deletingId)}
@@ -2169,13 +2206,21 @@ function DashboardContent() {
 
       {acceptedInviteWorkspaceName && (
         <div className={styles.modalOverlay} onClick={e => { if (e.target === e.currentTarget) setAcceptedInviteWorkspaceName(null); }}>
-          <div className={styles.modal}>
-            <div className={styles.modalTitle}>You joined {acceptedInviteWorkspaceName}</div>
-            <p className={styles.modalCopy}>
+          <div
+            ref={inviteAcceptedDialogRef}
+            className={styles.modal}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="dashboard-invite-accepted-title"
+            aria-describedby="dashboard-invite-accepted-description"
+            tabIndex={-1}
+          >
+            <h2 id="dashboard-invite-accepted-title" className={styles.modalTitle}>You joined {acceptedInviteWorkspaceName}</h2>
+            <p id="dashboard-invite-accepted-description" className={styles.modalCopy}>
               Congratulations, you are now part of {acceptedInviteWorkspaceName}. You can collaborate with the rest of your band in this workspace.
             </p>
             <div className={styles.modalActions}>
-              <button className={styles.modalConfirm} onClick={() => setAcceptedInviteWorkspaceName(null)}>
+              <button type="button" className={styles.modalConfirm} onClick={() => setAcceptedInviteWorkspaceName(null)}>
                 OK
               </button>
             </div>
@@ -2203,15 +2248,20 @@ function DashboardContent() {
           if (event.target === event.currentTarget) setSheetSongId(null);
         }}
       >
-        <div className={`${styles.bottomSheet} ${playingId ? styles.bottomSheetWithPlayer : ''}`}>
+        <div
+          ref={songSheetDialogRef}
+          className={`${styles.bottomSheet} ${playingId ? styles.bottomSheetWithPlayer : ''}`}
+          role={sheetSongId ? 'dialog' : undefined}
+          aria-modal={sheetSongId ? 'true' : undefined}
+          aria-labelledby={sheetSongId ? 'dashboard-song-sheet-title' : undefined}
+          tabIndex={sheetSongId ? -1 : undefined}
+        >
           {sheetSong && (
             <>
               {/* Artwork — tap anywhere to close, or use the ✕ button */}
               <div
                 className={styles.bsArtBlock}
                 onClick={() => setSheetSongId(null)}
-                role="button"
-                aria-label="Close song info"
               >
                 {sheetSong.image_url && (
                   <img
@@ -2233,7 +2283,7 @@ function DashboardContent() {
               {/* Title strip */}
               <div className={styles.bsHeader}>
                 <div>
-                  <p className={styles.bsSongTitle}>{sheetSong.title}</p>
+                  <p id="dashboard-song-sheet-title" className={styles.bsSongTitle}>{sheetSong.title}</p>
                   <p className={styles.bsSub}>
                     {getSongStatusLabel(sheetSong.status)}
                     {sheetSong.latestVersionNumber ? ` · v${sheetSong.latestVersionNumber}` : ''}

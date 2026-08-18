@@ -267,6 +267,50 @@ test('primary upload, navigation, and playlist controls use native buttons', () 
   ], 'keyboard-accessible public playlist tracks');
 });
 
+test('active dialogs share focus trapping, Escape dismissal, and labelled semantics', () => {
+  const focusHelper = read('lib/useDialogFocus.ts');
+  const dashboard = read('app/dashboard/page.tsx');
+  const feedback = read('components/BetaFeedback.tsx');
+  const versionPage = read('app/songs/[id]/versions/[versionId]/page.tsx');
+
+  assertIncludesAll(focusHelper, [
+    'const previouslyFocused = document.activeElement instanceof HTMLElement',
+    "if (event.key === 'Escape')",
+    "if (event.key !== 'Tab') return",
+    "document.addEventListener('keydown', handleKeyDown)",
+    'previouslyFocused?.focus()',
+  ], 'shared dialog focus lifecycle');
+
+  assertIncludesAll(dashboard, [
+    'useDialogFocus(showNewModal, closeNewSongDialog, newSongDialogRef)',
+    'useDialogFocus(Boolean(deletingId), closeDeleteSongDialog, deleteSongDialogRef)',
+    'Boolean(acceptedInviteWorkspaceName)',
+    'useDialogFocus(Boolean(sheetSongId), closeSongSheetDialog, songSheetDialogRef)',
+    'aria-labelledby="dashboard-new-song-title"',
+    'role="alertdialog"',
+    'aria-labelledby="dashboard-invite-accepted-title"',
+    "role={sheetSongId ? 'dialog' : undefined}",
+  ], 'dashboard dialogs');
+
+  assertIncludesAll(feedback, [
+    'useDialogFocus(open, closeFeedback, panelRef)',
+    'aria-modal="true"',
+    'aria-labelledby="beta-feedback-title"',
+    'aria-describedby="beta-feedback-description"',
+  ], 'feedback dialog');
+
+  assertIncludesAll(versionPage, [
+    'useDialogFocus(showShareModal, closeShareDialog, shareDialogRef)',
+    'Boolean(actionModalCommentId || editingActionId)',
+    'useDialogFocus(showUploadVersionModal, closeUploadVersionDialog, uploadVersionDialogRef)',
+    'useDialogFocus(showVersionModal, closeVersionPickerDialog, versionPickerDialogRef)',
+    'aria-labelledby="share-song-dialog-title"',
+    'aria-labelledby="song-action-dialog-title"',
+    'aria-labelledby="upload-version-dialog-title"',
+    'aria-labelledby="version-picker-dialog-title"',
+  ], 'song-version dialogs');
+});
+
 test('mobile marketing description occupies a separate row from the hero headline', () => {
   const marketing = read('public/marketing.html');
   const responsiveStart = marketing.indexOf('@media (max-width: 900px) {', marketing.indexOf('RESPONSIVE'));
