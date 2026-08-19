@@ -18,6 +18,7 @@
   /* TSR v3 Colour Tokens */
   --color-primary:        #C0392B;   /* deep red — brand accent, CTAs */
   --color-primary-bright: #E8402E;   /* brighter red for hover */
+  --color-primary-readable: #ED4D3B; /* red text/icons - 4.5:1 on the highest dark surface */
   --color-secondary:      #D4C4B0;   /* sand — secondary text, icons */
   --color-accent:         #C0392B;   /* same as primary (no separate accent) */
 

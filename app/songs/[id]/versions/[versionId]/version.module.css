@@ -131,7 +131,7 @@
 .heroBadge {
   background: rgba(192,57,43,0.18);
   border: 1px solid rgba(192,57,43,0.35);
-  color: #C0392B;
+  color: var(--color-primary-readable, #ED4D3B);
   font-size: 0.72rem;
   font-weight: 600;
   padding: 3px 10px;
@@ -152,7 +152,7 @@
 .heroBadgeInput {
   background: rgba(192,57,43,0.15);
   border: 1px solid #C0392B;
-  color: #C0392B;
+  color: var(--color-primary-readable, #ED4D3B);
   font-size: 0.72rem;
   font-weight: 600;
   padding: 3px 10px;
@@ -365,11 +365,11 @@
 
 .loadingWave {
   font-size: 0.78rem;
-  color: #C0392B;
+  color: var(--color-primary-readable, #ED4D3B);
   animation: pulseWave 1.2s ease-in-out infinite;
 }
 @keyframes pulseWave { 0%,100%{opacity:1} 50%{opacity:0.35} }
-.waveErrMsg { font-size: 0.78rem; color: #C0392B; }
+.waveErrMsg { font-size: 0.78rem; color: var(--color-primary-readable, #ED4D3B); }
 .waveStatus {
   display: inline-flex;
   align-items: center;
@@ -379,7 +379,7 @@
 .waveRetryBtn {
   background: transparent;
   border: 1px solid rgba(192,57,43,0.4);
-  color: #C0392B;
+  color: var(--color-primary-readable, #ED4D3B);
   border-radius: 0;
   padding: 4px 10px;
   font-size: 0.72rem;
@@ -434,7 +434,7 @@
 }
 .inlineFormTime {
   font-size: 0.78rem;
-  color: #C0392B;
+  color: var(--color-primary-readable, #ED4D3B);
   font-weight: 600;
 }
 .inlineTextarea {
@@ -510,7 +510,7 @@
 .uploadBtn {
   background: transparent;
   border: 1px solid #C0392B;
-  color: #C0392B;
+  color: var(--color-primary-readable, #ED4D3B);
   padding: 6px 14px;
   border-radius: 0;
   cursor: pointer;
@@ -707,7 +707,7 @@
   color: #F4EDE4;
   text-decoration-color: rgba(192,57,43,0.52);
 }
-.actionTimestamp { color: #C0392B; }
+.actionTimestamp { color: var(--color-primary-readable, #ED4D3B); }
 .actionControls {
   display: flex;
   align-items: center;
@@ -914,7 +914,7 @@
 .markActionBtn {
   background: rgba(192,57,43,0.15);
   border: 1px solid rgba(192,57,43,0.4);
-  color: #C0392B;
+  color: var(--color-primary-readable, #ED4D3B);
   border-radius: 0;
   padding: 4px 12px;
   font-size: 0.75rem;
@@ -1156,7 +1156,7 @@
 }
 .errorMsg {
   font-size: 0.8rem;
-  color: #C0392B;
+  color: var(--color-primary-readable, #ED4D3B);
 }
 
 /* ── Song Admin panel (right) ───────────────────────────────── */
@@ -1184,7 +1184,7 @@
 }
 .adminCount {
   background: rgba(192,57,43,0.15);
-  color: #C0392B;
+  color: var(--color-primary-readable, #ED4D3B);
   font-size: 0.68rem;
   font-weight: 700;
   padding: 1px 7px;
@@ -1336,7 +1336,7 @@
   border-radius: 0;
   transition: color 0.15s, background 0.15s;
 }
-.taskDeleteBtn:hover { color: #C0392B; background: rgba(192,57,43,0.1); }
+.taskDeleteBtn:hover { color: var(--color-primary-readable, #ED4D3B); background: rgba(192,57,43,0.1); }
 
 /* Completed section */
 .completedSection {
@@ -1489,7 +1489,7 @@
   .versionSelect {
     background: rgba(192,57,43,0.15) !important;
     border-color: #C0392B !important;
-    color: #C0392B !important;
+    color: var(--color-primary-readable, #ED4D3B) !important;
     font-size: 0.72rem !important;
   }
   .threadsPanelHeader {
@@ -1658,7 +1658,7 @@
   color: rgba(255,255,255,0.4);
 }
 .versionModalTick {
-  color: #C0392B;
+  color: var(--color-primary-readable, #ED4D3B);
   font-size: 0.85rem;
   font-weight: 700;
 }
@@ -2081,4 +2081,153 @@
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s;
 }
-.shareModDelete:hover { color: #C0392B; border-color: #C0392B; }
+.shareModDelete:hover { color: var(--color-primary-readable, #ED4D3B); border-color: #C0392B; }
+
+/* Touch devices get generous hit areas without enlarging the visual controls. */
+@media (pointer: coarse) {
+  .waveRetryBtn,
+  .cancelBtn,
+  .postBtn,
+  .changeVersionBtn,
+  .versionSelect,
+  .actionTab,
+  .actionFilterPill,
+  .actionEditBtn,
+  .actionResolveBtn,
+  .threadActionBtn,
+  .markActionBtn,
+  .actionStateBtn,
+  .mobileNavSongsBtn,
+  .shareBtn,
+  .shareCopyBtn,
+  .modalActions > button {
+    min-height: 44px;
+  }
+
+  .songsBtn,
+  .uploadBtn {
+    min-height: 44px !important;
+  }
+
+  .replyBtn,
+  .addTaskBtn,
+  .taskDeleteBtn,
+  .versionModalClose,
+  .mobileNavIconBtn,
+  .mobileNavAvatar,
+  .shareModalClose,
+  .shareModDelete {
+    width: 44px;
+    height: 44px;
+  }
+
+  .actionToggle {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    margin-top: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .actionToggle::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 22px;
+    height: 22px;
+    border: 2px solid rgba(244,237,228,0.18);
+    background: transparent;
+    box-sizing: border-box;
+    transform: translate(-50%, -50%);
+  }
+
+  .actionToggle:hover::before {
+    border-color: #C0392B;
+  }
+
+  .actionToggleDone::before {
+    background: #22c55e;
+    border-color: #22c55e;
+  }
+
+  .actionToggleApproved::before {
+    background: #f5ae3d;
+    border-color: #f5ae3d;
+  }
+
+  .actionToggle > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .taskCircle {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    margin: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .taskCircle::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid rgba(255,255,255,0.25);
+    background: transparent;
+    box-sizing: border-box;
+    transform: translate(-50%, -50%);
+  }
+
+  .taskCircle:hover::before {
+    border-color: #22c55e;
+  }
+
+  .taskCircleDone::before {
+    background: #22c55e;
+    border-color: #22c55e;
+  }
+
+  .taskCircle > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .shareToggle {
+    width: 44px;
+    height: 44px;
+    border: 0;
+    background: transparent;
+  }
+
+  .shareToggle::before {
+    content: '';
+    position: absolute;
+    top: 11px;
+    left: 2px;
+    width: 40px;
+    height: 22px;
+    border: 1px solid rgba(244,237,228,0.15);
+    background: rgba(244,237,228,0.08);
+    box-sizing: border-box;
+  }
+
+  .shareToggleOn::before {
+    background: rgba(240,228,140,0.18);
+    border-color: #F0E48C;
+  }
+
+  .shareToggleThumb {
+    top: 14px;
+    left: 5px;
+  }
+
+  .shareToggleOn .shareToggleThumb {
+    left: 23px;
+  }
+}

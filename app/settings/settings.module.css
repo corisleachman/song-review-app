@@ -85,12 +85,12 @@
 }
 .settingsNavItemActive {
   background: rgba(192,57,43,0.12);
-  color: #C0392B;
+  color: var(--color-primary-readable, #ED4D3B);
   font-weight: 600;
 }
 .settingsNavItemActive:hover {
   background: rgba(192,57,43,0.16);
-  color: #C0392B;
+  color: var(--color-primary-readable, #ED4D3B);
 }
 
 .settingsNavFooter {
@@ -326,7 +326,7 @@
   justify-content: center;
   font-size: 20px;
   font-weight: 700;
-  color: #C0392B;
+  color: var(--color-primary-readable, #ED4D3B);
   flex-shrink: 0;
   overflow: hidden;
 }
@@ -584,7 +584,7 @@
 .devToggleBtnActive {
   background: rgba(192,57,43,0.15);
   border-color: rgba(192,57,43,0.4);
-  color: #C0392B;
+  color: var(--color-primary-readable, #ED4D3B);
 }
 .devToggleBtn:disabled {
   opacity: 0.4;
@@ -695,9 +695,21 @@
   border-radius: 50%;
   background: rgba(192,57,43,0.15);
   border: 1px solid rgba(192,57,43,0.28);
-  color: #C0392B;
+  color: var(--color-primary-readable, #ED4D3B);
   font-size: 11px;
   font-weight: 700;
   flex-shrink: 0;
   margin-top: 1px;
+}
+
+@media (pointer: coarse) {
+  .backButton,
+  .settingsNavItem,
+  .primaryButton,
+  .actionButton,
+  .ghostButton,
+  .presetButton,
+  .devToggleBtn {
+    min-height: 44px;
+  }
 }

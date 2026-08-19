@@ -56,7 +56,7 @@ export default function TermsPage() {
         }
         .legal-eyebrow {
           font-size: 10px; font-weight: 600; letter-spacing: 0.16em;
-          text-transform: uppercase; color: #C0392B; margin-bottom: 20px;
+          text-transform: uppercase; color: var(--color-primary-readable, #ED4D3B); margin-bottom: 20px;
         }
         .legal-title {
           font-family: "ThunderLC", sans-serif; font-weight: 900;

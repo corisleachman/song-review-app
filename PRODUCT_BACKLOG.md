@@ -6,6 +6,34 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 
 ## Bugs
 
+### Mobile homepage: descriptive copy appears too late
+- Priority: P2
+- Logged: 2026-08-19
+- Observed on iPhone 16: the paragraph beginning “A collaboration space for artists...” fades in after the rest of the page, leaving a temporary gap that makes the layout look broken.
+- Expected: the paragraph should be present when its section first renders. Any remaining entrance motion must not delay the content or leave empty layout space.
+- Include reduced-motion behavior in the eventual check.
+
+### Mobile homepage: bento images crop the subject at the top
+- Priority: P2
+- Logged: 2026-08-19
+- Some images inside the bento frames are vertically centred, which can cut off the subject's head or the space above it.
+- Expected: mobile bento images should use a top-centred focal position by default. If cropping is required, prefer losing the bottom of the image.
+- Check every current homepage image rather than assuming one shared position works for all artwork.
+
+### Mobile homepage: primary CTA is clipped and outside the thumb zone
+- Priority: P1
+- Logged: 2026-08-19
+- Observed on iPhone 16: the red CTA can be cut off, and its top-right placement makes it difficult to reach one-handed.
+- Expected: the primary CTA must remain fully visible inside the safe area and sit in the lower, thumb-reachable part of the opening mobile composition.
+- Copy decision remains open between “Start for free” and “See how it works”. Preserve a clear route into account creation whichever label is chosen.
+
+### Mobile homepage: display headings lose clarity at small sizes
+- Priority: P2
+- Logged: 2026-08-19
+- Headings such as “You've been doing it the hard way” look blocky and blur into themselves at the current mobile size.
+- Expected: mobile display headings remain distinctive and legible without collisions or muddy letterforms.
+- Test a larger fluid size first. If that does not solve it, compare a lighter display weight or mobile-specific font treatment before changing the typeface.
+
 ### Desktop card view — status dropdown missing  ✅ DONE (2026-08-09)
 - Logged: 2026-08-07 · Shipped: 2026-08-09 (commits b9c03461, be268dce)
 - On the dashboard **card view** (desktop), the dropdown to change a track's status (In progress / Mixing / Mastered / Completed, etc.) does not appear the way it does in **list view**.
@@ -27,6 +55,15 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 ---
 
 ## Future / larger efforts
+
+### Mobile homepage hierarchy and hero animation
+- Priority: design exploration before implementation
+- Logged: 2026-08-19
+- The current mobile stack does not create a convincing opening hierarchy: the small logo, top-right CTA, “What is the Song Room?” description, large “Create Together” treatment, and oversized closing sign-off compete rather than reading as one sequence.
+- Direction to prototype: make “Song Room” the main animated visual inside the first large bento frame; follow it with “What is Song Room?” and place the primary CTA around the centre of the lower third.
+- Reconsider “Create Together, every version” as a smaller supporting line or move it into the upper half of the page instead of using it as an oversized closing sign-off.
+- This direction is not approved implementation yet. Compare it with a refined version of the current “Create Together” concept at an iPhone 16 viewport before choosing.
+- Success criteria: the brand is the first clear visual, the explanation follows naturally, and the next action is visible and reachable without an awkward stack or clipped content.
 
 ### Authentication options beyond Google
 - Logged: 2026-08-14
