@@ -146,7 +146,7 @@
   margin-bottom: 10px;
   font-size: 12px;
   line-height: 1.4;
-  color: var(--color-primary-bright);
+  color: var(--color-primary-readable, #ED4D3B);
 }
 
 .submit {
@@ -184,5 +184,18 @@
   }
   .panel {
     width: min(320px, calc(100vw - 32px));
+  }
+}
+
+@media (pointer: coarse) {
+  .fab,
+  .close,
+  .chip,
+  .submit {
+    min-height: 44px;
+  }
+
+  .close {
+    width: 44px;
   }
 }

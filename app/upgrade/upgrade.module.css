@@ -241,7 +241,7 @@
 }
 
 .check {
-  color: var(--color-primary);
+  color: var(--color-primary-readable, #ED4D3B);
   font-size: 13px;
   font-weight: 700;
   flex-shrink: 0;

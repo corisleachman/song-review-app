@@ -4654,3 +4654,44 @@ Apply the existing shared dialog-focus lifecycle to the remaining overlays, comp
 - All 22 contract tests, TypeScript checking, focused lint, and the placeholder-environment production build passed. Focused lint reported zero errors and 18 existing warnings.
 - A local Chromium check confirmed Feedback receives initial focus, wraps Tab and Shift+Tab, closes with Escape, returns focus to its trigger, and produces no browser console errors.
 - On 19 August, Coris confirmed that the authenticated dashboard and song-page dialogs in the PR #18 preview contained forward and reverse Tab navigation, closed with Escape, and returned focus to their opening controls. Both Vercel deployment checks passed after the staging Supabase variables were made available to all Preview branches.
+
+---
+
+## 2026-08-19 - Readable red text and touch-target accessibility
+
+### What we were trying to achieve
+
+Close the remaining measured accessibility gaps without making Song Room's compact desktop interface feel oversized.
+
+### Feature / change being made
+
+Introduce a text-only readable red and give compact controls a minimum 44-pixel target on coarse-pointer devices. The darker brand red remains unchanged for CTA backgrounds and borders.
+
+### Files changed
+
+- `styles/globals.css`
+- `app/dashboard/dashboard.module.css`
+- `app/songs/[id]/versions/[versionId]/version.module.css`
+- `app/upload/upload.module.css`
+- `app/playlists/playlists.module.css`
+- `app/settings/settings.module.css`
+- `app/listen/[songId]/listen.module.css`
+- `app/listen/playlist/[id]/listen-playlist.module.css`
+- `app/embed/playlist/[id]/embed.module.css`
+- `app/upgrade/upgrade.module.css`
+- `app/privacy/page.tsx`
+- `app/terms/page.tsx`
+- `components/AccountMenu.module.css`
+- `components/BetaFeedback.module.css`
+- `tests/critical-contracts.test.mjs`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- `#ED4D3B` is reserved for small red text and icons. It measures from 5.37:1 on the darkest app background to 4.53:1 on the lightest audited dark surface.
+- Mouse-oriented desktop sizing is unchanged. The larger hit areas apply only when the device reports a coarse pointer.
+- Small visual toggles retain their current appearance inside larger real button targets.
+- A source contract prevents the audited surfaces from returning to low-contrast `#C0392B` text and requires their coarse-pointer target rules.
+- All 23 contract tests, TypeScript checking, focused lint, and the placeholder-environment production build passed. The build reported existing lint warnings only.
+- Code is complete locally. Preview deployment and authenticated touch-device verification remain pending.

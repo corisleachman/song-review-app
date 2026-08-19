@@ -20,9 +20,9 @@
 .fname { color: var(--color-text-tertiary, rgba(244,237,228,.34)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pct { color: #F0E48C; font-variant-numeric: tabular-nums; flex-shrink: 0; }
 .pctDone { color: #7FBF6A; }
-.pctErr { color: var(--color-primary-bright, #E8402E); }
+.pctErr { color: var(--color-primary-readable, #ED4D3B); }
 .remove { width: 26px; height: 26px; flex-shrink: 0; background: transparent; border: 1px solid var(--color-border-mid, rgba(244,237,228,.18)); color: var(--color-text-secondary, rgba(244,237,228,.6)); display: grid; place-items: center; font-size: 12px; cursor: pointer; }
-.remove:hover { border-color: var(--color-primary, #C0392B); color: var(--color-primary-bright, #E8402E); }
+.remove:hover { border-color: var(--color-primary, #C0392B); color: var(--color-primary-readable, #ED4D3B); }
 .prog { position: absolute; left: 0; bottom: 0; height: 2px; background: #F0E48C; width: 0; transition: width .2s linear; }
 .rowDone .prog { background: #7FBF6A; }
 .rowError .prog { background: var(--color-primary-bright, #E8402E); }
@@ -47,7 +47,27 @@
 .stepIdle { color: var(--color-text-tertiary, rgba(244,237,228,.34)); }
 .stepBar { flex: 1; height: 1px; background: var(--color-border, rgba(244,237,228,.1)); }
 .notice { border-left: 2px solid #F0E48C; background: var(--color-surface-2, #261C1C); padding: 8px 12px; font-size: 12.5px; color: var(--color-text-secondary, rgba(244,237,228,.6)); margin-bottom: 14px; }
-.retryBtn { flex-shrink: 0; padding: 6px 11px; background: transparent; border: 1px solid var(--color-primary, #C0392B); color: var(--color-primary-bright, #E8402E); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; cursor: pointer; }
+.retryBtn { flex-shrink: 0; padding: 6px 11px; background: transparent; border: 1px solid var(--color-primary, #C0392B); color: var(--color-primary-readable, #ED4D3B); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; cursor: pointer; }
+
+@media (pointer: coarse) {
+  .remove {
+    width: 44px;
+    height: 44px;
+  }
+
+  .artSlot {
+    width: 44px;
+    height: 44px;
+  }
+
+  .dropMini,
+  .tin,
+  .ghostBtn,
+  .primaryBtn,
+  .retryBtn {
+    min-height: 44px;
+  }
+}
 .retryBtn:hover { background: rgba(192,57,43,.14); }
 .artSlot { padding: 0; font-family: inherit; cursor: pointer; font-size: 18px; overflow: hidden; }
 .artSlot:hover { border-color: #F0E48C; }

@@ -311,6 +311,40 @@ test('active dialogs share focus trapping, Escape dismissal, and labelled semant
   ], 'song-version dialogs');
 });
 
+test('interactive surfaces preserve readable red text and coarse-pointer targets', () => {
+  const globals = read('styles/globals.css');
+  const contrastSurfaces = [
+    'app/dashboard/dashboard.module.css',
+    'app/songs/[id]/versions/[versionId]/version.module.css',
+    'app/listen/[songId]/listen.module.css',
+    'app/listen/playlist/[id]/listen-playlist.module.css',
+    'app/embed/playlist/[id]/embed.module.css',
+    'app/settings/settings.module.css',
+    'app/upload/upload.module.css',
+    'app/playlists/playlists.module.css',
+  ].map(read);
+  const touchSurfaces = [
+    ...contrastSurfaces,
+    read('components/AccountMenu.module.css'),
+    read('components/BetaFeedback.module.css'),
+  ];
+
+  assert.match(globals, /--color-primary-readable:\s*#ED4D3B;/u);
+
+  for (const source of contrastSurfaces) {
+    assert.doesNotMatch(
+      source,
+      /(?:^|[;{]\s*)color:\s*#C0392B\b/mu,
+      'normal-size text must not reuse the darker CTA red'
+    );
+  }
+
+  for (const source of touchSurfaces) {
+    assert.match(source, /@media\s*\(pointer:\s*coarse\)/u);
+    assert.match(source, /(?:min-)?height:\s*44px/u);
+  }
+});
+
 test('mobile marketing description occupies a separate row from the hero headline', () => {
   const marketing = read('public/marketing.html');
   const responsiveStart = marketing.indexOf('@media (max-width: 900px) {', marketing.indexOf('RESPONSIVE'));
