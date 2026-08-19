@@ -23,9 +23,11 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 ### Mobile homepage: primary CTA is clipped and outside the thumb zone
 - Priority: P1
 - Logged: 2026-08-19
+- Status: Code complete on `codex/mobile-homepage-cta`; preview verification pending.
 - Observed on iPhone 16: the red CTA can be cut off, and its top-right placement makes it difficult to reach one-handed.
 - Expected: the primary CTA must remain fully visible inside the safe area and sit in the lower, thumb-reachable part of the opening mobile composition.
 - Copy decision remains open between “Start for free” and “See how it works”. Preserve a clear route into account creation whichever label is chosen.
+- Implementation: phone portrait and landscape layouts now hide the duplicate navigation CTA, size the hero against the small viewport, reserve iOS safe-area padding, and keep the existing hero CTA centred with a 48-pixel primary target. The approved larger hero exploration remains separate.
 
 ### Mobile homepage: display headings lose clarity at small sizes
 - Priority: P2

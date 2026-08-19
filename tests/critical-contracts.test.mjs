@@ -357,6 +357,20 @@ test('mobile marketing description occupies a separate row from the hero headlin
   assert.match(responsiveCss, /\.bento-cell-text p\s*\{[^}]*font-size:\s*clamp\(15px, 4vw, 18px\);/u);
 });
 
+test('mobile homepage keeps its primary CTA visible in the thumb zone', () => {
+  const marketing = read('public/marketing.html');
+  const phoneStart = marketing.indexOf('@media (max-width: 600px), (max-width: 900px) and (max-height: 600px) {', marketing.indexOf('RESPONSIVE'));
+  const phoneEnd = marketing.indexOf('@media (prefers-reduced-motion: reduce)', phoneStart);
+  const phoneCss = marketing.slice(phoneStart, phoneEnd);
+
+  assert.match(phoneCss, /\.nav-cta\s*\{[^}]*display:\s*none;/u);
+  assert.match(phoneCss, /\.hero\s*\{[^}]*height:\s*auto;[^}]*min-height:\s*100svh;/u);
+  assert.match(phoneCss, /padding-bottom:\s*max\(28px, calc\(18px \+ env\(safe-area-inset-bottom\)\)\);/u);
+  assert.match(phoneCss, /\.hero-content\s*\{[^}]*padding-left:\s*max\(20px, env\(safe-area-inset-left\)\);/u);
+  assert.match(phoneCss, /\.hero-cta-row\s*\{[^}]*width:\s*100%;[^}]*justify-content:\s*center;/u);
+  assert.match(phoneCss, /\.btn-primary\s*\{[^}]*min-height:\s*48px;[^}]*justify-content:\s*center;/u);
+});
+
 test('public playlist playback advances through its ordered tracks', () => {
   // The audio engine (auto-advance, media-session next, queue progression) lives
   // in the shared hook consumed by both public players.

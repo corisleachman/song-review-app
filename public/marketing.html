@@ -1184,6 +1184,43 @@ footer {
   .footer-links { justify-content: center; }
 }
 
+@media (max-width: 600px), (max-width: 900px) and (max-height: 600px) {
+  /* Keep one clear signup action in the lower thumb zone on phones. */
+  .nav-cta { display: none; }
+
+  .hero {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100svh;
+    padding-top: calc(98px + env(safe-area-inset-top));
+    padding-bottom: max(28px, calc(18px + env(safe-area-inset-bottom)));
+  }
+
+  .hero-content {
+    width: 100%;
+    padding-left: max(20px, env(safe-area-inset-left));
+    padding-right: max(20px, env(safe-area-inset-right));
+  }
+
+  .hero-cta-row {
+    width: 100%;
+    justify-content: center;
+    margin-top: clamp(18px, 4vh, 28px);
+  }
+
+  .btn-primary {
+    min-height: 48px;
+    flex: 1 1 170px;
+    justify-content: center;
+  }
+
+  .btn-ghost {
+    min-height: 44px;
+    flex: 1 1 140px;
+    justify-content: center;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }

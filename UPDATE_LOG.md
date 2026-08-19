@@ -4742,3 +4742,29 @@ Documentation-only closeout for playlist-cover hardening and the three accessibi
 - Both Vercel production checks passed for PR #19. The live privacy and login routes returned `200`, unauthenticated dashboard access correctly redirected to login, and the live privacy response contained the readable-red production artifact.
 - No application code, database schema, environment variables, or production configuration changed in this closeout.
 - The clipped and difficult-to-reach mobile homepage CTA is now the highest-priority confirmed interface defect in `PRODUCT_BACKLOG.md`.
+
+---
+
+## 2026-08-19 - Mobile homepage CTA safe-area fix
+
+### What we were trying to achieve
+
+Keep the main homepage signup action visible and easy to reach on an iPhone without beginning the larger mobile hero redesign.
+
+### Feature / change being made
+
+Phone-only homepage layout correction that removes the duplicate top navigation CTA and keeps the existing hero CTA inside the usable viewport and iOS safe area.
+
+### Files changed
+
+- `public/marketing.html`
+- `tests/critical-contracts.test.mjs`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Desktop and tablet navigation remain unchanged; the phone rule also covers short landscape viewports.
+- The phone hero now grows when its content needs more room instead of clipping inside a fixed `100vh` and 600-pixel minimum.
+- The primary hero CTA remains “Start for free”, is centred in the lower action row, and has a 48-pixel minimum height.
+- The separate “Song Room” hero-animation exploration is not part of this fix.
