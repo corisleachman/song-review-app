@@ -4694,4 +4694,27 @@ Introduce a text-only readable red and give compact controls a minimum 44-pixel 
 - Small visual toggles retain their current appearance inside larger real button targets.
 - A source contract prevents the audited surfaces from returning to low-contrast `#C0392B` text and requires their coarse-pointer target rules.
 - All 23 contract tests, TypeScript checking, focused lint, and the placeholder-environment production build passed. The build reported existing lint warnings only.
-- Code is complete locally. Preview deployment and authenticated touch-device verification remain pending.
+- Code is complete and deployed to the PR #19 preview. The user confirmed that all audited buttons worked on mobile without an interaction defect. Separate homepage layout observations found during that check are recorded in `PRODUCT_BACKLOG.md`.
+
+---
+
+## 2026-08-19 - Mobile homepage backlog capture
+
+### What we were trying to achieve
+
+Preserve the mobile homepage issues found while verifying the accessibility preview, without expanding the active accessibility change into a homepage redesign.
+
+### Feature / change being made
+
+Documentation-only backlog update covering delayed copy, bento image focal positioning, CTA reach and clipping, display-heading legibility, and an open mobile hero hierarchy exploration.
+
+### Files changed
+
+- `CODEBASE_REVIEW.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Confirmed defects are separated from the proposed “Song Room” hero-animation direction, which still needs a visual comparison before implementation.
+- No application code or current PR behavior changed.
