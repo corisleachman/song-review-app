@@ -1,6 +1,6 @@
 # Staged Codebase Review Record
 
-Last updated: 14 August 2026
+Last updated: 19 August 2026
 
 This is the working evidence record for the staged review that began on `codex/staged-code-review-fixes`. Findings stay here until they are verified, deferred with a reason, or closed. The main review rollout reached production on 13 August 2026; focused follow-up batches continue from that deployed base.
 
@@ -112,7 +112,7 @@ The API authorization review did not find a route-level cross-workspace bypass. 
 - PRIV-001: Both media buckets remain public by design. Turning off an app share link blocks the app route, but a raw storage URL copied earlier remains reachable. Private media delivery needs a separate migration and rollout.
 - ABUSE-001: Public comment throttling is stored in process memory. It limits a single serverless instance but can be bypassed across instances or cold starts. Database constraints, a honeypot, and length validation still apply.
 - UPLOAD-001: Preview complete. Playlist-cover upload now rejects oversized requests before multipart parsing, rejects empty, over-5 MB, and non-JPEG/PNG/WebP files before buffering, and caps Sharp decoding at 40 megapixels. A normal JPEG persisted after refresh and appeared on the shared preview. The oversized-file rejection initially showed a misleading local thumbnail and discreet generic error; the follow-up now validates before upload, preserves the saved cover, and presents a focus-managed dialog with a specific recovery action. The user confirmed the corrected dialog, unchanged thumbnail, Escape dismissal, and choose-another-image flow. Production rollout remains pending.
-- A11Y-001: Partially implemented across the semantic-controls and dialog-focus follow-ups. Batch-upload selection and artwork controls, playlist-cover selection, the dashboard add-song card and mini-player identity, and public-playlist track rows now use native buttons with existing visible focus treatment. The public playlist also exposes the current track and descriptive track-position labels. Dashboard creation, deletion, invite confirmation, and mobile song-sheet dialogs; Beta Feedback; and the song share, action, upload-version, and version-picker dialogs now use the shared Escape, Tab-loop, initial-focus, and focus-return lifecycle with labelled dialog semantics. Contract coverage protects both batches. A local browser check passed the Feedback dialog's initial focus, wraparound, Escape dismissal, and focus return without console errors; the authenticated dialogs still need the same preview check. Some controls remain below the recommended 44-pixel target, and small brand-red text measures about 3.62:1 against the darkest background, below the 4.5:1 target for normal text.
+- A11Y-001: Partially implemented across the semantic-controls and dialog-focus follow-ups. Batch-upload selection and artwork controls, playlist-cover selection, the dashboard add-song card and mini-player identity, and public-playlist track rows now use native buttons with existing visible focus treatment. The public playlist also exposes the current track and descriptive track-position labels. Dashboard creation, deletion, invite confirmation, and mobile song-sheet dialogs; Beta Feedback; and the song share, action, upload-version, and version-picker dialogs now use the shared Escape, Tab-loop, initial-focus, and focus-return lifecycle with labelled dialog semantics. Contract coverage protects both batches. A local browser check passed the Feedback dialog, and the user then confirmed the authenticated dashboard and song-page dialogs contain forward and reverse Tab navigation, close with Escape, and return focus to their triggers in the PR #18 preview. Some controls remain below the recommended 44-pixel target, and small brand-red text measures about 3.62:1 against the darkest background, below the 4.5:1 target for normal text.
 - CONFIG-001: Baseline response headers cover HSTS, framing, referrers, permissions, and MIME sniffing, but there is no Content Security Policy. Adding one needs a report-only pass first because the app uses inline styles and external media.
 
 #### P3
@@ -124,7 +124,7 @@ The API authorization review did not find a route-level cross-workspace bypass. 
 
 | Dimension | Score | Evidence |
 | --- | ---: | --- |
-| Accessibility | 2/4 | Strong global focus and reduced-motion foundations, but keyboard controls, dialog focus, and small-text contrast still have gaps. |
+| Accessibility | 2/4 | Global focus, reduced-motion, primary-control semantics, and dialog focus are in place; compact targets and small-text contrast still have gaps. |
 | Performance | 3/4 | Dashboard and public-playlist query waves were measured and reduced; large client routes and raw images remain. |
 | Theming | 2/4 | Distinctive shared palette and typography, with extensive literal color duplication. |
 | Responsive design | 3/4 | Eighteen CSS modules include mobile breakpoints and the staged mobile journeys passed; a few compact targets and fixed-size controls remain. |

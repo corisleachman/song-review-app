@@ -4652,4 +4652,5 @@ Apply the existing shared dialog-focus lifecycle to the remaining overlays, comp
 - Upload progress is exposed as a progress bar, upload errors use an alert role, and the current version is exposed in the picker.
 - Existing creation, deletion, sharing, upload, playback, and navigation behavior is unchanged.
 - All 22 contract tests, TypeScript checking, focused lint, and the placeholder-environment production build passed. Focused lint reported zero errors and 18 existing warnings.
-- A local Chromium check confirmed Feedback receives initial focus, wraps Tab and Shift+Tab, closes with Escape, returns focus to its trigger, and produces no browser console errors. Authenticated dialog verification remains a preview task.
+- A local Chromium check confirmed Feedback receives initial focus, wraps Tab and Shift+Tab, closes with Escape, returns focus to its trigger, and produces no browser console errors.
+- On 19 August, Coris confirmed that the authenticated dashboard and song-page dialogs in the PR #18 preview contained forward and reverse Tab navigation, closed with Escape, and returned focus to their opening controls. Both Vercel deployment checks passed after the staging Supabase variables were made available to all Preview branches.
