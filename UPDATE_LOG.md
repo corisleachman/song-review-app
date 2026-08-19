@@ -4718,3 +4718,27 @@ Documentation-only backlog update covering delayed copy, bento image focal posit
 
 - Confirmed defects are separated from the proposed “Song Room” hero-animation direction, which still needs a visual comparison before implementation.
 - No application code or current PR behavior changed.
+
+---
+
+## 2026-08-19 - Accessibility production closeout
+
+### What we were trying to achieve
+
+Bring the review record into line with the completed production rollouts before starting another implementation batch.
+
+### Feature / change being made
+
+Documentation-only closeout for playlist-cover hardening and the three accessibility follow-ups, with the remaining findings left clearly separated from completed work.
+
+### Files changed
+
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- PR #15 merged as `da9330ce`; PRs #17, #18, and #19 merged as `0401508c`, `923372a8`, and `800fc8dd`.
+- Both Vercel production checks passed for PR #19. The live privacy and login routes returned `200`, unauthenticated dashboard access correctly redirected to login, and the live privacy response contained the readable-red production artifact.
+- No application code, database schema, environment variables, or production configuration changed in this closeout.
+- The clipped and difficult-to-reach mobile homepage CTA is now the highest-priority confirmed interface defect in `PRODUCT_BACKLOG.md`.
