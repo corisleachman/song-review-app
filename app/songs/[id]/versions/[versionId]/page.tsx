@@ -6,6 +6,7 @@ import { Suspense } from 'react';
 import { ActionStatus, getActionStatusLabel, getActionStatusToast, getNextActionStatus, isOpenAction } from '@/lib/actionWorkflow';
 import { createClient } from '@/lib/supabase';
 import { formatTimestamp, getIdentity, clearAuth, clearIdentity } from '@/lib/auth';
+import { useDialogFocus } from '@/lib/useDialogFocus';
 import { getVersionDisplayLabel } from '@/lib/versionDisplay';
 import styles from './version.module.css';
 import WorkspaceSwitcher from '@/components/WorkspaceSwitcher';
@@ -596,6 +597,10 @@ function VersionPageInner() {
   const [shareUrl, setShareUrl] = useState(`/listen/${songId}`);
   const [publicComments, setPublicComments] = useState<Array<{ id: string; author_name: string; body: string; is_hidden: boolean; created_at: string }>>([]);
   const [publicCommentsLoaded, setPublicCommentsLoaded] = useState(false);
+  const shareDialogRef = useRef<HTMLDivElement>(null);
+  const actionDialogRef = useRef<HTMLDivElement>(null);
+  const uploadVersionDialogRef = useRef<HTMLDivElement>(null);
+  const versionPickerDialogRef = useRef<HTMLDivElement>(null);
   const [reactivePalette, setReactivePalette] = useState(() => ({
     primary: DEFAULT_REACTIVE_PRIMARY,
     secondary: DEFAULT_REACTIVE_SECONDARY,
@@ -605,6 +610,26 @@ function VersionPageInner() {
   const statusToastTimerRef = useRef<number | null>(null);
   const commentAnimationTimerRef = useRef<number | null>(null);
   const dragTaskId = useRef<string | null>(null);
+
+  const closeShareDialog = useCallback(() => setShowShareModal(false), []);
+  const closeActionDialog = useCallback(() => {
+    setActionModalCommentId(null);
+    setEditingActionId(null);
+    setActionAssignedToUserId('');
+  }, []);
+  const closeUploadVersionDialog = useCallback(() => {
+    if (!uploadingVersion) setShowUploadVersionModal(false);
+  }, [uploadingVersion]);
+  const closeVersionPickerDialog = useCallback(() => setShowVersionModal(false), []);
+
+  useDialogFocus(showShareModal, closeShareDialog, shareDialogRef);
+  useDialogFocus(
+    Boolean(actionModalCommentId || editingActionId),
+    closeActionDialog,
+    actionDialogRef
+  );
+  useDialogFocus(showUploadVersionModal, closeUploadVersionDialog, uploadVersionDialogRef);
+  useDialogFocus(showVersionModal, closeVersionPickerDialog, versionPickerDialogRef);
 
   const supabase = createClient();
 
@@ -2757,18 +2782,27 @@ function VersionPageInner() {
 
         {/* Share modal */}
         {showShareModal && (
-          <div className={styles.shareModalOverlay} onClick={() => setShowShareModal(false)}>
-            <div className={styles.shareModal} onClick={e => e.stopPropagation()}>
+          <div className={styles.shareModalOverlay} onClick={closeShareDialog}>
+            <div
+              ref={shareDialogRef}
+              className={styles.shareModal}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="share-song-dialog-title"
+              aria-describedby="share-song-dialog-description"
+              tabIndex={-1}
+              onClick={e => e.stopPropagation()}
+            >
               <div className={styles.shareModalHeader}>
                 <div>
                   <div className={styles.shareModalEyebrow}>Public Access</div>
-                  <div className={styles.shareModalTitle}>Share Song</div>
-                  <div className={styles.shareModalSubtitle}>
+                  <h2 id="share-song-dialog-title" className={styles.shareModalTitle}>Share Song</h2>
+                  <div id="share-song-dialog-description" className={styles.shareModalSubtitle}>
                     Let anyone listen with a link — no account needed. Comments and version history stay private.
                   </div>
                 </div>
-                <button className={styles.shareModalClose} onClick={() => setShowShareModal(false)}>
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <button type="button" className={styles.shareModalClose} onClick={closeShareDialog} aria-label="Close share song dialog">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
                     <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                   </svg>
                 </button>
@@ -3299,14 +3333,29 @@ function VersionPageInner() {
 
       {/* Action modal */}
       {(actionModalCommentId || editingActionId) && (
-        <div className={styles.modalOverlay} onClick={() => { setActionModalCommentId(null); setEditingActionId(null); }}>
-          <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <h3 className={styles.modalTitle}>{editingActionId ? 'Edit Action' : 'Mark as Action'}</h3>
-            <textarea className={styles.modalTextarea} value={actionText} onChange={e => setActionText(e.target.value)} rows={3} />
+        <div className={styles.modalOverlay} onClick={closeActionDialog}>
+          <div
+            ref={actionDialogRef}
+            className={styles.modal}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="song-action-dialog-title"
+            tabIndex={-1}
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 id="song-action-dialog-title" className={styles.modalTitle}>{editingActionId ? 'Edit Action' : 'Mark as Action'}</h3>
+            <textarea
+              className={styles.modalTextarea}
+              value={actionText}
+              onChange={e => setActionText(e.target.value)}
+              rows={3}
+              aria-label="Action description"
+            />
             <select
               className={styles.modalInput}
               value={actionAssignedToUserId}
               onChange={e => setActionAssignedToUserId(e.target.value)}
+              aria-label="Assign action to"
             >
               <option value="">Unassigned</option>
               {workspaceMembers.map(member => (
@@ -3315,7 +3364,7 @@ function VersionPageInner() {
                 </option>
               ))}
             </select>
-            <div className={styles.actionStateRow}>
+            <div className={styles.actionStateRow} role="group" aria-label="Action status">
               {(['open', 'in_progress', 'done'] as const).map(status => (
                 <button
                   key={status}
@@ -3327,8 +3376,8 @@ function VersionPageInner() {
               ))}
             </div>
             <div className={styles.modalActions}>
-              <button className={styles.cancelBtn} onClick={() => { setActionModalCommentId(null); setEditingActionId(null); setActionAssignedToUserId(''); }}>Cancel</button>
-              <button className={styles.postBtn} onClick={submitAction} disabled={!actionText.trim()}>
+              <button type="button" className={styles.cancelBtn} onClick={closeActionDialog}>Cancel</button>
+              <button type="button" className={styles.postBtn} onClick={submitAction} disabled={!actionText.trim()}>
                 {editingActionId ? 'Save changes' : 'Save Action'}
               </button>
             </div>
@@ -3339,9 +3388,18 @@ function VersionPageInner() {
       {statusToast && <div className={styles.statusToast}>{statusToast}</div>}
 
       {showUploadVersionModal && (
-        <div className={styles.modalOverlay} onClick={() => { if (!uploadingVersion) setShowUploadVersionModal(false); }}>
-          <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <h3 className={styles.modalTitle}>Upload New Version</h3>
+        <div className={styles.modalOverlay} onClick={closeUploadVersionDialog}>
+          <div
+            ref={uploadVersionDialogRef}
+            className={styles.modal}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="upload-version-dialog-title"
+            aria-describedby="upload-version-dialog-help"
+            tabIndex={-1}
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 id="upload-version-dialog-title" className={styles.modalTitle}>Upload New Version</h3>
             {pendingVersionFile ? (
               <div className={styles.uploadMetaCard}>
                 <strong>{pendingVersionFile.name}</strong>
@@ -3356,6 +3414,7 @@ function VersionPageInner() {
             <input
               className={styles.modalInput}
               placeholder='Version label (optional, e.g. "Mix notes applied")'
+              aria-label="Version label"
               value={newVersionLabel}
               onChange={e => setNewVersionLabel(e.target.value)}
               disabled={uploadingVersion}
@@ -3363,26 +3422,35 @@ function VersionPageInner() {
             <textarea
               className={styles.modalTextarea}
               placeholder='Version notes (optional, e.g. "New vocal comp and tighter bridge")'
+              aria-label="Version notes"
               value={newVersionNotes}
               onChange={e => setNewVersionNotes(e.target.value)}
               rows={3}
               disabled={uploadingVersion}
             />
-            <p className={styles.uploadHelp}>Uploads under 200 MB work best in the current flow.</p>
+            <p id="upload-version-dialog-help" className={styles.uploadHelp}>Uploads under 200 MB work best in the current flow.</p>
             {uploadingVersion && (
               <div>
                 <div className={styles.progressWrap}>
-                  <div className={styles.progressBar} style={{ width: `${versionUploadProgress}%` }} />
+                  <div
+                    className={styles.progressBar}
+                    style={{ width: `${versionUploadProgress}%` }}
+                    role="progressbar"
+                    aria-label="Version upload progress"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={versionUploadProgress}
+                  />
                 </div>
                 <span className={styles.progressLabel}>{versionUploadProgress}% uploaded to song-files...</span>
               </div>
             )}
-            {versionUploadError && <div className={styles.errorMsg}>{versionUploadError}</div>}
+            {versionUploadError && <div className={styles.errorMsg} role="alert">{versionUploadError}</div>}
             <div className={styles.modalActions}>
-              <button className={styles.cancelBtn} onClick={() => setShowUploadVersionModal(false)} disabled={uploadingVersion}>
+              <button type="button" className={styles.cancelBtn} onClick={closeUploadVersionDialog} disabled={uploadingVersion}>
                 Cancel
               </button>
-              <button className={styles.postBtn} onClick={uploadNewVersion} disabled={!pendingVersionFile || uploadingVersion}>
+              <button type="button" className={styles.postBtn} onClick={uploadNewVersion} disabled={!pendingVersionFile || uploadingVersion}>
                 {uploadingVersion ? 'Uploading…' : 'Upload version'}
               </button>
             </div>
@@ -3392,18 +3460,28 @@ function VersionPageInner() {
 
       {/* Version picker modal */}
       {showVersionModal && (
-        <div className={styles.modalOverlay} onClick={() => setShowVersionModal(false)}>
-          <div className={styles.versionModal} onClick={e => e.stopPropagation()}>
+        <div className={styles.modalOverlay} onClick={closeVersionPickerDialog}>
+          <div
+            ref={versionPickerDialogRef}
+            className={styles.versionModal}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="version-picker-dialog-title"
+            tabIndex={-1}
+            onClick={e => e.stopPropagation()}
+          >
             <div className={styles.versionModalHeader}>
-              <h3 className={styles.versionModalTitle}>Choose version</h3>
-              <button className={styles.versionModalClose} onClick={() => setShowVersionModal(false)}>✕</button>
+              <h3 id="version-picker-dialog-title" className={styles.versionModalTitle}>Choose version</h3>
+              <button type="button" className={styles.versionModalClose} onClick={closeVersionPickerDialog} aria-label="Close version picker">✕</button>
             </div>
             <div className={styles.versionModalList}>
               {versions.map(v => (
                 <button
                   key={v.id}
+                  type="button"
                   className={`${styles.versionModalItem} ${v.id === versionId ? styles.versionModalItemActive : ''}`}
                   onClick={() => { stopPlayback(); setShowVersionModal(false); router.push(`/songs/${songId}/versions/${v.id}`); }}
+                  aria-current={v.id === versionId ? 'true' : undefined}
                 >
                   <span className={styles.versionModalLabel}>{v.display_name || getVersionDisplayLabel(v)}</span>
                   <span className={styles.versionModalMeta}>

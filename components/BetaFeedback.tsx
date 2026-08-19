@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useDialogFocus } from '@/lib/useDialogFocus';
 import styles from './BetaFeedback.module.css';
 
 type FeedbackType = 'bug' | 'idea' | 'other';
@@ -16,6 +17,10 @@ export default function BetaFeedback() {
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
   const [error, setError] = useState<string | null>(null);
   const website = useRef(''); // honeypot — must stay empty
+  const panelRef = useRef<HTMLDivElement>(null);
+  const closeFeedback = useCallback(() => setOpen(false), []);
+
+  useDialogFocus(open, closeFeedback, panelRef);
 
   // Let the beta banner (or anything) open the panel.
   useEffect(() => {
@@ -23,16 +28,6 @@ export default function BetaFeedback() {
     window.addEventListener(OPEN_EVENT, handler);
     return () => window.removeEventListener(OPEN_EVENT, handler);
   }, []);
-
-  // Close on Escape.
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open]);
 
   const reset = useCallback(() => {
     setType('bug');
@@ -94,13 +89,21 @@ export default function BetaFeedback() {
   return (
     <div className={styles.wrap}>
       {open && (
-        <div className={styles.panel} role="dialog" aria-label="Send feedback">
+        <div
+          ref={panelRef}
+          className={styles.panel}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="beta-feedback-title"
+          aria-describedby="beta-feedback-description"
+          tabIndex={-1}
+        >
           <div className={styles.head}>
-            <button className={styles.close} onClick={() => setOpen(false)} aria-label="Close">
+            <button type="button" className={styles.close} onClick={closeFeedback} aria-label="Close feedback">
               &#10005;
             </button>
-            <h4 className={styles.title}>Help us build Song Room</h4>
-            <p className={styles.sub}>Found a bug or got an idea? Tell us — we read every one.</p>
+            <h4 id="beta-feedback-title" className={styles.title}>Help us build Song Room</h4>
+            <p id="beta-feedback-description" className={styles.sub}>Found a bug or got an idea? Tell us — we read every one.</p>
           </div>
 
           {status === 'sent' ? (

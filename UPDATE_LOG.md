@@ -4622,3 +4622,35 @@ New frameable `/embed/playlist/[id]` route rendering a self-contained, branded W
 - Default snippet is `width="100%" height="240"`; the player reflows via CSS container queries (drops thumbnails and footer link in narrow sidebars).
 - Engine was ported faithfully from the `/listen` immersive player (destroy+recreate per track, desktop live Web Audio / mobile OfflineAudioContext precompute, Media Session) into a standalone `EmbedPlayer` rather than refactored into a shared hook, to avoid regressing the shipped player. Follow-up: extract a shared `usePlaylistPlayer` hook as the single source of truth.
 - Verification: local `tsc --noEmit` clean, all 20 contract tests pass, focused lint 0 errors (2 pre-existing `<img>` warnings consistent with the listen player). Production build READY; Coris-confirmed the embed works end to end.
+
+---
+
+## 2026-08-17 - Dialog focus and semantics accessibility closeout
+
+### What we were trying to achieve
+
+Make every active dashboard, feedback, and song-version dialog usable without a pointer and announce its purpose clearly to assistive technology.
+
+### Feature / change being made
+
+Apply the existing shared dialog-focus lifecycle to the remaining overlays, complete their dialog labelling, and preserve the current visual design and application handlers.
+
+### Files changed
+
+- `app/dashboard/page.tsx`
+- `app/songs/[id]/versions/[versionId]/page.tsx`
+- `app/songs/[id]/versions/[versionId]/version.module.css`
+- `components/BetaFeedback.tsx`
+- `tests/critical-contracts.test.mjs`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- New-song, delete-song, accepted-invite, mobile song-sheet, Beta Feedback, public sharing, action editing, version upload, and version-picker overlays now receive initial focus, contain Tab and Shift+Tab, close with Escape when allowed, and return focus to their trigger.
+- Dialog titles and descriptions are connected with `aria-labelledby` and `aria-describedby`; destructive deletion uses `alertdialog`.
+- Upload progress is exposed as a progress bar, upload errors use an alert role, and the current version is exposed in the picker.
+- Existing creation, deletion, sharing, upload, playback, and navigation behavior is unchanged.
+- All 22 contract tests, TypeScript checking, focused lint, and the placeholder-environment production build passed. Focused lint reported zero errors and 18 existing warnings.
+- A local Chromium check confirmed Feedback receives initial focus, wraps Tab and Shift+Tab, closes with Escape, returns focus to its trigger, and produces no browser console errors.
+- On 19 August, Coris confirmed that the authenticated dashboard and song-page dialogs in the PR #18 preview contained forward and reverse Tab navigation, closed with Escape, and returned focus to their opening controls. Both Vercel deployment checks passed after the staging Supabase variables were made available to all Preview branches.
