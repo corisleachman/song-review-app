@@ -1188,6 +1188,9 @@ footer {
   /* Keep one clear signup action in the lower thumb zone on phones. */
   .nav-cta { display: none; }
 
+  /* Core explanatory copy should never wait for the bento image sequence. */
+  .cell-d { opacity: 1; }
+
   .hero {
     height: auto;
     min-height: 100vh;
@@ -1223,6 +1226,7 @@ footer {
 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
+  .cell-d { opacity: 1; }
 }
 
 /* ═══════════════════════════════════

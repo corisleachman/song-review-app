@@ -357,6 +357,19 @@ test('mobile marketing description occupies a separate row from the hero headlin
   assert.match(responsiveCss, /\.bento-cell-text p\s*\{[^}]*font-size:\s*clamp\(15px, 4vw, 18px\);/u);
 });
 
+test('mobile marketing description is present on first paint', () => {
+  const marketing = read('public/marketing.html');
+  const phoneStart = marketing.indexOf('@media (max-width: 600px), (max-width: 900px) and (max-height: 600px) {', marketing.indexOf('RESPONSIVE'));
+  const phoneEnd = marketing.indexOf('@media (prefers-reduced-motion: reduce)', phoneStart);
+  const reducedMotionStart = phoneEnd;
+  const reducedMotionEnd = marketing.indexOf('/*', reducedMotionStart + 1);
+  const phoneCss = marketing.slice(phoneStart, phoneEnd);
+  const reducedMotionCss = marketing.slice(reducedMotionStart, reducedMotionEnd);
+
+  assert.match(phoneCss, /\.cell-d\s*\{[^}]*opacity:\s*1;/u);
+  assert.match(reducedMotionCss, /\.cell-d\s*\{[^}]*opacity:\s*1;/u);
+});
+
 test('mobile homepage keeps its primary CTA visible in the thumb zone', () => {
   const marketing = read('public/marketing.html');
   const phoneStart = marketing.indexOf('@media (max-width: 600px), (max-width: 900px) and (max-height: 600px) {', marketing.indexOf('RESPONSIVE'));

@@ -9,9 +9,10 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 ### Mobile homepage: descriptive copy appears too late
 - Priority: P2
 - Logged: 2026-08-19
+- Status: Code complete on `codex/mobile-homepage-copy-timing`; preview verification pending.
 - Observed on iPhone 16: the paragraph beginning “A collaboration space for artists...” fades in after the rest of the page, leaving a temporary gap that makes the layout look broken.
 - Expected: the paragraph should be present when its section first renders. Any remaining entrance motion must not delay the content or leave empty layout space.
-- Include reduced-motion behavior in the eventual check.
+- Implementation: phone portrait and short wide layouts now show the description cell from first paint while the other bento cells keep their existing sequence. Reduced-motion users receive the same immediate copy.
 
 ### Mobile homepage: bento images crop the subject at the top
 - Priority: P2
@@ -23,7 +24,7 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 ### Mobile homepage: primary CTA is clipped and outside the thumb zone
 - Priority: P1
 - Logged: 2026-08-19
-- Status: Code complete on `codex/mobile-homepage-cta`; preview verification pending.
+- Status: Production verified on 2026-08-20 after PR #21.
 - Observed on iPhone 16: the red CTA can be cut off, and its top-right placement makes it difficult to reach one-handed.
 - Expected: the primary CTA must remain fully visible inside the safe area and sit in the lower, thumb-reachable part of the opening mobile composition.
 - Copy decision remains open between “Start for free” and “See how it works”. Preserve a clear route into account creation whichever label is chosen.
