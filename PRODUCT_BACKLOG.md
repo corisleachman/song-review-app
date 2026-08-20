@@ -9,7 +9,7 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 ### Mobile homepage: descriptive copy appears too late
 - Priority: P2
 - Logged: 2026-08-19
-- Status: Code complete on `codex/mobile-homepage-copy-timing`; preview verification pending.
+- Status: Preview verified on iPhone on 2026-08-20 in PR #22.
 - Observed on iPhone 16: the paragraph beginning “A collaboration space for artists...” fades in after the rest of the page, leaving a temporary gap that makes the layout look broken.
 - Expected: the paragraph should be present when its section first renders. Any remaining entrance motion must not delay the content or leave empty layout space.
 - Implementation: phone portrait and short wide layouts now show the description cell from first paint while the other bento cells keep their existing sequence. Reduced-motion users receive the same immediate copy.

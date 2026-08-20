@@ -4794,3 +4794,4 @@ Phone-only motion correction that keeps the core description visible from first 
 - Phone portrait and short wide layouts now bypass that parent-cell opacity delay.
 - Reduced-motion users receive the same immediate copy.
 - The larger mobile hero hierarchy and animation exploration remains separate.
+- PR #22 preview verification passed on an iPhone: the description appeared immediately as expected.
