@@ -370,6 +370,15 @@ test('mobile marketing description is present on first paint', () => {
   assert.match(reducedMotionCss, /\.cell-d\s*\{[^}]*opacity:\s*1;/u);
 });
 
+test('mobile marketing bento images preserve their top edge', () => {
+  const marketing = read('public/marketing.html');
+  const phoneStart = marketing.indexOf('@media (max-width: 600px), (max-width: 900px) and (max-height: 600px) {', marketing.indexOf('RESPONSIVE'));
+  const phoneEnd = marketing.indexOf('@media (prefers-reduced-motion: reduce)', phoneStart);
+  const phoneCss = marketing.slice(phoneStart, phoneEnd);
+
+  assert.match(phoneCss, /\.bento-cell-img\s*\{[^}]*background-position:\s*center top;/u);
+});
+
 test('mobile homepage keeps its primary CTA visible in the thumb zone', () => {
   const marketing = read('public/marketing.html');
   const phoneStart = marketing.indexOf('@media (max-width: 600px), (max-width: 900px) and (max-height: 600px) {', marketing.indexOf('RESPONSIVE'));

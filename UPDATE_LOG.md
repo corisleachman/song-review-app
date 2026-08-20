@@ -4795,3 +4795,28 @@ Phone-only motion correction that keeps the core description visible from first 
 - Reduced-motion users receive the same immediate copy.
 - The larger mobile hero hierarchy and animation exploration remains separate.
 - PR #22 preview verification passed on an iPhone: the description appeared immediately as expected.
+
+---
+
+## 2026-08-20 - Mobile bento image focal alignment
+
+### What we were trying to achieve
+
+Keep faces and the space above them visible when homepage bento images are cropped on phones.
+
+### Feature / change being made
+
+Phone-only image-framing correction that top-centres both layers of the rotating bento crossfade without changing desktop composition.
+
+### Files changed
+
+- `public/marketing.html`
+- `tests/critical-contracts.test.mjs`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The shared bento image layer was vertically centred at every viewport size, so short phone frames could crop the top of a portrait.
+- The same mobile rule applies before and during crossfades because both image layers use `.bento-cell-img`.
+- The crowded mobile dashboard song filters were captured as a separate backlog item; no dashboard UI changed in this slice.

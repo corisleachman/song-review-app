@@ -17,9 +17,19 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 ### Mobile homepage: bento images crop the subject at the top
 - Priority: P2
 - Logged: 2026-08-19
+- Status: Code complete on `codex/mobile-bento-image-alignment`; preview verification pending.
 - Some images inside the bento frames are vertically centred, which can cut off the subject's head or the space above it.
 - Expected: mobile bento images should use a top-centred focal position by default. If cropping is required, prefer losing the bottom of the image.
-- Check every current homepage image rather than assuming one shared position works for all artwork.
+- Implementation: phone portrait and short wide layouts now anchor both bento crossfade layers to the top centre. Desktop framing is unchanged.
+- Preview check: watch at least one full image rotation on a real phone and confirm faces and headroom stay inside each frame.
+
+### Mobile dashboard: song filters consume too much vertical space
+- Priority: P2
+- Logged: 2026-08-20
+- Status: Backlog; UI direction needs a focused design pass before implementation.
+- Observed on mobile: the song-status filters wrap across three rows, pushing the song list down and making the dashboard toolbar feel clunky.
+- Expected: replace the exposed filter grid with one compact, clearly labelled filter control near Sort and New song while preserving every status, count, active state, and keyboard/touch access.
+- Direction to test: a Filter button or compact select on the toolbar that opens a mobile-friendly menu or sheet. Do not squeeze all three controls onto one line if that creates small targets or truncated labels.
 
 ### Mobile homepage: primary CTA is clipped and outside the thumb zone
 - Priority: P1
