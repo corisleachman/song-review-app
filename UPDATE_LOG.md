@@ -4768,3 +4768,30 @@ Phone-only homepage layout correction that removes the duplicate top navigation 
 - The phone hero now grows when its content needs more room instead of clipping inside a fixed `100vh` and 600-pixel minimum.
 - The primary hero CTA remains “Start for free”, is centred in the lower action row, and has a 48-pixel minimum height.
 - The separate “Song Room” hero-animation exploration is not part of this fix.
+
+---
+
+## 2026-08-20 - Immediate mobile homepage description
+
+### What we were trying to achieve
+
+Show the homepage explanation as soon as its mobile bento section renders instead of leaving an empty text panel during the staggered image entrance.
+
+### Feature / change being made
+
+Phone-only motion correction that keeps the core description visible from first paint while preserving the existing bento sequence for the remaining image cells.
+
+### Files changed
+
+- `public/marketing.html`
+- `tests/critical-contracts.test.mjs`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The description cell was fourth in a 1.4-second JavaScript stagger, delaying the copy by roughly 4.5 seconds.
+- Phone portrait and short wide layouts now bypass that parent-cell opacity delay.
+- Reduced-motion users receive the same immediate copy.
+- The larger mobile hero hierarchy and animation exploration remains separate.
+- PR #22 preview verification passed on an iPhone: the description appeared immediately as expected.
