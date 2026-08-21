@@ -4877,3 +4877,30 @@ Phone-only display type treatment that uses Thunder Bold, a larger fluid scale, 
 - Supporting display headings use a smaller companion tier so feature and showcase sections do not become oversized.
 - Local checks at 320, 393, 430, and 600 pixels found no horizontal page or heading overflow. Desktop typography is outside the new media rule.
 - Real-phone preview verification is still required before rollout.
+
+---
+
+## 2026-08-21 - Pricing order and annual billing default
+
+### What we were trying to achieve
+
+Make the public pricing section read as a clear upgrade path on every screen and present the annual saving without requiring visitors to find the toggle first.
+
+### Feature / change being made
+
+Consistent Free, Pro, Studio ordering plus Annual as the initial billing period on the marketing homepage.
+
+### Files changed
+
+- `public/marketing.html`
+- `tests/critical-contracts.test.mjs`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The pricing markup was already ordered Free, Pro, Studio. A mobile CSS rule moved the featured Pro card ahead of Free when the grid stacked.
+- Removing that override preserves the expected upgrade sequence while the red treatment and “Most popular” badge continue to recommend Pro.
+- Annual now begins active in the HTML and the controller, preventing a monthly-price flash before JavaScript runs. Pro begins at £7.17 per month with £86 billed yearly; Studio begins at £15.83 per month with £190 billed yearly.
+- Monthly remains available from the same control and retains its original prices and billing notes.
+- Revised PR #25 preview verification is still required before rollout.
