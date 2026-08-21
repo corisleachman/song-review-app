@@ -1675,6 +1675,33 @@ footer {
   .phone-row::-webkit-scrollbar { height: 0; }
 }
 
+/* Keep the condensed display voice clear on phone screens. */
+@media (max-width: 600px) {
+  .problem-heading,
+  .product-heading,
+  .feature-heading,
+  .showcase-heading,
+  .pricing-heading,
+  .final-heading {
+    font-family: var(--tbold);
+    line-height: 0.84;
+    letter-spacing: 0.01em;
+    font-kerning: normal;
+  }
+
+  .problem-heading,
+  .pricing-heading,
+  .final-heading {
+    font-size: clamp(4.5rem, 22vw, 6rem);
+  }
+
+  .product-heading,
+  .feature-heading,
+  .showcase-heading {
+    font-size: clamp(3.75rem, 18vw, 5rem);
+  }
+}
+
 </style>
 <style id="beta-strip-style">
   .beta-strip{position:fixed;top:0;left:0;right:0;height:34px;z-index:200;display:flex;align-items:center;justify-content:center;gap:9px;background:var(--straw);color:var(--black);border-bottom:1px solid var(--black);font-family:var(--ui);font-size:12.5px;line-height:1;white-space:nowrap;overflow:hidden;padding:0 12px;}

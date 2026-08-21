@@ -45,9 +45,12 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 ### Mobile homepage: display headings lose clarity at small sizes
 - Priority: P2
 - Logged: 2026-08-19
+- Status: Local implementation complete on `codex/mobile-homepage-heading-legibility`; preview verification pending.
 - Headings such as “You've been doing it the hard way” look blocky and blur into themselves at the current mobile size.
 - Expected: mobile display headings remain distinctive and legible without collisions or muddy letterforms.
-- Test a larger fluid size first. If that does not solve it, compare a lighter display weight or mobile-specific font treatment before changing the typeface.
+- Implementation: phone display headings keep the Thunder family but move from the ultra-black face to Thunder Bold, use two larger fluid size tiers, and relax line-height from `0.74` to `0.84`. Copy, manual line breaks, colours, and desktop typography remain unchanged.
+- Local check: 320, 393, 430, and 600-pixel widths showed the intended Thunder Bold face with no heading or page overflow. At 393 pixels the problem heading increased from 64px with a 47.36px line advance to 86.46px with a 72.63px line advance.
+- Preview check: inspect each display heading on a real phone, including “You've been doing it the hard way”, the three feature headings, pricing, and the final sign-up heading. Confirm the lighter face stays crisp and no section feels excessively tall.
 
 ### Desktop card view — status dropdown missing  ✅ DONE (2026-08-09)
 - Logged: 2026-08-07 · Shipped: 2026-08-09 (commits b9c03461, be268dce)

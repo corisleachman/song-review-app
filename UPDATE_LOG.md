@@ -4850,3 +4850,30 @@ Mobile-only toolbar adaptation that presents the existing song filters and count
 - The mobile selector uses the existing filter options and state, including needs-attention, assigned-to-me, and every song stage.
 - Filter, Sort, and New song retain 44-pixel touch targets. On screens no wider than 340 pixels, the New song control keeps its accessible name while showing only the plus icon.
 - PR #24 preview verification passed on 2026-08-21: the compact toolbar, every song-filter option, list and empty-state updates, Sort, New song, mobile overflow, and unchanged desktop filter pills all behaved as expected.
+
+---
+
+## 2026-08-21 - Clearer mobile homepage display headings
+
+### What we were trying to achieve
+
+Keep the condensed homepage headings bold and recognisable on phones without their heavy strokes crowding into a block.
+
+### Feature / change being made
+
+Phone-only display type treatment that uses Thunder Bold, a larger fluid scale, and more line separation while preserving the existing copy and desktop design.
+
+### Files changed
+
+- `public/marketing.html`
+- `tests/critical-contracts.test.mjs`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The 393-pixel baseline rendered the problem heading at 64px in Thunder Black with a 47.36px line advance.
+- The revised phone rule renders that heading at 86.46px in Thunder Bold with a 72.63px line advance. The display remains condensed and forceful, but the letters and lines are easier to distinguish.
+- Supporting display headings use a smaller companion tier so feature and showcase sections do not become oversized.
+- Local checks at 320, 393, 430, and 600 pixels found no horizontal page or heading overflow. Desktop typography is outside the new media rule.
+- Real-phone preview verification is still required before rollout.
