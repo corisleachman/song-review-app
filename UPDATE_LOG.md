@@ -4849,4 +4849,4 @@ Mobile-only toolbar adaptation that presents the existing song filters and count
 - Filtering logic and desktop filter pills are unchanged.
 - The mobile selector uses the existing filter options and state, including needs-attention, assigned-to-me, and every song stage.
 - Filter, Sort, and New song retain 44-pixel touch targets. On screens no wider than 340 pixels, the New song control keeps its accessible name while showing only the plus icon.
-- Preview verification is still required on a real phone before rollout.
+- PR #24 preview verification passed on 2026-08-21: the compact toolbar, every song-filter option, list and empty-state updates, Sort, New song, mobile overflow, and unchanged desktop filter pills all behaved as expected.
