@@ -55,12 +55,12 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 ### Marketing pricing: stacked order and billing default
 - Priority: P2
 - Logged: 2026-08-21
-- Status: Local implementation complete on `codex/mobile-homepage-heading-legibility`; revised PR #25 preview verification pending.
+- Status: PR #25 preview verified on a real phone on 2026-08-22.
 - Observed on mobile: CSS promoted the featured Pro card above Free, producing the sequence Pro, Free, Studio when the pricing cards stacked.
 - Expected: plans follow the natural upgrade path Free, Pro, Studio at every viewport. Pro remains visually marked as “Most popular” without changing document order.
 - Billing decision: show Annual first so visitors see the lower monthly equivalent and the exact yearly charge, while keeping Monthly one click away.
 - Implementation: removed the mobile-only Pro reordering and made Annual the initial active billing period in the markup and toggle controller. Desktop card order remains Free, Pro, Studio.
-- Preview check: confirm the card sequence on mobile and desktop, verify annual prices appear at first paint, then switch Monthly and Annual in both directions and confirm prices, notes, active styling, and pressed states update together.
+- Preview result: Free, Pro, Studio appeared in the intended order; Annual was selected initially; and switching to Monthly and back to Annual restored the correct prices and billing states.
 
 ### Desktop card view — status dropdown missing  ✅ DONE (2026-08-09)
 - Logged: 2026-08-07 · Shipped: 2026-08-09 (commits b9c03461, be268dce)

@@ -4876,7 +4876,7 @@ Phone-only display type treatment that uses Thunder Bold, a larger fluid scale, 
 - The revised phone rule renders that heading at 86.46px in Thunder Bold with a 72.63px line advance. The display remains condensed and forceful, but the letters and lines are easier to distinguish.
 - Supporting display headings use a smaller companion tier so feature and showcase sections do not become oversized.
 - Local checks at 320, 393, 430, and 600 pixels found no horizontal page or heading overflow. Desktop typography is outside the new media rule.
-- Real-phone preview verification is still required before rollout.
+- PR #25 preview verification passed on a real phone on 2026-08-21. The revised headings were clear, and no unwanted collision or section height was reported.
 
 ---
 
@@ -4903,4 +4903,4 @@ Consistent Free, Pro, Studio ordering plus Annual as the initial billing period 
 - Removing that override preserves the expected upgrade sequence while the red treatment and “Most popular” badge continue to recommend Pro.
 - Annual now begins active in the HTML and the controller, preventing a monthly-price flash before JavaScript runs. Pro begins at £7.17 per month with £86 billed yearly; Studio begins at £15.83 per month with £190 billed yearly.
 - Monthly remains available from the same control and retains its original prices and billing notes.
-- Revised PR #25 preview verification is still required before rollout.
+- Revised PR #25 preview verification passed on a real phone on 2026-08-22. Plans appeared as Free, Pro, Studio; Annual was selected initially; and switching to Monthly and back restored the correct prices and billing states.
