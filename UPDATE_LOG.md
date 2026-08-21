@@ -4822,3 +4822,4 @@ Phone-only composition that uses one larger, centre-cropped lead image with the 
 - Both crossfade layers inherit the same centred crop, while desktop composition remains untouched.
 - Hidden bento cells now skip crossfade preloading, avoiding needless mobile image transfers.
 - The crowded mobile dashboard song filters were captured as a separate backlog item; no dashboard UI changed in this slice.
+- The revised PR #23 preview was approved on an iPhone on 2026-08-21.

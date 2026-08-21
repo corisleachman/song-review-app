@@ -17,7 +17,7 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 ### Mobile homepage: bento images crop the subject at the top
 - Priority: P2
 - Logged: 2026-08-19
-- Status: First preview rejected; revised code complete on `codex/mobile-bento-image-alignment`, new preview pending.
+- Status: Revised PR #23 preview verified on iPhone on 2026-08-21.
 - Some images inside the bento frames are vertically centred, which can cut off the subject's head or the space above it.
 - Preview finding: top-centred cropping exposed too much empty headroom and could leave only part of the subject visible.
 - Expected: the lead mobile image should have enough height to frame people naturally using a centred crop, with the explanatory copy over the lower part of that same image.
