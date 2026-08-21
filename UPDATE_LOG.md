@@ -4798,15 +4798,15 @@ Phone-only motion correction that keeps the core description visible from first 
 
 ---
 
-## 2026-08-20 - Mobile bento image focal alignment
+## 2026-08-20 - Mobile bento lead-image composition
 
 ### What we were trying to achieve
 
-Keep faces and the space above them visible when homepage bento images are cropped on phones.
+Keep people recognisable when homepage bento images are cropped on phones without leaving excessive empty headroom.
 
 ### Feature / change being made
 
-Phone-only image-framing correction that top-centres both layers of the rotating bento crossfade without changing desktop composition.
+Phone-only composition that uses one larger, centre-cropped lead image with the explanatory copy over its lower portion, followed by four supporting image cells.
 
 ### Files changed
 
@@ -4817,6 +4817,8 @@ Phone-only image-framing correction that top-centres both layers of the rotating
 
 ### Notes
 
-- The shared bento image layer was vertically centred at every viewport size, so short phone frames could crop the top of a portrait.
-- The same mobile rule applies before and during crossfades because both image layers use `.bento-cell-img`.
+- The first preview changed every phone image to top-centred framing. Real-device testing showed too much empty space above some subjects and left them visibly cut off.
+- The revision restores centred framing and fixes the underlying constraint by making the text-bearing lead cell roughly half the phone viewport high.
+- Both crossfade layers inherit the same centred crop, while desktop composition remains untouched.
+- Hidden bento cells now skip crossfade preloading, avoiding needless mobile image transfers.
 - The crowded mobile dashboard song filters were captured as a separate backlog item; no dashboard UI changed in this slice.

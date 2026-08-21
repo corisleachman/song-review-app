@@ -17,11 +17,12 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 ### Mobile homepage: bento images crop the subject at the top
 - Priority: P2
 - Logged: 2026-08-19
-- Status: Code complete on `codex/mobile-bento-image-alignment`; preview verification pending.
+- Status: First preview rejected; revised code complete on `codex/mobile-bento-image-alignment`, new preview pending.
 - Some images inside the bento frames are vertically centred, which can cut off the subject's head or the space above it.
-- Expected: mobile bento images should use a top-centred focal position by default. If cropping is required, prefer losing the bottom of the image.
-- Implementation: phone portrait and short wide layouts now anchor both bento crossfade layers to the top centre. Desktop framing is unchanged.
-- Preview check: watch at least one full image rotation on a real phone and confirm faces and headroom stay inside each frame.
+- Preview finding: top-centred cropping exposed too much empty headroom and could leave only part of the subject visible.
+- Expected: the lead mobile image should have enough height to frame people naturally using a centred crop, with the explanatory copy over the lower part of that same image.
+- Revised implementation: phone layouts promote the existing text-bearing bento cell into a lead panel about half the viewport high, retain centred image framing, and place the four supporting image cells below it. The hidden redundant cell no longer preloads crossfade images. Desktop framing is unchanged.
+- Preview check: watch the lead image through several rotations on a real phone and confirm each subject remains recognisable behind the copy.
 
 ### Mobile dashboard: song filters consume too much vertical space
 - Priority: P2

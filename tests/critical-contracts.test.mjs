@@ -370,13 +370,20 @@ test('mobile marketing description is present on first paint', () => {
   assert.match(reducedMotionCss, /\.cell-d\s*\{[^}]*opacity:\s*1;/u);
 });
 
-test('mobile marketing bento images preserve their top edge', () => {
+test('mobile marketing leads with a generous centre-cropped image and attached copy', () => {
   const marketing = read('public/marketing.html');
   const phoneStart = marketing.indexOf('@media (max-width: 600px), (max-width: 900px) and (max-height: 600px) {', marketing.indexOf('RESPONSIVE'));
   const phoneEnd = marketing.indexOf('@media (prefers-reduced-motion: reduce)', phoneStart);
   const phoneCss = marketing.slice(phoneStart, phoneEnd);
 
-  assert.match(phoneCss, /\.bento-cell-img\s*\{[^}]*background-position:\s*center top;/u);
+  assert.match(phoneCss, /\.hero-bento\s*\{[^}]*grid-template-rows:\s*minmax\(280px, 52svh\) 1fr 1fr;/u);
+  assert.match(phoneCss, /\.cell-a\s*\{[^}]*display:\s*none;/u);
+  assert.match(phoneCss, /\.cell-d\s*\{[^}]*grid-column:\s*1 \/ 3;[^}]*grid-row:\s*1;[^}]*opacity:\s*1;/u);
+  assert.match(phoneCss, /\.cell-b\s*\{[^}]*grid-row:\s*2;/u);
+  assert.match(phoneCss, /\.cell-e\s*\{[^}]*grid-row:\s*3;/u);
+  assert.match(phoneCss, /\.bento-cell-img\s*\{[^}]*background-position:\s*center;/u);
+  assert.match(phoneCss, /\.bento-cell-text\s*\{[^}]*justify-content:\s*flex-end;/u);
+  assert.match(marketing, /function crossfadeCell\(cellId\)\s*\{[^}]*getComputedStyle\(cell\)\.display === 'none'/u);
 });
 
 test('mobile homepage keeps its primary CTA visible in the thumb zone', () => {
