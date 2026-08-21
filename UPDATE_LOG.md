@@ -4795,3 +4795,31 @@ Phone-only motion correction that keeps the core description visible from first 
 - Reduced-motion users receive the same immediate copy.
 - The larger mobile hero hierarchy and animation exploration remains separate.
 - PR #22 preview verification passed on an iPhone: the description appeared immediately as expected.
+
+---
+
+## 2026-08-20 - Mobile bento lead-image composition
+
+### What we were trying to achieve
+
+Keep people recognisable when homepage bento images are cropped on phones without leaving excessive empty headroom.
+
+### Feature / change being made
+
+Phone-only composition that uses one larger, centre-cropped lead image with the explanatory copy over its lower portion, followed by four supporting image cells.
+
+### Files changed
+
+- `public/marketing.html`
+- `tests/critical-contracts.test.mjs`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The first preview changed every phone image to top-centred framing. Real-device testing showed too much empty space above some subjects and left them visibly cut off.
+- The revision restores centred framing and fixes the underlying constraint by making the text-bearing lead cell roughly half the phone viewport high.
+- Both crossfade layers inherit the same centred crop, while desktop composition remains untouched.
+- Hidden bento cells now skip crossfade preloading, avoiding needless mobile image transfers.
+- The crowded mobile dashboard song filters were captured as a separate backlog item; no dashboard UI changed in this slice.
+- The revised PR #23 preview was approved on an iPhone on 2026-08-21.

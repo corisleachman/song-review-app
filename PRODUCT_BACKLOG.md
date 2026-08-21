@@ -17,9 +17,20 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 ### Mobile homepage: bento images crop the subject at the top
 - Priority: P2
 - Logged: 2026-08-19
+- Status: Revised PR #23 preview verified on iPhone on 2026-08-21.
 - Some images inside the bento frames are vertically centred, which can cut off the subject's head or the space above it.
-- Expected: mobile bento images should use a top-centred focal position by default. If cropping is required, prefer losing the bottom of the image.
-- Check every current homepage image rather than assuming one shared position works for all artwork.
+- Preview finding: top-centred cropping exposed too much empty headroom and could leave only part of the subject visible.
+- Expected: the lead mobile image should have enough height to frame people naturally using a centred crop, with the explanatory copy over the lower part of that same image.
+- Revised implementation: phone layouts promote the existing text-bearing bento cell into a lead panel about half the viewport high, retain centred image framing, and place the four supporting image cells below it. The hidden redundant cell no longer preloads crossfade images. Desktop framing is unchanged.
+- Preview check: watch the lead image through several rotations on a real phone and confirm each subject remains recognisable behind the copy.
+
+### Mobile dashboard: song filters consume too much vertical space
+- Priority: P2
+- Logged: 2026-08-20
+- Status: Backlog; UI direction needs a focused design pass before implementation.
+- Observed on mobile: the song-status filters wrap across three rows, pushing the song list down and making the dashboard toolbar feel clunky.
+- Expected: replace the exposed filter grid with one compact, clearly labelled filter control near Sort and New song while preserving every status, count, active state, and keyboard/touch access.
+- Direction to test: a Filter button or compact select on the toolbar that opens a mobile-friendly menu or sheet. Do not squeeze all three controls onto one line if that creates small targets or truncated labels.
 
 ### Mobile homepage: primary CTA is clipped and outside the thumb zone
 - Priority: P1
