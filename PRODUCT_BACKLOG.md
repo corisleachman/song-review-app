@@ -27,10 +27,11 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 ### Mobile dashboard: song filters consume too much vertical space
 - Priority: P2
 - Logged: 2026-08-20
-- Status: Backlog; UI direction needs a focused design pass before implementation.
+- Status: Preview verified on 2026-08-21 in PR #24.
 - Observed on mobile: the song-status filters wrap across three rows, pushing the song list down and making the dashboard toolbar feel clunky.
 - Expected: replace the exposed filter grid with one compact, clearly labelled filter control near Sort and New song while preserving every status, count, active state, and keyboard/touch access.
-- Direction to test: a Filter button or compact select on the toolbar that opens a mobile-friendly menu or sheet. Do not squeeze all three controls onto one line if that creates small targets or truncated labels.
+- Implementation: phones use one native song-filter select beside Sort and New song. It reuses the existing filter state and options, keeps every count, and retains 44-pixel touch targets. Desktop continues to show the full filter-pill row.
+- Preview result: the compact toolbar, every song-filter option, the filtered list and empty states, Sort, New song, mobile overflow, and the unchanged desktop filter pills all passed manual verification.
 
 ### Mobile homepage: primary CTA is clipped and outside the thumb zone
 - Priority: P1

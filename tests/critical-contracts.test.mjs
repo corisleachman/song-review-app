@@ -435,6 +435,34 @@ test('desktop card view exposes the same song-stage update path', () => {
   ], 'desktop card stage control');
 });
 
+test('mobile dashboard condenses song filters into the primary toolbar', () => {
+  const dashboard = read('app/dashboard/page.tsx');
+  const dashboardCss = read('app/dashboard/dashboard.module.css');
+
+  assertIncludesAll(dashboard, [
+    'id="song-filter-mobile"',
+    'className={`${styles.sortSelect} ${styles.mobileSongFilterSelect}`}',
+    'onChange={e => setSongFilter(e.target.value as typeof songFilter)}',
+    '{option.label} · {option.count}',
+    'className={`${styles.filterRow} ${styles.songFilterRow}`}',
+    'aria-label="New song"',
+  ], 'mobile song filter control');
+  assert.match(dashboardCss, /\.mobileSongFilter\s*\{\s*display:\s*none;/u);
+  assert.match(dashboardCss, /\.mobileSongFilter::after\s*\{[^}]*pointer-events:\s*none;/u);
+  assert.match(
+    dashboardCss,
+    /@media \(max-width:\s*768px\)[\s\S]*?\.songsPanel \.headerRight\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, 1fr\) auto;/u,
+  );
+  assert.match(
+    dashboardCss,
+    /@media \(max-width:\s*768px\)[\s\S]*?\.mobileSongFilter\s*\{\s*display:\s*block;/u,
+  );
+  assert.match(
+    dashboardCss,
+    /@media \(max-width:\s*768px\)[\s\S]*?\.songFilterRow\s*\{\s*display:\s*none;/u,
+  );
+});
+
 test('visualizer preference is editable, persisted, and respected by the song player', () => {
   const settings = read('app/settings/appearance/page.tsx');
   const route = read('app/api/profile/visualizer/route.ts');

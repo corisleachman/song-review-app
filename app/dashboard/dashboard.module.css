@@ -231,6 +231,36 @@
   background: rgba(255,255,255,0.07);
 }
 
+.mobileSongFilter {
+  display: none;
+  position: relative;
+}
+
+.mobileSongFilter::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 11px;
+  width: 6px;
+  height: 6px;
+  border-right: 1px solid rgba(255,255,255,0.48);
+  border-bottom: 1px solid rgba(255,255,255,0.48);
+  pointer-events: none;
+  transform: translateY(-70%) rotate(45deg);
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .newBtn {
   display: flex;
   align-items: center;
@@ -1679,19 +1709,64 @@
     align-items: flex-start;
     margin-bottom: 16px;
   }
+  .songsPanel .panelHeader {
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .songsPanel .panelLabel {
+    display: none;
+  }
   .headerRight {
     flex-wrap: nowrap;
     justify-content: flex-end;
     align-items: center;
+  }
+  .songsPanel .headerRight {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    gap: 6px;
+    width: 100%;
+  }
+  .mobileSongFilter {
+    display: block;
+    min-width: 0;
+  }
+  .mobileSongFilterSelect {
+    width: 100%;
+    max-width: none;
+    min-height: 44px;
+    padding-right: 28px;
+  }
+  .songFilterRow {
+    display: none;
   }
   .sortControl {
     width: auto;
     justify-content: flex-end;
     gap: 6px;
   }
+  .songsPanel .sortControl {
+    width: 100%;
+    min-width: 0;
+  }
+  .songsPanel .sortLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
   .sortSelect {
     max-width: 148px;
     padding-right: 24px;
+  }
+  .songsPanel .sortSelect {
+    width: 100%;
+    max-width: none;
   }
   .newBtn {
     min-height: 44px;
@@ -2418,6 +2493,18 @@
 
   .pageWithPlayer {
     padding-bottom: 156px;
+  }
+}
+
+@media (max-width: 340px) {
+  .songsPanel .newBtn {
+    width: 44px;
+    padding-inline: 0;
+    justify-content: center;
+  }
+
+  .songsPanel .newBtnLabel {
+    display: none;
   }
 }
 
