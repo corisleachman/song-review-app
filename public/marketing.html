@@ -1178,7 +1178,6 @@ footer {
   .proof { grid-template-columns: 1fr; }
   .pricing-header { grid-template-columns: 1fr; }
   .pricing-grid { grid-template-columns: 1fr; }
-  .tier.featured { order: -1; }   /* lead with Pro on mobile */
   .final-heading { font-size: clamp(64px, 10vw, 140px); }
   footer { flex-direction: column; gap: 16px; text-align: center; }
   .footer-links { justify-content: center; }
@@ -1675,6 +1674,33 @@ footer {
   .phone-row::-webkit-scrollbar { height: 0; }
 }
 
+/* Keep the condensed display voice clear on phone screens. */
+@media (max-width: 600px) {
+  .problem-heading,
+  .product-heading,
+  .feature-heading,
+  .showcase-heading,
+  .pricing-heading,
+  .final-heading {
+    font-family: var(--tbold);
+    line-height: 0.84;
+    letter-spacing: 0.01em;
+    font-kerning: normal;
+  }
+
+  .problem-heading,
+  .pricing-heading,
+  .final-heading {
+    font-size: clamp(4.5rem, 22vw, 6rem);
+  }
+
+  .product-heading,
+  .feature-heading,
+  .showcase-heading {
+    font-size: clamp(3.75rem, 18vw, 5rem);
+  }
+}
+
 </style>
 <style id="beta-strip-style">
   .beta-strip{position:fixed;top:0;left:0;right:0;height:34px;z-index:200;display:flex;align-items:center;justify-content:center;gap:9px;background:var(--straw);color:var(--black);border-bottom:1px solid var(--black);font-family:var(--ui);font-size:12.5px;line-height:1;white-space:nowrap;overflow:hidden;padding:0 12px;}
@@ -2053,8 +2079,8 @@ footer {
 
   <div class="billing-wrap reveal">
     <div class="billing-toggle" role="group" aria-label="Billing period">
-      <button type="button" class="billing-opt is-active" data-cycle="monthly" aria-pressed="true">Monthly</button>
-      <button type="button" class="billing-opt" data-cycle="annual" aria-pressed="false">Annual <span class="billing-save">Save up to 20%</span></button>
+      <button type="button" class="billing-opt" data-cycle="monthly" aria-pressed="false">Monthly</button>
+      <button type="button" class="billing-opt is-active" data-cycle="annual" aria-pressed="true">Annual <span class="billing-save">Save up to 20%</span></button>
     </div>
   </div>
 
@@ -2093,10 +2119,10 @@ footer {
       <div>
         <div class="tier-name" style="color:var(--red)">Pro</div>
         <div class="tier-price">
-          <span class="tier-price-amount" data-monthly="£9" data-annual="£7.17">£9</span>
+          <span class="tier-price-amount" data-monthly="£9" data-annual="£7.17">£7.17</span>
           <span class="tier-price-period">/ month</span>
         </div>
-        <span class="tier-billing-note" data-monthly="billed monthly" data-annual="£86 billed yearly · save £22">billed monthly</span>
+        <span class="tier-billing-note" data-monthly="billed monthly" data-annual="£86 billed yearly · save £22">£86 billed yearly · save £22</span>
       </div>
       <p class="tier-for">For working artists and bands finishing real records.</p>
       <div class="tier-storage">
@@ -2119,10 +2145,10 @@ footer {
       <div>
         <div class="tier-name">Studio</div>
         <div class="tier-price">
-          <span class="tier-price-amount" data-monthly="£19" data-annual="£15.83">£19</span>
+          <span class="tier-price-amount" data-monthly="£19" data-annual="£15.83">£15.83</span>
           <span class="tier-price-period">/ month</span>
         </div>
-        <span class="tier-billing-note" data-monthly="billed monthly" data-annual="£190 billed yearly · save £38">billed monthly</span>
+        <span class="tier-billing-note" data-monthly="billed monthly" data-annual="£190 billed yearly · save £38">£190 billed yearly · save £38</span>
       </div>
       <p class="tier-for">For producers and studios running multiple acts.</p>
       <div class="tier-storage">
@@ -2526,6 +2552,7 @@ reveals.forEach(el => observer.observe(el));
     });
   }
   opts.forEach(b => b.addEventListener('click', () => setCycle(b.dataset.cycle)));
+  setCycle('annual');
 })();
 
 // ── Product screenshot cross-fade rotation (1 -> 2 -> 3 -> loop) ──

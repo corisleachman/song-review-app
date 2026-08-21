@@ -400,6 +400,56 @@ test('mobile homepage keeps its primary CTA visible in the thumb zone', () => {
   assert.match(phoneCss, /\.btn-primary\s*\{[^}]*min-height:\s*48px;[^}]*justify-content:\s*center;/u);
 });
 
+test('mobile marketing display headings use a clearer phone type scale', () => {
+  const marketing = read('public/marketing.html');
+  const mobileTypeStart = marketing.indexOf('/* Keep the condensed display voice clear on phone screens. */');
+  const mobileTypeEnd = marketing.indexOf('</style>', mobileTypeStart);
+  const mobileTypeCss = marketing.slice(mobileTypeStart, mobileTypeEnd);
+
+  assert.ok(
+    mobileTypeStart > marketing.indexOf('.showcase-heading {'),
+    'the phone type override must follow the later showcase heading rule',
+  );
+  assertIncludesAll(mobileTypeCss, [
+    '@media (max-width: 600px)',
+    '.problem-heading',
+    '.product-heading',
+    '.feature-heading',
+    '.showcase-heading',
+    '.pricing-heading',
+    '.final-heading',
+    'font-family: var(--tbold)',
+    'line-height: 0.84',
+    'letter-spacing: 0.01em',
+    'font-size: clamp(4.5rem, 22vw, 6rem)',
+    'font-size: clamp(3.75rem, 18vw, 5rem)',
+  ], 'mobile display typography');
+  assert.doesNotMatch(mobileTypeCss, /font-family:\s*var\(--tblack\)/u);
+});
+
+test('marketing pricing follows the upgrade path and defaults to annual billing', () => {
+  const marketing = read('public/marketing.html');
+  const pricingStart = marketing.indexOf('<!-- ══ PRICING ══ -->');
+  const pricingEnd = marketing.indexOf('<!-- ══ FINAL CTA ══ -->', pricingStart);
+  const pricing = marketing.slice(pricingStart, pricingEnd);
+
+  assertOrdered(pricing, [
+    '<!-- Free -->',
+    '<!-- Pro -->',
+    '<!-- Studio -->',
+  ], 'pricing tier sequence');
+  assertIncludesAll(pricing, [
+    'class="billing-opt" data-cycle="monthly" aria-pressed="false"',
+    'class="billing-opt is-active" data-cycle="annual" aria-pressed="true"',
+    'data-monthly="£9" data-annual="£7.17">£7.17</span>',
+    'data-monthly="billed monthly" data-annual="£86 billed yearly · save £22">£86 billed yearly · save £22</span>',
+    'data-monthly="£19" data-annual="£15.83">£15.83</span>',
+    'data-monthly="billed monthly" data-annual="£190 billed yearly · save £38">£190 billed yearly · save £38</span>',
+  ], 'annual pricing defaults');
+  assert.match(marketing, /opts\.forEach\([^;]+;\s*setCycle\('annual'\);/u);
+  assert.doesNotMatch(marketing, /\.tier\.featured\s*\{[^}]*order:\s*-1;/u);
+});
+
 test('public playlist playback advances through its ordered tracks', () => {
   // The audio engine (auto-advance, media-session next, queue progression) lives
   // in the shared hook consumed by both public players.
