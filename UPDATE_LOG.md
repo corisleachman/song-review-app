@@ -4823,3 +4823,30 @@ Phone-only composition that uses one larger, centre-cropped lead image with the 
 - Hidden bento cells now skip crossfade preloading, avoiding needless mobile image transfers.
 - The crowded mobile dashboard song filters were captured as a separate backlog item; no dashboard UI changed in this slice.
 - The revised PR #23 preview was approved on an iPhone on 2026-08-21.
+
+---
+
+## 2026-08-21 - Compact mobile dashboard song filter
+
+### What we were trying to achieve
+
+Stop the dashboard song filters from occupying several rows before the song list on phones.
+
+### Feature / change being made
+
+Mobile-only toolbar adaptation that presents the existing song filters and counts in one native selector beside Sort and New song.
+
+### Files changed
+
+- `app/dashboard/page.tsx`
+- `app/dashboard/dashboard.module.css`
+- `tests/critical-contracts.test.mjs`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Filtering logic and desktop filter pills are unchanged.
+- The mobile selector uses the existing filter options and state, including needs-attention, assigned-to-me, and every song stage.
+- Filter, Sort, and New song retain 44-pixel touch targets. On screens no wider than 340 pixels, the New song control keeps its accessible name while showing only the plus icon.
+- Preview verification is still required on a real phone before rollout.

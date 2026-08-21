@@ -1451,6 +1451,23 @@ function DashboardContent() {
           <div className={styles.panelHeader}>
             <span className={styles.panelLabel}>Songs</span>
             <div className={styles.headerRight}>
+              <div className={styles.mobileSongFilter}>
+                <label className={styles.visuallyHidden} htmlFor="song-filter-mobile">
+                  Filter songs
+                </label>
+                <select
+                  id="song-filter-mobile"
+                  className={`${styles.sortSelect} ${styles.mobileSongFilterSelect}`}
+                  value={songFilter}
+                  onChange={e => setSongFilter(e.target.value as typeof songFilter)}
+                >
+                  {songFilterOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label} · {option.count}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div className={styles.sortControl}>
                 <label className={styles.sortLabel} htmlFor="song-sort">
                   Sort
@@ -1495,16 +1512,20 @@ function DashboardContent() {
                   </svg>
                 </button>
               </div>
-              <button className={styles.newBtn} onClick={() => router.push('/upload')}>
+              <button
+                className={styles.newBtn}
+                aria-label="New song"
+                onClick={() => router.push('/upload')}
+              >
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                   <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
-                New song
+                <span className={styles.newBtnLabel}>New song</span>
               </button>
             </div>
           </div>
 
-          <div className={styles.filterRow}>
+          <div className={`${styles.filterRow} ${styles.songFilterRow}`}>
             {songFilterOptions.map(option => (
               <button
                 key={option.value}
