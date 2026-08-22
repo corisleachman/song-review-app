@@ -85,12 +85,12 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 ## Future / larger efforts
 
 ### Mobile homepage hierarchy and hero animation
-- Priority: design exploration before implementation
+- Priority: P2
 - Logged: 2026-08-19
+- Status: Variation C approved and implemented locally on 2026-08-22; preview verification pending.
 - The current mobile stack does not create a convincing opening hierarchy: the small logo, top-right CTA, “What is the Song Room?” description, large “Create Together” treatment, and oversized closing sign-off compete rather than reading as one sequence.
-- Direction to prototype: make “Song Room” the main animated visual inside the first large bento frame; follow it with “What is Song Room?” and place the primary CTA around the centre of the lower third.
-- Reconsider “Create Together, every version” as a smaller supporting line or move it into the upper half of the page instead of using it as an oversized closing sign-off.
-- This direction is not approved implementation yet. Compare it with a refined version of the current “Create Together” concept at an iPhone 16 viewport before choosing.
+- Approved direction: keep the full bento image system so the opening still shows several collaborators, place “Song Room” over the upper half of the lead image using the existing letter-by-letter outline animation, and remove “Create Together” and its sign-off from the phone hero.
+- Implementation: phones hide the redundant small navigation logo, use the real Thunder outline paths from the existing Song Room loading artwork, show the complete collaborator bento from first paint, use the approved concise explanation inside the lead image, and retain the lower safe-area CTA. Tablet and desktop hero artwork and copy are unchanged.
 - Success criteria: the brand is the first clear visual, the explanation follows naturally, and the next action is visible and reachable without an awkward stack or clipped content.
 
 ### Authentication options beyond Google
