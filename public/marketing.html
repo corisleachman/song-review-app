@@ -1257,6 +1257,18 @@ footer {
   .bento-copy-desktop { display: none; }
   .bento-copy-mobile { display: block; }
 
+  .bento-cell-text {
+    justify-content: flex-start;
+    padding-top: clamp(210px, 28svh, 260px);
+    padding-bottom: 12px;
+  }
+
+  .bento-cell-kicker {
+    font-size: clamp(15px, 4vw, 18px);
+    line-height: 1.2;
+    letter-spacing: 0.12em;
+  }
+
   .hero {
     padding-top: calc(34px + env(safe-area-inset-top));
   }
@@ -1264,7 +1276,7 @@ footer {
   .mobile-hero-wordmark {
     position: absolute;
     z-index: 3;
-    top: clamp(66px, 9svh, 84px);
+    top: 44px;
     left: max(20px, env(safe-area-inset-left));
     display: block;
     width: clamp(158px, 44vw, 190px);
@@ -1289,7 +1301,6 @@ footer {
 
 @media (max-width: 340px) {
   .mobile-hero-wordmark {
-    top: 56px;
     width: 145px;
   }
 }
