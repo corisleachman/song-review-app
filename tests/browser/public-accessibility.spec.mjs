@@ -17,6 +17,7 @@ async function prepareDeterministicPage(page, { consent = 'rejected' } = {}) {
 }
 
 async function expectNoBlockingAxeViolations(page) {
+  await page.addStyleTag({ content: '.reveal { transition: none !important; }' });
   await page.addScriptTag({ content: axeSource });
   const violations = await page.evaluate(async () => {
     const results = await window.axe.run(document, {

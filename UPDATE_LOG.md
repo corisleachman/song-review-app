@@ -5024,3 +5024,4 @@ Colour-only contrast correction for the oversized feature numbers, footer wordma
 - The small red footer wordmark now measures 4.90:1, while links and copyright text move from 4.42:1 to 4.61:1 with a minimal neutral shift.
 - Layout, typography, content, animation, and interaction are unchanged.
 - Desktop and mobile Chromium pass Axe with no serious or critical allowlist entries.
+- Axe scans make only the existing scroll-reveal transition instantaneous, preventing machine speed from measuring text halfway through a 700ms opacity fade while keeping the final colour checks strict.
