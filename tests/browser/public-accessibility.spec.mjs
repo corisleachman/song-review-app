@@ -124,3 +124,39 @@ test('mobile homepage respects reduced motion and avoids horizontal overflow', a
   );
   expect(hasHorizontalOverflow).toBe(false);
 });
+
+test('public responses advertise report-only CSP and accept bounded violation reports', async ({ page, request }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-chromium', 'One browser is enough for the header contract.');
+  await prepareDeterministicPage(page);
+  const response = await page.goto('/', { waitUntil: 'domcontentloaded' });
+  const headers = response?.headers() ?? {};
+
+  expect(headers['content-security-policy-report-only']).toContain("default-src 'self';");
+  expect(headers['content-security-policy-report-only']).toContain("frame-ancestors 'none';");
+  expect(headers['content-security-policy-report-only']).toContain('report-uri /api/csp-report;');
+  expect(headers['reporting-endpoints']).toBe('csp-endpoint="/api/csp-report"');
+  expect(headers['content-security-policy']).toBeUndefined();
+
+  const reportResponse = await request.post('/api/csp-report', {
+    headers: { 'Content-Type': 'application/csp-report' },
+    data: JSON.stringify({
+      'csp-report': {
+        'document-uri': 'http://127.0.0.1:3100/login?code=sensitive#fragment',
+        'effective-directive': 'img-src',
+        'violated-directive': 'img-src',
+        'blocked-uri': 'https://images.example.test/avatar.png?token=sensitive',
+        'original-policy': 'not logged',
+        'script-sample': 'not logged',
+        'status-code': 200,
+      },
+    }),
+  });
+  expect(reportResponse.status()).toBe(204);
+  expect(reportResponse.headers()['cache-control']).toBe('no-store');
+
+  const oversizedResponse = await request.post('/api/csp-report', {
+    headers: { 'Content-Type': 'application/csp-report' },
+    data: JSON.stringify({ 'csp-report': { sample: 'x'.repeat(17 * 1024) } }),
+  });
+  expect(oversizedResponse.status()).toBe(413);
+});

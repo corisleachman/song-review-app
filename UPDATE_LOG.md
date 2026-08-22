@@ -5026,3 +5026,38 @@ Colour-only contrast correction for the oversized feature numbers, footer wordma
 - Desktop and mobile Chromium pass Axe with no serious or critical allowlist entries.
 - Axe scans make only the existing scroll-reveal transition instantaneous, preventing machine speed from measuring text halfway through a 700ms opacity fade while keeping the final colour checks strict.
 - PR #29 preview verification passed. The user confirmed the numbered feature treatment and footer look correct, with no visual issue reported.
+
+### Production closeout
+
+- PR #29 squash-merged into `clone-clean` as `d3d78f8c` on 2026-08-22.
+- Both Vercel production deployments passed. The live homepage and login returned `200`, the expected readable colour tokens were present, and a live desktop Axe scan found no serious or critical violations.
+
+---
+
+## 2026-08-22 - Report-only Content Security Policy
+
+### What we were trying to achieve
+
+Start CONFIG-001 without risking a production outage by observing CSP violations before enforcing any new browser restriction.
+
+### Feature / change being made
+
+Route-aware `Content-Security-Policy-Report-Only` headers for the app and embeddable playlist player, plus a bounded same-origin report collector for sanitized Vercel runtime logging.
+
+### Files changed
+
+- `next.config.js`
+- `app/api/csp-report/route.ts`
+- `tests/critical-contracts.test.mjs`
+- `tests/browser/public-accessibility.spec.mjs`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The policy reflects the browser sources currently used by Supabase auth and storage, Google Analytics, Google fonts and avatars, and GitHub-hosted marketing media.
+- The header is report-only and cannot block page scripts, styles, images, audio, fonts, API traffic, authentication, or checkout navigation.
+- Existing enforced framing remains unchanged: normal routes retain `X-Frame-Options: DENY`, while `/embed/*` remains intentionally frameable through its existing `frame-ancestors *` policy.
+- `/api/csp-report` accepts the standard CSP and Reporting API content types, rejects bodies over 16 KB, processes at most 10 reports per request, strips query strings and hashes, and never logs policy text or script samples.
+- Contract tests cover the standard and embed header variants plus report-input safeguards. The browser suite checks the real response header and valid/oversized report responses.
+- Local verification passed: 32 contract tests, 7 browser checks across desktop and mobile Chromium with 3 expected project-specific skips, lint with no errors and 53 pre-existing warnings, the production build, and the production-dependency audit with zero known vulnerabilities. Preview observation and production rollout remain pending, and CSP enforcement is explicitly outside this change.
