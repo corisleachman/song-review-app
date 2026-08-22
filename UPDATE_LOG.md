@@ -4936,3 +4936,28 @@ Approved variation C of the mobile homepage hierarchy: the full collaborator ben
 - A final phone preview adjustment moves the complete explanation group 12 pixels lower while preserving the heading-to-body spacing and desktop composition.
 - Follow-up phone feedback adds a separate 12-pixel breathing space above “What is The Song Room?” so the yellow heading no longer crowds the outlined wordmark.
 - The final PR #26 preview passed verification on a real phone on 2026-08-22, including the wordmark inset, heading separation, supporting copy hierarchy, collaborator-image composition, and lower-page actions.
+
+---
+
+## 2026-08-22 - Mobile interface production closeout
+
+### What we were trying to achieve
+
+Bring the product backlog and staged review record into line with the completed mobile production rollouts before starting another technical batch.
+
+### Feature / change being made
+
+Documentation-only closeout for the mobile homepage CTA, immediate copy, bento composition, compact dashboard filter, heading and pricing treatment, and final Song Room hero hierarchy.
+
+### Files changed
+
+- `PRODUCT_BACKLOG.md`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- PRs #21 to #26 merged as `779501d5`, `d3237af0`, `ec006494`, `a3afc4b1`, `b056cdc9`, and `d5181516`.
+- Both Vercel statuses succeeded for every merge. The affected phone flows passed real-device preview checks, and the final live homepage returned `200` with the approved Song Room wordmark and copy-spacing rules.
+- No application code, database schema, environment variables, or production configuration changed in this closeout.
+- No confirmed P1 finding remains from the staged review. TEST-001 is the recommended next focused batch, starting with a scoped behavioral browser and automated-accessibility test plan.
