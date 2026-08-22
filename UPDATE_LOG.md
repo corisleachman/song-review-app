@@ -4931,4 +4931,4 @@ Approved variation C of the mobile homepage hierarchy: the full collaborator ben
 - The small phone navigation logo is hidden so the animated wordmark becomes the first clear brand statement.
 - Reduced-motion users receive the completed outline immediately. Tablet and desktop hero artwork, layout, and navigation are unchanged.
 - A narrow-phone adjustment keeps the wordmark clear of the explanation at 320 pixels without reducing the CTA targets.
-- Local visual verification and preview-device verification are still required before rollout.
+- Local visual verification passed at 320, 393, and 430-pixel phone widths plus a 1440-pixel desktop width. Preview verification on a real iPhone is still required before rollout.
