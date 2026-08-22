@@ -4904,3 +4904,35 @@ Consistent Free, Pro, Studio ordering plus Annual as the initial billing period 
 - Annual now begins active in the HTML and the controller, preventing a monthly-price flash before JavaScript runs. Pro begins at £7.17 per month with £86 billed yearly; Studio begins at £15.83 per month with £190 billed yearly.
 - Monthly remains available from the same control and retains its original prices and billing notes.
 - Revised PR #25 preview verification passed on a real phone on 2026-08-22. Plans appeared as Free, Pro, Studio; Annual was selected initially; and switching to Monthly and back restored the correct prices and billing states.
+
+---
+
+## 2026-08-22 - Mobile Song Room bento hero
+
+### What we were trying to achieve
+
+Make the phone homepage communicate people creating together while giving the Song Room name a clear, memorable position in the opening screen.
+
+### Feature / change being made
+
+Approved variation C of the mobile homepage hierarchy: the full collaborator bento remains, “Song Room” is drawn over the upper half of the lead image, and the former phone “Create Together” sign-off is removed.
+
+### Files changed
+
+- `public/marketing.html`
+- `tests/critical-contracts.test.mjs`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The new phone wordmark reuses the real Thunder outline paths and letter timing already used by Song Room loading screens.
+- The approved concise phone explanation stays attached to the lead image, all four supporting collaborator images are present from first paint, and the primary CTA remains in the lower safe-area region. The fuller desktop explanation is unchanged.
+- The small phone navigation logo is hidden so the animated wordmark becomes the first clear brand statement.
+- Reduced-motion users receive the completed outline immediately. Tablet and desktop hero artwork, layout, and navigation are unchanged.
+- A narrow-phone adjustment keeps the wordmark clear of the explanation at 320 pixels without reducing the CTA targets.
+- Local visual verification passed at 320, 393, and 430-pixel phone widths plus a 1440-pixel desktop width. Preview verification on a real iPhone is still required before rollout.
+- Preview feedback tightened the hierarchy before merge: the visible top of the Song Room drawing now uses the same inset as its left edge, the explanation has a consistent measured gap below the wordmark instead of drifting with image height, and its heading is at least the same size as the supporting text.
+- A final phone preview adjustment moves the complete explanation group 12 pixels lower while preserving the heading-to-body spacing and desktop composition.
+- Follow-up phone feedback adds a separate 12-pixel breathing space above “What is The Song Room?” so the yellow heading no longer crowds the outlined wordmark.
+- The final PR #26 preview passed verification on a real phone on 2026-08-22, including the wordmark inset, heading separation, supporting copy hierarchy, collaborator-image composition, and lower-page actions.

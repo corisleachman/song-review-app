@@ -276,6 +276,7 @@ a { color: inherit; text-decoration: none; }
   font-size: clamp(15px, 1.35vw, 23px);
   line-height: 1.42;
 }
+.bento-copy-mobile { display: none; }
 .bento-cell-text em {
   font-style: normal;
   color: var(--off-white);
@@ -404,6 +405,9 @@ a { color: inherit; text-decoration: none; }
 }
 
 .hero-headline-wrap { width: 100%; max-width: 610px; }
+
+/* Phone-only brand artwork. The desktop headline remains injected below. */
+.mobile-hero-wordmark { display: none; }
 
 .hero-tagline {
   font-family: var(--treg);
@@ -1238,9 +1242,85 @@ footer {
   }
 }
 
+@media (max-width: 600px) {
+  /* The approved phone composition starts with the animated brand, not a
+     second small logo or the desktop Create Together sign-off. */
+  .nav { display: none; }
+  .hero-headline-wrap,
+  .hero-tagline { display: none; }
+
+  .cell-b,
+  .cell-c,
+  .cell-e,
+  .cell-f { opacity: 1; }
+
+  .bento-copy-desktop { display: none; }
+  .bento-copy-mobile { display: block; }
+
+  .bento-cell-text {
+    justify-content: flex-start;
+    padding-top: calc(clamp(210px, 28svh, 260px) + 12px);
+    padding-bottom: 12px;
+  }
+
+  .bento-cell-kicker {
+    margin-top: 12px;
+    font-size: clamp(15px, 4vw, 18px);
+    line-height: 1.2;
+    letter-spacing: 0.12em;
+  }
+
+  .hero {
+    padding-top: calc(34px + env(safe-area-inset-top));
+  }
+
+  .mobile-hero-wordmark {
+    position: absolute;
+    z-index: 3;
+    top: 44px;
+    left: max(20px, env(safe-area-inset-left));
+    display: block;
+    width: clamp(158px, 44vw, 190px);
+    filter: drop-shadow(0 3px 14px rgba(14,10,10,0.52));
+    pointer-events: none;
+  }
+
+  .mobile-hero-wordmark svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .mobile-hero-wordmark path {
+    opacity: 0;
+    animation:
+      mobile-wordmark-draw 3.8s cubic-bezier(0.25, 0.1, 0.25, 1) var(--letter-delay) forwards,
+      mobile-wordmark-show 0.05s linear var(--letter-delay) forwards;
+  }
+}
+
+@media (max-width: 340px) {
+  .mobile-hero-wordmark {
+    width: 145px;
+  }
+}
+
+@keyframes mobile-wordmark-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes mobile-wordmark-show {
+  to { opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
   .cell-d { opacity: 1; }
+  .mobile-hero-wordmark path {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
 }
 
 /* ═══════════════════════════════════
@@ -1712,6 +1792,9 @@ footer {
     .beta-strip .beta-msg-short{display:inline;}
   }
 </style>
+<!-- Cookie consent and consent-gated analytics -->
+<link rel="stylesheet" href="/cookie-consent.css" data-tsr-cookie-consent>
+<script defer src="/cookie-consent.js" data-tsr-cookie-consent></script>
 </head>
 <body>
 <div class="beta-strip" role="status">
@@ -1752,9 +1835,39 @@ footer {
     <div class="bento-cell cell-d" id="bc-d">
       <div class="bento-cell-img" id="bci-d"></div>
       <div class="bento-cell-img bento-cell-img-next" id="bcn-d"></div>
+      <div class="mobile-hero-wordmark">
+        <svg viewBox="0 0 342.8 334" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mobile-wordmark-title">
+          <title id="mobile-wordmark-title">Song Room</title>
+          <g transform="translate(0,0)">
+            <path d="M75.6 72V59C75.6 35.4 61.8 22 37.8 22C14.2 22 1.2 34.8 1.2 59V60.8C1.2 84.2 5 94.2 19 102L25.4 105.6C39.2 113.4 39.6 114.2 39.6 120V131.8C39.6 133.8 39.2 134.8 38.4 134.8C37.6 134.8 37.2 133.8 37.2 131.6V116H1.2V128.8C1.2 153 14 166 37.8 166C61.8 166 75.6 152.6 75.6 128.8V126.2C75.6 102.8 72 93.6 58.4 86L53 83C37.6 74.4 37.2 73.4 37.2 67.6V56.4C37.2 54.2 37.6 53.2 38.4 53.2C39.2 53.2 39.6 54.2 39.6 56.4V72Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="564" stroke-dashoffset="564" style="--letter-delay:0.05s"/>
+          </g>
+          <g transform="translate(80.8,0)">
+            <path d="M1.2 59V128.8C1.2 153 14.2 166 37.8 166C61.8 166 75.6 152.6 75.6 128.8V59C75.6 35.4 61.8 22 37.8 22C14.2 22 1.2 34.8 1.2 59ZM37.2 56.4C37.2 54 37.6 53.2 38.4 53.2C39.2 53.2 39.6 54 39.6 56.4V131.6C39.6 133.8 39.2 134.8 38.4 134.8C37.6 134.8 37.2 133.8 37.2 131.6Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="544" stroke-dashoffset="544" style="--letter-delay:0.12s"/>
+          </g>
+          <g transform="translate(161.6,0)">
+            <path d="M42.8 24 51.8 100.8H49.8L39.8 24H1.2V164H37.2L29 88H31L40.2 164H78.8V24Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="741" stroke-dashoffset="741" style="--letter-delay:0.2s"/>
+          </g>
+          <g transform="translate(245.6,0)">
+            <path d="M37.2 56.4C37.2 54 37.6 53.2 38.4 53.2C39.2 53.2 39.6 54 39.6 56.4V81.6H75.6V59C75.6 35.4 61.8 22 37.8 22C14.2 22 1.2 34.8 1.2 59V128.8C1.2 155.4 16 166 29.2 166C38.2 166 46.6 161.2 48.8 152.8H51.2V164H75.6V85.6H37.2ZM37.2 108.8H39.6V131.6C39.6 133.8 39.2 134.8 38.4 134.8C37.6 134.8 37.2 133.8 37.2 131.6Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="598" stroke-dashoffset="598" style="--letter-delay:0.28s"/>
+          </g>
+          <g transform="translate(0,144)">
+            <path d="M1.2 24V164H37.2V114H37.6C39.6 114 39.6 114.4 39.6 117.2V135.2C39.6 146 39.8 155.2 41.6 164H77.6C75.8 155.4 75.6 146.2 75.6 135.6V134C75.6 112.6 63.6 99.6 55.2 99.6V97.2C63.8 97.2 75.6 85.8 75.6 62.4V61.4C75.6 36 61.8 24 38 24ZM37.2 55.2H37.6C39.6 55.2 39.6 55.6 39.6 58.2V79.6C39.6 82.4 39.6 82.8 37.6 82.8H37.2Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="591" stroke-dashoffset="591" style="--letter-delay:0.07s"/>
+          </g>
+          <g transform="translate(80.8,144)">
+            <path d="M1.2 59V128.8C1.2 153 14.2 166 37.8 166C61.8 166 75.6 152.6 75.6 128.8V59C75.6 35.4 61.8 22 37.8 22C14.2 22 1.2 34.8 1.2 59ZM37.2 56.4C37.2 54 37.6 53.2 38.4 53.2C39.2 53.2 39.6 54 39.6 56.4V131.6C39.6 133.8 39.2 134.8 38.4 134.8C37.6 134.8 37.2 133.8 37.2 131.6Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="544" stroke-dashoffset="544" style="--letter-delay:0.15s"/>
+          </g>
+          <g transform="translate(161.6,144)">
+            <path d="M1.2 59V128.8C1.2 153 14.2 166 37.8 166C61.8 166 75.6 152.6 75.6 128.8V59C75.6 35.4 61.8 22 37.8 22C14.2 22 1.2 34.8 1.2 59ZM37.2 56.4C37.2 54 37.6 53.2 38.4 53.2C39.2 53.2 39.6 54 39.6 56.4V131.6C39.6 133.8 39.2 134.8 38.4 134.8C37.6 134.8 37.2 133.8 37.2 131.6Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="544" stroke-dashoffset="544" style="--letter-delay:0.22s"/>
+          </g>
+          <g transform="translate(242.4,144)">
+            <path d="M1.2 24V164H34.2L30 88H32.4L37.2 164H59.2L64 88H66.4L62.2 164H95.2V24H49.6V100.8H47.2V24Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="925" stroke-dashoffset="925" style="--letter-delay:0.32s"/>
+          </g>
+        </svg>
+      </div>
       <div class="bento-cell-text">
         <span class="bento-cell-kicker">What is The Song Room?</span>
-        <p>A collaboration space for artists, bands and producers &mdash; upload song versions, drop <em>timestamped comments</em> on the waveform, and track every action and decision across a record&rsquo;s lifecycle, all in one shared workspace.</p>
+        <p class="bento-copy-desktop">A collaboration space for artists, bands and producers &mdash; upload song versions, drop <em>timestamped comments</em> on the waveform, and track every action and decision across a record&rsquo;s lifecycle, all in one shared workspace.</p>
+        <p class="bento-copy-mobile">A collaboration space for artists, bands and producers. Upload versions, leave timestamped comments and keep every decision in one shared workspace.</p>
       </div>
     </div>
     <div class="bento-cell cell-e" id="bc-e">

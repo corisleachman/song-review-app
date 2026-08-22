@@ -386,6 +386,52 @@ test('mobile marketing leads with a generous centre-cropped image and attached c
   assert.match(marketing, /function crossfadeCell\(cellId\)\s*\{[^}]*getComputedStyle\(cell\)\.display === 'none'/u);
 });
 
+test('mobile marketing leads with the approved Song Room bento wordmark', () => {
+  const marketing = read('public/marketing.html');
+  const phoneStart = marketing.indexOf('@media (max-width: 600px), (max-width: 900px) and (max-height: 600px) {', marketing.indexOf('RESPONSIVE'));
+  const phoneEnd = marketing.indexOf('@media (prefers-reduced-motion: reduce)', phoneStart);
+  const reducedMotionEnd = marketing.indexOf('/*', phoneEnd + 1);
+  const phoneCss = marketing.slice(phoneStart, phoneEnd);
+  const reducedMotionCss = marketing.slice(phoneEnd, reducedMotionEnd);
+  const leadCellStart = marketing.indexOf('<div class="bento-cell cell-d"');
+  const leadCellEnd = marketing.indexOf('<div class="bento-cell cell-e"', leadCellStart);
+  const leadCell = marketing.slice(leadCellStart, leadCellEnd);
+
+  assertIncludesAll(phoneCss, [
+    '.nav { display: none; }',
+    '.hero-headline-wrap,',
+    '.hero-tagline { display: none; }',
+    '.cell-b,',
+    '.cell-f { opacity: 1; }',
+    '.bento-copy-desktop { display: none; }',
+    '.bento-copy-mobile { display: block; }',
+    'justify-content: flex-start;',
+    'padding-top: calc(clamp(210px, 28svh, 260px) + 12px);',
+    'padding-bottom: 12px;',
+    '.bento-cell-kicker {',
+    'margin-top: 12px;',
+    'font-size: clamp(15px, 4vw, 18px);',
+    'line-height: 1.2;',
+    '.mobile-hero-wordmark {',
+    'display: block;',
+    'top: 44px;',
+    'width: clamp(158px, 44vw, 190px);',
+    'mobile-wordmark-draw 3.8s',
+    '@media (max-width: 340px)',
+    'width: 145px;',
+  ], 'mobile Song Room hierarchy');
+  assertIncludesAll(leadCell, [
+    'class="mobile-hero-wordmark"',
+    '<title id="mobile-wordmark-title">Song Room</title>',
+    'stroke-dasharray="564"',
+    'stroke-dasharray="925"',
+    'class="bento-cell-text"',
+    'class="bento-copy-mobile">A collaboration space for artists, bands and producers.',
+  ], 'mobile Song Room wordmark');
+  assert.doesNotMatch(leadCell, /Create Together/iu);
+  assert.match(reducedMotionCss, /\.mobile-hero-wordmark path\s*\{[^}]*opacity:\s*1;[^}]*stroke-dashoffset:\s*0;/u);
+});
+
 test('mobile homepage keeps its primary CTA visible in the thumb zone', () => {
   const marketing = read('public/marketing.html');
   const phoneStart = marketing.indexOf('@media (max-width: 600px), (max-width: 900px) and (max-height: 600px) {', marketing.indexOf('RESPONSIVE'));
