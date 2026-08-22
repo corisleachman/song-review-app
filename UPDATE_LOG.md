@@ -4934,3 +4934,4 @@ Approved variation C of the mobile homepage hierarchy: the full collaborator ben
 - Local visual verification passed at 320, 393, and 430-pixel phone widths plus a 1440-pixel desktop width. Preview verification on a real iPhone is still required before rollout.
 - Preview feedback tightened the hierarchy before merge: the visible top of the Song Room drawing now uses the same inset as its left edge, the explanation has a consistent measured gap below the wordmark instead of drifting with image height, and its heading is at least the same size as the supporting text.
 - A final phone preview adjustment moves the complete explanation group 12 pixels lower while preserving the heading-to-body spacing and desktop composition.
+- Follow-up phone feedback adds a separate 12-pixel breathing space above “What is The Song Room?” so the yellow heading no longer crowds the outlined wordmark.

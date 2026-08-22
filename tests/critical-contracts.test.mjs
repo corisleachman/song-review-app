@@ -409,6 +409,7 @@ test('mobile marketing leads with the approved Song Room bento wordmark', () => 
     'padding-top: calc(clamp(210px, 28svh, 260px) + 12px);',
     'padding-bottom: 12px;',
     '.bento-cell-kicker {',
+    'margin-top: 12px;',
     'font-size: clamp(15px, 4vw, 18px);',
     'line-height: 1.2;',
     '.mobile-hero-wordmark {',
