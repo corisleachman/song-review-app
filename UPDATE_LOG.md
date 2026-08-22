@@ -4961,3 +4961,33 @@ Documentation-only closeout for the mobile homepage CTA, immediate copy, bento c
 - Both Vercel statuses succeeded for every merge. The affected phone flows passed real-device preview checks, and the final live homepage returned `200` with the approved Song Room wordmark and copy-spacing rules.
 - No application code, database schema, environment variables, or production configuration changed in this closeout.
 - No confirmed P1 finding remains from the staged review. TEST-001 is the recommended next focused batch, starting with a scoped behavioral browser and automated-accessibility test plan.
+
+---
+
+## 2026-08-22 - Public browser and accessibility regression suite
+
+### What we were trying to achieve
+
+Close the staged review's browser-testing gap with a small repeatable suite that doesn't need a real account or access to production data.
+
+### Feature / change being made
+
+Desktop and mobile Chromium checks for the public homepage, Google-only login, primary keyboard journeys, cookie consent persistence, reduced motion, phone-width overflow, and serious or critical automated accessibility regressions.
+
+### Files changed
+
+- `.github/workflows/browser-accessibility.yml`
+- `.gitignore`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+- `package.json`
+- `package-lock.json`
+- `playwright.config.mjs`
+- `tests/browser/public-accessibility.spec.mjs`
+
+### Notes
+
+- The suite uses placeholder public Supabase values and never signs into an account, so pull-request runs can't mutate staging or production data.
+- Axe found an existing serious contrast result on the homepage feature numbers and footer. Those exact selectors are a documented, removable baseline; every new serious or critical finding still fails CI.
+- Failed GitHub Actions runs retain the Playwright report, screenshots, test results, and retry trace for seven days.
+- The local visual check at 393 by 852 showed the complete approved mobile composition with no framework error overlay or browser console error.

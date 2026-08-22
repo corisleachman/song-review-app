@@ -113,7 +113,8 @@ The API authorization review did not find a route-level cross-workspace bypass. 
 
 #### P2
 
-- TEST-001: `npm test` now runs a dependency-free Node contract suite around middleware routing, invite origins, workspace ownership, public sharing, upload finalization, privileged RPC grants, RLS cleanup, and deletion accounting. Production builds run the suite automatically. This closes the immediate regression gap, but there is still no behavioral unit, database-integration, browser, or automated accessibility suite.
+- TEST-001: Code complete on `codex/browser-accessibility-tests`, pending pull request and rollout. Playwright now exercises the public homepage, Google-only login, primary keyboard journeys, cookie rejection persistence, reduced motion, and phone-width overflow in desktop and mobile Chromium. Axe checks fail on any new serious or critical WCAG finding. A GitHub Actions workflow runs the suite on pull requests and keeps screenshots, traces, and the HTML report when it fails. Database integration coverage remains a separate gap.
+- A11Y-002: The automated homepage pass found an existing serious `color-contrast` result on the deliberately subdued feature numbers plus the footer brand and footer text. The feature numbers measure 1.13:1, the red footer wordmark 3.3:1, and the remaining footer copy 4.42:1. These selectors are recorded as a removable baseline so the new suite blocks regressions without pretending the debt is fixed.
 - PRIV-001: Both media buckets remain public by design. Turning off an app share link blocks the app route, but a raw storage URL copied earlier remains reachable. Private media delivery needs a separate migration and rollout.
 - ABUSE-001: Public comment throttling is stored in process memory. It limits a single serverless instance but can be bypassed across instances or cold starts. Database constraints, a honeypot, and length validation still apply.
 - CONFIG-001: Baseline response headers cover HSTS, framing, referrers, permissions, and MIME sniffing, but there is no Content Security Policy. Adding one needs a report-only pass first because the app uses inline styles and external media.
@@ -127,7 +128,7 @@ The API authorization review did not find a route-level cross-workspace bypass. 
 
 | Dimension | Score | Evidence |
 | --- | ---: | --- |
-| Accessibility | 3/4 | Global focus, reduced-motion, primary-control semantics, dialog focus, readable red text, and coarse-pointer targets are in place. Automated accessibility testing remains a gap. |
+| Accessibility | 3/4 | Global focus, reduced-motion, primary-control semantics, dialog focus, and coarse-pointer targets are in place. The new browser gate covers public flows and records the remaining homepage contrast baseline. |
 | Performance | 3/4 | Dashboard and public-playlist query waves were measured and reduced; large client routes and raw images remain. |
 | Theming | 2/4 | Distinctive shared palette and typography, with extensive literal color duplication. |
 | Responsive design | 3/4 | Eighteen CSS modules include mobile breakpoints and the staged mobile journeys passed; a few compact targets and fixed-size controls remain. |
@@ -166,4 +167,4 @@ The API authorization review did not find a route-level cross-workspace bypass. 
 - Stage 3 baseline: captured for public routes and the authenticated dashboard request chain. Authenticated song/version journey timings still need to be captured during later batches.
 - Stage 4 fixes: account bootstrap, active-workspace identity, all four dashboard query batches, single-request dashboard initialization, and public-playlist query consolidation are implemented and measured. Assigned-action and playlist playback regression checks passed in preview.
 - Stage 5 regression and production readiness: production complete. Public playlist playback, song deletion, playlist cascade cleanup, signed-in dashboard loading, song opening, and playback all passed. The database and application rollout checks are recorded above, and the remaining P2/P3 findings stay documented for focused follow-up work.
-- Focused upload, accessibility, and mobile interface follow-ups: production complete through PRs #15 and #17 to #26. No confirmed P1 issue remains from this review. The recommended next focused batch is TEST-001: plan the smallest behavioral browser and automated-accessibility layer without changing application behavior or weakening the existing contract suite.
+- Focused upload, accessibility, and mobile interface follow-ups: production complete through PRs #15 and #17 to #26. TEST-001 is code complete locally and still needs pull-request and rollout verification. No confirmed P1 issue remains from this review. After TEST-001 ships, A11Y-002 is the recommended next focused batch: correct the homepage feature-number and footer contrast without changing the approved visual hierarchy.
