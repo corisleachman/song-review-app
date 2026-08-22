@@ -4935,3 +4935,4 @@ Approved variation C of the mobile homepage hierarchy: the full collaborator ben
 - Preview feedback tightened the hierarchy before merge: the visible top of the Song Room drawing now uses the same inset as its left edge, the explanation has a consistent measured gap below the wordmark instead of drifting with image height, and its heading is at least the same size as the supporting text.
 - A final phone preview adjustment moves the complete explanation group 12 pixels lower while preserving the heading-to-body spacing and desktop composition.
 - Follow-up phone feedback adds a separate 12-pixel breathing space above “What is The Song Room?” so the yellow heading no longer crowds the outlined wordmark.
+- The final PR #26 preview passed verification on a real phone on 2026-08-22, including the wordmark inset, heading separation, supporting copy hierarchy, collaborator-image composition, and lower-page actions.
