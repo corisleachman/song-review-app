@@ -313,6 +313,7 @@ test('active dialogs share focus trapping, Escape dismissal, and labelled semant
 
 test('interactive surfaces preserve readable red text and coarse-pointer targets', () => {
   const globals = read('styles/globals.css');
+  const marketing = read('public/marketing.html');
   const contrastSurfaces = [
     'app/dashboard/dashboard.module.css',
     'app/songs/[id]/versions/[versionId]/version.module.css',
@@ -330,6 +331,14 @@ test('interactive surfaces preserve readable red text and coarse-pointer targets
   ];
 
   assert.match(globals, /--color-primary-readable:\s*#ED4D3B;/u);
+  assert.match(marketing, /--red-readable:\s*#ED4D3B;/u);
+  assert.match(marketing, /--red-muted-readable:\s*#A05048;/u);
+  assert.match(marketing, /--dune-readable:\s*#8F7E70;/u);
+  assert.match(marketing, /\.feature-number\s*\{[^}]*color:\s*var\(--red-muted-readable\);/u);
+  assert.doesNotMatch(marketing, /\.feature-number\s*\{[^}]*opacity:/u);
+  assert.match(marketing, /\.footer-brand em\s*\{[^}]*color:\s*var\(--red-readable\);/u);
+  assert.match(marketing, /\.footer-link\s*\{[^}]*color:\s*var\(--dune-readable\);/u);
+  assert.match(marketing, /\.footer-copy\s*\{[^}]*color:\s*var\(--dune-readable\);/u);
 
   for (const source of contrastSurfaces) {
     assert.doesNotMatch(
