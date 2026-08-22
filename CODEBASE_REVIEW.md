@@ -149,6 +149,7 @@ The API authorization review did not find a route-level cross-workspace bypass. 
 - The validated preview tree matched the squash-merge tree exactly and was promoted as production deployment `dpl_Eo9XPBCMdnxLUXJFYxwHMHcuiLXj`.
 - The playlist-cover hardening follow-up merged through PR #15 as `da9330ce`.
 - The accessibility follow-ups merged through PRs #17, #18, and #19 as `0401508c`, `923372a8`, and `800fc8dd`. Both Vercel production checks passed for the final merge and the live artifact check confirmed the readable-red update.
+- The mobile interface follow-ups merged through PRs #21 to #26 as `779501d5`, `d3237af0`, `ec006494`, `a3afc4b1`, `b056cdc9`, and `d5181516`. Both Vercel checks passed for every merge, the affected phone flows passed real-device preview checks, and the final live homepage served the approved Song Room hero spacing.
 - Application rollback uses the previous Vercel deployment. Leave the two security migrations applied during an app rollback. Restoring the permissive policies is not a safe rollback.
 - The song-deletion function has a down migration, but it should be dropped only after the application has been rolled back to code that does not call it.
 
@@ -165,4 +166,4 @@ The API authorization review did not find a route-level cross-workspace bypass. 
 - Stage 3 baseline: captured for public routes and the authenticated dashboard request chain. Authenticated song/version journey timings still need to be captured during later batches.
 - Stage 4 fixes: account bootstrap, active-workspace identity, all four dashboard query batches, single-request dashboard initialization, and public-playlist query consolidation are implemented and measured. Assigned-action and playlist playback regression checks passed in preview.
 - Stage 5 regression and production readiness: production complete. Public playlist playback, song deletion, playlist cascade cleanup, signed-in dashboard loading, song opening, and playback all passed. The database and application rollout checks are recorded above, and the remaining P2/P3 findings stay documented for focused follow-up work.
-- Focused upload and accessibility follow-ups: production complete through PRs #15 and #17 to #19. The next confirmed P1 interface defect is the clipped and difficult-to-reach mobile homepage CTA recorded in `PRODUCT_BACKLOG.md`.
+- Focused upload, accessibility, and mobile interface follow-ups: production complete through PRs #15 and #17 to #26. No confirmed P1 issue remains from this review. The recommended next focused batch is TEST-001: plan the smallest behavioral browser and automated-accessibility layer without changing application behavior or weakening the existing contract suite.
