@@ -5,18 +5,6 @@ import { readFileSync } from 'node:fs';
 const require = createRequire(import.meta.url);
 const axeSource = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
 const blockingImpacts = new Set(['serious', 'critical']);
-const knownHomepageBlockingFindings = new Set([
-  'color-contrast:.feature-row:nth-child(1) > .feature-body > .feature-number',
-  'color-contrast:.feature-row:nth-child(2) > .feature-body > .feature-number',
-  'color-contrast:.feature-row:nth-child(3) > .feature-body > .feature-number',
-  'color-contrast:.footer-brand > em',
-  'color-contrast:.footer-link[href="#"]:nth-child(1)',
-  'color-contrast:.footer-link[href="#"]:nth-child(2)',
-  'color-contrast:.footer-link[href="#"]:nth-child(3)',
-  'color-contrast:.footer-link[href="#"]:nth-child(4)',
-  'color-contrast:.footer-link[href="#"]:nth-child(5)',
-  'color-contrast:.footer-copy',
-]);
 
 async function prepareDeterministicPage(page, { consent = 'rejected' } = {}) {
   await page.route('https://raw.githubusercontent.com/**', (route) => route.abort());
@@ -28,7 +16,7 @@ async function prepareDeterministicPage(page, { consent = 'rejected' } = {}) {
   }
 }
 
-async function expectNoBlockingAxeViolations(page, allowedFindings = new Set()) {
+async function expectNoBlockingAxeViolations(page) {
   await page.addScriptTag({ content: axeSource });
   const violations = await page.evaluate(async () => {
     const results = await window.axe.run(document, {
@@ -55,8 +43,7 @@ async function expectNoBlockingAxeViolations(page, allowedFindings = new Set()) 
       impact: violation.impact,
       help: violation.help,
       ...node,
-    })))
-    .filter((node) => !allowedFindings.has(`${node.id}:${node.target.join(' > ')}`));
+    })));
   expect(unexpectedBlocking, JSON.stringify(unexpectedBlocking, null, 2)).toEqual([]);
 }
 
@@ -81,7 +68,7 @@ test('homepage exposes its primary account journey without blocking accessibilit
 
   const primaryAccountLink = page.locator('#hero-cta').getByRole('link', { name: 'Start for free' });
   await expect(primaryAccountLink).toBeVisible();
-  await expectNoBlockingAxeViolations(page, knownHomepageBlockingFindings);
+  await expectNoBlockingAxeViolations(page);
 
   await tabTo(page, primaryAccountLink);
   await expect(primaryAccountLink).toBeFocused();

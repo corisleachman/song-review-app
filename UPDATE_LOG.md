@@ -4991,3 +4991,36 @@ Desktop and mobile Chromium checks for the public homepage, Google-only login, p
 - Axe found an existing serious contrast result on the homepage feature numbers and footer. Those exact selectors are a documented, removable baseline; every new serious or critical finding still fails CI.
 - Failed GitHub Actions runs retain the Playwright report, screenshots, test results, and retry trace for seven days.
 - The local visual check at 393 by 852 showed the complete approved mobile composition with no framework error overlay or browser console error.
+
+### Production closeout
+
+- PR #28 squash-merged into `clone-clean` as `0cc61bf6` on 2026-08-22.
+- The browser-accessibility job and both Vercel preview checks passed before merge. Both production deployments passed afterward.
+- The live homepage and Google-only login route returned `200`, and the workflow file is present on `clone-clean`.
+
+---
+
+## 2026-08-22 - Homepage contrast baseline removal
+
+### What we were trying to achieve
+
+Remove every known serious or critical homepage accessibility exception without flattening the approved dark editorial hierarchy.
+
+### Feature / change being made
+
+Colour-only contrast correction for the oversized feature numbers, footer wordmark, footer links, and copyright text, followed by removal of their temporary Axe baseline.
+
+### Files changed
+
+- `public/marketing.html`
+- `tests/browser/public-accessibility.spec.mjs`
+- `tests/critical-contracts.test.mjs`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The 80-pixel feature numbers move from 1.13:1 to 3.50:1 using a muted red that remains secondary to the main headings.
+- The small red footer wordmark now measures 4.90:1, while links and copyright text move from 4.42:1 to 4.61:1 with a minimal neutral shift.
+- Layout, typography, content, animation, and interaction are unchanged.
+- Desktop and mobile Chromium pass Axe with no serious or critical allowlist entries.
