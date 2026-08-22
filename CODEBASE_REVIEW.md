@@ -114,7 +114,7 @@ The API authorization review did not find a route-level cross-workspace bypass. 
 
 #### P2
 
-- A11Y-002: Code complete on `codex/homepage-contrast-baseline`, pending pull request and rollout. The homepage feature numbers now use a muted readable red at 3.50:1, the small footer wordmark uses the readable red at 4.90:1, and footer links and copyright text use a minimally lighter neutral at 4.61:1. The exact-selector Axe baseline has been removed; desktop and mobile Chromium now pass with no serious or critical exceptions.
+- A11Y-002: Code and preview verification complete on PR #29, pending merge and production rollout. The homepage feature numbers now use a muted readable red at 3.50:1, the small footer wordmark uses the readable red at 4.90:1, and footer links and copyright text use a minimally lighter neutral at 4.61:1. The exact-selector Axe baseline has been removed; desktop and mobile Chromium pass with no serious or critical exceptions, all preview checks are green, and the user confirmed the revised visual treatment looks correct.
 - PRIV-001: Both media buckets remain public by design. Turning off an app share link blocks the app route, but a raw storage URL copied earlier remains reachable. Private media delivery needs a separate migration and rollout.
 - ABUSE-001: Public comment throttling is stored in process memory. It limits a single serverless instance but can be bypassed across instances or cold starts. Database constraints, a honeypot, and length validation still apply.
 - CONFIG-001: Baseline response headers cover HSTS, framing, referrers, permissions, and MIME sniffing, but there is no Content Security Policy. Adding one needs a report-only pass first because the app uses inline styles and external media.

@@ -5025,3 +5025,4 @@ Colour-only contrast correction for the oversized feature numbers, footer wordma
 - Layout, typography, content, animation, and interaction are unchanged.
 - Desktop and mobile Chromium pass Axe with no serious or critical allowlist entries.
 - Axe scans make only the existing scroll-reveal transition instantaneous, preventing machine speed from measuring text halfway through a 700ms opacity fade while keeping the final colour checks strict.
+- PR #29 preview verification passed. The user confirmed the numbered feature treatment and footer look correct, with no visual issue reported.
