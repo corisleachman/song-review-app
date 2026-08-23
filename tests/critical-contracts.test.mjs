@@ -61,11 +61,21 @@ test('response headers expose a route-aware report-only CSP without changing emb
     'report-uri /api/csp-report;',
     'report-to csp-endpoint;',
   ], 'standard report-only CSP');
+  assert.match(
+    standardReportOnly,
+    /img-src [^;]*https:\/\/www\.googletagmanager\.com[^;]*;/u,
+    'standard report-only CSP should allow the Google Tag Manager image beacon',
+  );
   assert.equal(standardHeaders.get('Reporting-Endpoints'), 'csp-endpoint="/api/csp-report"');
   assert.equal(standardHeaders.get('X-Frame-Options'), 'DENY');
   assert.equal(standardHeaders.has('Content-Security-Policy'), false);
 
   assert.match(embedReportOnly, /frame-ancestors \*;/u);
+  assert.match(
+    embedReportOnly,
+    /img-src [^;]*https:\/\/www\.googletagmanager\.com[^;]*;/u,
+    'embed report-only CSP should allow the Google Tag Manager image beacon',
+  );
   assert.equal(embedHeaders.get('Content-Security-Policy'), 'frame-ancestors *');
   assert.equal(embedHeaders.has('X-Frame-Options'), false);
 });

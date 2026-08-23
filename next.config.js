@@ -66,6 +66,7 @@ function buildReportOnlyPolicy(frameAncestors) {
       'https://*.googleusercontent.com',
       'https://*.google-analytics.com',
       'https://*.analytics.google.com',
+      'https://www.googletagmanager.com',
       'https://raw.githubusercontent.com',
       'https://corisleachman.github.io',
     ],
