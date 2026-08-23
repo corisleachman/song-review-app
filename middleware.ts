@@ -19,13 +19,14 @@ export async function middleware(request: NextRequest) {
     '/song-room-preview.jpg',
   ];
   const isInviteRoute = pathname.startsWith('/invite/');
+  const isSignupRoute = pathname.startsWith('/signup/');
   const isReferralRoute = pathname.startsWith('/r/');
   const isListenRoute = pathname.startsWith('/listen/');
   const isEmbedRoute = pathname.startsWith('/embed/');
   const isBlogRoute = pathname.startsWith('/blog');
   
   // Check if path is public
-  if (publicRoutes.includes(pathname) || isInviteRoute || isReferralRoute || isListenRoute || isEmbedRoute || isBlogRoute) {
+  if (publicRoutes.includes(pathname) || isInviteRoute || isSignupRoute || isReferralRoute || isListenRoute || isEmbedRoute || isBlogRoute) {
     return NextResponse.next();
   }
   
@@ -65,7 +66,10 @@ export async function middleware(request: NextRequest) {
   }
 
   const loginUrl = new URL('/login', request.url);
-  loginUrl.searchParams.set('redirectTo', pathname);
+  const redirectTarget = pathname === '/upgrade'
+    ? `${pathname}${request.nextUrl.search}`
+    : pathname;
+  loginUrl.searchParams.set('redirectTo', redirectTarget);
   return NextResponse.redirect(loginUrl);
 }
 

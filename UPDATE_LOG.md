@@ -5066,3 +5066,69 @@ Route-aware `Content-Security-Policy-Report-Only` headers for the app and embedd
 - The observed preview requests returned only successful or redirect statuses in the available runtime window, with no 5xx status.
 - Revised local verification passed all 32 contract tests and a complete optimized Next.js build using the same inert Supabase placeholders as public CI. The normal build command's first run stopped only because this restarted local workspace had no Supabase variables loaded.
 - Revised preview deployment `dpl_E477RGjURnc6QbXdJuJceSGuVKVq` reached Ready and all PR checks passed. The landing page loaded after analytics consent, and deployment-specific runtime inspection found no CSP reports, error or fatal logs, or failed application requests.
+
+---
+
+## 2026-08-23 - Tier signup and upgrade journey assessment
+
+### What we were trying to achieve
+
+Turn the homepage pricing choices into distinct beta-ready signup journeys and decide where plan suggestions or automated emails can help without interrupting the core collaboration experience.
+
+### Feature / change being made
+
+Documentation-only product and technical specification for tier-aware Google signup, post-auth plan confirmation, contextual upgrade prompts, lifecycle-email boundaries, and funnel measurement.
+
+### Files changed
+
+- `TIER_SIGNUP_AND_UPGRADE_JOURNEY.md`
+- `PRODUCT_BACKLOG.md`
+- `public-mvp-roadmap.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Current code confirms that all three homepage plan buttons point to `/login`, while the login callback carries only a restricted post-auth destination and `/upgrade` does not read the selected plan or annual homepage default.
+- The recommended route contract uses one Google authentication system with separate Free, Pro, and Studio entry URLs. Paid users confirm the preselected choice before Stripe; workspace invites take priority and checkout stays owner-only.
+- Existing limit prompts are the right starting point for in-product upgrades. Generic launch popups and promotional nurture are excluded from beta.
+- The attached Flow and Apollo emails were treated only as reference material. Trial-expiry messaging is appropriate only for a real trial; pricing-abandonment email is deferred until Song Room has consent handling, durable events, deduplication, and evidence that the message is useful.
+- No application code, database schema, environment variable, email automation, or production behaviour changed in this assessment.
+
+---
+
+## 2026-08-23 - Tier-aware signup and plan confirmation
+
+### What we were trying to achieve
+
+Keep a visitor's Free, Pro, or Studio choice from the homepage through Google account creation, then take them to the right first destination without sending anyone to Stripe automatically.
+
+### Feature / change being made
+
+Allowlisted tier entry routes, plan-aware Google login copy and redirect handling, owner-aware paid-plan confirmation, and checkout-return preservation.
+
+### Files changed
+
+- `lib/signupIntent.ts`
+- `app/signup/[plan]/page.tsx`
+- `middleware.ts`
+- `app/login/page.tsx`
+- `app/login/page.module.css`
+- `app/upgrade/page.tsx`
+- `app/upgrade/upgrade.module.css`
+- `app/api/billing/checkout/route.ts`
+- `public/marketing.html`
+- `tests/critical-contracts.test.mjs`
+- `tests/browser/public-accessibility.spec.mjs`
+- `TIER_SIGNUP_AND_UPGRADE_JOURNEY.md`
+- `PRODUCT_BACKLOG.md`
+- `public-mvp-roadmap.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Free, Pro, and Studio now have distinct homepage routes. The paid links follow the annual/monthly control, while the normal Sign in link remains neutral.
+- One Google auth system remains canonical. Only allowlisted plan, billing, and checkout-cancellation destinations can cross the callback boundary, and a stored workspace invite wins over pricing intent.
+- Paid selections open a confirmation screen with the exact plan and price. Workspace role and current plan come from `/api/auth/bootstrap`; only an owner of an eligible workspace can start the existing Stripe checkout route.
+- Cancelling Stripe returns to the same selected plan and billing period. Middleware keeps that safe query through a fresh login if the session has expired.
+- The newly exercised upgrade page also received readable small-print colours after Axe exposed existing serious contrast failures.
+- Local contract, TypeScript, and desktop/mobile browser checks pass. Preview Google OAuth, real Stripe test checkout/cancellation, production rollout, and durable funnel storage remain pending.

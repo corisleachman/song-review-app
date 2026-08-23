@@ -141,6 +141,11 @@
   border-color: var(--color-primary);
 }
 
+.selected {
+  border-color: var(--color-primary-readable, #ED4D3B);
+  box-shadow: 0 0 0 2px rgba(237, 77, 59, 0.18);
+}
+
 .popularBadge {
   position: absolute;
   top: -12px;
@@ -206,7 +211,7 @@
 
 .billed {
   font-size: 12px;
-  color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
 }
 
 /* ── Feature list ────────────────────────────────────────────────── */
@@ -236,7 +241,7 @@
 
 .featureNote {
   font-size: 11px;
-  color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
   font-style: italic;
 }
 
@@ -304,7 +309,7 @@
 .footer {
   text-align: center;
   font-size: 12px;
-  color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
   margin-top: 40px;
 }
 
@@ -313,4 +318,16 @@
   color: #ff6b6b;
   font-size: 14px;
   margin-bottom: 24px;
+}
+
+.notice {
+  max-width: 720px;
+  margin: 0 auto 24px;
+  border: 1px solid var(--color-border);
+  background: var(--color-glass-light);
+  color: var(--color-text-secondary);
+  padding: 14px 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
 }

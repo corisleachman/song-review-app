@@ -1815,7 +1815,7 @@ footer {
     <a class="nav-link" href="#pricing">Pricing</a>
     <a class="nav-link" href="/login">Sign in</a>
   </div>
-  <a class="nav-cta" href="/login">Start for free</a>
+  <a class="nav-cta" href="/signup/free">Start for free</a>
 </nav>
 
 <!-- ══ HERO ══ -->
@@ -1892,7 +1892,7 @@ footer {
       </div>
       <p class="hero-tagline" id="hero-tagline">Every version. Every note. One room.</p>
       <div class="hero-cta-row" id="hero-cta">
-        <a class="btn-primary" href="/login">
+        <a class="btn-primary" href="/signup/free">
           Start for free
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
@@ -2225,7 +2225,7 @@ footer {
         <li>MP3 uploads</li>
         <li>1 public share link</li>
       </ul>
-      <a class="tier-cta" href="/login">Start for free</a>
+      <a class="tier-cta" href="/signup/free">Start for free</a>
     </div>
 
     <!-- Pro -->
@@ -2252,7 +2252,7 @@ footer {
         <li>Unlimited public share links</li>
         <li>Referral rewards</li>
       </ul>
-      <a class="tier-cta" href="/login">Start for free</a>
+      <a class="tier-cta" data-signup-plan="pro" href="/signup/pro?billing=year">Choose Pro</a>
     </div>
 
     <!-- Studio -->
@@ -2276,11 +2276,11 @@ footer {
         <li>Client-facing shares without TSR branding</li>
         <li>Priority support</li>
       </ul>
-      <a class="tier-cta" href="/login">Start for free</a>
+      <a class="tier-cta" data-signup-plan="studio" href="/signup/studio?billing=year">Choose Studio</a>
     </div>
   </div>
 
-  <p class="pricing-footnote reveal">No credit card required to start. Upgrade or downgrade any time. All prices exclude VAT.</p>
+  <p class="pricing-footnote reveal">Free needs no card. Paid plans are confirmed securely through Stripe. All prices exclude VAT.</p>
 </section>
 
 <!-- ══ FINAL CTA ══ -->
@@ -2295,7 +2295,7 @@ footer {
       Free forever. No credit card. Your whole band in on day one.
     </p>
     <div class="final-cta-row reveal reveal-d2">
-      <a class="btn-primary" href="/login">
+      <a class="btn-primary" href="/signup/free">
         Start for free
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
@@ -2664,6 +2664,13 @@ reveals.forEach(el => observer.observe(el));
       const on = b.dataset.cycle === cycle;
       b.classList.toggle('is-active', on);
       b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    const billing = cycle === 'monthly' ? 'month' : 'year';
+    document.querySelectorAll('[data-signup-plan]').forEach(link => {
+      const plan = link.getAttribute('data-signup-plan');
+      if (plan === 'pro' || plan === 'studio') {
+        link.setAttribute('href', `/signup/${plan}?billing=${billing}`);
+      }
     });
   }
   opts.forEach(b => b.addEventListener('click', () => setCycle(b.dataset.cycle)));

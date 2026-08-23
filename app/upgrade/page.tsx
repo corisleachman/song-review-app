@@ -1,7 +1,18 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import {
+  getPlanDisplayName,
+  isPlanAtLeast,
+  normalizeAccountPlan,
+  type AccountPlan,
+} from '@/lib/plans';
+import {
+  normalizeBillingInterval,
+  normalizeSignupPlan,
+  type BillingInterval,
+} from '@/lib/signupIntent';
 import styles from './upgrade.module.css';
 
 type FeatureItem = {
@@ -11,7 +22,7 @@ type FeatureItem = {
 };
 
 type Plan = {
-  id: string;
+  id: AccountPlan;
   name: string;
   tagline: string;
   monthlyPrice: number;
@@ -91,15 +102,100 @@ const PLANS: Plan[] = [
   },
 ];
 
-export default function UpgradePage() {
+type WorkspaceAccess = {
+  loading: boolean;
+  isOwner: boolean | null;
+  currentPlan: AccountPlan;
+  error: string | null;
+};
+
+function UpgradeContent() {
   const router = useRouter();
-  const [interval, setInterval] = useState<'month' | 'year'>('month');
+  const searchParams = useSearchParams();
+  const requestedPlan = normalizeSignupPlan(searchParams.get('plan'));
+  const selectedPlan = requestedPlan === 'pro' || requestedPlan === 'studio'
+    ? requestedPlan
+    : null;
+  const checkoutCancelled = searchParams.get('billingStatus') === 'cancelled';
+  const cameFromPricing = selectedPlan !== null && searchParams.get('source') === 'pricing';
+  const cameFromCheckout = selectedPlan !== null
+    && searchParams.get('source') === 'checkout'
+    && checkoutCancelled;
+  const shouldExitToDashboard = cameFromPricing || cameFromCheckout;
+  const hasSelectedPlanJourney = shouldExitToDashboard;
+
+  const [interval, setInterval] = useState<BillingInterval>(() =>
+    normalizeBillingInterval(searchParams.get('billing'))
+  );
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [access, setAccess] = useState<WorkspaceAccess>({
+    loading: true,
+    isOwner: null,
+    currentPlan: 'free',
+    error: null,
+  });
 
-  const handleSelect = async (planId: string) => {
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const loadWorkspaceAccess = async () => {
+      try {
+        const response = await fetch('/api/auth/bootstrap', {
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+        const payload = await response.json().catch(() => null) as {
+          identity?: { membershipRole?: string };
+          workspace?: { plan?: string };
+          error?: string;
+        } | null;
+
+        if (!response.ok) {
+          throw new Error(payload?.error || 'Could not load workspace access.');
+        }
+
+        setAccess({
+          loading: false,
+          isOwner: payload?.identity?.membershipRole === 'owner',
+          currentPlan: normalizeAccountPlan(payload?.workspace?.plan),
+          error: null,
+        });
+      } catch (loadError) {
+        if (controller.signal.aborted) return;
+        setAccess({
+          loading: false,
+          isOwner: null,
+          currentPlan: 'free',
+          error: loadError instanceof Error
+            ? loadError.message
+            : 'Could not load workspace access.',
+        });
+      }
+    };
+
+    void loadWorkspaceAccess();
+    return () => controller.abort();
+  }, []);
+
+  const handleIntervalChange = (nextInterval: BillingInterval) => {
+    setInterval(nextInterval);
+    if (!hasSelectedPlanJourney) return;
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('billing', nextInterval);
+    router.replace(`/upgrade?${params.toString()}`, { scroll: false });
+  };
+
+  const handleSelect = async (planId: AccountPlan) => {
     if (planId === 'free') {
-      router.back();
+      if (shouldExitToDashboard) router.push('/dashboard');
+      else router.back();
+      return;
+    }
+
+    if (!access.isOwner) {
+      setError('Only the workspace owner can change the plan.');
       return;
     }
 
@@ -140,14 +236,20 @@ export default function UpgradePage() {
         <button
           type="button"
           className={styles.back}
-          onClick={() => router.back()}
+          onClick={() => shouldExitToDashboard ? router.push('/dashboard') : router.back()}
         >
           ← Back
         </button>
         <div className={styles.heading}>
-          <h1 className={styles.title}>Choose your plan</h1>
+          <h1 className={styles.title}>
+            {hasSelectedPlanJourney && selectedPlan
+              ? `Confirm your ${getPlanDisplayName(selectedPlan)} plan`
+              : 'Choose your plan'}
+          </h1>
           <p className={styles.subtitle}>
-            Simple pricing. No per-seat fees. No surprises.
+            {hasSelectedPlanJourney
+              ? 'Review the price below. Stripe only opens after you confirm.'
+              : 'Simple pricing. No per-seat fees. No surprises.'}
           </p>
         </div>
 
@@ -155,14 +257,16 @@ export default function UpgradePage() {
           <button
             type="button"
             className={`${styles.toggleBtn} ${interval === 'month' ? styles.toggleActive : ''}`}
-            onClick={() => setInterval('month')}
+            aria-pressed={interval === 'month'}
+            onClick={() => handleIntervalChange('month')}
           >
             Monthly
           </button>
           <button
             type="button"
             className={`${styles.toggleBtn} ${interval === 'year' ? styles.toggleActive : ''}`}
-            onClick={() => setInterval('year')}
+            aria-pressed={interval === 'year'}
+            onClick={() => handleIntervalChange('year')}
           >
             Annual
             <span className={styles.saveBadge}>Save ~20%</span>
@@ -170,6 +274,17 @@ export default function UpgradePage() {
         </div>
       </div>
 
+      {checkoutCancelled && (
+        <p className={styles.notice} role="status">
+          Checkout was cancelled. Your plan has not changed, and your selection is still here.
+        </p>
+      )}
+      {!access.loading && access.isOwner === false && (
+        <p className={styles.notice} role="status">
+          This workspace is managed by its owner. Ask them to change the plan from Settings.
+        </p>
+      )}
+      {access.error && <p className={styles.error}>{access.error}</p>}
       {error && <p className={styles.error}>{error}</p>}
 
       <div className={styles.grid}>
@@ -183,11 +298,39 @@ export default function UpgradePage() {
               ? plan.monthlyPrice * 12 - plan.annualPrice
               : null;
           const isLoading = loading === plan.id;
+          const isCurrentPlan = access.currentPlan === plan.id;
+          const isIncludedInCurrentPlan =
+            plan.id !== 'free'
+            && !isCurrentPlan
+            && isPlanAtLeast(access.currentPlan, plan.id);
+          const paidActionDisabled =
+            plan.id !== 'free'
+            && (
+              access.loading
+              || access.isOwner !== true
+              || isCurrentPlan
+              || isIncludedInCurrentPlan
+            );
+
+          let ctaLabel = plan.cta;
+          if (plan.id === 'free') {
+            ctaLabel = shouldExitToDashboard ? 'Continue on Free' : 'Stay on Free';
+          } else if (access.loading) {
+            ctaLabel = 'Checking workspace…';
+          } else if (access.isOwner === false) {
+            ctaLabel = 'Owner manages this';
+          } else if (isCurrentPlan) {
+            ctaLabel = 'Current plan';
+          } else if (isIncludedInCurrentPlan) {
+            ctaLabel = `Included in ${getPlanDisplayName(access.currentPlan)}`;
+          } else if (selectedPlan === plan.id && hasSelectedPlanJourney) {
+            ctaLabel = `Continue with ${plan.name}`;
+          }
 
           return (
             <div
               key={plan.id}
-              className={`${styles.card} ${plan.popular ? styles.popular : ''}`}
+              className={`${styles.card} ${plan.popular ? styles.popular : ''} ${selectedPlan === plan.id ? styles.selected : ''}`}
             >
               {plan.popular && (
                 <div className={styles.popularBadge}>Most popular</div>
@@ -241,9 +384,13 @@ export default function UpgradePage() {
                 type="button"
                 className={`${styles.cta} ${styles[plan.ctaVariant]}`}
                 onClick={() => void handleSelect(plan.id)}
-                disabled={isLoading || (loading !== null && !isLoading)}
+                disabled={
+                  isLoading
+                  || (loading !== null && !isLoading)
+                  || paidActionDisabled
+                }
               >
-                {isLoading ? 'Redirecting…' : plan.cta}
+                {isLoading ? 'Redirecting…' : ctaLabel}
               </button>
             </div>
           );
@@ -254,5 +401,13 @@ export default function UpgradePage() {
         Secured by Stripe · Cancel any time · Storage limits are per workspace
       </p>
     </div>
+  );
+}
+
+export default function UpgradePage() {
+  return (
+    <Suspense fallback={<div className={styles.page} />}>
+      <UpgradeContent />
+    </Suspense>
   );
 }
