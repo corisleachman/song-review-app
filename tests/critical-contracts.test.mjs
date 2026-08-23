@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const require = createRequire(import.meta.url);
 
 function read(relativePath) {
   return readFileSync(path.join(repoRoot, relativePath), 'utf8');
@@ -29,6 +31,79 @@ function assertOrdered(source, expected, context) {
     previousIndex = currentIndex;
   }
 }
+
+test('response headers expose a route-aware report-only CSP without changing embed framing', async () => {
+  const nextConfig = require(path.join(repoRoot, 'next.config.js'));
+  const headerRules = await nextConfig.headers();
+  const standardRule = headerRules.find((rule) => rule.source === '/((?!embed).*)');
+  const embedRule = headerRules.find((rule) => rule.source === '/embed/:path*');
+
+  assert.ok(standardRule, 'standard security header rule is missing');
+  assert.ok(embedRule, 'embed security header rule is missing');
+
+  const standardHeaders = new Map(standardRule.headers.map(({ key, value }) => [key, value]));
+  const embedHeaders = new Map(embedRule.headers.map(({ key, value }) => [key, value]));
+  const standardReportOnly = standardHeaders.get('Content-Security-Policy-Report-Only') ?? '';
+  const embedReportOnly = embedHeaders.get('Content-Security-Policy-Report-Only') ?? '';
+
+  assertIncludesAll(standardReportOnly, [
+    "default-src 'self';",
+    "base-uri 'self';",
+    "object-src 'none';",
+    "frame-ancestors 'none';",
+    "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com;",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;",
+    'https://fonts.gstatic.com',
+    'https://raw.githubusercontent.com',
+    'https://corisleachman.github.io',
+    'https://*.googleusercontent.com',
+    'supabase.co',
+    'report-uri /api/csp-report;',
+    'report-to csp-endpoint;',
+  ], 'standard report-only CSP');
+  assert.match(
+    standardReportOnly,
+    /img-src [^;]*https:\/\/www\.googletagmanager\.com[^;]*;/u,
+    'standard report-only CSP should allow the Google Tag Manager image beacon',
+  );
+  assert.equal(standardHeaders.get('Reporting-Endpoints'), 'csp-endpoint="/api/csp-report"');
+  assert.equal(standardHeaders.get('X-Frame-Options'), 'DENY');
+  assert.equal(standardHeaders.has('Content-Security-Policy'), false);
+
+  assert.match(embedReportOnly, /frame-ancestors \*;/u);
+  assert.match(
+    embedReportOnly,
+    /img-src [^;]*https:\/\/www\.googletagmanager\.com[^;]*;/u,
+    'embed report-only CSP should allow the Google Tag Manager image beacon',
+  );
+  assert.equal(embedHeaders.get('Content-Security-Policy'), 'frame-ancestors *');
+  assert.equal(embedHeaders.has('X-Frame-Options'), false);
+});
+
+test('CSP reporting endpoint bounds input and logs only sanitized fields', () => {
+  const route = read('app/api/csp-report/route.ts');
+
+  assertIncludesAll(route, [
+    'const MAX_REPORT_BYTES = 16 * 1024',
+    'const MAX_REPORTS_PER_REQUEST = 10',
+    "'application/csp-report'",
+    "'application/reports+json'",
+    "return `${url.origin}${url.pathname}`.slice(0, 500)",
+    "console.warn('[csp-report]', JSON.stringify(report))",
+    "'Cache-Control': 'no-store'",
+  ], 'CSP report safeguards');
+  assertOrdered(route, [
+    "request.headers.get('content-length')",
+    'declaredLength > MAX_REPORT_BYTES',
+    'const rawBody = await request.text()',
+    "Buffer.byteLength(rawBody, 'utf8') > MAX_REPORT_BYTES",
+    'JSON.parse(rawBody)',
+  ], 'CSP report request validation');
+  assert.doesNotMatch(
+    route,
+    /console\.warn\([^\n]*(?:original-policy|script-sample|request\.headers)/u,
+  );
+});
 
 test('auth middleware applies to pages but skips APIs and static files', () => {
   const middleware = read('middleware.ts');
