@@ -2642,3 +2642,17 @@ Pricing was restructured on the marketing site (`tsr-marketing-v19.html`) to dif
   - crawlers can discover the site: https://song-room.live/robots.txt and https://song-room.live/sitemap.xml
   - dependency scanning enabled via Dependabot; opened its first batch of update PRs against clone-clean on activation
 - Follow-ups (in backlog): FAQ, alt-text audit, canonical-host consistency in the `layout.tsx` fallback, login rate-limit, signup bot protection, CSP enforce, npm-audit CI workflow (needs manual add — PAT lacks Workflows permission)
+
+
+## 2026-08-26 — Public /trust page (security & launch readiness)
+
+- Slice / change name: `/trust` — public security & discoverability showcase on the app domain
+- Status: DONE — production deploy verified (https://www.song-room.live/trust, HTTP 200, unauthenticated, in sitemap); pending Coris eyeball.
+- Exact files changed:
+  - `app/trust/page.tsx` — new (self-contained page, `/privacy`+`/terms` pattern; two checked sections: 12 security, 11 discoverability)
+  - `middleware.ts` — `/trust` added to `publicRoutes`
+  - `app/sitemap.ts` — `/trust` added
+- Outcome:
+  - a linkable, on-brand trust page on our own domain, safe to show publicly (only in-place measures listed; no gaps/secrets/internal detail)
+  - supersedes the GitHub Pages wireframe for linking; wireframe kept as design reference
+- Note: content is a manual snapshot — refresh the item lists + counts in `app/trust/page.tsx` whenever a new protection ships from the backlog.
