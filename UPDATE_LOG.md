@@ -5132,3 +5132,30 @@ Allowlisted tier entry routes, plan-aware Google login copy and redirect handlin
 - Cancelling Stripe returns to the same selected plan and billing period. Middleware keeps that safe query through a fresh login if the session has expired.
 - The newly exercised upgrade page also received readable small-print colours after Axe exposed existing serious contrast failures.
 - Local contract, TypeScript, and desktop/mobile browser checks pass. Preview Google OAuth, real Stripe test checkout/cancellation, production rollout, and durable funnel storage remain pending.
+
+---
+
+## 2026-08-26 - Tier-aware signup Preview verification
+
+### What we were trying to achieve
+
+Validate the external Preview configuration and the owner paid-plan journey before deciding whether PR #31 is ready for production.
+
+### Feature / change being made
+
+Verification notes for the Vercel Preview Stripe Test separation, Google account handoff, all four paid-price mappings, and cancellation return.
+
+### Files changed
+
+- `PRODUCT_BACKLOG.md`
+- `TIER_SIGNUP_AND_UPGRADE_JOURNEY.md`
+- `public-mvp-roadmap.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Preview now has its own Stripe Test secret and four test price IDs. The existing live prices and referral coupon are Production-only, and the Production webhook configuration was not changed.
+- Preview deployment `dpl_3ToWJRA8uSgZ6Srv9mvsNLHd1MDM` reached Ready for commit `b2c04ff7702a0a336d7eadcacb08f42101996845`.
+- The real Google owner flow reached the selected Pro annual confirmation. Stripe Sandbox showed all four expected Preview prices: Pro at £9/month or £86/year and Studio at £19/month or £190/year.
+- Cancelling Checkout returned to the same Preview selection and showed that the plan had not changed. This passed for the original Pro annual journey and the final Studio monthly check. Deployment-specific inspection found no error or fatal runtime logs during the test window.
+- No payment was submitted. Preview webhook delivery, a real-device mobile paid-path check, and the Production rollout remain pending.

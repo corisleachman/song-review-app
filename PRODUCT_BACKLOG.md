@@ -9,12 +9,13 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 ### Marketing pricing: tier choice is lost during signup
 - Priority: P1 beta blocker
 - Logged: 2026-08-23
-- Status: Core journey implemented locally on `codex/tier-aware-signup`; preview, live Google/Stripe verification, and production rollout remain pending.
-- Current behaviour: Free, Pro, and Studio pricing buttons all open the same neutral `/login` route, so the chosen tier and billing period disappear.
+- Status: Desktop Preview verified on 2026-08-26 on `codex/tier-aware-signup`; real-device mobile verification and production rollout remain pending.
+- Original behaviour: Free, Pro, and Studio pricing buttons all opened the same neutral `/login` route, so the chosen tier and billing period disappeared.
 - Expected: use tier-aware signup routes for Free, Pro, and Studio, preserve the selection through Google OAuth and account bootstrap, then send Free to the dashboard and paid choices to a preselected confirmation screen before Stripe.
 - Important boundary: a pending workspace invite must take priority over pricing intent, and only a workspace owner may enter checkout.
 - Implementation: the homepage now uses distinct tier routes, the billing toggle updates paid links, the chosen plan survives the allowlisted Google callback, and paid choices open a preselected owner-aware confirmation screen before Stripe. Checkout cancellation returns to the same choice.
-- Remaining beta work: add durable server-backed funnel events before introducing any behavioural upgrade email.
+- Preview result: the owner Google flow reached the Pro annual confirmation, and Stripe Sandbox showed the expected four test prices: Pro at £9/month or £86/year and Studio at £19/month or £190/year. Cancellation returned to the same plan and billing choice with a clear notice. The deployment produced no error or fatal runtime logs during the checks.
+- Remaining beta work: verify the paid path on a real mobile device, complete the production rollout, and add durable server-backed funnel events before introducing any behavioural upgrade email.
 - Detailed product and technical acceptance criteria: `TIER_SIGNUP_AND_UPGRADE_JOURNEY.md`.
 
 ### Mobile homepage: descriptive copy appears too late  ✅ DONE (2026-08-20)

@@ -1,6 +1,6 @@
 # Tier Signup and Upgrade Journey
 
-Status: core journey implemented locally on `codex/tier-aware-signup`. Preview/staging, live Google and Stripe checks, durable funnel events, and production rollout remain pending.
+Status: Desktop Preview verified on 2026-08-26 on `codex/tier-aware-signup`. Real-device mobile verification, durable funnel events, and production rollout remain pending.
 
 ## Goal
 
@@ -15,6 +15,13 @@ Let a visitor choose Free, Pro, or Studio on the homepage and keep that choice t
 - `/upgrade` defaults to annual billing, reads the chosen tier, checks canonical workspace role and plan data, and disables paid checkout for non-owners or already-covered plans.
 - Stripe cancellation returns to the same plan and billing choice. An expired session also preserves that allowlisted return query through login.
 - Contextual limit prompts still use the existing runtime-only event logging. Durable signup and upgrade funnel storage is not part of this code slice.
+
+## Preview verification
+
+- Vercel Preview uses Stripe Test mode credentials and four test price IDs. The existing live prices and referral coupon remain scoped to Production.
+- The owner Google flow preserved the Pro annual choice through authentication. Stripe Sandbox showed every configured Preview price: Pro at £9/month or £86/year and Studio at £19/month or £190/year.
+- Cancelling Checkout returned to the same Preview URL, plan, and billing period, with confirmation that the plan had not changed. This passed for both the original Pro annual journey and the final Studio monthly check.
+- No test payment was submitted. The Preview webhook, real-device mobile paid path, durable funnel storage, and Production rollout remain outside this verification.
 
 ## Recommended beta signup routes
 
