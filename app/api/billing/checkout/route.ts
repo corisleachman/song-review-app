@@ -116,11 +116,12 @@ export async function POST(request: Request) {
       line_items: [{ price: priceId, quantity: 1 }],
       ...(discounts ? { discounts } : {}),
       success_url: `${origin}/dashboard?billing=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url:  `${origin}/settings/plan?billing=cancelled`,
+      cancel_url:  `${origin}/upgrade?plan=${targetPlan}&billing=${interval}&source=checkout&billingStatus=cancelled`,
       metadata: {
         account_id:    resolved.identity.workspaceId,
         owner_user_id: resolved.identity.userId,
         target_plan:   targetPlan,
+        billing_interval: interval,
       },
     });
 

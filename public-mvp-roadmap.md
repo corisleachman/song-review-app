@@ -2455,6 +2455,35 @@ Pricing was restructured on the marketing site (`tsr-marketing-v19.html`) to dif
 - Blocks: Phase 8 (Marketing Site) public launch
 - Related: Phase 5 (Pricing Review & Stripe Rollout), Phase 6.5 (Referral Programme — "Referral rewards" is advertised as a Pro feature)
 
+## Phase 10.1: Tier-aware signup and upgrade journey
+
+**Status: Desktop and real-device mobile Preview journeys verified on 2026-08-26; production rollout pending**
+
+### Objective
+
+Carry a visitor's Free, Pro, or Studio choice from the homepage through Google account creation and into the correct first destination, while keeping upgrade suggestions relevant and restrained.
+
+### Beta workstream
+
+- [x] Add `/signup/free`, `/signup/pro?billing=...`, and `/signup/studio?billing=...` entry routes using the shared Google auth flow.
+- [x] Make the homepage billing toggle update the paid signup links.
+- [x] Preserve allowlisted plan and billing intent through OAuth and bootstrap.
+- [x] Give pending workspace invites priority over pricing intent.
+- [x] Send Free users to the dashboard and paid users to `/upgrade` with the correct plan and billing period selected for confirmation.
+- [x] Keep checkout owner-only and explain the restriction to members.
+- [x] Align the `/upgrade` default with the homepage annual default.
+- [x] Verify the desktop Preview owner journey through Google, all four Pro/Studio Stripe Test price mappings, and cancellation return.
+- [x] Verify the Pro annual paid path on a real mobile device through Stripe Sandbox and cancellation return.
+- Add durable funnel and prompt events before any behavioural email campaign.
+
+### Messaging boundary
+
+Beta upgrade prompts should appear at real owner actions such as a plan limit or selected gated feature. Generic dashboard popups and promotional email sequences are out of scope for launch. Usage warnings and checkout reminders require deduplication, preferences, plan-state rechecks, and frequency controls first.
+
+### Product specification
+
+See `TIER_SIGNUP_AND_UPGRADE_JOURNEY.md` for the route contract, acceptance criteria, trigger matrix, email assessment, measurement events, and open decisions.
+
 ## 2026-08-07 — Beta feedback database layer
 
 - Slice / change name: Beta feedback + Founding Tester capture — database layer

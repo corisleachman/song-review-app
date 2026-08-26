@@ -74,7 +74,91 @@ test('homepage exposes its primary account journey without blocking accessibilit
   await tabTo(page, primaryAccountLink);
   await expect(primaryAccountLink).toBeFocused();
   await page.keyboard.press('Enter');
-  await expect(page).toHaveURL(/\/login$/);
+  await expect(page).toHaveURL(/\/login\?signupPlan=free$/);
+  await expect(page.getByRole('heading', { name: 'Create your Free workspace' })).toBeVisible();
+});
+
+test('homepage pricing keeps the chosen tier and billing period', async ({ page }) => {
+  await prepareDeterministicPage(page);
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+
+  const pricing = page.locator('#pricing');
+  const proLink = pricing.getByRole('link', { name: 'Choose Pro' });
+  const studioLink = pricing.getByRole('link', { name: 'Choose Studio' });
+
+  await expect(proLink).toHaveAttribute('href', '/signup/pro?billing=year');
+  await expect(studioLink).toHaveAttribute('href', '/signup/studio?billing=year');
+
+  await pricing.getByRole('button', { name: 'Monthly' }).click();
+  await expect(proLink).toHaveAttribute('href', '/signup/pro?billing=month');
+  await expect(studioLink).toHaveAttribute('href', '/signup/studio?billing=month');
+});
+
+test('paid signup route explains the exact choice before Google auth', async ({ page }) => {
+  await prepareDeterministicPage(page);
+  await page.goto('/signup/pro?billing=month', { waitUntil: 'domcontentloaded' });
+
+  await expect(page).toHaveURL(/\/login\?signupPlan=pro&billing=month$/);
+  await expect(page.getByRole('heading', { name: 'Create your Pro workspace' })).toBeVisible();
+  await expect(page.getByText('Pro is £9 per month, billed monthly. You will confirm before payment.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Continue with Google for Pro' })).toBeVisible();
+});
+
+test('plan confirmation defaults to the selected annual tier without opening Stripe', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-chromium', 'One browser is enough for the authenticated confirmation contract.');
+  await prepareDeterministicPage(page);
+  await page.context().addCookies([
+    { name: 'song_review_auth', value: 'test-auth', domain: '127.0.0.1', path: '/' },
+    { name: 'song_review_identity', value: 'test-identity', domain: '127.0.0.1', path: '/' },
+  ]);
+  await page.route('**/api/auth/bootstrap', (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({
+      identity: { membershipRole: 'owner' },
+      workspace: { plan: 'free' },
+    }),
+  }));
+
+  await page.goto('/upgrade?plan=studio&billing=year&source=pricing', { waitUntil: 'domcontentloaded' });
+
+  await expect(page.getByRole('heading', { name: 'Confirm your Studio plan' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Annual/ })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByText('15.83', { exact: true })).toBeVisible();
+  await expect(page.getByText(/Billed £190\/year/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Continue with Studio' })).toBeEnabled();
+
+  await page.getByRole('button', { name: 'Monthly', exact: true }).click();
+  await expect(page).toHaveURL(/plan=studio&billing=month&source=pricing/);
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('button', { name: 'Monthly', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByText('19', { exact: true })).toBeVisible();
+  await expectNoBlockingAxeViolations(page);
+});
+
+test('plan confirmation blocks checkout for workspace members', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-chromium', 'One browser is enough for the owner boundary.');
+  await prepareDeterministicPage(page);
+  await page.context().addCookies([
+    { name: 'song_review_auth', value: 'test-auth', domain: '127.0.0.1', path: '/' },
+    { name: 'song_review_identity', value: 'test-identity', domain: '127.0.0.1', path: '/' },
+  ]);
+  await page.route('**/api/auth/bootstrap', (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({
+      identity: { membershipRole: 'member' },
+      workspace: { plan: 'free' },
+    }),
+  }));
+
+  await page.goto('/upgrade?plan=pro&billing=year&source=pricing', { waitUntil: 'domcontentloaded' });
+
+  await expect(page.getByText('This workspace is managed by its owner. Ask them to change the plan from Settings.')).toBeVisible();
+  const ownerManagedButtons = page.getByRole('button', { name: 'Owner manages this' });
+  await expect(ownerManagedButtons).toHaveCount(2);
+  await expect(ownerManagedButtons.first()).toBeDisabled();
+  await expect(ownerManagedButtons.nth(1)).toBeDisabled();
 });
 
 test('login keeps the beta account journey Google-only and keyboard reachable', async ({ page }) => {

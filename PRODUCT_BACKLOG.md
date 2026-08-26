@@ -6,6 +6,18 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 
 ## Bugs
 
+### Marketing pricing: tier choice is lost during signup
+- Priority: P1 beta blocker
+- Logged: 2026-08-23
+- Status: Desktop and real-device mobile Preview verification passed on 2026-08-26 on `codex/tier-aware-signup`; production rollout remains pending.
+- Original behaviour: Free, Pro, and Studio pricing buttons all opened the same neutral `/login` route, so the chosen tier and billing period disappeared.
+- Expected: use tier-aware signup routes for Free, Pro, and Studio, preserve the selection through Google OAuth and account bootstrap, then send Free to the dashboard and paid choices to a preselected confirmation screen before Stripe.
+- Important boundary: a pending workspace invite must take priority over pricing intent, and only a workspace owner may enter checkout.
+- Implementation: the homepage now uses distinct tier routes, the billing toggle updates paid links, the chosen plan survives the allowlisted Google callback, and paid choices open a preselected owner-aware confirmation screen before Stripe. Checkout cancellation returns to the same choice.
+- Preview result: the owner Google flow reached the Pro annual confirmation, and Stripe Sandbox showed the expected four test prices: Pro at £9/month or £86/year and Studio at £19/month or £190/year. Cancellation returned to the same plan and billing choice with a clear notice. The deployment produced no error or fatal runtime logs during the checks.
+- Remaining beta work: complete the production rollout and add durable server-backed funnel events before introducing any behavioural upgrade email.
+- Detailed product and technical acceptance criteria: `TIER_SIGNUP_AND_UPGRADE_JOURNEY.md`.
+
 ### Mobile homepage: descriptive copy appears too late  ✅ DONE (2026-08-20)
 - Priority: P2
 - Logged: 2026-08-19
@@ -83,6 +95,16 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 ---
 
 ## Future / larger efforts
+
+### Contextual upgrade prompts and lifecycle email
+- Priority: P2, with only the in-product foundation required for beta
+- Logged: 2026-08-23
+- Status: Assessment complete; marketing email automation is intentionally deferred until event data, consent handling, deduplication, and frequency controls exist.
+- Use plan suggestions only at relevant owner actions such as an approaching storage limit, a blocked upload, a full collaborator allowance, or a selected plan-gated feature.
+- Do not interrupt playback, commenting, uploads, or a successful first collaboration with generic sales messaging.
+- Beta should capture durable funnel and prompt events. Owner-only usage warnings can follow when threshold calculation and delivery deduplication are trustworthy.
+- The supplied Flow trial email is a useful model only if Song Room introduces a genuine trial. The Apollo pricing-abandonment approach should wait until beta evidence shows that it would be useful rather than intrusive.
+- Full trigger matrix, release order, measurement plan, and open decisions: `TIER_SIGNUP_AND_UPGRADE_JOURNEY.md`.
 
 ### Mobile homepage hierarchy and hero animation  ✅ DONE (2026-08-22)
 - Priority: P2

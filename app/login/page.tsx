@@ -3,8 +3,13 @@
 export const dynamic = 'force-dynamic';
 
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState, useRef, Suspense } from 'react';
+import { useEffect, useMemo, useState, useRef, Suspense } from 'react';
 import { createClient } from '@/lib/supabase';
+import {
+  buildSignupDestination,
+  getSignupIntent,
+  normalizePostLoginUpgradePath,
+} from '@/lib/signupIntent';
 import styles from './page.module.css';
 import BetaBanner from '@/components/BetaBanner';
 
@@ -16,13 +21,15 @@ function normalizeRedirectTarget(value: string | null) {
   return value;
 }
 
-async function resolvePostLoginRedirect(redirectTo: string) {
+async function resolvePostLoginRedirect(redirectTo: string | null) {
   const normalized = normalizeRedirectTarget(redirectTo);
   if (normalized === '/' || normalized === '/dashboard' || normalized === '/settings' || normalized === '/identify') {
     return normalized === '/' ? '/dashboard' : normalized;
   }
   const inviteMatch = normalized.match(/^\/invite\/([^/?#]+)/);
   if (inviteMatch) return normalized;
+  const upgradePath = normalizePostLoginUpgradePath(normalized);
+  if (upgradePath) return upgradePath;
   const versionMatch = normalized.match(/^\/songs\/([^/]+)\/versions\/([^/?#]+)/);
   if (versionMatch) {
     const [, songId, versionId] = versionMatch;
@@ -83,6 +90,29 @@ function LoginContent() {
 
   const googleStatus = searchParams.get('google');
   const googleMessage = searchParams.get('message');
+  const signupPlanParam = searchParams.get('signupPlan');
+  const signupBillingParam = searchParams.get('billing');
+  const signupIntent = useMemo(
+    () => getSignupIntent(signupPlanParam, signupBillingParam),
+    [signupBillingParam, signupPlanParam],
+  );
+
+  const signupHeading = signupIntent
+    ? `Create your ${signupIntent.plan === 'free' ? 'Free' : signupIntent.plan === 'pro' ? 'Pro' : 'Studio'} workspace`
+    : 'Log in or create your account';
+
+  const signupDescription = (() => {
+    if (!signupIntent) return 'Use Google to log in or create your Song Room account.';
+    if (signupIntent.plan === 'free') return 'Start with 500 MB of storage. No card required.';
+    if (signupIntent.plan === 'pro') {
+      return signupIntent.billing === 'month'
+        ? 'Pro is £9 per month, billed monthly. You will confirm before payment.'
+        : 'Pro is £7.17 per month, billed £86 yearly. You will confirm before payment.';
+    }
+    return signupIntent.billing === 'month'
+      ? 'Studio is £19 per month, billed monthly. You will confirm before payment.'
+      : 'Studio is £15.83 per month, billed £190 yearly. You will confirm before payment.';
+  })();
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -99,16 +129,15 @@ function LoginContent() {
       const { data } = await supabase.auth.getSession();
       if (!mounted) return;
       const arrivedFromOAuthFlow = searchParams.get('google') === 'success';
-      if (arrivedFromOAuthFlow && data.session) {
+      if ((arrivedFromOAuthFlow || signupIntent) && data.session) {
         const requestedRedirect = searchParams.get('redirectTo');
         const storedInvitePath =
           typeof window !== 'undefined' ? window.sessionStorage.getItem(POST_LOGIN_INVITE_PATH_KEY) : null;
         const inviteRedirect =
           storedInvitePath && /^\/invite\/[^/?#]+$/.test(storedInvitePath) ? storedInvitePath : null;
-        const redirectCandidate =
-          inviteRedirect && (!requestedRedirect || requestedRedirect === '/dashboard')
-            ? inviteRedirect
-            : requestedRedirect;
+        const redirectCandidate = inviteRedirect
+          ?? requestedRedirect
+          ?? (signupIntent ? buildSignupDestination(signupIntent) : null);
         const redirectTo = await resolvePostLoginRedirect(redirectCandidate);
         if (!mounted) return;
         if (typeof window !== 'undefined' && inviteRedirect === redirectTo) {
@@ -119,7 +148,7 @@ function LoginContent() {
     };
     void syncSessionAndRedirect();
     return () => { mounted = false; };
-  }, [supabase, searchParams]);
+  }, [signupIntent, supabase, searchParams]);
 
   // BG crossfade
   useEffect(() => {
@@ -237,7 +266,9 @@ function LoginContent() {
   const handleGoogleSignIn = async () => {
     setError('');
     setGoogleLoading(true);
-    const redirectTo = searchParams.get('redirectTo') || '/dashboard';
+    const redirectTo = signupIntent
+      ? buildSignupDestination(signupIntent)
+      : searchParams.get('redirectTo') || '/dashboard';
     const callbackUrl = new URL('/auth/callback', window.location.origin);
     callbackUrl.searchParams.set('next', redirectTo);
     const { error: signInError } = await supabase.auth.signInWithOAuth({
@@ -277,8 +308,9 @@ function LoginContent() {
         <div className={styles.left}>
           {/* Auth panel */}
           <div className={styles.authPanel}>
+            <h1 className={styles.authHeading}>{signupHeading}</h1>
             <p className={styles.authIntro}>
-              Use Google to log in or create your Song Room account.
+              {signupDescription}
             </p>
 
             {/* Google */}
@@ -293,7 +325,11 @@ function LoginContent() {
                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
               </svg>
-              {googleLoading ? 'Connecting...' : 'Continue with Google'}
+              {googleLoading
+                ? 'Connecting...'
+                : signupIntent && signupIntent.plan !== 'free'
+                  ? `Continue with Google for ${signupIntent.plan === 'pro' ? 'Pro' : 'Studio'}`
+                  : 'Continue with Google'}
             </button>
 
             <div className={styles.formFooter}>

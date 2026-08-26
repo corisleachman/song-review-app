@@ -575,9 +575,66 @@ test('marketing pricing follows the upgrade path and defaults to annual billing'
     'data-monthly="billed monthly" data-annual="£86 billed yearly · save £22">£86 billed yearly · save £22</span>',
     'data-monthly="£19" data-annual="£15.83">£15.83</span>',
     'data-monthly="billed monthly" data-annual="£190 billed yearly · save £38">£190 billed yearly · save £38</span>',
+    'href="/signup/free">Start for free</a>',
+    'data-signup-plan="pro" href="/signup/pro?billing=year">Choose Pro</a>',
+    'data-signup-plan="studio" href="/signup/studio?billing=year">Choose Studio</a>',
   ], 'annual pricing defaults');
   assert.match(marketing, /opts\.forEach\([^;]+;\s*setCycle\('annual'\);/u);
+  assert.match(marketing, /link\.setAttribute\('href', `\/signup\/\$\{plan\}\?billing=\$\{billing\}`\)/u);
   assert.doesNotMatch(marketing, /\.tier\.featured\s*\{[^}]*order:\s*-1;/u);
+});
+
+test('tier-aware signup preserves a strict plan choice through Google auth and checkout', () => {
+  const signupPage = read('app/signup/[plan]/page.tsx');
+  const signupIntent = read('lib/signupIntent.ts');
+  const login = read('app/login/page.tsx');
+  const middleware = read('middleware.ts');
+  const upgrade = read('app/upgrade/page.tsx');
+  const checkout = read('app/api/billing/checkout/route.ts');
+
+  assertIncludesAll(signupPage, [
+    'getSignupIntent(plan, billing)',
+    'if (!intent) notFound()',
+    "new URLSearchParams({ signupPlan: intent.plan })",
+    "redirect(`/login?${loginParams.toString()}`)",
+  ], 'public signup route');
+  assertIncludesAll(signupIntent, [
+    "value === 'free' || value === 'pro' || value === 'studio'",
+    "return value === 'month' ? 'month' : 'year'",
+    "source: 'pricing'",
+    "new Set(['plan', 'billing', 'source', 'billingStatus'])",
+    "source === 'checkout' && billingStatus !== 'cancelled'",
+  ], 'signup intent allowlists');
+  assertIncludesAll(login, [
+    'getSignupIntent(signupPlanParam, signupBillingParam)',
+    'buildSignupDestination(signupIntent)',
+    'normalizePostLoginUpgradePath(normalized)',
+    'inviteRedirect',
+    '?? requestedRedirect',
+    "callbackUrl.searchParams.set('next', redirectTo)",
+  ], 'post-login plan and invite routing');
+  assertIncludesAll(middleware, [
+    "pathname.startsWith('/signup/')",
+    "pathname === '/upgrade'",
+    '`${pathname}${request.nextUrl.search}`',
+  ], 'signup access and upgrade query preservation');
+  assertIncludesAll(upgrade, [
+    "fetch('/api/auth/bootstrap'",
+    "payload?.identity?.membershipRole === 'owner'",
+    "normalizeAccountPlan(payload?.workspace?.plan)",
+    "normalizeBillingInterval(searchParams.get('billing'))",
+    "searchParams.get('plan')",
+    "router.replace(`/upgrade?${params.toString()}`, { scroll: false })",
+    'Only the workspace owner can change the plan.',
+    'Checkout was cancelled. Your plan has not changed, and your selection is still here.',
+  ], 'plan confirmation and owner boundary');
+  assertIncludesAll(checkout, [
+    "resolved.identity.membershipRole !== 'owner'",
+    'body.plan === \'studio\' ? \'studio\' : \'pro\'',
+    "body.interval === 'year' ? 'year' : 'month'",
+    'cancel_url:  `${origin}/upgrade?plan=${targetPlan}&billing=${interval}&source=checkout&billingStatus=cancelled`',
+    'billing_interval: interval',
+  ], 'Stripe checkout selection');
 });
 
 test('public playlist playback advances through its ordered tracks', () => {
@@ -672,7 +729,8 @@ test('beta login and signup use a single Google account path', () => {
   assertIncludesAll(login, [
     'Use Google to log in or create your Song Room account.',
     "provider: 'google'",
-    "googleLoading ? 'Connecting...' : 'Continue with Google'",
+    "? 'Connecting...'",
+    ": 'Continue with Google'",
     'During beta, Google is the only account option.',
   ], 'Google-only authentication controls');
   assert.doesNotMatch(
