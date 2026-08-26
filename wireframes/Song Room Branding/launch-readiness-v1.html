@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Song Room — Security &amp; Launch Readiness</title>
+  <meta name="description" content="The security and discoverability measures built into The Song Room ahead of launch." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    @font-face {
+      font-family: 'ThunderBlack';
+      src: url('https://corisleachman.github.io/song-review-app/wireframes/fonts/Thunder-BlackLC.woff2') format('woff2'),
+           url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-BlackLC.otf') format('opentype');
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'ThunderReg';
+      src: url('https://corisleachman.github.io/song-review-app/wireframes/fonts/Thunder-LC.woff2') format('woff2'),
+           url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-LC.ttf') format('truetype');
+      font-display: swap;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black:     #0E0A0A;
+      --surface:   #1C1515;
+      --surface-2: #261C1C;
+      --straw:     #F0E48C;
+      --off-white: #F4EDE4;
+      --sand:      #D4C4B0;
+      --dune:      #8C7B6B;
+      --border:    rgba(244,237,228,0.10);
+      --border-m:  rgba(244,237,228,0.20);
+
+      --tblack: 'ThunderBlack', Impact, 'Arial Narrow Bold', sans-serif;
+      --treg:   'ThunderReg',   Impact, 'Arial Narrow Bold', sans-serif;
+      --ui:     'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    html, body {
+      background: var(--black);
+      color: var(--off-white);
+      font-family: var(--ui);
+      font-size: 15px;
+      line-height: 1.55;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page { max-width: 1100px; margin: 0 auto; padding: 72px 28px 96px; }
+
+    /* ---- Header ---- */
+    .eyebrow {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--straw); margin-bottom: 22px;
+    }
+    .title {
+      font-family: var(--tblack);
+      font-size: clamp(56px, 12vw, 132px);
+      line-height: 0.86; letter-spacing: 0.005em;
+      text-transform: uppercase; color: var(--off-white);
+    }
+    .title .straw { color: var(--straw); }
+    .lede {
+      margin-top: 26px; max-width: 560px;
+      font-size: 16px; color: var(--sand); line-height: 1.6;
+    }
+
+    /* ---- Stat bar ---- */
+    .stats {
+      display: flex; flex-wrap: wrap; gap: 0;
+      margin-top: 40px; border: 1px solid var(--border-m);
+    }
+    .stat {
+      flex: 1; min-width: 150px; padding: 22px 24px;
+      border-right: 1px solid var(--border);
+    }
+    .stat:last-child { border-right: none; }
+    .stat-num {
+      font-family: var(--tblack); font-size: 46px; line-height: 0.9;
+      color: var(--off-white);
+    }
+    .stat-num.straw { color: var(--straw); }
+    .stat-label {
+      margin-top: 8px; font-size: 10.5px; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--dune);
+    }
+
+    /* ---- Section ---- */
+    .section { margin-top: 72px; }
+    .section-head {
+      display: flex; align-items: baseline; gap: 16px;
+      padding-bottom: 18px; border-bottom: 1px solid var(--border-m);
+    }
+    .section-title {
+      font-family: var(--tblack); font-size: clamp(30px, 5vw, 46px);
+      line-height: 0.9; text-transform: uppercase; color: var(--off-white);
+    }
+    .section-count {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--straw);
+    }
+
+    .grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      border: 1px solid var(--border); border-bottom: none; margin-top: 24px;
+    }
+    .item {
+      display: flex; gap: 16px; padding: 22px 24px;
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+    }
+    .item:nth-child(2n) { border-right: none; }
+
+    .check {
+      flex-shrink: 0; width: 26px; height: 26px;
+      border: 1px solid var(--straw);
+      display: flex; align-items: center; justify-content: center;
+      margin-top: 2px;
+    }
+    .check svg { width: 15px; height: 15px; display: block; }
+    .check svg path { stroke: var(--straw); stroke-width: 2.4; fill: none;
+      stroke-linecap: square; stroke-linejoin: miter; }
+
+    .item-body h3 {
+      font-family: var(--ui); font-size: 15px; font-weight: 600;
+      color: var(--off-white); letter-spacing: 0.005em; margin-bottom: 5px;
+    }
+    .item-body p { font-size: 13.5px; color: var(--dune); line-height: 1.55; }
+
+    /* ---- Footer ---- */
+    .foot {
+      margin-top: 80px; padding-top: 26px;
+      border-top: 1px solid var(--border-m);
+      display: flex; flex-wrap: wrap; gap: 14px 24px;
+      align-items: center; justify-content: space-between;
+    }
+    .foot-brand {
+      font-family: var(--tblack); font-size: 22px;
+      text-transform: uppercase; letter-spacing: 0.02em; color: var(--off-white);
+    }
+    .foot-right { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; }
+    .foot-meta { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dune); }
+    .foot-link {
+      font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+      color: var(--straw); text-decoration: none;
+      border-bottom: 1px solid transparent; padding-bottom: 1px;
+    }
+    .foot-link:hover, .foot-link:focus-visible { border-bottom-color: var(--straw); }
+
+    :focus-visible { outline: 2px solid var(--straw); outline-offset: 3px; }
+
+    /* ---- Reveal (motion-safe) ---- */
+    @media (prefers-reduced-motion: no-preference) {
+      .reveal { opacity: 0; transform: translateY(14px); animation: rise 0.6s cubic-bezier(0.23,1,0.32,1) forwards; }
+      .d1 { animation-delay: 0.05s; } .d2 { animation-delay: 0.13s; }
+      .d3 { animation-delay: 0.21s; } .d4 { animation-delay: 0.29s; }
+      @keyframes rise { to { opacity: 1; transform: none; } }
+    }
+
+    @media (max-width: 680px) {
+      .page { padding: 52px 20px 72px; }
+      .grid { grid-template-columns: 1fr; }
+      .item:nth-child(n) { border-right: none; }
+      .stat { border-right: none; border-bottom: 1px solid var(--border); }
+      .stat:last-child { border-bottom: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+
+    <header>
+      <div class="eyebrow reveal d1">The Song Room — Trust &amp; Launch Readiness</div>
+      <h1 class="title reveal d2">Secure.<br />Discoverable.<br /><span class="straw">Ship-ready.</span></h1>
+      <p class="lede reveal d3">A live snapshot of the security and discoverability measures already built into The Song Room ahead of launch.</p>
+
+      <div class="stats reveal d4">
+        <div class="stat">
+          <div class="stat-num straw">12</div>
+          <div class="stat-label">Security measures</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num straw">11</div>
+          <div class="stat-label">SEO &amp; discoverability</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">HTTPS</div>
+          <div class="stat-label">Enforced site-wide</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- SECURITY -->
+    <section class="section">
+      <div class="section-head">
+        <h2 class="section-title">Security</h2>
+        <span class="section-count">Protections in place</span>
+      </div>
+      <div class="grid">
+        <div class="item"><span class="check"><svg viewBox="0 0 16 16"><path d="M2 8.5 L6 12.5 L14 3.5"/></svg></span><div class="item-body"><h3>Encrypted connection</h3><p>Every page loads over HTTPS, enforced site-wide so the connection can't be downgraded.</p></div></div>
+        <div class="item"><span class="check"><svg viewBox="0 0 16 16"><path d="M2 8.5 L6 12.5 L14 3.5"/></svg></span><div class="item-body"><h3>Hardened browser headers</h3><p>Protections against clickjacking, content-sniffing and referrer leakage on every response.</p></div></div>
+        <div class="item"><span class="check"><svg viewBox="0 0 16 16"><path d="M2 8.5 L6 12.5 L14 3.5"/></svg></span><div class="item-body"><h3>Content Security Policy</h3><p>A policy governs what's allowed to run on the page, and it's actively monitored.</p></div></div>
+        <div class="item"><span class="check"><svg viewBox="0 0 16 16"><path d="M2 8.5 L6 12.5 L14 3.5"/></svg></span><div class="item-body"><h3>Row-level database security</h3><p>Access is enforced row by row, so people only ever reach their own songs and data.</p></div></div>
+        <div class="item"><span class="check"><svg viewBox="0 0 16 16"><path d="M2 8.5 L6 12.5 L14 3.5"/></svg></span><div class="item-body"><h3>Server-verified access</h3><p>Sign-in and permissions are checked on the server, never trusted from the browser.</p></div></div>
+        <div class="item"><span class="check"><svg viewBox="0 0 16 16"><path d="M2 8.5 L6 12.5 L14 3.5"/></svg></span><div class="item-body"><h3>Google sign-in</h3><p>Accounts use Google authentication, so The Song Room never sees or stores your password.</p></div></div>
+        <div class="item"><span class="check"><svg viewBox="0 0 16 16"><path d="M2 8.5 L6 12.5 L14 3.5"/></svg></span><div class="item-body"><h3>Encryption at rest</h3><p>Uploaded audio and account data are encrypted where they're stored.</p></div></div>
+        <div class="item"><span class="check"><svg viewBox="0 0 16 16"><path d="M2 8.5 L6 12.5 L14 3.5"/></svg></span><div class="item-body"><h3>Server-only secrets</h3><p>Keys and credentials stay on the server and are never shipped to the browser.</p></div></div>
+        <div class="item"><span class="check"><svg viewBox="0 0 16 16"><path d="M2 8.5 L6 12.5 L14 3.5"/></svg></span><div class="item-body"><h3>Injection protection</h3><p>User content is escaped and database queries are parameterised to block injection attacks.</p></div></div>
+        <div class="item"><span class="check"><svg viewBox="0 0 16 16"><path d="M2 8.5 L6 12.5 L14 3.5"/></svg></span><div class="item-body"><h3>Continuous dependency scanning</h3><p>Third-party code is scanned automatically and patched as security fixes ship.</p></div></div>
+        <div class="item"><span class="check"><svg viewBox="0 0 16 16"><path d="M2 8.5 L6 12.5 L14 3.5"/></svg></span><div class="item-body"><h3>Abuse protection on public forms</h3><p>Public inputs are rate-limited and spam-guarded.</p></div></div>
+        <div class="item"><span class="check"><svg viewBox="0 0 16 16"><path d="M2 8.5 L6 12.5 L14 3.5"/></svg></span><div class="item-body"><h3>Cookie consent</h3><p>Non-essential tracking only runs after you agree.</p></div></div>
+      </div>
+    </section>
+
+    <!-- DISCOVERABILITY -->
+    <section class="section">
+      <div class="section-head">
+        <h2 class="section-title">Discoverability &amp; SEO</h2>
+        <span class="section-count">In place</span>
+      </div>
+      <div class="grid">
+        <div class="item"><span class="check"><svg viewBox="0 0 16 16"><path d="M2 8.5 L6 12.5 L14 3.5"/></svg></span><div class="item-body"><h3>robots.txt</h3><p>Clear crawl rules tell search engines what to index.</p></div></div>
+        <div class="item"><span class="check"><svg viewBox="0 0 16 16"><path d="M2 8.5 L6 12.5 L14 3.5"/></svg></span><div class="item-body"><h3>XML sitemap</h3><p>A full sitemap helps search engines find every page.</p></div></div>
+        <div class="item"><span class="check"><svg viewBox="0 0 16 16"><path d="M2 8.5 L6 12.5 L14 3.5"/></svg></span><div class="item-body"><h3>Page titles &amp; descriptions</h3><p>Every page carries purpose-written search metadata.</p></div></div>
+        <div class="item"><span class="check"><svg viewBox="0 0 16 16"><path d="M2 8.5 L6 12.5 L14 3.5"/></svg></span><div class="item-body"><h3>Social share cards</h3><p>Links unfurl into rich previews when shared on social and in messages.</p></div></div>
+        <div class="item"><span class="check"><svg viewBox="0 0 16 16"><path d="M2 8.5 L6 12.5 L14 3.5"/></svg></span><div class="item-body"><h3>Favicon &amp; app icons</h3><p>Proper icons across browsers, tabs and devices.</p></div></div>
+        <div class="item"><span class="check"><svg viewBox="0 0 16 16"><path d="M2 8.5 L6 12.5 L14 3.5"/></svg></span><div class="item-body"><h3>Custom 404 page</h3><p>A branded, helpful page when something can't be found.</p></div></div>
+        <div class="item"><span class="check"><svg viewBox="0 0 16 16"><path d="M2 8.5 L6 12.5 L14 3.5"/></svg></span><div class="item-body"><h3>Mobile-first &amp; responsive</h3><p>Designed for the phone first, scaling cleanly up to desktop.</p></div></div>
+        <div class="item"><span class="check"><svg viewBox="0 0 16 16"><path d="M2 8.5 L6 12.5 L14 3.5"/></svg></span><div class="item-body"><h3>Canonical URLs</h3><p>One clear address per page, so search ranking isn't split.</p></div></div>
+        <div class="item"><span class="check"><svg viewBox="0 0 16 16"><path d="M2 8.5 L6 12.5 L14 3.5"/></svg></span><div class="item-body"><h3>Privacy Policy &amp; Terms</h3><p>Both published and linked from the site footer.</p></div></div>
+        <div class="item"><span class="check"><svg viewBox="0 0 16 16"><path d="M2 8.5 L6 12.5 L14 3.5"/></svg></span><div class="item-body"><h3>Accessibility checks in CI</h3><p>Automated accessibility tests run on every change before it ships.</p></div></div>
+        <div class="item"><span class="check"><svg viewBox="0 0 16 16"><path d="M2 8.5 L6 12.5 L14 3.5"/></svg></span><div class="item-body"><h3>Consent-gated analytics</h3><p>Usage analytics that only run once you've given consent.</p></div></div>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <div class="foot-brand">The Song Room</div>
+      <div class="foot-right">
+        <span class="foot-meta">Last reviewed 26 Aug 2026</span>
+        <a class="foot-link" href="https://www.song-room.live" target="_blank" rel="noopener">song-room.live ↗</a>
+      </div>
+    </footer>
+
+  </main>
+</body>
+</html>
