@@ -5159,3 +5159,52 @@ Verification notes for the Vercel Preview Stripe Test separation, Google account
 - The real Google owner flow reached the selected Pro annual confirmation. Stripe Sandbox showed all four expected Preview prices: Pro at £9/month or £86/year and Studio at £19/month or £190/year.
 - Cancelling Checkout returned to the same Preview selection and showed that the plan had not changed. This passed for the original Pro annual journey and the final Studio monthly check. Deployment-specific inspection found no error or fatal runtime logs during the test window.
 - No payment was submitted. Preview webhook delivery, a real-device mobile paid-path check, and the Production rollout remain pending.
+
+## 2026-08-26 — SEO discoverability (robots + sitemap) + dependency scanning
+
+### What we were trying to achieve
+
+Work through a pre-launch checklist (SEO, security, UX) against the live build and close the concrete gaps. The site had no robots.txt, no sitemap.xml, and no automated dependency scanning.
+
+### Feature / change being made
+
+Added Next.js App Router `robots.ts` and `sitemap.ts` for crawler discoverability, and enabled Dependabot for dependency scanning. Logged the remaining checklist items to PRODUCT_BACKLOG.md.
+
+### Files changed
+
+- `app/robots.ts` (new)
+- `app/sitemap.ts` (new)
+- `PRODUCT_BACKLOG.md` (pre-launch checklist audit appended)
+- `.github/dependabot.yml` (new — on the `main` default branch, as Dependabot requires)
+
+### Notes
+
+- Confirmed working: production deploy `dpl_iAQPNVMhkN3s48sTmPuPgSG3VFs1` (commit `aa86caa`) reached Ready; live at https://song-room.live/robots.txt and https://song-room.live/sitemap.xml.
+- Output uses the non-www host because `NEXT_PUBLIC_APP_URL=https://song-room.live`; consistent with the marketing canonical.
+- Dependabot config must live on the default branch, so it sits on `main` with `target-branch: clone-clean` (update PRs open against production). `sharp` is ignored to preserve the 0.32.6 pin required by Vercel.
+- The npm-audit CI workflow (`.github/workflows/dependency-audit.yml`) was NOT committed — the PAT lacks the Workflows permission; it needs to be added manually in the GitHub UI.
+- Secret rotation (Supabase service-role key, Resend key, GitHub PAT) is being handled separately.
+
+
+## 2026-08-26 — Public /trust page (security & launch readiness)
+
+### What we were trying to achieve
+
+Give the security + discoverability showcase a permanent home on our own domain (rather than the GitHub Pages wireframe), so it can be linked and shown publicly — including in launch content.
+
+### Feature / change being made
+
+New public `/trust` route presenting the in-place security and SEO/discoverability measures as two checked-off sections. Public-safe: only genuine, implemented measures are shown — no gaps, keys, project IDs, or internal paths.
+
+### Files changed
+
+- `app/trust/page.tsx` (new — follows the `/privacy` + `/terms` self-contained page pattern: inline styles, sticky nav, ThunderLC title)
+- `middleware.ts` (added `/trust` to `publicRoutes` so it renders unauthenticated)
+- `app/sitemap.ts` (added `/trust`)
+
+### Notes
+
+- Confirmed working: production deploy `dpl_G3F56vGYy9oSyuWKhLsQ8i46Q1ew` (commit `a84d1e3`) reached Ready; live at https://www.song-room.live/trust (HTTP 200, unauthenticated), and present in the sitemap.
+- Design mirrors the approved launch-readiness wireframe (straw-yellow check grid) inside the app's legal-page chrome.
+- Content is a manual snapshot: when a new protection ships (e.g. signup bot protection), update the item lists + the "12/11" counts in `app/trust/page.tsx`.
+- The original GitHub Pages version remains at `wireframes/Song Room Branding/launch-readiness-v1.html` as the design reference.

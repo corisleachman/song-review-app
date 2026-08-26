@@ -133,3 +133,29 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
   - manual override of user account levels (plan up/downgrade)
   - assign / issue redemption codes to individuals
 - Note: the **beta feedback triage view** (currently being specced) is phase 1 of this console. The account-level override and code-assignment pieces are the later expansions.
+
+---
+
+## Pre-launch checklist audit (2026-08-26)
+
+Captured from a launch-readiness review (TikTok launch checklists cross-referenced against the build). Secret rotation is being handled outside the backlog. robots.txt, sitemap.xml and Dependabot shipped 2026-08-26; npm-audit CI workflow pending manual add (token lacks Workflows permission).
+
+### Security hardening
+- Logged: 2026-08-26
+- Add login/auth rate limiting (verify Supabase defaults, add app-level throttle).
+- Add bot protection on signup (Cloudflare Turnstile or hCaptcha).
+- Flip CSP from Report-Only to enforcing once the report endpoint is clean.
+- Verify audio upload restrictions (allowed MIME types + max size caps).
+- Standardise input validation across API routes.
+
+### SEO / discoverability
+- Logged: 2026-08-26
+- Add FAQ (marketing section or /faq route) for SEO + conversion.
+- Audit alt text on all content/marketing images.
+- Make canonical host consistent (www vs non-www; align metadataBase + marketing.html canonical, currently non-www).
+
+### Pre-launch QA
+- Logged: 2026-08-26
+- Manual test all forms (signup, login, feedback, upload, checkout).
+- Broken-link crawl (marketing + blog + in-app nav).
+- Lighthouse performance pass.
