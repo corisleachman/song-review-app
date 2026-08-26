@@ -2457,7 +2457,7 @@ Pricing was restructured on the marketing site (`tsr-marketing-v19.html`) to dif
 
 ## Phase 10.1: Tier-aware signup and upgrade journey
 
-**Status: Desktop Preview journey verified on 2026-08-26; mobile paid-path verification and production rollout pending**
+**Status: Desktop and real-device mobile Preview journeys verified on 2026-08-26; production rollout pending**
 
 ### Objective
 
@@ -2473,8 +2473,8 @@ Carry a visitor's Free, Pro, or Studio choice from the homepage through Google a
 - [x] Keep checkout owner-only and explain the restriction to members.
 - [x] Align the `/upgrade` default with the homepage annual default.
 - [x] Verify the desktop Preview owner journey through Google, all four Pro/Studio Stripe Test price mappings, and cancellation return.
+- [x] Verify the Pro annual paid path on a real mobile device through Stripe Sandbox and cancellation return.
 - Add durable funnel and prompt events before any behavioural email campaign.
-- Verify the paid path on a real mobile device before production.
 
 ### Messaging boundary
 

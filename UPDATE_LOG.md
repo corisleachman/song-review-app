@@ -5155,10 +5155,11 @@ Verification notes for the Vercel Preview Stripe Test separation, Google account
 ### Notes
 
 - Preview now has its own Stripe Test secret and four test price IDs. The existing live prices and referral coupon are Production-only, and the Production webhook configuration was not changed.
-- Preview deployment `dpl_3ToWJRA8uSgZ6Srv9mvsNLHd1MDM` reached Ready for commit `b2c04ff7702a0a336d7eadcacb08f42101996845`.
+- Refreshed Preview deployment `dpl_6WHLuBoKseuGXv5StTP8Y3Zt2TDj` reached Ready for commit `e63b768aa612878719be1656bf4dc9ba19535e0c` after the latest production base was merged. All PR checks passed and the merge state was clean.
 - The real Google owner flow reached the selected Pro annual confirmation. Stripe Sandbox showed all four expected Preview prices: Pro at £9/month or £86/year and Studio at £19/month or £190/year.
 - Cancelling Checkout returned to the same Preview selection and showed that the plan had not changed. This passed for the original Pro annual journey and the final Studio monthly check. Deployment-specific inspection found no error or fatal runtime logs during the test window.
-- No payment was submitted. Preview webhook delivery, a real-device mobile paid-path check, and the Production rollout remain pending.
+- The real-device mobile Pro annual path passed, including the Preview return, selected price, Stripe Sandbox handoff, and cancellation return.
+- No payment was submitted. Preview webhook delivery and the Production rollout remain pending.
 
 ## 2026-08-26 — SEO discoverability (robots + sitemap) + dependency scanning
 
