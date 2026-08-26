@@ -14,6 +14,7 @@ export async function middleware(request: NextRequest) {
     '/auth/reset-password',
     '/privacy',
     '/terms',
+    '/trust',
     '/cookie-consent.js',
     '/cookie-consent.css',
     '/song-room-preview.jpg',
