@@ -5066,3 +5066,29 @@ Route-aware `Content-Security-Policy-Report-Only` headers for the app and embedd
 - The observed preview requests returned only successful or redirect statuses in the available runtime window, with no 5xx status.
 - Revised local verification passed all 32 contract tests and a complete optimized Next.js build using the same inert Supabase placeholders as public CI. The normal build command's first run stopped only because this restarted local workspace had no Supabase variables loaded.
 - Revised preview deployment `dpl_E477RGjURnc6QbXdJuJceSGuVKVq` reached Ready and all PR checks passed. The landing page loaded after analytics consent, and deployment-specific runtime inspection found no CSP reports, error or fatal logs, or failed application requests.
+
+
+## 2026-08-26 — SEO discoverability (robots + sitemap) + dependency scanning
+
+### What we were trying to achieve
+
+Work through a pre-launch checklist (SEO, security, UX) against the live build and close the concrete gaps. The site had no robots.txt, no sitemap.xml, and no automated dependency scanning.
+
+### Feature / change being made
+
+Added Next.js App Router `robots.ts` and `sitemap.ts` for crawler discoverability, and enabled Dependabot for dependency scanning. Logged the remaining checklist items to PRODUCT_BACKLOG.md.
+
+### Files changed
+
+- `app/robots.ts` (new)
+- `app/sitemap.ts` (new)
+- `PRODUCT_BACKLOG.md` (pre-launch checklist audit appended)
+- `.github/dependabot.yml` (new — on the `main` default branch, as Dependabot requires)
+
+### Notes
+
+- Confirmed working: production deploy `dpl_iAQPNVMhkN3s48sTmPuPgSG3VFs1` (commit `aa86caa`) reached Ready; live at https://song-room.live/robots.txt and https://song-room.live/sitemap.xml.
+- Output uses the non-www host because `NEXT_PUBLIC_APP_URL=https://song-room.live`; consistent with the marketing canonical.
+- Dependabot config must live on the default branch, so it sits on `main` with `target-branch: clone-clean` (update PRs open against production). `sharp` is ignored to preserve the 0.32.6 pin required by Vercel.
+- The npm-audit CI workflow (`.github/workflows/dependency-audit.yml`) was NOT committed — the PAT lacks the Workflows permission; it needs to be added manually in the GitHub UI.
+- Secret rotation (Supabase service-role key, Resend key, GitHub PAT) is being handled separately.

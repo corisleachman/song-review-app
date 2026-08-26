@@ -2627,3 +2627,18 @@ Pricing was restructured on the marketing site (`tsr-marketing-v19.html`) to dif
 - Next follow-up:
   - extract a shared `usePlaylistPlayer` hook so the immersive `/listen` player and the embed player share one audio engine
   - optional: taller (420px) height preset in the share box; a per-plan embed allowlist instead of `frame-ancestors *` if ever needed
+
+
+## 2026-08-26 — SEO discoverability + dependency scanning (launch-readiness)
+
+- Slice / change name: robots.txt + sitemap.xml + Dependabot (pre-launch checklist audit)
+- Status: DONE — production deploy verified (robots.txt + sitemap.xml live); pending Coris eyeball.
+- Exact files changed:
+  - `app/robots.ts` — new (allows public marketing/blog/legal, disallows app/api/auth/embed areas)
+  - `app/sitemap.ts` — new (marketing, blog index + 4 posts, privacy, terms)
+  - `.github/dependabot.yml` — new, on `main` (weekly npm + github-actions updates, `target-branch: clone-clean`, `sharp` ignored to protect the 0.32.6 pin)
+  - `PRODUCT_BACKLOG.md` — pre-launch checklist audit appended (security hardening, SEO, QA)
+- Outcome:
+  - crawlers can discover the site: https://song-room.live/robots.txt and https://song-room.live/sitemap.xml
+  - dependency scanning enabled via Dependabot; opened its first batch of update PRs against clone-clean on activation
+- Follow-ups (in backlog): FAQ, alt-text audit, canonical-host consistency in the `layout.tsx` fallback, login rate-limit, signup bot protection, CSP enforce, npm-audit CI workflow (needs manual add — PAT lacks Workflows permission)
