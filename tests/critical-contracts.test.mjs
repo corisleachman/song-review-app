@@ -627,6 +627,13 @@ test('tier-aware signup preserves a strict plan choice through Google auth and c
     "router.replace(`/upgrade?${params.toString()}`, { scroll: false })",
     'Only the workspace owner can change the plan.',
     'Checkout was cancelled. Your plan has not changed, and your selection is still here.',
+    'const isSelectedPlan = selectedPlan === plan.id && hasSelectedPlanJourney',
+    'const showPopularTreatment = Boolean(plan.popular) && !hasSelectedPlanJourney',
+    "const ctaVariant = hasSelectedPlanJourney && !isSelectedPlan",
+    'showPopularTreatment ? styles.popular',
+    'isSelectedPlan ? styles.selected',
+    '{showPopularTreatment && (',
+    'styles[ctaVariant]',
   ], 'plan confirmation and owner boundary');
   assertIncludesAll(checkout, [
     "resolved.identity.membershipRole !== 'owner'",

@@ -298,6 +298,11 @@ function UpgradeContent() {
               ? plan.monthlyPrice * 12 - plan.annualPrice
               : null;
           const isLoading = loading === plan.id;
+          const isSelectedPlan = selectedPlan === plan.id && hasSelectedPlanJourney;
+          const showPopularTreatment = Boolean(plan.popular) && !hasSelectedPlanJourney;
+          const ctaVariant = hasSelectedPlanJourney && !isSelectedPlan
+            ? 'ghost'
+            : plan.ctaVariant;
           const isCurrentPlan = access.currentPlan === plan.id;
           const isIncludedInCurrentPlan =
             plan.id !== 'free'
@@ -323,16 +328,16 @@ function UpgradeContent() {
             ctaLabel = 'Current plan';
           } else if (isIncludedInCurrentPlan) {
             ctaLabel = `Included in ${getPlanDisplayName(access.currentPlan)}`;
-          } else if (selectedPlan === plan.id && hasSelectedPlanJourney) {
+          } else if (isSelectedPlan) {
             ctaLabel = `Continue with ${plan.name}`;
           }
 
           return (
             <div
               key={plan.id}
-              className={`${styles.card} ${plan.popular ? styles.popular : ''} ${selectedPlan === plan.id ? styles.selected : ''}`}
+              className={`${styles.card} ${showPopularTreatment ? styles.popular : ''} ${isSelectedPlan ? styles.selected : ''}`}
             >
-              {plan.popular && (
+              {showPopularTreatment && (
                 <div className={styles.popularBadge}>Most popular</div>
               )}
 
@@ -382,7 +387,7 @@ function UpgradeContent() {
 
               <button
                 type="button"
-                className={`${styles.cta} ${styles[plan.ctaVariant]}`}
+                className={`${styles.cta} ${styles[ctaVariant]}`}
                 onClick={() => void handleSelect(plan.id)}
                 disabled={
                   isLoading

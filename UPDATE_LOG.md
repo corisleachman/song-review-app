@@ -5234,3 +5234,28 @@ Validate an existing Stripe customer before creating a subscription Checkout Ses
 - Only a confirmed missing or deleted customer triggers replacement. Authentication, permissions, rate limits, and other Stripe failures still stop Checkout and surface through the existing error response.
 - No Stripe object, Supabase record, environment variable, Preview deployment, or Production deployment was changed while preparing this local hotfix.
 - Preview verification and production rollout remain pending.
+
+---
+
+## 2026-08-27 - Plan confirmation hierarchy
+
+### What we were trying to achieve
+
+Remove the conflicting double highlight shown after a user cancels Stripe Checkout and returns to a specific plan confirmation page.
+
+### Feature / change being made
+
+Reserve the strong card border and primary paid action for the selected plan during a plan-specific confirmation journey. Keep the Pro “Most popular” treatment on the normal comparison screen, where it remains useful.
+
+### Files changed
+
+- `app/upgrade/page.tsx`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- A Studio confirmation now highlights Studio alone, hides the Pro promotional badge, and gives alternative plans quieter actions.
+- A Pro confirmation behaves the same way in reverse.
+- The general “Choose your plan” view still highlights Pro as the most popular option.
+- The change is visual hierarchy only. Plan selection, prices, workspace permissions, and Stripe Checkout behaviour are unchanged.
