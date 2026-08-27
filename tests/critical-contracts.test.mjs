@@ -632,9 +632,15 @@ test('tier-aware signup preserves a strict plan choice through Google auth and c
     "resolved.identity.membershipRole !== 'owner'",
     'body.plan === \'studio\' ? \'studio\' : \'pro\'',
     "body.interval === 'year' ? 'year' : 'month'",
+    "code === 'resource_missing' || message.includes('no such customer')",
+    'stripe.customers.retrieve(stripeCustomerId)',
+    "'deleted' in customer && customer.deleted",
+    'if (!isMissingStripeCustomerError(customerError))',
+    'stripeCustomerId = null',
+    ".update({ stripe_customer_id: stripeCustomerId })",
     'cancel_url:  `${origin}/upgrade?plan=${targetPlan}&billing=${interval}&source=checkout&billingStatus=cancelled`',
     'billing_interval: interval',
-  ], 'Stripe checkout selection');
+  ], 'Stripe checkout selection and stale-customer recovery');
 });
 
 test('public playlist playback advances through its ordered tracks', () => {

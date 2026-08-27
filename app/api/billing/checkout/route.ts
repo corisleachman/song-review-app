@@ -14,6 +14,20 @@ function getErrorMessage(error: unknown) {
   return 'Could not start checkout.';
 }
 
+function isMissingStripeCustomerError(error: unknown) {
+  if (!error || typeof error !== 'object') return false;
+
+  const message = 'message' in error && typeof error.message === 'string'
+    ? error.message.toLowerCase()
+    : '';
+
+  const code = 'code' in error && typeof error.code === 'string'
+    ? error.code
+    : '';
+
+  return code === 'resource_missing' || message.includes('no such customer');
+}
+
 export async function POST(request: Request) {
   try {
     noStore();
@@ -62,6 +76,21 @@ export async function POST(request: Request) {
     const stripe     = getStripe();
     const origin     = new URL(request.url).origin;
     let stripeCustomerId = account.stripe_customer_id as string | null;
+
+    if (stripeCustomerId) {
+      try {
+        const customer = await stripe.customers.retrieve(stripeCustomerId);
+        if ('deleted' in customer && customer.deleted) {
+          stripeCustomerId = null;
+        }
+      } catch (customerError) {
+        if (!isMissingStripeCustomerError(customerError)) {
+          throw customerError;
+        }
+
+        stripeCustomerId = null;
+      }
+    }
 
     if (!stripeCustomerId) {
       const customer = await stripe.customers.create({

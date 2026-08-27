@@ -5209,3 +5209,28 @@ New public `/trust` route presenting the in-place security and SEO/discoverabili
 - Design mirrors the approved launch-readiness wireframe (straw-yellow check grid) inside the app's legal-page chrome.
 - Content is a manual snapshot: when a new protection ships (e.g. signup bot protection), update the item lists + the "12/11" counts in `app/trust/page.tsx`.
 - The original GitHub Pages version remains at `wireframes/Song Room Branding/launch-readiness-v1.html` as the design reference.
+
+---
+
+## 2026-08-27 - Stripe customer recovery before Checkout
+
+### What we were trying to achieve
+
+Restore paid-plan Checkout for workspaces whose saved Stripe customer ID belongs to an old or deleted Stripe account, as exposed by the PR #31 production smoke test.
+
+### Feature / change being made
+
+Validate an existing Stripe customer before creating a subscription Checkout Session. If Stripe confirms that the customer is missing or deleted, create a replacement under the currently configured Stripe account and save its ID to the same workspace before continuing.
+
+### Files changed
+
+- `app/api/billing/checkout/route.ts`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Valid Stripe customers continue through the existing Checkout path without being changed.
+- Only a confirmed missing or deleted customer triggers replacement. Authentication, permissions, rate limits, and other Stripe failures still stop Checkout and surface through the existing error response.
+- No Stripe object, Supabase record, environment variable, Preview deployment, or Production deployment was changed while preparing this local hotfix.
+- Preview verification and production rollout remain pending.
