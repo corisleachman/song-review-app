@@ -591,6 +591,7 @@ test('tier-aware signup preserves a strict plan choice through Google auth and c
   const middleware = read('middleware.ts');
   const upgrade = read('app/upgrade/page.tsx');
   const checkout = read('app/api/billing/checkout/route.ts');
+  const planSettings = read('app/settings/plan/page.tsx');
 
   assertIncludesAll(signupPage, [
     'getSignupIntent(plan, billing)',
@@ -628,13 +629,21 @@ test('tier-aware signup preserves a strict plan choice through Google auth and c
     'Only the workspace owner can change the plan.',
     'Checkout was cancelled. Your plan has not changed, and your selection is still here.',
     'const isSelectedPlan = selectedPlan === plan.id && hasSelectedPlanJourney',
-    'const showPopularTreatment = Boolean(plan.popular) && !hasSelectedPlanJourney',
+    "const returnToSettings = searchParams.get('returnTo') === 'settings'",
+    "if (returnToSettings) router.push('/settings/plan')",
+    "returnTo: returnToSettings ? 'settings' : undefined",
+    'const showCurrentPlanTreatment = !hasSelectedPlanJourney',
+    'const showPopularRecommendation = Boolean(plan.popular)',
     "const ctaVariant = hasSelectedPlanJourney && !isSelectedPlan",
-    'showPopularTreatment ? styles.popular',
+    'showCurrentPlanTreatment ? styles.currentPlan',
     'isSelectedPlan ? styles.selected',
-    '{showPopularTreatment && (',
+    'Your current plan',
+    '{showPopularRecommendation && (',
     'styles[ctaVariant]',
   ], 'plan confirmation and owner boundary');
+  assertIncludesAll(planSettings, [
+    "router.push('/upgrade?returnTo=settings')",
+  ], 'Plan & Billing upgrade origin');
   assertIncludesAll(checkout, [
     "resolved.identity.membershipRole !== 'owner'",
     'body.plan === \'studio\' ? \'studio\' : \'pro\'',
@@ -645,7 +654,9 @@ test('tier-aware signup preserves a strict plan choice through Google auth and c
     'if (!isMissingStripeCustomerError(customerError))',
     'stripeCustomerId = null',
     ".update({ stripe_customer_id: stripeCustomerId })",
-    'cancel_url:  `${origin}/upgrade?plan=${targetPlan}&billing=${interval}&source=checkout&billingStatus=cancelled`',
+    "const returnTo   = body.returnTo === 'settings' ? 'settings' : null",
+    "if (returnTo === 'settings') cancelParams.set('returnTo', 'settings')",
+    'cancel_url:  `${origin}/upgrade?${cancelParams.toString()}`',
     'billing_interval: interval',
   ], 'Stripe checkout selection and stale-customer recovery');
 });

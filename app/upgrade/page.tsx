@@ -121,6 +121,7 @@ function UpgradeContent() {
   const cameFromCheckout = selectedPlan !== null
     && searchParams.get('source') === 'checkout'
     && checkoutCancelled;
+  const returnToSettings = searchParams.get('returnTo') === 'settings';
   const shouldExitToDashboard = cameFromPricing || cameFromCheckout;
   const hasSelectedPlanJourney = shouldExitToDashboard;
 
@@ -189,7 +190,8 @@ function UpgradeContent() {
 
   const handleSelect = async (planId: AccountPlan) => {
     if (planId === 'free') {
-      if (shouldExitToDashboard) router.push('/dashboard');
+      if (returnToSettings) router.push('/settings/plan');
+      else if (shouldExitToDashboard) router.push('/dashboard');
       else router.back();
       return;
     }
@@ -206,7 +208,11 @@ function UpgradeContent() {
       const response = await fetch('/api/billing/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: planId, interval }),
+        body: JSON.stringify({
+          plan: planId,
+          interval,
+          returnTo: returnToSettings ? 'settings' : undefined,
+        }),
       });
 
       const payload = await response.json().catch(() => null);
@@ -236,7 +242,11 @@ function UpgradeContent() {
         <button
           type="button"
           className={styles.back}
-          onClick={() => shouldExitToDashboard ? router.push('/dashboard') : router.back()}
+          onClick={() => {
+            if (returnToSettings) router.push('/settings/plan');
+            else if (shouldExitToDashboard) router.push('/dashboard');
+            else router.back();
+          }}
         >
           ← Back
         </button>
@@ -299,11 +309,16 @@ function UpgradeContent() {
               : null;
           const isLoading = loading === plan.id;
           const isSelectedPlan = selectedPlan === plan.id && hasSelectedPlanJourney;
-          const showPopularTreatment = Boolean(plan.popular) && !hasSelectedPlanJourney;
           const ctaVariant = hasSelectedPlanJourney && !isSelectedPlan
             ? 'ghost'
             : plan.ctaVariant;
           const isCurrentPlan = access.currentPlan === plan.id;
+          const showCurrentPlanTreatment = !hasSelectedPlanJourney
+            && !access.loading
+            && isCurrentPlan;
+          const showPopularRecommendation = Boolean(plan.popular)
+            && !hasSelectedPlanJourney
+            && !showCurrentPlanTreatment;
           const isIncludedInCurrentPlan =
             plan.id !== 'free'
             && !isCurrentPlan
@@ -318,7 +333,9 @@ function UpgradeContent() {
             );
 
           let ctaLabel = plan.cta;
-          if (plan.id === 'free') {
+          if (showCurrentPlanTreatment) {
+            ctaLabel = 'Current plan';
+          } else if (plan.id === 'free') {
             ctaLabel = shouldExitToDashboard ? 'Continue on Free' : 'Stay on Free';
           } else if (access.loading) {
             ctaLabel = 'Checking workspace…';
@@ -335,10 +352,17 @@ function UpgradeContent() {
           return (
             <div
               key={plan.id}
-              className={`${styles.card} ${showPopularTreatment ? styles.popular : ''} ${isSelectedPlan ? styles.selected : ''}`}
+              className={`${styles.card} ${showCurrentPlanTreatment ? styles.currentPlan : ''} ${isSelectedPlan ? styles.selected : ''}`}
             >
-              {showPopularTreatment && (
-                <div className={styles.popularBadge}>Most popular</div>
+              {showCurrentPlanTreatment && (
+                <div className={`${styles.cardBadge} ${styles.currentPlanBadge}`}>
+                  Your current plan
+                </div>
+              )}
+              {showPopularRecommendation && (
+                <div className={`${styles.cardBadge} ${styles.popularBadge}`}>
+                  Most popular
+                </div>
               )}
 
               <div className={styles.cardTop}>
@@ -392,6 +416,7 @@ function UpgradeContent() {
                 disabled={
                   isLoading
                   || (loading !== null && !isLoading)
+                  || showCurrentPlanTreatment
                   || paidActionDisabled
                 }
               >

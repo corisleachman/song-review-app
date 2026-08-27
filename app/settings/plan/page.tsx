@@ -187,7 +187,7 @@ export default function PlanPage() {
             <button
               type="button"
               className={styles.primaryButton}
-              onClick={() => router.push('/upgrade')}
+              onClick={() => router.push('/upgrade?returnTo=settings')}
             >
               See plans
             </button>

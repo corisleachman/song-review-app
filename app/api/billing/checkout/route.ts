@@ -50,10 +50,12 @@ export async function POST(request: Request) {
     const body = await request.json().catch(() => ({})) as {
       plan?: string;
       interval?: string;
+      returnTo?: string;
     };
 
     const targetPlan = body.plan === 'studio' ? 'studio' : 'pro';
     const interval   = body.interval === 'year' ? 'year' : 'month';
+    const returnTo   = body.returnTo === 'settings' ? 'settings' : null;
 
     const { data: account, error: accountError } = await supabaseServer
       .from('accounts')
@@ -138,6 +140,14 @@ export async function POST(request: Request) {
       }
     }
 
+    const cancelParams = new URLSearchParams({
+      plan: targetPlan,
+      billing: interval,
+      source: 'checkout',
+      billingStatus: 'cancelled',
+    });
+    if (returnTo === 'settings') cancelParams.set('returnTo', 'settings');
+
     const session = await stripe.checkout.sessions.create({
       mode:                'subscription',
       customer:            stripeCustomerId,
@@ -145,7 +155,7 @@ export async function POST(request: Request) {
       line_items: [{ price: priceId, quantity: 1 }],
       ...(discounts ? { discounts } : {}),
       success_url: `${origin}/dashboard?billing=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url:  `${origin}/upgrade?plan=${targetPlan}&billing=${interval}&source=checkout&billingStatus=cancelled`,
+      cancel_url:  `${origin}/upgrade?${cancelParams.toString()}`,
       metadata: {
         account_id:    resolved.identity.workspaceId,
         owner_user_id: resolved.identity.userId,

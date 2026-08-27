@@ -5259,3 +5259,31 @@ Reserve the strong card border and primary paid action for the selected plan dur
 - A Pro confirmation behaves the same way in reverse.
 - The general “Choose your plan” view still highlights Pro as the most popular option.
 - The change is visual hierarchy only. Plan selection, prices, workspace permissions, and Stripe Checkout behaviour are unchanged.
+
+---
+
+## 2026-08-27 - Current-plan hierarchy and Settings return path
+
+### What we were trying to achieve
+
+Make the general plan comparison reflect the workspace's actual account state and keep users inside Plan & Billing when they cancel a Stripe Checkout that started there.
+
+### Feature / change being made
+
+Give the current workspace plan the strong comparison-card treatment and a “Your current plan” badge. Carry a strictly validated Settings return context through Checkout cancellation so the Back control returns to Plan & Billing instead of the dashboard.
+
+### Files changed
+
+- `app/settings/plan/page.tsx`
+- `app/upgrade/page.tsx`
+- `app/upgrade/upgrade.module.css`
+- `app/api/billing/checkout/route.ts`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The current plan is now the only strongly highlighted card on the general comparison screen. Pro can retain a quieter “Most popular” recommendation without competing with workspace state.
+- Plan-specific confirmation journeys still highlight only the selected plan.
+- Only the exact `settings` return value is accepted by the Checkout route. Other values fall back to the existing dashboard return behaviour.
+- No Stripe products, prices, customers, subscriptions, environment variables, or production settings were changed.
