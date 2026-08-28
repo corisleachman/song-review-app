@@ -268,6 +268,9 @@ function DashboardContent() {
 
   // Dashboard audio player
   const audioRef = useRef<HTMLAudioElement>(null);
+  // Hidden second element used only to warm the *next* track's bytes into the
+  // browser cache while the current track plays. Never played directly.
+  const preloadAudioRef = useRef<HTMLAudioElement>(null);
   const miniPlayerRef = useRef<HTMLDivElement>(null);
   const queueRef = useRef<Song[]>([]);
   const sourceQueueRef = useRef<Song[]>([]);
@@ -980,7 +983,10 @@ function DashboardContent() {
     return 'This audio file could not be prepared for playback. Open the song and try again.';
   }
 
-  async function resolveLatestVersionAudioUrl(song: Song) {
+  // When `silent` is true (background hydration / preloading upcoming tracks)
+  // we never surface alerts — the user may be running with the phone locked.
+  async function resolveLatestVersionAudioUrl(song: Song, opts?: { silent?: boolean }) {
+    const silent = opts?.silent ?? false;
     if (song.latestVersionAudioUrl) return song.latestVersionAudioUrl;
     if (!song.latestVersionId) return null;
 
@@ -994,14 +1000,14 @@ function DashboardContent() {
       }
 
       if (payload?.version?.audioMissing) {
-        window.alert('This version was created, but its audio file was not found in storage. Please upload the version again.');
+        if (!silent) window.alert('This version was created, but its audio file was not found in storage. Please upload the version again.');
         return null;
       }
 
       const audioUrl = payload?.version?.audioUrl ?? null;
       const filePath = payload?.version?.file_path ?? null;
       if (!audioUrl) {
-        window.alert(getDashboardAudioError());
+        if (!silent) window.alert(getDashboardAudioError());
         return null;
       }
 
@@ -1024,8 +1030,55 @@ function DashboardContent() {
       return audioUrl;
     } catch (error) {
       console.error('Resolve latest version audio error:', error);
-      window.alert(getDashboardAudioError());
+      if (!silent) window.alert(getDashboardAudioError());
       return null;
+    }
+  }
+
+  // Report playback position to the OS so lock-screen / CarPlay / Android Auto
+  // scrubbers stay accurate and reliably expose next/prev affordances.
+  function updatePositionState() {
+    if (!('mediaSession' in navigator) || typeof navigator.mediaSession.setPositionState !== 'function') return;
+    const audio = audioRef.current;
+    if (!audio) return;
+    const duration = audio.duration;
+    if (!Number.isFinite(duration) || duration <= 0) return;
+    try {
+      navigator.mediaSession.setPositionState({
+        duration,
+        playbackRate: audio.playbackRate || 1,
+        position: Math.min(audio.currentTime || 0, duration),
+      });
+    } catch { /* some browsers reject positionState in cross-origin frames */ }
+  }
+
+  // Warm the *next* track's bytes into the browser cache via the hidden
+  // preloader element. One track only — buffering further ahead is throttled on
+  // mobile and just wastes data. Safe to call repeatedly; it no-ops if the next
+  // URL isn't resolved yet or is already primed.
+  function primeNextPreload() {
+    const el = preloadAudioRef.current;
+    if (!el) return;
+    const nextUrl = queueRef.current[queueIndexRef.current + 1]?.latestVersionAudioUrl;
+    if (!nextUrl) return;
+    if (el.getAttribute('src') === nextUrl) return;
+    try { el.src = nextUrl; el.load(); } catch { /* ignore */ }
+  }
+
+  // Resolve audio URLs for every upcoming track once, in play order, so no
+  // track change ever waits on the network. Runs in the background while the
+  // current track plays; primes the next track's bytes as soon as its URL lands.
+  async function hydrateUpcomingUrls() {
+    const startIdx = queueIndexRef.current + 1;
+    for (let i = startIdx; i < queueRef.current.length; i++) {
+      const track = queueRef.current[i];
+      if (!track || track.latestVersionAudioUrl || !track.latestVersionId) {
+        if (i === queueIndexRef.current + 1) primeNextPreload();
+        continue;
+      }
+      // resolveLatestVersionAudioUrl updates queueRef/sourceQueueRef in place.
+      await resolveLatestVersionAudioUrl(track, { silent: true });
+      if (i === queueIndexRef.current + 1) primeNextPreload();
     }
   }
 
@@ -1046,17 +1099,15 @@ function DashboardContent() {
       return;
     }
 
-    const hydratedQueue = await Promise.all(queue.map(async item => {
-      if (item.id !== song.id || item.latestVersionAudioUrl) return item;
-
-      const latestVersionAudioUrl = await resolveLatestVersionAudioUrl(item);
-      return latestVersionAudioUrl ? { ...item, latestVersionAudioUrl } : item;
-    }));
-
-    sourceQueueRef.current = hydratedQueue;
+    // Only the tapped track needs its URL to start playing now. The rest of the
+    // queue is hydrated in the background (below) so auto-advance never blocks.
+    const hydratedSource = queue.map(item => (
+      item.id === song.id ? { ...item, latestVersionAudioUrl: audioUrl } : item
+    ));
+    sourceQueueRef.current = hydratedSource;
     const playbackQueue = shuffleEnabledRef.current
-      ? buildShuffledQueue(hydratedQueue, song.id)
-      : hydratedQueue;
+      ? buildShuffledQueue(hydratedSource, song.id)
+      : hydratedSource;
     queueRef.current = playbackQueue;
     const hydratedSong = playbackQueue.find(item => item.id === song.id) ?? { ...song, latestVersionAudioUrl: audioUrl };
     const idx = playbackQueue.findIndex(item => item.id === song.id);
@@ -1074,33 +1125,69 @@ function DashboardContent() {
       window.alert(getDashboardAudioError());
     });
     setMediaSession(hydratedSong);
+
+    // Background: resolve every upcoming track's URL and warm the next track's
+    // bytes, so end-of-track advance can happen synchronously with no network.
+    void hydrateUpcomingUrls();
   }
 
-  async function handlePlayerEnded() {
-    const queue = queueRef.current;
+  // Switch to an already-resolved track. Deliberately free of any `await`
+  // before audio.play(): mobile browsers only allow starting a new source while
+  // the screen is locked when play() runs in the SAME task as the `ended` event
+  // or a Media Session action. An awaited fetch here is exactly what used to
+  // break background auto-advance (track ended and never moved on).
+  function startResolvedTrack(idx: number, audioUrl: string) {
+    const track = queueRef.current[idx];
+    if (!track || !audioRef.current) return;
+
+    const hydrated = { ...track, latestVersionAudioUrl: audioUrl };
+    queueRef.current = queueRef.current.map((item, index) => index === idx ? hydrated : item);
+    sourceQueueRef.current = sourceQueueRef.current.map(item => (
+      item.id === hydrated.id ? hydrated : item
+    ));
+    queueIndexRef.current = idx;
+    setQueueIndex(idx);
+    setPlayingId(track.id);
+    setIsPlaying(true);
+    setPlayerCurrentTime(0);
+    audioRef.current.src = audioUrl;
+    audioRef.current.play().catch(error => {
+      console.error('Dashboard playback error:', error);
+    });
+    setMediaSession(hydrated);
+
+    // Warm the following track's bytes and keep resolving the rest of the queue.
+    primeNextPreload();
+    void hydrateUpcomingUrls();
+  }
+
+  // Move to a queue index. Takes the synchronous path when the URL is already
+  // resolved (the common case, thanks to background hydration) so lock-screen /
+  // car controls and end-of-track advance work while backgrounded. Only falls
+  // back to an async resolve when the URL isn't ready yet (foreground only).
+  function moveToIndex(idx: number): boolean {
+    if (idx < 0 || idx >= queueRef.current.length) return false;
+
+    const preresolved = queueRef.current[idx]?.latestVersionAudioUrl;
+    if (preresolved) {
+      startResolvedTrack(idx, preresolved);
+      return true;
+    }
+
+    void (async () => {
+      const track = queueRef.current[idx];
+      if (!track) return;
+      const audioUrl = await resolveLatestVersionAudioUrl(track);
+      if (audioUrl) startResolvedTrack(idx, audioUrl);
+    })();
+    return true;
+  }
+
+  function handlePlayerEnded() {
     const nextIdx = queueIndexRef.current + 1;
-
-    if (nextIdx < queue.length) {
-      const next = queue[nextIdx];
-      const audioUrl = await resolveLatestVersionAudioUrl(next);
-
-      if (audioUrl && audioRef.current) {
-        const hydratedNext = { ...next, latestVersionAudioUrl: audioUrl };
-        queueRef.current = queue.map((item, index) => index === nextIdx ? hydratedNext : item);
-        sourceQueueRef.current = sourceQueueRef.current.map(item => (
-          item.id === hydratedNext.id ? hydratedNext : item
-        ));
-        queueIndexRef.current = nextIdx;
-        setQueueIndex(nextIdx);
-        setPlayingId(next.id);
-        audioRef.current.src = audioUrl;
-        audioRef.current.play().catch(error => {
-          console.error('Dashboard playback error:', error);
-          window.alert(getDashboardAudioError());
-        });
-        setMediaSession(hydratedNext);
-        return;
-      }
+    if (nextIdx < queueRef.current.length) {
+      moveToIndex(nextIdx);
+      return;
     }
 
     setIsPlaying(false);
@@ -1110,30 +1197,9 @@ function DashboardContent() {
     }
   }
 
-  async function skipTrack(direction: 'prev' | 'next') {
-    const queue = queueRef.current;
+  function skipTrack(direction: 'prev' | 'next') {
     const targetIdx = direction === 'next' ? queueIndexRef.current + 1 : queueIndexRef.current - 1;
-    if (targetIdx < 0 || targetIdx >= queue.length) return;
-
-    const target = queue[targetIdx];
-    const audioUrl = await resolveLatestVersionAudioUrl(target);
-
-    if (audioUrl && audioRef.current) {
-      const hydratedTarget = { ...target, latestVersionAudioUrl: audioUrl };
-      queueRef.current = queue.map((item, index) => index === targetIdx ? hydratedTarget : item);
-      sourceQueueRef.current = sourceQueueRef.current.map(item => (
-        item.id === hydratedTarget.id ? hydratedTarget : item
-      ));
-      queueIndexRef.current = targetIdx;
-      setQueueIndex(targetIdx);
-      setPlayingId(target.id);
-      audioRef.current.src = audioUrl;
-      audioRef.current.play().catch(error => {
-        console.error('Dashboard playback error:', error);
-        window.alert(getDashboardAudioError());
-      });
-      setMediaSession(hydratedTarget);
-    }
+    moveToIndex(targetIdx);
   }
 
   function togglePlayPause() {
@@ -2410,14 +2476,25 @@ function DashboardContent() {
       <audio
         ref={audioRef}
         loop={loopEnabled}
-        onEnded={() => {
-          void handlePlayerEnded();
+        onEnded={handlePlayerEnded}
+        onLoadedMetadata={() => {
+          setPlayerDuration(audioRef.current?.duration ?? 0);
+          updatePositionState();
         }}
-        onTimeUpdate={() => setPlayerCurrentTime(audioRef.current?.currentTime ?? 0)}
-        onDurationChange={() => setPlayerDuration(audioRef.current?.duration ?? 0)}
+        onTimeUpdate={() => {
+          setPlayerCurrentTime(audioRef.current?.currentTime ?? 0);
+          updatePositionState();
+        }}
+        onDurationChange={() => {
+          setPlayerDuration(audioRef.current?.duration ?? 0);
+          updatePositionState();
+        }}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
       />
+
+      {/* Hidden preloader: warms the next track's bytes into cache. Never played. */}
+      <audio ref={preloadAudioRef} preload="auto" muted aria-hidden="true" tabIndex={-1} style={{ display: 'none' }} />
 
       {playingId && (() => {
         const playingSong = queueRef.current.find(song => song.id === playingId);
