@@ -5337,3 +5337,32 @@ Verification-only closeout for the PR #40 Preview. No application behaviour was 
 - Cancelling Checkout returned to the selected plan confirmation, where only that plan was highlighted.
 - The confirmation page's Back control returned to Settings → Plan & Billing instead of the dashboard.
 - No Stripe payment was submitted. Production rollout remains pending.
+
+---
+
+## 2026-08-28 - Mobile global navigation and priority mobile backlog
+
+### What we were trying to achieve
+
+Restore the authenticated destinations that disappeared when the desktop sidebar is hidden on mobile, and capture two beta-priority mobile usability gaps while they were fresh.
+
+### Feature / change being made
+
+Connect the existing accessible account-menu pattern to the mobile workspace header. The profile control now exposes Dashboard, Playlists, Settings, and Sign out without adding more permanent controls to the already tight header. Record the missing signed-out Login route and the proposed single Edit journey for mobile song management without implementing those separate changes yet.
+
+### Files changed
+
+- `components/AccountMenu.tsx`
+- `components/AccountMenu.module.css`
+- `components/WorkspaceSwitcher.tsx`
+- `components/WorkspaceSwitcher.module.css`
+- `tests/critical-contracts.test.mjs`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The workspace name remains the trigger for switching workspaces. The profile image or account initial is now the trigger for global account navigation.
+- The menu preserves arrow-key navigation, Escape-to-close, visible focus, and coarse-pointer targets of at least 44 pixels.
+- Desktop navigation, workspace switching, account permissions, song behaviour, and billing behaviour are unchanged.
+- The two newly logged backlog items need their own scoped design and implementation work.

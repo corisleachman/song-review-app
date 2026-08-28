@@ -429,6 +429,22 @@ test('interactive surfaces preserve readable red text and coarse-pointer targets
   }
 });
 
+test('mobile authenticated navigation keeps every global destination reachable', () => {
+  const shell = read('components/AppShell.tsx');
+  const switcher = read('components/WorkspaceSwitcher.tsx');
+  const accountMenu = read('components/AccountMenu.tsx');
+
+  assert.match(shell, /variant="mobile"/u);
+  assert.match(switcher, /<AccountMenu/u);
+  assertIncludesAll(accountMenu, [
+    'href="/dashboard"',
+    'href="/playlists"',
+    'href="/settings"',
+    "'Sign out'",
+    'aria-haspopup="menu"',
+  ], 'mobile account menu');
+});
+
 test('mobile marketing description occupies a separate row from the hero headline', () => {
   const marketing = read('public/marketing.html');
   const responsiveStart = marketing.indexOf('@media (max-width: 900px) {', marketing.indexOf('RESPONSIVE'));
