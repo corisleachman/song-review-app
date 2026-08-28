@@ -5209,3 +5209,26 @@ New public `/trust` route presenting the in-place security and SEO/discoverabili
 - Design mirrors the approved launch-readiness wireframe (straw-yellow check grid) inside the app's legal-page chrome.
 - Content is a manual snapshot: when a new protection ships (e.g. signup bot protection), update the item lists + the "12/11" counts in `app/trust/page.tsx`.
 - The original GitHub Pages version remains at `wireframes/Song Room Branding/launch-readiness-v1.html` as the design reference.
+
+## 2026-08-28 — Dashboard background audio: reliable auto-advance + next-track preload
+
+### What we were trying to achieve
+
+The dashboard mini-player stopped advancing to the next track once the phone was locked or backgrounded — e.g. playing from the dashboard, pocketing the phone for a run, or handing off to a car. Playback reached the end of a track and stalled instead of moving on. In the car, the head-unit controls showed no "next" option, and after manually skipping the artwork and controls didn't refresh. Goal: make end-of-track auto-advance and the lock-screen / car (CarPlay / Android Auto) controls work reliably while the app is backgrounded, and preload the upcoming track so changeovers are smooth.
+
+### Feature / change being made
+
+Bug fix + enhancement to the dashboard `<audio>` playback engine. Track changes no longer wait on the network and now happen synchronously inside the `ended` / Media Session task, so they are permitted while the screen is locked. Added background whole-queue URL resolution at play time, single-next-track byte preloading via a hidden audio element, and Media Session `setPositionState` for lock-screen / CarPlay position and next/prev reliability.
+
+### Files changed
+
+- `app/dashboard/page.tsx`
+
+### Notes
+
+- Root cause: `onEnded → handlePlayerEnded` `await`ed a `/api/versions/[id]` fetch to resolve the next track's public URL *before* calling `play()`. A locked mobile tab freezes that fetch, and even when it resolves, a `play()` that lands after an `await` is blocked in the background — so playback died at the end of track 1 and the car's Media Session went stale (no next control, stale artwork).
+- Fix: `hydrateUpcomingUrls()` resolves every upcoming track's URL in the background as soon as playback starts (public `getPublicUrl` URLs, no expiry, safe to resolve ahead of time). `startResolvedTrack()` / `moveToIndex()` perform a synchronous `src`-swap + `play()` when the URL is already resolved (the normal case); an async resolve is only used as a foreground fallback. `handlePlayerEnded` and `skipTrack` are now synchronous.
+- Preload: exactly one next track's bytes are warmed via a hidden `<audio preload="auto">` element. Intentionally one track only — mobile browsers throttle byte-level preload on backgrounded elements, and buffering 2–3 tracks ahead wastes cellular data for tracks the listener may skip.
+- Media Session: added `setPositionState` on `loadedmetadata` / `timeupdate` / `durationchange` for accurate lock-screen / CarPlay scrubbing and reliable next/prev. Background URL resolution runs silently (no `window.alert` on a locked phone).
+- Deploy: production `dpl_7rY4dNcVkxsyaM1x9YbamMrUMG32` (commit `fd40abf`) reached Ready; passed the `npm test` prebuild gate and `npx tsc --noEmit`.
+- **Verification status: PARTIAL.** Verified on a real mobile device on home Wi-Fi — auto-advance rolled through tracks seamlessly with the screen locked. Still to confirm in the real-world failing scenario: in-car playback over cellular (off Wi-Fi) — head-unit next/prev controls, per-track artwork refresh, and background auto-advance. This entry records what was implemented; full car/cellular confirmation is pending.
