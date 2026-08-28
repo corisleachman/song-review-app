@@ -5394,3 +5394,28 @@ Carry the canonical avatar URL already returned by the Settings summary through 
 - No extra profile request was added. Settings reuses `identity.avatarUrl` from its existing canonical summary response.
 - The initial remains the fallback when an account genuinely has no profile image.
 - Authentication, workspace switching, navigation destinations, permissions, and profile storage are unchanged.
+
+---
+
+## 2026-08-28 - PR #41 mobile navigation Preview verification
+
+### What we were trying to achieve
+
+Confirm on a real mobile viewport that the restored account navigation reaches Settings and keeps the authenticated profile image visible across the app shell.
+
+### Feature / change being made
+
+Verification-only closeout for the PR #41 Preview. No application behaviour changed in this entry.
+
+### Files changed
+
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The mobile profile control displayed the new account menu correctly and opened Settings from the dashboard.
+- The first Settings check exposed a missing profile photo because its provider discarded the canonical avatar URL; that regression was corrected in commit `a3a3511d` without adding another request.
+- The refreshed Preview then showed the same real profile image in Settings as the dashboard.
+- The wrapped Settings section navigation was captured separately as P2 beta polish. It was not changed in PR #41.
+- All 35 contracts, TypeScript, the browser accessibility job, and both Vercel Preview deployments passed before this manual check.
+- Production rollout remains pending.
