@@ -5,7 +5,7 @@ import UpgradeModal from '@/components/UpgradeModal';
 import { SettingsProvider, useSettingsData, useSettingsActions } from '@/lib/settingsContext';
 
 function UploadLayoutInner({ children }: { children: React.ReactNode }) {
-  const { identityLabel, workspaceName, workspaceImageUrl, workspacePlan, membershipRole } = useSettingsData();
+  const { identityLabel, avatarUrl, workspaceName, workspaceImageUrl, workspacePlan, membershipRole } = useSettingsData();
   const { upgradeModalType, setUpgradeModalType } = useSettingsActions();
   return (
     <AppShell
@@ -14,6 +14,7 @@ function UploadLayoutInner({ children }: { children: React.ReactNode }) {
       workspaceName={workspaceName}
       workspaceImageUrl={workspaceImageUrl}
       membershipRole={membershipRole}
+      avatarUrl={avatarUrl}
     >
       {children}
       <UpgradeModal

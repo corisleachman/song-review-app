@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase';
 import { clearAuth, clearIdentity } from '@/lib/auth';
@@ -8,13 +9,16 @@ import styles from './AccountMenu.module.css';
 
 interface AccountMenuProps {
   label: string;
+  avatarUrl?: string | null;
+  onSignOut?: () => Promise<void> | void;
 }
 
 function getInitial(value: string) {
   return value.trim().charAt(0).toUpperCase() || '?';
 }
 
-export default function AccountMenu({ label }: AccountMenuProps) {
+export default function AccountMenu({ label, avatarUrl = null, onSignOut }: AccountMenuProps) {
+  const pathname = usePathname();
   const [supabase] = useState(() => createClient());
   const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
@@ -80,13 +84,22 @@ export default function AccountMenu({ label }: AccountMenuProps) {
     setSigningOut(true);
 
     try {
+      if (onSignOut) {
+        await onSignOut();
+        return;
+      }
+
       await supabase.auth.signOut();
     } catch (error) {
       console.error('Sign-out error:', error);
     } finally {
-      clearAuth();
-      clearIdentity();
-      window.location.assign('/');
+      if (!onSignOut) {
+        clearAuth();
+        clearIdentity();
+        window.location.assign('/');
+      } else {
+        setSigningOut(false);
+      }
     }
   };
 
@@ -108,16 +121,39 @@ export default function AccountMenu({ label }: AccountMenuProps) {
           }
         }}
       >
-        <span className={styles.avatar}>{getInitial(label)}</span>
+        <span className={styles.avatar} aria-hidden="true">
+          {avatarUrl ? <img src={avatarUrl} alt="" /> : getInitial(label)}
+        </span>
       </button>
 
       {open && (
         <div ref={menuRef} id="account-menu-panel" className={styles.menu} role="menu" aria-label="Account options">
           <div className={styles.menuLabel} role="presentation">{label}</div>
-          <Link href="/dashboard" className={styles.menuLink} role="menuitem" onClick={() => setOpen(false)}>
+          <Link
+            href="/dashboard"
+            className={styles.menuLink}
+            role="menuitem"
+            aria-current={pathname === '/dashboard' ? 'page' : undefined}
+            onClick={() => setOpen(false)}
+          >
             Dashboard
           </Link>
-          <Link href="/settings" className={styles.menuLink} role="menuitem" onClick={() => setOpen(false)}>
+          <Link
+            href="/playlists"
+            className={styles.menuLink}
+            role="menuitem"
+            aria-current={pathname?.startsWith('/playlists') ? 'page' : undefined}
+            onClick={() => setOpen(false)}
+          >
+            Playlists
+          </Link>
+          <Link
+            href="/settings"
+            className={styles.menuLink}
+            role="menuitem"
+            aria-current={pathname?.startsWith('/settings') ? 'page' : undefined}
+            onClick={() => setOpen(false)}
+          >
             Settings
           </Link>
           <button

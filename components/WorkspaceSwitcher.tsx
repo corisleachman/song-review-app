@@ -2,6 +2,7 @@
 
 import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { useDialogFocus } from '@/lib/useDialogFocus';
+import AccountMenu from './AccountMenu';
 import styles from './WorkspaceSwitcher.module.css';
 
 type WorkspaceRole = 'owner' | 'member';
@@ -244,26 +245,11 @@ export default function WorkspaceSwitcher({
           </button>
           <div className={styles.mobileBarRight}>
             {roleLabel && <span className={styles.mobileRole}>{roleLabel}</span>}
-            <div className={styles.mobileAvatar}>
-              {avatarUrl
-                ? <img src={avatarUrl} alt="" className={styles.mobileAvatarImg} />
-                : <span>{(userLabel?.[0] ?? 'U').toUpperCase()}</span>
-              }
-            </div>
-            {onSignOut && (
-              <button
-                type="button"
-                className={styles.mobileSignOutBtn}
-                onClick={onSignOut}
-                aria-label="Sign out"
-                title="Sign out"
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                  <path d="M6 14H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-                  <path d="M11 11l3-3-3-3M14 8H6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-            )}
+            <AccountMenu
+              label={userLabel || 'Account'}
+              avatarUrl={avatarUrl}
+              onSignOut={onSignOut}
+            />
           </div>
         </div>
         {open && (

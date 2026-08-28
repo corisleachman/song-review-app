@@ -6,6 +6,29 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 
 ## Bugs
 
+### Mobile marketing: signed-out users cannot find Login
+- Priority: P1 beta blocker
+- Logged: 2026-08-28
+- Observed on mobile: the homepage presents account-creation calls to action, but an existing user has no visible Login route in the opening view.
+- Expected: make Login immediately visible and clearly secondary to the primary signup action, without forcing returning users to hunt through the page or reuse a signup route.
+- Design note: treat “Start for free” and “Log in” as two different intents. The mobile opening composition needs both, with Login reachable in the first viewport and a minimum 44-pixel touch target.
+
+### Mobile dashboard: four song-management icons overwhelm each row
+- Priority: P1 beta usability
+- Logged: 2026-08-28
+- Observed on mobile: Info, Rename, Change image, and Delete remain exposed as four adjacent icons on every compact song row, consuming space and making the primary song journey harder to scan.
+- Proposed direction: keep the artwork/title row as the route into the song. Replace the four management icons with one clearly labelled Edit control that opens the existing full-screen song information sheet, extended with rename, cover-image replacement, and delete actions.
+- Safety and interaction requirements: do not make the Edit icon the only way to open the song; keep destructive deletion behind an explicit confirmation; preserve play controls, song-stage changes, activity context, keyboard access, and 44-pixel touch targets.
+- Status: product direction captured for discussion. Review the referenced mobile screenshot and agree the sheet hierarchy before changing code.
+
+### Mobile settings: section navigation wraps into a large link grid
+- Priority: P2 beta polish
+- Logged: 2026-08-28
+- Observed on mobile: Workspace, Plan & Billing, Collaborators, Referrals, Appearance, and Privacy & cookies wrap across two loose rows above the current settings page, consuming space and weakening the hierarchy.
+- Proposed direction: replace the wrapped mobile links with one compact “Settings section” control that displays the current section and reveals the permitted destinations. Preserve owner-only visibility rules, the active section, keyboard access, and 44-pixel touch targets.
+- Desktop boundary: keep the existing persistent left-hand Settings navigation on larger screens.
+- Status: direction captured for a separate mobile Settings polish slice. No layout change has been made in PR #41.
+
 ### Marketing pricing: tier choice is lost during signup
 - Priority: P1 beta blocker
 - Logged: 2026-08-23

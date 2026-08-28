@@ -5337,3 +5337,85 @@ Verification-only closeout for the PR #40 Preview. No application behaviour was 
 - Cancelling Checkout returned to the selected plan confirmation, where only that plan was highlighted.
 - The confirmation page's Back control returned to Settings → Plan & Billing instead of the dashboard.
 - No Stripe payment was submitted. Production rollout remains pending.
+
+---
+
+## 2026-08-28 - Mobile global navigation and priority mobile backlog
+
+### What we were trying to achieve
+
+Restore the authenticated destinations that disappeared when the desktop sidebar is hidden on mobile, and capture two beta-priority mobile usability gaps while they were fresh.
+
+### Feature / change being made
+
+Connect the existing accessible account-menu pattern to the mobile workspace header. The profile control now exposes Dashboard, Playlists, Settings, and Sign out without adding more permanent controls to the already tight header. Record the missing signed-out Login route and the proposed single Edit journey for mobile song management without implementing those separate changes yet.
+
+### Files changed
+
+- `components/AccountMenu.tsx`
+- `components/AccountMenu.module.css`
+- `components/WorkspaceSwitcher.tsx`
+- `components/WorkspaceSwitcher.module.css`
+- `tests/critical-contracts.test.mjs`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The workspace name remains the trigger for switching workspaces. The profile image or account initial is now the trigger for global account navigation.
+- The menu preserves arrow-key navigation, Escape-to-close, visible focus, and coarse-pointer targets of at least 44 pixels.
+- Desktop navigation, workspace switching, account permissions, song behaviour, and billing behaviour are unchanged.
+- The two newly logged backlog items need their own scoped design and implementation work.
+
+---
+
+## 2026-08-28 - Preserve profile photos across the mobile app shell
+
+### What we were trying to achieve
+
+Keep the authenticated profile image visible after moving from the dashboard into Settings, Playlists, or Upload through the new mobile account menu.
+
+### Feature / change being made
+
+Carry the canonical avatar URL already returned by the Settings summary through `SettingsProvider` and into every Settings-backed `AppShell`. Record the separate mobile Settings section-navigation problem without changing that layout in this fix.
+
+### Files changed
+
+- `lib/settingsContext.tsx`
+- `app/settings/layout.tsx`
+- `app/playlists/layout.tsx`
+- `app/upload/layout.tsx`
+- `tests/critical-contracts.test.mjs`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- No extra profile request was added. Settings reuses `identity.avatarUrl` from its existing canonical summary response.
+- The initial remains the fallback when an account genuinely has no profile image.
+- Authentication, workspace switching, navigation destinations, permissions, and profile storage are unchanged.
+
+---
+
+## 2026-08-28 - PR #41 mobile navigation Preview verification
+
+### What we were trying to achieve
+
+Confirm on a real mobile viewport that the restored account navigation reaches Settings and keeps the authenticated profile image visible across the app shell.
+
+### Feature / change being made
+
+Verification-only closeout for the PR #41 Preview. No application behaviour changed in this entry.
+
+### Files changed
+
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The mobile profile control displayed the new account menu correctly and opened Settings from the dashboard.
+- The first Settings check exposed a missing profile photo because its provider discarded the canonical avatar URL; that regression was corrected in commit `a3a3511d` without adding another request.
+- The refreshed Preview then showed the same real profile image in Settings as the dashboard.
+- The wrapped Settings section navigation was captured separately as P2 beta polish. It was not changed in PR #41.
+- All 35 contracts, TypeScript, the browser accessibility job, and both Vercel Preview deployments passed before this manual check.
+- Production rollout remains pending.
