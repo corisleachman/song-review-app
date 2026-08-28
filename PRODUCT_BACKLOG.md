@@ -21,6 +21,14 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 - Safety and interaction requirements: do not make the Edit icon the only way to open the song; keep destructive deletion behind an explicit confirmation; preserve play controls, song-stage changes, activity context, keyboard access, and 44-pixel touch targets.
 - Status: product direction captured for discussion. Review the referenced mobile screenshot and agree the sheet hierarchy before changing code.
 
+### Mobile settings: section navigation wraps into a large link grid
+- Priority: P2 beta polish
+- Logged: 2026-08-28
+- Observed on mobile: Workspace, Plan & Billing, Collaborators, Referrals, Appearance, and Privacy & cookies wrap across two loose rows above the current settings page, consuming space and weakening the hierarchy.
+- Proposed direction: replace the wrapped mobile links with one compact “Settings section” control that displays the current section and reveals the permitted destinations. Preserve owner-only visibility rules, the active section, keyboard access, and 44-pixel touch targets.
+- Desktop boundary: keep the existing persistent left-hand Settings navigation on larger screens.
+- Status: direction captured for a separate mobile Settings polish slice. No layout change has been made in PR #41.
+
 ### Marketing pricing: tier choice is lost during signup
 - Priority: P1 beta blocker
 - Logged: 2026-08-23

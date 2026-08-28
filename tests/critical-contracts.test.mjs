@@ -445,6 +445,25 @@ test('mobile authenticated navigation keeps every global destination reachable',
   ], 'mobile account menu');
 });
 
+test('settings-backed app shells preserve the canonical profile avatar', () => {
+  const context = read('lib/settingsContext.tsx');
+  const layouts = [
+    'app/settings/layout.tsx',
+    'app/playlists/layout.tsx',
+    'app/upload/layout.tsx',
+  ].map(read);
+
+  assertIncludesAll(context, [
+    'avatarUrl: string | null;',
+    'setAvatarUrl(s.identity.avatarUrl ?? null);',
+    'avatarUrl,',
+  ], 'settings avatar context');
+
+  for (const layout of layouts) {
+    assert.match(layout, /avatarUrl=\{avatarUrl\}/u);
+  }
+});
+
 test('mobile marketing description occupies a separate row from the hero headline', () => {
   const marketing = read('public/marketing.html');
   const responsiveStart = marketing.indexOf('@media (max-width: 900px) {', marketing.indexOf('RESPONSIVE'));

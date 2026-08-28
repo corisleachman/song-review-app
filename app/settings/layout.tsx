@@ -29,7 +29,7 @@ const NAV_ITEMS: NavItem[] = [
 
 function SettingsLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { identityLabel, workspaceName, workspaceImageUrl, workspacePlan, membershipRole, isOwner, loading } = useSettingsData();
+  const { identityLabel, avatarUrl, workspaceName, workspaceImageUrl, workspacePlan, membershipRole, isOwner, loading } = useSettingsData();
   const { upgradeModalType, setUpgradeModalType } = useSettingsActions();
 
   const visibleNav = NAV_ITEMS.filter(item => !item.ownerOnly || isOwner);
@@ -41,6 +41,7 @@ function SettingsLayoutInner({ children }: { children: React.ReactNode }) {
       workspaceName={workspaceName}
       workspaceImageUrl={workspaceImageUrl}
       membershipRole={membershipRole}
+      avatarUrl={avatarUrl}
     >
       <div className={styles.settingsShell}>
         {/* ── Left nav ── */}

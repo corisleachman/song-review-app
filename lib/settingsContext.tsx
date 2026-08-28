@@ -40,6 +40,7 @@ export interface WorkspaceInvite {
 
 export interface SettingsData {
   identityLabel: string;
+  avatarUrl: string | null;
   isLegacyFallback: boolean;
   membershipRole: 'owner' | 'member' | null;
   isOwner: boolean;
@@ -110,6 +111,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
   const bootstrapped = useRef(false);
 
   const [identityLabel, setIdentityLabel] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isLegacyFallback, setIsLegacyFallback] = useState(false);
   const [membershipRole, setMembershipRole] = useState<'owner' | 'member' | null>(null);
   const [isOwner, setIsOwner] = useState(false);
@@ -165,6 +167,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
           identity: {
             authorName: string;
             displayName: string;
+            avatarUrl: string | null;
             membershipRole: 'owner' | 'member';
             workspaceName: string;
             workspaceImageUrl: string | null;
@@ -181,6 +184,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
 
         const ownerAccess = s.identity.membershipRole === 'owner';
         setIdentityLabel(s.identity.authorName || s.identity.displayName || '');
+        setAvatarUrl(s.identity.avatarUrl ?? null);
         setIsLegacyFallback(false);
         setMembershipRole(s.identity.membershipRole);
         setIsOwner(ownerAccess);
@@ -206,6 +210,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
 
   const data: SettingsData = {
     identityLabel,
+    avatarUrl,
     isLegacyFallback,
     membershipRole,
     isOwner,

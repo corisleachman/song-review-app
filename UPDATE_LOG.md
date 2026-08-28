@@ -5366,3 +5366,31 @@ Connect the existing accessible account-menu pattern to the mobile workspace hea
 - The menu preserves arrow-key navigation, Escape-to-close, visible focus, and coarse-pointer targets of at least 44 pixels.
 - Desktop navigation, workspace switching, account permissions, song behaviour, and billing behaviour are unchanged.
 - The two newly logged backlog items need their own scoped design and implementation work.
+
+---
+
+## 2026-08-28 - Preserve profile photos across the mobile app shell
+
+### What we were trying to achieve
+
+Keep the authenticated profile image visible after moving from the dashboard into Settings, Playlists, or Upload through the new mobile account menu.
+
+### Feature / change being made
+
+Carry the canonical avatar URL already returned by the Settings summary through `SettingsProvider` and into every Settings-backed `AppShell`. Record the separate mobile Settings section-navigation problem without changing that layout in this fix.
+
+### Files changed
+
+- `lib/settingsContext.tsx`
+- `app/settings/layout.tsx`
+- `app/playlists/layout.tsx`
+- `app/upload/layout.tsx`
+- `tests/critical-contracts.test.mjs`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- No extra profile request was added. Settings reuses `identity.avatarUrl` from its existing canonical summary response.
+- The initial remains the fallback when an account genuinely has no profile image.
+- Authentication, workspace switching, navigation destinations, permissions, and profile storage are unchanged.
