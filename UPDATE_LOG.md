@@ -5210,6 +5210,86 @@ New public `/trust` route presenting the in-place security and SEO/discoverabili
 - Content is a manual snapshot: when a new protection ships (e.g. signup bot protection), update the item lists + the "12/11" counts in `app/trust/page.tsx`.
 - The original GitHub Pages version remains at `wireframes/Song Room Branding/launch-readiness-v1.html` as the design reference.
 
+---
+
+## 2026-08-27 - Stripe customer recovery before Checkout
+
+### What we were trying to achieve
+
+Restore paid-plan Checkout for workspaces whose saved Stripe customer ID belongs to an old or deleted Stripe account, as exposed by the PR #31 production smoke test.
+
+### Feature / change being made
+
+Validate an existing Stripe customer before creating a subscription Checkout Session. If Stripe confirms that the customer is missing or deleted, create a replacement under the currently configured Stripe account and save its ID to the same workspace before continuing.
+
+### Files changed
+
+- `app/api/billing/checkout/route.ts`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Valid Stripe customers continue through the existing Checkout path without being changed.
+- Only a confirmed missing or deleted customer triggers replacement. Authentication, permissions, rate limits, and other Stripe failures still stop Checkout and surface through the existing error response.
+- No Stripe object, Supabase record, environment variable, Preview deployment, or Production deployment was changed while preparing this local hotfix.
+- Preview verification and production rollout remain pending.
+
+---
+
+## 2026-08-27 - Plan confirmation hierarchy
+
+### What we were trying to achieve
+
+Remove the conflicting double highlight shown after a user cancels Stripe Checkout and returns to a specific plan confirmation page.
+
+### Feature / change being made
+
+Reserve the strong card border and primary paid action for the selected plan during a plan-specific confirmation journey. Keep the Pro “Most popular” treatment on the normal comparison screen, where it remains useful.
+
+### Files changed
+
+- `app/upgrade/page.tsx`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- A Studio confirmation now highlights Studio alone, hides the Pro promotional badge, and gives alternative plans quieter actions.
+- A Pro confirmation behaves the same way in reverse.
+- The general “Choose your plan” view still highlights Pro as the most popular option.
+- The change is visual hierarchy only. Plan selection, prices, workspace permissions, and Stripe Checkout behaviour are unchanged.
+
+---
+
+## 2026-08-27 - Current-plan hierarchy and Settings return path
+
+### What we were trying to achieve
+
+Make the general plan comparison reflect the workspace's actual account state and keep users inside Plan & Billing when they cancel a Stripe Checkout that started there.
+
+### Feature / change being made
+
+Give the current workspace plan the strong comparison-card treatment and a “Your current plan” badge. Carry a strictly validated Settings return context through Checkout cancellation so the Back control returns to Plan & Billing instead of the dashboard.
+
+### Files changed
+
+- `app/settings/plan/page.tsx`
+- `app/upgrade/page.tsx`
+- `app/upgrade/upgrade.module.css`
+- `app/api/billing/checkout/route.ts`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The current plan is now the only strongly highlighted card on the general comparison screen. Pro can retain a quieter “Most popular” recommendation without competing with workspace state.
+- Plan-specific confirmation journeys still highlight only the selected plan.
+- Only the exact `settings` return value is accepted by the Checkout route. Other values fall back to the existing dashboard return behaviour.
+- No Stripe products, prices, customers, subscriptions, environment variables, or production settings were changed.
+
+---
+
 ## 2026-08-28 — Dashboard background audio: reliable auto-advance + next-track preload
 
 ### What we were trying to achieve
@@ -5233,3 +5313,27 @@ Bug fix + enhancement to the dashboard `<audio>` playback engine. Track changes 
 - Deploy: production `dpl_7rY4dNcVkxsyaM1x9YbamMrUMG32` (commit `fd40abf`) reached Ready; passed the `npm test` prebuild gate and `npx tsc --noEmit`.
 - **Verification status: VERIFIED (auto-advance).** Confirmed on a real mobile device on Wi-Fi, and in-car over cellular (2016 BMW X5 — Bluetooth only, no CarPlay/Android Auto): with the phone locked and off Wi-Fi, playback now rolls from one track to the next on its own. This was the original reported failure and it is resolved.
 - **Known limitation (not a regression, not fixable from the web app):** On the iDrive head unit, rotating the controller / using the wheel to *browse the track list* shows only the currently-playing track, and selecting it replays that track. A web app cannot publish a browsable queue to the OS media session — the Web Media Session API only exposes the *current* track's metadata, so iOS/Android hand the car a single-item list. Native apps (e.g. Spotify) populate this via platform queue APIs that are unavailable to web pages. The car controls a web app *can* drive are play/pause and skip next/previous via AVRCP passthrough (`nexttrack` / `previoustrack` handlers). Dedicated skip-button behaviour on this specific head unit is still to be confirmed separately.
+
+---
+
+## 2026-08-28 - PR #40 plan journey Preview verification
+
+### What we were trying to achieve
+
+Confirm that Stripe customer recovery, plan-card hierarchy, and the Settings return path work together in the real Preview journey before production rollout.
+
+### Feature / change being made
+
+Verification-only closeout for the PR #40 Preview. No application behaviour was changed in this entry.
+
+### Files changed
+
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The general plan comparison correctly highlighted the workspace's actual plan with the “Your current plan” badge while keeping the Pro recommendation visually quieter.
+- Starting a Pro or Studio upgrade from Settings reached Stripe Test Checkout without the stale-customer error.
+- Cancelling Checkout returned to the selected plan confirmation, where only that plan was highlighted.
+- The confirmation page's Back control returned to Settings → Plan & Billing instead of the dashboard.
+- No Stripe payment was submitted. Production rollout remains pending.

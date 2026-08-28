@@ -127,18 +127,18 @@
   transform: translateY(-2px);
 }
 
-.popular {
-  border-color: var(--color-primary);
+.currentPlan {
+  border-color: var(--color-primary-readable, #ED4D3B);
   background: linear-gradient(
     135deg,
     rgba(192,57,43,0.08) 0%,
     var(--color-glass-light) 100%
   );
-  box-shadow: 0 0 40px rgba(192,57,43,0.12);
+  box-shadow: 0 0 0 2px rgba(237, 77, 59, 0.18);
 }
 
-.popular:hover {
-  border-color: var(--color-primary);
+.currentPlan:hover {
+  border-color: var(--color-primary-readable, #ED4D3B);
 }
 
 .selected {
@@ -146,13 +146,11 @@
   box-shadow: 0 0 0 2px rgba(237, 77, 59, 0.18);
 }
 
-.popularBadge {
+.cardBadge {
   position: absolute;
   top: -12px;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--color-primary);
-  color: white;
   font-size: 11px;
   font-weight: 700;
   padding: 4px 16px;
@@ -160,6 +158,17 @@
   white-space: nowrap;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.currentPlanBadge {
+  background: var(--color-primary-readable, #ED4D3B);
+  color: white;
+}
+
+.popularBadge {
+  background: var(--color-glass-medium);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
 }
 
 /* ── Card top section ────────────────────────────────────────────── */
