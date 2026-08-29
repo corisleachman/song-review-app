@@ -5507,7 +5507,7 @@ Keep the sheet's primary Open song action immediately visible on taller phones, 
 
 ### Feature / change being made
 
-Place a 90%-opaque Open song button over the lower part of the artwork, move the owner-only Delete song action into a labelled danger zone at the end of the sheet, and raise the modal sheet above page-level floating controls. Capture a separate future reduction of the global Feedback button without changing that component in this slice.
+Place a 90%-opaque Open song button over the lower part of the artwork, move the owner-only Delete song action into a visually separated danger area at the end of the sheet, and raise the modal sheet above page-level floating controls. Capture a separate future reduction of the global Feedback button without changing that component in this slice.
 
 ### Files changed
 
@@ -5521,5 +5521,5 @@ Place a 90%-opaque Open song button over the lower part of the artwork, move the
 
 - Tapping elsewhere on the artwork still closes the sheet; the overlaid action stops propagation and opens the song.
 - Delete remains owner-only and still enters the existing confirmation flow.
-- The first PR #43 mobile flow passed before this refinement. A refreshed Preview visual check remains pending.
+- The refined PR #43 Preview passed its real-device mobile check. The final copy polish removes the redundant visible “Danger zone” heading while retaining the consequence text and right-aligned Delete song action; a refreshed Preview visual check remains pending.
 - The compact bug-icon treatment for Feedback is backlog-only.

@@ -2521,7 +2521,6 @@ function DashboardContent() {
                 {canDeleteSongs && (
                   <div className={styles.bsDangerZone}>
                     <div className={styles.bsDangerCopy}>
-                      <span className={styles.bsDangerLabel}>Danger zone</span>
                       <span className={styles.bsDangerDescription}>
                         Permanently remove this song and all of its versions.
                       </span>

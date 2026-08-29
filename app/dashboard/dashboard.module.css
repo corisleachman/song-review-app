@@ -1796,13 +1796,6 @@
   flex-direction: column;
   gap: 4px;
 }
-.bsDangerLabel {
-  color: #F06A5D;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
 .bsDangerDescription {
   max-width: 240px;
   color: rgba(255,255,255,0.38);
