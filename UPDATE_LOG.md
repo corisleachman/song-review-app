@@ -5443,4 +5443,28 @@ Keep “Start for free” as the primary phone action and replace the phone-only
 
 - The Login action uses the existing `/login` route and a 44-pixel minimum touch target.
 - Signup routing, Google authentication, desktop navigation, and the desktop “See how it works” link are unchanged.
-- Preview and production verification remain pending.
+- Preview verification passed on PR #42. Production rollout remains pending.
+
+---
+
+## 2026-08-29 - PR #42 mobile Login Preview verification
+
+### What we were trying to achieve
+
+Confirm on a real mobile viewport that returning signed-out users can immediately reach Login without weakening the Free signup journey.
+
+### Feature / change being made
+
+Verification-only closeout for the PR #42 Preview. No application behaviour changed in this entry.
+
+### Files changed
+
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- “Start for free” and “Log in” were both visible in the opening mobile view.
+- “Log in” reached the existing account login journey.
+- “Start for free” continued to open the Free signup journey.
+- Preview verification passed. Production rollout remains pending.
