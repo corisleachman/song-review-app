@@ -9,7 +9,7 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 ### Mobile marketing: signed-out users cannot find Login
 - Priority: P1 beta blocker
 - Logged: 2026-08-28
-- Status: implementation and real-device Preview verification passed on PR #42; production rollout remains pending.
+- Status: ✅ DONE. PR #42 was squash-merged as `9568e598`; both production deployments and the live routes passed on 2026-08-29.
 - Observed on mobile: the homepage presents account-creation calls to action, but an existing user has no visible Login route in the opening view.
 - Expected: make Login immediately visible and clearly secondary to the primary signup action, without forcing returning users to hunt through the page or reuse a signup route.
 - Design note: treat “Start for free” and “Log in” as two different intents. The mobile opening composition needs both, with Login reachable in the first viewport and a minimum 44-pixel touch target.
@@ -20,7 +20,7 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 - Observed on mobile: Info, Rename, Change image, and Delete remain exposed as four adjacent icons on every compact song row, consuming space and making the primary song journey harder to scan.
 - Proposed direction: keep the artwork/title row as the route into the song. Replace the four management icons with one clearly labelled Edit control that opens the existing full-screen song information sheet, extended with rename, cover-image replacement, and delete actions.
 - Safety and interaction requirements: do not make the Edit icon the only way to open the song; keep destructive deletion behind an explicit confirmation; preserve play controls, song-stage changes, activity context, keyboard access, and 44-pixel touch targets.
-- Status: product direction captured for discussion. Review the referenced mobile screenshot and agree the sheet hierarchy before changing code.
+- Status: implementation complete locally on `codex/mobile-song-edit-sheet`; Preview and production verification remain pending.
 
 ### Mobile settings: section navigation wraps into a large link grid
 - Priority: P2 beta polish

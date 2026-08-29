@@ -905,6 +905,10 @@
   color: #fff;
 }
 
+.mobileEditButton {
+  display: none;
+}
+
 /* Ghost card */
 .cardGhost {
   background: transparent;
@@ -1472,15 +1476,19 @@
 /* The sheet itself — slides up from off-screen bottom */
 .bottomSheet {
   width: 100%;
+  max-height: 100svh;
   background: #0E0A0A;
   border-top: 1px solid rgba(255,255,255,0.1);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   transform: translateY(100%);
   transition: transform 0.30s cubic-bezier(0.32, 0.72, 0, 1);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 .bottomSheetWithPlayer {
   margin-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  max-height: calc(100svh - 76px - env(safe-area-inset-bottom, 0px));
   padding-bottom: 0;
 }
 .bsOverlayVisible .bottomSheet {
@@ -1595,6 +1603,104 @@
 .bsOverlayVisible .bsBody {
   opacity: 1;
   transform: translateY(0);
+}
+.bsEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.bsEditorLabel {
+  color: rgba(255,255,255,0.48);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.bsEditorRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+.bsEditorInput {
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 0;
+  background: rgba(255,255,255,0.045);
+  color: #F4EDE4;
+  font: inherit;
+  font-size: 16px;
+  outline: none;
+}
+.bsEditorInput:focus {
+  border-color: rgba(192,57,43,0.78);
+}
+.bsSaveButton,
+.bsSecondaryAction,
+.bsDangerAction {
+  min-height: 44px;
+  border-radius: 0;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.bsSaveButton {
+  min-width: 76px;
+  padding: 0 16px;
+  border: 1px solid rgba(192,57,43,0.62);
+  background: rgba(192,57,43,0.2);
+  color: #F4EDE4;
+}
+.bsSaveButton:disabled,
+.bsSecondaryAction:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+.bsSaveButton:not(:disabled):hover,
+.bsSaveButton:not(:disabled):active {
+  background: rgba(192,57,43,0.34);
+}
+.bsEditorActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.bsSecondaryAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 14px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: transparent;
+  color: rgba(255,255,255,0.78);
+}
+.bsDangerAction {
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: #F06A5D;
+}
+.bsSecondaryAction:not(:disabled):hover,
+.bsSecondaryAction:not(:disabled):active {
+  border-color: rgba(255,255,255,0.28);
+  color: #F4EDE4;
+}
+.bsDangerAction:hover,
+.bsDangerAction:active {
+  color: #FF8D82;
+}
+.bsSaveButton:focus-visible,
+.bsSecondaryAction:focus-visible,
+.bsDangerAction:focus-visible,
+.mobileEditButton:focus-visible {
+  outline: 2px solid #F4EDE4;
+  outline-offset: 2px;
 }
 .bsGrid {
   display: grid;
@@ -2015,6 +2121,32 @@
   }
 
   /* Mobile action buttons */
+  .desktopSongAction,
+  .desktopListCard .desktopSongAction,
+  .desktopGridCard .desktopSongAction {
+    display: none !important;
+  }
+  .mobileEditButton {
+    display: inline-flex !important;
+    width: 44px;
+    height: 44px;
+    border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 0;
+    background: rgba(14,10,10,0.9);
+    color: rgba(255,255,255,0.84);
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .cardAttention .mobileEditButton,
+  .desktopListCard.cardAttention .mobileEditButton,
+  .desktopGridCard.cardAttention .mobileEditButton {
+    border-color: rgba(192,57,43,0.5);
+    color: #F4EDE4;
+  }
+  .mobileEditButton:active {
+    background: rgba(192,57,43,0.24);
+  }
   .iconBtn {
     width: 24px;
     height: 24px;

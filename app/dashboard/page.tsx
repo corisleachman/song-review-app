@@ -241,6 +241,8 @@ function DashboardContent() {
   const [songSort, setSongSort] = useState<'activity' | 'upload' | 'title'>('activity');
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
   const [sheetSongId, setSheetSongId] = useState<string | null>(null);
+  const [sheetEditTitle, setSheetEditTitle] = useState('');
+  const [sheetTitleSaving, setSheetTitleSaving] = useState(false);
   const [openOverlayId, setOpenOverlayId] = useState<string | null>(null);
 
   // New song modal
@@ -756,35 +758,56 @@ function DashboardContent() {
     }
   }
 
-  async function commitRename(id: string) {
-    const trimmed = editTitle.trim();
-    if (trimmed) {
-      const previousTitle = songs.find(song => song.id === id)?.title ?? '';
-      try {
-        const res = await fetch(`/api/songs/${id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: trimmed }),
-        });
-
-        const payload = await res.json().catch(() => null);
-
-        if (!res.ok) {
-          throw new Error(
-            payload && typeof payload.error === 'string'
-              ? payload.error
-              : 'Could not rename song.'
-          );
-        }
-
-        setSongs(prev => prev.map(s => s.id === id ? { ...s, title: trimmed } : s));
-      } catch (error) {
-        console.error('Rename song error:', error);
-        setSongs(prev => prev.map(s => s.id === id ? { ...s, title: previousTitle } : s));
-        window.alert(error instanceof Error ? error.message : 'Could not rename song.');
-      }
+  async function commitRename(id: string, nextTitle = editTitle) {
+    const trimmed = nextTitle.trim();
+    if (!trimmed) {
+      setEditingId(null);
+      return false;
     }
-    setEditingId(null);
+
+    const previousTitle = songs.find(song => song.id === id)?.title ?? '';
+    try {
+      const res = await fetch(`/api/songs/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: trimmed }),
+      });
+
+      const payload = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        throw new Error(
+          payload && typeof payload.error === 'string'
+            ? payload.error
+            : 'Could not rename song.'
+        );
+      }
+
+      setSongs(prev => prev.map(s => s.id === id ? { ...s, title: trimmed } : s));
+      return true;
+    } catch (error) {
+      console.error('Rename song error:', error);
+      setSongs(prev => prev.map(s => s.id === id ? { ...s, title: previousTitle } : s));
+      window.alert(error instanceof Error ? error.message : 'Could not rename song.');
+      return false;
+    } finally {
+      setEditingId(null);
+    }
+  }
+
+  async function saveSheetTitle(song: Song) {
+    if (sheetTitleSaving) return;
+
+    const trimmed = sheetEditTitle.trim();
+    if (!trimmed || trimmed === song.title) return;
+
+    setSheetTitleSaving(true);
+    try {
+      const saved = await commitRename(song.id, trimmed);
+      if (saved) setSheetEditTitle(trimmed);
+    } finally {
+      setSheetTitleSaving(false);
+    }
   }
 
   async function deleteSong(id: string) {
@@ -893,8 +916,10 @@ function DashboardContent() {
   function handleSongInfoClick(event: React.MouseEvent<HTMLButtonElement>, songId: string, isListView: boolean) {
     event.stopPropagation();
 
-    if (typeof window !== 'undefined' && window.innerWidth < 768) {
-      setSheetSongId(prev => (prev === songId ? null : songId));
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+      const song = songs.find(candidate => candidate.id === songId);
+      setSheetEditTitle(song?.title ?? '');
+      setSheetSongId(songId);
       return;
     }
 
@@ -1431,6 +1456,94 @@ function DashboardContent() {
     </button>
   );
 
+  const renderSongManagementActions = (
+    song: Song,
+    infoOpen: boolean,
+    isListView: boolean,
+    controlsId: string,
+  ) => (
+    <div className={styles.cardActions}>
+      <button
+        type="button"
+        className={`${styles.iconBtn} ${styles.iconBtnInfo} ${styles.desktopSongAction} ${infoOpen ? styles.iconBtnActive : ''}`}
+        title={infoOpen ? 'Hide info' : 'Show info'}
+        aria-label={infoOpen ? `Hide info for ${song.title}` : `Show info for ${song.title}`}
+        aria-expanded={infoOpen}
+        aria-controls={controlsId}
+        onClick={event => handleSongInfoClick(event, song.id, isListView)}
+      >
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
+          <circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" strokeWidth="1.2" />
+          <path d="M5.5 5v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+          <circle cx="5.5" cy="3.2" r="0.6" fill="currentColor" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        className={styles.mobileEditButton}
+        title="Edit song"
+        aria-label={`Edit ${song.title}`}
+        aria-haspopup="dialog"
+        aria-controls="dashboard-song-sheet"
+        aria-expanded={sheetSongId === song.id}
+        onClick={event => handleSongInfoClick(event, song.id, isListView)}
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M10.8 2.2l3 3-8.4 8.4H2.2v-3.2l8.6-8.2Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+          <path d="m9.5 3.5 3 3" stroke="currentColor" strokeWidth="1.4" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        className={`${styles.iconBtn} ${styles.desktopSongAction}`}
+        title="Rename"
+        aria-label={`Rename ${song.title}`}
+        onClick={event => {
+          event.stopPropagation();
+          setEditingId(song.id);
+          setEditTitle(song.title);
+        }}
+      >
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
+          <path d="M7.5 1.5l2 2-6 6H1.5v-2l6-6z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        className={`${styles.iconBtn} ${styles.desktopSongAction}`}
+        title="Upload cover art"
+        aria-label={`Change cover image for ${song.title}`}
+        onClick={event => {
+          event.stopPropagation();
+          coverUploadTargetId.current = song.id;
+          coverInputRef.current?.click();
+        }}
+      >
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
+          <rect x="1" y="2" width="9" height="7" rx="1" stroke="currentColor" strokeWidth="1" />
+          <circle cx="3.5" cy="4.5" r="1" fill="currentColor" />
+          <path d="M1 8l3-3 2 2 2-2 2 3" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </button>
+      {canDeleteSongs && (
+        <button
+          type="button"
+          className={`${styles.iconBtn} ${styles.desktopSongAction}`}
+          title="Delete"
+          aria-label={`Delete ${song.title}`}
+          onClick={event => {
+            event.stopPropagation();
+            setDeletingId(song.id);
+          }}
+        >
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
+            <path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      )}
+    </div>
+  );
+
   const sheetSong = sheetSongId ? songs.find(song => song.id === sheetSongId) ?? null : null;
   const sheetActivitySummary = sheetSong?.activityFeed[0] ?? null;
   const sheetActivitySnippet = sheetActivitySummary?.detail ?? sheetActivitySummary?.summary ?? null;
@@ -1737,64 +1850,7 @@ function DashboardContent() {
                           </div>
                         </div>
 
-                        <div className={styles.cardActions}>
-                          <button
-                            className={`${styles.iconBtn} ${styles.iconBtnInfo} ${isInfoOpen ? styles.iconBtnActive : ''}`}
-                            title={isInfoOpen ? 'Hide info' : 'Show info'}
-                            aria-label={isInfoOpen ? `Hide info for ${song.title}` : `Show info for ${song.title}`}
-                            aria-expanded={isInfoOpen}
-                            aria-controls={`song-info-${song.id}`}
-                            onClick={e => handleSongInfoClick(e, song.id, true)}
-                          >
-                            <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
-                              <circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" strokeWidth="1.2" />
-                              <path d="M5.5 5v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-                              <circle cx="5.5" cy="3.2" r="0.6" fill="currentColor" />
-                            </svg>
-                          </button>
-                          <button
-                            className={styles.iconBtn}
-                            title="Rename"
-                            onClick={e => {
-                              e.stopPropagation();
-                              setEditingId(song.id);
-                              setEditTitle(song.title);
-                            }}
-                          >
-                            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                              <path d="M7.5 1.5l2 2-6 6H1.5v-2l6-6z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/>
-                            </svg>
-                          </button>
-                          <button
-                            className={styles.iconBtn}
-                            title="Upload cover art"
-                            onClick={e => {
-                              e.stopPropagation();
-                              coverUploadTargetId.current = song.id;
-                              coverInputRef.current?.click();
-                            }}
-                          >
-                            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                              <rect x="1" y="2" width="9" height="7" rx="1" stroke="currentColor" strokeWidth="1"/>
-                              <circle cx="3.5" cy="4.5" r="1" fill="currentColor"/>
-                              <path d="M1 8l3-3 2 2 2-2 2 3" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/>
-                            </svg>
-                          </button>
-                          {canDeleteSongs && (
-                            <button
-                              className={styles.iconBtn}
-                              title="Delete"
-                              onClick={e => {
-                                e.stopPropagation();
-                                setDeletingId(song.id);
-                              }}
-                            >
-                              <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                                <path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
-                            </button>
-                          )}
-                        </div>
+                        {renderSongManagementActions(song, isInfoOpen, true, `song-info-${song.id}`)}
                       </div>
 
                       <div
@@ -2077,64 +2133,7 @@ function DashboardContent() {
                             </svg>
                           </span>
                         </div>
-                        <div className={styles.cardActions}>
-                          <button
-                            className={`${styles.iconBtn} ${styles.iconBtnInfo} ${isOverlayOpen ? styles.iconBtnActive : ''}`}
-                            title={isOverlayOpen ? 'Hide info' : 'Show info'}
-                            aria-label={isOverlayOpen ? `Hide info for ${song.title}` : `Show info for ${song.title}`}
-                            aria-expanded={isOverlayOpen}
-                            aria-controls={`song-overlay-${song.id}`}
-                            onClick={e => handleSongInfoClick(e, song.id, false)}
-                          >
-                            <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
-                              <circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" strokeWidth="1.2" />
-                              <path d="M5.5 5v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-                              <circle cx="5.5" cy="3.2" r="0.6" fill="currentColor" />
-                            </svg>
-                          </button>
-                          <button
-                            className={styles.iconBtn}
-                            title="Rename"
-                            onClick={e => {
-                              e.stopPropagation();
-                              setEditingId(song.id);
-                              setEditTitle(song.title);
-                            }}
-                          >
-                            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                              <path d="M7.5 1.5l2 2-6 6H1.5v-2l6-6z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/>
-                            </svg>
-                          </button>
-                          <button
-                            className={styles.iconBtn}
-                            title="Upload cover art"
-                            onClick={e => {
-                              e.stopPropagation();
-                              coverUploadTargetId.current = song.id;
-                              coverInputRef.current?.click();
-                            }}
-                          >
-                            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                              <rect x="1" y="2" width="9" height="7" rx="1" stroke="currentColor" strokeWidth="1"/>
-                              <circle cx="3.5" cy="4.5" r="1" fill="currentColor"/>
-                              <path d="M1 8l3-3 2 2 2-2 2 3" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/>
-                            </svg>
-                          </button>
-                          {canDeleteSongs && (
-                            <button
-                              className={styles.iconBtn}
-                              title="Delete"
-                              onClick={e => {
-                                e.stopPropagation();
-                                setDeletingId(song.id);
-                              }}
-                            >
-                              <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                                <path d="M2 3h7M4 3V2h3v1M4.5 5v3M6.5 5v3M3 3l.5 6h4l.5-6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
-                            </button>
-                          )}
-                        </div>
+                        {renderSongManagementActions(song, isOverlayOpen, false, `song-overlay-${song.id}`)}
                       </div>
                     </>
                   )}
@@ -2336,6 +2335,7 @@ function DashboardContent() {
         }}
       >
         <div
+          id="dashboard-song-sheet"
           ref={songSheetDialogRef}
           className={`${styles.bottomSheet} ${playingId ? styles.bottomSheetWithPlayer : ''}`}
           role={sheetSongId ? 'dialog' : undefined}
@@ -2379,6 +2379,67 @@ function DashboardContent() {
                 </div>
               </div>
               <div className={styles.bsBody}>
+                <div className={styles.bsEditor}>
+                  <label className={styles.bsEditorLabel} htmlFor="sheet-song-title">
+                    Song title
+                  </label>
+                  <div className={styles.bsEditorRow}>
+                    <input
+                      id="sheet-song-title"
+                      className={styles.bsEditorInput}
+                      value={sheetEditTitle}
+                      onChange={event => setSheetEditTitle(event.target.value)}
+                      onKeyDown={event => {
+                        if (event.key === 'Enter') {
+                          event.preventDefault();
+                          void saveSheetTitle(sheetSong);
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className={styles.bsSaveButton}
+                      disabled={
+                        sheetTitleSaving
+                        || !sheetEditTitle.trim()
+                        || sheetEditTitle.trim() === sheetSong.title
+                      }
+                      onClick={() => void saveSheetTitle(sheetSong)}
+                    >
+                      {sheetTitleSaving ? 'Saving…' : 'Save'}
+                    </button>
+                  </div>
+                  <div className={styles.bsEditorActions}>
+                    <button
+                      type="button"
+                      className={styles.bsSecondaryAction}
+                      disabled={Boolean(sheetSong.imageUploading)}
+                      onClick={() => {
+                        coverUploadTargetId.current = sheetSong.id;
+                        coverInputRef.current?.click();
+                      }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <rect x="1.5" y="3" width="13" height="10" stroke="currentColor" strokeWidth="1.2" />
+                        <circle cx="5" cy="6.5" r="1.4" fill="currentColor" />
+                        <path d="m2 12 4-4 2.8 2.7 2.3-2.3 3.4 3.4" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+                      </svg>
+                      {sheetSong.imageUploading ? 'Uploading…' : 'Change cover image'}
+                    </button>
+                    {canDeleteSongs && (
+                      <button
+                        type="button"
+                        className={styles.bsDangerAction}
+                        onClick={() => {
+                          setSheetSongId(null);
+                          setDeletingId(sheetSong.id);
+                        }}
+                      >
+                        Delete song
+                      </button>
+                    )}
+                  </div>
+                </div>
                 <div className={styles.bsGrid}>
                   <div className={styles.bsItem}>
                     <span className={styles.bsItemLabel}>Last activity</span>

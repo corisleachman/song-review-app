@@ -5468,3 +5468,31 @@ Verification-only closeout for the PR #42 Preview. No application behaviour chan
 - “Log in” reached the existing account login journey.
 - “Start for free” continued to open the Free signup journey.
 - Preview verification passed. Production rollout remains pending.
+
+---
+
+## 2026-08-29 - Consolidate mobile song management into one Edit sheet
+
+### What we were trying to achieve
+
+Remove the four competing management icons from every compact mobile song row while keeping every existing song-management capability easy to reach.
+
+### Feature / change being made
+
+Show one accessible pencil control on mobile and use the existing full-screen song sheet as the single place to rename a song, change its cover image, update its stage, inspect activity, open it, or start the confirmed deletion flow. Keep the existing desktop controls unchanged.
+
+### Files changed
+
+- `app/dashboard/page.tsx`
+- `app/dashboard/dashboard.module.css`
+- `tests/critical-contracts.test.mjs`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The song artwork and row remain the primary route into the song; Edit is not the only navigation path.
+- Title and cover changes reuse the existing APIs and upload validation.
+- Delete remains owner-only and still requires the existing confirmation dialog.
+- The Edit control and sheet actions use touch targets of at least 44 pixels. The sheet is keyboard-labelled, focus-trapped, Escape-dismissible, and scrollable on short screens.
+- Preview and production verification remain pending.

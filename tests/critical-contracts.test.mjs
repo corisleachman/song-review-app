@@ -771,6 +771,46 @@ test('mobile dashboard condenses song filters into the primary toolbar', () => {
   );
 });
 
+test('mobile song rows consolidate management into one accessible edit sheet', () => {
+  const dashboard = read('app/dashboard/page.tsx');
+  const dashboardCss = read('app/dashboard/dashboard.module.css');
+
+  assertIncludesAll(dashboard, [
+    'const renderSongManagementActions = (',
+    'className={styles.mobileEditButton}',
+    'aria-label={`Edit ${song.title}`}',
+    'aria-haspopup="dialog"',
+    'aria-controls="dashboard-song-sheet"',
+    'window.innerWidth <= 768',
+    'id="dashboard-song-sheet"',
+    'id="sheet-song-title"',
+    'void saveSheetTitle(sheetSong)',
+    "sheetSong.imageUploading ? 'Uploading…' : 'Change cover image'",
+    'setDeletingId(sheetSong.id)',
+    'Delete song',
+    'renderSongManagementActions(song, isInfoOpen, true, `song-info-${song.id}`)',
+    'renderSongManagementActions(song, isOverlayOpen, false, `song-overlay-${song.id}`)',
+  ], 'mobile song edit sheet');
+  assert.match(
+    dashboardCss,
+    /@media \(max-width:\s*768px\)[\s\S]*?\.desktopSongAction[^}]*\{[^}]*display:\s*none !important;/u,
+  );
+  assert.match(
+    dashboardCss,
+    /@media \(max-width:\s*768px\)[\s\S]*?\.mobileEditButton\s*\{[^}]*display:\s*inline-flex !important;[^}]*width:\s*44px;[^}]*height:\s*44px;/u,
+  );
+  assert.match(
+    dashboardCss,
+    /\.bottomSheet\s*\{[^}]*max-height:\s*100svh;[^}]*overflow-y:\s*auto;/u,
+  );
+  assertIncludesAll(dashboardCss, [
+    '.bsEditorInput',
+    'min-height: 44px;',
+    '.bsSecondaryAction',
+    '.bsDangerAction',
+  ], 'mobile song edit sheet controls');
+});
+
 test('visualizer preference is editable, persisted, and respected by the song player', () => {
   const settings = read('app/settings/appearance/page.tsx');
   const route = read('app/api/profile/visualizer/route.ts');
