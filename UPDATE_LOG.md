@@ -5496,3 +5496,30 @@ Show one accessible pencil control on mobile and use the existing full-screen so
 - Delete remains owner-only and still requires the existing confirmation dialog.
 - The Edit control and sheet actions use touch targets of at least 44 pixels. The sheet is keyboard-labelled, focus-trapped, Escape-dismissible, and scrollable on short screens.
 - Preview and production verification remain pending.
+
+---
+
+## 2026-08-29 - Refine the PR #43 mobile Edit sheet hierarchy
+
+### What we were trying to achieve
+
+Keep the sheet's primary Open song action immediately visible on taller phones, prevent the global Feedback control from covering it, and move destructive deletion away from routine editing controls.
+
+### Feature / change being made
+
+Place a 90%-opaque Open song button over the lower part of the artwork, move the owner-only Delete song action into a labelled danger zone at the end of the sheet, and raise the modal sheet above page-level floating controls. Capture a separate future reduction of the global Feedback button without changing that component in this slice.
+
+### Files changed
+
+- `app/dashboard/page.tsx`
+- `app/dashboard/dashboard.module.css`
+- `tests/critical-contracts.test.mjs`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Tapping elsewhere on the artwork still closes the sheet; the overlaid action stops propagation and opens the song.
+- Delete remains owner-only and still enters the existing confirmation flow.
+- The first PR #43 mobile flow passed before this refinement. A refreshed Preview visual check remains pending.
+- The compact bug-icon treatment for Feedback is backlog-only.

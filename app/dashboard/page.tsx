@@ -2366,6 +2366,17 @@ function DashboardContent() {
                 >
                   ✕
                 </button>
+                <button
+                  type="button"
+                  className={styles.bsArtworkCta}
+                  onClick={event => {
+                    event.stopPropagation();
+                    setSheetSongId(null);
+                    openSongContext(sheetSong);
+                  }}
+                >
+                  Open song →
+                </button>
               </div>
               {/* Title strip */}
               <div className={styles.bsHeader}>
@@ -2426,18 +2437,6 @@ function DashboardContent() {
                       </svg>
                       {sheetSong.imageUploading ? 'Uploading…' : 'Change cover image'}
                     </button>
-                    {canDeleteSongs && (
-                      <button
-                        type="button"
-                        className={styles.bsDangerAction}
-                        onClick={() => {
-                          setSheetSongId(null);
-                          setDeletingId(sheetSong.id);
-                        }}
-                      >
-                        Delete song
-                      </button>
-                    )}
                   </div>
                 </div>
                 <div className={styles.bsGrid}>
@@ -2519,16 +2518,27 @@ function DashboardContent() {
                 {sheetActivitySnippet && (
                   <div className={styles.bsActivitySnippet}>{sheetActivitySnippet}</div>
                 )}
+                {canDeleteSongs && (
+                  <div className={styles.bsDangerZone}>
+                    <div className={styles.bsDangerCopy}>
+                      <span className={styles.bsDangerLabel}>Danger zone</span>
+                      <span className={styles.bsDangerDescription}>
+                        Permanently remove this song and all of its versions.
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className={styles.bsDangerAction}
+                      onClick={() => {
+                        setSheetSongId(null);
+                        setDeletingId(sheetSong.id);
+                      }}
+                    >
+                      Delete song
+                    </button>
+                  </div>
+                )}
               </div>
-              <button
-                className={styles.bsCta}
-                onClick={() => {
-                  setSheetSongId(null);
-                  openSongContext(sheetSong);
-                }}
-              >
-                Open song →
-              </button>
             </>
           )}
         </div>

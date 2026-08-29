@@ -783,9 +783,13 @@ test('mobile song rows consolidate management into one accessible edit sheet', (
     'aria-controls="dashboard-song-sheet"',
     'window.innerWidth <= 768',
     'id="dashboard-song-sheet"',
+    'className={styles.bsArtworkCta}',
+    'event.stopPropagation();',
     'id="sheet-song-title"',
     'void saveSheetTitle(sheetSong)',
     "sheetSong.imageUploading ? 'Uploading…' : 'Change cover image'",
+    'className={styles.bsDangerZone}',
+    'className={styles.bsDangerAction}',
     'setDeletingId(sheetSong.id)',
     'Delete song',
     'renderSongManagementActions(song, isInfoOpen, true, `song-info-${song.id}`)',
@@ -803,12 +807,25 @@ test('mobile song rows consolidate management into one accessible edit sheet', (
     dashboardCss,
     /\.bottomSheet\s*\{[^}]*max-height:\s*100svh;[^}]*overflow-y:\s*auto;/u,
   );
+  assertOrdered(dashboard, [
+    'className={styles.bsArtBlock}',
+    'className={styles.bsArtworkCta}',
+    'className={styles.bsHeader}',
+    'className={styles.bsEditor}',
+    'className={styles.bsDangerZone}',
+  ], 'mobile song edit sheet hierarchy');
+  assert.doesNotMatch(dashboard, /className=\{styles\.bsCta\}/u);
   assertIncludesAll(dashboardCss, [
     '.bsEditorInput',
     'min-height: 44px;',
     '.bsSecondaryAction',
+    '.bsArtworkCta',
+    'bottom: 16px;',
+    'background: rgba(192,57,43,0.9);',
+    '.bsDangerZone',
     '.bsDangerAction',
   ], 'mobile song edit sheet controls');
+  assert.match(dashboardCss, /\.bsOverlay\s*\{[^}]*z-index:\s*1100;/u);
 });
 
 test('visualizer preference is editable, persisted, and respected by the song player', () => {
