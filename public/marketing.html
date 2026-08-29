@@ -400,6 +400,10 @@ a { color: inherit; text-decoration: none; }
 .btn-ghost svg { transition: transform 150ms; }
 .btn-ghost:hover svg { transform: translateX(3px); }
 
+/* Keep the returning-user route in the phone hero without duplicating the
+   desktop Sign in navigation. */
+.mobile-login-cta { display: none; }
+
 .hero-right {
   display: flex;
   flex-direction: column;
@@ -1242,6 +1246,9 @@ footer {
     flex: 1 1 140px;
     justify-content: center;
   }
+
+  .desktop-hero-secondary { display: none; }
+  .mobile-login-cta { display: flex; }
 }
 
 @media (max-width: 600px) {
@@ -1898,9 +1905,15 @@ footer {
             <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
           </svg>
         </a>
-        <a class="btn-ghost" href="#features">
+        <a class="btn-ghost desktop-hero-secondary" href="#features">
           See how it works
           <svg width="14" height="10" viewBox="0 0 14 10" fill="none">
+            <path d="M1 5h12M8 1l5 4-5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+          </svg>
+        </a>
+        <a class="btn-ghost mobile-login-cta" href="/login" aria-label="Log in to your existing Song Room account">
+          Log in
+          <svg width="14" height="10" viewBox="0 0 14 10" fill="none" aria-hidden="true">
             <path d="M1 5h12M8 1l5 4-5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
           </svg>
         </a>

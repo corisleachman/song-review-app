@@ -9,6 +9,7 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 ### Mobile marketing: signed-out users cannot find Login
 - Priority: P1 beta blocker
 - Logged: 2026-08-28
+- Status: implementation and real-device Preview verification passed on PR #42; production rollout remains pending.
 - Observed on mobile: the homepage presents account-creation calls to action, but an existing user has no visible Login route in the opening view.
 - Expected: make Login immediately visible and clearly secondary to the primary signup action, without forcing returning users to hunt through the page or reuse a signup route.
 - Design note: treat “Start for free” and “Log in” as two different intents. The mobile opening composition needs both, with Login reachable in the first viewport and a minimum 44-pixel touch target.

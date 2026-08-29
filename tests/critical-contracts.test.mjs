@@ -556,6 +556,9 @@ test('mobile homepage keeps its primary CTA visible in the thumb zone', () => {
   const phoneStart = marketing.indexOf('@media (max-width: 600px), (max-width: 900px) and (max-height: 600px) {', marketing.indexOf('RESPONSIVE'));
   const phoneEnd = marketing.indexOf('@media (prefers-reduced-motion: reduce)', phoneStart);
   const phoneCss = marketing.slice(phoneStart, phoneEnd);
+  const heroCtaStart = marketing.indexOf('<div class="hero-cta-row" id="hero-cta">');
+  const heroCtaEnd = marketing.indexOf('</div>', heroCtaStart);
+  const heroCta = marketing.slice(heroCtaStart, heroCtaEnd);
 
   assert.match(phoneCss, /\.nav-cta\s*\{[^}]*display:\s*none;/u);
   assert.match(phoneCss, /\.hero\s*\{[^}]*height:\s*auto;[^}]*min-height:\s*100svh;/u);
@@ -563,6 +566,15 @@ test('mobile homepage keeps its primary CTA visible in the thumb zone', () => {
   assert.match(phoneCss, /\.hero-content\s*\{[^}]*padding-left:\s*max\(20px, env\(safe-area-inset-left\)\);/u);
   assert.match(phoneCss, /\.hero-cta-row\s*\{[^}]*width:\s*100%;[^}]*justify-content:\s*center;/u);
   assert.match(phoneCss, /\.btn-primary\s*\{[^}]*min-height:\s*48px;[^}]*justify-content:\s*center;/u);
+  assert.match(phoneCss, /\.btn-ghost\s*\{[^}]*min-height:\s*44px;[^}]*justify-content:\s*center;/u);
+  assert.match(phoneCss, /\.desktop-hero-secondary\s*\{[^}]*display:\s*none;/u);
+  assert.match(phoneCss, /\.mobile-login-cta\s*\{[^}]*display:\s*flex;/u);
+  assertIncludesAll(heroCta, [
+    'class="btn-primary" href="/signup/free"',
+    'class="btn-ghost desktop-hero-secondary" href="#features"',
+    'class="btn-ghost mobile-login-cta" href="/login"',
+    'aria-label="Log in to your existing Song Room account"',
+  ], 'mobile signup and login actions');
 });
 
 test('mobile marketing display headings use a clearer phone type scale', () => {

@@ -5419,3 +5419,52 @@ Verification-only closeout for the PR #41 Preview. No application behaviour chan
 - The wrapped Settings section navigation was captured separately as P2 beta polish. It was not changed in PR #41.
 - All 35 contracts, TypeScript, the browser accessibility job, and both Vercel Preview deployments passed before this manual check.
 - Production rollout remains pending.
+
+---
+
+## 2026-08-29 - Expose Login in the signed-out mobile homepage
+
+### What we were trying to achieve
+
+Give returning mobile users an immediately visible route into their existing account instead of making them hunt for a desktop-only Sign in link or reuse a signup route.
+
+### Feature / change being made
+
+Keep “Start for free” as the primary phone action and replace the phone-only “See how it works” action with a distinct “Log in” link. Larger screens keep their existing navigation and explainer action.
+
+### Files changed
+
+- `public/marketing.html`
+- `tests/critical-contracts.test.mjs`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The Login action uses the existing `/login` route and a 44-pixel minimum touch target.
+- Signup routing, Google authentication, desktop navigation, and the desktop “See how it works” link are unchanged.
+- Preview verification passed on PR #42. Production rollout remains pending.
+
+---
+
+## 2026-08-29 - PR #42 mobile Login Preview verification
+
+### What we were trying to achieve
+
+Confirm on a real mobile viewport that returning signed-out users can immediately reach Login without weakening the Free signup journey.
+
+### Feature / change being made
+
+Verification-only closeout for the PR #42 Preview. No application behaviour changed in this entry.
+
+### Files changed
+
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- “Start for free” and “Log in” were both visible in the opening mobile view.
+- “Log in” reached the existing account login journey.
+- “Start for free” continued to open the Free signup journey.
+- Preview verification passed. Production rollout remains pending.
