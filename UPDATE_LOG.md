@@ -5548,3 +5548,26 @@ Verification-only closeout for the PR #43 Preview. No application behaviour chan
 - Delete song remained at the end of the sheet, retained its consequence text and confirmation flow, and no longer displayed the redundant “Danger zone” heading.
 - All 36 contracts, TypeScript, the browser accessibility job, and both Vercel Preview deployments passed.
 - PR #43 is clean and mergeable against `clone-clean`. Production remains unchanged pending explicit merge authority.
+
+---
+
+## 2026-08-30 - Remove the mobile mini-player divider
+
+### What we were trying to achieve
+
+Remove the stray one-pixel rule that appeared above the mobile playback controls and made the player look visually split.
+
+### Feature / change being made
+
+Disable the mini-player's decorative top border at the phone breakpoint while retaining the existing desktop separator and every playback control.
+
+### Files changed
+
+- `app/dashboard/dashboard.module.css`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Playback state, queue behaviour, transport layout, safe-area spacing, and player stacking are unchanged.
+- Preview and real-device verification remain pending.

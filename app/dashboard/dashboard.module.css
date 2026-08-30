@@ -2567,6 +2567,7 @@
 @media (max-width: 768px) {
   .miniPlayer {
     left: 0;
+    border-top: 0;
   }
 
   .miniPlayerRow {

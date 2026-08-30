@@ -316,6 +316,14 @@ test('dashboard mini-player gives transport and timeline the primary space', () 
     /grid-template-areas:\s*'controls controls controls'\s*'current timeline duration';/u
   );
   assert.match(dashboardCss, /\.miniPlayerModeBtnActive[^}]*color:\s*#f0e48c;/u);
+  assert.match(
+    dashboardCss,
+    /\.miniPlayer\s*\{[^}]*border-top:\s*1px solid rgba\(244, 237, 228, 0\.18\);/u
+  );
+  assert.match(
+    dashboardCss,
+    /@media \(max-width:\s*768px\)[\s\S]*?\.miniPlayer\s*\{[^}]*left:\s*0;[^}]*border-top:\s*0;/u
+  );
 });
 
 test('primary upload, navigation, and playlist controls use native buttons', () => {
