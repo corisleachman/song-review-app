@@ -5523,3 +5523,28 @@ Place a 90%-opaque Open song button over the lower part of the artwork, move the
 - Delete remains owner-only and still enters the existing confirmation flow.
 - The refined PR #43 Preview passed its real-device mobile check. The final copy polish removes the redundant visible “Danger zone” heading while retaining the consequence text and right-aligned Delete song action; a refreshed Preview visual check remains pending.
 - The compact bug-icon treatment for Feedback is backlog-only.
+
+---
+
+## 2026-08-29 - PR #43 mobile Edit sheet Preview verification
+
+### What we were trying to achieve
+
+Confirm on a real mobile device that the consolidated song-management sheet is clearer, keeps its primary action visible, and separates destructive deletion from routine editing.
+
+### Feature / change being made
+
+Verification-only closeout for the PR #43 Preview. No application behaviour changed in this entry.
+
+### Files changed
+
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The single Edit button passed and was judged substantially clearer than the former four-icon row.
+- Open song remained visible over the artwork, the editing controls worked, and the global Feedback control no longer covered sheet actions.
+- Delete song remained at the end of the sheet, retained its consequence text and confirmation flow, and no longer displayed the redundant “Danger zone” heading.
+- All 36 contracts, TypeScript, the browser accessibility job, and both Vercel Preview deployments passed.
+- PR #43 is clean and mergeable against `clone-clean`. Production remains unchanged pending explicit merge authority.

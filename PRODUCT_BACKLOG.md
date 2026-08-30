@@ -21,7 +21,7 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 - Proposed direction: keep the artwork/title row as the route into the song. Replace the four management icons with one clearly labelled Edit control that opens the existing full-screen song information sheet, extended with rename, cover-image replacement, and delete actions.
 - Safety and interaction requirements: do not make the Edit icon the only way to open the song; keep destructive deletion behind an explicit confirmation; preserve play controls, song-stage changes, activity context, keyboard access, and 44-pixel touch targets.
 - Preview finding: the consolidated control passed its first mobile check, but the primary Open song action sat below the fold and the floating Feedback control could cover it. The refinement moves Open song onto the artwork, places Delete in a separated danger zone at the end, and ensures the modal sheet covers page-level floating controls.
-- Status: the refined Preview passed its real-device mobile check. A final local copy polish removes the redundant visible “Danger zone” label while preserving the separation, consequence text, and confirmed delete flow; the refreshed Preview and production verification remain pending.
+- Status: Preview complete on PR #43. The single Edit control, artwork-level Open song action, editing controls, separated Delete action, confirmation path, and final label removal passed real-device mobile verification. Merge and production verification remain pending.
 
 ### Global Feedback control is too visually dominant
 - Priority: P2 beta polish
