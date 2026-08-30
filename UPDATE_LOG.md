@@ -5468,3 +5468,83 @@ Verification-only closeout for the PR #42 Preview. No application behaviour chan
 - “Log in” reached the existing account login journey.
 - “Start for free” continued to open the Free signup journey.
 - Preview verification passed. Production rollout remains pending.
+
+---
+
+## 2026-08-29 - Consolidate mobile song management into one Edit sheet
+
+### What we were trying to achieve
+
+Remove the four competing management icons from every compact mobile song row while keeping every existing song-management capability easy to reach.
+
+### Feature / change being made
+
+Show one accessible pencil control on mobile and use the existing full-screen song sheet as the single place to rename a song, change its cover image, update its stage, inspect activity, open it, or start the confirmed deletion flow. Keep the existing desktop controls unchanged.
+
+### Files changed
+
+- `app/dashboard/page.tsx`
+- `app/dashboard/dashboard.module.css`
+- `tests/critical-contracts.test.mjs`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The song artwork and row remain the primary route into the song; Edit is not the only navigation path.
+- Title and cover changes reuse the existing APIs and upload validation.
+- Delete remains owner-only and still requires the existing confirmation dialog.
+- The Edit control and sheet actions use touch targets of at least 44 pixels. The sheet is keyboard-labelled, focus-trapped, Escape-dismissible, and scrollable on short screens.
+- Preview and production verification remain pending.
+
+---
+
+## 2026-08-29 - Refine the PR #43 mobile Edit sheet hierarchy
+
+### What we were trying to achieve
+
+Keep the sheet's primary Open song action immediately visible on taller phones, prevent the global Feedback control from covering it, and move destructive deletion away from routine editing controls.
+
+### Feature / change being made
+
+Place a 90%-opaque Open song button over the lower part of the artwork, move the owner-only Delete song action into a visually separated danger area at the end of the sheet, and raise the modal sheet above page-level floating controls. Capture a separate future reduction of the global Feedback button without changing that component in this slice.
+
+### Files changed
+
+- `app/dashboard/page.tsx`
+- `app/dashboard/dashboard.module.css`
+- `tests/critical-contracts.test.mjs`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Tapping elsewhere on the artwork still closes the sheet; the overlaid action stops propagation and opens the song.
+- Delete remains owner-only and still enters the existing confirmation flow.
+- The refined PR #43 Preview passed its real-device mobile check. The final copy polish removes the redundant visible “Danger zone” heading while retaining the consequence text and right-aligned Delete song action; a refreshed Preview visual check remains pending.
+- The compact bug-icon treatment for Feedback is backlog-only.
+
+---
+
+## 2026-08-29 - PR #43 mobile Edit sheet Preview verification
+
+### What we were trying to achieve
+
+Confirm on a real mobile device that the consolidated song-management sheet is clearer, keeps its primary action visible, and separates destructive deletion from routine editing.
+
+### Feature / change being made
+
+Verification-only closeout for the PR #43 Preview. No application behaviour changed in this entry.
+
+### Files changed
+
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The single Edit button passed and was judged substantially clearer than the former four-icon row.
+- Open song remained visible over the artwork, the editing controls worked, and the global Feedback control no longer covered sheet actions.
+- Delete song remained at the end of the sheet, retained its consequence text and confirmation flow, and no longer displayed the redundant “Danger zone” heading.
+- All 36 contracts, TypeScript, the browser accessibility job, and both Vercel Preview deployments passed.
+- PR #43 is clean and mergeable against `clone-clean`. Production remains unchanged pending explicit merge authority.
