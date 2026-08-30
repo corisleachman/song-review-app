@@ -318,6 +318,29 @@ test('dashboard mini-player gives transport and timeline the primary space', () 
   assert.match(dashboardCss, /\.miniPlayerModeBtnActive[^}]*color:\s*#f0e48c;/u);
 });
 
+test('mobile Settings uses one permission-aware section control', () => {
+  const settingsLayout = read('app/settings/layout.tsx');
+  const settingsCss = read('app/settings/settings.module.css');
+
+  assertIncludesAll(settingsLayout, [
+    "const visibleNav = NAV_ITEMS.filter(item => !item.ownerOnly || isOwner)",
+    'const activeNav = visibleNav.find(',
+    '<nav className={styles.settingsNavList}>',
+    'className={styles.settingsSectionPicker}',
+    '<label htmlFor="settings-section">Settings section</label>',
+    "value={activeNav?.href ?? ''}",
+    'onChange={(event) => router.push(event.target.value)}',
+    '{visibleNav.map(item => (',
+  ], 'mobile Settings section control');
+  assert.match(settingsCss, /\.settingsSectionPicker\s*\{[^}]*display:\s*none;/u);
+  assert.match(settingsCss, /\.settingsSectionSelect\s*\{[^}]*min-height:\s*44px;/u);
+  assert.match(settingsCss, /\.settingsSectionSelect:focus-visible\s*\{[^}]*outline:\s*2px solid/u);
+  assert.match(
+    settingsCss,
+    /@media \(max-width:\s*768px\)[\s\S]*?\.settingsNavList\s*\{[^}]*display:\s*none;[\s\S]*?\.settingsSectionPicker\s*\{[^}]*display:\s*grid;/u,
+  );
+});
+
 test('primary upload, navigation, and playlist controls use native buttons', () => {
   const upload = read('app/upload/page.tsx');
   const playlistManager = read('app/playlists/[id]/page.tsx');

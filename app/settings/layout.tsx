@@ -1,8 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import AppShell from '@/components/AppShell';
 import UpgradeModal from '@/components/UpgradeModal';
 import { SettingsProvider, useSettingsData, useSettingsActions } from '@/lib/settingsContext';
@@ -29,10 +28,14 @@ const NAV_ITEMS: NavItem[] = [
 
 function SettingsLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { identityLabel, avatarUrl, workspaceName, workspaceImageUrl, workspacePlan, membershipRole, isOwner, loading } = useSettingsData();
   const { upgradeModalType, setUpgradeModalType } = useSettingsActions();
 
   const visibleNav = NAV_ITEMS.filter(item => !item.ownerOnly || isOwner);
+  const activeNav = visibleNav.find(
+    item => pathname === item.href || pathname?.startsWith(item.href + '/'),
+  );
 
   return (
     <AppShell
@@ -64,6 +67,23 @@ function SettingsLayoutInner({ children }: { children: React.ReactNode }) {
               );
             })}
           </nav>
+          <div className={styles.settingsSectionPicker}>
+            <label htmlFor="settings-section">Settings section</label>
+            <select
+              id="settings-section"
+              className={styles.settingsSectionSelect}
+              value={activeNav?.href ?? ''}
+              disabled={loading}
+              onChange={(event) => router.push(event.target.value)}
+            >
+              {!activeNav && <option value="">Choose a section</option>}
+              {visibleNav.map(item => (
+                <option key={item.href} value={item.href}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </div>
           {identityLabel && (
             <p className={styles.settingsNavFooter}>Signed in as {identityLabel}</p>
           )}

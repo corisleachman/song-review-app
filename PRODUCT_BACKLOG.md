@@ -33,10 +33,11 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 ### Mobile settings: section navigation wraps into a large link grid
 - Priority: P2 beta polish
 - Logged: 2026-08-28
+- Status: Local implementation complete on `codex/mobile-settings-section-nav`; Preview verification is pending.
 - Observed on mobile: Workspace, Plan & Billing, Collaborators, Referrals, Appearance, and Privacy & cookies wrap across two loose rows above the current settings page, consuming space and weakening the hierarchy.
 - Proposed direction: replace the wrapped mobile links with one compact “Settings section” control that displays the current section and reveals the permitted destinations. Preserve owner-only visibility rules, the active section, keyboard access, and 44-pixel touch targets.
 - Desktop boundary: keep the existing persistent left-hand Settings navigation on larger screens.
-- Status: direction captured for a separate mobile Settings polish slice. No layout change has been made in PR #41.
+- Implementation: mobile now uses one labelled native section selector populated from the same permission-filtered navigation items as desktop. The active route remains visible, while larger screens retain the persistent link list.
 
 ### Marketing pricing: tier choice is lost during signup
 - Priority: P1 beta blocker

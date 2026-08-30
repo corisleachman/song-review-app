@@ -5548,3 +5548,29 @@ Verification-only closeout for the PR #43 Preview. No application behaviour chan
 - Delete song remained at the end of the sheet, retained its consequence text and confirmation flow, and no longer displayed the redundant “Danger zone” heading.
 - All 36 contracts, TypeScript, the browser accessibility job, and both Vercel Preview deployments passed.
 - PR #43 is clean and mergeable against `clone-clean`. Production remains unchanged pending explicit merge authority.
+
+---
+
+## 2026-08-30 - Compact the mobile Settings navigation
+
+### What we were trying to achieve
+
+Replace the large wrapping grid of Settings links on phones with a clearer section switcher that uses less vertical space.
+
+### Feature / change being made
+
+Show one labelled native section selector on mobile, keep its options restricted by the existing owner permissions, and preserve the current desktop Settings sidebar without introducing a second navigation data source.
+
+### Files changed
+
+- `app/settings/layout.tsx`
+- `app/settings/settings.module.css`
+- `tests/critical-contracts.test.mjs`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The selector shows the active Settings section and routes through the existing Next.js navigation path.
+- Its native interaction, visible label, focus ring, and 44-pixel minimum height cover touch and keyboard use.
+- Preview and real-device verification remain pending.
