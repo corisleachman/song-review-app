@@ -5551,7 +5551,7 @@ Verification-only closeout for the PR #43 Preview. No application behaviour chan
 
 ---
 
-## 2026-08-30 - Remove the mobile mini-player compositor line
+## 2026-08-30 - Remove the collapsed edit-sheet rail from the mobile player
 
 ### What we were trying to achieve
 
@@ -5559,7 +5559,7 @@ Remove the stray one-pixel rule that appeared across the mobile playback control
 
 ### Feature / change being made
 
-Use an opaque mobile player surface without backdrop blur, and disable the decorative top border at the phone breakpoint. This prevents the browser's translucent fixed-layer compositor from painting a horizontal seam through the controls while retaining the desktop treatment and every playback control.
+Hide the collapsed song edit sheet's top border while the mini-player is open. The sheet keeps its divider when it is actually visible, and the mini-player returns to its existing translucent treatment.
 
 ### Files changed
 
@@ -5569,6 +5569,7 @@ Use an opaque mobile player surface without backdrop blur, and disable the decor
 
 ### Notes
 
-- The first Preview test proved that removing only the outer border did not address the internal rule. Rendered inspection reproduced the line crossing the opaque Pause button, confirming a compositing seam rather than a child-element border.
+- Rendered DOM inspection identified the exact one-pixel element as `.bottomSheetWithPlayer`, whose collapsed top border was left 76 pixels above the viewport edge behind the player controls.
+- The two earlier player-surface changes were reverted because the player itself was not painting the line.
 - Playback state, queue behaviour, transport layout, safe-area spacing, and player stacking are unchanged.
 - Corrected Preview and real-device verification remain pending.

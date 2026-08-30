@@ -1491,6 +1491,9 @@
   max-height: calc(100svh - 76px - env(safe-area-inset-bottom, 0px));
   padding-bottom: 0;
 }
+.bsOverlay:not(.bsOverlayVisible) .bottomSheetWithPlayer {
+  border-top-color: transparent;
+}
 .bsOverlayVisible .bottomSheet {
   transform: translateY(0);
 }
@@ -2567,10 +2570,6 @@
 @media (max-width: 768px) {
   .miniPlayer {
     left: 0;
-    background: #140e0e;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    border-top: 0;
   }
 
   .miniPlayerRow {
