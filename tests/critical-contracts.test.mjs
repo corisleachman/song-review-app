@@ -322,7 +322,7 @@ test('dashboard mini-player gives transport and timeline the primary space', () 
   );
   assert.match(
     dashboardCss,
-    /@media \(max-width:\s*768px\)[\s\S]*?\.miniPlayer\s*\{[^}]*left:\s*0;[^}]*border-top:\s*0;/u
+    /@media \(max-width:\s*768px\)[\s\S]*?\.miniPlayer\s*\{[^}]*left:\s*0;[^}]*background:\s*#140e0e;[^}]*backdrop-filter:\s*none;[^}]*-webkit-backdrop-filter:\s*none;[^}]*border-top:\s*0;/u
   );
 });
 

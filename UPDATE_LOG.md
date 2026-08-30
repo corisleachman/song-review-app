@@ -5551,15 +5551,15 @@ Verification-only closeout for the PR #43 Preview. No application behaviour chan
 
 ---
 
-## 2026-08-30 - Remove the mobile mini-player divider
+## 2026-08-30 - Remove the mobile mini-player compositor line
 
 ### What we were trying to achieve
 
-Remove the stray one-pixel rule that appeared above the mobile playback controls and made the player look visually split.
+Remove the stray one-pixel rule that appeared across the mobile playback controls and made the player look visually split.
 
 ### Feature / change being made
 
-Disable the mini-player's decorative top border at the phone breakpoint while retaining the existing desktop separator and every playback control.
+Use an opaque mobile player surface without backdrop blur, and disable the decorative top border at the phone breakpoint. This prevents the browser's translucent fixed-layer compositor from painting a horizontal seam through the controls while retaining the desktop treatment and every playback control.
 
 ### Files changed
 
@@ -5569,5 +5569,6 @@ Disable the mini-player's decorative top border at the phone breakpoint while re
 
 ### Notes
 
+- The first Preview test proved that removing only the outer border did not address the internal rule. Rendered inspection reproduced the line crossing the opaque Pause button, confirming a compositing seam rather than a child-element border.
 - Playback state, queue behaviour, transport layout, safe-area spacing, and player stacking are unchanged.
-- Preview and real-device verification remain pending.
+- Corrected Preview and real-device verification remain pending.

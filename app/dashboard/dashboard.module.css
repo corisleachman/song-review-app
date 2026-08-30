@@ -2567,6 +2567,9 @@
 @media (max-width: 768px) {
   .miniPlayer {
     left: 0;
+    background: #140e0e;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     border-top: 0;
   }
 
