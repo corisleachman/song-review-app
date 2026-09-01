@@ -809,7 +809,7 @@ test('mobile song rows consolidate management into one accessible edit sheet', (
   );
   assert.match(
     dashboardCss,
-    /\.bsOverlay:not\(\.bsOverlayVisible\) \.bottomSheetWithPlayer\s*\{[^}]*border-top-color:\s*transparent;/u,
+    /\.bsOverlay:not\(\.bsOverlayVisible\) \.bottomSheetWithPlayer\s*\{[^}]*border-top:\s*0;/u,
   );
   assertOrdered(dashboard, [
     'className={styles.bsArtBlock}',

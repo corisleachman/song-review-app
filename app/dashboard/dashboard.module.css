@@ -1492,7 +1492,7 @@
   padding-bottom: 0;
 }
 .bsOverlay:not(.bsOverlayVisible) .bottomSheetWithPlayer {
-  border-top-color: transparent;
+  border-top: 0;
 }
 .bsOverlayVisible .bottomSheet {
   transform: translateY(0);
