@@ -5626,4 +5626,29 @@ Build referral links from the authenticated API request origin so Preview links 
 - The referral code and reward logic are unchanged.
 - Both referral endpoints now follow the request-origin pattern already used by workspace invites and Stripe return URLs.
 - The referral entry route now redirects with an absolute URL from the same request origin. This fixes the Vercel runtime error raised by its former relative `/?ref=...` redirect.
-- Preview verification remains pending.
+- Preview verification passed. The Settings field displayed the complete Preview URL, copying it preserved the full address, and opening the referral route redirected successfully instead of returning HTTP 500.
+
+---
+
+## 2026-09-01 - PR #44 Preview verification
+
+### What we were trying to achieve
+
+Confirm the compact mobile Settings navigation and the corrected referral journey together before merging PR #44.
+
+### Feature / change being made
+
+Verification-only closeout for the PR #44 Preview. No additional application behaviour changed in this entry.
+
+### Files changed
+
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The mobile Settings section selector passed and replaced the former wrapping link grid.
+- The desktop Settings sidebar remained unchanged.
+- The authenticated Settings header displayed the user's profile image correctly.
+- Referral fields returned complete environment-specific URLs, and opening the copied Preview link completed the referral redirect without an HTTP 500 response.
+- All GitHub checks and both Vercel Preview deployments passed. Production remains unchanged pending the approved squash merge.
