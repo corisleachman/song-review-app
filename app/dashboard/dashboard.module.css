@@ -1491,6 +1491,9 @@
   max-height: calc(100svh - 76px - env(safe-area-inset-bottom, 0px));
   padding-bottom: 0;
 }
+.bsOverlay:not(.bsOverlayVisible) .bottomSheetWithPlayer {
+  border-top: 0;
+}
 .bsOverlayVisible .bottomSheet {
   transform: translateY(0);
 }

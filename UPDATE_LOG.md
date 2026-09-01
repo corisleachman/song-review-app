@@ -5574,3 +5574,29 @@ Show one labelled native section selector on mobile, keep its options restricted
 - The selector shows the active Settings section and routes through the existing Next.js navigation path.
 - Its native interaction, visible label, focus ring, and 44-pixel minimum height cover touch and keyboard use.
 - Preview and real-device verification remain pending.
+
+---
+
+## 2026-08-30 - Remove the collapsed edit-sheet rail from the mobile player
+
+### What we were trying to achieve
+
+Remove the stray one-pixel rule that appeared across the mobile playback controls and made the player look visually split.
+
+### Feature / change being made
+
+Hide the collapsed song edit sheet's top border while the mini-player is open. The sheet keeps its divider when it is actually visible, and the mini-player returns to its existing translucent treatment.
+
+### Files changed
+
+- `app/dashboard/dashboard.module.css`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Rendered DOM inspection identified the exact one-pixel element as `.bottomSheetWithPlayer`, whose collapsed top border was left 76 pixels above the viewport edge behind the player controls.
+- Making only the border colour transparent did not work because the sheet's opaque background still painted underneath the transparent border box. The collapsed state now removes the border width entirely.
+- The two earlier player-surface changes were reverted because the player itself was not painting the line.
+- Playback state, queue behaviour, transport layout, safe-area spacing, and player stacking are unchanged.
+- Corrected Preview passed all automated checks and was verified on an iPhone 17 Pro Max and in Chrome's mobile emulator. The unwanted rule is gone and the transport controls continue to work normally.

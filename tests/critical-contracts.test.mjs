@@ -830,6 +830,10 @@ test('mobile song rows consolidate management into one accessible edit sheet', (
     dashboardCss,
     /\.bottomSheet\s*\{[^}]*max-height:\s*100svh;[^}]*overflow-y:\s*auto;/u,
   );
+  assert.match(
+    dashboardCss,
+    /\.bsOverlay:not\(\.bsOverlayVisible\) \.bottomSheetWithPlayer\s*\{[^}]*border-top:\s*0;/u,
+  );
   assertOrdered(dashboard, [
     'className={styles.bsArtBlock}',
     'className={styles.bsArtworkCta}',
