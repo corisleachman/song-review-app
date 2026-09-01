@@ -5600,3 +5600,28 @@ Hide the collapsed song edit sheet's top border while the mini-player is open. T
 - The two earlier player-surface changes were reverted because the player itself was not painting the line.
 - Playback state, queue behaviour, transport layout, safe-area spacing, and player stacking are unchanged.
 - Corrected Preview passed all automated checks and was verified on an iPhone 17 Pro Max and in Chrome's mobile emulator. The unwanted rule is gone and the transport controls continue to work normally.
+
+---
+
+## 2026-09-01 - Return complete referral links in every environment
+
+### What we were trying to achieve
+
+Fix referral links that appeared as a relative path such as `/r/TSR-GNPKT` when the optional public app URL variable was absent.
+
+### Feature / change being made
+
+Build referral links from the authenticated API request origin so Preview links point to the current Preview and production links point to the live site.
+
+### Files changed
+
+- `app/api/referrals/code/route.ts`
+- `app/api/referrals/summary/route.ts`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The referral code and reward logic are unchanged.
+- Both referral endpoints now follow the request-origin pattern already used by workspace invites and Stripe return URLs.
+- Preview verification remains pending.

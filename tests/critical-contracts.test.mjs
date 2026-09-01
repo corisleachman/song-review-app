@@ -145,6 +145,23 @@ test('workspace invite emails build links from the request origin', () => {
   assert.doesNotMatch(route, /localhost(?::\d+)?/iu);
 });
 
+test('referral links build full URLs from the request origin', () => {
+  const routes = [
+    read('app/api/referrals/code/route.ts'),
+    read('app/api/referrals/summary/route.ts'),
+  ];
+
+  for (const route of routes) {
+    assertIncludesAll(route, [
+      'export async function GET(req: NextRequest)',
+      '`/r/${encodeURIComponent(code.code)}`',
+      'req.nextUrl.origin',
+      '.toString()',
+    ], 'referral request-origin URL');
+    assert.doesNotMatch(route, /NEXT_PUBLIC_APP_URL/u);
+  }
+});
+
 test('pending workspace invites use Google-only account entry during beta', () => {
   const actions = read('app/invite/[token]/InviteActions.tsx');
   const page = read('app/invite/[token]/page.tsx');

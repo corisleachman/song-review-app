@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { getOrCreateReferralCode, REFERRAL_REWARD_CAP } from '@/lib/referrals';
 import { supabaseServer } from '@/lib/supabaseServer';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const resolved = await resolveCanonicalIdentity();
     if (!resolved) {
@@ -19,8 +19,10 @@ export async function GET() {
       identity.workspaceId ?? null,
     );
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
-    const referralUrl = `${baseUrl}/r/${code.code}`;
+    const referralUrl = new URL(
+      `/r/${encodeURIComponent(code.code)}`,
+      req.nextUrl.origin,
+    ).toString();
 
     // Fetch all referrals for this user
     const { data: referrals } = await supabaseServer
