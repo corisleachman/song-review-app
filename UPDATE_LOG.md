@@ -5570,6 +5570,7 @@ Hide the collapsed song edit sheet's top border while the mini-player is open. T
 ### Notes
 
 - Rendered DOM inspection identified the exact one-pixel element as `.bottomSheetWithPlayer`, whose collapsed top border was left 76 pixels above the viewport edge behind the player controls.
+- Making only the border colour transparent did not work because the sheet's opaque background still painted underneath the transparent border box. The collapsed state now removes the border width entirely.
 - The two earlier player-surface changes were reverted because the player itself was not painting the line.
 - Playback state, queue behaviour, transport layout, safe-area spacing, and player stacking are unchanged.
-- Corrected Preview and real-device verification remain pending.
+- Corrected Preview passed all automated checks and was verified on an iPhone 17 Pro Max and in Chrome's mobile emulator. The unwanted rule is gone and the transport controls continue to work normally.
