@@ -5617,6 +5617,7 @@ Build referral links from the authenticated API request origin so Preview links 
 
 - `app/api/referrals/code/route.ts`
 - `app/api/referrals/summary/route.ts`
+- `app/r/[code]/route.ts`
 - `tests/critical-contracts.test.mjs`
 - `UPDATE_LOG.md`
 
@@ -5624,4 +5625,5 @@ Build referral links from the authenticated API request origin so Preview links 
 
 - The referral code and reward logic are unchanged.
 - Both referral endpoints now follow the request-origin pattern already used by workspace invites and Stripe return URLs.
+- The referral entry route now redirects with an absolute URL from the same request origin. This fixes the Vercel runtime error raised by its former relative `/?ref=...` redirect.
 - Preview verification remains pending.

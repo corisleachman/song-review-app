@@ -160,6 +160,14 @@ test('referral links build full URLs from the request origin', () => {
     ], 'referral request-origin URL');
     assert.doesNotMatch(route, /NEXT_PUBLIC_APP_URL/u);
   }
+
+  const entryRoute = read('app/r/[code]/route.ts');
+  assertIncludesAll(entryRoute, [
+    "const destination = new URL('/', request.nextUrl.origin)",
+    "destination.searchParams.set('ref', code)",
+    'NextResponse.redirect(destination, { status: 302 })',
+  ], 'referral entry redirect');
+  assert.doesNotMatch(entryRoute, /NEXT_PUBLIC_APP_URL/u);
 });
 
 test('pending workspace invites use Google-only account entry during beta', () => {
