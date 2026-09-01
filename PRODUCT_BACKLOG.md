@@ -14,14 +14,14 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 - Expected: make Login immediately visible and clearly secondary to the primary signup action, without forcing returning users to hunt through the page or reuse a signup route.
 - Design note: treat “Start for free” and “Log in” as two different intents. The mobile opening composition needs both, with Login reachable in the first viewport and a minimum 44-pixel touch target.
 
-### Mobile dashboard: four song-management icons overwhelm each row
+### Mobile dashboard: four song-management icons overwhelm each row  ✅ DONE (2026-08-30)
 - Priority: P1 beta usability
 - Logged: 2026-08-28
 - Observed on mobile: Info, Rename, Change image, and Delete remain exposed as four adjacent icons on every compact song row, consuming space and making the primary song journey harder to scan.
 - Proposed direction: keep the artwork/title row as the route into the song. Replace the four management icons with one clearly labelled Edit control that opens the existing full-screen song information sheet, extended with rename, cover-image replacement, and delete actions.
 - Safety and interaction requirements: do not make the Edit icon the only way to open the song; keep destructive deletion behind an explicit confirmation; preserve play controls, song-stage changes, activity context, keyboard access, and 44-pixel touch targets.
 - Preview finding: the consolidated control passed its first mobile check, but the primary Open song action sat below the fold and the floating Feedback control could cover it. The refinement moves Open song onto the artwork, places Delete in a separated danger zone at the end, and ensures the modal sheet covers page-level floating controls.
-- Status: Preview complete on PR #43. The single Edit control, artwork-level Open song action, editing controls, separated Delete action, confirmation path, and final label removal passed real-device mobile verification. Merge and production verification remain pending.
+- Status: Production complete after PR #43 squash-merged as `18d78431`. The single Edit control, artwork-level Open song action, editing controls, separated Delete action, confirmation path, and final label removal passed real-device Preview verification; the production deployment and live route checks passed after merge.
 
 ### Global Feedback control is too visually dominant
 - Priority: P2 beta polish
@@ -33,21 +33,22 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 ### Mobile settings: section navigation wraps into a large link grid
 - Priority: P2 beta polish
 - Logged: 2026-08-28
+- Status: Preview complete on PR #44. The compact native selector passed on mobile, the desktop Settings sidebar remained unchanged, and the authenticated Settings header retained the user's profile image. Merge and production verification remain pending.
 - Observed on mobile: Workspace, Plan & Billing, Collaborators, Referrals, Appearance, and Privacy & cookies wrap across two loose rows above the current settings page, consuming space and weakening the hierarchy.
 - Proposed direction: replace the wrapped mobile links with one compact “Settings section” control that displays the current section and reveals the permitted destinations. Preserve owner-only visibility rules, the active section, keyboard access, and 44-pixel touch targets.
 - Desktop boundary: keep the existing persistent left-hand Settings navigation on larger screens.
-- Status: direction captured for a separate mobile Settings polish slice. No layout change has been made in PR #41.
+- Implementation: mobile now uses one labelled native section selector populated from the same permission-filtered navigation items as desktop. The active route remains visible, while larger screens retain the persistent link list.
 
-### Marketing pricing: tier choice is lost during signup
+### Marketing pricing: tier choice is lost during signup  ✅ DONE (2026-08-26)
 - Priority: P1 beta blocker
 - Logged: 2026-08-23
-- Status: Desktop and real-device mobile Preview verification passed on 2026-08-26 on `codex/tier-aware-signup`; production rollout remains pending.
+- Status: Production complete after PR #31 merged as `fad0df1a`. Desktop and real-device mobile Preview verification passed before merge, the production deployment passed afterward, and the later Stripe customer-recovery work preserved the tier-aware route. Durable funnel events remain a separate P2 follow-up under contextual upgrade prompts and lifecycle email.
 - Original behaviour: Free, Pro, and Studio pricing buttons all opened the same neutral `/login` route, so the chosen tier and billing period disappeared.
 - Expected: use tier-aware signup routes for Free, Pro, and Studio, preserve the selection through Google OAuth and account bootstrap, then send Free to the dashboard and paid choices to a preselected confirmation screen before Stripe.
 - Important boundary: a pending workspace invite must take priority over pricing intent, and only a workspace owner may enter checkout.
 - Implementation: the homepage now uses distinct tier routes, the billing toggle updates paid links, the chosen plan survives the allowlisted Google callback, and paid choices open a preselected owner-aware confirmation screen before Stripe. Checkout cancellation returns to the same choice.
 - Preview result: the owner Google flow reached the Pro annual confirmation, and Stripe Sandbox showed the expected four test prices: Pro at £9/month or £86/year and Studio at £19/month or £190/year. Cancellation returned to the same plan and billing choice with a clear notice. The deployment produced no error or fatal runtime logs during the checks.
-- Remaining beta work: complete the production rollout and add durable server-backed funnel events before introducing any behavioural upgrade email.
+- Remaining follow-up: add durable server-backed funnel events before introducing any behavioural upgrade email.
 - Detailed product and technical acceptance criteria: `TIER_SIGNUP_AND_UPGRADE_JOURNEY.md`.
 
 ### Mobile homepage: descriptive copy appears too late  ✅ DONE (2026-08-20)

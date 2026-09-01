@@ -6,14 +6,14 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest, props: { params: Promise<{ code: string }> }) {
   const params = await props.params;
   const { code } = params;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
 
   // Validate the code exists and is active
   const referralCode = await getReferralCodeByCode(code).catch(() => null);
 
-  const destination = referralCode
-    ? `${appUrl}/?ref=${code}`   // Valid — go to signup with ref in URL too (belt + braces)
-    : `${appUrl}/`;              // Invalid — redirect silently, no error shown
+  const destination = new URL('/', request.nextUrl.origin);
+  if (referralCode) {
+    destination.searchParams.set('ref', code);
+  }
 
   const response = NextResponse.redirect(destination, { status: 302 });
 

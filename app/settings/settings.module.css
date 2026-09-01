@@ -100,6 +100,47 @@
   margin-top: 16px;
 }
 
+.settingsSectionPicker {
+  display: none;
+}
+
+.settingsSectionPicker label {
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.settingsSectionSelect {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 40px 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0;
+  background-color: rgba(255, 255, 255, 0.055);
+  color: rgba(255, 255, 255, 0.9);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.settingsSectionSelect:focus-visible {
+  outline: 2px solid var(--color-primary-readable, #ED4D3B);
+  outline-offset: 2px;
+}
+
+.settingsSectionSelect:disabled {
+  cursor: wait;
+  opacity: 0.5;
+}
+
+.settingsSectionSelect option {
+  background: #171219;
+  color: #fff;
+}
+
 /* ── Right content panel ─────────────────────────────────────── */
 .settingsContent {
   flex: 1;
@@ -608,14 +649,13 @@
   }
 
   .settingsNavList {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 4px;
+    display: none;
   }
 
-  .settingsNavItem {
-    padding: 7px 12px;
-    font-size: 13px;
+  .settingsSectionPicker {
+    display: grid;
+    gap: 8px;
+    width: 100%;
   }
 
   .settingsNavFooter {

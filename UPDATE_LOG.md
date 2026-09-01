@@ -5551,6 +5551,32 @@ Verification-only closeout for the PR #43 Preview. No application behaviour chan
 
 ---
 
+## 2026-08-30 - Compact the mobile Settings navigation
+
+### What we were trying to achieve
+
+Replace the large wrapping grid of Settings links on phones with a clearer section switcher that uses less vertical space.
+
+### Feature / change being made
+
+Show one labelled native section selector on mobile, keep its options restricted by the existing owner permissions, and preserve the current desktop Settings sidebar without introducing a second navigation data source.
+
+### Files changed
+
+- `app/settings/layout.tsx`
+- `app/settings/settings.module.css`
+- `tests/critical-contracts.test.mjs`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The selector shows the active Settings section and routes through the existing Next.js navigation path.
+- Its native interaction, visible label, focus ring, and 44-pixel minimum height cover touch and keyboard use.
+- Preview and real-device verification remain pending.
+
+---
+
 ## 2026-08-30 - Remove the collapsed edit-sheet rail from the mobile player
 
 ### What we were trying to achieve
@@ -5574,3 +5600,55 @@ Hide the collapsed song edit sheet's top border while the mini-player is open. T
 - The two earlier player-surface changes were reverted because the player itself was not painting the line.
 - Playback state, queue behaviour, transport layout, safe-area spacing, and player stacking are unchanged.
 - Corrected Preview passed all automated checks and was verified on an iPhone 17 Pro Max and in Chrome's mobile emulator. The unwanted rule is gone and the transport controls continue to work normally.
+
+---
+
+## 2026-09-01 - Return complete referral links in every environment
+
+### What we were trying to achieve
+
+Fix referral links that appeared as a relative path such as `/r/TSR-GNPKT` when the optional public app URL variable was absent.
+
+### Feature / change being made
+
+Build referral links from the authenticated API request origin so Preview links point to the current Preview and production links point to the live site.
+
+### Files changed
+
+- `app/api/referrals/code/route.ts`
+- `app/api/referrals/summary/route.ts`
+- `app/r/[code]/route.ts`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The referral code and reward logic are unchanged.
+- Both referral endpoints now follow the request-origin pattern already used by workspace invites and Stripe return URLs.
+- The referral entry route now redirects with an absolute URL from the same request origin. This fixes the Vercel runtime error raised by its former relative `/?ref=...` redirect.
+- Preview verification passed. The Settings field displayed the complete Preview URL, copying it preserved the full address, and opening the referral route redirected successfully instead of returning HTTP 500.
+
+---
+
+## 2026-09-01 - PR #44 Preview verification
+
+### What we were trying to achieve
+
+Confirm the compact mobile Settings navigation and the corrected referral journey together before merging PR #44.
+
+### Feature / change being made
+
+Verification-only closeout for the PR #44 Preview. No additional application behaviour changed in this entry.
+
+### Files changed
+
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The mobile Settings section selector passed and replaced the former wrapping link grid.
+- The desktop Settings sidebar remained unchanged.
+- The authenticated Settings header displayed the user's profile image correctly.
+- Referral fields returned complete environment-specific URLs, and opening the copied Preview link completed the referral redirect without an HTTP 500 response.
+- All GitHub checks and both Vercel Preview deployments passed. Production remains unchanged pending the approved squash merge.

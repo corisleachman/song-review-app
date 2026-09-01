@@ -145,6 +145,31 @@ test('workspace invite emails build links from the request origin', () => {
   assert.doesNotMatch(route, /localhost(?::\d+)?/iu);
 });
 
+test('referral links build full URLs from the request origin', () => {
+  const routes = [
+    read('app/api/referrals/code/route.ts'),
+    read('app/api/referrals/summary/route.ts'),
+  ];
+
+  for (const route of routes) {
+    assertIncludesAll(route, [
+      'export async function GET(req: NextRequest)',
+      '`/r/${encodeURIComponent(code.code)}`',
+      'req.nextUrl.origin',
+      '.toString()',
+    ], 'referral request-origin URL');
+    assert.doesNotMatch(route, /NEXT_PUBLIC_APP_URL/u);
+  }
+
+  const entryRoute = read('app/r/[code]/route.ts');
+  assertIncludesAll(entryRoute, [
+    "const destination = new URL('/', request.nextUrl.origin)",
+    "destination.searchParams.set('ref', code)",
+    'NextResponse.redirect(destination, { status: 302 })',
+  ], 'referral entry redirect');
+  assert.doesNotMatch(entryRoute, /NEXT_PUBLIC_APP_URL/u);
+});
+
 test('pending workspace invites use Google-only account entry during beta', () => {
   const actions = read('app/invite/[token]/InviteActions.tsx');
   const page = read('app/invite/[token]/page.tsx');
@@ -316,6 +341,29 @@ test('dashboard mini-player gives transport and timeline the primary space', () 
     /grid-template-areas:\s*'controls controls controls'\s*'current timeline duration';/u
   );
   assert.match(dashboardCss, /\.miniPlayerModeBtnActive[^}]*color:\s*#f0e48c;/u);
+});
+
+test('mobile Settings uses one permission-aware section control', () => {
+  const settingsLayout = read('app/settings/layout.tsx');
+  const settingsCss = read('app/settings/settings.module.css');
+
+  assertIncludesAll(settingsLayout, [
+    "const visibleNav = NAV_ITEMS.filter(item => !item.ownerOnly || isOwner)",
+    'const activeNav = visibleNav.find(',
+    '<nav className={styles.settingsNavList}>',
+    'className={styles.settingsSectionPicker}',
+    '<label htmlFor="settings-section">Settings section</label>',
+    "value={activeNav?.href ?? ''}",
+    'onChange={(event) => router.push(event.target.value)}',
+    '{visibleNav.map(item => (',
+  ], 'mobile Settings section control');
+  assert.match(settingsCss, /\.settingsSectionPicker\s*\{[^}]*display:\s*none;/u);
+  assert.match(settingsCss, /\.settingsSectionSelect\s*\{[^}]*min-height:\s*44px;/u);
+  assert.match(settingsCss, /\.settingsSectionSelect:focus-visible\s*\{[^}]*outline:\s*2px solid/u);
+  assert.match(
+    settingsCss,
+    /@media \(max-width:\s*768px\)[\s\S]*?\.settingsNavList\s*\{[^}]*display:\s*none;[\s\S]*?\.settingsSectionPicker\s*\{[^}]*display:\s*grid;/u,
+  );
 });
 
 test('primary upload, navigation, and playlist controls use native buttons', () => {
