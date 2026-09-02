@@ -7,6 +7,10 @@
   flex-direction: column;
   font-family: 'DM Sans', sans-serif;
 }
+.pageCommentsOpen {
+  height: 100vh;
+  overflow: hidden;
+}
 .loading {
   min-height: 100vh;
   display: flex;
@@ -41,6 +45,19 @@
 }
 
 /* ── Hero ───────────────────────────────────────────────────── */
+.reviewWorkspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 380px);
+  align-items: stretch;
+  min-width: 0;
+  border-bottom: 1px solid #1C1515;
+}
+.reviewWorkspace .hero {
+  min-width: 0;
+}
+.reviewWorkspace .heroOverlay {
+  height: 100%;
+}
 .hero {
   position: relative;
   background-color: #0E0A0A;
@@ -305,17 +322,21 @@
   position: relative;
   width: 100%;
   border-radius: 0;
-  overflow: visible;  /* allow floating comment box to escape */
+  overflow: hidden;
   background: rgba(0,0,0,0.24);
 }
 
 .waveform {
   width: 100%;
-  cursor: crosshair;
+  cursor: pointer;
   border-radius: 0;
   overflow: hidden;
   position: relative;
   z-index: 1;
+}
+.waveform:focus-visible {
+  outline: 2px solid #F0E48C;
+  outline-offset: 3px;
 }
 .hoverCanvas {
   position: absolute;
@@ -359,8 +380,62 @@
 .waveHint {
   font-size: 0.72rem;
   color: rgba(255,255,255,0.35);
-  margin: 6px 0 0;
+  margin: 0;
   text-align: left;
+}
+.waveformFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 44px;
+  padding-top: 8px;
+}
+.waveformCommentActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.commentsTriggerBtn,
+.addCommentInlineBtn {
+  min-height: 36px;
+  border-radius: 0;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.commentsTriggerBtn {
+  display: none;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px;
+  color: rgba(244,237,228,0.72);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+.commentsTriggerBtn span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  background: rgba(255,255,255,0.08);
+  color: #F4EDE4;
+  font-size: 0.68rem;
+}
+.addCommentInlineBtn {
+  padding: 0 14px;
+  color: #F4EDE4;
+  background: #C0392B;
+  border: 1px solid #C0392B;
+}
+.commentsTriggerBtn:hover,
+.addCommentInlineBtn:hover {
+  filter: brightness(1.08);
 }
 
 .loadingWave {
@@ -404,34 +479,6 @@
   gap: 8px;
 }
 
-/* Floating comment box — overlays the waveform at click point */
-.floatingCommentBox {
-  --comment-box-width: 400px;
-  --comment-box-half-width: 200px;
-  position: absolute;
-  bottom: calc(100% + 10px);  /* sits ABOVE the waveform */
-  width: var(--comment-box-width);
-  max-width: calc(100vw - 32px);
-  background: #0E0A0A;
-  border: 1px solid rgba(192,57,43,0.5);
-  border-radius: 0;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  z-index: 50;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
-  /* Small arrow pointing down to the waveform */
-}
-.floatingCommentBox::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 6px solid transparent;
-  border-top-color: rgba(192,57,43,0.5);
-}
 .inlineFormTime {
   font-size: 0.78rem;
   color: var(--color-primary-readable, #ED4D3B);
@@ -557,10 +604,10 @@
   display: block;
 }
 
-/* ── Three-column body ──────────────────────────────────────── */
+/* ── Actions and song administration ───────────────────────── */
 .body {
   display: grid;
-  grid-template-columns: 1fr 1.4fr 1fr;
+  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.7fr);
   flex: 1;
   min-height: 0;
 }
@@ -1016,6 +1063,256 @@
   white-space: nowrap;
 }
 
+/* ── Dedicated comments workspace ───────────────────────────── */
+.commentsSurface {
+  min-width: 0;
+  height: clamp(560px, 72vh, 700px);
+  max-height: 760px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #151010;
+  border-left: 1px solid rgba(244,237,228,0.1);
+  color: #F4EDE4;
+}
+.commentsSurfaceHeader {
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #2A2020;
+  background: #110D0D;
+  flex-shrink: 0;
+}
+.commentsTitleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.commentsEyebrow,
+.composerLabel {
+  color: rgba(244,237,228,0.38);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+}
+.commentsTitle {
+  margin: 0;
+  color: #F4EDE4;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+.commentsTitle span {
+  margin-left: 4px;
+  color: rgba(244,237,228,0.42);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+.commentsHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.addCommentBtn {
+  min-height: 38px;
+  padding: 0 11px;
+  border: 1px solid #C0392B;
+  border-radius: 0;
+  background: #C0392B;
+  color: #F4EDE4;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.addCommentBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.commentsCloseBtn {
+  display: none;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(244,237,228,0.14);
+  border-radius: 0;
+  background: transparent;
+  color: #F4EDE4;
+  cursor: pointer;
+}
+.threadIndexView {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+}
+.commentsEmpty {
+  min-height: 100%;
+  padding: 46px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+.commentsEmptyMark {
+  margin-bottom: 22px;
+  color: #F0E48C;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.commentsEmpty h3 {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+}
+.commentsEmpty p {
+  margin: 0 0 20px;
+  color: rgba(244,237,228,0.52);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+.nearbyThreadNotice {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(240,228,140,0.07);
+  border-bottom: 1px solid rgba(240,228,140,0.2);
+}
+.nearbyThreadNotice > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.nearbyThreadNotice strong {
+  color: #F4EDE4;
+  font-size: 0.8rem;
+}
+.nearbyThreadNotice span {
+  color: rgba(244,237,228,0.56);
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+.nearbyThreadActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.nearbyThreadActions button {
+  min-height: 36px;
+  padding-inline: 10px;
+  font-size: 0.7rem;
+}
+.newCommentComposer {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 16px;
+  border-bottom: 1px solid #2A2020;
+  background: #151010;
+  overflow-y: auto;
+}
+.composerHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.composerHeading > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.composerHeading strong {
+  color: #F0E48C;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+.composerField,
+.replyField {
+  display: block;
+  min-width: 0;
+}
+.replyField {
+  flex: 1;
+}
+.commentTextarea {
+  width: 100%;
+  min-height: 130px;
+  box-sizing: border-box;
+  padding: 12px;
+  resize: vertical;
+  border: 1px solid rgba(244,237,228,0.14);
+  border-radius: 0;
+  outline: none;
+  background: #0E0A0A;
+  color: #F4EDE4;
+  font: inherit;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+.commentTextarea:focus {
+  border-color: #C0392B;
+  box-shadow: 0 0 0 1px rgba(192,57,43,0.25);
+}
+.commentTextarea::placeholder {
+  color: rgba(244,237,228,0.3);
+}
+.composerActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.composerHint {
+  margin-right: auto;
+  color: rgba(244,237,228,0.32);
+  font-size: 0.68rem;
+}
+.textBtn {
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: rgba(244,237,228,0.58);
+  font: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.textBtn:hover {
+  color: #F4EDE4;
+}
+.commentError {
+  flex: 1 0 100%;
+  margin: 0;
+  color: #FF8173;
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.commentsScrim {
+  display: none;
+}
+
 /* ── Shared buttons ─────────────────────────────────────────── */
 .postBtn {
   background: #C0392B;
@@ -1056,7 +1353,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
+  z-index: 900;
 }
 .modal {
   background: #0E0A0A;
@@ -1360,6 +1657,54 @@
   padding: 1px 7px;
   border-radius: 0;
   font-weight: 600;
+}
+
+/* ── Compact review workspace ───────────────────────────────── */
+@media (max-width: 1099px) {
+  .reviewWorkspace {
+    display: block;
+    border-bottom: 0;
+  }
+  .commentsTriggerBtn {
+    display: inline-flex;
+  }
+  .commentsSurface {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 810;
+    width: min(420px, 100vw);
+    height: 100dvh;
+    max-height: none;
+    border-left-color: rgba(244,237,228,0.16);
+    box-shadow: -24px 0 70px rgba(0,0,0,0.58);
+    transform: translateX(100%);
+    visibility: hidden;
+    transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s linear 220ms;
+  }
+  .commentsSurfaceOpen {
+    transform: translateX(0);
+    visibility: visible;
+    transition-delay: 0s;
+  }
+  .commentsCloseBtn {
+    display: inline-flex;
+  }
+  .commentsScrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 800;
+    background: rgba(5,3,3,0.72);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 180ms ease;
+  }
+  .commentsScrimOpen {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 /* ── Mobile ─────────────────────────────────────────────────── */
@@ -2229,5 +2574,82 @@
 
   .shareToggleOn .shareToggleThumb {
     left: 23px;
+  }
+}
+
+@media (max-width: 700px) {
+  .waveformFooter {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 10px;
+  }
+  .waveformCommentActions {
+    display: grid;
+    grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
+    width: 100%;
+  }
+  .commentsTriggerBtn,
+  .addCommentInlineBtn {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+    padding-inline: 9px;
+    font-size: 0.7rem;
+  }
+  .commentsSurface {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100dvh;
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 10px);
+    border-left: 0;
+    box-shadow: 0 -24px 70px rgba(0,0,0,0.62);
+    transform: translateY(100%);
+  }
+  .commentsSurfaceOpen {
+    transform: translateY(0);
+  }
+  .commentsSurfaceHeader {
+    min-height: 68px;
+    padding: max(env(safe-area-inset-top, 0px), 12px) 14px 12px;
+  }
+  .commentsHeaderActions {
+    gap: 6px;
+  }
+  .addCommentBtn {
+    min-height: 44px;
+    padding-inline: 10px;
+    font-size: 0.67rem;
+  }
+  .commentsCloseBtn {
+    width: 44px;
+    height: 44px;
+  }
+  .newCommentComposer {
+    padding: 16px 14px;
+  }
+  .composerHeading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .commentTextarea {
+    min-height: 150px;
+  }
+  .composerActions {
+    align-items: stretch;
+  }
+  .composerHint {
+    flex: 1 0 100%;
+    margin: 0;
+  }
+  .composerActions > button {
+    min-height: 44px;
+    flex: 1 1 120px;
+  }
+  .pageCommentsOpen .mobileBottomNav {
+    visibility: hidden;
   }
 }

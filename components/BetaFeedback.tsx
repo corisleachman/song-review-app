@@ -90,6 +90,7 @@ export default function BetaFeedback() {
     <div className={styles.wrap}>
       {open && (
         <div
+          id="beta-feedback-panel"
           ref={panelRef}
           className={styles.panel}
           role="dialog"
@@ -167,11 +168,19 @@ export default function BetaFeedback() {
         </div>
       )}
 
-      <button type="button" className={styles.fab} onClick={() => setOpen((v) => !v)} aria-label="Send feedback">
-        <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true">
-          <path fill="currentColor" d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" />
+      <button
+        type="button"
+        className={styles.fab}
+        onClick={() => setOpen((value) => !value)}
+        aria-label="Report a bug or send feedback"
+        aria-expanded={open}
+        aria-controls="beta-feedback-panel"
+        title="Report a bug or send feedback"
+      >
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+          <path d="M8.3 8.2A4.9 4.9 0 0 1 12 6.5a4.9 4.9 0 0 1 3.7 1.7M8 10.5h8v4.25a4 4 0 0 1-8 0V10.5Z" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M12 3.5v3M8.4 5.2l1.7 2.2M15.6 5.2l-1.7 2.2M8 12H4.5M19.5 12H16M8.2 16.2l-3 1.6M15.8 16.2l3 1.6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
         </svg>
-        <span>Feedback</span>
       </button>
     </div>
   );

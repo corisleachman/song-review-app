@@ -5652,3 +5652,63 @@ Verification-only closeout for the PR #44 Preview. No additional application beh
 - The authenticated Settings header displayed the user's profile image correctly.
 - Referral fields returned complete environment-specific URLs, and opening the copied Preview link completed the referral redirect without an HTTP 500 response.
 - All GitHub checks and both Vercel Preview deployments passed. Production remains unchanged pending the approved squash merge.
+
+---
+
+## 2026-09-02 - Start the consolidated commenting workspace
+
+### What we were trying to achieve
+
+Turn waveform seeking back into an effortless listening action and move timestamped collaboration into a dedicated responsive comments workspace.
+
+### Feature / change being made
+
+Record the approved user journey, responsive behaviour, accessibility requirements, data boundaries, failure handling, acceptance criteria, and rollback plan before changing the authenticated version page. Close the already-verified PR #44 rollout record at the same time.
+
+### Files changed
+
+- `COMMENTING_WORKFLOW_REDESIGN.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- PR #44 squash-merged as `2fb7cd8e`; the `song-review-app-v2` production deployment completed successfully.
+- The live homepage returned 200, protected Settings redirected to the allowlisted login destination, and the live referral entry redirected without an HTTP 500 response.
+- The commenting change is confined to the authenticated version review experience and should reuse the current thread APIs and canonical server data.
+- No database migration, storage change, billing change, new dependency, or external configuration is planned.
+
+---
+
+## 2026-09-02 - Build the consolidated commenting workspace and compact Feedback control
+
+### What we were trying to achieve
+
+Make waveform seeking quick and interruption-free, give timestamped conversations a stable review surface, and replace the oversized floating Feedback button with a discreet bug control.
+
+### Feature / change being made
+
+Separate waveform seeking from comment creation, move existing threads and replies into one responsive comments workspace, preserve comment-linked actions and deep links, and keep unfinished drafts recoverable during failures and guarded during navigation.
+
+### Files changed
+
+- `app/songs/[id]/versions/[versionId]/VersionCommentsPanel.tsx`
+- `app/songs/[id]/versions/[versionId]/page.tsx`
+- `app/songs/[id]/versions/[versionId]/version.module.css`
+- `components/BetaFeedback.tsx`
+- `components/BetaFeedback.module.css`
+- `tests/critical-contracts.test.mjs`
+- `COMMENTING_WORKFLOW_REDESIGN.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Empty waveform taps and clicks now seek only. Keyboard users can seek in five-second steps with the arrow keys, jump with Home and End, and hear the current slider value.
+- `Add comment at {time}` pauses playback, captures the playhead time, and opens the same comments component as a fixed desktop rail, compact side drawer, or phone sheet.
+- Existing markers open the matching conversation. A new comment within two seconds of an existing thread offers Reply or Start separate comment rather than merging silently.
+- Existing thread, reply, action, notification, deep-link, version, and workspace data paths remain unchanged.
+- Failed posts retain their draft and timestamp. Leaving or changing version with a draft asks before discarding it.
+- The Feedback form is unchanged, but its large labelled trigger is now a 44-pixel bug icon with an accessible name and expanded state.
+- `npm test`, TypeScript checking, focused ESLint, and the Next.js compile/type phase pass. The local full build reaches page-data collection and then stops because local Supabase variables are intentionally absent; Preview will provide the environment-backed production build check.
+- No migration, new dependency, external configuration, or production change is included.

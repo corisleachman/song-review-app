@@ -10,6 +10,7 @@ import { useDialogFocus } from '@/lib/useDialogFocus';
 import { getVersionDisplayLabel } from '@/lib/versionDisplay';
 import styles from './version.module.css';
 import WorkspaceSwitcher from '@/components/WorkspaceSwitcher';
+import VersionCommentsPanel from './VersionCommentsPanel';
 
 const MAX_AUDIO_SIZE_BYTES = 200 * 1024 * 1024;
 
@@ -20,14 +21,6 @@ interface Comment {
   author_avatar_url?: string | null;
   body: string;
   created_at: string;
-}
-
-function getInitials(name: string | null | undefined) {
-  const trimmed = (name ?? '').trim();
-  if (!trimmed) return '?';
-  const parts = trimmed.split(/\s+/).filter(Boolean);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
 interface Thread {
@@ -254,11 +247,6 @@ function formatVersionDate(value?: string) {
     month: 'short',
     year: 'numeric',
   }).format(new Date(value));
-}
-
-function formatThreadPreview(text?: string) {
-  if (!text) return 'No text yet';
-  return text.length > 68 ? `${text.slice(0, 68)}…` : text;
 }
 
 function formatFileSize(bytes: number) {
@@ -491,7 +479,7 @@ function VersionPageInner() {
   const heroOverlayRef = useRef<HTMLDivElement>(null);
   const heroContentRef = useRef<HTMLDivElement>(null);
   const actionsPanelRef = useRef<HTMLDivElement>(null);
-  const threadsPanelRef = useRef<HTMLDivElement>(null);
+  const commentsSurfaceRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const analyserAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -512,6 +500,7 @@ function VersionPageInner() {
   const songTitleRef = useRef<string>('');
   const songImageRef = useRef<string>('');
   const pendingTimestampRef = useRef<number | null>(null);
+  const commentDraftDirtyRef = useRef(false);
   const versionFileInputRef = useRef<HTMLInputElement>(null);
   const reactiveAudioContextRef = useRef<AudioContext | null>(null);
   const reactiveAnalyserRef = useRef<AnalyserNode | null>(null);
@@ -559,13 +548,17 @@ function VersionPageInner() {
   const [isRetryingWave, setIsRetryingWave] = useState(false);
   const [waveReloadNonce, setWaveReloadNonce] = useState(0);
   const [pendingTimestamp, setPendingTimestamp] = useState<number | null>(null);
-  const [clickXPercent, setClickXPercent] = useState<number>(0);
+  const [nearbyThreadId, setNearbyThreadId] = useState<string | null>(null);
+  const [commentsSurfaceOpen, setCommentsSurfaceOpen] = useState(false);
+  const [commentsOverlayMode, setCommentsOverlayMode] = useState(false);
   const [editingLabel, setEditingLabel] = useState(false);
   const [showVersionModal, setShowVersionModal] = useState(false);
   const [labelDraft, setLabelDraft] = useState('');
   const [newComment, setNewComment] = useState('');
+  const [commentError, setCommentError] = useState<string | null>(null);
   const [posting, setPosting] = useState(false);
   const [replyText, setReplyText] = useState('');
+  const [replyError, setReplyError] = useState<string | null>(null);
   const [actionModalCommentId, setActionModalCommentId] = useState<string | null>(null);
   const [editingActionId, setEditingActionId] = useState<string | null>(null);
   const [actionText, setActionText] = useState('');
@@ -621,6 +614,7 @@ function VersionPageInner() {
     if (!uploadingVersion) setShowUploadVersionModal(false);
   }, [uploadingVersion]);
   const closeVersionPickerDialog = useCallback(() => setShowVersionModal(false), []);
+  const closeCommentsSurface = useCallback(() => setCommentsSurfaceOpen(false), []);
 
   useDialogFocus(showShareModal, closeShareDialog, shareDialogRef);
   useDialogFocus(
@@ -630,8 +624,30 @@ function VersionPageInner() {
   );
   useDialogFocus(showUploadVersionModal, closeUploadVersionDialog, uploadVersionDialogRef);
   useDialogFocus(showVersionModal, closeVersionPickerDialog, versionPickerDialogRef);
+  useDialogFocus(commentsSurfaceOpen && commentsOverlayMode, closeCommentsSurface, commentsSurfaceRef);
 
-  const supabase = createClient();
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 1099px)');
+    const updateMode = () => setCommentsOverlayMode(media.matches);
+    updateMode();
+    media.addEventListener('change', updateMode);
+    return () => media.removeEventListener('change', updateMode);
+  }, []);
+
+  useEffect(() => {
+    commentDraftDirtyRef.current = Boolean(newComment.trim() || replyText.trim());
+  }, [newComment, replyText]);
+
+  useEffect(() => {
+    const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
+      if (!commentDraftDirtyRef.current) return;
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', warnBeforeLeaving);
+    return () => window.removeEventListener('beforeunload', warnBeforeLeaving);
+  }, []);
 
   useEffect(() => {
     setShareUrl(`${window.location.origin}/listen/${songId}`);
@@ -1438,6 +1454,7 @@ function VersionPageInner() {
     const threadId = searchParams.get('thread') || searchParams.get('threadId');
     if (!threadId || threads.length === 0) return;
     setSelectedThreadId(threadId);
+    setCommentsSurfaceOpen(true);
     const t = threads.find(x => x.id === threadId);
     if (!t) return;
     if (wavesurferRef.current && isReady && duration > 0) {
@@ -1471,10 +1488,14 @@ function VersionPageInner() {
     const focus = searchParams.get('focus');
     if (!focus || loading) return;
 
+    if (focus === 'threads') {
+      setCommentsSurfaceOpen(true);
+    }
+
     const target = focus === 'actions'
       ? actionsPanelRef.current
       : focus === 'threads'
-        ? threadsPanelRef.current
+        ? commentsSurfaceRef.current
         : null;
 
     if (!target) return;
@@ -1627,7 +1648,9 @@ function VersionPageInner() {
           currentIdx > 0
             ? () => {
                 const prev = allVersions[currentIdx - 1];
-                if (prev) router.push(`/songs/${songIdRef.current}/versions/${prev.id}`);
+                if (!prev) return;
+                if (commentDraftDirtyRef.current && !window.confirm('Discard your unfinished comment?')) return;
+                router.push(`/songs/${songIdRef.current}/versions/${prev.id}`);
               }
             : null
         );
@@ -1635,7 +1658,9 @@ function VersionPageInner() {
           currentIdx < allVersions.length - 1
             ? () => {
                 const next = allVersions[currentIdx + 1];
-                if (next) router.push(`/songs/${songIdRef.current}/versions/${next.id}`);
+                if (!next) return;
+                if (commentDraftDirtyRef.current && !window.confirm('Discard your unfinished comment?')) return;
+                router.push(`/songs/${songIdRef.current}/versions/${next.id}`);
               }
             : null
         );
@@ -1667,30 +1692,10 @@ function VersionPageInner() {
       handleWaveFailure(message);
     });
 
-    ws.on('click', (relX: number) => {
-      const ts = relX * ws.getDuration();
-      // Use setThreads callback to get latest threads without stale closure
-      setThreads(prev => {
-        const nearby = prev.find(t => Math.abs(t.timestamp_seconds - ts) < 2);
-        if (nearby) {
-          setSelectedThreadId(nearby.id);
-          setPendingTimestamp(null);
-          pendingTimestampRef.current = null;
-        } else {
-          pendingTimestampRef.current = ts;
-          setPendingTimestamp(ts);
-          setClickXPercent(relX * 100);
-          setNewComment('');
-          setSelectedThreadId(null);
-        }
-        return prev;
-      });
-    });
-
     wavesurferRef.current = ws;
     // Don't call ws.load() here — audio is loaded lazily on first play press.
     // This prevents downloading the MP3 on every page view.
-  }, [attachNativeAudioEvents, clearWaveTimers, playNativeAudioFallback, retryWaveform]);
+  }, [attachNativeAudioEvents, clearWaveTimers, playNativeAudioFallback, retryWaveform, router]);
 
   const stopPlayback = useCallback(() => {
     if (wavesurferRef.current) {
@@ -1713,6 +1718,42 @@ function VersionPageInner() {
     drawReactiveIdle();
     setIsPlaying(false);
   }, [drawReactiveIdle, stopReactiveDrawing]);
+
+  const confirmDiscardCommentDraft = useCallback(() => {
+    if (!commentDraftDirtyRef.current) return true;
+    return window.confirm('Discard your unfinished comment?');
+  }, []);
+
+  const navigateFromReview = useCallback((path: string) => {
+    if (!confirmDiscardCommentDraft()) return false;
+    stopPlayback();
+    router.push(path);
+    return true;
+  }, [confirmDiscardCommentDraft, router, stopPlayback]);
+
+  const pauseForComment = useCallback(() => {
+    if (wavesurferRef.current) {
+      try { wavesurferRef.current.pause(); } catch {}
+    }
+    if (audioRef.current) {
+      try { audioRef.current.pause(); } catch {}
+    }
+    if (nativeAudioRef.current && nativeAudioRef.current !== audioRef.current) {
+      try { nativeAudioRef.current.pause(); } catch {}
+    }
+    setIsPlaying(false);
+  }, []);
+
+  const seekToTime = (seconds: number) => {
+    if (duration <= 0) return;
+    const nextTime = clamp(seconds, 0, duration);
+    if (wavesurferRef.current && isReady) {
+      wavesurferRef.current.seekTo(nextTime / duration);
+    } else if (nativeAudioFallbackRef.current && audioRef.current) {
+      audioRef.current.currentTime = nextTime;
+    }
+    setCurrentTime(nextTime);
+  };
 
   // Draw hover overlay on canvas: between playhead and mouse
   const drawHoverOverlay = () => {
@@ -1935,13 +1976,71 @@ function VersionPageInner() {
     showStatusToast('Action resolved in this version');
   };
 
+  const startCommentAtCurrentTime = () => {
+    if (commentDraftDirtyRef.current && !confirmDiscardCommentDraft()) return;
+    const timestamp = duration > 0 ? clamp(currentTime, 0, duration) : Math.max(0, currentTime);
+    const nearbyThread = threads.find(thread => Math.abs(thread.timestamp_seconds - timestamp) < 2) ?? null;
+
+    pauseForComment();
+    setShowMobileWorkspaceSwitcher(false);
+    setCommentError(null);
+    setReplyError(null);
+    setNewComment('');
+    setReplyText('');
+    setPendingTimestamp(timestamp);
+    pendingTimestampRef.current = timestamp;
+    setNearbyThreadId(nearbyThread?.id ?? null);
+    setSelectedThreadId(nearbyThread?.id ?? null);
+    setCommentsSurfaceOpen(true);
+  };
+
+  const useCurrentCommentTime = () => {
+    const timestamp = duration > 0 ? clamp(currentTime, 0, duration) : Math.max(0, currentTime);
+    setPendingTimestamp(timestamp);
+    pendingTimestampRef.current = timestamp;
+    setNearbyThreadId(null);
+    setSelectedThreadId(null);
+    setCommentError(null);
+  };
+
+  const cancelNewComment = () => {
+    setPendingTimestamp(null);
+    pendingTimestampRef.current = null;
+    setNearbyThreadId(null);
+    setNewComment('');
+    setCommentError(null);
+  };
+
+  const replyToNearbyThread = () => {
+    setPendingTimestamp(null);
+    pendingTimestampRef.current = null;
+    setNearbyThreadId(null);
+    setNewComment('');
+    setCommentError(null);
+    setReplyError(null);
+  };
+
+  const startSeparateComment = () => {
+    setNearbyThreadId(null);
+    setSelectedThreadId(null);
+    setCommentError(null);
+  };
+
+  const showThreadIndex = () => {
+    if (replyText.trim() && !confirmDiscardCommentDraft()) return;
+    setSelectedThreadId(null);
+    setReplyText('');
+    setReplyError(null);
+  };
+
   const submitThread = async () => {
     const ts = pendingTimestampRef.current;
     if (!newComment.trim() || ts === null) return;
     if (!identity) {
-      showStatusToast('Could not determine who is posting this comment.');
+      setCommentError('We could not confirm which account is posting this comment. Refresh the page and try again.');
       return;
     }
+    setCommentError(null);
     setPosting(true);
     try {
       const res = await fetch('/api/threads/create', {
@@ -1964,6 +2063,7 @@ function VersionPageInner() {
       setNewComment('');
       setPendingTimestamp(null);
       pendingTimestampRef.current = null;
+      setNearbyThreadId(null);
 
       if (thread && typeof thread === 'object') {
         setThreads(prev => sortThreadsByTimestamp([
@@ -1983,7 +2083,7 @@ function VersionPageInner() {
       showStatusToast('Comment posted');
     } catch (error) {
       console.error('Create thread error:', error);
-      showStatusToast(error instanceof Error ? error.message : 'Could not save comment.');
+      setCommentError(error instanceof Error ? error.message : 'Could not save comment. Your draft is still here.');
     } finally {
       setPosting(false);
     }
@@ -1991,6 +2091,7 @@ function VersionPageInner() {
 
   const submitReply = async (threadId: string) => {
     if (!replyText.trim() || posting) return;
+    setReplyError(null);
     setPosting(true);
     try {
       const res = await fetch('/api/threads/reply', {
@@ -2009,7 +2110,7 @@ function VersionPageInner() {
       triggerCommentAnimation(payload?.commentId ?? null);
     } catch (error) {
       console.error('Reply error:', error);
-      showStatusToast(error instanceof Error ? error.message : 'Could not post reply.');
+      setReplyError(error instanceof Error ? error.message : 'Could not post reply. Your draft is still here.');
     } finally {
       setPosting(false);
     }
@@ -2117,15 +2218,21 @@ function VersionPageInner() {
   };
 
   const seekToThread = (thread: Thread) => {
+    const replacesDraft = thread.id !== selectedThreadId || pendingTimestamp !== null;
+    if (replacesDraft && !confirmDiscardCommentDraft()) return;
     setSelectedThreadId(thread.id);
     setPendingTimestamp(null);
     pendingTimestampRef.current = null;
-    if (wavesurferRef.current && isReady && duration > 0) {
-      wavesurferRef.current.seekTo(thread.timestamp_seconds / duration);
-    } else if (nativeAudioFallbackRef.current && audioRef.current && duration > 0) {
-      audioRef.current.currentTime = thread.timestamp_seconds;
-      setCurrentTime(thread.timestamp_seconds);
+    setNearbyThreadId(null);
+    setNewComment('');
+    setCommentError(null);
+    if (thread.id !== selectedThreadId) {
+      setReplyText('');
+      setReplyError(null);
     }
+    setShowMobileWorkspaceSwitcher(false);
+    setCommentsSurfaceOpen(true);
+    seekToTime(thread.timestamp_seconds);
   };
 
   async function copyThreadLink(threadId: string) {
@@ -2222,7 +2329,7 @@ function VersionPageInner() {
       setNewVersionLabel('');
       setNewVersionNotes('');
       showStatusToast('Version uploaded');
-      router.push(`/songs/${songId}/versions/${data.versionId}`);
+      navigateFromReview(`/songs/${songId}/versions/${data.versionId}`);
     } catch (error) {
       if (createdVersionId) {
         await fetch(`/api/versions/${createdVersionId}/finalize`, { method: 'DELETE' }).catch(() => null);
@@ -2376,7 +2483,6 @@ function VersionPageInner() {
     );
   }
 
-  const selectedThread = threads.find(t => t.id === selectedThreadId) ?? null;
   const thisVersionActions = actions.filter(action => action.song_version_id === versionId);
   const allVersionActions = actions;
   const activeActionsForTab = actionsTab === 'all_versions' ? allVersionActions : thisVersionActions;
@@ -2413,7 +2519,7 @@ function VersionPageInner() {
     const targetPath = `/songs/${songId}/versions/${targetVersionId}?${nextParams.toString()}`;
 
     if (targetVersionId !== versionId) {
-      router.push(targetPath);
+      navigateFromReview(targetPath);
       return;
     }
 
@@ -2432,7 +2538,9 @@ function VersionPageInner() {
   }
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${commentsSurfaceOpen && commentsOverlayMode ? styles.pageCommentsOpen : ''}`}>
+
+      <div className={styles.reviewWorkspace}>
 
       {/* ── Hero ── */}
       <div
@@ -2465,7 +2573,7 @@ function VersionPageInner() {
 
           {/* Nav row */}
           <div className={styles.heroNav}>
-            <button className={styles.songsBtn} onClick={() => { stopPlayback(); router.push('/dashboard'); }}>← Songs</button>
+            <button className={styles.songsBtn} onClick={() => navigateFromReview('/dashboard')}>← Songs</button>
             <div className={styles.heroNavRight}>
               <button
                 className={`${styles.shareBtn} ${song?.is_public ? styles.shareBtnActive : ''}`}
@@ -2727,7 +2835,29 @@ function VersionPageInner() {
                     if (canvas) canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
                   }}
                 >
-                  <div ref={waveformRef} className={styles.waveform} style={{ height: 80, minHeight: 80 }} />
+                  <div
+                    ref={waveformRef}
+                    className={styles.waveform}
+                    style={{ height: 80, minHeight: 80 }}
+                    role="slider"
+                    tabIndex={0}
+                    aria-label="Song position"
+                    aria-valuemin={0}
+                    aria-valuemax={Math.max(0, Math.floor(duration))}
+                    aria-valuenow={Math.max(0, Math.floor(currentTime))}
+                    aria-valuetext={`${formatTimestamp(Math.floor(currentTime))} of ${formatTimestamp(Math.floor(duration))}`}
+                    onKeyDown={event => {
+                      let nextTime: number | null = null;
+                      const step = event.shiftKey ? 10 : 5;
+                      if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') nextTime = currentTime - step;
+                      if (event.key === 'ArrowRight' || event.key === 'ArrowUp') nextTime = currentTime + step;
+                      if (event.key === 'Home') nextTime = 0;
+                      if (event.key === 'End') nextTime = duration;
+                      if (nextTime === null) return;
+                      event.preventDefault();
+                      seekToTime(nextTime);
+                    }}
+                  />
                   <canvas
                     ref={hoverCanvasRef}
                     className={styles.hoverCanvas}
@@ -2742,38 +2872,41 @@ function VersionPageInner() {
                           key={thread.id}
                           className={`${styles.marker} ${selectedThreadId === thread.id ? styles.markerActive : ''}`}
                           style={{ left: `${(thread.timestamp_seconds / duration) * 100}%`, background: MARKER_COLORS[i % MARKER_COLORS.length] }}
-                          onClick={() => seekToThread(thread)}
+                          onClick={event => {
+                            event.stopPropagation();
+                            seekToThread(thread);
+                          }}
+                          aria-label={`Open comment at ${formatTimestamp(thread.timestamp_seconds)}, ${thread.comments.length} message${thread.comments.length === 1 ? '' : 's'}`}
                           title={formatTimestamp(thread.timestamp_seconds)}
                         />
                       ))}
                     </div>
                   )}
-                  {pendingTimestamp !== null && (
-                    <div
-                      className={styles.floatingCommentBox}
-                      style={{ left: `clamp(0px, calc(${clickXPercent}% - var(--comment-box-half-width, 200px)), calc(100% - var(--comment-box-width, 400px)))` }}
-                      onClick={e => e.stopPropagation()}
-                    >
-                      <span className={styles.inlineFormTime}>@ {formatTimestamp(Math.floor(pendingTimestamp))}</span>
-                      <textarea
-                        className={styles.inlineTextarea}
-                        placeholder="What's happening here?"
-                        value={newComment}
-                        onChange={e => setNewComment(e.target.value)}
-                        rows={2}
-                        autoFocus
-                        onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitThread(); } }}
-                      />
-                      <div className={styles.inlineFormActions}>
-                        <button className={styles.cancelBtn} onClick={() => { setPendingTimestamp(null); pendingTimestampRef.current = null; setClickXPercent(0); }}>Cancel</button>
-                        <button className={styles.postBtn} onClick={submitThread} disabled={!newComment.trim() || posting}>
-                          {posting ? 'Posting…' : 'Post'}
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </div>
-                {!pendingTimestamp && <p className={styles.waveHint}>{audioLoadedRef.current ? 'click anywhere on the waveform to leave a comment' : 'press play to load audio'}</p>}
+                <div className={styles.waveformFooter}>
+                  <p className={styles.waveHint}>
+                    {audioLoadedRef.current ? 'Tap the waveform to seek through the track.' : 'Press play to load audio.'}
+                  </p>
+                  <div className={styles.waveformCommentActions}>
+                    <button
+                      type="button"
+                      className={styles.commentsTriggerBtn}
+                      onClick={() => {
+                        setCommentsSurfaceOpen(true);
+                        if (pendingTimestamp === null && !selectedThreadId) showThreadIndex();
+                      }}
+                    >
+                      Comments <span>{threads.length}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.addCommentInlineBtn}
+                      onClick={startCommentAtCurrentTime}
+                    >
+                      + Add comment at {formatTimestamp(Math.floor(currentTime))}
+                    </button>
+                  </div>
+                </div>
             </div>
 
           </div>{/* /heroContent */}
@@ -2952,7 +3085,56 @@ function VersionPageInner() {
         )}
       </div>{/* /hero */}
 
-      {/* Three-column body */}
+        <VersionCommentsPanel
+          panelRef={commentsSurfaceRef}
+          isCompact={commentsOverlayMode}
+          isOpen={commentsSurfaceOpen}
+          threads={threads}
+          selectedThreadId={selectedThreadId}
+          nearbyThreadId={nearbyThreadId}
+          pendingTimestamp={pendingTimestamp}
+          currentTime={currentTime}
+          currentUserId={currentUserId}
+          identity={identity}
+          actions={actions}
+          animatedCommentId={animatedCommentId}
+          newComment={newComment}
+          replyText={replyText}
+          posting={posting}
+          commentError={commentError}
+          replyError={replyError}
+          threadLinkCopied={threadLinkCopied}
+          timestampCopied={timestampCopied}
+          onClose={closeCommentsSurface}
+          onStartComment={startCommentAtCurrentTime}
+          onUseCurrentTime={useCurrentCommentTime}
+          onChangeNewComment={value => { setNewComment(value); setCommentError(null); }}
+          onSubmitThread={submitThread}
+          onCancelNewComment={cancelNewComment}
+          onSelectThread={seekToThread}
+          onShowThreadIndex={showThreadIndex}
+          onReplyNearby={replyToNearbyThread}
+          onStartSeparateComment={startSeparateComment}
+          onChangeReply={value => { setReplyText(value); setReplyError(null); }}
+          onSubmitReply={submitReply}
+          onCopyThreadTimestamp={copyThreadTimestamp}
+          onCopyThreadLink={copyThreadLink}
+          onMarkAsAction={(commentId, body) => {
+            setActionModalCommentId(commentId);
+            setEditingActionId(null);
+            setActionText(body);
+            setActionStatus('open');
+            setActionAssignedToUserId('');
+          }}
+        />
+        <div
+          className={`${styles.commentsScrim} ${commentsSurfaceOpen ? styles.commentsScrimOpen : ''}`}
+          onClick={closeCommentsSurface}
+          aria-hidden="true"
+        />
+      </div>{/* /reviewWorkspace */}
+
+      {/* Actions and song administration */}
       <div className={styles.body}>
 
         {/* Left: Actions */}
@@ -3100,136 +3282,6 @@ function VersionPageInner() {
           ))}
         </div>
 
-        {/* Right: Threads */}
-        <div ref={threadsPanelRef} className={styles.threadsPanel}>
-          {selectedThread ? (
-            <>
-              <div className={styles.threadsPanelHeader}>
-                <div className={styles.threadHeaderInfo}>
-                  <div className={styles.threadMarkerDot} style={{ background: MARKER_COLORS[threads.findIndex(t => t.id === selectedThread.id) % MARKER_COLORS.length] }} />
-                  <div className={styles.threadHeaderMeta}>
-                    <span className={styles.threadTimestamp}>@ {formatTimestamp(selectedThread.timestamp_seconds)}</span>
-                    <span className={styles.threadHeaderCount}>
-                      {selectedThread.comments.length} message{selectedThread.comments.length !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                </div>
-                <div className={styles.threadHeaderActions}>
-                  <button className={styles.threadActionBtn} onClick={() => seekToThread(selectedThread)}>
-                    Jump to time
-                  </button>
-                  <button className={styles.threadActionBtn} onClick={() => copyThreadTimestamp(selectedThread.timestamp_seconds)}>
-                    {timestampCopied ? 'Copied time' : 'Copy timestamp'}
-                  </button>
-                  <button className={styles.threadActionBtn} onClick={() => copyThreadLink(selectedThread.id)}>
-                    {threadLinkCopied ? 'Copied link' : 'Copy link'}
-                  </button>
-                </div>
-                <button className={styles.threadsDropdown} onClick={() => setSelectedThreadId(null)}>
-                  {threads.length} thread{threads.length !== 1 ? 's' : ''} ▾
-                </button>
-              </div>
-              <div className={styles.bubbleList}>
-                {selectedThread.comments?.map((c, i, arr) => {
-                  const isOwn = (c.author_user_id && currentUserId)
-                    ? c.author_user_id === currentUserId
-                    : c.author === identity;
-                  const prev = arr[i - 1];
-                  const prevKey = prev ? (prev.author_user_id || prev.author) : null;
-                  const thisKey = c.author_user_id || c.author;
-                  const showMeta = prevKey !== thisKey;
-                  return (
-                    <div key={c.id} className={`${styles.bubbleRow} ${isOwn ? styles.bubbleRowOwn : styles.bubbleRowOther}`}>
-                      {showMeta ? (
-                        <div className={styles.bubbleAvatar}>
-                          <span className={styles.bubbleAvatarInitials}>{getInitials(c.author)}</span>
-                          {c.author_avatar_url && (
-                            <img
-                              src={c.author_avatar_url}
-                              alt=""
-                              referrerPolicy="no-referrer"
-                              onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-                            />
-                          )}
-                        </div>
-                      ) : (
-                        <div className={`${styles.bubbleAvatar} ${styles.bubbleAvatarSpacer}`} aria-hidden="true" />
-                      )}
-                      <div className={styles.bubbleStack}>
-                        {showMeta && <span className={styles.bubbleAuthor}>{isOwn ? 'You' : c.author}</span>}
-                        <div
-                          className={`${styles.bubble} ${isOwn ? styles.bubbleOwn : styles.bubbleOther} ${animatedCommentId === c.id ? styles.bubbleGentlePop : ''}`}
-                        >
-                          {c.body}
-                        </div>
-                        {!actions.some(a => a.comment_id === c.id) && (
-                          <button className={styles.markActionBtn} onClick={() => {
-                            setActionModalCommentId(c.id);
-                            setEditingActionId(null);
-                            setActionText(c.body);
-                            setActionStatus('open');
-                            setActionAssignedToUserId('');
-                          }}>
-                            + Mark as action
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className={styles.replyRow}>
-                <div className={styles.replyDot} />
-                <input
-                  className={styles.replyInput}
-                  placeholder="Reply…"
-                  value={replyText}
-                  onChange={e => setReplyText(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') submitReply(selectedThread.id); }}
-                  disabled={posting}
-                />
-                <span className={styles.replyTime}>{posting ? 'Posting…' : formatTimestamp(Math.floor(currentTime))}</span>
-                <button className={styles.replyBtn} aria-label="Post reply" onClick={() => submitReply(selectedThread.id)} disabled={!replyText.trim() || posting}>
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M1 7h11M8 3l4 4-4 4"/>
-                  </svg>
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className={styles.threadsPanelHeader}>
-                <span className={styles.threadsPanelTitle}>{threads.length} thread{threads.length !== 1 ? 's' : ''}</span>
-              </div>
-              {threads.length === 0
-                ? <p className={styles.empty}>No comments yet. Click the waveform to start the conversation.</p>
-                : (
-                  <div className={styles.threadIndexList}>
-                    {threads.map((t, i) => (
-                      <button key={t.id} className={styles.threadIndexItem} onClick={() => seekToThread(t)}>
-                        <div className={styles.threadIndexDot} style={{ background: MARKER_COLORS[i % MARKER_COLORS.length] }} />
-                        <div className={styles.threadIndexBody}>
-                          <div className={styles.threadIndexTop}>
-                            <span className={styles.threadIndexTime}>@ {formatTimestamp(t.timestamp_seconds)}</span>
-                            <span className={styles.threadIndexCount}>
-                              {t.comments?.length || 0} message{(t.comments?.length || 0) !== 1 ? 's' : ''}
-                            </span>
-                          </div>
-                          <span className={styles.threadIndexPreview}>
-                            {formatThreadPreview(t.comments?.[0]?.body)}
-                          </span>
-                          <span className={styles.threadIndexMeta}>
-                            Last reply by {t.comments?.[t.comments.length - 1]?.author || t.created_by}
-                          </span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )
-              }
-            </>
-          )}
-        </div>
         {/* Right: Song Admin */}
         <div className={styles.adminPanel}>
           <div className={styles.adminPanelHeader}>
@@ -3385,7 +3437,7 @@ function VersionPageInner() {
         </div>
       )}
 
-      {statusToast && <div className={styles.statusToast}>{statusToast}</div>}
+      {statusToast && <div className={styles.statusToast} role="status" aria-live="polite">{statusToast}</div>}
 
       {showUploadVersionModal && (
         <div className={styles.modalOverlay} onClick={closeUploadVersionDialog}>
@@ -3480,7 +3532,14 @@ function VersionPageInner() {
                   key={v.id}
                   type="button"
                   className={`${styles.versionModalItem} ${v.id === versionId ? styles.versionModalItemActive : ''}`}
-                  onClick={() => { stopPlayback(); setShowVersionModal(false); router.push(`/songs/${songId}/versions/${v.id}`); }}
+                  onClick={() => {
+                    if (v.id === versionId) {
+                      setShowVersionModal(false);
+                      return;
+                    }
+                    setShowVersionModal(false);
+                    navigateFromReview(`/songs/${songId}/versions/${v.id}`);
+                  }}
                   aria-current={v.id === versionId ? 'true' : undefined}
                 >
                   <span className={styles.versionModalLabel}>{v.display_name || getVersionDisplayLabel(v)}</span>
@@ -3512,7 +3571,7 @@ function VersionPageInner() {
       <nav className={styles.mobileBottomNav}>
         <button
           className={styles.mobileNavSongsBtn}
-          onClick={() => { stopPlayback(); router.push('/dashboard'); }}
+          onClick={() => navigateFromReview('/dashboard')}
         >
           ← Songs
         </button>
@@ -3563,7 +3622,7 @@ function VersionPageInner() {
           <button
             className={styles.mobileNavAvatar}
             aria-label="Settings"
-            onClick={() => router.push('/settings')}
+            onClick={() => navigateFromReview('/settings')}
           >
             {avatarUrl ? (
               <img src={avatarUrl} alt="" />

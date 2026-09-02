@@ -293,6 +293,58 @@ test('feedback and initial cookie consent clear the player while preferences liv
   ], 'settings-only cookie preference control');
 });
 
+test('song review keeps waveform seeking separate from the comments workspace', () => {
+  const page = read('app/songs/[id]/versions/[versionId]/page.tsx');
+  const panel = read('app/songs/[id]/versions/[versionId]/VersionCommentsPanel.tsx');
+  const styles = read('app/songs/[id]/versions/[versionId]/version.module.css');
+  const feedback = read('components/BetaFeedback.tsx');
+
+  assertIncludesAll(page, [
+    '<VersionCommentsPanel',
+    'onClick={startCommentAtCurrentTime}',
+    'Tap the waveform to seek through the track.',
+    'Comments <span>{threads.length}</span>',
+    'role="slider"',
+    'aria-label="Song position"',
+    "event.key === 'ArrowLeft'",
+    "event.key === 'ArrowRight'",
+    "searchParams.get('threadId')",
+    "searchParams.get('focus')",
+    "focus === 'threads'",
+    "fetch('/api/threads/create'",
+    "fetch('/api/threads/reply'",
+    '`/api/actions/by-song/${songId}`',
+    "window.confirm('Discard your unfinished comment?')",
+  ], 'song review comments integration');
+  assert.doesNotMatch(page, /ws\.on\(['"]click['"]/u);
+  assert.doesNotMatch(page, /floatingCommentBox/u);
+
+  assertIncludesAll(panel, [
+    "role={isCompact ? 'dialog' : 'complementary'}",
+    'aria-modal={isCompact ? true : undefined}',
+    'Add the first comment',
+    'Reply in thread',
+    'Start separate comment',
+    '+ Mark as action',
+  ], 'comments workspace behavior');
+
+  assertIncludesAll(styles, [
+    '.reviewWorkspace',
+    'grid-template-columns: minmax(0, 1fr) minmax(340px, 380px)',
+    '.commentsSurface',
+    '@media (max-width: 1099px)',
+    'transform: translateX(100%)',
+    'transform: translateY(100%)',
+  ], 'comments workspace layout');
+
+  assertIncludesAll(feedback, [
+    'aria-label="Report a bug or send feedback"',
+    'aria-expanded={open}',
+    'aria-controls="beta-feedback-panel"',
+  ], 'compact feedback control');
+  assert.doesNotMatch(feedback, /<span>Feedback<\/span>/u);
+});
+
 test('dashboard mini-player gives transport and timeline the primary space', () => {
   const dashboard = read('app/dashboard/page.tsx');
   const dashboardCss = read('app/dashboard/dashboard.module.css');
