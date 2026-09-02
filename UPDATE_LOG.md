@@ -5714,3 +5714,9 @@ Separate waveform seeking from comment creation, move existing threads and repli
 - Marketing copy now describes free waveform seeking followed by an explicit timestamped comment action, matching the shipped interaction.
 - `npm test`, TypeScript checking, focused ESLint, and the Next.js compile/type phase pass. The local full build reaches page-data collection and then stops because local Supabase variables are intentionally absent; Preview will provide the environment-backed production build check.
 - No migration, new dependency, external configuration, or production change is included.
+- Draft PR #46 is open against `clone-clean`, and the `song-review-app-v2` Preview completed its environment-backed build successfully.
+- Automated browser accessibility, Preview deployment, and Vercel checks all pass.
+- Preview routing sends a signed-out `/dashboard` visit to `/login?redirectTo=%2Fdashboard`, preserving the intended destination.
+- The Preview renders the Feedback trigger as a 44 by 44 pixel accessible control. Its dialog opens, reports its expanded state, closes with Escape, and restores focus to the trigger.
+- The Preview homepage now shows the corrected seek-first commenting copy.
+- Authenticated song review behaviour still requires the approved consolidated manual test deck before PR #46 can leave draft or merge.

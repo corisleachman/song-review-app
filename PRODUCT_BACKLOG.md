@@ -9,7 +9,7 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 ### Song review: waveform seeking is coupled to comment creation
 - Priority: P1 beta usability
 - Logged: 2026-09-01
-- Status: Code complete on `codex/commenting-review-workspace`; Preview deployment and the consolidated manual test deck remain pending. The detailed interaction and technical plan is recorded in `COMMENTING_WORKFLOW_REDESIGN.md`.
+- Status: Preview complete on draft PR #46. Repository checks and both Vercel deployments pass; the consolidated authenticated manual test deck remains pending. The detailed interaction and technical plan is recorded in `COMMENTING_WORKFLOW_REDESIGN.md`.
 - Observed: tapping or clicking the waveform both seeks and opens a floating comment composer, so a routine listening action is treated as comment intent and the composer covers the surface being reviewed.
 - Expected: an empty waveform interaction seeks only. Comment creation starts through an explicit timestamped action, while existing markers open their conversations.
 - Responsive direction: use a stable comments rail beside the complete player area on wide screens, a drawer on compact desktop and tablet, and an accessible full-height sheet on phones.
