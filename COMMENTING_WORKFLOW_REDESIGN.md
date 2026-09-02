@@ -144,11 +144,10 @@ Remove the old coupling between waveform click percentage and floating composer 
 - Failed posts preserve the draft and timestamp.
 - The implementation adds no new API, database, storage, billing, or duplicate-fetch path.
 
-Preview verification passed on desktop and a real mobile device on 2 September 2026. The follow-up checks confirmed the two-row desktop thread header, immediate optimistic thread and reply rendering, mobile beta banner, and compact Feedback clearance.
+Preview verification passed on desktop and a real mobile device on 2 September 2026. The follow-up checks confirmed the two-row desktop thread header, immediate optimistic thread and reply rendering, mobile beta banner, and compact Feedback clearance. PR #46 then squash-merged as `0c78ae81`; both production deployments, live route checks, and the initial runtime error scan passed.
 
 ## Rollout and rollback
 
-- Ship as one focused draft PR with several reviewable commits.
-- Verify on Preview before merge.
+- Shipped through focused PR #46 after the consolidated Preview test deck passed.
 - No migration order or external configuration is expected.
-- Roll back by reverting the PR or restoring the previous Vercel production deployment.
+- Roll back by reverting `0c78ae81` or restoring the previous Vercel production deployment.

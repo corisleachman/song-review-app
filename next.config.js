@@ -29,7 +29,7 @@ function getSupabaseBrowserSources() {
   }
 }
 
-function buildReportOnlyPolicy(frameAncestors) {
+function buildContentSecurityPolicy(frameAncestors) {
   const supabase = getSupabaseBrowserSources();
   const developmentScriptSources = process.env.NODE_ENV === 'development'
     ? ["'unsafe-eval'"]
@@ -96,11 +96,11 @@ function buildReportOnlyPolicy(frameAncestors) {
   return directives.map((directive) => `${directive.join(' ')};`).join(' ');
 }
 
-function reportOnlyHeaders(frameAncestors) {
+function contentSecurityPolicyHeaders(frameAncestors) {
   return [
     {
-      key: 'Content-Security-Policy-Report-Only',
-      value: buildReportOnlyPolicy(frameAncestors),
+      key: 'Content-Security-Policy',
+      value: buildContentSecurityPolicy(frameAncestors),
     },
     {
       key: 'Reporting-Endpoints',
@@ -118,7 +118,7 @@ const securityHeaders = [
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), browsing-topics=()' },
   { key: 'Strict-Transport-Security', value: 'max-age=31536000' },
-  ...reportOnlyHeaders("'none'"),
+  ...contentSecurityPolicyHeaders("'none'"),
 ];
 
 // Applied to /embed/* only. Identical to securityHeaders but WITHOUT
@@ -131,8 +131,7 @@ const embedHeaders = [
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), browsing-topics=()' },
   { key: 'Strict-Transport-Security', value: 'max-age=31536000' },
-  { key: 'Content-Security-Policy', value: 'frame-ancestors *' },
-  ...reportOnlyHeaders('*'),
+  ...contentSecurityPolicyHeaders('*'),
 ];
 
 /** @type {import('next').NextConfig} */
