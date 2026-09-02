@@ -5749,3 +5749,31 @@ Reflow the narrow comments header into two rows, render thread and reply submiss
 - The version page now renders the shared beta banner used elsewhere in the authenticated app.
 - The mobile bottom navigation publishes its measured height through `--tsr-player-safe-area`, keeping the global Feedback trigger visible above it across device safe areas.
 - No API contract, database schema, storage, billing, dependency, or production configuration changed.
+
+---
+
+## 2026-09-02 - PR #46 consolidated Preview verification passed
+
+### What we were trying to achieve
+
+Close the approved desktop and real-device mobile test deck before requesting authority to merge the commenting workspace into production.
+
+### Feature / change being made
+
+Verification-only closeout for the PR #46 Preview. No application behaviour changed in this entry.
+
+### Files changed
+
+- `COMMENTING_WORKFLOW_REDESIGN.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Waveform seeking remained independent from comment creation on desktop and mobile.
+- The desktop comments rail, compact drawer, phone sheet, markers, replies, nearby-thread choice, Mark as action, deep links, and draft guard passed.
+- The refined thread header no longer overlaps its timestamp or crowds the All comments control.
+- Optimistic new comments and replies appeared immediately, then reconciled with the canonical server response without duplication.
+- The mobile beta banner and compact Feedback control remained visible without covering the fixed navigation or song controls.
+- All repository, browser accessibility, and Vercel Preview checks passed on commit `981bcb65`.
+- PR #46 remains a draft and production is unchanged pending explicit merge approval.

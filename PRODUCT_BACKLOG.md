@@ -9,7 +9,7 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 ### Song review: waveform seeking is coupled to comment creation
 - Priority: P1 beta usability
 - Logged: 2026-09-01
-- Status: Preview complete on draft PR #46. Repository checks and both Vercel deployments pass; the consolidated authenticated manual test deck remains pending. The detailed interaction and technical plan is recorded in `COMMENTING_WORKFLOW_REDESIGN.md`.
+- Status: Preview complete on draft PR #46. The consolidated authenticated desktop and real-device mobile test deck passed, including the optimistic submission refinement and compact responsive layouts. Repository checks and both Vercel deployments pass. Production remains unchanged pending merge approval. The detailed interaction and technical plan is recorded in `COMMENTING_WORKFLOW_REDESIGN.md`.
 - Observed: tapping or clicking the waveform both seeks and opens a floating comment composer, so a routine listening action is treated as comment intent and the composer covers the surface being reviewed.
 - Expected: an empty waveform interaction seeks only. Comment creation starts through an explicit timestamped action, while existing markers open their conversations.
 - Responsive direction: use a stable comments rail beside the complete player area on wide screens, a drawer on compact desktop and tablet, and an accessible full-height sheet on phones.
@@ -38,7 +38,7 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 - Logged: 2026-08-29
 - Observed on mobile and desktop: the large red Feedback button competes with primary page actions and can make already compact views feel cluttered.
 - Proposed direction: replace the large labelled button with a discreet bug icon that opens the same feedback dialog. Keep a clear accessible name, visible keyboard focus, a minimum 44-pixel touch target, and enough player and safe-area clearance.
-- Status: backlog only. PR #43 changes the Edit sheet stacking so the existing Feedback control cannot cover it, but does not redesign the Feedback control itself.
+- Status: Preview complete on draft PR #46. The large labelled control is now a 44-pixel bug icon, the existing dialog is unchanged, keyboard behaviour passed, and mobile clearance above fixed navigation passed on a real device. Production remains unchanged pending merge approval.
 
 ### Mobile settings: section navigation wraps into a large link grid
 - Priority: P2 beta polish
