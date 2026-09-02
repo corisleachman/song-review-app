@@ -4451,6 +4451,7 @@ Give the left-positioned song-page Feedback control a shared Cookie settings cle
 
 - `components/BetaFeedback.tsx`
 - `components/BetaFeedback.module.css`
+- `public/marketing.html`
 - `public/cookie-consent.css`
 - `tests/critical-contracts.test.mjs`
 - `UPDATE_LOG.md`
@@ -5710,5 +5711,6 @@ Separate waveform seeking from comment creation, move existing threads and repli
 - Existing thread, reply, action, notification, deep-link, version, and workspace data paths remain unchanged.
 - Failed posts retain their draft and timestamp. Leaving or changing version with a draft asks before discarding it.
 - The Feedback form is unchanged, but its large labelled trigger is now a 44-pixel bug icon with an accessible name and expanded state.
+- Marketing copy now describes free waveform seeking followed by an explicit timestamped comment action, matching the shipped interaction.
 - `npm test`, TypeScript checking, focused ESLint, and the Next.js compile/type phase pass. The local full build reaches page-data collection and then stops because local Supabase variables are intentionally absent; Preview will provide the environment-backed production build check.
 - No migration, new dependency, external configuration, or production change is included.
