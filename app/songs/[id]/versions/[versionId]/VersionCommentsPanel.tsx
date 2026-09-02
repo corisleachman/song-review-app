@@ -11,6 +11,7 @@ interface Comment {
   author_avatar_url?: string | null;
   body: string;
   created_at: string;
+  delivery_status?: 'sending';
 }
 
 interface Thread {
@@ -293,7 +294,10 @@ export default function VersionCommentsPanel({
                     <div className={`${styles.bubble} ${isOwn ? styles.bubbleOwn : styles.bubbleOther} ${animatedCommentId === comment.id ? styles.bubbleGentlePop : ''}`}>
                       {comment.body}
                     </div>
-                    {!actions.some(action => action.comment_id === comment.id) && (
+                    {comment.delivery_status === 'sending' && (
+                      <span className={styles.bubbleDelivery} role="status">Sending…</span>
+                    )}
+                    {comment.delivery_status !== 'sending' && !actions.some(action => action.comment_id === comment.id) && (
                       <button type="button" className={styles.markActionBtn} onClick={() => onMarkAsAction(comment.id, comment.body)}>
                         + Mark as action
                       </button>

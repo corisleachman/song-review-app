@@ -5720,3 +5720,32 @@ Separate waveform seeking from comment creation, move existing threads and repli
 - The Preview renders the Feedback trigger as a 44 by 44 pixel accessible control. Its dialog opens, reports its expanded state, closes with Escape, and restores focus to the trigger.
 - The Preview homepage now shows the corrected seek-first commenting copy.
 - Authenticated song review behaviour still requires the approved consolidated manual test deck before PR #46 can leave draft or merge.
+
+---
+
+## 2026-09-02 - Refine the PR #46 commenting experience after device testing
+
+### What we were trying to achieve
+
+Remove crowding from the desktop comments header, make new comments feel immediate, and restore the shared beta and Feedback controls on the mobile song page.
+
+### Feature / change being made
+
+Reflow the narrow comments header into two rows, render thread and reply submissions optimistically while the canonical server request completes, and reserve the measured mobile navigation height for global floating controls.
+
+### Files changed
+
+- `app/songs/[id]/versions/[versionId]/VersionCommentsPanel.tsx`
+- `app/songs/[id]/versions/[versionId]/page.tsx`
+- `app/songs/[id]/versions/[versionId]/version.module.css`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- New threads and replies now appear in the conversation immediately with a quiet `Sending…` state. The canonical APIs and database remain authoritative.
+- Successful requests replace the temporary record and revalidate threads in the background. Failed requests remove the temporary record, restore the exact draft, and keep the existing error recovery path.
+- The timestamp, thread actions, and All comments control now occupy a structured two-row header rather than competing for one narrow line.
+- The version page now renders the shared beta banner used elsewhere in the authenticated app.
+- The mobile bottom navigation publishes its measured height through `--tsr-player-safe-area`, keeping the global Feedback trigger visible above it across device safe areas.
+- No API contract, database schema, storage, billing, dependency, or production configuration changed.

@@ -822,15 +822,20 @@
   overflow: hidden;
 }
 .threadsPanelHeader {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "thread-info thread-index"
+    "thread-actions thread-actions";
   align-items: center;
-  gap: 10px;
-  padding: 16px 20px;
+  gap: 10px 8px;
+  padding: 14px 16px;
   border-bottom: 1px solid #1C1515;
   flex-shrink: 0;
 }
 .threadsPanelTitle { font-size: 0.82rem; color: rgba(244,237,228,0.35); }
 .threadHeaderInfo {
+  grid-area: thread-info;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -849,10 +854,12 @@
   color: rgba(244,237,228,0.28);
 }
 .threadHeaderActions {
-  display: flex;
+  grid-area: thread-actions;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: center;
-  gap: 8px;
-  margin-left: auto;
+  gap: 6px;
+  min-width: 0;
 }
 .threadActionBtn {
   background: rgba(255,255,255,0.04);
@@ -864,6 +871,8 @@
   font-size: 0.74rem;
   font-family: inherit;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 .threadActionBtn:hover {
@@ -872,12 +881,16 @@
   color: #F4EDE4;
 }
 .threadsDropdown {
-  margin-left: auto;
+  grid-area: thread-index;
+  min-height: 36px;
+  margin-left: 0;
+  padding: 0 4px 0 10px;
   background: transparent;
   border: none;
   color: rgba(244,237,228,0.35);
   cursor: pointer;
   font-size: 0.8rem;
+  white-space: nowrap;
 }
 .threadsDropdown:hover { color: #F4EDE4; }
 
@@ -939,6 +952,13 @@
 }
 .bubbleGentlePop {
   animation: bubbleGentlePop 360ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.bubbleDelivery {
+  padding-inline: 4px;
+  color: rgba(244,237,228,0.42);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 @keyframes bubbleGentlePop {
@@ -1838,14 +1858,10 @@
     font-size: 0.72rem !important;
   }
   .threadsPanelHeader {
-    align-items: flex-start;
-    flex-wrap: wrap;
+    align-items: center;
   }
   .threadHeaderActions {
-    order: 3;
     width: 100%;
-    margin-left: 0;
-    flex-wrap: nowrap;
     gap: 6px;
   }
   .threadActionBtn {

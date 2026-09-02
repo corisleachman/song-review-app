@@ -10,6 +10,7 @@ import { useDialogFocus } from '@/lib/useDialogFocus';
 import { getVersionDisplayLabel } from '@/lib/versionDisplay';
 import styles from './version.module.css';
 import WorkspaceSwitcher from '@/components/WorkspaceSwitcher';
+import BetaBanner from '@/components/BetaBanner';
 import VersionCommentsPanel from './VersionCommentsPanel';
 
 const MAX_AUDIO_SIZE_BYTES = 200 * 1024 * 1024;
@@ -21,6 +22,7 @@ interface Comment {
   author_avatar_url?: string | null;
   body: string;
   created_at: string;
+  delivery_status?: 'sending';
 }
 
 interface Thread {
@@ -594,6 +596,7 @@ function VersionPageInner() {
   const actionDialogRef = useRef<HTMLDivElement>(null);
   const uploadVersionDialogRef = useRef<HTMLDivElement>(null);
   const versionPickerDialogRef = useRef<HTMLDivElement>(null);
+  const mobileBottomNavRef = useRef<HTMLElement>(null);
   const [reactivePalette, setReactivePalette] = useState(() => ({
     primary: DEFAULT_REACTIVE_PRIMARY,
     secondary: DEFAULT_REACTIVE_SECONDARY,
@@ -602,6 +605,7 @@ function VersionPageInner() {
   const [initialLoadNonce, setInitialLoadNonce] = useState(0);
   const statusToastTimerRef = useRef<number | null>(null);
   const commentAnimationTimerRef = useRef<number | null>(null);
+  const optimisticCommentCounterRef = useRef(0);
   const dragTaskId = useRef<string | null>(null);
 
   const closeShareDialog = useCallback(() => setShowShareModal(false), []);
@@ -633,6 +637,38 @@ function VersionPageInner() {
     media.addEventListener('change', updateMode);
     return () => media.removeEventListener('change', updateMode);
   }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const mobileBottomNav = mobileBottomNavRef.current;
+
+    if (!mobileBottomNav) {
+      root.style.removeProperty('--tsr-player-safe-area');
+      return;
+    }
+
+    const updatePlayerSafeArea = () => {
+      const height = Math.ceil(mobileBottomNav.getBoundingClientRect().height);
+      if (height > 0) {
+        root.style.setProperty('--tsr-player-safe-area', `${height}px`);
+      } else {
+        root.style.removeProperty('--tsr-player-safe-area');
+      }
+    };
+
+    updatePlayerSafeArea();
+    const observer = typeof ResizeObserver === 'undefined'
+      ? null
+      : new ResizeObserver(updatePlayerSafeArea);
+    observer?.observe(mobileBottomNav);
+    window.addEventListener('resize', updatePlayerSafeArea);
+
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', updatePlayerSafeArea);
+      root.style.removeProperty('--tsr-player-safe-area');
+    };
+  }, [loading]);
 
   useEffect(() => {
     commentDraftDirtyRef.current = Boolean(newComment.trim() || replyText.trim());
@@ -2035,18 +2071,46 @@ function VersionPageInner() {
 
   const submitThread = async () => {
     const ts = pendingTimestampRef.current;
-    if (!newComment.trim() || ts === null) return;
+    const commentText = newComment.trim();
+    if (!commentText || ts === null || posting) return;
     if (!identity) {
       setCommentError('We could not confirm which account is posting this comment. Refresh the page and try again.');
       return;
     }
+
+    const optimisticSequence = ++optimisticCommentCounterRef.current;
+    const optimisticThreadId = `optimistic-thread-${optimisticSequence}`;
+    const optimisticCommentId = `optimistic-comment-${optimisticSequence}`;
+    const optimisticThread: Thread = {
+      id: optimisticThreadId,
+      timestamp_seconds: ts,
+      created_by: identity,
+      created_at: new Date().toISOString(),
+      comments: [{
+        id: optimisticCommentId,
+        author: identity,
+        author_user_id: currentUserId,
+        author_avatar_url: avatarUrl,
+        body: commentText,
+        created_at: new Date().toISOString(),
+        delivery_status: 'sending',
+      }],
+    };
+
     setCommentError(null);
+    setNewComment('');
+    setPendingTimestamp(null);
+    pendingTimestampRef.current = null;
+    setNearbyThreadId(null);
+    setSelectedThreadId(optimisticThreadId);
+    setThreads(prev => sortThreadsByTimestamp([...prev, optimisticThread]));
+    triggerCommentAnimation(optimisticCommentId);
     setPosting(true);
     try {
       const res = await fetch('/api/threads/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ versionId, songId, timestamp: ts, commentText: newComment.trim() }),
+        body: JSON.stringify({ versionId, songId, timestamp: ts, commentText }),
       });
 
       const payload = await res.json().catch(() => null);
@@ -2060,29 +2124,42 @@ function VersionPageInner() {
       }
 
       const { threadId, commentId, thread } = payload;
-      setNewComment('');
-      setPendingTimestamp(null);
-      pendingTimestampRef.current = null;
-      setNearbyThreadId(null);
+      setThreads(prev => {
+        const withoutOptimistic = prev.filter(existing => existing.id !== optimisticThreadId);
+        if (thread && typeof thread === 'object') {
+          const canonicalThread = thread as Thread;
+          return sortThreadsByTimestamp([
+            ...withoutOptimistic.filter(existing => existing.id !== canonicalThread.id),
+            canonicalThread,
+          ]);
+        }
 
-      if (thread && typeof thread === 'object') {
-        setThreads(prev => sortThreadsByTimestamp([
-          ...prev.filter(existing => existing.id !== thread.id),
-          thread as Thread,
-        ]));
-      }
-
-      try {
-        await loadThreads();
-      } catch (reloadError) {
-        console.error('Reload threads error:', reloadError);
-      }
-
+        return sortThreadsByTimestamp([
+          ...withoutOptimistic,
+          {
+            ...optimisticThread,
+            id: threadId,
+            comments: optimisticThread.comments.map(comment => ({
+              ...comment,
+              id: commentId ?? comment.id,
+              delivery_status: undefined,
+            })),
+          },
+        ]);
+      });
       setSelectedThreadId(threadId);
       triggerCommentAnimation(commentId ?? null);
       showStatusToast('Comment posted');
+      void loadThreads().catch(reloadError => {
+        console.error('Reload threads error:', reloadError);
+      });
     } catch (error) {
       console.error('Create thread error:', error);
+      setThreads(prev => prev.filter(existing => existing.id !== optimisticThreadId));
+      setSelectedThreadId(null);
+      setNewComment(commentText);
+      setPendingTimestamp(ts);
+      pendingTimestampRef.current = ts;
       setCommentError(error instanceof Error ? error.message : 'Could not save comment. Your draft is still here.');
     } finally {
       setPosting(false);
@@ -2090,14 +2167,34 @@ function VersionPageInner() {
   };
 
   const submitReply = async (threadId: string) => {
-    if (!replyText.trim() || posting) return;
+    const commentText = replyText.trim();
+    if (!commentText || posting) return;
+    const optimisticSequence = ++optimisticCommentCounterRef.current;
+    const optimisticCommentId = `optimistic-reply-${optimisticSequence}`;
+    const optimisticComment: Comment = {
+      id: optimisticCommentId,
+      author: identity,
+      author_user_id: currentUserId,
+      author_avatar_url: avatarUrl,
+      body: commentText,
+      created_at: new Date().toISOString(),
+      delivery_status: 'sending',
+    };
+
     setReplyError(null);
+    setReplyText('');
+    setThreads(prev => prev.map(thread => (
+      thread.id === threadId
+        ? { ...thread, comments: [...thread.comments, optimisticComment] }
+        : thread
+    )));
+    triggerCommentAnimation(optimisticCommentId);
     setPosting(true);
     try {
       const res = await fetch('/api/threads/reply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ threadId, songId, versionId, text: replyText.trim() }),
+        body: JSON.stringify({ threadId, songId, versionId, text: commentText }),
       });
       const payload = await res.json().catch(() => null);
       if (!res.ok) {
@@ -2105,11 +2202,30 @@ function VersionPageInner() {
           payload && typeof payload.error === 'string' ? payload.error : 'Could not post reply.'
         );
       }
-      setReplyText('');
-      await loadThreads();
+      setThreads(prev => prev.map(thread => (
+        thread.id === threadId
+          ? {
+              ...thread,
+              comments: thread.comments.map(comment => (
+                comment.id === optimisticCommentId
+                  ? { ...comment, id: payload?.commentId ?? comment.id, delivery_status: undefined }
+                  : comment
+              )),
+            }
+          : thread
+      )));
       triggerCommentAnimation(payload?.commentId ?? null);
+      void loadThreads().catch(reloadError => {
+        console.error('Reload threads error:', reloadError);
+      });
     } catch (error) {
       console.error('Reply error:', error);
+      setThreads(prev => prev.map(thread => (
+        thread.id === threadId
+          ? { ...thread, comments: thread.comments.filter(comment => comment.id !== optimisticCommentId) }
+          : thread
+      )));
+      setReplyText(commentText);
       setReplyError(error instanceof Error ? error.message : 'Could not post reply. Your draft is still here.');
     } finally {
       setPosting(false);
@@ -2539,6 +2655,7 @@ function VersionPageInner() {
 
   return (
     <div className={`${styles.page} ${commentsSurfaceOpen && commentsOverlayMode ? styles.pageCommentsOpen : ''}`}>
+      <BetaBanner />
 
       <div className={styles.reviewWorkspace}>
 
@@ -3568,7 +3685,7 @@ function VersionPageInner() {
       />
 
       {/* Mobile-only bottom nav — hidden on desktop via CSS */}
-      <nav className={styles.mobileBottomNav}>
+      <nav ref={mobileBottomNavRef} className={styles.mobileBottomNav}>
         <button
           className={styles.mobileNavSongsBtn}
           onClick={() => navigateFromReview('/dashboard')}

@@ -300,6 +300,8 @@ test('song review keeps waveform seeking separate from the comments workspace', 
   const feedback = read('components/BetaFeedback.tsx');
 
   assertIncludesAll(page, [
+    "import BetaBanner from '@/components/BetaBanner'",
+    '<BetaBanner />',
     '<VersionCommentsPanel',
     'onClick={startCommentAtCurrentTime}',
     'Tap the waveform to seek through the track.',
@@ -315,6 +317,12 @@ test('song review keeps waveform seeking separate from the comments workspace', 
     "fetch('/api/threads/reply'",
     '`/api/actions/by-song/${songId}`',
     "window.confirm('Discard your unfinished comment?')",
+    "delivery_status: 'sending'",
+    'optimistic-thread-',
+    'optimistic-reply-',
+    'setReplyText(commentText)',
+    "root.style.setProperty('--tsr-player-safe-area', `${height}px`)",
+    '<nav ref={mobileBottomNavRef} className={styles.mobileBottomNav}>',
   ], 'song review comments integration');
   assert.doesNotMatch(page, /ws\.on\(['"]click['"]/u);
   assert.doesNotMatch(page, /floatingCommentBox/u);
@@ -326,12 +334,16 @@ test('song review keeps waveform seeking separate from the comments workspace', 
     'Reply in thread',
     'Start separate comment',
     '+ Mark as action',
+    'Sending…',
   ], 'comments workspace behavior');
 
   assertIncludesAll(styles, [
     '.reviewWorkspace',
     'grid-template-columns: minmax(0, 1fr) minmax(340px, 380px)',
     '.commentsSurface',
+    'grid-template-areas:',
+    '"thread-info thread-index"',
+    'grid-template-columns: repeat(3, minmax(0, 1fr))',
     '@media (max-width: 1099px)',
     'transform: translateX(100%)',
     'transform: translateY(100%)',
