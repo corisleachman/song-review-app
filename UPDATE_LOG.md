@@ -5836,3 +5836,32 @@ Replace the route-aware `Content-Security-Policy-Report-Only` header with `Conte
 - All 39 contract tests, TypeScript, focused ESLint, 13 applicable browser checks across desktop and mobile Chromium, and the optimized Next.js production build pass. The build retains its pre-existing lint warnings.
 - Code is local only. Preview deployment and authenticated verification remain pending explicit Git/GitHub authority. Production remains on the report-only policy.
 - Roll back the candidate by reverting the focused header commit. After production rollout, the preceding production deployment remains the immediate operational rollback.
+
+---
+
+## 2026-09-02 - PR #47 enforced CSP Preview verification passed
+
+### What we were trying to achieve
+
+Close the authenticated browser and console release gate before moving the tuned Content Security Policy from report-only observation into production enforcement.
+
+### Feature / change being made
+
+Verification-only closeout for the PR #47 Preview. No application behaviour or allowlist source changed in this entry.
+
+### Files changed
+
+- `CODEBASE_REVIEW.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Draft PR #47 and both Vercel Preview checks passed on commit `caf49abe`.
+- Primary deployment `dpl_FD6sxrB2nhWKoi5cMk5X9r4o27G4` reached Ready and served the enforced header against the staging Supabase origin.
+- Standard routes retained `frame-ancestors 'none'` and `X-Frame-Options: DENY`; the embed route retained the complete enforced policy with `frame-ancestors *` and no `X-Frame-Options` header.
+- The signed-out dashboard redirect, report collector, Google sign-in, authenticated dashboard, playback, song review, comments, actions, Plan and Billing journey, and Stripe Test Checkout cancellation path passed.
+- The Preview runtime error scan was clean. A deliberate synthetic violation returned 204 and was the only CSP report in the inspected window.
+- The browser console showed Vercel's Preview-only injected Toolbar script being blocked from `https://vercel.live`. This is not Song Room application code and remains intentionally excluded rather than widening the production policy for optional Preview tooling.
+- `content.js`, `about:blank`, Chrome runtime messaging, and `Grammarly-check.js` messages were browser-extension activity and did not affect the tested journeys.
+- No migration, dependency, environment variable, or irreversible rollout step is involved. Production remains on report-only until PR #47 merges and its production deployment is verified.

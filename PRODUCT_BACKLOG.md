@@ -187,7 +187,7 @@ Captured from a launch-readiness review (TikTok launch checklists cross-referenc
 - Logged: 2026-08-26
 - Add login/auth rate limiting (verify Supabase defaults, add app-level throttle).
 - Add bot protection on signup (Cloudflare Turnstile or hCaptcha).
-- Flip CSP from Report-Only to enforcing once the report endpoint is clean. Local enforcement candidate prepared on `codex/csp-enforcement-readiness`: the available seven-day production log window is clean, a live public-route crawl found no policy violations, no new browser origins have appeared since PR #30, and the enforced local browser suite passes. Preview authentication, upload, playback, sharing, embedding, and Stripe-cancellation verification remain required before merge.
+- Flip CSP from Report-Only to enforcing once the report endpoint is clean. PR #47 enforcement candidate on `codex/csp-enforcement-readiness` passed the clean production-log review, live public-route crawl, source-origin audit, enforced local browser suite, authenticated Preview journey, and Preview console review. Vercel's injected Preview Toolbar remains intentionally outside the allowlist, while browser-extension connection and Grammarly messages are not app failures. Production rollout remains pending.
 - Verify audio upload restrictions (allowed MIME types + max size caps).
 - Standardise input validation across API routes.
 
