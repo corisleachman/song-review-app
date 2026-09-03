@@ -209,17 +209,24 @@ test('mobile homepage respects reduced motion and avoids horizontal overflow', a
   expect(hasHorizontalOverflow).toBe(false);
 });
 
-test('public responses advertise report-only CSP and accept bounded violation reports', async ({ page, request }, testInfo) => {
+test('public responses enforce CSP and accept bounded violation reports', async ({ page, request }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-chromium', 'One browser is enough for the header contract.');
   await prepareDeterministicPage(page);
   const response = await page.goto('/', { waitUntil: 'domcontentloaded' });
   const headers = response?.headers() ?? {};
 
-  expect(headers['content-security-policy-report-only']).toContain("default-src 'self';");
-  expect(headers['content-security-policy-report-only']).toContain("frame-ancestors 'none';");
-  expect(headers['content-security-policy-report-only']).toContain('report-uri /api/csp-report;');
+  expect(headers['content-security-policy']).toContain("default-src 'self';");
+  expect(headers['content-security-policy']).toContain("frame-ancestors 'none';");
+  expect(headers['content-security-policy']).toContain('report-uri /api/csp-report;');
   expect(headers['reporting-endpoints']).toBe('csp-endpoint="/api/csp-report"');
-  expect(headers['content-security-policy']).toBeUndefined();
+  expect(headers['content-security-policy-report-only']).toBeUndefined();
+
+  const embedResponse = await request.get('/embed/playlist/not-a-real-playlist');
+  const embedHeaders = embedResponse.headers();
+  expect(embedHeaders['content-security-policy']).toContain("default-src 'self';");
+  expect(embedHeaders['content-security-policy']).toContain('frame-ancestors *;');
+  expect(embedHeaders['content-security-policy-report-only']).toBeUndefined();
+  expect(embedHeaders['x-frame-options']).toBeUndefined();
 
   const reportResponse = await request.post('/api/csp-report', {
     headers: { 'Content-Type': 'application/csp-report' },

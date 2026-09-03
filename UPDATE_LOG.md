@@ -5051,6 +5051,7 @@ Route-aware `Content-Security-Policy-Report-Only` headers for the app and embedd
 - `app/api/csp-report/route.ts`
 - `tests/critical-contracts.test.mjs`
 - `tests/browser/public-accessibility.spec.mjs`
+- `playwright.config.mjs`
 - `CODEBASE_REVIEW.md`
 - `UPDATE_LOG.md`
 
@@ -5777,3 +5778,90 @@ Verification-only closeout for the PR #46 Preview. No application behaviour chan
 - The mobile beta banner and compact Feedback control remained visible without covering the fixed navigation or song controls.
 - All repository, browser accessibility, and Vercel Preview checks passed on commit `981bcb65`.
 - PR #46 remains a draft and production is unchanged pending explicit merge approval.
+
+---
+
+## 2026-09-02 - PR #46 production closeout
+
+### What we were trying to achieve
+
+Close the consolidated commenting and compact Feedback rollout after the approved merge and confirm that the live deployment remained healthy.
+
+### Feature / change being made
+
+Verification-only production closeout for PR #46. No application behaviour changed in this entry.
+
+### Files changed
+
+- `COMMENTING_WORKFLOW_REDESIGN.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- PR #46 squash-merged into `clone-clean` as `0c78ae81`.
+- Production deployment `dpl_3ENYccxC1rxauqmi5KkzRt1EWXYo` reached Ready and serves both live Song Room domains.
+- The live homepage and login returned 200, the protected dashboard retained its allowlisted login redirect, and the homepage contained the corrected seek-first review copy.
+- The initial production runtime error scan returned no errors.
+- No migration, external configuration change, or irreversible rollout step was involved.
+- Rollback remains a revert of `0c78ae81` or restoration of the preceding Vercel production deployment.
+
+---
+
+## 2026-09-02 - Prepare CSP enforcement candidate
+
+### What we were trying to achieve
+
+Move the tuned Content Security Policy from observation to browser enforcement without changing its known-good source allowlist or the embeddable playlist framing contract.
+
+### Feature / change being made
+
+Replace the route-aware `Content-Security-Policy-Report-Only` header with `Content-Security-Policy`, while keeping the sanitized same-origin report collector and `Reporting-Endpoints` header active for blocked-request monitoring.
+
+### Files changed
+
+- `next.config.js`
+- `tests/critical-contracts.test.mjs`
+- `tests/browser/public-accessibility.spec.mjs`
+- `CODEBASE_REVIEW.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The available seven-day Vercel production log window contains no CSP warnings or reports.
+- A fresh production crawl covered the homepage with analytics consent, login, privacy, terms, trust, blog pages, an invalid invite, a public-listen error state, and an embed error state. No `securitypolicyviolation` events or CSP console errors were observed.
+- A source diff from PR #30 found no new third-party browser origin. Supabase, Google Analytics, Google fonts and avatars, and GitHub-hosted media remain covered by the existing policy.
+- Normal routes still enforce `frame-ancestors 'none'` and `X-Frame-Options: DENY`. Embed routes still omit `X-Frame-Options` and enforce `frame-ancestors *` as part of the full policy.
+- All 39 contract tests, TypeScript, focused ESLint, 13 applicable browser checks across desktop and mobile Chromium, and the optimized Next.js production build pass. The build retains its pre-existing lint warnings.
+- Code is local only. Preview deployment and authenticated verification remain pending explicit Git/GitHub authority. Production remains on the report-only policy.
+- Roll back the candidate by reverting the focused header commit. After production rollout, the preceding production deployment remains the immediate operational rollback.
+
+---
+
+## 2026-09-02 - PR #47 enforced CSP Preview verification passed
+
+### What we were trying to achieve
+
+Close the authenticated browser and console release gate before moving the tuned Content Security Policy from report-only observation into production enforcement.
+
+### Feature / change being made
+
+Verification-only closeout for the PR #47 Preview. No application behaviour or allowlist source changed in this entry.
+
+### Files changed
+
+- `CODEBASE_REVIEW.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Draft PR #47 and both Vercel Preview checks passed on commit `caf49abe`.
+- Primary deployment `dpl_FD6sxrB2nhWKoi5cMk5X9r4o27G4` reached Ready and served the enforced header against the staging Supabase origin.
+- Standard routes retained `frame-ancestors 'none'` and `X-Frame-Options: DENY`; the embed route retained the complete enforced policy with `frame-ancestors *` and no `X-Frame-Options` header.
+- The signed-out dashboard redirect, report collector, Google sign-in, authenticated dashboard, playback, song review, comments, actions, Plan and Billing journey, and Stripe Test Checkout cancellation path passed.
+- The Preview runtime error scan was clean. A deliberate synthetic violation returned 204 and was the only CSP report in the inspected window.
+- The browser console showed Vercel's Preview-only injected Toolbar script being blocked from `https://vercel.live`. This is not Song Room application code and remains intentionally excluded rather than widening the production policy for optional Preview tooling.
+- `content.js`, `about:blank`, Chrome runtime messaging, and `Grammarly-check.js` messages were browser-extension activity and did not affect the tested journeys.
+- No migration, dependency, environment variable, or irreversible rollout step is involved. Production remains on report-only until PR #47 merges and its production deployment is verified.

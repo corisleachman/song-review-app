@@ -32,7 +32,7 @@ function assertOrdered(source, expected, context) {
   }
 }
 
-test('response headers expose a route-aware report-only CSP without changing embed framing', async () => {
+test('response headers enforce a route-aware CSP without changing embed framing', async () => {
   const nextConfig = require(path.join(repoRoot, 'next.config.js'));
   const headerRules = await nextConfig.headers();
   const standardRule = headerRules.find((rule) => rule.source === '/((?!embed).*)');
@@ -43,10 +43,10 @@ test('response headers expose a route-aware report-only CSP without changing emb
 
   const standardHeaders = new Map(standardRule.headers.map(({ key, value }) => [key, value]));
   const embedHeaders = new Map(embedRule.headers.map(({ key, value }) => [key, value]));
-  const standardReportOnly = standardHeaders.get('Content-Security-Policy-Report-Only') ?? '';
-  const embedReportOnly = embedHeaders.get('Content-Security-Policy-Report-Only') ?? '';
+  const standardPolicy = standardHeaders.get('Content-Security-Policy') ?? '';
+  const embedPolicy = embedHeaders.get('Content-Security-Policy') ?? '';
 
-  assertIncludesAll(standardReportOnly, [
+  assertIncludesAll(standardPolicy, [
     "default-src 'self';",
     "base-uri 'self';",
     "object-src 'none';",
@@ -60,23 +60,23 @@ test('response headers expose a route-aware report-only CSP without changing emb
     'supabase.co',
     'report-uri /api/csp-report;',
     'report-to csp-endpoint;',
-  ], 'standard report-only CSP');
+  ], 'standard enforced CSP');
   assert.match(
-    standardReportOnly,
+    standardPolicy,
     /img-src [^;]*https:\/\/www\.googletagmanager\.com[^;]*;/u,
-    'standard report-only CSP should allow the Google Tag Manager image beacon',
+    'standard CSP should allow the Google Tag Manager image beacon',
   );
   assert.equal(standardHeaders.get('Reporting-Endpoints'), 'csp-endpoint="/api/csp-report"');
   assert.equal(standardHeaders.get('X-Frame-Options'), 'DENY');
-  assert.equal(standardHeaders.has('Content-Security-Policy'), false);
+  assert.equal(standardHeaders.has('Content-Security-Policy-Report-Only'), false);
 
-  assert.match(embedReportOnly, /frame-ancestors \*;/u);
+  assert.match(embedPolicy, /frame-ancestors \*;/u);
   assert.match(
-    embedReportOnly,
+    embedPolicy,
     /img-src [^;]*https:\/\/www\.googletagmanager\.com[^;]*;/u,
-    'embed report-only CSP should allow the Google Tag Manager image beacon',
+    'embed CSP should allow the Google Tag Manager image beacon',
   );
-  assert.equal(embedHeaders.get('Content-Security-Policy'), 'frame-ancestors *');
+  assert.equal(embedHeaders.has('Content-Security-Policy-Report-Only'), false);
   assert.equal(embedHeaders.has('X-Frame-Options'), false);
 });
 
