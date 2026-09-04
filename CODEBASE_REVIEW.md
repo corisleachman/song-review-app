@@ -1,6 +1,6 @@
 # Staged Codebase Review Record
 
-Last updated: 3 September 2026
+Last updated: 4 September 2026
 
 This is the working evidence record for the staged review that began on `codex/staged-code-review-fixes`. Findings stay here until they are verified, deferred with a reason, or closed. The main review rollout reached production on 13 August 2026; focused follow-up batches continue from that deployed base.
 
@@ -118,7 +118,7 @@ The API authorization review did not find a route-level cross-workspace bypass. 
 
 - PRIV-001: Both media buckets remain public by design. Turning off an app share link blocks the app route, but a raw storage URL copied earlier remains reachable. Private media delivery needs a separate migration and rollout.
 - ABUSE-001: Public comment throttling is stored in process memory. It limits a single serverless instance but can be bypassed across instances or cold starts. Database constraints, a honeypot, and length validation still apply.
-- UPLOAD-002: Staging and production currently leave `song-files.file_size_limit` and `song-files.allowed_mime_types` unset. The signed upload allocation checks the claimed size and extension, but the existing finalizer trusts uploader-controlled `audio/*` metadata and does not inspect the stored file signature. A focused local candidate now shares one extension/MIME/size policy across every active upload client and both server routes, writes a canonical Content-Type, rejects malformed allocation JSON, inspects at most the first 64 KB of the stored object before finalization, and removes a pending upload that fails validation. A forward migration adds the 200 MB bucket cap and accepted audio MIME allowlist. Rollout remains pending staging migration, Preview deployment, and authenticated valid/invalid upload checks.
+- UPLOAD-002: Staging verified; production rollout pending. Commit `7a79faaf` shares one extension/MIME/size policy across every active upload client and both server routes, writes a canonical Content-Type, rejects malformed allocation JSON, inspects at most the first 64 KB of the stored object before finalization, and removes a pending upload that fails validation. Migration `20260903163658` now gives the staging `song-files` bucket its 200 MB cap and accepted audio MIME allowlist; production remains unchanged with both bucket restrictions unset. Primary Preview deployment `dpl_8FB7HadGRBZqKxa1MP1vRLvLKT6F` accepted real MP3, WAV, and M4A uploads, rejected empty, oversized, unsupported-extension, and renamed non-audio files, and removed the invalid pending object. Both Vercel deployments and the GitHub check passed, and a 250-entry runtime scan found no 5xx response or error-level event. No pull request has been opened and no production change has been made.
 
 #### P3
 
@@ -171,4 +171,4 @@ The API authorization review did not find a route-level cross-workspace bypass. 
 - Stage 3 baseline: captured for public routes and the authenticated dashboard request chain. Authenticated song/version journey timings still need to be captured during later batches.
 - Stage 4 fixes: account bootstrap, active-workspace identity, all four dashboard query batches, single-request dashboard initialization, and public-playlist query consolidation are implemented and measured. Assigned-action and playlist playback regression checks passed in preview.
 - Stage 5 regression and production readiness: production complete. Public playlist playback, song deletion, playlist cascade cleanup, signed-in dashboard loading, song opening, and playback all passed. The database and application rollout checks are recorded above, and the remaining P2/P3 findings stay documented for focused follow-up work.
-- Focused upload, accessibility, mobile interface, browser-test, homepage-contrast, and CSP follow-ups: production complete through PRs #15, #17 to #26, #28, #29, and #47. UPLOAD-002 is code-complete locally but not rolled out. No confirmed P1 issue remains from this review.
+- Focused upload, accessibility, mobile interface, browser-test, homepage-contrast, and CSP follow-ups: production complete through PRs #15, #17 to #26, #28, #29, and #47. UPLOAD-002 is committed, pushed, migrated on staging, and verified in Preview; its pull request and production rollout remain pending. No confirmed P1 issue remains from this review.

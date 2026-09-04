@@ -5932,3 +5932,32 @@ Bind file extensions to accepted MIME types before allocating a signed upload, s
 - Code is local only on `codex/audio-upload-hardening`. No migration, Preview deployment, commit, push, pull request, or production change has been made.
 - Rollout should apply the migration to staging first, deploy a Preview, then test representative valid formats plus empty, oversized, mismatched, and renamed non-audio files. Stop before production if a supported real audio file is rejected or an invalid object finalizes.
 - Rollback is an application revert plus a forward bucket update restoring `file_size_limit` and `allowed_mime_types` to `NULL`; existing stored audio objects are not rewritten or deleted by this migration.
+
+---
+
+## 2026-09-04 - Verify audio upload hardening on staging
+
+### What we were trying to achieve
+
+Prove that the shared upload policy and Storage bucket restrictions accept supported audio while stopping empty, oversized, unsupported, and disguised files before any production rollout.
+
+### Feature / change being made
+
+Staging migration and authenticated Preview verification for the beta audio-upload hardening candidate.
+
+### Files changed
+
+- `CODEBASE_REVIEW.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Commit `7a79faaf4955bc9214b874dd60f743afaf67ce5a` is pushed on `codex/audio-upload-hardening`. No pull request has been opened.
+- Migration `20260903163658_audio_upload_bucket_restrictions.sql` is applied to staging project `ivifkrtupqizyqqsxdty` only. The staging `song-files` bucket now has a 209,715,200-byte cap and the intended accepted MIME list. Production is unchanged.
+- Primary Preview deployment `dpl_8FB7HadGRBZqKxa1MP1vRLvLKT6F` and secondary deployment `dpl_Bxzdy8mYCH83q4kS6Fad7vZMaSuz` reached Ready. Both Vercel commit statuses and the GitHub Preview Comments check passed.
+- Authenticated uploads finalized successfully for MP3, WAV, and M4A fixtures. Empty, 201 MB, and unsupported `.txt` fixtures were stopped in the client with specific messages.
+- A renamed non-audio `.mp3` reached the signed-upload boundary but failed the server signature check with 400. The existing cleanup request removed its pending version and storage object; read-only staging checks found only the three valid finalized fixtures.
+- The primary deployment's 250-entry runtime sample contained no 5xx response or error-level event. Browser console checks found no application error. Known Vercel Preview Toolbar CSP reports remain unrelated to Song Room resources.
+- Rollback before production is an application revert plus a forward bucket update restoring the staging `file_size_limit` and `allowed_mime_types` values to `NULL`. The migration does not rewrite or delete existing audio.
+- The three valid fixtures remain on the shared staging test song as explicit verification evidence. Removing them is a separate destructive cleanup action.
