@@ -5865,3 +5865,70 @@ Verification-only closeout for the PR #47 Preview. No application behaviour or a
 - The browser console showed Vercel's Preview-only injected Toolbar script being blocked from `https://vercel.live`. This is not Song Room application code and remains intentionally excluded rather than widening the production policy for optional Preview tooling.
 - `content.js`, `about:blank`, Chrome runtime messaging, and `Grammarly-check.js` messages were browser-extension activity and did not affect the tested journeys.
 - No migration, dependency, environment variable, or irreversible rollout step is involved. Production remains on report-only until PR #47 merges and its production deployment is verified.
+
+---
+
+## 2026-09-03 - PR #47 production closeout
+
+### What we were trying to achieve
+
+Finish the approved CSP rollout and verify that enforcement did not block a real Song Room resource or change the embed framing contract.
+
+### Feature / change being made
+
+Verification-only production closeout for PR #47. No application behaviour or allowlist source changed in this entry.
+
+### Files changed
+
+- `CODEBASE_REVIEW.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- PR #47 squash-merged into `clone-clean` as `7e4faacd0c7ccd1ef35b700f53ecd7ef4399db16`.
+- Primary production deployment `dpl_Fw7k7gH1UrK9Z18EtHJKpi3BsLst` and secondary deployment `dpl_85UaWqDEFCEmxUGmhVM2QbNL6EMB` reached Ready.
+- The live homepage and login returned 200, and the signed-out dashboard retained `/login?redirectTo=%2Fdashboard`.
+- Standard responses contain `Content-Security-Policy`, not `Content-Security-Policy-Report-Only`, with the production Supabase origin, `frame-ancestors 'none'`, and `X-Frame-Options: DENY`.
+- The embed response retains the complete enforced policy with `frame-ancestors *` and no `X-Frame-Options` header.
+- The production runtime scan found no application error, 5xx response, genuine blocked Song Room resource, or CSP report. Vercel's injected Preview Toolbar warning did not apply to production application code.
+- Rollback is a revert of `7e4faacd` or restoration of primary deployment `dpl_3ENYccxC1rxauqmi5KkzRt1EWXYo`, the preceding `clone-clean` production baseline at `0c78ae81`.
+
+---
+
+## 2026-09-03 - Harden signed audio uploads before beta
+
+### What we were trying to achieve
+
+Close the remaining audio-upload validation gap before beta without changing authentication, plans, storage accounting, or the supported audio formats.
+
+### Feature / change being made
+
+Bind file extensions to accepted MIME types before allocating a signed upload, store one canonical Content-Type, verify actual size and a bounded audio/container signature before finalization, and add matching Supabase Storage bucket restrictions.
+
+### Files changed
+
+- `lib/audioUploadPolicy.mjs`
+- `app/api/versions/create/route.ts`
+- `app/api/versions/[versionId]/finalize/route.ts`
+- `app/upload/page.tsx`
+- `app/songs/[id]/upload/page.tsx`
+- `app/songs/[id]/versions/[versionId]/page.tsx`
+- `supabase/migrations/20260903163658_audio_upload_bucket_restrictions.sql`
+- `tests/critical-contracts.test.mjs`
+- `CODEBASE_REVIEW.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Read-only checks confirmed that `song-files.file_size_limit` and `song-files.allowed_mime_types` are currently unset in staging and production.
+- MP3, WAV, M4A, AAC, FLAC, OGG, AIF, and AIFF keep their existing 200 MB product limit. Browser MIME aliases are accepted, while the upload request uses the extension's canonical audio type.
+- Empty, oversized, unsupported-extension, and extension/MIME mismatch requests are rejected before a signed URL is issued. Invalid JSON now returns 400 instead of falling into the generic 500 response.
+- Finalization checks the stored object's actual size, path extension, canonical-compatible MIME metadata, and at most 64 KB of format-identifying bytes. Failed stored-object validation removes the object and pending version through the existing cleanup path.
+- A temporary Storage inspection failure returns retryable 409 and leaves the pending object intact, matching the existing client retry behaviour.
+- The migration adds a 200 MB `song-files` bucket cap and an allowlist covering the accepted canonical and browser MIME values. It has not been applied to staging or production.
+- All 41 contract tests, TypeScript, focused ESLint with no errors, and the optimized Next.js production build pass. Existing repository lint warnings remain.
+- Code is local only on `codex/audio-upload-hardening`. No migration, Preview deployment, commit, push, pull request, or production change has been made.
+- Rollout should apply the migration to staging first, deploy a Preview, then test representative valid formats plus empty, oversized, mismatched, and renamed non-audio files. Stop before production if a supported real audio file is rejected or an invalid object finalizes.
+- Rollback is an application revert plus a forward bucket update restoring `file_size_limit` and `allowed_mime_types` to `NULL`; existing stored audio objects are not rewritten or deleted by this migration.

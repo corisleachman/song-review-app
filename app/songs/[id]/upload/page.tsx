@@ -3,11 +3,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getIdentity } from '@/lib/auth';
+import { validateAudioUploadMetadata } from '@/lib/audioUploadPolicy.mjs';
 import { createClient } from '@/lib/supabase';
 import styles from '../song.module.css';
 
 const supabase = createClient();
-const MAX_AUDIO_SIZE_BYTES = 200 * 1024 * 1024;
 
 function getUploadErrorMessage(value: unknown, fallback: string) {
   if (typeof value === 'string') return value;
@@ -23,13 +23,16 @@ function getMissingAudioMessage() {
 }
 
 function validateAudioFile(file: File) {
-  const isAudio = file.type.startsWith('audio/')
-    || /\.(mp3|wav|m4a|aac|flac|ogg|aif|aiff)$/i.test(file.name);
+  const validation = validateAudioUploadMetadata({
+    fileName: file.name,
+    fileSize: file.size,
+    contentType: file.type,
+  });
 
-  if (!isAudio) return 'Choose an MP3, WAV, M4A, AAC, FLAC, OGG, AIF, or AIFF audio file.';
-  if (file.size <= 0) return 'That audio file is empty.';
-  if (file.size > MAX_AUDIO_SIZE_BYTES) return 'Choose an audio file no larger than 200MB.';
-  return null;
+  if (validation.ok) return null;
+  if (validation.reason === 'invalid_size') return 'That audio file is empty.';
+  if (validation.reason === 'too_large') return 'Choose an audio file no larger than 200MB.';
+  return 'Choose an MP3, WAV, M4A, AAC, FLAC, OGG, AIF, or AIFF audio file.';
 }
 
 async function finalizeUploadedVersion(versionId: string) {
@@ -170,6 +173,7 @@ export default function UploadVersionPage() {
           songId,
           fileName: file.name,
           fileSize: file.size,
+          fileType: file.type,
           label: label.trim() || null,
           notes: notes.trim() || null,
         }),
@@ -178,8 +182,10 @@ export default function UploadVersionPage() {
         const e = await res.json().catch(() => ({}));
         throw new Error(getUploadErrorMessage(e.error, `HTTP ${res.status}`));
       }
-      const { versionId, uploadUrl } = await res.json();
+      const { versionId, uploadUrl, uploadContentType } = await res.json();
       createdVersionId = versionId;
+
+      if (!uploadContentType) throw new Error('Could not determine the audio file type.');
 
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -189,7 +195,7 @@ export default function UploadVersionPage() {
         xhr.addEventListener('load', () => (xhr.status < 300 ? resolve() : reject(new Error('Upload failed'))));
         xhr.addEventListener('error', () => reject(new Error('Network error')));
         xhr.open('PUT', uploadUrl);
-        xhr.setRequestHeader('Content-Type', file.type || 'audio/mpeg');
+        xhr.setRequestHeader('Content-Type', uploadContentType);
         xhr.send(file);
       });
 

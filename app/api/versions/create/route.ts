@@ -7,28 +7,8 @@ import {
   createPlanLimitPayload,
   isMissingPlanColumnError,
 } from '@/lib/plans';
+import { validateAudioUploadMetadata } from '@/lib/audioUploadPolicy.mjs';
 import { supabaseServer } from '@/lib/supabaseServer';
-
-const MAX_AUDIO_SIZE_BYTES = 200 * 1024 * 1024;
-const MAX_FILE_NAME_LENGTH = 160;
-const AUDIO_EXTENSIONS = new Set(['mp3', 'wav', 'm4a', 'aac', 'flac', 'ogg', 'aif', 'aiff']);
-
-function normalizeAudioFileName(value: unknown) {
-  if (typeof value !== 'string') return null;
-
-  const baseName = value.replace(/\\/g, '/').split('/').pop()?.trim() ?? '';
-  const extension = baseName.split('.').pop()?.toLowerCase() ?? '';
-  if (!baseName || !AUDIO_EXTENSIONS.has(extension)) return null;
-
-  const safeDisplayName = baseName
-    .replace(/[\u0000-\u001f\u007f]/g, '')
-    .slice(0, MAX_FILE_NAME_LENGTH)
-    .trim();
-
-  if (!safeDisplayName) return null;
-
-  return { displayName: safeDisplayName, extension };
-}
 
 function isMissingUploadIntegrityRpc(error: unknown, functionName: string) {
   if (!error || typeof error !== 'object') return false;
@@ -45,13 +25,25 @@ function isMissingUploadIntegrityRpc(error: unknown, functionName: string) {
 
 export async function POST(req: NextRequest) {
   try {
+    let payload: unknown;
+    try {
+      payload = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Upload details must be valid JSON.' }, { status: 400 });
+    }
+
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      return NextResponse.json({ error: 'Upload details must be a JSON object.' }, { status: 400 });
+    }
+
     const {
       songId: rawSongId,
       fileName,
       fileSize,
+      fileType,
       label,
       notes,
-    } = await req.json();
+    } = payload as Record<string, unknown>;
     const songId = typeof rawSongId === 'string' ? rawSongId.trim() : '';
     const resolved = await resolveCanonicalIdentity();
 
@@ -62,21 +54,28 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const normalizedFile = normalizeAudioFileName(fileName);
-    const incomingBytes = typeof fileSize === 'number' && Number.isSafeInteger(fileSize)
-      ? fileSize
-      : 0;
+    const validation = validateAudioUploadMetadata({
+      fileName,
+      fileSize,
+      contentType: fileType,
+    });
 
-    if (!songId || !normalizedFile) {
+    if (!songId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    if (incomingBytes <= 0 || incomingBytes > MAX_AUDIO_SIZE_BYTES) {
+    if (!validation.ok) {
+      const error = validation.reason === 'invalid_size' || validation.reason === 'too_large'
+        ? 'Audio files must be larger than 0 bytes and no more than 200MB.'
+        : 'Choose a supported audio file whose type matches its extension.';
       return NextResponse.json(
-        { error: 'Audio files must be larger than 0 bytes and no more than 200MB.' },
+        { error },
         { status: 400 }
       );
     }
+
+    const { normalizedFile, uploadContentType } = validation;
+    const incomingBytes = fileSize as number;
 
     const normalizedLabel = typeof label === 'string' && label.trim()
       ? label.trim().slice(0, 120)
@@ -217,7 +216,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { versionId, uploadUrl: urlData.signedUrl, filePath },
+      { versionId, uploadUrl: urlData.signedUrl, filePath, uploadContentType },
       { status: 201 }
     );
   } catch (error) {

@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import test from 'node:test';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(import.meta.url);
@@ -232,6 +232,144 @@ test('playlist cover uploads validate size and type before buffering or decoding
     'Your current cover is unchanged.',
     'Choose another image',
   ], 'playlist cover error dialog');
+});
+
+test('audio upload policy binds supported extensions to MIME types and file signatures', async () => {
+  const policy = await import(pathToFileURL(path.join(repoRoot, 'lib/audioUploadPolicy.mjs')).href);
+  const asciiBytes = (value, size = value.length) => {
+    const bytes = new Uint8Array(size);
+    bytes.set(new TextEncoder().encode(value));
+    return bytes;
+  };
+
+  assert.deepEqual(
+    policy.validateAudioUploadMetadata({
+      fileName: 'rough mix.MP3',
+      fileSize: 1024,
+      contentType: 'audio/mpeg',
+    }),
+    {
+      ok: true,
+      normalizedFile: { displayName: 'rough mix.MP3', extension: 'mp3' },
+      uploadContentType: 'audio/mpeg',
+    },
+  );
+  assert.equal(
+    policy.validateAudioUploadMetadata({
+      fileName: 'mix.wav',
+      fileSize: 1024,
+      contentType: 'audio/x-wav',
+    }).uploadContentType,
+    'audio/wav',
+  );
+  assert.equal(
+    policy.validateAudioUploadMetadata({
+      fileName: 'mix.flac',
+      fileSize: 1024,
+      contentType: '',
+    }).uploadContentType,
+    'audio/flac',
+  );
+  assert.equal(
+    policy.validateAudioUploadMetadata({
+      fileName: 'not-a-track.mp4',
+      fileSize: 1024,
+      contentType: 'audio/mp4',
+    }).reason,
+    'unsupported_extension',
+  );
+  assert.equal(
+    policy.validateAudioUploadMetadata({
+      fileName: 'renamed.txt.mp3',
+      fileSize: 1024,
+      contentType: 'text/plain',
+    }).reason,
+    'mime_mismatch',
+  );
+  assert.equal(
+    policy.validateAudioUploadMetadata({
+      fileName: 'too-large.wav',
+      fileSize: policy.MAX_AUDIO_SIZE_BYTES + 1,
+      contentType: 'audio/wav',
+    }).reason,
+    'too_large',
+  );
+
+  const wav = asciiBytes('RIFF0000WAVE');
+  const m4a = asciiBytes('\u0000\u0000\u0000\u0018ftypM4A ', 24);
+  const ogg = asciiBytes('OggS', 64);
+  ogg[4] = 0;
+  ogg.set(new TextEncoder().encode('OpusHead'), 28);
+
+  assert.equal(policy.matchesAudioFileSignature('mp3', Uint8Array.from([0xff, 0xfb, 0x90, 0x64])), true);
+  assert.equal(policy.matchesAudioFileSignature('wav', wav), true);
+  assert.equal(policy.matchesAudioFileSignature('m4a', m4a), true);
+  assert.equal(policy.matchesAudioFileSignature('aac', Uint8Array.from([0xff, 0xf1, 0x50, 0x80])), true);
+  assert.equal(policy.matchesAudioFileSignature('aac', asciiBytes('ADIF')), true);
+  assert.equal(policy.matchesAudioFileSignature('flac', asciiBytes('fLaC')), true);
+  assert.equal(policy.matchesAudioFileSignature('ogg', ogg), true);
+  assert.equal(policy.matchesAudioFileSignature('aiff', asciiBytes('FORM0000AIFF')), true);
+  assert.equal(policy.matchesAudioFileSignature('mp3', asciiBytes('this is not audio')), false);
+  assert.equal(policy.matchesAudioFileSignature('ogg', asciiBytes('OggS\u0000not audio', 32)), false);
+});
+
+test('audio upload routes reject malformed metadata and inspect stored bytes before finalizing', () => {
+  const createRoute = read('app/api/versions/create/route.ts');
+  const finalizeRoute = read('app/api/versions/[versionId]/finalize/route.ts');
+  const migration = compactSql('supabase/migrations/20260903163658_audio_upload_bucket_restrictions.sql');
+  const clients = [
+    read('app/upload/page.tsx'),
+    read('app/songs/[id]/upload/page.tsx'),
+    read('app/songs/[id]/versions/[versionId]/page.tsx'),
+  ];
+
+  assertIncludesAll(createRoute, [
+    'Upload details must be valid JSON.',
+    'validateAudioUploadMetadata({',
+    'contentType: fileType',
+    'uploadContentType',
+  ], 'audio upload allocation validation');
+  assertOrdered(createRoute, [
+    'payload = await req.json()',
+    'validateAudioUploadMetadata({',
+    "createSignedUploadUrl(filePath)",
+  ], 'audio upload allocation order');
+
+  assertIncludesAll(finalizeRoute, [
+    '.createSignedUrl(filePath, 60)',
+    "headers: { Range: `bytes=0-${finalByte}` }",
+    'readBoundedResponseBody(response, AUDIO_SIGNATURE_BYTES)',
+    'matchesAudioFileSignature(normalizedFile.extension, signatureBytes)',
+    'The uploaded object does not match its audio file type.',
+  ], 'stored audio inspection');
+  assertOrdered(finalizeRoute, [
+    'const actualSize',
+    'const storedContentType',
+    'readStoredAudioSignature(filePath, actualSize)',
+    'matchesAudioFileSignature(normalizedFile.extension, signatureBytes)',
+    "supabaseServer.rpc('finalize_song_version_upload'",
+  ], 'audio finalization validation order');
+
+  assertIncludesAll(migration, [
+    'file_size_limit = 209715200',
+    "allowed_mime_types = ARRAY[",
+    "'audio/mpeg'",
+    "'audio/x-wav'",
+    "'audio/m4a'",
+    "'audio/x-aac'",
+    "'audio/x-flac'",
+    "'application/ogg'",
+    "'audio/x-aiff'",
+    "WHERE id = 'song-files'",
+  ], 'audio storage bucket restrictions');
+
+  for (const client of clients) {
+    assertIncludesAll(client, [
+      'fileType:',
+      'uploadContentType',
+      "setRequestHeader('Content-Type',",
+    ], 'audio upload client metadata');
+  }
 });
 
 test('feedback and initial cookie consent clear the player while preferences live in settings', () => {

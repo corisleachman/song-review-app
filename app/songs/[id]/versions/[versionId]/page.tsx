@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { ActionStatus, getActionStatusLabel, getActionStatusToast, getNextActionStatus, isOpenAction } from '@/lib/actionWorkflow';
+import { validateAudioUploadMetadata } from '@/lib/audioUploadPolicy.mjs';
 import { createClient } from '@/lib/supabase';
 import { formatTimestamp, getIdentity, clearAuth, clearIdentity } from '@/lib/auth';
 import { useDialogFocus } from '@/lib/useDialogFocus';
@@ -12,8 +13,6 @@ import styles from './version.module.css';
 import WorkspaceSwitcher from '@/components/WorkspaceSwitcher';
 import BetaBanner from '@/components/BetaBanner';
 import VersionCommentsPanel from './VersionCommentsPanel';
-
-const MAX_AUDIO_SIZE_BYTES = 200 * 1024 * 1024;
 
 interface Comment {
   id: string;
@@ -321,15 +320,21 @@ async function fetchJsonWithTimeout<T>(
 }
 
 function validateAudioFile(file: File) {
-  const isAudio = file.type.startsWith('audio/') || /\.(mp3|wav|m4a|aac|flac|ogg|aif|aiff)$/i.test(file.name);
+  const validation = validateAudioUploadMetadata({
+    fileName: file.name,
+    fileSize: file.size,
+    contentType: file.type,
+  });
 
-  if (!isAudio) {
+  if (validation.ok) return null;
+
+  if (validation.reason === 'unsupported_extension' || validation.reason === 'mime_mismatch') {
     return 'Choose an audio file such as MP3, WAV, M4A, AAC, FLAC, OGG, AIF, or AIFF.';
   }
 
-  if (file.size <= 0) return 'That audio file is empty.';
+  if (validation.reason === 'invalid_size') return 'That audio file is empty.';
 
-  if (file.size > MAX_AUDIO_SIZE_BYTES) {
+  if (validation.reason === 'too_large') {
     return 'That file is too large for the current upload flow. Try a file under 200 MB.';
   }
 
@@ -2411,6 +2416,7 @@ function VersionPageInner() {
           songId,
           fileName: pendingVersionFile.name,
           fileSize: pendingVersionFile.size,
+          fileType: pendingVersionFile.type,
           label: newVersionLabel.trim() || null,
           notes: newVersionNotes.trim() || null,
         }),
@@ -2418,7 +2424,7 @@ function VersionPageInner() {
 
       const data = await res.json();
 
-      if (!res.ok || !data.uploadUrl || !data.versionId) {
+      if (!res.ok || !data.uploadUrl || !data.versionId || !data.uploadContentType) {
         throw new Error(getUploadErrorMessage(data.error));
       }
       createdVersionId = data.versionId;
@@ -2433,7 +2439,7 @@ function VersionPageInner() {
         xhr.addEventListener('load', () => (xhr.status < 300 ? resolve() : reject(new Error('Upload failed'))));
         xhr.addEventListener('error', () => reject(new Error('Upload failed')));
         xhr.open('PUT', data.uploadUrl);
-        xhr.setRequestHeader('Content-Type', pendingVersionFile.type || 'audio/mpeg');
+        xhr.setRequestHeader('Content-Type', data.uploadContentType);
         xhr.send(pendingVersionFile);
       });
 

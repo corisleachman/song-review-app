@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { validateAudioUploadMetadata } from '@/lib/audioUploadPolicy.mjs';
 import styles from './upload.module.css';
 
 type Status = 'uploading' | 'done' | 'error';
@@ -29,16 +30,17 @@ function cleanTitle(name: string) {
 let counter = 0;
 const uid = () => `u${++counter}`;
 
-function contentTypeFor(file: File): string {
-  if (file.type && file.type.startsWith('audio/')) return file.type;
-  const ext = (file.name.split('.').pop() || '').toLowerCase();
-  const map: Record<string, string> = {
-    mp3: 'audio/mpeg', wav: 'audio/wav', wave: 'audio/wav',
-    aiff: 'audio/aiff', aif: 'audio/aiff', aifc: 'audio/aiff',
-    m4a: 'audio/mp4', mp4: 'audio/mp4', flac: 'audio/flac',
-    ogg: 'audio/ogg', oga: 'audio/ogg', aac: 'audio/aac',
-  };
-  return map[ext] || file.type || 'application/octet-stream';
+function validateAudioFile(file: File) {
+  const validation = validateAudioUploadMetadata({
+    fileName: file.name,
+    fileSize: file.size,
+    contentType: file.type,
+  });
+
+  if (validation.ok) return null;
+  if (validation.reason === 'invalid_size') return 'That audio file is empty.';
+  if (validation.reason === 'too_large') return 'Choose an audio file no larger than 200MB.';
+  return 'Choose an MP3, WAV, M4A, AAC, FLAC, OGG, AIF, or AIFF audio file.';
 }
 
 // Confirm the uploaded audio actually landed in storage (mirrors the single-song
@@ -98,6 +100,9 @@ export default function UploadPage() {
     let createdVersionId: string | null = null;
 
     try {
+      const validationError = validateAudioFile(item.file);
+      if (validationError) throw new Error(validationError);
+
       const s = await fetch('/api/songs/create', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: item.title }),
@@ -108,12 +113,19 @@ export default function UploadPage() {
 
       const v = await fetch('/api/versions/create', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ songId, fileName: item.file.name, fileSize: item.file.size }),
+        body: JSON.stringify({
+          songId,
+          fileName: item.file.name,
+          fileSize: item.file.size,
+          fileType: item.file.type,
+        }),
       });
       if (!v.ok) { const e = await v.json().catch(() => ({})); throw new Error(e.error || 'Could not start upload'); }
-      const { versionId, uploadUrl } = await v.json();
+      const { versionId, uploadUrl, uploadContentType } = await v.json();
       createdVersionId = versionId;
       update(item.id, { versionId });
+
+      if (!uploadContentType) throw new Error('Could not determine the audio file type.');
 
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -121,7 +133,7 @@ export default function UploadPage() {
         xhr.addEventListener('load', () => (xhr.status < 300 ? resolve() : reject(new Error('Upload failed'))));
         xhr.addEventListener('error', () => reject(new Error('Network error')));
         xhr.open('PUT', uploadUrl);
-        xhr.setRequestHeader('Content-Type', contentTypeFor(item.file));
+        xhr.setRequestHeader('Content-Type', uploadContentType);
         xhr.send(item.file);
       });
       await finalizeVersion(versionId);
@@ -137,7 +149,14 @@ export default function UploadPage() {
 
   const addFiles = useCallback((files: FileList | File[]) => {
     const all = Array.from(files);
-    const audio = all.filter((f) => f.type.startsWith('audio/'));
+    const audio = all.filter((file) => {
+      const validation = validateAudioUploadMetadata({
+        fileName: file.name,
+        fileSize: file.size,
+        contentType: file.type,
+      });
+      return validation.ok || validation.reason === 'invalid_size' || validation.reason === 'too_large';
+    });
     const skipped = all.length - audio.length;
     setNotice(skipped > 0 ? `Skipped ${skipped} non-audio file${skipped === 1 ? '' : 's'}.` : null);
     if (!audio.length) return;
