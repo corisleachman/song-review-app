@@ -187,8 +187,8 @@ Captured from a launch-readiness review (TikTok launch checklists cross-referenc
 - Logged: 2026-08-26
 - Add login/auth rate limiting (verify Supabase defaults, add app-level throttle).
 - Add bot protection on signup (Cloudflare Turnstile or hCaptcha).
-- Flip CSP from Report-Only to enforcing once the report endpoint is clean. PR #47 enforcement candidate on `codex/csp-enforcement-readiness` passed the clean production-log review, live public-route crawl, source-origin audit, enforced local browser suite, authenticated Preview journey, and Preview console review. Vercel's injected Preview Toolbar remains intentionally outside the allowlist, while browser-extension connection and Grammarly messages are not app failures. Production rollout remains pending.
-- Verify audio upload restrictions (allowed MIME types + max size caps).
+- Flip CSP from Report-Only to enforcing once the report endpoint is clean. ✅ DONE (2026-09-03). PR #47 squash-merged as `7e4faacd`; both production deployments reached Ready, route-specific framing remained correct, and the live header and runtime checks passed without a genuine CSP report.
+- Verify audio upload restrictions (allowed MIME types + max size caps). Staging verified on `codex/audio-upload-hardening` at `7a79faaf`: every active uploader uses the same extension/MIME/200 MB policy, the server canonicalizes stored MIME metadata and checks a bounded file signature before finalizing, and malformed allocation JSON returns 400. Migration `20260903163658` is applied to staging only. The authenticated Preview accepted MP3, WAV, and M4A, rejected empty, oversized, unsupported-extension, and renamed non-audio files, and removed the invalid pending upload. Draft PR #48 is open against `clone-clean` with all initial checks passing. Production rollout remains pending.
 - Standardise input validation across API routes.
 
 ### SEO / discoverability

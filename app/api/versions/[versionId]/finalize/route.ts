@@ -7,11 +7,16 @@ import {
   isStorageLimitReached,
   normalizeAccountPlan,
 } from '@/lib/plans';
+import {
+  AUDIO_SIGNATURE_BYTES,
+  getAudioUploadContentType,
+  MAX_AUDIO_SIZE_BYTES,
+  matchesAudioFileSignature,
+  normalizeAudioFileName,
+} from '@/lib/audioUploadPolicy.mjs';
 import { supabaseServer } from '@/lib/supabaseServer';
 
 export const dynamic = 'force-dynamic';
-
-const MAX_AUDIO_SIZE_BYTES = 200 * 1024 * 1024;
 
 function normalizeStoragePath(value: string | null | undefined) {
   const trimmed = value?.trim() ?? '';
@@ -53,6 +58,59 @@ async function removePendingUpload(versionId: string, filePath: string) {
   if (versionResult.error) {
     throw versionResult.error;
   }
+}
+
+async function readBoundedResponseBody(response: Response, maxBytes: number) {
+  if (!response.body) return new Uint8Array();
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+
+  try {
+    while (totalBytes < maxBytes) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const remaining = maxBytes - totalBytes;
+      const chunk = value.byteLength > remaining ? value.subarray(0, remaining) : value;
+      chunks.push(chunk);
+      totalBytes += chunk.byteLength;
+
+      if (value.byteLength > remaining) break;
+    }
+  } finally {
+    await reader.cancel().catch(() => undefined);
+  }
+
+  const result = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    result.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return result;
+}
+
+async function readStoredAudioSignature(filePath: string, actualSize: number) {
+  const { data, error } = await supabaseServer.storage
+    .from('song-files')
+    .createSignedUrl(filePath, 60);
+
+  if (error || !data?.signedUrl) throw error ?? new Error('Could not inspect uploaded audio.');
+
+  const finalByte = Math.max(0, Math.min(actualSize, AUDIO_SIGNATURE_BYTES) - 1);
+  const response = await fetch(data.signedUrl, {
+    cache: 'no-store',
+    headers: { Range: `bytes=0-${finalByte}` },
+  });
+
+  if (!response.ok) {
+    await response.body?.cancel();
+    throw new Error(`Audio inspection returned status ${response.status}.`);
+  }
+
+  return readBoundedResponseBody(response, AUDIO_SIGNATURE_BYTES);
 }
 
 export async function POST(_req: NextRequest, props: { params: Promise<{ versionId: string }> }) {
@@ -108,14 +166,34 @@ export async function POST(_req: NextRequest, props: { params: Promise<{ version
 
     const actualSize = typeof fileInfo.size === 'number' ? fileInfo.size : 0;
     const contentType = fileInfo.contentType?.toLowerCase() ?? '';
-    const validAudioObject = actualSize > 0
-      && actualSize <= MAX_AUDIO_SIZE_BYTES
-      && contentType.startsWith('audio/');
+    const normalizedFile = normalizeAudioFileName(filePath);
+    const storedContentType = normalizedFile
+      ? getAudioUploadContentType(normalizedFile.extension, contentType)
+      : null;
 
-    if (!validAudioObject) {
+    if (actualSize <= 0 || actualSize > MAX_AUDIO_SIZE_BYTES || !normalizedFile || !storedContentType) {
       await removePendingUpload(params.versionId, filePath);
       return NextResponse.json(
         { error: 'The uploaded object is not a supported audio file under 200MB.' },
+        { status: 400 }
+      );
+    }
+
+    let signatureBytes: Uint8Array;
+    try {
+      signatureBytes = await readStoredAudioSignature(filePath, actualSize);
+    } catch (error) {
+      console.warn('[versions/finalize] Could not inspect uploaded audio yet:', error);
+      return NextResponse.json(
+        { error: 'The uploaded audio could not be inspected yet. Please retry.' },
+        { status: 409 }
+      );
+    }
+
+    if (!matchesAudioFileSignature(normalizedFile.extension, signatureBytes)) {
+      await removePendingUpload(params.versionId, filePath);
+      return NextResponse.json(
+        { error: 'The uploaded object does not match its audio file type.' },
         { status: 400 }
       );
     }
