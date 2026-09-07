@@ -5961,3 +5961,28 @@ Staging migration and authenticated Preview verification for the beta audio-uplo
 - The primary deployment's 250-entry runtime sample contained no 5xx response or error-level event. Browser console checks found no application error. Known Vercel Preview Toolbar CSP reports remain unrelated to Song Room resources.
 - Rollback before production is an application revert plus a forward bucket update restoring the staging `file_size_limit` and `allowed_mime_types` values to `NULL`. The migration does not rewrite or delete existing audio.
 - The three valid fixtures remain on the shared staging test song as explicit verification evidence. Removing them is a separate destructive cleanup action.
+
+---
+
+## 2026-09-07 - Open audio upload hardening draft PR
+
+### What we were trying to achieve
+
+Put the staging-verified audio upload restrictions into a focused review against the real production branch without changing production.
+
+### Feature / change being made
+
+GitHub review handoff for the beta audio-upload hardening candidate.
+
+### Files changed
+
+- `CODEBASE_REVIEW.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Draft PR #48 is open from `codex/audio-upload-hardening` into `clone-clean` and GitHub reports it mergeable.
+- Both Vercel checks, Preview Comments, and the public browser and accessibility suite passed on the reviewed implementation and staging-verification tree.
+- The pull request records the migration-first production order, stop conditions, and forward bucket rollback.
+- Production remains on `clone-clean` commit `7e4faacd`; the production Supabase bucket and live deployments are unchanged.
