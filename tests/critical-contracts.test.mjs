@@ -357,16 +357,22 @@ test('signed audio uploads continue to server verification when displayed progre
       contentType: 'audio/aiff',
       onProgress: (loaded, total) => progress.push([loaded, total]),
     },
-    { createRequest: () => request, responseGraceMs: 5 },
+    { createRequest: () => request, responseGraceMs: 40 },
   );
 
   request.upload.emit('progress', { lengthComputable: true, loaded: 995, total: 1000 });
-  await upload;
+  await new Promise(resolve => setTimeout(resolve, 30));
+  request.upload.emit('progress', { lengthComputable: true, loaded: 1000, total: 1000 });
+  const completion = await Promise.race([
+    upload.then(() => 'upload'),
+    new Promise(resolve => setTimeout(() => resolve('timeout'), 25)),
+  ]);
 
   assert.equal(request.method, 'PUT');
   assert.equal(request.url, 'https://storage.test/upload');
   assert.deepEqual(request.header, ['Content-Type', 'audio/aiff']);
-  assert.deepEqual(progress, [[995, 1000]]);
+  assert.deepEqual(progress, [[995, 1000], [1000, 1000]]);
+  assert.equal(completion, 'upload');
 });
 
 test('signed audio uploads still reject failed Storage responses', async () => {
