@@ -313,10 +313,103 @@ test('audio upload policy binds supported extensions to MIME types and file sign
   assert.equal(policy.matchesAudioFileSignature('ogg', asciiBytes('OggS\u0000not audio', 32)), false);
 });
 
+test('signed audio uploads continue to server verification when the Storage response stalls', async () => {
+  const { uploadAudioToSignedUrl } = await import(
+    pathToFileURL(path.join(repoRoot, 'lib/signedAudioUpload.mjs')).href
+  );
+
+  class FakeEventTarget {
+    listeners = new Map();
+
+    addEventListener(type, listener) {
+      this.listeners.set(type, listener);
+    }
+
+    emit(type, event = {}) {
+      this.listeners.get(type)?.(event);
+    }
+  }
+
+  class FakeRequest extends FakeEventTarget {
+    upload = new FakeEventTarget();
+    status = 0;
+
+    open(method, url) {
+      this.method = method;
+      this.url = url;
+    }
+
+    setRequestHeader(name, value) {
+      this.header = [name, value];
+    }
+
+    send(file) {
+      this.file = file;
+    }
+  }
+
+  const request = new FakeRequest();
+  const progress = [];
+  const upload = uploadAudioToSignedUrl(
+    {
+      file: { name: 'mix.aiff' },
+      uploadUrl: 'https://storage.test/upload',
+      contentType: 'audio/aiff',
+      onProgress: (loaded, total) => progress.push([loaded, total]),
+    },
+    { createRequest: () => request, responseGraceMs: 5 },
+  );
+
+  request.upload.emit('progress', { lengthComputable: true, loaded: 5, total: 10 });
+  request.upload.emit('load');
+  await upload;
+
+  assert.equal(request.method, 'PUT');
+  assert.equal(request.url, 'https://storage.test/upload');
+  assert.deepEqual(request.header, ['Content-Type', 'audio/aiff']);
+  assert.deepEqual(progress, [[5, 10]]);
+});
+
+test('signed audio uploads still reject failed Storage responses', async () => {
+  const { uploadAudioToSignedUrl } = await import(
+    pathToFileURL(path.join(repoRoot, 'lib/signedAudioUpload.mjs')).href
+  );
+
+  class FakeEventTarget {
+    listeners = new Map();
+
+    addEventListener(type, listener) {
+      this.listeners.set(type, listener);
+    }
+
+    emit(type, event = {}) {
+      this.listeners.get(type)?.(event);
+    }
+  }
+
+  class FakeRequest extends FakeEventTarget {
+    upload = new FakeEventTarget();
+    status = 403;
+    open() {}
+    setRequestHeader() {}
+    send() {}
+  }
+
+  const request = new FakeRequest();
+  const upload = uploadAudioToSignedUrl(
+    { file: {}, uploadUrl: 'https://storage.test/upload', contentType: 'audio/mpeg' },
+    { createRequest: () => request, responseGraceMs: 5 },
+  );
+
+  request.emit('load');
+  await assert.rejects(upload, /Upload failed/u);
+});
+
 test('audio upload routes reject malformed metadata and inspect stored bytes before finalizing', () => {
   const createRoute = read('app/api/versions/create/route.ts');
   const finalizeRoute = read('app/api/versions/[versionId]/finalize/route.ts');
   const migration = compactSql('supabase/migrations/20260903163658_audio_upload_bucket_restrictions.sql');
+  const signedUpload = read('lib/signedAudioUpload.mjs');
   const clients = [
     read('app/upload/page.tsx'),
     read('app/songs/[id]/upload/page.tsx'),
@@ -363,11 +456,20 @@ test('audio upload routes reject malformed metadata and inspect stored bytes bef
     "WHERE id = 'song-files'",
   ], 'audio storage bucket restrictions');
 
+  assertIncludesAll(signedUpload, [
+    'SIGNED_UPLOAD_RESPONSE_GRACE_MS = 15_000',
+    "xhr.upload.addEventListener('progress'",
+    "xhr.upload.addEventListener('load', startResponseTimer)",
+    'event.loaded >= event.total',
+    'globalThis.setTimeout(() => finish(resolve), responseGraceMs)',
+    "xhr.setRequestHeader('Content-Type', contentType)",
+  ], 'signed audio upload response recovery');
+
   for (const client of clients) {
     assertIncludesAll(client, [
       'fileType:',
       'uploadContentType',
-      "setRequestHeader('Content-Type',",
+      'uploadAudioToSignedUrl({',
     ], 'audio upload client metadata');
   }
 });

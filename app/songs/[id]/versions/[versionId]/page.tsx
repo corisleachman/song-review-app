@@ -5,6 +5,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { ActionStatus, getActionStatusLabel, getActionStatusToast, getNextActionStatus, isOpenAction } from '@/lib/actionWorkflow';
 import { validateAudioUploadMetadata } from '@/lib/audioUploadPolicy.mjs';
+import { uploadAudioToSignedUrl } from '@/lib/signedAudioUpload.mjs';
 import { createClient } from '@/lib/supabase';
 import { formatTimestamp, getIdentity, clearAuth, clearIdentity } from '@/lib/auth';
 import { useDialogFocus } from '@/lib/useDialogFocus';
@@ -2429,18 +2430,11 @@ function VersionPageInner() {
       }
       createdVersionId = data.versionId;
 
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.upload.addEventListener('progress', event => {
-          if (event.lengthComputable) {
-            setVersionUploadProgress(Math.round((event.loaded / event.total) * 100));
-          }
-        });
-        xhr.addEventListener('load', () => (xhr.status < 300 ? resolve() : reject(new Error('Upload failed'))));
-        xhr.addEventListener('error', () => reject(new Error('Upload failed')));
-        xhr.open('PUT', data.uploadUrl);
-        xhr.setRequestHeader('Content-Type', data.uploadContentType);
-        xhr.send(pendingVersionFile);
+      await uploadAudioToSignedUrl({
+        file: pendingVersionFile,
+        uploadUrl: data.uploadUrl,
+        contentType: data.uploadContentType,
+        onProgress: (loaded, total) => setVersionUploadProgress(Math.round((loaded / total) * 100)),
       });
 
       await finalizeUploadedVersion(data.versionId);

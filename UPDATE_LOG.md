@@ -5986,3 +5986,35 @@ GitHub review handoff for the beta audio-upload hardening candidate.
 - Both Vercel checks, Preview Comments, and the public browser and accessibility suite passed on the reviewed implementation and staging-verification tree.
 - The pull request records the migration-first production order, stop conditions, and forward bucket rollback.
 - Production remains on `clone-clean` commit `7e4faacd`; the production Supabase bucket and live deployments are unchanged.
+
+---
+
+## 2026-09-07 - Recover stalled signed audio upload responses
+
+### What we were trying to achieve
+
+Keep a fully transferred audio file from leaving the interface and pending version stuck forever when Storage persists the object but does not finish its PUT response.
+
+### Feature / change being made
+
+Shared post-transfer response recovery for all three signed audio upload journeys.
+
+### Files changed
+
+- `lib/signedAudioUpload.mjs`
+- `app/upload/page.tsx`
+- `app/songs/[id]/upload/page.tsx`
+- `app/songs/[id]/versions/[versionId]/page.tsx`
+- `tests/critical-contracts.test.mjs`
+- `CODEBASE_REVIEW.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- PR #48 merged as `6f655f23` after production migration `20260903163658` was applied and verified. Primary deployment `dpl_3sL1SuU2q7LvzENQ4Li9JWmaBSzQ` reached Ready.
+- The live 201 MB rejection and renamed non-audio signature rejection passed. The invalid pending upload and object were removed, and the runtime scan remained clear of 5xx and error-level events.
+- A valid AIFF uploaded all 475,278 bytes and appeared in Storage with canonical `audio/aiff` metadata, but the browser's PUT never emitted completion or error. No finalization request followed, leaving the version pending and the interface at 100%.
+- The shared uploader now waits 15 seconds after every byte is sent. If the Storage response remains open, it proceeds to the server finalizer, which still proves object presence, actual size, MIME, and file signature before committing the version.
+- Normal 2xx completion, non-2xx rejection, network errors, progress reporting, cleanup, and final verification retain their existing behaviour.
+- The pending production AIFF version and object remain untouched until explicit cleanup approval. This candidate is local only and production is not yet considered complete.
