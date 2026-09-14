@@ -313,7 +313,7 @@ test('audio upload policy binds supported extensions to MIME types and file sign
   assert.equal(policy.matchesAudioFileSignature('ogg', asciiBytes('OggS\u0000not audio', 32)), false);
 });
 
-test('signed audio uploads continue to server verification when the Storage response stalls', async () => {
+test('signed audio uploads continue to server verification when displayed progress reaches 100%', async () => {
   const { uploadAudioToSignedUrl } = await import(
     pathToFileURL(path.join(repoRoot, 'lib/signedAudioUpload.mjs')).href
   );
@@ -360,14 +360,13 @@ test('signed audio uploads continue to server verification when the Storage resp
     { createRequest: () => request, responseGraceMs: 5 },
   );
 
-  request.upload.emit('progress', { lengthComputable: true, loaded: 5, total: 10 });
-  request.upload.emit('load');
+  request.upload.emit('progress', { lengthComputable: true, loaded: 995, total: 1000 });
   await upload;
 
   assert.equal(request.method, 'PUT');
   assert.equal(request.url, 'https://storage.test/upload');
   assert.deepEqual(request.header, ['Content-Type', 'audio/aiff']);
-  assert.deepEqual(progress, [[5, 10]]);
+  assert.deepEqual(progress, [[995, 1000]]);
 });
 
 test('signed audio uploads still reject failed Storage responses', async () => {
@@ -460,7 +459,7 @@ test('audio upload routes reject malformed metadata and inspect stored bytes bef
     'SIGNED_UPLOAD_RESPONSE_GRACE_MS = 15_000',
     "xhr.upload.addEventListener('progress'",
     "xhr.upload.addEventListener('load', startResponseTimer)",
-    'event.loaded >= event.total',
+    'Math.round((event.loaded / event.total) * 100) >= 100',
     'globalThis.setTimeout(() => finish(resolve), responseGraceMs)',
     "xhr.setRequestHeader('Content-Type', contentType)",
   ], 'signed audio upload response recovery');
