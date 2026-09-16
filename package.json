@@ -15,7 +15,7 @@
     "test:browser": "playwright test"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.10.3",
+    "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.110.7",
     "date-fns": "^2.30.0",
     "next": "^15.5.21",
@@ -23,12 +23,12 @@
     "react-dom": "^18.2.0",
     "resend": "^4.8.0",
     "sharp": "0.35.3",
-    "stripe": "^22.3.2",
-    "wavesurfer.js": "^7.12.11"
+    "stripe": "^22.6.2",
+    "wavesurfer.js": "^7.12.12"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.3.6",
-    "@playwright/test": "1.62.1",
+    "@eslint/eslintrc": "^3.3.7",
+    "@playwright/test": "1.63.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
