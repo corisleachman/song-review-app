@@ -6002,6 +6002,7 @@ Shared post-transfer response recovery for all three signed audio upload journey
 ### Files changed
 
 - `lib/signedAudioUpload.mjs`
+- `app/api/versions/[versionId]/finalize/route.ts`
 - `app/upload/page.tsx`
 - `app/songs/[id]/upload/page.tsx`
 - `app/songs/[id]/versions/[versionId]/page.tsx`
@@ -6024,4 +6025,5 @@ Shared post-transfer response recovery for all three signed audio upload journey
 - On 17 September, candidate `c3e0f2e9` also reproduced the stall on Ready Preview `dpl_B6wGmjj1J32y8EAAgNmNhWmrPhtD`. The verified 475,278-byte AIFF was selected in Chrome, allocation returned 201, and no finalization request appeared despite the visible 100% state. The loaded page asset was `page-dbca185b7d8cb777.js`; all four PR checks passed.
 - Added opt-in `?uploadDebug=1` console diagnostics to identify whether the shared uploader starts its grace timer, fires it, or receives a Storage response or error. Diagnostics include only fixed event names, elapsed time, byte counts, and HTTP status, never signed URLs, tokens, filenames, or file content. Recovery behaviour is unchanged by this diagnostic slice.
 - Preview `dpl_A8JyLAgUmUphDvZJuqdwbo1C8Xi1` reached Ready with all checks passing. The diagnostic AIFF test produced four uploader events within 600ms, but the browser connector rendered their object payloads only as `Object`. Diagnostics now use serialized JSON and the review-page finalizer records request/response boundaries. This avoids mistaking an unfinished runtime-log entry for proof that a request was never sent.
+- Ready Preview `dpl_BBP3HxbWRkJ5QAHrWG5dL4z72MW7` at `f98deed0` provided readable evidence: Storage returned 200 after 923ms and `finalize_requested` followed immediately. The interface remained at 100% without a finalizer response. For this test, the broken boundary is finalization, not direct upload completion. Added Preview-only, explicitly requested server stage markers to identify which finalizer operation is pending; markers contain only fixed stage names and elapsed time. Production tracing remains disabled.
 - The pending production AIFF version and object remain untouched until explicit cleanup approval. PR #50 remains draft; production is unchanged and its upload closeout is not complete.

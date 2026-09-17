@@ -92,31 +92,51 @@ async function readBoundedResponseBody(response: Response, maxBytes: number) {
   return result;
 }
 
-async function readStoredAudioSignature(filePath: string, actualSize: number) {
+async function readStoredAudioSignature(
+  filePath: string,
+  actualSize: number,
+  trace: (stage: string) => void = () => undefined,
+) {
+  trace('signature_url_started');
   const { data, error } = await supabaseServer.storage
     .from('song-files')
     .createSignedUrl(filePath, 60);
 
   if (error || !data?.signedUrl) throw error ?? new Error('Could not inspect uploaded audio.');
 
+  trace('signature_fetch_started');
   const finalByte = Math.max(0, Math.min(actualSize, AUDIO_SIGNATURE_BYTES) - 1);
   const response = await fetch(data.signedUrl, {
     cache: 'no-store',
     headers: { Range: `bytes=0-${finalByte}` },
   });
+  trace('signature_headers_received');
 
   if (!response.ok) {
     await response.body?.cancel();
     throw new Error(`Audio inspection returned status ${response.status}.`);
   }
 
-  return readBoundedResponseBody(response, AUDIO_SIGNATURE_BYTES);
+  trace('signature_body_started');
+  const signature = await readBoundedResponseBody(response, AUDIO_SIGNATURE_BYTES);
+  trace('signature_body_finished');
+  return signature;
 }
 
-export async function POST(_req: NextRequest, props: { params: Promise<{ versionId: string }> }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ versionId: string }> }) {
+  const startedAt = Date.now();
+  const debugEnabled = process.env.VERCEL_ENV === 'preview'
+    && req.headers.get('X-Song-Room-Upload-Debug') === '1';
+  const trace = (stage: string) => {
+    if (debugEnabled) {
+      console.info('[audio-finalize]', JSON.stringify({ stage, elapsedMs: Date.now() - startedAt }));
+    }
+  };
+  trace('request_received');
   const params = await props.params;
   try {
     const resolved = await resolveCanonicalIdentity();
+    trace('identity_finished');
     if (!resolved) {
       return NextResponse.json({ error: 'You must be signed in to finish an upload.' }, { status: 401 });
     }
@@ -127,6 +147,7 @@ export async function POST(_req: NextRequest, props: { params: Promise<{ version
       .eq('id', params.versionId)
       .maybeSingle();
 
+    trace('version_read_finished');
     if (versionError) throw versionError;
     if (!version) {
       return NextResponse.json({ error: 'Version not found.' }, { status: 404 });
@@ -138,6 +159,7 @@ export async function POST(_req: NextRequest, props: { params: Promise<{ version
       .eq('id', version.song_id)
       .maybeSingle();
 
+    trace('song_read_finished');
     if (songError) throw songError;
     if (!song?.account_id || song.account_id !== resolved.identity.workspaceId) {
       return NextResponse.json({ error: 'You do not have access to this version.' }, { status: 403 });
@@ -156,6 +178,7 @@ export async function POST(_req: NextRequest, props: { params: Promise<{ version
     const { data: fileInfo, error: fileInfoError } = await supabaseServer.storage
       .from('song-files')
       .info(filePath);
+    trace('storage_info_finished');
 
     if (fileInfoError || !fileInfo) {
       return NextResponse.json(
@@ -181,7 +204,7 @@ export async function POST(_req: NextRequest, props: { params: Promise<{ version
 
     let signatureBytes: Uint8Array;
     try {
-      signatureBytes = await readStoredAudioSignature(filePath, actualSize);
+      signatureBytes = await readStoredAudioSignature(filePath, actualSize, trace);
     } catch (error) {
       console.warn('[versions/finalize] Could not inspect uploaded audio yet:', error);
       return NextResponse.json(
@@ -204,6 +227,7 @@ export async function POST(_req: NextRequest, props: { params: Promise<{ version
       .eq('id', song.account_id)
       .single();
 
+    trace('account_read_finished');
     if (accountResult.error && !isMissingPlanColumnError(accountResult.error)) {
       throw accountResult.error;
     }
@@ -227,6 +251,7 @@ export async function POST(_req: NextRequest, props: { params: Promise<{ version
       p_file_size_bytes: actualSize,
       p_storage_limit_bytes: storageLimit,
     });
+    trace('finalize_rpc_finished');
 
     if (finalizeResult.error) {
       if (isStorageLimitError(finalizeResult.error)) {

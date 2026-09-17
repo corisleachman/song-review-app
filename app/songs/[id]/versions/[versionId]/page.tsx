@@ -353,7 +353,12 @@ async function finalizeUploadedVersion(versionIdToFinalize: string) {
     let response: Response;
     try {
       reportUploadDiagnostic('finalize_requested', { attempt });
-      response = await fetch(`/api/versions/${versionIdToFinalize}/finalize`, { method: 'POST' });
+      response = await fetch(`/api/versions/${versionIdToFinalize}/finalize`, {
+        method: 'POST',
+        headers: new URLSearchParams(window.location.search).get('uploadDebug') === '1'
+          ? { 'X-Song-Room-Upload-Debug': '1' }
+          : undefined,
+      });
       reportUploadDiagnostic('finalize_response', { status: response.status });
     } catch (error) {
       reportUploadDiagnostic('finalize_network_error');
