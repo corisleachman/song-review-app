@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { request as requestHttps } from 'node:https';
+import { fetchAudioSignaturePrefix } from '@/lib/audioSignatureRead.mjs';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import {
   createPlanLimitPayload,
@@ -61,43 +61,10 @@ async function removePendingUpload(versionId: string, filePath: string) {
   }
 }
 
-async function readBoundedResponseBody(response: Response, maxBytes: number) {
-  if (!response.body) return new Uint8Array();
-
-  const reader = response.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let totalBytes = 0;
-
-  try {
-    while (totalBytes < maxBytes) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      const remaining = maxBytes - totalBytes;
-      const chunk = value.byteLength > remaining ? value.subarray(0, remaining) : value;
-      chunks.push(chunk);
-      totalBytes += chunk.byteLength;
-
-      if (value.byteLength > remaining) break;
-    }
-  } finally {
-    await reader.cancel().catch(() => undefined);
-  }
-
-  const result = new Uint8Array(totalBytes);
-  let offset = 0;
-  for (const chunk of chunks) {
-    result.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return result;
-}
-
 async function readStoredAudioSignature(
   filePath: string,
   actualSize: number,
   trace: (stage: string) => void = () => undefined,
-  compareTransport = false,
 ) {
   trace('signature_url_started');
   const { data, error } = await supabaseServer.storage
@@ -106,65 +73,7 @@ async function readStoredAudioSignature(
 
   if (error || !data?.signedUrl) throw error ?? new Error('Could not inspect uploaded audio.');
 
-  const finalByte = Math.max(0, Math.min(actualSize, AUDIO_SIGNATURE_BYTES) - 1);
-  // Temporary Preview-only comparison. The signed URL stays entirely server-side
-  // and this probe cannot finalize an upload or replace signature validation.
-  const nativeProbe = compareTransport
-    ? await probeSignedAudioTransport(data.signedUrl, finalByte + 1)
-    : null;
-  trace(nativeProbe ? `signature_fetch_started_native_${nativeProbe}` : 'signature_fetch_started');
-  const response = await fetch(data.signedUrl, {
-    cache: 'no-store',
-    headers: { Range: `bytes=0-${finalByte}` },
-  });
-  trace('signature_headers_received');
-
-  if (!response.ok) {
-    await response.body?.cancel();
-    throw new Error(`Audio inspection returned status ${response.status}.`);
-  }
-
-  trace('signature_body_started');
-  const signature = await readBoundedResponseBody(response, AUDIO_SIGNATURE_BYTES);
-  trace('signature_body_finished');
-  return signature;
-}
-
-async function probeSignedAudioTransport(signedUrl: string, maxBytes: number) {
-  return new Promise<string>(resolve => {
-    let settled = false;
-    let receivedBytes = 0;
-    const finish = (result: string) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      probe.destroy();
-      resolve(result);
-    };
-    const probe = requestHttps(signedUrl, {
-      method: 'GET',
-      headers: { Range: `bytes=0-${maxBytes - 1}` },
-    }, response => {
-      const status = response.statusCode ?? 0;
-      response.on('error', () => finish('response_error'));
-      if (status < 200 || status >= 300) {
-        response.destroy();
-        finish(`status_${status}`);
-        return;
-      }
-      response.on('data', (chunk: Buffer) => {
-        receivedBytes += Math.min(chunk.byteLength, maxBytes - receivedBytes);
-        if (receivedBytes >= maxBytes) {
-          response.destroy();
-          finish(`status_${status}_bytes_${receivedBytes}`);
-        }
-      });
-      response.on('end', () => finish(`status_${status}_bytes_${receivedBytes}`));
-    });
-    const timer = setTimeout(() => finish('timeout'), 10_000);
-    probe.on('error', () => finish('request_error'));
-    probe.end();
-  });
+  return fetchAudioSignaturePrefix(data.signedUrl, Math.min(actualSize, AUDIO_SIGNATURE_BYTES), { trace });
 }
 
 export async function POST(req: NextRequest, props: { params: Promise<{ versionId: string }> }) {
@@ -248,7 +157,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ versionI
 
     let signatureBytes: Uint8Array;
     try {
-      signatureBytes = await readStoredAudioSignature(filePath, actualSize, trace, debugEnabled);
+      signatureBytes = await readStoredAudioSignature(filePath, actualSize, trace);
     } catch (error) {
       console.warn('[versions/finalize] Could not inspect uploaded audio yet:', error);
       return NextResponse.json(

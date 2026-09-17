@@ -446,15 +446,14 @@ test('audio upload routes reject malformed metadata and inspect stored bytes bef
 
   assertIncludesAll(finalizeRoute, [
     '.createSignedUrl(filePath, 60)',
-    "headers: { Range: `bytes=0-${finalByte}` }",
-    'readBoundedResponseBody(response, AUDIO_SIGNATURE_BYTES)',
+    'fetchAudioSignaturePrefix(data.signedUrl, Math.min(actualSize, AUDIO_SIGNATURE_BYTES), { trace })',
     'matchesAudioFileSignature(normalizedFile.extension, signatureBytes)',
     'The uploaded object does not match its audio file type.',
   ], 'stored audio inspection');
   assertOrdered(finalizeRoute, [
     'const actualSize',
     'const storedContentType',
-    'readStoredAudioSignature(filePath, actualSize, trace, debugEnabled)',
+    'readStoredAudioSignature(filePath, actualSize, trace)',
     'matchesAudioFileSignature(normalizedFile.extension, signatureBytes)',
     "supabaseServer.rpc('finalize_song_version_upload'",
   ], 'audio finalization validation order');
@@ -462,9 +461,6 @@ test('audio upload routes reject malformed metadata and inspect stored bytes bef
     "process.env.VERCEL_ENV === 'preview'",
     "req.headers.get('X-Song-Room-Upload-Debug') === '1'",
     'JSON.stringify({ stage, elapsedMs: Date.now() - startedAt })',
-    'await probeSignedAudioTransport(data.signedUrl, finalByte + 1)',
-    "setTimeout(() => finish('timeout'), 10_000)",
-    'Math.min(chunk.byteLength, maxBytes - receivedBytes)',
   ], 'explicit Preview-only finalizer diagnostics');
 
   assertIncludesAll(migration, [
