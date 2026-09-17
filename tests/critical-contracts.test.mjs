@@ -350,6 +350,7 @@ test('signed audio uploads continue to server verification when displayed progre
 
   const request = new FakeRequest();
   const progress = [];
+  const diagnostics = [];
   const upload = uploadAudioToSignedUrl(
     {
       file: { name: 'mix.aiff' },
@@ -357,7 +358,11 @@ test('signed audio uploads continue to server verification when displayed progre
       contentType: 'audio/aiff',
       onProgress: (loaded, total) => progress.push([loaded, total]),
     },
-    { createRequest: () => request, responseGraceMs: 40 },
+    {
+      createRequest: () => request,
+      responseGraceMs: 40,
+      onDiagnostic: (event, details) => diagnostics.push({ event, ...details }),
+    },
   );
 
   request.upload.emit('progress', { lengthComputable: true, loaded: 995, total: 1000 });
@@ -373,6 +378,12 @@ test('signed audio uploads continue to server verification when displayed progre
   assert.deepEqual(request.header, ['Content-Type', 'audio/aiff']);
   assert.deepEqual(progress, [[995, 1000], [1000, 1000]]);
   assert.equal(completion, 'upload');
+  assert.deepEqual(diagnostics.map(entry => entry.event), [
+    'started', 'displayed_completion', 'response_grace_started', 'response_grace_elapsed',
+  ]);
+  assert.ok(diagnostics.every(entry => Object.values(entry).every(
+    value => typeof value === 'number' || !value.includes('storage.test') && !value.includes('mix.aiff'),
+  )));
 });
 
 test('signed audio uploads still reject failed Storage responses', async () => {
@@ -466,7 +477,8 @@ test('audio upload routes reject malformed metadata and inspect stored bytes bef
     "xhr.upload.addEventListener('progress'",
     "xhr.upload.addEventListener('load', startResponseTimer)",
     'Math.round((event.loaded / event.total) * 100) >= 100',
-    'globalThis.setTimeout(() => finish(resolve), responseGraceMs)',
+    "diagnose('response_grace_elapsed')",
+    "get('uploadDebug') !== '1'",
     "xhr.setRequestHeader('Content-Type', contentType)",
   ], 'signed audio upload response recovery');
 
