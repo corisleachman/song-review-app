@@ -5,7 +5,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { ActionStatus, getActionStatusLabel, getActionStatusToast, getNextActionStatus, isOpenAction } from '@/lib/actionWorkflow';
 import { validateAudioUploadMetadata } from '@/lib/audioUploadPolicy.mjs';
-import { uploadAudioToSignedUrl } from '@/lib/signedAudioUpload.mjs';
+import { reportUploadDiagnostic, uploadAudioToSignedUrl } from '@/lib/signedAudioUpload.mjs';
 import { createClient } from '@/lib/supabase';
 import { formatTimestamp, getIdentity, clearAuth, clearIdentity } from '@/lib/auth';
 import { useDialogFocus } from '@/lib/useDialogFocus';
@@ -352,8 +352,11 @@ async function finalizeUploadedVersion(versionIdToFinalize: string) {
 
     let response: Response;
     try {
+      reportUploadDiagnostic('finalize_requested', { attempt });
       response = await fetch(`/api/versions/${versionIdToFinalize}/finalize`, { method: 'POST' });
+      reportUploadDiagnostic('finalize_response', { status: response.status });
     } catch (error) {
+      reportUploadDiagnostic('finalize_network_error');
       lastError = error instanceof Error ? error : new Error('Could not finish the upload.');
       continue;
     }
