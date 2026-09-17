@@ -309,6 +309,16 @@ test('audio upload policy binds supported extensions to MIME types and file sign
   assert.equal(policy.matchesAudioFileSignature('flac', asciiBytes('fLaC')), true);
   assert.equal(policy.matchesAudioFileSignature('ogg', ogg), true);
   assert.equal(policy.matchesAudioFileSignature('aiff', asciiBytes('FORM0000AIFF')), true);
+  for (const extension of ['aif', 'aiff', 'AIF', 'AIFF']) {
+    assert.equal(policy.validateAudioUploadMetadata({
+      fileName: `mix.${extension}`, fileSize: 1024, contentType: 'audio/aiff',
+    }).reason, 'aiff_unavailable');
+  }
+  assert.equal(policy.validateAudioUploadMetadata({
+    fileName: 'renamed.mp3', fileSize: 1024, contentType: 'audio/aiff',
+  }).reason, 'mime_mismatch');
+  assert.equal(policy.getAudioUploadContentType('aiff', 'audio/aiff'), 'audio/aiff');
+  assert.equal(policy.AUDIO_UPLOAD_ACCEPT, '.mp3,.wav,.m4a,.aac,.flac,.ogg');
   assert.equal(policy.matchesAudioFileSignature('mp3', asciiBytes('this is not audio')), false);
   assert.equal(policy.matchesAudioFileSignature('ogg', asciiBytes('OggS\u0000not audio', 32)), false);
 });
@@ -433,11 +443,19 @@ test('audio upload routes reject malformed metadata and inspect stored bytes bef
   ];
 
   assertIncludesAll(createRoute, [
+    "validation.reason === 'aiff_unavailable'",
+    'AIFF_UPLOAD_UNAVAILABLE_MESSAGE',
     'Upload details must be valid JSON.',
     'validateAudioUploadMetadata({',
     'contentType: fileType',
     'uploadContentType',
   ], 'audio upload allocation validation');
+  for (const client of clients) {
+    assert.ok(client.includes('accept={AUDIO_UPLOAD_ACCEPT}'));
+    assert.ok(client.includes("validation.reason === 'aiff_unavailable'"));
+    assert.ok(client.includes('AIFF_UPLOAD_UNAVAILABLE_MESSAGE'));
+    assert.ok(!client.includes('AIF, or AIFF'));
+  }
   assertOrdered(createRoute, [
     'payload = await req.json()',
     'validateAudioUploadMetadata({',

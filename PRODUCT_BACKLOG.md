@@ -188,7 +188,7 @@ Captured from a launch-readiness review (TikTok launch checklists cross-referenc
 - Add login/auth rate limiting (verify Supabase defaults, add app-level throttle).
 - Add bot protection on signup (Cloudflare Turnstile or hCaptcha).
 - Flip CSP from Report-Only to enforcing once the report endpoint is clean. ✅ DONE (2026-09-03). PR #47 squash-merged as `7e4faacd`; both production deployments reached Ready, route-specific framing remained correct, and the live header and runtime checks passed without a genuine CSP report.
-- Verify audio upload restrictions (allowed MIME types + max size caps). PR #48 merged as `6f655f23`; migration `20260903163658` is applied to staging and production. MP3, WAV, and M4A passed Preview; live oversized and renamed non-audio rejection passed. Valid AIFF closeout remains open. Full PR #50 invocation logs show successful Storage PUT and signed GET headers, then a bounded body read that hangs until Preview returns 504. Next response cloning and awaited one-branch cancellation reproduce the stall locally. The focused fix owns the GET lifetime with an abort signal and deadline, and doesn't await cloned-stream cleanup. Local tests pass 47/47; verify valid AIFF completion and invalid-file rejection in Preview before requesting production rollout approval.
+- Verify audio upload restrictions (allowed MIME types + max size caps). PR #48 merged as `6f655f23`; migration `20260903163658` is applied to staging and production. MP3, WAV, and M4A passed Preview; live oversized and renamed non-audio rejection passed. PR #50's signature-read lifetime fix now finalized the user's AIFF with 200 on 17 September, confirming upload completion. AIFF playback failed separately and is deferred as P3; new AIFF/AIF allocation and selections are temporarily blocked in the local candidate. Existing files are preserved. Verify AIFF rejection and MP3/WAV upload, waveform and playback on the next Preview before production rollout approval.
 - Standardise input validation across API routes.
 
 ### SEO / discoverability
@@ -202,3 +202,14 @@ Captured from a launch-readiness review (TikTok launch checklists cross-referenc
 - Manual test all forms (signup, login, feedback, upload, checkout).
 - Broken-link crawl (marketing + blog + in-app nav).
 - Lighthouse performance pass.
+
+## Deferred audio-format support
+
+### AIFF/AIF browser playback and waveform support
+- Priority: P3, deferred until after beta-critical work.
+- Logged: 2026-09-17
+- Status: Playback support deferred. Temporary new-upload restriction implemented in PR #50; production rollout pending.
+- Evidence: the user's 623,130-byte AIFF finalized on Preview `dpl_BRgru3UvRRzAECzYhqacVACNbTBr` at 17:49:30 UTC, and version/page reads returned 200. Pressing Play produced no audio and briefly showed “Waveform load interrupted”. Upload completion and browser playback are separate failures.
+- Working cause: browser decoding/container compatibility is likely, but the generic retry message does not prove the issue is exclusive to AIFF. Earlier Preview M4A waveform retries also remain unexplained; keep a supported-format playback check in beta QA.
+- Interim behaviour: block new `.aif` and `.aiff` selections and server allocations with WAV/MP3 export guidance. Keep previously stored files, legacy inspection, and historical versions unchanged. No transcoding or Storage migration in this slice.
+- Acceptance: before re-enabling, verify representative AIFF and AIFC variants across Chrome, Safari/iOS and Firefox, including waveform decoding, seeking, playback, background playback and version switching. Choose a separately reviewed conversion/delivery approach only if necessary.

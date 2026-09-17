@@ -6037,3 +6037,35 @@ Shared post-transfer response recovery for all three signed audio upload journey
 - Moved bounded signature reading into `lib/audioSignatureRead.mjs`. The request now carries an explicit abort signal, which opts out of Next response deduplication, has a ten-second read deadline, and aborts its owned transport on completion. Body cleanup is initiated without awaiting a tee cancellation promise.
 - Removed the temporary native HTTPS comparison. Signed delivery, the 64 KiB prefix cap, membership checks, metadata restrictions, signature validation, quota accounting, and finalization RPC remain intact.
 - Changed files: the finalizer route, new signature reader, `tests/audio-signature-read.test.mjs`, contract tests, and the review/backlog/log documents. Local tests passed 47/47; TypeScript and focused ESLint passed. Preview upload verification is still required before rollout.
+
+---
+
+## 2026-09-17 - Defer AIFF playback and block new AIFF uploads
+
+### What we were trying to achieve
+
+Stop accepting a format with a reproduced playback failure while preserving the upload-completion fix and keeping beta-critical work first.
+
+### Feature / change being made
+
+Temporary client/server AIFF upload restriction and lower-priority playback backlog.
+
+### Files changed
+
+- `lib/audioUploadPolicy.mjs`
+- `app/api/versions/create/route.ts`
+- `app/upload/page.tsx`
+- `app/songs/[id]/upload/page.tsx`
+- `app/songs/[id]/versions/[versionId]/page.tsx`
+- `tests/critical-contracts.test.mjs`
+- `CODEBASE_REVIEW.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The user's latest staging AIFF version `48a7d162-bd75-4f8e-b7fc-b8c6239605d5` finalized four seconds after allocation, with matching 623,130-byte Storage metadata. The finalizer returned 200 on Preview `dpl_BRgru3UvRRzAECzYhqacVACNbTBr`; subsequent version/page requests returned 200. This verifies the prior finalizer fix for this upload, not successful playback.
+- The user reported silence and the generic waveform retry message after pressing Play. AIFF browser compatibility is a working diagnosis, not proof that every other supported format works. Earlier M4A waveform retries are still unexplained.
+- New AIFF/AIF metadata is rejected before allocation; all three pickers share the supported extension list. Drag/drop rejection presents specific WAV/MP3 export guidance. Previously allocated/stored AIFF inspection remains available, avoiding deletion or reinterpretation of historical versions.
+- No migration, Storage setting, dependency, authentication or billing change. Production and existing test objects remain untouched. AIFF playback support is recorded as P3, after beta-critical work.
+- Local checks: 47 tests passed, TypeScript passed, focused ESLint had no errors and six existing warnings. Supported MP3/WAV upload and playback plus AIFF rejection still need Preview verification before merge approval. Rollback is the app revert or preceding deployment; no data rollback is needed.

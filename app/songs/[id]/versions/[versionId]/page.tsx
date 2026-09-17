@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { ActionStatus, getActionStatusLabel, getActionStatusToast, getNextActionStatus, isOpenAction } from '@/lib/actionWorkflow';
-import { validateAudioUploadMetadata } from '@/lib/audioUploadPolicy.mjs';
+import { AIFF_UPLOAD_UNAVAILABLE_MESSAGE, AUDIO_UPLOAD_ACCEPT, validateAudioUploadMetadata } from '@/lib/audioUploadPolicy.mjs';
 import { reportUploadDiagnostic, uploadAudioToSignedUrl } from '@/lib/signedAudioUpload.mjs';
 import { createClient } from '@/lib/supabase';
 import { formatTimestamp, getIdentity, clearAuth, clearIdentity } from '@/lib/auth';
@@ -328,9 +328,10 @@ function validateAudioFile(file: File) {
   });
 
   if (validation.ok) return null;
+  if (validation.reason === 'aiff_unavailable') return AIFF_UPLOAD_UNAVAILABLE_MESSAGE;
 
   if (validation.reason === 'unsupported_extension' || validation.reason === 'mime_mismatch') {
-    return 'Choose an audio file such as MP3, WAV, M4A, AAC, FLAC, OGG, AIF, or AIFF.';
+    return 'Choose an audio file such as MP3, WAV, M4A, AAC, FLAC, or OGG.';
   }
 
   if (validation.reason === 'invalid_size') return 'That audio file is empty.';
@@ -3684,7 +3685,7 @@ function VersionPageInner() {
       <input
         ref={versionFileInputRef}
         type="file"
-        accept="audio/*,.mp3,.wav,.m4a,.aac,.flac,.ogg,.aif,.aiff"
+        accept={AUDIO_UPLOAD_ACCEPT}
         style={{ display: 'none' }}
         onChange={e => {
           handleVersionFilePicked(e.target.files?.[0]);
