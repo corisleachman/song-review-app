@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getIdentity } from '@/lib/auth';
-import { validateAudioUploadMetadata } from '@/lib/audioUploadPolicy.mjs';
+import { AIFF_UPLOAD_UNAVAILABLE_MESSAGE, AUDIO_UPLOAD_ACCEPT, validateAudioUploadMetadata } from '@/lib/audioUploadPolicy.mjs';
+import { uploadAudioToSignedUrl } from '@/lib/signedAudioUpload.mjs';
 import { createClient } from '@/lib/supabase';
 import styles from '../song.module.css';
 
@@ -30,9 +31,10 @@ function validateAudioFile(file: File) {
   });
 
   if (validation.ok) return null;
+  if (validation.reason === 'aiff_unavailable') return AIFF_UPLOAD_UNAVAILABLE_MESSAGE;
   if (validation.reason === 'invalid_size') return 'That audio file is empty.';
   if (validation.reason === 'too_large') return 'Choose an audio file no larger than 200MB.';
-  return 'Choose an MP3, WAV, M4A, AAC, FLAC, OGG, AIF, or AIFF audio file.';
+  return 'Choose an MP3, WAV, M4A, AAC, FLAC, or OGG audio file.';
 }
 
 async function finalizeUploadedVersion(versionId: string) {
@@ -187,16 +189,11 @@ export default function UploadVersionPage() {
 
       if (!uploadContentType) throw new Error('Could not determine the audio file type.');
 
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.upload.addEventListener('progress', e => {
-          if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100));
-        });
-        xhr.addEventListener('load', () => (xhr.status < 300 ? resolve() : reject(new Error('Upload failed'))));
-        xhr.addEventListener('error', () => reject(new Error('Network error')));
-        xhr.open('PUT', uploadUrl);
-        xhr.setRequestHeader('Content-Type', uploadContentType);
-        xhr.send(file);
+      await uploadAudioToSignedUrl({
+        file,
+        uploadUrl,
+        contentType: uploadContentType,
+        onProgress: (loaded, total) => setProgress(Math.round((loaded / total) * 100)),
       });
 
       await finalizeUploadedVersion(versionId);
@@ -274,7 +271,7 @@ export default function UploadVersionPage() {
           <input
             ref={fileInputRef}
             type="file"
-            accept="audio/*,.mp3,.wav,.m4a,.aac,.flac,.ogg,.aif,.aiff"
+            accept={AUDIO_UPLOAD_ACCEPT}
             style={{ display: 'none' }}
             onChange={e => {
               const f = e.target.files?.[0];

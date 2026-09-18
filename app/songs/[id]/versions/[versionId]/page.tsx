@@ -4,7 +4,8 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { ActionStatus, getActionStatusLabel, getActionStatusToast, getNextActionStatus, isOpenAction } from '@/lib/actionWorkflow';
-import { validateAudioUploadMetadata } from '@/lib/audioUploadPolicy.mjs';
+import { AIFF_UPLOAD_UNAVAILABLE_MESSAGE, AUDIO_UPLOAD_ACCEPT, validateAudioUploadMetadata } from '@/lib/audioUploadPolicy.mjs';
+import { reportUploadDiagnostic, uploadAudioToSignedUrl } from '@/lib/signedAudioUpload.mjs';
 import { createClient } from '@/lib/supabase';
 import { formatTimestamp, getIdentity, clearAuth, clearIdentity } from '@/lib/auth';
 import { useDialogFocus } from '@/lib/useDialogFocus';
@@ -327,9 +328,10 @@ function validateAudioFile(file: File) {
   });
 
   if (validation.ok) return null;
+  if (validation.reason === 'aiff_unavailable') return AIFF_UPLOAD_UNAVAILABLE_MESSAGE;
 
   if (validation.reason === 'unsupported_extension' || validation.reason === 'mime_mismatch') {
-    return 'Choose an audio file such as MP3, WAV, M4A, AAC, FLAC, OGG, AIF, or AIFF.';
+    return 'Choose an audio file such as MP3, WAV, M4A, AAC, FLAC, or OGG.';
   }
 
   if (validation.reason === 'invalid_size') return 'That audio file is empty.';
@@ -351,8 +353,16 @@ async function finalizeUploadedVersion(versionIdToFinalize: string) {
 
     let response: Response;
     try {
-      response = await fetch(`/api/versions/${versionIdToFinalize}/finalize`, { method: 'POST' });
+      reportUploadDiagnostic('finalize_requested', { attempt });
+      response = await fetch(`/api/versions/${versionIdToFinalize}/finalize`, {
+        method: 'POST',
+        headers: new URLSearchParams(window.location.search).get('uploadDebug') === '1'
+          ? { 'X-Song-Room-Upload-Debug': '1' }
+          : undefined,
+      });
+      reportUploadDiagnostic('finalize_response', { status: response.status });
     } catch (error) {
+      reportUploadDiagnostic('finalize_network_error');
       lastError = error instanceof Error ? error : new Error('Could not finish the upload.');
       continue;
     }
@@ -2429,18 +2439,11 @@ function VersionPageInner() {
       }
       createdVersionId = data.versionId;
 
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.upload.addEventListener('progress', event => {
-          if (event.lengthComputable) {
-            setVersionUploadProgress(Math.round((event.loaded / event.total) * 100));
-          }
-        });
-        xhr.addEventListener('load', () => (xhr.status < 300 ? resolve() : reject(new Error('Upload failed'))));
-        xhr.addEventListener('error', () => reject(new Error('Upload failed')));
-        xhr.open('PUT', data.uploadUrl);
-        xhr.setRequestHeader('Content-Type', data.uploadContentType);
-        xhr.send(pendingVersionFile);
+      await uploadAudioToSignedUrl({
+        file: pendingVersionFile,
+        uploadUrl: data.uploadUrl,
+        contentType: data.uploadContentType,
+        onProgress: (loaded, total) => setVersionUploadProgress(Math.round((loaded / total) * 100)),
       });
 
       await finalizeUploadedVersion(data.versionId);
@@ -3682,7 +3685,7 @@ function VersionPageInner() {
       <input
         ref={versionFileInputRef}
         type="file"
-        accept="audio/*,.mp3,.wav,.m4a,.aac,.flac,.ogg,.aif,.aiff"
+        accept={AUDIO_UPLOAD_ACCEPT}
         style={{ display: 'none' }}
         onChange={e => {
           handleVersionFilePicked(e.target.files?.[0]);

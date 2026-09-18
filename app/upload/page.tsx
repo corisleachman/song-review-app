@@ -2,7 +2,8 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { validateAudioUploadMetadata } from '@/lib/audioUploadPolicy.mjs';
+import { AIFF_UPLOAD_UNAVAILABLE_MESSAGE, AUDIO_UPLOAD_ACCEPT, validateAudioUploadMetadata } from '@/lib/audioUploadPolicy.mjs';
+import { uploadAudioToSignedUrl } from '@/lib/signedAudioUpload.mjs';
 import styles from './upload.module.css';
 
 type Status = 'uploading' | 'done' | 'error';
@@ -38,9 +39,10 @@ function validateAudioFile(file: File) {
   });
 
   if (validation.ok) return null;
+  if (validation.reason === 'aiff_unavailable') return AIFF_UPLOAD_UNAVAILABLE_MESSAGE;
   if (validation.reason === 'invalid_size') return 'That audio file is empty.';
   if (validation.reason === 'too_large') return 'Choose an audio file no larger than 200MB.';
-  return 'Choose an MP3, WAV, M4A, AAC, FLAC, OGG, AIF, or AIFF audio file.';
+  return 'Choose an MP3, WAV, M4A, AAC, FLAC, or OGG audio file.';
 }
 
 // Confirm the uploaded audio actually landed in storage (mirrors the single-song
@@ -127,14 +129,11 @@ export default function UploadPage() {
 
       if (!uploadContentType) throw new Error('Could not determine the audio file type.');
 
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.upload.addEventListener('progress', (e) => { if (e.lengthComputable) update(item.id, { progress: e.loaded / e.total }); });
-        xhr.addEventListener('load', () => (xhr.status < 300 ? resolve() : reject(new Error('Upload failed'))));
-        xhr.addEventListener('error', () => reject(new Error('Network error')));
-        xhr.open('PUT', uploadUrl);
-        xhr.setRequestHeader('Content-Type', uploadContentType);
-        xhr.send(item.file);
+      await uploadAudioToSignedUrl({
+        file: item.file,
+        uploadUrl,
+        contentType: uploadContentType,
+        onProgress: (loaded, total) => update(item.id, { progress: loaded / total }),
       });
       await finalizeVersion(versionId);
       await verifyVersion(versionId);
@@ -149,16 +148,18 @@ export default function UploadPage() {
 
   const addFiles = useCallback((files: FileList | File[]) => {
     const all = Array.from(files);
+    let skippedAiff = false;
     const audio = all.filter((file) => {
       const validation = validateAudioUploadMetadata({
         fileName: file.name,
         fileSize: file.size,
         contentType: file.type,
       });
+      if (validation.reason === 'aiff_unavailable') skippedAiff = true;
       return validation.ok || validation.reason === 'invalid_size' || validation.reason === 'too_large';
     });
     const skipped = all.length - audio.length;
-    setNotice(skipped > 0 ? `Skipped ${skipped} non-audio file${skipped === 1 ? '' : 's'}.` : null);
+    setNotice(skippedAiff ? AIFF_UPLOAD_UNAVAILABLE_MESSAGE : skipped > 0 ? `Skipped ${skipped} non-audio file${skipped === 1 ? '' : 's'}.` : null);
     if (!audio.length) return;
     const newItems: Item[] = audio.map((f) => {
       const title = cleanTitle(f.name);
@@ -250,7 +251,7 @@ export default function UploadPage() {
               aria-label="Choose audio tracks to upload"
             >
               <span className={styles.dropBig}>Drop your tracks here</span>
-              <span className={styles.dropSmall}>WAV, MP3, AIFF, M4A · or click to browse</span>
+              <span className={styles.dropSmall}>WAV, MP3, M4A · or click to browse</span>
             </button>
           )}
 
@@ -314,7 +315,7 @@ export default function UploadPage() {
         </>
       )}
 
-      <input ref={inputRef} type="file" accept="audio/*" multiple className={styles.hiddenInput} onChange={(e) => { if (e.target.files) addFiles(e.target.files); e.target.value = ''; }} />
+      <input ref={inputRef} type="file" accept={AUDIO_UPLOAD_ACCEPT} multiple className={styles.hiddenInput} onChange={(e) => { if (e.target.files) addFiles(e.target.files); e.target.value = ''; }} />
       <input ref={artInputRef} type="file" accept="image/*" className={styles.hiddenInput} onChange={(e) => { const f = e.target.files?.[0]; if (f) void onArtChosen(f); e.target.value = ''; }} />
 
       {anyItems && (
