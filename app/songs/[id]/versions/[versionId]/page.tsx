@@ -509,6 +509,9 @@ function VersionPageInner() {
   const waveRetryTimerRef = useRef<number | null>(null);
   const waveLoadTimeoutRef = useRef<number | null>(null);
   const waveAutoRetryUsedRef = useRef(false);
+  const playRequestedRef = useRef(false);
+  const waveSessionKeyRef = useRef<string | null>(null);
+  const startWaveformLoadRef = useRef<(() => void) | null>(null);
   const hoverCanvasRef = useRef<HTMLCanvasElement>(null);
   const desktopReactiveCanvasRef = useRef<HTMLCanvasElement>(null);
   const mobileReactiveCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -971,13 +974,17 @@ function VersionPageInner() {
 
   const retryWaveform = useCallback((mode: 'auto' | 'manual' = 'manual') => {
     clearWaveTimers();
+    waveLoadIdRef.current += 1;
+    startWaveformLoadRef.current = null;
     if (mode === 'manual') {
       waveAutoRetryUsedRef.current = false;
       nativeAudioFallbackRef.current = false;
+      playRequestedRef.current = true;
     }
     audioLoadedRef.current = false;
     setWaveErr(null);
     setIsReady(false);
+    setIsPlaying(playRequestedRef.current);
     setIsRetryingWave(mode === 'auto');
     setCurrentTime(0);
     setDuration(0);
@@ -1009,6 +1016,11 @@ function VersionPageInner() {
     };
     const handlePlay = () => {
       if (loadId !== waveLoadIdRef.current) return;
+      playRequestedRef.current = true;
+      if (nativeAudioFallbackRef.current) {
+        setIsReady(true);
+        setWaveErr(null);
+      }
       setIsPlaying(true);
       if ('mediaSession' in navigator) {
         navigator.mediaSession.playbackState = 'playing';
@@ -1016,6 +1028,7 @@ function VersionPageInner() {
     };
     const handlePause = () => {
       if (loadId !== waveLoadIdRef.current) return;
+      playRequestedRef.current = false;
       setIsPlaying(false);
       if ('mediaSession' in navigator) {
         navigator.mediaSession.playbackState = 'paused';
@@ -1023,6 +1036,7 @@ function VersionPageInner() {
     };
     const handleEnded = () => {
       if (loadId !== waveLoadIdRef.current) return;
+      playRequestedRef.current = false;
       setIsPlaying(false);
       if ('mediaSession' in navigator) {
         navigator.mediaSession.playbackState = 'none';
@@ -1046,7 +1060,8 @@ function VersionPageInner() {
     };
   }, []);
 
-  const playNativeAudioFallback = useCallback(async (url: string, reason: string) => {
+  const playNativeAudioFallback = useCallback(async (url: string, reason: string, loadId = waveLoadIdRef.current) => {
+    if (loadId !== waveLoadIdRef.current || !playRequestedRef.current) return;
     const waveAudio = audioRef.current;
     let audio = nativeAudioRef.current;
 
@@ -1057,6 +1072,9 @@ function VersionPageInner() {
     }
 
     clearWaveTimers();
+    nativeAudioCleanupRef.current?.();
+    nativeAudioCleanupRef.current = null;
+    nativeAudioFallbackRef.current = true;
     if (wavesurferRef.current) {
       try { wavesurferRef.current.pause(); } catch {}
     }
@@ -1068,17 +1086,17 @@ function VersionPageInner() {
       } catch {}
     }
 
-    nativeAudioFallbackRef.current = true;
     audioRef.current = audio;
     analyserAudioRef.current = null;
     if (reactiveAudioContextRef.current) {
       await reactiveAudioContextRef.current.close();
     }
+    if (loadId !== waveLoadIdRef.current || !playRequestedRef.current) return;
     reactiveAudioContextRef.current = null;
     reactiveSourceRef.current = null;
     reactiveSourceElementRef.current = null;
     reactiveAnalyserRef.current = null;
-    attachNativeAudioEvents(audio, waveLoadIdRef.current);
+    attachNativeAudioEvents(audio, loadId);
     setIsRetryingWave(false);
     setWaveErr(null);
     setIsReady(true);
@@ -1091,6 +1109,49 @@ function VersionPageInner() {
 
     await audio.play();
   }, [attachNativeAudioEvents, clearWaveTimers]);
+
+  const reportPlaybackFailure = useCallback((error: unknown, loadId: number) => {
+    if (loadId !== waveLoadIdRef.current) return;
+    playRequestedRef.current = false;
+    setIsPlaying(false);
+    setWaveErr(error instanceof Error ? error.message : 'Playback could not start. Press Play to try again.');
+  }, []);
+
+  const handlePlaybackToggle = useCallback(() => {
+    if (!audioUrl || loading) return;
+    const loadId = waveLoadIdRef.current;
+    const audio = audioRef.current;
+    if (nativeAudioFallbackRef.current && audio) {
+      playRequestedRef.current = audio.paused;
+      setIsPlaying(audio.paused);
+      if (audio.paused) {
+        setWaveErr(null);
+        void audio.play().catch(error => reportPlaybackFailure(error, loadId));
+      } else {
+        audio.pause();
+      }
+      return;
+    }
+
+    if (!isReady) {
+      if (playRequestedRef.current) return;
+      playRequestedRef.current = true;
+      setIsPlaying(true);
+      if (waveErr) {
+        retryWaveform('manual');
+      } else {
+        startWaveformLoadRef.current?.();
+      }
+      return;
+    }
+
+    const ws = wavesurferRef.current;
+    if (!ws) return;
+    playRequestedRef.current = !ws.isPlaying();
+    setIsPlaying(playRequestedRef.current);
+    setWaveErr(null);
+    void ws.playPause().catch(error => reportPlaybackFailure(error, loadId));
+  }, [audioUrl, isReady, loading, reportPlaybackFailure, retryWaveform, waveErr]);
 
   useEffect(() => {
     let mounted = true;
@@ -1291,7 +1352,7 @@ function VersionPageInner() {
       stopReactiveDrawing();
       drawReactiveIdle();
     }
-  }, [drawReactiveIdle, ensureReactiveAudioGraph, isPlaying, startReactiveDrawing, stopReactiveDrawing]);
+  }, [drawReactiveIdle, ensureReactiveAudioGraph, isPlaying, isReady, startReactiveDrawing, stopReactiveDrawing]);
 
   useEffect(() => {
     return () => {
@@ -1324,23 +1385,12 @@ function VersionPageInner() {
 
       event.preventDefault();
 
-      if (nativeAudioFallbackRef.current && audioRef.current) {
-        if (audioRef.current.paused) {
-          void audioRef.current.play();
-        } else {
-          audioRef.current.pause();
-        }
-        return;
-      }
-
-      if (!wavesurferRef.current || !isReady || waveErr) return;
-
-      wavesurferRef.current.playPause();
+      handlePlaybackToggle();
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isReady, waveErr]);
+  }, [handlePlaybackToggle]);
 
   const triggerCommentAnimation = useCallback((commentId: string | null) => {
     if (!commentId) return;
@@ -1559,6 +1609,7 @@ function VersionPageInner() {
   const initWaveSurfer = useCallback(async (container: HTMLDivElement, url: string) => {
     const loadId = ++waveLoadIdRef.current;
     clearWaveTimers();
+    startWaveformLoadRef.current = null;
     logVersionInit('wave:init-start', { loadId, hasContainer: container.isConnected, url });
 
     if (wavesurferRef.current) {
@@ -1607,12 +1658,15 @@ function VersionPageInner() {
       reactiveAudioContextRef.current = null;
     }
 
+    let failureHandled = false;
     const handleWaveFailure = (message: string) => {
-      if (loadId !== waveLoadIdRef.current) return;
+      if (loadId !== waveLoadIdRef.current || failureHandled) return;
+      failureHandled = true;
       clearWaveTimers();
+      startWaveformLoadRef.current = null;
       logVersionInit('wave:init-failed', { loadId, message });
 
-      if (!waveAutoRetryUsedRef.current) {
+      if (playRequestedRef.current && !waveAutoRetryUsedRef.current) {
         waveAutoRetryUsedRef.current = true;
         setWaveErr('Waveform load interrupted. Retrying…');
         setIsRetryingWave(true);
@@ -1624,12 +1678,26 @@ function VersionPageInner() {
       }
 
       setIsRetryingWave(false);
+      playRequestedRef.current = false;
+      setIsPlaying(false);
+      setIsReady(false);
       setWaveErr(message);
     };
 
-    waveLoadTimeoutRef.current = window.setTimeout(() => {
-      handleWaveFailure('Waveform took too long to load. Try again.');
-    }, 12000);
+    let fallbackStarted = false;
+    const handleWaveError = (error: Error) => {
+      const message = error?.message || String(error);
+      if (loadId !== waveLoadIdRef.current || failureHandled || fallbackStarted || message.toLowerCase().includes('aborted')) return;
+      if (!playRequestedRef.current) {
+        handleWaveFailure(message);
+        return;
+      }
+      fallbackStarted = true;
+      clearWaveTimers();
+      void playNativeAudioFallback(url, message, loadId).catch(fallbackError => {
+        handleWaveFailure(fallbackError instanceof Error ? fallbackError.message : 'Failed to load audio. Please try again.');
+      });
+    };
 
     const ws = WaveSurfer.create({
       container,
@@ -1651,13 +1719,16 @@ function VersionPageInner() {
     attachNativeAudioEvents(audio, loadId);
 
     ws.on('ready', (dur: number) => {
-      if (loadId !== waveLoadIdRef.current) return;
+      if (loadId !== waveLoadIdRef.current || failureHandled || nativeAudioFallbackRef.current) return;
       clearWaveTimers();
       setWaveErr(null);
       setDuration(dur);
       setIsReady(true);
       setIsRetryingWave(false);
       logVersionInit('wave:ready', { loadId, duration: dur });
+      if (playRequestedRef.current && !nativeAudioFallbackRef.current) {
+        void ws.play().catch(error => reportPlaybackFailure(error, loadId));
+      }
 
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       if (isMobile) {
@@ -1674,9 +1745,15 @@ function VersionPageInner() {
         }
       }
     });
-    ws.on('timeupdate', (t: number) => setCurrentTime(t));
-    ws.on('seeking', (t: number) => setCurrentTime(t));
+    ws.on('timeupdate', (t: number) => {
+      if (loadId === waveLoadIdRef.current) setCurrentTime(t);
+    });
+    ws.on('seeking', (t: number) => {
+      if (loadId === waveLoadIdRef.current) setCurrentTime(t);
+    });
     ws.on('play', () => {
+      if (loadId !== waveLoadIdRef.current) return;
+      playRequestedRef.current = true;
       setIsPlaying(true);
       if ('mediaSession' in navigator) {
         const artwork: MediaImage[] = songImageRef.current
@@ -1720,35 +1797,35 @@ function VersionPageInner() {
       }
     });
     ws.on('pause', () => {
+      if (loadId !== waveLoadIdRef.current || nativeAudioFallbackRef.current) return;
+      playRequestedRef.current = false;
       setIsPlaying(false);
       if ('mediaSession' in navigator) {
         navigator.mediaSession.playbackState = 'paused';
       }
     });
-    ws.on('finish', () => setIsPlaying(false));
-    ws.on('error', (e: Error) => {
-      const message = e?.message || String(e);
-      if (loadId !== waveLoadIdRef.current || message.toLowerCase().includes('aborted')) return;
-      console.error('WaveSurfer error:', e);
-      if (message.toLowerCase().includes('failed to fetch')) {
-        void playNativeAudioFallback(url, message).catch(fallbackError => {
-          handleWaveFailure(
-            fallbackError instanceof Error
-              ? fallbackError.message
-              : 'Failed to load audio. Please try again.'
-          );
-        });
-        return;
-      }
-      handleWaveFailure(message);
+    ws.on('finish', () => {
+      if (loadId !== waveLoadIdRef.current) return;
+      playRequestedRef.current = false;
+      setIsPlaying(false);
     });
+    ws.on('error', handleWaveError);
 
     wavesurferRef.current = ws;
-    // Don't call ws.load() here — audio is loaded lazily on first play press.
-    // This prevents downloading the MP3 on every page view.
-  }, [attachNativeAudioEvents, clearWaveTimers, playNativeAudioFallback, retryWaveform, router]);
+    startWaveformLoadRef.current = () => {
+      if (loadId !== waveLoadIdRef.current || failureHandled || audioLoadedRef.current || !playRequestedRef.current) return;
+      audioLoadedRef.current = true;
+      waveLoadTimeoutRef.current = window.setTimeout(() => {
+        handleWaveFailure('Waveform took too long to load. Try again.');
+      }, 12000);
+      void ws.load(url).catch(handleWaveError);
+    };
+    // Keep audio lazy, but honour a Play press made while initialization awaited the module.
+    if (playRequestedRef.current) startWaveformLoadRef.current();
+  }, [attachNativeAudioEvents, clearWaveTimers, playNativeAudioFallback, reportPlaybackFailure, retryWaveform, router]);
 
-  const stopPlayback = useCallback(() => {
+  const stopPlayback = useCallback((preservePlayRequest = false) => {
+    if (!preservePlayRequest) playRequestedRef.current = false;
     if (wavesurferRef.current) {
       try { wavesurferRef.current.pause(); } catch {}
     }
@@ -1783,6 +1860,7 @@ function VersionPageInner() {
   }, [confirmDiscardCommentDraft, router, stopPlayback]);
 
   const pauseForComment = useCallback(() => {
+    playRequestedRef.current = false;
     if (wavesurferRef.current) {
       try { wavesurferRef.current.pause(); } catch {}
     }
@@ -1830,32 +1908,56 @@ function VersionPageInner() {
 
   useEffect(() => {
     if (!audioUrl || loading) return;
+    const sessionKey = `${versionId}:${audioUrl}`;
+    if (waveSessionKeyRef.current !== sessionKey) {
+      waveSessionKeyRef.current = sessionKey;
+      waveAutoRetryUsedRef.current = false;
+      playRequestedRef.current = false;
+    }
     waveLoadIdRef.current += 1;
-    waveAutoRetryUsedRef.current = false;
+    startWaveformLoadRef.current = null;
     audioLoadedRef.current = false;
     setIsReady(false);
     setWaveErr(null);
-    setIsRetryingWave(false);
+    setIsPlaying(playRequestedRef.current);
+    setIsRetryingWave(playRequestedRef.current && waveAutoRetryUsedRef.current);
     setDuration(0);
 
     let attempts = 0;
+    let cancelled = false;
+    let containerTimer: ReturnType<typeof setTimeout> | null = null;
 
     const tryInit = () => {
+      if (cancelled) return;
       if (waveformRef.current) {
-        initWaveSurfer(waveformRef.current, audioUrl);
+        void initWaveSurfer(waveformRef.current, audioUrl).catch(error => {
+          if (cancelled) return;
+          playRequestedRef.current = false;
+          setIsPlaying(false);
+          setIsRetryingWave(false);
+          setWaveErr(error instanceof Error ? error.message : 'Waveform could not initialize. Try again.');
+        });
       } else if (attempts++ < 20) {
-        setTimeout(tryInit, 50);
+        containerTimer = setTimeout(tryInit, 50);
+      } else {
+        playRequestedRef.current = false;
+        setIsPlaying(false);
+        setIsRetryingWave(false);
+        setWaveErr('Waveform could not initialize. Try again.');
       }
     };
 
     const debounceTimer = setTimeout(tryInit, 80);
 
     return () => {
+      cancelled = true;
       clearTimeout(debounceTimer);
+      if (containerTimer) clearTimeout(containerTimer);
       clearWaveTimers();
       waveLoadIdRef.current += 1;
+      startWaveformLoadRef.current = null;
       audioLoadedRef.current = false;
-      stopPlayback();
+      stopPlayback(true);
       if (wavesurferRef.current) {
         try { wavesurferRef.current.destroy(); } catch {}
         wavesurferRef.current = null;
@@ -1897,7 +1999,7 @@ function VersionPageInner() {
       reactiveAnalyserRef.current = null;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [audioUrl, waveReloadNonce, loading]);
+  }, [audioUrl, versionId, waveReloadNonce, loading]);
 
   async function loadTasks() {
     const payload = await fetchJsonWithTimeout<{ tasks: Task[] }>(
@@ -2814,47 +2916,8 @@ function VersionPageInner() {
               <div className={styles.heroControls}>
                 <button
                   className={styles.heroPlayBtn}
-                  onClick={() => {
-                    const ws = wavesurferRef.current;
-                    const audio = audioRef.current;
-                    if (!audioUrl) return;
-
-                    if (nativeAudioFallbackRef.current && audio) {
-                      if (audio.paused) {
-                        setIsPlaying(true); // immediate feedback
-                        void audio.play();
-                      } else {
-                        setIsPlaying(false);
-                        audio.pause();
-                      }
-                      return;
-                    }
-
-                    if (!ws) return;
-                    if (!audioLoadedRef.current) {
-                      audioLoadedRef.current = true;
-                      setIsPlaying(true); // optimistic — show pause icon immediately
-                      void ws.load(audioUrl).catch((error: Error) => {
-                        const message = error?.message || String(error);
-                        setIsPlaying(false); // revert on error
-                        if (!message.toLowerCase().includes('aborted')) {
-                          void playNativeAudioFallback(audioUrl, message || 'WaveSurfer load failed').catch(fallbackError => {
-                            setWaveErr(
-                              fallbackError instanceof Error
-                                ? fallbackError.message
-                                : 'Failed to load audio. Please try again.'
-                            );
-                          });
-                        }
-                      });
-                      ws.once('ready', () => { void ws.play(); });
-                    } else {
-                      // Toggle — optimistic state change
-                      setIsPlaying(prev => !prev);
-                      ws.playPause();
-                    }
-                  }}
-                  disabled={audioLoadedRef.current && !isReady}
+                  onClick={handlePlaybackToggle}
+                  disabled={isPlaying && !isReady}
                 >
                   {isPlaying
                     ? <svg width="20" height="20" viewBox="0 0 20 20" fill="white"><rect x="3" y="2" width="5" height="16" rx="1.5"/><rect x="12" y="2" width="5" height="16" rx="1.5"/></svg>
@@ -2866,7 +2929,7 @@ function VersionPageInner() {
                   <span className={styles.heroTimeSep}> / </span>
                   {formatTimestamp(Math.floor(duration))}
                 </span>
-                {!isReady && audioUrl && !waveErr && audioLoadedRef.current && (
+                {!isReady && audioUrl && !waveErr && isPlaying && (
                   <span className={styles.loadingWave}>
                     {isRetryingWave ? 'Retrying…' : 'Loading…'}
                   </span>

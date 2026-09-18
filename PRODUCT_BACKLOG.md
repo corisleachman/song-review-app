@@ -1,19 +1,48 @@
 # Product Backlog
 
-Parking lot for bugs and feature ideas to pick up after the current beta-launch work. Not scheduled — captured here so nothing is lost. When an item becomes an active slice, move it into `public-mvp-roadmap.md`.
+Bugs and feature ideas for beta readiness and later product work. The current priority order below identifies the near-term queue; other entries remain unscheduled. When an item becomes an active slice, move it into `public-mvp-roadmap.md`.
 
 ---
 
+## Current priority order
+
+1. Verify and roll out the focused first-Play reliability fix. The candidate is local; Production hasn't changed.
+2. Fix the 11-inch iPad homepage typography and tablet layout, with real-device checks.
+3. Plan and implement email/password signup, including referrals and complete account recovery. Microsoft login isn't part of this work.
+4. Continue the remaining security-hardening and review findings, then SEO and final pre-launch QA.
+
+Microsoft login stays deferred until traction and income justify it. This order promotes password signup without interrupting the current reliability and tablet fixes.
+
 ## Bugs
 
-### Song review: idle and slow-network waveform timeout/retry resilience
-- Priority: P2 resilience follow-up, below the P1 tablet presentation work.
+### Song review: first Play press can silently do nothing
+- Priority: P1 beta journey reliability, ahead of tablet presentation work.
 - Logged: 2026-09-18
-- Status: Deferred; application fix not implemented. Successful MP3 playback removes the provisional blanket playback blocker.
-- Evidence: MP3 version `8082846d-c43f-4d8f-9e61-0cab43f02466` finalized with matching 8,300,586-byte Storage metadata. Initial playback timed out while the user reported roughly 15 KB/s downloads. After connectivity improved and the same Preview version was refreshed, the user confirmed successful MP3 playback without a code or file change.
-- Code finding retained: the deadline is armed before lazy `ws.load`, each automatic reinitialization resets the retry allowance, and retry initialization doesn't resume a requested load. Slow networking can also exceed twelve seconds; these are resilience defects, not proof of a general format incompatibility or the sole cause of the earlier failure.
-- Proposed focused fix, when scheduled: actual-load deadlines, a bounded automatic-retry budget and resumption of user-requested loading, while preserving lazy loading, native fallback, version navigation, single-player coordination and background playback.
-- Verification for that future fix: idle beyond twelve seconds without errors/downloads/reinitialization; throttled-network recovery with a stable readable error after retry exhaustion; manual retry, normal MP3/WAV playback and navigation cleanup.
+- Status: User-observed in Production after PR #50. A focused candidate is implemented locally on `codex/player-first-play-readiness`; it isn't committed, pushed or deployed. Full browser playback journey verification hasn't passed.
+- Evidence: the first affected Production version is `https://www.song-room.live/songs/48da7337-f2fc-4df4-93e3-d4633aceae30/versions/c8b3db65-6c2a-4102-ac6e-16784bb6719b`, tested in desktop Chrome. The user pressed Play when the button was visible, but exact elapsed initialization time wasn't measured. The first press did nothing; leaving and returning allowed playback. A subsequent MP3 version played on its first press immediately after upload, after approximately three to four seconds of loading. Its URL and browser console/network capture weren't supplied. This is intermittent behaviour, not a consistent post-upload failure.
+- Controlled finding: a local harness runs the actual initialization callback, Play handler, retry callback and lifecycle effect extracted with TypeScript's parser. With delayed initialization, enabled Play presses are discarded and aren't resumed when the player appears; a later press loads/plays normally. Without pressing Play, the twelve-second deadline triggers idle failure and automatic retries repeatedly reset their own allowance. A timeout after a requested load creates a new player without resuming that load. Media, timers and module import are mocked; the particular Chrome occurrence remains unconfirmed.
+- Earlier evidence: Preview MP3 version `8082846d-c43f-4d8f-9e61-0cab43f02466` played after connectivity recovered, without file or code changes. This still rules out a blanket MP3 incompatibility conclusion; it doesn't establish dependable first-play behaviour.
+- Local implementation: preserve a requested first Play through initialization, start deadlines only for actual loading, permit one automatic retry per version/audio session, resume requested loading after retry, ignore stale callbacks and retain a stable recoverable failure. Button and desktop Space use the same handler. The existing native fallback remains, with duplicate fallback and stale-session guards. Upload finalization, canonical reads and background/single-player coordination architecture are unchanged.
+- Local checks: 69 tests passed, including 22 new player-lifecycle cases; TypeScript and focused ESLint passed. The optimized build passed with temporary non-production build placeholders and existing lint warnings. Mocked media tests don't establish real browser playback or gesture permissions.
+- Verification: initial post-upload navigation and direct version opening, immediate first tap during slow initialization, idle beyond twelve seconds, throttled-network recovery and exhausted retries, manual retry, MP3/WAV playback, version navigation cleanup and background playback.
+
+### Tablet homepage: display headings become dense, blocky shapes
+- Priority: P1 beta presentation
+- Logged: 2026-09-14
+- Status: Not started. Confirmed from three real-device screenshots of the live homepage on an 11-inch iPad Air.
+- Observed: filled Thunder headings such as “You've been doing it the hard way” and “Upload it. Everyone hears it.” become cramped blocks with poor internal definition. The words are much harder to scan than the surrounding body copy and don't look intentionally rendered.
+- Working cause: the clearer phone treatment uses Thunder Bold with a `0.84` line-height only at 600px and below. Tablet portrait widths from 601px to 900px retain Thunder Black with the desktop `0.74` line-height, even though those sections have already switched to the narrow layout.
+- Expected: carry a deliberately tested display treatment through the tablet range. Keep the established editorial character, but use a readable face, line-height, size, and wrap at every width. Font loading failure must also fall back without collisions or materially changing the section height.
+- Verification: check the live page on a real 11-inch iPad Air in portrait and landscape, using Safari and Chrome. Compare the key headings before merge and confirm that every word remains distinct at normal zoom and 200% zoom.
+
+### Tablet homepage: 11-inch iPad falls into an unfinished responsive layout
+- Priority: P1 beta presentation
+- Logged: 2026-09-14
+- Status: Not started. Confirmed from three real-device screenshots of the live homepage on an 11-inch iPad Air.
+- Observed: the hero and later sections look like enlarged phone stacks rather than a composed tablet page. Feature copy sits in a small area of very wide panels, image and text transitions feel disconnected, and excessive empty space makes the page look broken. The signed-out navigation also loses “Sign in”: desktop links are hidden at 900px, while the phone Login action appears only at 600px and below.
+- Working cause: the shared `max-width: 900px` rules flatten the hero, problem, feature, product, proof, and pricing layouts to one column. The more considered phone composition is reserved for 600px and below, leaving common iPad portrait widths between those modes.
+- Expected: add a content-driven tablet composition for tall touch viewports rather than simply stacking the desktop page. Keep image and copy relationships obvious, constrain readable measures, remove dead space, and retain both account-creation and returning-user routes in the opening view.
+- Verification: test the complete homepage on a real 11-inch iPad Air in portrait and landscape, using Safari and Chrome. Check first load, scrolling, font completion, rotating the device, browser chrome changes, touch targets, and 200% zoom before production rollout.
 
 ### Song review: waveform seeking is coupled to comment creation
 - Priority: P1 beta usability
@@ -135,6 +164,16 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 
 ## Features
 
+### Email/password signup and complete account-recovery journeys
+- Priority: P1 near-term product work, after current playback and tablet fixes; no dependency on Microsoft login.
+- Logged: 2026-09-18
+- Status: Promoted from post-beta reassessment at the user's request. Plan the complete journeys before implementation; Production remains Google-only until a separately approved rollout.
+- Scope: email/password signup and login alongside Google, email verification and resend, forgotten-password requests, expired/used recovery links, password reset/change and session handling. Decide explicitly whether a username is a login identifier or a display name rather than silently adding a second identity system.
+- Entry journeys: neutral signup, tier-aware Free/Pro/Studio choices, referrals, workspace invitations, protected-page login redirects, signed-in visitors and sign-out/re-entry. Preserve referral attribution through confirmation and recovery, avoid duplicate referral rewards, and keep invite priority and owner-only checkout rules intact.
+- Existing accounts: define safe Google/password account linking, duplicate-email handling and password setup for Google-created accounts without duplicate Song Room users or workspaces. Require proof of identity; never link accounts based only on an unverified email or client-supplied username.
+- Security and operations: inspect existing auth routes before designing new ones; plan rate limiting, anti-enumeration responses, password rules, redirect allowlists, transactional email delivery, staged configuration, rollback and a full acceptance matrix. Keep the storage, billing and canonical identity model unchanged unless separately justified.
+- Delivery gate: agree the journey specification first, then implement a focused auth slice and verify it in staging before enabling Production. Microsoft remains separate and deferred.
+
 ### Turn off the audio visualiser on the song page  ✅ DONE (2026-08-09)
 - Logged: 2026-08-07 · Shipped: 2026-08-09 (commit 0ef7554a) — per-user toggle in Settings > Appearance
 - Add a control to disable the waveform / frequency visualiser on the song/player page (for performance, preference, or distraction-free listening).
@@ -167,12 +206,12 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 - Implementation: phones hide the redundant small navigation logo, use the real Thunder outline paths from the existing Song Room loading artwork, show the complete collaborator bento from first paint, use the approved concise explanation inside the lead image, and retain the lower safe-area CTA. Tablet and desktop hero artwork and copy are unchanged.
 - Success criteria: the brand is the first clear visual, the explanation follows naturally, and the next action is visible and reachable without an awkward stack or clipped content.
 
-### Authentication options beyond Google
-- Logged: 2026-08-14
-- Beta uses Google as the only login and account-creation method.
-- Reassess whether Song Room needs email/username and password accounts after beta feedback.
-- Consider additional single sign-on providers, especially Microsoft, for collaborators who do not use Google accounts.
-- Plan account linking and recovery before adding another provider so existing users do not create duplicate Song Room identities.
+### Microsoft login
+- Priority: Deferred growth-stage work, independent of email/password signup.
+- Logged: 2026-08-14; reprioritised 2026-09-18.
+- Status: Deprioritised at the user's request. Revisit if the app gains traction and generates income; no implementation now.
+- Email/password signup is now a separate near-term P1 item above, including referrals and account recovery. Google remains the only currently deployed method.
+- Before adding Microsoft, plan identity linking and recovery so existing users don't create duplicate Song Room accounts or workspaces.
 
 ### Multi-upload + revamped uploader  ✅ DONE (2026-08-10)
 - Logged: 2026-08-07
@@ -197,7 +236,7 @@ Captured from a launch-readiness review (TikTok launch checklists cross-referenc
 - Add login/auth rate limiting (verify Supabase defaults, add app-level throttle).
 - Add bot protection on signup (Cloudflare Turnstile or hCaptcha).
 - Flip CSP from Report-Only to enforcing once the report endpoint is clean. ✅ DONE (2026-09-03). PR #47 squash-merged as `7e4faacd`; both production deployments reached Ready, route-specific framing remained correct, and the live header and runtime checks passed without a genuine CSP report.
-- Verify audio upload restrictions (allowed MIME types + max size caps). PR #48 merged as `6f655f23`; migration `20260903163658` is applied to staging and production. PR #50's signature-read lifetime fix passed subsequent AIFF and MP3 uploads; the user confirmed MP3 playback after connectivity recovered on 18 September, with no file or code change, then confirmed WAV upload and playback. AIFF playback remains deferred as P3 and new AIFF/AIF uploads are blocked in Preview, with existing files preserved. Idle/slow-network retry defects remain P2 resilience work. The user confirmed the AIFF rejection message and approved production rollout on 18 September. Deployment and live verification remain pending.
+- Verify audio upload restrictions (allowed MIME types + max size caps). PR #48 merged as `6f655f23`; migration `20260903163658` is applied to staging and production. PR #50's signature-read lifetime fix passed subsequent AIFF and MP3 uploads; the user confirmed MP3 playback after connectivity recovered on 18 September, with no file or code change, then confirmed WAV upload and playback. AIFF playback remains deferred as P3 and new AIFF/AIF uploads are blocked by the deployed policy, with existing files preserved. The later first-Play failure in Production promotes PLAYBACK-001 to P1 journey reliability. The user confirmed the AIFF rejection message and approved production rollout on 18 September. PR #50 merged as `6a09241e`; primary Production `dpl_CGr85ktfsnHnR5syLVQnngEVDobL` is Ready and public route/header/runtime checks passed. The user confirmed live AIFF rejection and MP3 upload; playback only loaded after leaving and returning. A subsequent MP3 version passed immediate first-press playback after a three-to-four-second load in desktop Chrome. Upload/rejection and that new first-play smoke test passed by user observation; intermittent first-play reliability remains open.
 - Standardise input validation across API routes.
 
 ### SEO / discoverability
@@ -217,7 +256,7 @@ Captured from a launch-readiness review (TikTok launch checklists cross-referenc
 ### AIFF/AIF browser playback and waveform support
 - Priority: P3, deferred until after beta-critical work.
 - Logged: 2026-09-17
-- Status: Playback support deferred. Temporary new-upload restriction implemented in PR #50; production rollout pending.
+- Status: Playback support deferred. Temporary new-upload restriction implemented in PR #50; deployed to primary Production as `6a09241e`. Preview and Production rejection passed by user observation. AIFF playback support stays deferred.
 - Evidence: the user's 623,130-byte AIFF finalized on Preview `dpl_BRgru3UvRRzAECzYhqacVACNbTBr` at 17:49:30 UTC, and version/page reads returned 200. Pressing Play produced no audio and briefly showed “Waveform load interrupted”. Upload completion and browser playback are separate failures.
 - Working cause: browser decoding/container compatibility is likely, but the generic retry message does not prove the issue is exclusive to AIFF. Earlier Preview M4A waveform retries also remain unexplained; keep a supported-format playback check in beta QA.
 - Interim behaviour: block new `.aif` and `.aiff` selections and server allocations with WAV/MP3 export guidance. Keep previously stored files, legacy inspection, and historical versions unchanged. No transcoding or Storage migration in this slice.
