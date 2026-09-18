@@ -6,7 +6,7 @@ Bugs and feature ideas for beta readiness and later product work. The current pr
 
 ## Current priority order
 
-1. Verify and roll out the focused first-Play reliability fix. The candidate is local; Production hasn't changed.
+1. Verify the focused first-Play reliability fix in draft PR #52, then seek separate rollout approval. Production hasn't changed.
 2. Fix the 11-inch iPad homepage typography and tablet layout, with real-device checks.
 3. Plan and implement email/password signup, including referrals and complete account recovery. Microsoft login isn't part of this work.
 4. Continue the remaining security-hardening and review findings, then SEO and final pre-launch QA.
@@ -18,7 +18,7 @@ Microsoft login stays deferred until traction and income justify it. This order 
 ### Song review: first Play press can silently do nothing
 - Priority: P1 beta journey reliability, ahead of tablet presentation work.
 - Logged: 2026-09-18
-- Status: User-observed in Production after PR #50. A focused candidate is implemented locally on `codex/player-first-play-readiness`; it isn't committed, pushed or deployed. Full browser playback journey verification hasn't passed.
+- Status: User-observed in Production after PR #50. The focused candidate is committed and pushed on `codex/player-first-play-readiness`, in [draft PR #52](https://github.com/corisleachman/song-review-app/pull/52) into `clone-clean`. Preview checks are pending at publication; full browser playback journey verification hasn't passed. No Production rollout is authorised.
 - Evidence: the first affected Production version is `https://www.song-room.live/songs/48da7337-f2fc-4df4-93e3-d4633aceae30/versions/c8b3db65-6c2a-4102-ac6e-16784bb6719b`, tested in desktop Chrome. The user pressed Play when the button was visible, but exact elapsed initialization time wasn't measured. The first press did nothing; leaving and returning allowed playback. A subsequent MP3 version played on its first press immediately after upload, after approximately three to four seconds of loading. Its URL and browser console/network capture weren't supplied. This is intermittent behaviour, not a consistent post-upload failure.
 - Controlled finding: a local harness runs the actual initialization callback, Play handler, retry callback and lifecycle effect extracted with TypeScript's parser. With delayed initialization, enabled Play presses are discarded and aren't resumed when the player appears; a later press loads/plays normally. Without pressing Play, the twelve-second deadline triggers idle failure and automatic retries repeatedly reset their own allowance. A timeout after a requested load creates a new player without resuming that load. Media, timers and module import are mocked; the particular Chrome occurrence remains unconfirmed.
 - Earlier evidence: Preview MP3 version `8082846d-c43f-4d8f-9e61-0cab43f02466` played after connectivity recovered, without file or code changes. This still rules out a blanket MP3 incompatibility conclusion; it doesn't establish dependable first-play behaviour.
