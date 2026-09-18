@@ -6,6 +6,15 @@ Parking lot for bugs and feature ideas to pick up after the current beta-launch 
 
 ## Bugs
 
+### Song review: idle and slow-network waveform timeout/retry resilience
+- Priority: P2 resilience follow-up, below the P1 tablet presentation work.
+- Logged: 2026-09-18
+- Status: Deferred; application fix not implemented. Successful MP3 playback removes the provisional blanket playback blocker.
+- Evidence: MP3 version `8082846d-c43f-4d8f-9e61-0cab43f02466` finalized with matching 8,300,586-byte Storage metadata. Initial playback timed out while the user reported roughly 15 KB/s downloads. After connectivity improved and the same Preview version was refreshed, the user confirmed successful MP3 playback without a code or file change.
+- Code finding retained: the deadline is armed before lazy `ws.load`, each automatic reinitialization resets the retry allowance, and retry initialization doesn't resume a requested load. Slow networking can also exceed twelve seconds; these are resilience defects, not proof of a general format incompatibility or the sole cause of the earlier failure.
+- Proposed focused fix, when scheduled: actual-load deadlines, a bounded automatic-retry budget and resumption of user-requested loading, while preserving lazy loading, native fallback, version navigation, single-player coordination and background playback.
+- Verification for that future fix: idle beyond twelve seconds without errors/downloads/reinitialization; throttled-network recovery with a stable readable error after retry exhaustion; manual retry, normal MP3/WAV playback and navigation cleanup.
+
 ### Song review: waveform seeking is coupled to comment creation
 - Priority: P1 beta usability
 - Logged: 2026-09-01
@@ -188,7 +197,7 @@ Captured from a launch-readiness review (TikTok launch checklists cross-referenc
 - Add login/auth rate limiting (verify Supabase defaults, add app-level throttle).
 - Add bot protection on signup (Cloudflare Turnstile or hCaptcha).
 - Flip CSP from Report-Only to enforcing once the report endpoint is clean. ✅ DONE (2026-09-03). PR #47 squash-merged as `7e4faacd`; both production deployments reached Ready, route-specific framing remained correct, and the live header and runtime checks passed without a genuine CSP report.
-- Verify audio upload restrictions (allowed MIME types + max size caps). PR #48 merged as `6f655f23`; migration `20260903163658` is applied to staging and production. MP3, WAV, and M4A passed Preview; live oversized and renamed non-audio rejection passed. PR #50's signature-read lifetime fix now finalized the user's AIFF with 200 on 17 September, confirming upload completion. AIFF playback failed separately and is deferred as P3; new AIFF/AIF allocation and selections are temporarily blocked in the local candidate. Existing files are preserved. Verify AIFF rejection and MP3/WAV upload, waveform and playback on the next Preview before production rollout approval.
+- Verify audio upload restrictions (allowed MIME types + max size caps). PR #48 merged as `6f655f23`; migration `20260903163658` is applied to staging and production. PR #50's signature-read lifetime fix passed subsequent AIFF and MP3 uploads; the user confirmed MP3 playback after connectivity recovered on 18 September, with no file or code change, then confirmed WAV upload and playback. AIFF playback remains deferred as P3 and new AIFF/AIF uploads are blocked in Preview, with existing files preserved. Idle/slow-network retry defects remain P2 resilience work. The user confirmed the AIFF rejection message and approved production rollout on 18 September. Deployment and live verification remain pending.
 - Standardise input validation across API routes.
 
 ### SEO / discoverability

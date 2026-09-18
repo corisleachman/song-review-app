@@ -6069,3 +6069,103 @@ Temporary client/server AIFF upload restriction and lower-priority playback back
 - New AIFF/AIF metadata is rejected before allocation; all three pickers share the supported extension list. Drag/drop rejection presents specific WAV/MP3 export guidance. Previously allocated/stored AIFF inspection remains available, avoiding deletion or reinterpretation of historical versions.
 - No migration, Storage setting, dependency, authentication or billing change. Production and existing test objects remain untouched. AIFF playback support is recorded as P3, after beta-critical work.
 - Local checks: 47 tests passed, TypeScript passed, focused ESLint had no errors and six existing warnings. Supported MP3/WAV upload and playback plus AIFF rejection still need Preview verification before merge approval. Rollback is the app revert or preceding deployment; no data rollback is needed.
+
+---
+
+## 2026-09-18 - Diagnose shared playback retry loop after MP3 upload
+
+### What we were trying to achieve
+
+Identify why a supported MP3 fails to play after the upload completion fix, without treating this as an AIFF-only limitation.
+
+### Feature / change being made
+
+Diagnostic evidence and beta-blocking playback backlog. No application change or rollout in this slice.
+
+### Files changed
+
+- `CODEBASE_REVIEW.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Staging version `8082846d-c43f-4d8f-9e61-0cab43f02466` finalized at 09:41:49 UTC with 8,300,586 bytes and matching Storage `audio/mpeg` metadata. Preview finalizer and version/page requests returned 200. These checks prove upload completion, not playback.
+- The user's console shows repeated twelve-second timeouts with load IDs 26, 29 and 32. The source arms a waveform deadline during initialization despite loading only on Play, resets its automatic-retry allowance on every nonce change, and doesn't resume lazy loading after reinitialization. These are definite lifecycle defects, though client network/decode behaviour may have additional causes.
+- Logged a P1 beta blocker above the tablet presentation items and retained deferred AIFF support separately. The focused proposed fix is actual-load deadlines, a bounded retry allowance, and resumption only after user-requested loading. Background playback and coordination need regression checks.
+- Application implementation requires agreement on this focused playback scope. PR #50 remains draft at `aea04a0f`; production and all stored files are unchanged. No application tests were run for this documentation-only diagnostic update; read-only staging/runtime checks and source inspection supplied the evidence.
+
+---
+
+## 2026-09-18 - Confirm MP3 playback after connectivity recovered
+
+### What we were trying to achieve
+
+Correct the provisional playback assessment using the user's successful retest of the same file and deployment.
+
+### Feature / change being made
+
+Preview MP3 playback evidence and reclassification of timeout/retry resilience work.
+
+### Files changed
+
+- `CODEBASE_REVIEW.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The user confirmed MP3 playback on the same `aea04a0f` Preview and version `8082846d-c43f-4d8f-9e61-0cab43f02466` after refreshing with improved connectivity. Initial download speed was reportedly about 15 KB/s. No file or application code changed between failure and success.
+- This supersedes the earlier provisional P1 blanket playback blocker. MP3 playback has passed by user observation; connectivity is a plausible explanation for the initial timeout, not a controlled diagnosis of every preceding failure.
+- Retained the definite deadline/retry source findings as P2 resilience work below the P1 iPad items. No player code was changed, and no implementation approval was inferred. AIFF playback support remains deferred as P3 with new-upload restriction in Preview.
+- Documentation-only update, local and uncommitted. Diff checks passed. Production is unchanged; WAV playback and AIFF rejection still need explicit Preview confirmation before rollout approval.
+
+---
+
+## 2026-09-18 - Confirm WAV upload and playback in PR #50 Preview
+
+### What we were trying to achieve
+
+Complete the supported-format upload/playback checks without expanding the player implementation scope.
+
+### Feature / change being made
+
+User-verified WAV success recorded alongside the successful MP3 retest.
+
+### Files changed
+
+- `CODEBASE_REVIEW.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The user confirmed a WAV successfully uploaded and played on the current PR #50 Preview. This is user-observed evidence; no WAV version URL was supplied, and no independent database or browser playback check was performed in this slice.
+- MP3 and WAV upload/playback checks are now passed. New AIFF rejection still needs explicit Preview confirmation before rollout approval. Idle/slow-network player resilience remains a separate P2 follow-up, and AIFF playback support remains P3.
+- Documentation-only update, local and uncommitted. Diff checks passed. No application, service or production change; existing files and the separate iPad notes are preserved.
+
+---
+
+## 2026-09-18 - Confirm AIFF rejection and approve PR #50 rollout
+
+### What we were trying to achieve
+
+Close the remaining Preview check and record explicit production rollout authority.
+
+### Feature / change being made
+
+PR #50 Preview verification and rollout approval, without adding player or tablet changes.
+
+### Files changed
+
+- `CODEBASE_REVIEW.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The user confirmed seeing the AIFF rejection message and explicitly requested PR #50 rollout. MP3 and WAV upload/playback previously passed by user observation.
+- Production rollout is approved: commit and push the focused verification notes, wait for all checks, mark ready, squash-merge into `clone-clean`, then verify both Production deployments and the live site. Stop on deployment failure, incorrect production origin, new application errors or a failed upload/playback smoke test.
+- No migration or service configuration change is required. Existing audio and pending test data are preserved. Slow-network player resilience and AIFF playback support remain separate deferred work; iPad backlog additions are excluded from this PR.
+- Rollback is a revert of the PR #50 squash commit or restoration of the preceding primary Production deployment `dpl_3sL1SuU2q7LvzENQ4Li9JWmaBSzQ` at `6f655f238089678078db1307225782f580e78479`. The already-applied PR #48 migration stays in place.
+- Documentation-only verification update. Production is unchanged until the approved merge; live verification remains required.
