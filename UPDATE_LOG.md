@@ -6421,6 +6421,135 @@ PR #52 verification evidence and rollout approval. No new player behaviour, serv
 
 ---
 
+## 2026-09-19 - Close PR #52 and capture the slow sign-in return journey
+
+### What we were trying to achieve
+
+Record the completed first-Play rollout and preserve a separate user-observed authentication experience for later measurement, without starting an auth or loading-state change.
+
+### Feature / change being made
+
+Documentation-only Production closeout and backlog capture.
+
+### Files changed
+
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The user confirmed the authenticated live first-Play check passed after PR #52 deployed. PR #52 squash-merged into `clone-clean` as `9c483ee136238e8f80cc77c8e13b53050d5ada9a`; primary Production `dpl_2SyH8hq57prmZeAdfYt4V7oM7Gf3` was Ready on the exact merge SHA. Homepage/Login, signed-out redirect, route-specific CSP/framing and deployment-scoped runtime checks passed. The legacy deployment `dpl_DG3qbAsATdyfiAYXa2gubbGmgNwc` was Ready with target `null`, not Production. Rollback remains a revert of `9c483ee1` or restoration of `dpl_CGr85ktfsnHnR5syLVQnngEVDobL`.
+- The new backlog item records a separate Production journey: Google account selection returns visibly to Login for an estimated three to five seconds, then the destination song presents the outlined Song Room loader for about three more seconds. The combined post-selection experience feels like six to eight seconds and creates uncertainty because two different waiting states appear in sequence.
+- Treat the durations as user-observed estimates. No browser trace, server timing or environment comparison was collected, so OAuth callback, session, bootstrap, redirect, route data and animation phases remain candidates rather than diagnosed causes.
+- Before implementation, instrument and compare the complete journey. Assess both actual latency and continuity: one truthful transition with destination context may improve confidence, while callback/bootstrap/route work should be removed or overlapped only when measurements identify it.
+- Keep this work compatible with protected redirects, tier selection, referrals, workspace invitations and existing Google identities. Carry the resulting post-auth pattern into the planned email/password journeys.
+- No application code, authentication provider, Supabase setting, schema, environment variable, email service, billing, storage, deployment or Production data changed for that capture. Its local documentation was carried forward intact onto `codex/ipad-homepage-readiness` when the next priority slice began.
+
+---
+
+## 2026-09-19 - Add a composed 11-inch iPad homepage treatment
+
+### What we were trying to achieve
+
+Fix the real-device homepage typography and layout failures recorded from an 11-inch iPad Air, without changing the established phone or desktop presentation.
+
+### Feature / change being made
+
+A focused tall-tablet breakpoint, readable display typography and regression coverage. Repository work is complete locally; Preview, real-device checks and rollout aren't complete.
+
+### Files changed
+
+- `public/marketing.html`
+- `tests/critical-contracts.test.mjs`
+- `tests/browser/public-accessibility.spec.mjs`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Root cause and implementation
+
+- The shared `max-width: 900px` rules flattened the hero and major content sections into one-column phone-like stacks. The considered phone composition and clearer display typography started only at 600px, leaving common iPad portrait widths with Thunder Black at a `0.74` line-height, hidden Sign in navigation and excessive vertical dead space.
+- Add a bounded `601px` to `900px` tall-viewport mode. The hero now pairs a lead image with one supporting image and its descriptive panel. Sign in and Start for free remain visible with 44-pixel targets.
+- Restore paired tablet compositions for the problem/chat, product, feature, proof and showcase sections. Bound horizontal padding, text measures, feature spacing and screenshot sizing without changing page copy or the phone and desktop breakpoints.
+- Use Thunder Bold, normal kerning, a `0.84` line-height and bounded fluid sizes for the main tablet headings. Reduced-motion users now see the completed outlined hero headline instead of its invisible animation start state.
+
+### Local verification and status
+
+- `npm test`: 70 passed, including the new tablet CSS contract.
+- Public Playwright suite: 14 passed with six expected project skips. The 820×1180 tablet case confirms two-column hero/problem/product/feature/showcase layouts, visible account routes, a 44-pixel Sign in target, 16-pixel body copy, readable heading metrics, the reduced-motion hero fallback, no horizontal overflow and no blocking accessibility violations.
+- Inspected local 820×1180 Chromium captures for the hero, problem/chat, first feature, showcase, proof and pricing sections. The display words remain distinct and the paired content relationships are restored.
+- Optimized Next.js build passed with command-scoped non-production Supabase placeholders and existing lint warnings. Build-generated cookie-consent additions in two otherwise untouched blog files were removed after verification.
+- Published initial implementation commit `29325d35` on `codex/ipad-homepage-readiness`, based on Production `clone-clean` commit `9c483ee1`, and opened [draft PR #53](https://github.com/corisleachman/song-review-app/pull/53) with base `clone-clean`. All four checks passed on documentation head `ce84e942`; primary Preview `dpl_EPZHhbsaPYJwpL3NjYJn97ouGpvw` reached Ready for that exact SHA. Chrome's 11-inch iPad emulation looked clear, but a subsequent desktop Safari screenshot failed the heading-readability gate. The PR therefore remains draft and unmerged. Nothing from this slice is deployed to Production. The earlier PR #52 closeout and slow sign-in backlog note remain preserved.
+- The original user screenshots are evidence of the Production defect, not evidence that this local fix works in iPad Safari or Chrome. The remaining gate is the complete real-device checklist recorded in `PRODUCT_BACKLOG.md`, including portrait, landscape, rotation, browser chrome changes, touch use, font completion and 200% zoom.
+- No migration, dependency, authentication, billing, storage, environment-variable or service-setting change is involved. A future rollback is a revert of this slice's eventual merge commit or restoration of the preceding Vercel Production deployment, which must be recorded during rollout.
+
+### Recommended next step
+
+Publish the desktop typography refinement, wait for every check and the replacement primary Preview, then repeat desktop Safari before the real-device iPad gate. Do not merge on Chrome emulation alone.
+
+---
+
+## 2026-09-19 - Refine PR #53 display typography after desktop Safari finding
+
+### What we were trying to achieve
+
+Make the marketing display headings readable in desktop Safari as well as the tall-tablet composition, without replacing the brand typeface or changing unrelated page content.
+
+### Feature / change being made
+
+A shared wide-screen heading treatment and regression coverage within draft PR #53. The PR remains unmerged while the revised Preview is tested.
+
+### Files changed
+
+- `public/marketing.html`
+- `tests/critical-contracts.test.mjs`
+- `tests/browser/public-accessibility.spec.mjs`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Root cause and implementation
+
+- The first PR #53 Preview looked clear in Chrome's 11-inch iPad emulation and all automated checks passed. A desktop Safari screenshot then showed the problem heading as dense blocks. This is a failed manual Preview gate, so the PR stays draft.
+- Safari is rendering the specified font rather than falling back. The wide breakpoint still used Thunder Black at a `0.74` line-height and allowed lead headings to grow to 140 pixels, while phone and tall-tablet rules used the clearer Thunder Bold treatment at `0.84`.
+- Apply Thunder Bold, normal kerning and a `0.84` line-height to the main marketing headings at the shared level. Bound lead headings at 120 pixels and supporting headings at 80 pixels. Keep Thunder Black for short accents such as feature numbers and prices.
+- Add a source contract for every shared heading and a 1440×900 browser check covering computed family, size, line-height and horizontal overflow.
+
+### Verification status
+
+- `npm test`: 71 passed, including the new shared desktop typography contract.
+- Focused ESLint passed for both changed test files. The public Chromium suite passed 15 tests with seven expected project skips, including the new 1440×900 heading check and the 820×1180 tablet case.
+- Local Playwright WebKit renders at 1440×900 and 820×1180 returned 200, loaded Thunder Bold at a `0.84` line-height, had no horizontal overflow, browser page errors or framework overlay, and were visually inspected at the Problem section.
+- The optimized Next.js build passed with command-scoped non-production Supabase placeholders and existing lint warnings. Its generated cookie-consent additions in two otherwise untouched blog files were removed after verification.
+- A replacement Preview is still required after this refinement.
+- Desktop Safari at normal zoom and 200% zoom is now the first manual gate. A real 11-inch iPad Safari and Chrome check remains required because Chrome device emulation isn't real-device evidence.
+- No migration, dependency, authentication, billing, storage, environment-variable or service-setting change is involved. Nothing from PR #53 is deployed to Production.
+
+---
+
+## 2026-09-19 - Approve PR #53 after the desktop Safari retest
+
+### What we were trying to achieve
+
+Close the available manual Preview gate for the homepage typography refinement and proceed with the approved PR #53 rollout without overstating unavailable device coverage.
+
+### Feature / change being made
+
+Documentation-only Preview evidence and rollout approval. No further homepage behaviour or styling change.
+
+### Files changed
+
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Verification evidence and rollout boundary
+
+- The user confirmed the revised homepage looks great in desktop Safari on primary Preview `dpl_GM3rwftoCetk3CsaXDnJfcWh63ty`, built from refinement commit `960fc041a6a191defd9585bebad5de759809d716`.
+- All four GitHub and Vercel checks passed on that head. Earlier local verification covered 71 contract tests, 15 Chromium browser passes with seven expected project skips, focused ESLint, an optimized build and clean desktop/tablet WebKit renders.
+- Chrome's 11-inch iPad emulation looked clear. A physical 11-inch iPad wasn't available for the revised candidate, so Safari/Chrome orientation, rotation, browser chrome and 200% zoom on that device remain follow-up coverage, not completed evidence.
+- The user's instruction to continue authorises marking PR #53 ready, squash-merging it into `clone-clean`, waiting for the resulting deployments and checking the live homepage. Stop rollout if the documentation-only head fails or the Production deployment is unhealthy.
+- No migration, dependency, authentication, billing, storage, environment-variable or service-setting change is involved. Rollback is a revert of the future PR #53 squash commit or restoration of the preceding primary Production deployment.
+
+---
+
 ## 2026-09-14 - Record 11-inch iPad homepage failures
 
 ### What we were trying to achieve

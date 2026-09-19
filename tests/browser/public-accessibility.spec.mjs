@@ -78,6 +78,46 @@ test('homepage exposes its primary account journey without blocking accessibilit
   await expect(page.getByRole('heading', { name: 'Create your Free workspace' })).toBeVisible();
 });
 
+test('desktop homepage keeps its display headings readable at the wide breakpoint', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-chromium', 'One desktop project supplies the wide viewport.');
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await prepareDeterministicPage(page);
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await page.evaluate(() => document.fonts.ready);
+
+  const typography = await page.evaluate(() => {
+    const selectors = [
+      '.problem-heading',
+      '.product-heading',
+      '.feature-heading',
+      '.proof-quote',
+      '.showcase-heading',
+      '.pricing-heading',
+      '.final-heading',
+    ];
+    return {
+      headings: selectors.map((selector) => {
+        const style = getComputedStyle(document.querySelector(selector));
+        const fontSize = Number.parseFloat(style.fontSize);
+        return {
+          selector,
+          family: style.fontFamily,
+          fontSize,
+          lineHeightRatio: Number.parseFloat(style.lineHeight) / fontSize,
+        };
+      }),
+      hasHorizontalOverflow: document.documentElement.scrollWidth > window.innerWidth + 1,
+    };
+  });
+
+  for (const heading of typography.headings) {
+    expect(heading.family, heading.selector).toContain('ThunderBold');
+    expect(heading.fontSize, heading.selector).toBeLessThanOrEqual(120);
+    expect(heading.lineHeightRatio, heading.selector).toBeGreaterThanOrEqual(0.83);
+  }
+  expect(typography.hasHorizontalOverflow).toBe(false);
+});
+
 test('homepage pricing keeps the chosen tier and billing period', async ({ page }) => {
   await prepareDeterministicPage(page);
   await page.goto('/', { waitUntil: 'domcontentloaded' });
@@ -207,6 +247,51 @@ test('mobile homepage respects reduced motion and avoids horizontal overflow', a
     () => document.documentElement.scrollWidth > window.innerWidth + 1,
   );
   expect(hasHorizontalOverflow).toBe(false);
+});
+
+test('11-inch iPad portrait keeps tablet composition, account routes and readable headings', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-chromium', 'One Chromium project supplies the tablet viewport.');
+  await page.setViewportSize({ width: 820, height: 1180 });
+  await prepareDeterministicPage(page);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+
+  await expect(page.locator('.nav').getByRole('link', { name: 'Sign in' })).toBeVisible();
+  await expect(page.locator('.nav').getByRole('link', { name: 'Start for free' })).toBeVisible();
+  await expect(page.locator('.hero-headline-wrap path').first()).toHaveCSS('stroke-opacity', '1');
+
+  const tabletLayout = await page.evaluate(() => {
+    const columns = (selector) => getComputedStyle(document.querySelector(selector)).gridTemplateColumns.split(' ').length;
+    const heading = document.querySelector('.problem-heading');
+    const headingStyle = getComputedStyle(heading);
+    const fontSize = Number.parseFloat(headingStyle.fontSize);
+    const lineHeight = Number.parseFloat(headingStyle.lineHeight);
+    const login = document.querySelector('.nav-link[href="/login"]');
+    return {
+      heroColumns: columns('.hero-bento'),
+      problemColumns: columns('.problem'),
+      productColumns: columns('.product-header'),
+      featureColumns: columns('.feature-row'),
+      shotColumns: columns('.shot-grid'),
+      headingFamily: headingStyle.fontFamily,
+      headingLineHeightRatio: lineHeight / fontSize,
+      bodyFontSize: Number.parseFloat(getComputedStyle(document.querySelector('.problem-body')).fontSize),
+      loginHeight: login.getBoundingClientRect().height,
+      hasHorizontalOverflow: document.documentElement.scrollWidth > window.innerWidth + 1,
+    };
+  });
+
+  expect(tabletLayout.heroColumns).toBe(2);
+  expect(tabletLayout.problemColumns).toBe(2);
+  expect(tabletLayout.productColumns).toBe(2);
+  expect(tabletLayout.featureColumns).toBe(2);
+  expect(tabletLayout.shotColumns).toBe(2);
+  expect(tabletLayout.headingFamily).toContain('ThunderBold');
+  expect(tabletLayout.headingLineHeightRatio).toBeGreaterThanOrEqual(0.83);
+  expect(tabletLayout.bodyFontSize).toBeGreaterThanOrEqual(16);
+  expect(tabletLayout.loginHeight).toBeGreaterThanOrEqual(44);
+  expect(tabletLayout.hasHorizontalOverflow).toBe(false);
+  await expectNoBlockingAxeViolations(page);
 });
 
 test('public responses enforce CSP and accept bounded violation reports', async ({ page, request }, testInfo) => {
