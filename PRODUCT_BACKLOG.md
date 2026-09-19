@@ -28,7 +28,7 @@ Microsoft login stays deferred until traction and income justify it. This order 
 ### Tablet homepage: display headings become dense, blocky shapes
 - Priority: P1 beta presentation
 - Logged: 2026-09-14
-- Status: Code complete locally on `codex/ipad-homepage-readiness`; Preview and real-device verification remain. The original failure is confirmed from three screenshots of the live homepage on an 11-inch iPad Air.
+- Status: Code complete in [draft PR #53](https://github.com/corisleachman/song-review-app/pull/53); automated Preview checks and real-device verification remain. The original failure is confirmed from three screenshots of the live homepage on an 11-inch iPad Air.
 - Observed: filled Thunder headings such as “You've been doing it the hard way” and “Upload it. Everyone hears it.” become cramped blocks with poor internal definition. The words are much harder to scan than the surrounding body copy and don't look intentionally rendered.
 - Working cause: the clearer phone treatment uses Thunder Bold with a `0.84` line-height only at 600px and below. Tablet portrait widths from 601px to 900px retain Thunder Black with the desktop `0.74` line-height, even though those sections have already switched to the narrow layout.
 - Expected: carry a deliberately tested display treatment through the tablet range. Keep the established editorial character, but use a readable face, line-height, size, and wrap at every width. Font loading failure must also fall back without collisions or materially changing the section height.
@@ -39,7 +39,7 @@ Microsoft login stays deferred until traction and income justify it. This order 
 ### Tablet homepage: 11-inch iPad falls into an unfinished responsive layout
 - Priority: P1 beta presentation
 - Logged: 2026-09-14
-- Status: Code complete locally on `codex/ipad-homepage-readiness`; Preview and real-device verification remain. The original failure is confirmed from three screenshots of the live homepage on an 11-inch iPad Air.
+- Status: Code complete in [draft PR #53](https://github.com/corisleachman/song-review-app/pull/53); automated Preview checks and real-device verification remain. The original failure is confirmed from three screenshots of the live homepage on an 11-inch iPad Air.
 - Observed: the hero and later sections look like enlarged phone stacks rather than a composed tablet page. Feature copy sits in a small area of very wide panels, image and text transitions feel disconnected, and excessive empty space makes the page look broken. The signed-out navigation also loses “Sign in”: desktop links are hidden at 900px, while the phone Login action appears only at 600px and below.
 - Working cause: the shared `max-width: 900px` rules flatten the hero, problem, feature, product, proof, and pricing layouts to one column. The more considered phone composition is reserved for 600px and below, leaving common iPad portrait widths between those modes.
 - Expected: add a content-driven tablet composition for tall touch viewports rather than simply stacking the desktop page. Keep image and copy relationships obvious, constrain readable measures, remove dead space, and retain both account-creation and returning-user routes in the opening view.

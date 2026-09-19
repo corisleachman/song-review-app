@@ -6478,13 +6478,13 @@ A focused tall-tablet breakpoint, readable display typography and regression cov
 - Public Playwright suite: 14 passed with six expected project skips. The 820×1180 tablet case confirms two-column hero/problem/product/feature/showcase layouts, visible account routes, a 44-pixel Sign in target, 16-pixel body copy, readable heading metrics, the reduced-motion hero fallback, no horizontal overflow and no blocking accessibility violations.
 - Inspected local 820×1180 Chromium captures for the hero, problem/chat, first feature, showcase, proof and pricing sections. The display words remain distinct and the paired content relationships are restored.
 - Optimized Next.js build passed with command-scoped non-production Supabase placeholders and existing lint warnings. Build-generated cookie-consent additions in two otherwise untouched blog files were removed after verification.
-- Local branch: `codex/ipad-homepage-readiness`, based on Production `clone-clean` commit `9c483ee1`. Nothing from this slice is committed, pushed, in a PR, deployed to Preview or deployed to Production. The earlier PR #52 closeout and slow sign-in backlog note remain preserved in the same uncommitted documentation.
+- Published initial implementation commit `29325d35` on `codex/ipad-homepage-readiness`, based on Production `clone-clean` commit `9c483ee1`, and opened [draft PR #53](https://github.com/corisleachman/song-review-app/pull/53) with base `clone-clean`. Automated checks and the final primary-project Preview are pending; nothing from this slice is deployed to Production. The earlier PR #52 closeout and slow sign-in backlog note remain preserved.
 - The original user screenshots are evidence of the Production defect, not evidence that this local fix works in iPad Safari or Chrome. The remaining gate is the complete real-device checklist recorded in `PRODUCT_BACKLOG.md`, including portrait, landscape, rotation, browser chrome changes, touch use, font completion and 200% zoom.
 - No migration, dependency, authentication, billing, storage, environment-variable or service-setting change is involved. A future rollback is a revert of this slice's eventual merge commit or restoration of the preceding Vercel Production deployment, which must be recorded during rollout.
 
 ### Recommended next step
 
-Commit and publish this focused candidate only after explicit approval, then use its primary-project Preview for the named real-device iPad gate before any merge.
+Wait for every check on the final PR head and the primary-project Preview to reach Ready, then use that Preview for the named real-device iPad gate before any merge.
 
 ---
 
