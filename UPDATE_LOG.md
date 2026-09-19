@@ -6393,6 +6393,34 @@ Repository publication only. Approval doesn't include merging or deploying this 
 
 ---
 
+## 2026-09-19 - Approve PR #52 after authenticated Preview checks
+
+### What we were trying to achieve
+
+Close the manual Preview gate for the first-Play reliability fix and proceed through the approved Production rollout without changing the scope.
+
+### Feature / change being made
+
+PR #52 verification evidence and rollout approval. No new player behaviour, service configuration or data change.
+
+### Files changed
+
+- `CODEBASE_REVIEW.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The user reported that all requested checks passed and instructed the agent to continue. Treat that as authenticated Preview evidence for the checklist recorded above and authority to mark PR #52 ready, squash-merge it into `clone-clean` and verify the resulting Production deployment.
+- The verified Preview candidate before this note was primary deployment `dpl_CpEoFwCV1bCAPhqrKL6MEnXTvJjD`, Ready against head `489cb1541dc38cc107ca1cf63bcaca14eab1bb92`. All four PR checks passed; the browser/accessibility workflow reported 13 passed and five expected skips.
+- This evidence is user-reported for the authenticated song/version journeys. The agent didn't independently operate the protected browser session. Don't broaden it into proof about untested browsers, devices or network conditions.
+- After committing this note, wait for every check on the new head. Stop if any fails. Then mark the PR ready and squash-merge only into `clone-clean`, never `main`.
+- Git-triggered Production is expected for both Vercel projects. Classify deployments by target and project: verify the primary `song-review-app-v2` Production artifact and the live domain; don't promote a staging-backed Preview. Confirm the legacy project's resulting target rather than assuming it is Production.
+- Production verification: homepage and login return 200; signed-out dashboard retains `/login?redirectTo=%2Fdashboard`; standard responses have enforced CSP, no report-only policy, `frame-ancestors 'none'` and `X-Frame-Options: DENY`; embed retains `frame-ancestors *` without X-Frame-Options; CSP contains Production Supabase and excludes staging. Scan deployment-scoped runtime errors and CSP reports. Browser-only first-Play success still requires a live authenticated smoke test before calling the journey Production complete.
+- No migration, dependency, environment variable, authentication, billing or storage change is involved. Rollback is a revert of the future PR #52 squash commit or restoration of current primary Production deployment `dpl_CGr85ktfsnHnR5syLVQnngEVDobL`.
+
+---
+
 ## 2026-09-14 - Record 11-inch iPad homepage failures
 
 ### What we were trying to achieve
