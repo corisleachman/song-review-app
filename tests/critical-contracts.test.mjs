@@ -968,6 +968,41 @@ test('mobile homepage keeps its primary CTA visible in the thumb zone', () => {
   ], 'mobile signup and login actions');
 });
 
+test('tall tablet marketing keeps a composed layout and readable display type', () => {
+  const marketing = read('public/marketing.html');
+  const tabletStart = marketing.indexOf('/* Give tall tablet viewports their own composition');
+  const tabletEnd = marketing.indexOf('/* Keep the condensed display voice clear on phone screens. */', tabletStart);
+  const tabletCss = marketing.slice(tabletStart, tabletEnd);
+  const reducedMotionStart = marketing.indexOf('@media (prefers-reduced-motion: reduce)');
+  const reducedMotionEnd = marketing.indexOf('/*', reducedMotionStart + 1);
+  const reducedMotionCss = marketing.slice(reducedMotionStart, reducedMotionEnd);
+
+  assert.ok(tabletStart > marketing.indexOf('.phone-row::-webkit-scrollbar'), 'tablet overrides must follow the later 900px rules');
+  assertIncludesAll(tabletCss, [
+    '@media (min-width: 601px) and (max-width: 900px) and (min-height: 601px)',
+    '.nav-links {',
+    'display: flex;',
+    '.nav-link[href="/login"]',
+    'min-height: 44px;',
+    'grid-template-columns: minmax(0, 1.4fr) minmax(260px, 1fr);',
+    '.cell-a {',
+    'grid-row: 1 / 3;',
+    '.cell-c,',
+    'display: none;',
+    '.problem,',
+    'grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);',
+    '.product-header,',
+    '.feature-row {',
+    '.shot-grid {',
+    'font-family: var(--tbold);',
+    'line-height: 0.84;',
+    'font-size: clamp(4rem, 8.8vw, 5.25rem);',
+    'font-size: clamp(3.25rem, 6.8vw, 4rem);',
+  ], 'tablet homepage treatment');
+  assert.doesNotMatch(tabletCss, /font-family:\s*var\(--tblack\)/u);
+  assert.match(reducedMotionCss, /\.hero-headline-wrap path\s*\{[^}]*stroke-dashoffset:\s*0 !important;[^}]*stroke-opacity:\s*1 !important;/u);
+});
+
 test('mobile marketing display headings use a clearer phone type scale', () => {
   const marketing = read('public/marketing.html');
   const mobileTypeStart = marketing.indexOf('/* Keep the condensed display voice clear on phone screens. */');

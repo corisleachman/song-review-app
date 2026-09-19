@@ -6421,6 +6421,73 @@ PR #52 verification evidence and rollout approval. No new player behaviour, serv
 
 ---
 
+## 2026-09-19 - Close PR #52 and capture the slow sign-in return journey
+
+### What we were trying to achieve
+
+Record the completed first-Play rollout and preserve a separate user-observed authentication experience for later measurement, without starting an auth or loading-state change.
+
+### Feature / change being made
+
+Documentation-only Production closeout and backlog capture.
+
+### Files changed
+
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The user confirmed the authenticated live first-Play check passed after PR #52 deployed. PR #52 squash-merged into `clone-clean` as `9c483ee136238e8f80cc77c8e13b53050d5ada9a`; primary Production `dpl_2SyH8hq57prmZeAdfYt4V7oM7Gf3` was Ready on the exact merge SHA. Homepage/Login, signed-out redirect, route-specific CSP/framing and deployment-scoped runtime checks passed. The legacy deployment `dpl_DG3qbAsATdyfiAYXa2gubbGmgNwc` was Ready with target `null`, not Production. Rollback remains a revert of `9c483ee1` or restoration of `dpl_CGr85ktfsnHnR5syLVQnngEVDobL`.
+- The new backlog item records a separate Production journey: Google account selection returns visibly to Login for an estimated three to five seconds, then the destination song presents the outlined Song Room loader for about three more seconds. The combined post-selection experience feels like six to eight seconds and creates uncertainty because two different waiting states appear in sequence.
+- Treat the durations as user-observed estimates. No browser trace, server timing or environment comparison was collected, so OAuth callback, session, bootstrap, redirect, route data and animation phases remain candidates rather than diagnosed causes.
+- Before implementation, instrument and compare the complete journey. Assess both actual latency and continuity: one truthful transition with destination context may improve confidence, while callback/bootstrap/route work should be removed or overlapped only when measurements identify it.
+- Keep this work compatible with protected redirects, tier selection, referrals, workspace invitations and existing Google identities. Carry the resulting post-auth pattern into the planned email/password journeys.
+- No application code, authentication provider, Supabase setting, schema, environment variable, email service, billing, storage, deployment or Production data changed for that capture. Its local documentation was carried forward intact onto `codex/ipad-homepage-readiness` when the next priority slice began.
+
+---
+
+## 2026-09-19 - Add a composed 11-inch iPad homepage treatment
+
+### What we were trying to achieve
+
+Fix the real-device homepage typography and layout failures recorded from an 11-inch iPad Air, without changing the established phone or desktop presentation.
+
+### Feature / change being made
+
+A focused tall-tablet breakpoint, readable display typography and regression coverage. Repository work is complete locally; Preview, real-device checks and rollout aren't complete.
+
+### Files changed
+
+- `public/marketing.html`
+- `tests/critical-contracts.test.mjs`
+- `tests/browser/public-accessibility.spec.mjs`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Root cause and implementation
+
+- The shared `max-width: 900px` rules flattened the hero and major content sections into one-column phone-like stacks. The considered phone composition and clearer display typography started only at 600px, leaving common iPad portrait widths with Thunder Black at a `0.74` line-height, hidden Sign in navigation and excessive vertical dead space.
+- Add a bounded `601px` to `900px` tall-viewport mode. The hero now pairs a lead image with one supporting image and its descriptive panel. Sign in and Start for free remain visible with 44-pixel targets.
+- Restore paired tablet compositions for the problem/chat, product, feature, proof and showcase sections. Bound horizontal padding, text measures, feature spacing and screenshot sizing without changing page copy or the phone and desktop breakpoints.
+- Use Thunder Bold, normal kerning, a `0.84` line-height and bounded fluid sizes for the main tablet headings. Reduced-motion users now see the completed outlined hero headline instead of its invisible animation start state.
+
+### Local verification and status
+
+- `npm test`: 70 passed, including the new tablet CSS contract.
+- Public Playwright suite: 14 passed with six expected project skips. The 820×1180 tablet case confirms two-column hero/problem/product/feature/showcase layouts, visible account routes, a 44-pixel Sign in target, 16-pixel body copy, readable heading metrics, the reduced-motion hero fallback, no horizontal overflow and no blocking accessibility violations.
+- Inspected local 820×1180 Chromium captures for the hero, problem/chat, first feature, showcase, proof and pricing sections. The display words remain distinct and the paired content relationships are restored.
+- Optimized Next.js build passed with command-scoped non-production Supabase placeholders and existing lint warnings. Build-generated cookie-consent additions in two otherwise untouched blog files were removed after verification.
+- Local branch: `codex/ipad-homepage-readiness`, based on Production `clone-clean` commit `9c483ee1`. Nothing from this slice is committed, pushed, in a PR, deployed to Preview or deployed to Production. The earlier PR #52 closeout and slow sign-in backlog note remain preserved in the same uncommitted documentation.
+- The original user screenshots are evidence of the Production defect, not evidence that this local fix works in iPad Safari or Chrome. The remaining gate is the complete real-device checklist recorded in `PRODUCT_BACKLOG.md`, including portrait, landscape, rotation, browser chrome changes, touch use, font completion and 200% zoom.
+- No migration, dependency, authentication, billing, storage, environment-variable or service-setting change is involved. A future rollback is a revert of this slice's eventual merge commit or restoration of the preceding Vercel Production deployment, which must be recorded during rollout.
+
+### Recommended next step
+
+Commit and publish this focused candidate only after explicit approval, then use its primary-project Preview for the named real-device iPad gate before any merge.
+
+---
+
 ## 2026-09-14 - Record 11-inch iPad homepage failures
 
 ### What we were trying to achieve

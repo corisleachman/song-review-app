@@ -6,10 +6,9 @@ Bugs and feature ideas for beta readiness and later product work. The current pr
 
 ## Current priority order
 
-1. Complete the approved PR #52 Production rollout and live verification. The authenticated Preview checks passed by user report.
-2. Fix the 11-inch iPad homepage typography and tablet layout, with real-device checks.
-3. Plan and implement email/password signup, including referrals and complete account recovery. Microsoft login isn't part of this work.
-4. Continue the remaining security-hardening and review findings, then SEO and final pre-launch QA.
+1. Fix the 11-inch iPad homepage typography and tablet layout, with real-device checks.
+2. Plan and implement email/password signup, including referrals and complete account recovery. Microsoft login isn't part of this work.
+3. Continue the remaining security-hardening and review findings, then SEO and final pre-launch QA.
 
 Microsoft login stays deferred until traction and income justify it. This order promotes password signup without interrupting the current reliability and tablet fixes.
 
@@ -18,7 +17,7 @@ Microsoft login stays deferred until traction and income justify it. This order 
 ### Song review: first Play press can silently do nothing
 - Priority: P1 beta journey reliability, ahead of tablet presentation work.
 - Logged: 2026-09-18
-- Status: Authenticated PR #52 Preview checks passed by user report on 2026-09-19. The user authorised continuation through rollout. Production remains on PR #50 until the final notes pass fresh checks and PR #52 merges into `clone-clean`.
+- Status: ✅ DONE. PR #52 squash-merged into `clone-clean` as `9c483ee1`. Primary Production `dpl_2SyH8hq57prmZeAdfYt4V7oM7Gf3` reached Ready; the public route, security-header and runtime-log checks passed. The user then confirmed the authenticated live first-Play check passed on 2026-09-19.
 - Evidence: the first affected Production version is `https://www.song-room.live/songs/48da7337-f2fc-4df4-93e3-d4633aceae30/versions/c8b3db65-6c2a-4102-ac6e-16784bb6719b`, tested in desktop Chrome. The user pressed Play when the button was visible, but exact elapsed initialization time wasn't measured. The first press did nothing; leaving and returning allowed playback. A subsequent MP3 version played on its first press immediately after upload, after approximately three to four seconds of loading. Its URL and browser console/network capture weren't supplied. This is intermittent behaviour, not a consistent post-upload failure.
 - Controlled finding: a local harness runs the actual initialization callback, Play handler, retry callback and lifecycle effect extracted with TypeScript's parser. With delayed initialization, enabled Play presses are discarded and aren't resumed when the player appears; a later press loads/plays normally. Without pressing Play, the twelve-second deadline triggers idle failure and automatic retries repeatedly reset their own allowance. A timeout after a requested load creates a new player without resuming that load. Media, timers and module import are mocked; the particular Chrome occurrence remains unconfirmed.
 - Earlier evidence: Preview MP3 version `8082846d-c43f-4d8f-9e61-0cab43f02466` played after connectivity recovered, without file or code changes. This still rules out a blanket MP3 incompatibility conclusion; it doesn't establish dependable first-play behaviour.
@@ -29,20 +28,36 @@ Microsoft login stays deferred until traction and income justify it. This order 
 ### Tablet homepage: display headings become dense, blocky shapes
 - Priority: P1 beta presentation
 - Logged: 2026-09-14
-- Status: Not started. Confirmed from three real-device screenshots of the live homepage on an 11-inch iPad Air.
+- Status: Code complete locally on `codex/ipad-homepage-readiness`; Preview and real-device verification remain. The original failure is confirmed from three screenshots of the live homepage on an 11-inch iPad Air.
 - Observed: filled Thunder headings such as “You've been doing it the hard way” and “Upload it. Everyone hears it.” become cramped blocks with poor internal definition. The words are much harder to scan than the surrounding body copy and don't look intentionally rendered.
 - Working cause: the clearer phone treatment uses Thunder Bold with a `0.84` line-height only at 600px and below. Tablet portrait widths from 601px to 900px retain Thunder Black with the desktop `0.74` line-height, even though those sections have already switched to the narrow layout.
 - Expected: carry a deliberately tested display treatment through the tablet range. Keep the established editorial character, but use a readable face, line-height, size, and wrap at every width. Font loading failure must also fall back without collisions or materially changing the section height.
+- Local implementation: tall tablet viewports from 601px to 900px now use Thunder Bold, a `0.84` line-height, normal kerning and bounded fluid sizes for the main marketing headings and proof quote. Reduced-motion users receive the completed outlined hero heading instead of an invisible animation start state. Phone and desktop typography remain on their existing breakpoints.
+- Local verification: the 820×1180 Chromium render keeps every word distinct in the problem, feature, proof and pricing sections. The contract suite passed 70 tests; the public browser suite passed 14 tests with six expected project skips; the optimized build passed with its existing warnings.
 - Verification: check the live page on a real 11-inch iPad Air in portrait and landscape, using Safari and Chrome. Compare the key headings before merge and confirm that every word remains distinct at normal zoom and 200% zoom.
 
 ### Tablet homepage: 11-inch iPad falls into an unfinished responsive layout
 - Priority: P1 beta presentation
 - Logged: 2026-09-14
-- Status: Not started. Confirmed from three real-device screenshots of the live homepage on an 11-inch iPad Air.
+- Status: Code complete locally on `codex/ipad-homepage-readiness`; Preview and real-device verification remain. The original failure is confirmed from three screenshots of the live homepage on an 11-inch iPad Air.
 - Observed: the hero and later sections look like enlarged phone stacks rather than a composed tablet page. Feature copy sits in a small area of very wide panels, image and text transitions feel disconnected, and excessive empty space makes the page look broken. The signed-out navigation also loses “Sign in”: desktop links are hidden at 900px, while the phone Login action appears only at 600px and below.
 - Working cause: the shared `max-width: 900px` rules flatten the hero, problem, feature, product, proof, and pricing layouts to one column. The more considered phone composition is reserved for 600px and below, leaving common iPad portrait widths between those modes.
 - Expected: add a content-driven tablet composition for tall touch viewports rather than simply stacking the desktop page. Keep image and copy relationships obvious, constrain readable measures, remove dead space, and retain both account-creation and returning-user routes in the opening view.
+- Local implementation: tall tablet portrait now has a two-column hero with one lead image, one supporting image and the descriptive panel instead of the four-row phone stack. Sign in and Start for free stay visible with 44-pixel targets. Problem/chat, product, feature, proof and showcase sections recover their paired compositions; copy measures, spacing and image relationships are bounded for the tablet width. Short viewports retain the existing phone-safe layout, while wider iPad landscape continues to use desktop rules.
+- Local verification: an 820×1180 Chromium check confirmed the tablet grids, visible account routes, readable 16-pixel body copy, reduced-motion hero, no horizontal overflow and no blocking accessibility violations. Visual captures of the hero, problem/chat, first feature, proof, showcase and pricing sections were inspected. This isn't a substitute for the named iPad Safari and Chrome gate.
 - Verification: test the complete homepage on a real 11-inch iPad Air in portrait and landscape, using Safari and Chrome. Check first load, scrolling, font completion, rotating the device, browser chrome changes, touch targets, and 200% zoom before production rollout.
+
+### Google sign-in return feels stalled and repeats two loading experiences
+- Priority: P2 beta authentication UX; unscheduled pending measurement.
+- Logged: 2026-09-19
+- Status: Captured from a user-observed Production journey. No implementation or technical diagnosis is approved.
+- Observed journey: from Login, Google opens the account chooser. After the user selects their existing Google account, the app visibly returns to the Login screen for roughly three to five seconds before redirecting to the intended song. The song route then shows the outlined “Song Room” letter-build loading animation for about another three seconds before its content appears. The complete post-selection wait feels like six to eight seconds.
+- User impact: the return to an apparently unchanged Login screen makes a successful account choice look as if it didn't work. The later branded loader creates a second distinct wait, so the journey feels slower and less certain than one continuous sign-in transition even if every request eventually succeeds.
+- Cause boundary: these durations are user estimates, not an instrumented trace. Plausible phases include the OAuth callback, session establishment, account/workspace bootstrap, redirect handling, route/data loading and the destination animation, but the backlog must not name one as the cause until the journey is measured.
+- Investigation before design: capture timestamps from Google account selection through callback completion, authenticated redirect, bootstrap/server work, song-route navigation, data readiness and meaningful song content. Compare warm and cold sessions, direct Login versus protected-song return, desktop and mobile, and representative network conditions. Check whether the Login page truly renders again or only remains visible while navigation is pending.
+- Product direction to assess: replace the misleading Login return with one persistent, accessible “Signing you in” / “Opening your song” transition that preserves the destination context. Separately determine which waits can actually be removed, overlapped or prefetched. Consider shortening or skipping the decorative song loader after an authentication return, but don't hide a slow path behind a longer animation.
+- Preserve: Google OAuth security, allowlisted redirects, tier choice, referral attribution, pending workspace-invite priority, existing-account identity, active workspace selection and the exact protected destination. The future email/password flow should reuse the same post-authentication transition rather than create another waiting pattern.
+- Acceptance gate: agree baseline measurements before setting a performance target. Verification must show that users never see an actionable Login screen after successful account selection, always receive immediate progress and destination context, and reach usable song content faster without duplicate work or redirect regressions.
 
 ### Song review: waveform seeking is coupled to comment creation
 - Priority: P1 beta usability

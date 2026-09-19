@@ -1326,6 +1326,10 @@ footer {
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
   .cell-d { opacity: 1; }
+  .hero-headline-wrap path {
+    stroke-dashoffset: 0 !important;
+    stroke-opacity: 1 !important;
+  }
   .mobile-hero-wordmark path {
     opacity: 1;
     stroke-dashoffset: 0;
@@ -1761,6 +1765,227 @@ footer {
   }
   .phone-row .shot { flex: 0 0 62%; scroll-snap-align: center; }
   .phone-row::-webkit-scrollbar { height: 0; }
+}
+
+/* Give tall tablet viewports their own composition instead of stretching the
+   phone stack. Short tablet landscape windows keep the existing phone-safe
+   treatment above. */
+@media (min-width: 601px) and (max-width: 900px) and (min-height: 601px) {
+  .nav {
+    padding: 0 24px;
+  }
+
+  .nav-links {
+    display: flex;
+    margin-left: auto;
+  }
+
+  .nav-link {
+    display: none;
+  }
+
+  .nav-link[href="/login"] {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .nav-cta {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .hero {
+    height: 100vh;
+    height: 100svh;
+    min-height: 720px;
+    padding-bottom: clamp(52px, 7vh, 76px);
+  }
+
+  .hero-bento {
+    grid-template-columns: minmax(0, 1.4fr) minmax(260px, 1fr);
+    grid-template-rows: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  }
+
+  .cell-a {
+    display: block;
+    grid-column: 1;
+    grid-row: 1 / 3;
+  }
+
+  .cell-b {
+    display: block;
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .cell-d {
+    display: block;
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .cell-c,
+  .cell-e,
+  .cell-f {
+    display: none;
+  }
+
+  .bento-cell-text {
+    justify-content: center;
+    padding: clamp(22px, 3.5vw, 32px);
+  }
+
+  .bento-cell-text p {
+    max-width: 32ch;
+    font-size: clamp(16px, 2.1vw, 18px);
+    line-height: 1.5;
+  }
+
+  .hero-content {
+    grid-template-columns: minmax(0, 1.4fr) minmax(260px, 1fr);
+    gap: 0;
+    padding: 0 36px;
+  }
+
+  .hero-headline-wrap {
+    max-width: 500px;
+  }
+
+  .hero-tagline {
+    max-width: 500px;
+    margin-top: 8px;
+    font-size: clamp(14px, 2vw, 17px);
+    line-height: 1.2;
+    text-align: left;
+  }
+
+  .hero-cta-row {
+    margin-top: 24px;
+  }
+
+  .btn-primary,
+  .btn-ghost {
+    min-height: 44px;
+  }
+
+  .problem,
+  .proof {
+    grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+    gap: 36px;
+    padding: 80px 36px;
+  }
+
+  .product,
+  .pricing,
+  .showcase {
+    padding: 80px 36px;
+  }
+
+  .problem-body,
+  .product-desc,
+  .feature-desc,
+  .showcase-sub,
+  .pricing-note,
+  .final-sub {
+    font-size: 16px;
+  }
+
+  .problem-body,
+  .product-desc,
+  .pricing-note {
+    max-width: 38ch;
+  }
+
+  .chat-window {
+    height: 440px;
+  }
+
+  .product-header,
+  .pricing-header {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 36px;
+  }
+
+  .feature-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    min-height: 440px;
+  }
+
+  .feature-row:nth-child(even) {
+    direction: rtl;
+  }
+
+  .feature-row:nth-child(even) > * {
+    direction: ltr;
+  }
+
+  .feature-body {
+    padding: 36px;
+    gap: 18px;
+  }
+
+  .feature-number {
+    font-size: 64px;
+  }
+
+  .proof {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .shot-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .shot.lead,
+  .shot-video {
+    grid-column: 1 / -1;
+  }
+
+  .shot.lead .shot-frame,
+  .shot-video .shot-frame {
+    aspect-ratio: 16 / 8.2;
+  }
+
+  .phone-row .shot {
+    flex-basis: 42%;
+  }
+
+  footer {
+    flex-direction: row;
+    text-align: left;
+  }
+
+  .footer-links {
+    justify-content: flex-start;
+  }
+
+  .problem-heading,
+  .product-heading,
+  .feature-heading,
+  .showcase-heading,
+  .proof-quote,
+  .pricing-heading,
+  .final-heading {
+    font-family: var(--tbold);
+    line-height: 0.84;
+    letter-spacing: 0.01em;
+    font-kerning: normal;
+  }
+
+  .problem-heading,
+  .pricing-heading,
+  .final-heading {
+    font-size: clamp(4rem, 8.8vw, 5.25rem);
+  }
+
+  .product-heading,
+  .feature-heading,
+  .showcase-heading,
+  .proof-quote {
+    font-size: clamp(3.25rem, 6.8vw, 4rem);
+  }
 }
 
 /* Keep the condensed display voice clear on phone screens. */
