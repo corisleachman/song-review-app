@@ -6525,6 +6525,31 @@ A shared wide-screen heading treatment and regression coverage within draft PR #
 
 ---
 
+## 2026-09-19 - Approve PR #53 after the desktop Safari retest
+
+### What we were trying to achieve
+
+Close the available manual Preview gate for the homepage typography refinement and proceed with the approved PR #53 rollout without overstating unavailable device coverage.
+
+### Feature / change being made
+
+Documentation-only Preview evidence and rollout approval. No further homepage behaviour or styling change.
+
+### Files changed
+
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Verification evidence and rollout boundary
+
+- The user confirmed the revised homepage looks great in desktop Safari on primary Preview `dpl_GM3rwftoCetk3CsaXDnJfcWh63ty`, built from refinement commit `960fc041a6a191defd9585bebad5de759809d716`.
+- All four GitHub and Vercel checks passed on that head. Earlier local verification covered 71 contract tests, 15 Chromium browser passes with seven expected project skips, focused ESLint, an optimized build and clean desktop/tablet WebKit renders.
+- Chrome's 11-inch iPad emulation looked clear. A physical 11-inch iPad wasn't available for the revised candidate, so Safari/Chrome orientation, rotation, browser chrome and 200% zoom on that device remain follow-up coverage, not completed evidence.
+- The user's instruction to continue authorises marking PR #53 ready, squash-merging it into `clone-clean`, waiting for the resulting deployments and checking the live homepage. Stop rollout if the documentation-only head fails or the Production deployment is unhealthy.
+- No migration, dependency, authentication, billing, storage, environment-variable or service-setting change is involved. Rollback is a revert of the future PR #53 squash commit or restoration of the preceding primary Production deployment.
+
+---
+
 ## 2026-09-14 - Record 11-inch iPad homepage failures
 
 ### What we were trying to achieve
