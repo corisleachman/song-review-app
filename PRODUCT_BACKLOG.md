@@ -6,11 +6,11 @@ Bugs and feature ideas for beta readiness and later product work. The current pr
 
 ## Current priority order
 
-1. Fix the 11-inch iPad homepage typography and tablet layout, with real-device checks.
-2. Plan and implement email/password signup, including referrals and complete account recovery. Microsoft login isn't part of this work.
-3. Continue the remaining security-hardening and review findings, then SEO and final pre-launch QA.
+1. Implement the approved email/password journey in focused slices, including referrals, invites, existing Google accounts, and complete recovery. Microsoft login isn't part of this work.
+2. Continue the remaining security-hardening and review findings.
+3. Complete SEO, discoverability, and final pre-launch QA.
 
-Microsoft login stays deferred until traction and income justify it. This order promotes password signup without interrupting the current reliability and tablet fixes.
+The iPad homepage work is now in Production. A physical 11-inch iPad check remains useful coverage, but it no longer blocks this queue. Microsoft login stays deferred until traction and income justify it.
 
 ## Bugs
 
@@ -28,7 +28,7 @@ Microsoft login stays deferred until traction and income justify it. This order 
 ### Tablet homepage: display headings become dense, blocky shapes
 - Priority: P1 beta presentation
 - Logged: 2026-09-14
-- Status: Preview validation passed for [PR #53](https://github.com/corisleachman/song-review-app/pull/53) and rollout is approved. All four checks passed on refinement commit `960fc041`; primary Preview `dpl_GM3rwftoCetk3CsaXDnJfcWh63ty` reached Ready. The user confirmed the revised page looks great in desktop Safari. Chrome's 11-inch iPad emulation, local WebKit at tablet size and the automated tablet case also passed. A physical 11-inch iPad hasn't been available, so that remains post-rollout coverage rather than claimed evidence.
+- Status: ✅ PRODUCTION COMPLETE. PR #53 squash-merged into `clone-clean` as `5dc27863`. Primary Production `dpl_DAJqpPQhNMphgGYKTbE1mvb2Bp6M` reached Ready and serves the live aliases. Live homepage/header/WebKit and deployment-scoped runtime checks passed, and the user confirmed the revised page looks great in desktop Safari. Chrome's 11-inch iPad emulation, local WebKit at tablet size and the automated tablet case also passed. A physical 11-inch iPad hasn't been available, so that remains post-rollout coverage rather than claimed evidence.
 - Observed: filled Thunder headings such as “You've been doing it the hard way” and “Upload it. Everyone hears it.” become cramped blocks with poor internal definition. The original iPad screenshots and the later desktop Safari screenshot show the same readability problem. The words are much harder to scan than the surrounding body copy and don't look intentionally rendered.
 - Working cause: this is a breakpoint inconsistency rather than evidence of a failed font download. Phone and tall-tablet rules select Thunder Bold with a `0.84` line-height, while wide screens still select the much heavier Thunder Black face at `0.74` and allow lead headings to reach 140 pixels. Safari is rendering that specified desktop treatment.
 - Expected: carry a deliberately tested display treatment through the tablet range. Keep the established editorial character, but use a readable face, line-height, size, and wrap at every width. Font loading failure must also fall back without collisions or materially changing the section height.
@@ -39,7 +39,7 @@ Microsoft login stays deferred until traction and income justify it. This order 
 ### Tablet homepage: 11-inch iPad falls into an unfinished responsive layout
 - Priority: P1 beta presentation
 - Logged: 2026-09-14
-- Status: Preview validation passed for [PR #53](https://github.com/corisleachman/song-review-app/pull/53) and rollout is approved. Automated checks, Chrome's 11-inch iPad emulation and local WebKit passed. A physical 11-inch iPad wasn't available for the revised candidate, so the named physical-device matrix remains honest post-rollout coverage.
+- Status: ✅ PRODUCTION COMPLETE. PR #53 squash-merged into `clone-clean` as `5dc27863`; primary Production `dpl_DAJqpPQhNMphgGYKTbE1mvb2Bp6M` is Ready. Automated checks, Chrome's 11-inch iPad emulation, local WebKit, live route/header checks and the Production runtime scan passed. A physical 11-inch iPad wasn't available for the revised candidate, so the named physical-device matrix remains honest post-rollout coverage.
 - Observed: the hero and later sections look like enlarged phone stacks rather than a composed tablet page. Feature copy sits in a small area of very wide panels, image and text transitions feel disconnected, and excessive empty space makes the page look broken. The signed-out navigation also loses “Sign in”: desktop links are hidden at 900px, while the phone Login action appears only at 600px and below.
 - Working cause: the shared `max-width: 900px` rules flatten the hero, problem, feature, product, proof, and pricing layouts to one column. The more considered phone composition is reserved for 600px and below, leaving common iPad portrait widths between those modes.
 - Expected: add a content-driven tablet composition for tall touch viewports rather than simply stacking the desktop page. Keep image and copy relationships obvious, constrain readable measures, remove dead space, and retain both account-creation and returning-user routes in the opening view.
@@ -180,14 +180,16 @@ Microsoft login stays deferred until traction and income justify it. This order 
 ## Features
 
 ### Email/password signup and complete account-recovery journeys
-- Priority: P1 near-term product work, after current playback and tablet fixes; no dependency on Microsoft login.
+- Priority: P1 active planning, now first in the implementation queue; no dependency on Microsoft login.
 - Logged: 2026-09-18
-- Status: Promoted from post-beta reassessment at the user's request. Plan the complete journeys before implementation; Production remains Google-only until a separately approved rollout.
-- Scope: email/password signup and login alongside Google, email verification and resend, forgotten-password requests, expired/used recovery links, password reset/change and session handling. Decide explicitly whether a username is a login identifier or a display name rather than silently adding a second identity system.
+- Status: Journey specification, Slice 0, and the Slice 1 shared auth boundary are complete. Slice 1 is in draft PR #54 and its full Preview gate has passed. The primary Preview passed the automated public, signed-out, legacy-cookie rejection, default-off Email, security-header, staging-CSP, and runtime-log checks; the user then confirmed the protected Google login, return destination, and persisted session on the final documentation-head Preview. The PR remains draft pending code review and explicit rollout approval. Production is unchanged. Slice 1 removes Production legacy-cookie trust, centralizes post-auth destination validation, adds a one-hour AES-256-GCM sealed intent with optional email binding, builds disabled-by-default confirmation and continuation routes, and keeps the public UI Google-only. The approved temporary safeguard disabled Production Email while retaining Google; a fresh public Auth response confirmed `email: false` and `google: true`. Staging Email remains enabled for controlled development. Both hosted projects still have default templates, built-in trial email delivery, CAPTCHA off, leaked-password protection off, password-change reauthentication off, and no explicit stronger password policy. All five Production auth users are confirmed Google-only identities. Forms, mail delivery, and the remaining hosted Auth/SMTP work haven't started.
+- Scope: email/password signup and login alongside Google, email verification and resend, forgotten-password requests, expired/used recovery links, password reset/change and deliberate session handling. Email is the login identifier. The requested username is a display name, not a unique handle or second sign-in identifier.
 - Entry journeys: neutral signup, tier-aware Free/Pro/Studio choices, referrals, workspace invitations, protected-page login redirects, signed-in visitors and sign-out/re-entry. Preserve referral attribution through confirmation and recovery, avoid duplicate referral rewards, and keep invite priority and owner-only checkout rules intact.
-- Existing accounts: define safe Google/password account linking, duplicate-email handling and password setup for Google-created accounts without duplicate Song Room users or workspaces. Require proof of identity; never link accounts based only on an unverified email or client-supplied username.
-- Security and operations: inspect existing auth routes before designing new ones; plan rate limiting, anti-enumeration responses, password rules, redirect allowlists, transactional email delivery, staged configuration, rollback and a full acceptance matrix. Keep the storage, billing and canonical identity model unchanged unless separately justified.
-- Delivery gate: agree the journey specification first, then implement a focused auth slice and verify it in staging before enabling Production. Microsoft remains separate and deferred.
+- Existing accounts: a signed-in Google user adds a password through Settings using Supabase's supported `updateUser` flow. A password account choosing Google may use Supabase's verified-email automatic linking, but staging must prove the Supabase user UUID remains unchanged. Never merge accounts from an unverified email, display name, or client assertion.
+- Security and operations: use the captured hosted baseline to centralize sealed auth intent, remove legacy-cookie trust from the new boundary, use SSR/PKCE confirmation, configure custom SMTP, add uniform anti-enumeration responses, review rate limits, and add CAPTCHA before public enablement.
+- Delivery gate: implement the specification in bounded slices, complete the cross-browser acceptance matrix in staging, and keep the Production Email UI hidden until configuration and mail delivery are verified. Microsoft remains separate and deferred.
+- Detailed product, technical, rollout, and rollback plan: `EMAIL_PASSWORD_SIGNUP_AND_RECOVERY_JOURNEY.md`.
+- Read-only environment findings and the remaining hosted-setting checklist: `AUTH_CONFIGURATION_AUDIT.md`.
 
 ### Turn off the audio visualiser on the song page  ✅ DONE (2026-08-09)
 - Logged: 2026-08-07 · Shipped: 2026-08-09 (commit 0ef7554a) — per-user toggle in Settings > Appearance

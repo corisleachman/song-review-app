@@ -42,29 +42,4 @@ export function buildSignupDestination(intent: SignupIntent): string {
   return `/upgrade?${params.toString()}`;
 }
 
-export function normalizePostLoginUpgradePath(value: string | null | undefined): string | null {
-  if (!value || !value.startsWith('/') || value.startsWith('//')) return null;
-
-  const url = new URL(value, 'https://song-room.local');
-  if (url.pathname !== '/upgrade') return null;
-
-  const allowedKeys = new Set(['plan', 'billing', 'source', 'billingStatus']);
-  if (Array.from(url.searchParams.keys()).some(key => !allowedKeys.has(key))) return null;
-
-  const plan = normalizeSignupPlan(url.searchParams.get('plan'));
-  if (plan !== 'pro' && plan !== 'studio') return null;
-  const source = url.searchParams.get('source');
-  const billingStatus = url.searchParams.get('billingStatus');
-  if (source !== 'pricing' && source !== 'checkout') return null;
-  if (source === 'pricing' && billingStatus !== null) return null;
-  if (source === 'checkout' && billingStatus !== 'cancelled') return null;
-
-  const params = new URLSearchParams({
-    plan,
-    billing: normalizeBillingInterval(url.searchParams.get('billing')),
-    source,
-  });
-  if (billingStatus) params.set('billingStatus', billingStatus);
-
-  return `/upgrade?${params.toString()}`;
-}
+export { normalizePostLoginUpgradePath } from '@/lib/authDestination';

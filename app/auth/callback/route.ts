@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { normalizeAuthDestination } from '@/lib/authDestination';
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
-  const next = requestUrl.searchParams.get('next') || '/';
+  const next = normalizeAuthDestination(requestUrl.searchParams.get('next'));
 
   if (code) {
     const cookieStore = await cookies();
@@ -17,7 +18,7 @@ export async function GET(request: Request) {
     // multiple 307 redirect hops before the cookies are stored.
     const loginUrl = new URL('/login', requestUrl.origin);
     loginUrl.searchParams.set('google', 'success');
-    if (next && next !== '/') {
+    if (next !== '/dashboard') {
       loginUrl.searchParams.set('redirectTo', next);
     }
 
@@ -44,8 +45,7 @@ export async function GET(request: Request) {
     if (error) {
       const errorUrl = new URL('/login', requestUrl.origin);
       errorUrl.searchParams.set('google', 'error');
-      errorUrl.searchParams.set('message', error.message);
-      if (next && next !== '/') {
+      if (next !== '/dashboard') {
         errorUrl.searchParams.set('redirectTo', next);
       }
       return NextResponse.redirect(errorUrl);
@@ -57,8 +57,7 @@ export async function GET(request: Request) {
   // No code — redirect to login
   const loginUrl = new URL('/login', requestUrl.origin);
   loginUrl.searchParams.set('google', 'error');
-  loginUrl.searchParams.set('message', 'No auth code received.');
-  if (next && next !== '/') {
+  if (next !== '/dashboard') {
     loginUrl.searchParams.set('redirectTo', next);
   }
   return NextResponse.redirect(loginUrl);

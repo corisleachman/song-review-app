@@ -16,7 +16,7 @@ This is a planning document. It does not describe a completed UI unless explicit
 
 A user identity answers: "Who am I signed in as?"
 
-For the public app, this is the Google-authenticated person.
+The deployed beta currently uses Google. The planned email/password journey must resolve to the same Supabase user UUID and profile rather than creating a second identity model. See `EMAIL_PASSWORD_SIGNUP_AND_RECOVERY_JOURNEY.md`.
 
 Examples:
 - Cat Leachman signed in as `cat.libbie@gmail.com`
@@ -131,7 +131,7 @@ The switcher should be present even if the user only has one workspace, because 
 ### 1. User signs up directly
 
 Scenario:
-Cat visits the app without an invite and signs in with Google.
+Cat visits the app without an invite and creates an account with Google or a verified email/password.
 
 Expected behavior:
 1. app creates Cat's profile
@@ -161,7 +161,7 @@ Cat receives an invite to Coris's workspace before creating her own workspace.
 
 Expected behavior:
 1. Cat opens invite link
-2. Cat signs in with Google
+2. Cat signs in with Google or creates a verified email/password account for the invited address
 3. app validates that Cat is signed in with the invited email
 4. app creates Cat's membership in Coris's workspace
 5. app opens the dashboard in Coris's workspace

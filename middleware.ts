@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { normalizeAuthDestination } from '@/lib/authDestination';
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -11,6 +12,8 @@ export async function middleware(request: NextRequest) {
     '/marketing.html',
     '/identify',
     '/auth/callback',
+    '/auth/confirm',
+    '/auth/continue',
     '/auth/reset-password',
     '/privacy',
     '/terms',
@@ -31,11 +34,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
   
-  // Check for auth cookie
-  const authCookie = request.cookies.get('song_review_auth');
-  const identityCookie = request.cookies.get('song_review_identity');
-
-  if (authCookie && identityCookie) {
+  // Browser fixtures can opt into the old cookies locally. Production never
+  // trusts them as proof of authentication.
+  const allowLegacyBrowserFixture =
+    process.env.NODE_ENV !== 'production'
+    && process.env.PLAYWRIGHT_ALLOW_LEGACY_AUTH === 'true';
+  if (
+    allowLegacyBrowserFixture
+    && request.cookies.has('song_review_auth')
+    && request.cookies.has('song_review_identity')
+  ) {
     return NextResponse.next();
   }
 
@@ -60,16 +68,14 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data, error } = await supabase.auth.getClaims();
 
-  if (session) {
+  if (!error && data?.claims?.sub) {
     return response;
   }
 
   const loginUrl = new URL('/login', request.url);
-  const redirectTarget = pathname === '/upgrade'
-    ? `${pathname}${request.nextUrl.search}`
-    : pathname;
+  const redirectTarget = normalizeAuthDestination(`${pathname}${request.nextUrl.search}`);
   loginUrl.searchParams.set('redirectTo', redirectTarget);
   return NextResponse.redirect(loginUrl);
 }

@@ -49,6 +49,7 @@ export default defineConfig({
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'browser-test-anon-key',
       SUPABASE_SERVICE_ROLE_KEY:
         process.env.SUPABASE_SERVICE_ROLE_KEY || 'browser-test-service-role-key',
+      PLAYWRIGHT_ALLOW_LEGACY_AUTH: 'true',
       NEXT_PUBLIC_APP_URL: baseURL,
     },
   },
