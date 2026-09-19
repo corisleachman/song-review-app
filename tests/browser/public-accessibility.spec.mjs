@@ -78,6 +78,46 @@ test('homepage exposes its primary account journey without blocking accessibilit
   await expect(page.getByRole('heading', { name: 'Create your Free workspace' })).toBeVisible();
 });
 
+test('desktop homepage keeps its display headings readable at the wide breakpoint', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-chromium', 'One desktop project supplies the wide viewport.');
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await prepareDeterministicPage(page);
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await page.evaluate(() => document.fonts.ready);
+
+  const typography = await page.evaluate(() => {
+    const selectors = [
+      '.problem-heading',
+      '.product-heading',
+      '.feature-heading',
+      '.proof-quote',
+      '.showcase-heading',
+      '.pricing-heading',
+      '.final-heading',
+    ];
+    return {
+      headings: selectors.map((selector) => {
+        const style = getComputedStyle(document.querySelector(selector));
+        const fontSize = Number.parseFloat(style.fontSize);
+        return {
+          selector,
+          family: style.fontFamily,
+          fontSize,
+          lineHeightRatio: Number.parseFloat(style.lineHeight) / fontSize,
+        };
+      }),
+      hasHorizontalOverflow: document.documentElement.scrollWidth > window.innerWidth + 1,
+    };
+  });
+
+  for (const heading of typography.headings) {
+    expect(heading.family, heading.selector).toContain('ThunderBold');
+    expect(heading.fontSize, heading.selector).toBeLessThanOrEqual(120);
+    expect(heading.lineHeightRatio, heading.selector).toBeGreaterThanOrEqual(0.83);
+  }
+  expect(typography.hasHorizontalOverflow).toBe(false);
+});
+
 test('homepage pricing keeps the chosen tier and billing period', async ({ page }) => {
   await prepareDeterministicPage(page);
   await page.goto('/', { waitUntil: 'domcontentloaded' });

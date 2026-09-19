@@ -6478,13 +6478,50 @@ A focused tall-tablet breakpoint, readable display typography and regression cov
 - Public Playwright suite: 14 passed with six expected project skips. The 820×1180 tablet case confirms two-column hero/problem/product/feature/showcase layouts, visible account routes, a 44-pixel Sign in target, 16-pixel body copy, readable heading metrics, the reduced-motion hero fallback, no horizontal overflow and no blocking accessibility violations.
 - Inspected local 820×1180 Chromium captures for the hero, problem/chat, first feature, showcase, proof and pricing sections. The display words remain distinct and the paired content relationships are restored.
 - Optimized Next.js build passed with command-scoped non-production Supabase placeholders and existing lint warnings. Build-generated cookie-consent additions in two otherwise untouched blog files were removed after verification.
-- Published initial implementation commit `29325d35` on `codex/ipad-homepage-readiness`, based on Production `clone-clean` commit `9c483ee1`, and opened [draft PR #53](https://github.com/corisleachman/song-review-app/pull/53) with base `clone-clean`. Automated checks and the final primary-project Preview are pending; nothing from this slice is deployed to Production. The earlier PR #52 closeout and slow sign-in backlog note remain preserved.
+- Published initial implementation commit `29325d35` on `codex/ipad-homepage-readiness`, based on Production `clone-clean` commit `9c483ee1`, and opened [draft PR #53](https://github.com/corisleachman/song-review-app/pull/53) with base `clone-clean`. All four checks passed on documentation head `ce84e942`; primary Preview `dpl_EPZHhbsaPYJwpL3NjYJn97ouGpvw` reached Ready for that exact SHA. Chrome's 11-inch iPad emulation looked clear, but a subsequent desktop Safari screenshot failed the heading-readability gate. The PR therefore remains draft and unmerged. Nothing from this slice is deployed to Production. The earlier PR #52 closeout and slow sign-in backlog note remain preserved.
 - The original user screenshots are evidence of the Production defect, not evidence that this local fix works in iPad Safari or Chrome. The remaining gate is the complete real-device checklist recorded in `PRODUCT_BACKLOG.md`, including portrait, landscape, rotation, browser chrome changes, touch use, font completion and 200% zoom.
 - No migration, dependency, authentication, billing, storage, environment-variable or service-setting change is involved. A future rollback is a revert of this slice's eventual merge commit or restoration of the preceding Vercel Production deployment, which must be recorded during rollout.
 
 ### Recommended next step
 
-Wait for every check on the final PR head and the primary-project Preview to reach Ready, then use that Preview for the named real-device iPad gate before any merge.
+Publish the desktop typography refinement, wait for every check and the replacement primary Preview, then repeat desktop Safari before the real-device iPad gate. Do not merge on Chrome emulation alone.
+
+---
+
+## 2026-09-19 - Refine PR #53 display typography after desktop Safari finding
+
+### What we were trying to achieve
+
+Make the marketing display headings readable in desktop Safari as well as the tall-tablet composition, without replacing the brand typeface or changing unrelated page content.
+
+### Feature / change being made
+
+A shared wide-screen heading treatment and regression coverage within draft PR #53. The PR remains unmerged while the revised Preview is tested.
+
+### Files changed
+
+- `public/marketing.html`
+- `tests/critical-contracts.test.mjs`
+- `tests/browser/public-accessibility.spec.mjs`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Root cause and implementation
+
+- The first PR #53 Preview looked clear in Chrome's 11-inch iPad emulation and all automated checks passed. A desktop Safari screenshot then showed the problem heading as dense blocks. This is a failed manual Preview gate, so the PR stays draft.
+- Safari is rendering the specified font rather than falling back. The wide breakpoint still used Thunder Black at a `0.74` line-height and allowed lead headings to grow to 140 pixels, while phone and tall-tablet rules used the clearer Thunder Bold treatment at `0.84`.
+- Apply Thunder Bold, normal kerning and a `0.84` line-height to the main marketing headings at the shared level. Bound lead headings at 120 pixels and supporting headings at 80 pixels. Keep Thunder Black for short accents such as feature numbers and prices.
+- Add a source contract for every shared heading and a 1440×900 browser check covering computed family, size, line-height and horizontal overflow.
+
+### Verification status
+
+- `npm test`: 71 passed, including the new shared desktop typography contract.
+- Focused ESLint passed for both changed test files. The public Chromium suite passed 15 tests with seven expected project skips, including the new 1440×900 heading check and the 820×1180 tablet case.
+- Local Playwright WebKit renders at 1440×900 and 820×1180 returned 200, loaded Thunder Bold at a `0.84` line-height, had no horizontal overflow, browser page errors or framework overlay, and were visually inspected at the Problem section.
+- The optimized Next.js build passed with command-scoped non-production Supabase placeholders and existing lint warnings. Its generated cookie-consent additions in two otherwise untouched blog files were removed after verification.
+- A replacement Preview is still required after this refinement.
+- Desktop Safari at normal zoom and 200% zoom is now the first manual gate. A real 11-inch iPad Safari and Chrome check remains required because Chrome device emulation isn't real-device evidence.
+- No migration, dependency, authentication, billing, storage, environment-variable or service-setting change is involved. Nothing from PR #53 is deployed to Production.
 
 ---
 

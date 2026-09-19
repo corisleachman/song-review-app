@@ -1003,6 +1003,37 @@ test('tall tablet marketing keeps a composed layout and readable display type', 
   assert.match(reducedMotionCss, /\.hero-headline-wrap path\s*\{[^}]*stroke-dashoffset:\s*0 !important;[^}]*stroke-opacity:\s*1 !important;/u);
 });
 
+test('desktop marketing display headings keep the readable shared type scale', () => {
+  const marketing = read('public/marketing.html');
+  const desktopCss = marketing;
+  const leadHeadings = ['.problem-heading', '.pricing-heading', '.final-heading'];
+  const supportingHeadings = ['.product-heading', '.feature-heading', '.proof-quote', '.showcase-heading'];
+
+  for (const selector of [...leadHeadings, ...supportingHeadings]) {
+    const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const rule = desktopCss.match(new RegExp(`${escapedSelector}\\s*\\{[^}]*\\}`, 'u'))?.[0] ?? '';
+    assertIncludesAll(rule, [
+      'font-family: var(--tbold);',
+      'line-height: 0.84;',
+      'letter-spacing: 0.01em;',
+      'font-kerning: normal;',
+    ], `${selector} desktop typography`);
+    assert.doesNotMatch(rule, /font-family:\s*var\(--tblack\)/u);
+  }
+
+  for (const selector of leadHeadings) {
+    const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const rule = desktopCss.match(new RegExp(`${escapedSelector}\\s*\\{[^}]*\\}`, 'u'))?.[0] ?? '';
+    assert.match(rule, /font-size:\s*clamp\(4rem, 8vw, 7\.5rem\);/u);
+  }
+
+  for (const selector of supportingHeadings) {
+    const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const rule = desktopCss.match(new RegExp(`${escapedSelector}\\s*\\{[^}]*\\}`, 'u'))?.[0] ?? '';
+    assert.match(rule, /font-size:\s*clamp\(3\.25rem, 5\.5vw, 5rem\);/u);
+  }
+});
+
 test('mobile marketing display headings use a clearer phone type scale', () => {
   const marketing = read('public/marketing.html');
   const mobileTypeStart = marketing.indexOf('/* Keep the condensed display voice clear on phone screens. */');
