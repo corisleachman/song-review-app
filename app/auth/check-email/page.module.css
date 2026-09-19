@@ -1,0 +1,120 @@
+.root {
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 82% 12%, rgba(207,56,43,0.17), transparent 34rem),
+    #0e0a0a;
+  color: #f4f0e8;
+  font-family: 'DM Sans', -apple-system, sans-serif;
+}
+.card {
+  width: min(100% - 40px, 520px);
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding: clamp(64px, 10vh, 112px) 0 72px;
+}
+
+.brand {
+  display: inline-block;
+  margin-bottom: clamp(64px, 12vh, 124px);
+  color: #f4f0e8;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.eyebrow {
+  margin: 0 0 14px;
+  color: #df483a;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.card h1 {
+  margin: 0;
+  font-size: clamp(38px, 7vw, 68px);
+  font-weight: 600;
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+}
+
+.intro {
+  margin: 28px 0 0;
+  color: rgba(244,240,232,0.82);
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+.intro strong {
+  color: #f4f0e8;
+  overflow-wrap: anywhere;
+}
+
+.note {
+  margin: 14px 0 30px;
+  color: rgba(244,240,232,0.54);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.primaryButton,
+.textButton {
+  min-height: 46px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.primaryButton {
+  width: 100%;
+  border: 1px solid #cf382b;
+  background: #cf382b;
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.primaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.textButton {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: rgba(244,240,232,0.76);
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.googleHelp {
+  display: block;
+  margin-top: 18px;
+  color: rgba(244,240,232,0.66);
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.status {
+  margin: 18px 0 0;
+  color: rgba(244,240,232,0.76);
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+@media (max-width: 560px) {
+  .card {
+    padding-top: 44px;
+  }
+
+  .brand {
+    margin-bottom: 72px;
+  }
+}

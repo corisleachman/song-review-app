@@ -3,7 +3,8 @@
 export const dynamic = 'force-dynamic';
 
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState, useRef, Suspense } from 'react';
+import Link from 'next/link';
+import { useEffect, useMemo, useState, useRef, Suspense, type FormEvent } from 'react';
 import { createClient } from '@/lib/supabase';
 import {
   buildSignupDestination,
@@ -14,6 +15,8 @@ import styles from './page.module.css';
 import BetaBanner from '@/components/BetaBanner';
 
 const POST_LOGIN_INVITE_PATH_KEY = 'song_review_post_login_invite_path';
+const PENDING_AUTH_EMAIL_KEY = 'song_room_pending_auth_email';
+const PENDING_AUTH_RETURN_KEY = 'song_room_pending_auth_return';
 
 function normalizeRedirectTarget(value: string | null) {
   return normalizeAuthDestination(value);
@@ -70,6 +73,13 @@ function LoginContent() {
   const [supabase] = useState(() => createClient());
   const [error, setError] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [emailAuthEnabled, setEmailAuthEnabled] = useState(false);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [passwordConfirmation, setPasswordConfirmation] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   // BG slideshow
@@ -85,13 +95,25 @@ function LoginContent() {
     () => getSignupIntent(signupPlanParam, signupBillingParam),
     [signupBillingParam, signupPlanParam],
   );
+  const isSignup = Boolean(signupIntent);
+  const destination = signupIntent
+    ? buildSignupDestination(signupIntent)
+    : normalizeAuthDestination(searchParams.get('redirectTo'));
 
-  const signupHeading = signupIntent
-    ? `Create your ${signupIntent.plan === 'free' ? 'Free' : signupIntent.plan === 'pro' ? 'Pro' : 'Studio'} workspace`
-    : 'Log in or create your account';
+  const signupHeading = emailAuthEnabled
+    ? signupIntent
+      ? `Create your ${signupIntent.plan === 'free' ? 'Free' : signupIntent.plan === 'pro' ? 'Pro' : 'Studio'} workspace`
+      : 'Welcome back'
+    : signupIntent
+      ? `Create your ${signupIntent.plan === 'free' ? 'Free' : signupIntent.plan === 'pro' ? 'Pro' : 'Studio'} workspace`
+      : 'Log in or create your account';
 
   const signupDescription = (() => {
-    if (!signupIntent) return 'Use Google to log in or create your Song Room account.';
+    if (!signupIntent) {
+      return emailAuthEnabled
+        ? 'Log in with your email and password, or continue with Google.'
+        : 'Use Google to log in or create your Song Room account.';
+    }
     if (signupIntent.plan === 'free') return 'Start with 500 MB of storage. No card required.';
     if (signupIntent.plan === 'pro') {
       return signupIntent.billing === 'month'
@@ -102,6 +124,27 @@ function LoginContent() {
       ? 'Studio is £19 per month, billed monthly. You will confirm before payment.'
       : 'Studio is £15.83 per month, billed £190 yearly. You will confirm before payment.';
   })();
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const loadEmailAuthStatus = async () => {
+      try {
+        const response = await fetch('/api/auth/email/config', {
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+        if (!response.ok) return;
+        const payload = await response.json() as { enabled?: boolean };
+        setEmailAuthEnabled(payload.enabled === true);
+      } catch (statusError) {
+        if (!(statusError instanceof DOMException && statusError.name === 'AbortError')) {
+          console.error('Email auth status could not be loaded.');
+        }
+      }
+    };
+    void loadEmailAuthStatus();
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -253,7 +296,6 @@ function LoginContent() {
     };
   }, []);
 
-  // Auth handlers - unchanged from original
   const handleGoogleSignIn = async () => {
     setError('');
     setGoogleLoading(true);
@@ -266,11 +308,70 @@ function LoginContent() {
       provider: 'google',
       options: { redirectTo: callbackUrl.toString() },
     });
-    if (signInError) { setError(signInError.message); setGoogleLoading(false); }
+    if (signInError) {
+      setError('Google sign-in could not be started. Please try again.');
+      setGoogleLoading(false);
+    }
+  };
+
+  const handleEmailSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError('');
+
+    if (isSignup && password !== passwordConfirmation) {
+      setError('The passwords don’t match.');
+      return;
+    }
+    if (isSignup && !acceptedTerms) {
+      setError('Please accept the Terms and Privacy notice to create your account.');
+      return;
+    }
+
+    setEmailLoading(true);
+    try {
+      const endpoint = isSignup ? '/api/auth/email/signup' : '/api/auth/email/login';
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...(isSignup ? { name } : {}),
+          email,
+          password,
+          destination,
+        }),
+      });
+      const payload = await response.json().catch(() => null) as {
+        error?: string;
+        email?: string;
+        continueTo?: string;
+      } | null;
+
+      if (!response.ok || !payload) {
+        setError(payload?.error ?? 'That request could not be completed. Please try again.');
+        return;
+      }
+
+      if (isSignup) {
+        window.sessionStorage.setItem(PENDING_AUTH_EMAIL_KEY, payload.email ?? email.trim().toLowerCase());
+        window.sessionStorage.setItem(PENDING_AUTH_RETURN_KEY, window.location.pathname + window.location.search);
+        window.location.assign('/auth/check-email');
+        return;
+      }
+
+      if (!payload.continueTo?.startsWith('/auth/continue?intent=')) {
+        setError('Login completed, but the next page could not be opened. Please try again.');
+        return;
+      }
+      window.location.assign(payload.continueTo);
+    } catch {
+      setError('That request could not be completed. Check your connection and try again.');
+    } finally {
+      setEmailLoading(false);
+    }
   };
 
   return (
-    <div className={styles.root}>
+    <div className={`${styles.root} ${emailAuthEnabled ? styles.emailAuthRoot : ''}`}>
       {/* Background slides */}
       <div className={styles.bg} aria-hidden="true">
         {(previousBgIndex === null || previousBgIndex === bgIndex
@@ -304,9 +405,99 @@ function LoginContent() {
               {signupDescription}
             </p>
 
+            {emailAuthEnabled && (
+              <form className={styles.emailForm} onSubmit={handleEmailSubmit} noValidate>
+                {isSignup && (
+                  <label className={styles.fieldLabel}>
+                    <span>Name</span>
+                    <input
+                      className={styles.fieldInput}
+                      type="text"
+                      name="name"
+                      autoComplete="name"
+                      minLength={2}
+                      maxLength={80}
+                      value={name}
+                      onChange={event => setName(event.target.value)}
+                      required
+                    />
+                  </label>
+                )}
+                <label className={styles.fieldLabel}>
+                  <span>Email</span>
+                  <input
+                    className={styles.fieldInput}
+                    type="email"
+                    name="email"
+                    autoComplete="email"
+                    maxLength={254}
+                    value={email}
+                    onChange={event => setEmail(event.target.value)}
+                    required
+                  />
+                </label>
+                <label className={styles.fieldLabel}>
+                  <span>Password</span>
+                  <input
+                    className={styles.fieldInput}
+                    type="password"
+                    name="password"
+                    autoComplete={isSignup ? 'new-password' : 'current-password'}
+                    minLength={12}
+                    maxLength={128}
+                    value={password}
+                    onChange={event => setPassword(event.target.value)}
+                    aria-describedby={isSignup ? 'password-requirements' : undefined}
+                    required
+                  />
+                </label>
+                {isSignup && (
+                  <>
+                    <p id="password-requirements" className={styles.fieldHint}>Use at least 12 characters. Password-manager paste is welcome.</p>
+                    <label className={styles.fieldLabel}>
+                      <span>Confirm password</span>
+                      <input
+                        className={styles.fieldInput}
+                        type="password"
+                        name="password-confirmation"
+                        autoComplete="new-password"
+                        minLength={12}
+                        maxLength={128}
+                        value={passwordConfirmation}
+                        onChange={event => setPasswordConfirmation(event.target.value)}
+                        required
+                      />
+                    </label>
+                    <label className={styles.checkboxLabel}>
+                      <input
+                        type="checkbox"
+                        checked={acceptedTerms}
+                        onChange={event => setAcceptedTerms(event.target.checked)}
+                        required
+                      />
+                      <span>I accept the <a href="/terms">Terms</a> and <a href="/privacy">Privacy notice</a>.</span>
+                    </label>
+                  </>
+                )}
+                <button className={styles.btnEmail} type="submit" disabled={emailLoading || googleLoading}>
+                  {emailLoading ? 'Please wait…' : isSignup ? 'Create account' : 'Log in'}
+                </button>
+                <div className={styles.modeLinks}>
+                  {isSignup ? (
+                    <Link href={`/login${destination === '/dashboard' ? '' : `?redirectTo=${encodeURIComponent(destination)}`}`}>Already have an account? Log in</Link>
+                  ) : (
+                    <Link href="/signup/free">New to The Song Room? Create account</Link>
+                  )}
+                </div>
+              </form>
+            )}
+
+            {emailAuthEnabled && <div className={styles.orDivider}><span>or</span></div>}
+
             {/* Google */}
             <button
               className={styles.btnGoogle}
+              type="button"
               onClick={handleGoogleSignIn}
               disabled={googleLoading}
             >
@@ -324,7 +515,7 @@ function LoginContent() {
             </button>
 
             <div className={styles.formFooter}>
-              <span>During beta, Google is the only account option. </span>
+              <span>{emailAuthEnabled ? 'By continuing, you agree to our ' : 'During beta, Google is the only account option. '}</span>
               <a className={styles.formLink} href="/terms">Terms</a>
               <span className={styles.formSeparator} aria-hidden="true"> · </span>
               <a className={styles.formLink} href="/privacy">Privacy</a>

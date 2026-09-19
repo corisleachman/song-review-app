@@ -6779,3 +6779,54 @@ Preview evidence for draft PR #54. No application behaviour changed in this foll
 ### Rollback
 
 No rollout occurred. Revert the PR branch commit if the candidate needs to be abandoned; the independently disabled Production Email provider remains the outer safeguard.
+
+---
+
+## 2026-09-20 - Build default-off email signup and login forms
+
+### What we were trying to achieve
+
+Start Slice 2 without exposing an unfinished authentication method or changing any hosted service. The staging candidate needed coherent login, signup, verification, and resend states that reuse the shared boundary shipped in PR #54.
+
+### Feature / change being made
+
+Slice 2A of the email/password journey: server-gated account-entry forms, bounded server routes, check-email and resend UX, and a staging rollout contract.
+
+### Files changed
+
+- `app/login/page.tsx`
+- `app/login/page.module.css`
+- `app/auth/check-email/page.tsx`
+- `app/auth/check-email/page.module.css`
+- `app/api/auth/email/config/route.ts`
+- `app/api/auth/email/login/route.ts`
+- `app/api/auth/email/signup/route.ts`
+- `app/api/auth/email/resend/route.ts`
+- `lib/authFeatureFlags.ts`
+- `lib/emailPasswordAuthCore.ts`
+- `lib/emailPasswordAuthServer.ts`
+- `middleware.ts`
+- `next.config.js`
+- `tests/auth-boundary.test.mjs`
+- `tests/critical-contracts.test.mjs`
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `EMAIL_PASSWORD_SIGNUP_AND_RECOVERY_JOURNEY.md`
+- `PRODUCT_BACKLOG.md`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Change and verification
+
+- Email controls remain hidden unless the server-only Email flag is true and the auth-intent secret has at least 32 characters. The normal Production configuration therefore stays Google-only.
+- Login and tier-aware signup now use distinct states. Signup collects a display name rather than creating a username or handle, applies a 12-character password minimum, uses correct autocomplete values, and keeps Google available.
+- Server routes enforce same-origin JSON requests, a 16 KB request limit, normalized email validation, bounded names and passwords, strict destination normalization, and neutral public provider responses.
+- Password login returns through the existing sealed continuation. Signup binds the sealed intent to the normalized email, carries the existing referral code, and refuses to return an unexpected session when hosted email confirmation is misconfigured.
+- The check-email state survives a same-tab reload without putting the email address in the URL. It offers a 60-second resend cooldown, changed-email escape, and a neutral Google-account hint. Its server layout redirects to Login while Email auth is disabled.
+- Confirmation, continuation, and check-email responses now use no-store and no-referrer headers. Middleware treats check-email as public.
+- The API can pass a CAPTCHA token to Supabase, but no provider widget or CSP allowance was added because the provider choice is still open.
+- Local TypeScript and focused ESLint passed. The test suite passed 80 tests. A local Playwright render check passed at 1440×900 and 390×844 with no page errors, error overlay, or horizontal overflow. The check-email route returned `200` and rendered correctly on the phone viewport. The default-off public Chromium suite then passed 15 applicable checks with seven expected project skips.
+- No form was submitted to Supabase. No email was sent and no account was created. No Vercel variable, Supabase Auth setting, SMTP setting, database, billing setting, or Production deployment changed.
+
+### Rollback
+
+Discard or revert this Slice 2A branch. The default-off flag and independently disabled Production Email provider remain the outer safeguards.

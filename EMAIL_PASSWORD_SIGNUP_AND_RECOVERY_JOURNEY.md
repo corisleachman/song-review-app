@@ -1,6 +1,6 @@
 # Email/Password Signup and Recovery Journey
 
-Status: Product and technical journey plan prepared on 19 September 2026. Slice 1 is code-complete in draft PR #54 and its full Preview gate has passed. Code review and explicit rollout approval are still required. The email/password rollout has not started. Production remains Google-only.
+Status: Product and technical journey plan prepared on 19 September 2026. Slice 1 reached Production through PR #54 as merge commit `fddab843`. Slice 2A is now implemented locally on a fresh branch: default-off login/signup forms, server-side password routes, sealed continuation, check-email, and verification resend are ready for review. Hosted staging SMTP, templates, redirect configuration, and a selected CAPTCHA widget remain rollout blockers. Production remains Google-only with Email disabled.
 
 Configuration audit: Slice 0 is complete. `AUTH_CONFIGURATION_AUDIT.md` records the repository, Vercel, Production public Auth behavior, and the hosted Supabase dashboard baseline for both environments. The approved temporary safeguard disabled Production Email while leaving Google enabled. No other hosted setting changed.
 
@@ -249,7 +249,9 @@ Draft PR #54 passed all four GitHub checks. Primary Preview `dpl_FRi2S1GDVmFvbAA
 
 ### Slice 2: Login, signup, and email delivery in staging
 
-Add the forms, check-email/resend state, custom SMTP, templates, staging redirect URLs, and CAPTCHA. No Production setting changes yet.
+Slice 2A is code-complete locally on 20 September 2026. It adds default-off Email login and tier-aware signup controls, server-side name/email/password validation, a neutral login failure, enumeration-resistant signup and resend results, a sealed email-bound continuation, a reload-safe check-email state, and a 60-second resend cooldown. The routes accept an optional CAPTCHA token for Supabase Auth, but no provider widget or CSP source has been selected. `EMAIL_PASSWORD_STAGING_ROLLOUT.md` records the template contract and exact staging order.
+
+The remaining Slice 2 work is hosted and provider-dependent: choose and implement Turnstile or hCaptcha, configure custom SMTP and sender DNS, install the reviewed confirmation template, correct staging Site URL and redirects, strengthen the staging password policy, then enable the server flag in Preview only. No Production setting changes yet.
 
 ### Slice 3: Recovery and account settings
 

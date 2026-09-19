@@ -7,6 +7,9 @@ import { fileURLToPath } from 'node:url';
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const destinationModule = await import(pathToFileURL(path.join(repoRoot, 'lib/authDestination.ts')).href);
 const intentModule = await import(pathToFileURL(path.join(repoRoot, 'lib/authIntentCore.ts')).href);
+const emailPasswordModule = await import(
+  pathToFileURL(path.join(repoRoot, 'lib/emailPasswordAuthCore.ts')).href
+);
 
 const {
   normalizeAuthDestination,
@@ -19,6 +22,13 @@ const {
   sealAuthIntent,
   unsealAuthIntent,
 } = intentModule;
+const {
+  isValidAuthEmail,
+  normalizeAuthEmail,
+  parseEmailLoginInput,
+  parseEmailResendInput,
+  parseEmailSignupInput,
+} = emailPasswordModule;
 
 test('auth destinations allow only named Song Room journeys', () => {
   assert.equal(normalizeAuthDestination('/dashboard'), '/dashboard');
@@ -102,4 +112,61 @@ test('auth intent secrets fail closed when too short', () => {
     }, 'too-short'),
     /at least 32 characters/,
   );
+});
+
+test('email auth input normalizes identifiers and preserves password characters', () => {
+  const parsed = parseEmailLoginInput({
+    email: ' Person@Example.com ',
+    password: '  long passphrase  ',
+    destination: '/dashboard',
+    captchaToken: 'captcha-result',
+  });
+
+  assert.equal(parsed.ok, true);
+  assert.equal(parsed.value.email, 'person@example.com');
+  assert.equal(parsed.value.password, '  long passphrase  ');
+  assert.equal(parsed.value.captchaToken, 'captcha-result');
+  assert.equal(normalizeAuthEmail(' Person@Example.com '), 'person@example.com');
+  assert.equal(isValidAuthEmail('person@example.com'), true);
+});
+
+test('email signup validates name, email, and a 12-character password server-side', () => {
+  const valid = parseEmailSignupInput({
+    name: '  Alex   Rivers ',
+    email: 'alex@example.com',
+    password: 'a useful passphrase',
+    destination: '/songs/song_1',
+  });
+  assert.equal(valid.ok, true);
+  assert.equal(valid.value.name, 'Alex Rivers');
+
+  assert.equal(parseEmailSignupInput({
+    name: 'A',
+    email: 'alex@example.com',
+    password: 'a useful passphrase',
+  }).ok, false);
+  assert.equal(parseEmailSignupInput({
+    name: 'Alex Rivers',
+    email: 'not-an-email',
+    password: 'a useful passphrase',
+  }).ok, false);
+  assert.equal(parseEmailSignupInput({
+    name: 'Alex Rivers',
+    email: 'alex@example.com',
+    password: 'too-short',
+  }).ok, false);
+});
+
+test('verification resend validates email without accepting password data', () => {
+  const valid = parseEmailResendInput({
+    email: ' Listener@Example.com ',
+    captchaToken: 'captcha-result',
+    password: 'must-not-be-used',
+  });
+  assert.equal(valid.ok, true);
+  assert.deepEqual(valid.value, {
+    email: 'listener@example.com',
+    captchaToken: 'captcha-result',
+  });
+  assert.equal(parseEmailResendInput({ email: 'invalid' }).ok, false);
 });

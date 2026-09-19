@@ -173,6 +173,11 @@ const nextConfig = {
         source: '/auth/continue',
         headers: authTransitionHeaders,
       },
+      {
+        // This page can render a pending email address from same-tab session state.
+        source: '/auth/check-email',
+        headers: authTransitionHeaders,
+      },
     ];
   },
   async rewrites() {

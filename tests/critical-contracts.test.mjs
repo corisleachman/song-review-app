@@ -39,11 +39,13 @@ test('response headers enforce a route-aware CSP without changing embed framing'
   const embedRule = headerRules.find((rule) => rule.source === '/embed/:path*');
   const authConfirmRule = headerRules.find((rule) => rule.source === '/auth/confirm');
   const authContinueRule = headerRules.find((rule) => rule.source === '/auth/continue');
+  const authCheckEmailRule = headerRules.find((rule) => rule.source === '/auth/check-email');
 
   assert.ok(standardRule, 'standard security header rule is missing');
   assert.ok(embedRule, 'embed security header rule is missing');
   assert.ok(authConfirmRule, 'auth confirmation header rule is missing');
   assert.ok(authContinueRule, 'auth continuation header rule is missing');
+  assert.ok(authCheckEmailRule, 'check-email header rule is missing');
 
   const standardHeaders = new Map(standardRule.headers.map(({ key, value }) => [key, value]));
   const embedHeaders = new Map(embedRule.headers.map(({ key, value }) => [key, value]));
@@ -83,7 +85,7 @@ test('response headers enforce a route-aware CSP without changing embed framing'
   assert.equal(embedHeaders.has('Content-Security-Policy-Report-Only'), false);
   assert.equal(embedHeaders.has('X-Frame-Options'), false);
 
-  for (const rule of [authConfirmRule, authContinueRule]) {
+  for (const rule of [authConfirmRule, authContinueRule, authCheckEmailRule]) {
     const headers = new Map(rule.headers.map(({ key, value }) => [key, value]));
     assert.equal(headers.get('Cache-Control'), 'no-store, max-age=0');
     assert.equal(headers.get('Referrer-Policy'), 'no-referrer');
@@ -155,6 +157,7 @@ test('shared auth boundary is session-backed, allowlisted, sealed, and default-o
     "process.env.PLAYWRIGHT_ALLOW_LEGACY_AUTH === 'true'",
     'supabase.auth.getClaims()',
     'normalizeAuthDestination',
+    "'/auth/check-email'",
   ], 'middleware auth boundary');
   assert.doesNotMatch(middleware, /supabase\.auth\.(?:getSession|getUser)\(\)/u);
   assertIncludesAll(destination, [
@@ -1374,8 +1377,15 @@ test('visualizer preference is editable, persisted, and respected by the song pl
   ], 'song player visualizer preference');
 });
 
-test('beta login and signup use a single Google account path', () => {
+test('email login and signup stay default-off behind the server readiness boundary', () => {
   const login = read('app/login/page.tsx');
+  const featureFlag = read('lib/authFeatureFlags.ts');
+  const config = read('app/api/auth/email/config/route.ts');
+  const loginRoute = read('app/api/auth/email/login/route.ts');
+  const signupRoute = read('app/api/auth/email/signup/route.ts');
+  const resendRoute = read('app/api/auth/email/resend/route.ts');
+  const checkEmail = read('app/auth/check-email/page.tsx');
+  const checkEmailLayout = read('app/auth/check-email/layout.tsx');
 
   assertIncludesAll(login, [
     'Use Google to log in or create your Song Room account.',
@@ -1383,11 +1393,49 @@ test('beta login and signup use a single Google account path', () => {
     "? 'Connecting...'",
     ": 'Continue with Google'",
     'During beta, Google is the only account option.',
-  ], 'Google-only authentication controls');
-  assert.doesNotMatch(
-    login,
-    /signInWithPassword|resetPasswordForEmail|\.auth\.signUp|Continue with email|Forgot password|type="password"/u
-  );
+    "fetch('/api/auth/email/config'",
+    'emailAuthEnabled && (',
+    "fetch(endpoint, {",
+    "window.location.assign('/auth/check-email')",
+  ], 'flagged account-entry controls');
+  assertIncludesAll(featureFlag, [
+    "process.env.EMAIL_PASSWORD_AUTH_ENABLED?.trim().toLowerCase() === 'true'",
+    'process.env.AUTH_INTENT_SECRET?.trim().length',
+  ], 'email auth readiness');
+  assert.match(config, /enabled: isEmailPasswordAuthReady\(\)/u);
+  assertIncludesAll(loginRoute, [
+    'isSameOriginAuthRequest(request)',
+    'parseEmailLoginInput',
+    'supabase.auth.signInWithPassword',
+    "Email or password wasn't recognised.",
+    'AUTH_INTENT_COOKIE',
+  ], 'password login route');
+  assertIncludesAll(signupRoute, [
+    'parseEmailSignupInput',
+    'REFERRAL_COOKIE_NAME',
+    "purpose: 'signup'",
+    'supabase.auth.signUp',
+    'emailRedirectTo: buildAuthConfirmationRedirect(request, intentToken)',
+    'if (data.session)',
+  ], 'password signup route');
+  assertIncludesAll(resendRoute, [
+    'authIntentEmailMatches',
+    'parseEmailResendInput',
+    'supabase.auth.resend',
+    "type: 'signup'",
+    'emailRedirectTo: buildAuthConfirmationRedirect(request, intentToken)',
+  ], 'verification resend route');
+  assertIncludesAll(checkEmail, [
+    'RESEND_COOLDOWN_SECONDS = 60',
+    "fetch('/api/auth/email/resend'",
+    'If this address can be verified, a fresh email is on its way.',
+    'Already use Google? Return to Login and continue with Google.',
+  ], 'check-email state');
+  assertIncludesAll(checkEmailLayout, [
+    'isEmailPasswordAuthReady()',
+    "redirect('/login?auth=email_unavailable')",
+  ], 'check-email feature boundary');
+  assert.doesNotMatch(loginRoute + signupRoute + resendRoute, /error\.message/u);
 });
 
 test('public song reads expose only public songs with finalized audio', () => {
