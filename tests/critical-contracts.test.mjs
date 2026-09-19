@@ -37,9 +37,13 @@ test('response headers enforce a route-aware CSP without changing embed framing'
   const headerRules = await nextConfig.headers();
   const standardRule = headerRules.find((rule) => rule.source === '/((?!embed).*)');
   const embedRule = headerRules.find((rule) => rule.source === '/embed/:path*');
+  const authConfirmRule = headerRules.find((rule) => rule.source === '/auth/confirm');
+  const authContinueRule = headerRules.find((rule) => rule.source === '/auth/continue');
 
   assert.ok(standardRule, 'standard security header rule is missing');
   assert.ok(embedRule, 'embed security header rule is missing');
+  assert.ok(authConfirmRule, 'auth confirmation header rule is missing');
+  assert.ok(authContinueRule, 'auth continuation header rule is missing');
 
   const standardHeaders = new Map(standardRule.headers.map(({ key, value }) => [key, value]));
   const embedHeaders = new Map(embedRule.headers.map(({ key, value }) => [key, value]));
@@ -78,6 +82,12 @@ test('response headers enforce a route-aware CSP without changing embed framing'
   );
   assert.equal(embedHeaders.has('Content-Security-Policy-Report-Only'), false);
   assert.equal(embedHeaders.has('X-Frame-Options'), false);
+
+  for (const rule of [authConfirmRule, authContinueRule]) {
+    const headers = new Map(rule.headers.map(({ key, value }) => [key, value]));
+    assert.equal(headers.get('Cache-Control'), 'no-store, max-age=0');
+    assert.equal(headers.get('Referrer-Policy'), 'no-referrer');
+  }
 });
 
 test('CSP reporting endpoint bounds input and logs only sanitized fields', () => {
@@ -129,6 +139,54 @@ test('auth middleware applies to pages but skips APIs and static files', () => {
   for (const [pathname, expected] of cases) {
     assert.equal(matcher.test(pathname), expected, `unexpected matcher result for ${pathname}`);
   }
+});
+
+test('shared auth boundary is session-backed, allowlisted, sealed, and default-off', () => {
+  const middleware = read('middleware.ts');
+  const destination = read('lib/authDestination.ts');
+  const intent = read('lib/authIntentCore.ts');
+  const featureFlag = read('lib/authFeatureFlags.ts');
+  const confirmation = read('app/auth/confirm/route.ts');
+  const continuation = read('app/auth/continue/route.ts');
+  const callback = read('app/auth/callback/route.ts');
+
+  assertIncludesAll(middleware, [
+    "process.env.NODE_ENV !== 'production'",
+    "process.env.PLAYWRIGHT_ALLOW_LEGACY_AUTH === 'true'",
+    'supabase.auth.getClaims()',
+    'normalizeAuthDestination',
+  ], 'middleware auth boundary');
+  assert.doesNotMatch(middleware, /supabase\.auth\.(?:getSession|getUser)\(\)/u);
+  assertIncludesAll(destination, [
+    "candidate.startsWith('//')",
+    "kind: 'dashboard', path: '/dashboard'",
+    "kind: 'invite'",
+    "kind: 'paid_plan'",
+    "kind: 'protected_route'",
+  ], 'auth destination allowlist');
+  assertIncludesAll(intent, [
+    "createCipheriv('aes-256-gcm'",
+    "createDecipheriv('aes-256-gcm'",
+    'timingSafeEqual',
+    'AUTH_INTENT_TTL_SECONDS',
+  ], 'sealed auth intent');
+  assert.match(
+    featureFlag,
+    /process\.env\.EMAIL_PASSWORD_AUTH_ENABLED\?\.trim\(\)\.toLowerCase\(\) === 'true'/u,
+  );
+  assertIncludesAll(confirmation, [
+    'isEmailPasswordAuthEnabled()',
+    'supabase.auth.verifyOtp',
+    'invalid_confirmation',
+    "response.headers.set('Referrer-Policy', 'no-referrer')",
+  ], 'email confirmation boundary');
+  assertIncludesAll(continuation, [
+    'getCurrentAuthenticatedUser()',
+    'authIntentEmailMatches',
+    "destinationKind !== 'invite' && destinationKind !== 'recovery'",
+    'bootstrapAccountForUser(user)',
+  ], 'auth continuation boundary');
+  assert.doesNotMatch(callback, /error\.message|searchParams\.set\('message'/u);
 });
 
 test('workspace invite emails build links from the request origin', () => {
@@ -1091,6 +1149,7 @@ test('marketing pricing follows the upgrade path and defaults to annual billing'
 test('tier-aware signup preserves a strict plan choice through Google auth and checkout', () => {
   const signupPage = read('app/signup/[plan]/page.tsx');
   const signupIntent = read('lib/signupIntent.ts');
+  const authDestination = read('lib/authDestination.ts');
   const login = read('app/login/page.tsx');
   const middleware = read('middleware.ts');
   const upgrade = read('app/upgrade/page.tsx');
@@ -1107,21 +1166,24 @@ test('tier-aware signup preserves a strict plan choice through Google auth and c
     "value === 'free' || value === 'pro' || value === 'studio'",
     "return value === 'month' ? 'month' : 'year'",
     "source: 'pricing'",
+    "export { normalizePostLoginUpgradePath } from '@/lib/authDestination'",
+  ], 'signup intent allowlists');
+  assertIncludesAll(authDestination, [
     "new Set(['plan', 'billing', 'source', 'billingStatus'])",
     "source === 'checkout' && billingStatus !== 'cancelled'",
-  ], 'signup intent allowlists');
+  ], 'post-login destination allowlist');
   assertIncludesAll(login, [
     'getSignupIntent(signupPlanParam, signupBillingParam)',
     'buildSignupDestination(signupIntent)',
-    'normalizePostLoginUpgradePath(normalized)',
+    'resolveAuthDestination(normalized)',
     'inviteRedirect',
     '?? requestedRedirect',
     "callbackUrl.searchParams.set('next', redirectTo)",
   ], 'post-login plan and invite routing');
   assertIncludesAll(middleware, [
     "pathname.startsWith('/signup/')",
-    "pathname === '/upgrade'",
     '`${pathname}${request.nextUrl.search}`',
+    'normalizeAuthDestination',
   ], 'signup access and upgrade query preservation');
   assertIncludesAll(upgrade, [
     "fetch('/api/auth/bootstrap'",

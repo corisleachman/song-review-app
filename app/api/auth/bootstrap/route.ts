@@ -2,15 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { RequestTiming } from '@/lib/requestTiming';
+import { normalizeAuthDestination } from '@/lib/authDestination';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-function buildReturnUrl(request: NextRequest, next: string | null) {
+function buildReturnUrl(request: NextRequest, next: string) {
   const url = new URL('/login', request.url);
   url.searchParams.set('google', 'success');
 
-  if (next && next !== '/') {
+  if (next !== '/dashboard') {
     url.searchParams.set('redirectTo', next);
   }
 
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest) {
 
   try {
     noStore();
-    const next = req.nextUrl.searchParams.get('next');
+    const next = normalizeAuthDestination(req.nextUrl.searchParams.get('next'));
     const shouldRedirect = req.nextUrl.searchParams.get('redirect') === '1';
     const resolved = await timing.measure(
       'identity',
@@ -40,7 +41,7 @@ export async function GET(req: NextRequest) {
         const url = new URL('/login', req.url);
         url.searchParams.set('google', 'error');
         url.searchParams.set('message', 'No authenticated user found during bootstrap.');
-        if (next && next !== '/') {
+        if (next !== '/dashboard') {
           url.searchParams.set('redirectTo', next);
         }
         return NextResponse.redirect(url);
@@ -64,8 +65,8 @@ export async function GET(req: NextRequest) {
       const url = new URL('/login', req.url);
       url.searchParams.set('google', 'error');
       url.searchParams.set('message', 'Could not finish signing you in.');
-      const next = req.nextUrl.searchParams.get('next');
-      if (next && next !== '/') {
+      const next = normalizeAuthDestination(req.nextUrl.searchParams.get('next'));
+      if (next !== '/dashboard') {
         url.searchParams.set('redirectTo', next);
       }
       return NextResponse.redirect(url);

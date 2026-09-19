@@ -1,10 +1,10 @@
 # Tier Signup and Upgrade Journey
 
-Status: Desktop and real-device mobile Preview verification passed on 2026-08-26 on `codex/tier-aware-signup`. Durable funnel events and production rollout remain pending.
+Status: Tier-aware Google signup is Production complete through PR #31 (`fad0df1a`). Durable funnel events remain pending. The planned email/password extension is defined in `EMAIL_PASSWORD_SIGNUP_AND_RECOVERY_JOURNEY.md` and is not implemented.
 
 ## Goal
 
-Let a visitor choose Free, Pro, or Studio on the homepage and keep that choice through Google account creation. Upgrade suggestions should appear when they help someone complete a task, not as generic interruptions.
+Let a visitor choose Free, Pro, or Studio on the homepage and keep that choice through account creation. Upgrade suggestions should appear when they help someone complete a task, not as generic interruptions.
 
 ## Current implementation
 
@@ -36,9 +36,9 @@ Use one authentication system with tier-aware entry routes. Do not build separat
 
 When a visitor switches the homepage pricing control to monthly, the Pro and Studio links should change to `billing=month`. The normal Sign in link should remain `/login` and carry no sales intent.
 
-Each signup route should reuse the Google authentication component but name the choice clearly, for example “Create your Pro workspace” with the selected price beneath it. The paid CTA should say “Choose Pro” or “Choose Studio”, not “Start for free”.
+Each signup route should reuse the shared authentication boundary and name the choice clearly, for example “Create your Pro workspace” with the selected price beneath it. Google is the current deployed method. The planned Email option must preserve the same tier context through verification. The paid CTA should say “Choose Pro” or “Choose Studio”, not “Start for free”.
 
-After Google returns:
+After authentication completes:
 
 1. A pending workspace invite takes priority. The person must finish the invite flow without being diverted to checkout.
 2. Free signup completes account bootstrap and opens the dashboard.
@@ -46,13 +46,13 @@ After Google returns:
 4. The user confirms the plan before leaving for Stripe. Do not start checkout automatically after Google login.
 5. If the signed-in user is not a workspace owner, explain that only the owner can change the plan and do not show an actionable checkout button.
 
-Plan and billing values must use strict allowlists. Preserve them through OAuth in a short-lived, same-site intent cookie or an equivalently validated server flow. Never accept an arbitrary post-login URL.
+Plan and billing values must use strict allowlists. Google currently preserves them through its validated return flow. Email confirmation must use the sealed, expiring auth intent defined in `EMAIL_PASSWORD_SIGNUP_AND_RECOVERY_JOURNEY.md` so cross-device verification does not lose the plan. Never accept an arbitrary post-login URL.
 
 ## Beta acceptance criteria
 
 - Every pricing CTA has a distinct tier-aware route on desktop and mobile.
 - Annual is the default on the homepage and the plan confirmation screen. A visitor's monthly choice is preserved.
-- The selected tier survives Google OAuth, first-account bootstrap, refresh, Back, and checkout cancellation.
+- The selected tier survives Google OAuth or email verification, first-account bootstrap, refresh, Back, and checkout cancellation.
 - Free users reach the dashboard without seeing Stripe.
 - Pro and Studio users see the correct plan and exact billing amount before Stripe.
 - Workspace invites override pricing intent.
@@ -111,7 +111,7 @@ Every automated email needs an idempotency record, a minimum resend interval, th
 The beta funnel should record durable server-backed events for:
 
 - pricing plan selected, including plan and billing period
-- Google auth started and completed
+- authentication started and completed, including provider
 - account bootstrap completed
 - plan confirmation viewed
 - checkout started, cancelled, failed, and completed
@@ -124,10 +124,10 @@ The likely activation sequence is first song uploaded, first collaborator invite
 
 ## Scope decision
 
-Beta blocker:
+Production foundation:
 
 - direct Free, Pro, and Studio signup routes
-- preserved tier and billing intent through Google OAuth
+- preserved tier and billing intent through Google OAuth, with Email planned to use the same continuation boundary
 - plan-aware confirmation and owner handling
 - accurate CTA copy and funnel measurement
 
@@ -142,7 +142,11 @@ Later measured work:
 - threshold and checkout-reminder emails
 - pricing-page nurture
 - trial lifecycle messaging
-- broader identity providers and password accounts
+- broader identity providers beyond Google and email/password
+
+Near-term separate work:
+
+- email/password signup, confirmation, recovery, referrals, invites, and safe Google-account compatibility as specified in `EMAIL_PASSWORD_SIGNUP_AND_RECOVERY_JOURNEY.md`
 
 ## Open product decisions
 

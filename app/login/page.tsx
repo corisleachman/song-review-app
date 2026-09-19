@@ -8,28 +8,20 @@ import { createClient } from '@/lib/supabase';
 import {
   buildSignupDestination,
   getSignupIntent,
-  normalizePostLoginUpgradePath,
 } from '@/lib/signupIntent';
+import { normalizeAuthDestination, resolveAuthDestination } from '@/lib/authDestination';
 import styles from './page.module.css';
 import BetaBanner from '@/components/BetaBanner';
 
 const POST_LOGIN_INVITE_PATH_KEY = 'song_review_post_login_invite_path';
 
 function normalizeRedirectTarget(value: string | null) {
-  if (!value) return '/dashboard';
-  if (!value.startsWith('/') || value.startsWith('//')) return '/dashboard';
-  return value;
+  return normalizeAuthDestination(value);
 }
 
 async function resolvePostLoginRedirect(redirectTo: string | null) {
   const normalized = normalizeRedirectTarget(redirectTo);
-  if (normalized === '/' || normalized === '/dashboard' || normalized === '/settings' || normalized === '/identify') {
-    return normalized === '/' ? '/dashboard' : normalized;
-  }
-  const inviteMatch = normalized.match(/^\/invite\/([^/?#]+)/);
-  if (inviteMatch) return normalized;
-  const upgradePath = normalizePostLoginUpgradePath(normalized);
-  if (upgradePath) return upgradePath;
+  const destination = resolveAuthDestination(normalized);
   const versionMatch = normalized.match(/^\/songs\/([^/]+)\/versions\/([^/?#]+)/);
   if (versionMatch) {
     const [, songId, versionId] = versionMatch;
@@ -41,9 +33,7 @@ async function resolvePostLoginRedirect(redirectTo: string | null) {
     }
     return `/songs/${songId}`;
   }
-  const songMatch = normalized.match(/^\/songs\/([^/?#]+)/);
-  if (songMatch) return normalized;
-  return '/dashboard';
+  return destination.path;
 }
 
 // ── SVG draw paths (Thunder BlackLC letterforms) ──
@@ -89,7 +79,6 @@ function LoginContent() {
   const animRef = useRef<number>(0);
 
   const googleStatus = searchParams.get('google');
-  const googleMessage = searchParams.get('message');
   const signupPlanParam = searchParams.get('signupPlan');
   const signupBillingParam = searchParams.get('billing');
   const signupIntent = useMemo(
@@ -133,8 +122,10 @@ function LoginContent() {
         const requestedRedirect = searchParams.get('redirectTo');
         const storedInvitePath =
           typeof window !== 'undefined' ? window.sessionStorage.getItem(POST_LOGIN_INVITE_PATH_KEY) : null;
-        const inviteRedirect =
-          storedInvitePath && /^\/invite\/[^/?#]+$/.test(storedInvitePath) ? storedInvitePath : null;
+        const storedInviteDestination = resolveAuthDestination(storedInvitePath);
+        const inviteRedirect = storedInviteDestination.kind === 'invite'
+          ? storedInviteDestination.path
+          : null;
         const redirectCandidate = inviteRedirect
           ?? requestedRedirect
           ?? (signupIntent ? buildSignupDestination(signupIntent) : null);
@@ -268,7 +259,7 @@ function LoginContent() {
     setGoogleLoading(true);
     const redirectTo = signupIntent
       ? buildSignupDestination(signupIntent)
-      : searchParams.get('redirectTo') || '/dashboard';
+      : normalizeAuthDestination(searchParams.get('redirectTo'));
     const callbackUrl = new URL('/auth/callback', window.location.origin);
     callbackUrl.searchParams.set('next', redirectTo);
     const { error: signInError } = await supabase.auth.signInWithOAuth({
@@ -342,7 +333,7 @@ function LoginContent() {
             {/* Error */}
             {error && <div className={styles.fieldError} role="alert">{error}</div>}
             {googleStatus === 'error' && !error && (
-              <div className={styles.fieldError} role="alert">{googleMessage || 'Sign-in could not be completed. Please try again.'}</div>
+              <div className={styles.fieldError} role="alert">Sign-in could not be completed. Please try again.</div>
             )}
           </div>
         </div>

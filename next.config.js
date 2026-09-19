@@ -134,6 +134,11 @@ const embedHeaders = [
   ...contentSecurityPolicyHeaders('*'),
 ];
 
+const authTransitionHeaders = [
+  { key: 'Cache-Control', value: 'no-store, max-age=0' },
+  { key: 'Referrer-Policy', value: 'no-referrer' },
+];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -156,6 +161,17 @@ const nextConfig = {
         // Embeddable player routes: frameable anywhere.
         source: '/embed/:path*',
         headers: embedHeaders,
+      },
+      {
+        // Confirmation URLs can contain one-time tokens. Never allow a browser
+        // to retain them or send their URL as a referrer.
+        source: '/auth/confirm',
+        headers: authTransitionHeaders,
+      },
+      {
+        // Sealed intent tokens receive the same treatment during continuation.
+        source: '/auth/continue',
+        headers: authTransitionHeaders,
       },
     ];
   },

@@ -6572,3 +6572,171 @@ High-priority backlog coverage for the 11-inch iPad homepage layout and display 
 - The tablet backlog now calls for a content-driven composition rather than an enlarged phone stack. It also requires the returning-user route to stay visible.
 - Acceptance testing must include a real 11-inch iPad Air in both orientations, Safari and Chrome, rotation, font completion, touch use, and 200% zoom.
 - No application code, deployment, or production data was changed in this documentation-only update.
+
+---
+
+## 2026-09-19 - Plan email/password signup and recovery
+
+### What we were trying to achieve
+
+Turn the promoted email/password backlog item into an implementation-ready set of user journeys without changing the deployed Google-only authentication boundary.
+
+### Feature / change being made
+
+Documentation-only product, security, rollout, and acceptance planning for email/password signup, login, verification, recovery, referrals, invitations, tier choices, and existing Google accounts.
+
+### Files changed
+
+- `EMAIL_PASSWORD_SIGNUP_AND_RECOVERY_JOURNEY.md`
+- `PRODUCT_BACKLOG.md`
+- `TIER_SIGNUP_AND_UPGRADE_JOURNEY.md`
+- `WORKSPACE_MODEL.md`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Findings and decisions
+
+- Email is the sign-in identifier. The requested username is treated as a display name, not a unique handle or a second authentication identifier.
+- Google remains available. Microsoft stays deferred and is not a dependency.
+- Both methods must resolve to the same Supabase user UUID, profile, memberships, referral history, workspace state, and billing boundary.
+- The current login, callback, and invite paths are Google-specific. The existing reset-password page is incomplete, and middleware still accepts legacy auth cookies before checking Supabase. The shared beta-password endpoint is unrelated to user accounts and must not be reused.
+- Use one sealed, expiring, allowlisted auth intent across Google, email confirmation, recovery, referrals, invites, protected routes, and tier selection. A secure same-browser cookie remains useful, but the sealed email continuation is required for cross-device confirmation.
+- A valid invite stays first in destination priority and should create membership before an unnecessary personal workspace. Protected destinations come next, then paid plan confirmation, then dashboard.
+- Existing Google users add a password only while authenticated through Settings. Supabase documents this with `updateUser({ password })`. Supabase automatic linking for the same verified email must retain one UUID in staging tests; there will be no client-side account merge.
+- Production needs custom SMTP, reviewed redirect URLs, SSR/PKCE token exchange, uniform anti-enumeration responses, rate-limit review, password policy, recent-login reauthentication, security notifications, and CAPTCHA before Email is exposed.
+- Supabase's current documentation warns that signup against an existing OAuth email returns an obfuscated response without sending a verification email. The neutral check-email screen therefore includes non-account-specific help for people who already use Google.
+- Rollback hides Email first while preserving Google and recovery for any password accounts already created. Disabling the provider or deleting identities isn't a safe rollback.
+
+### Status and verification boundary
+
+- This branch starts from Production `clone-clean` merge `5dc27863` after PR #53. The backlog now records primary Production deployment `dpl_DAJqpPQhNMphgGYKTbE1mvb2Bp6M` as Ready. Physical 11-inch iPad testing remains useful follow-up coverage.
+- Current Supabase password, identity-linking, SSR, email-template, rate-limit, CAPTCHA, password-security, and sign-out documentation was checked before writing the plan.
+- No application code, database schema, Supabase setting, SMTP service, DNS record, Vercel variable, dependency, authentication provider, billing rule, storage behavior, deployment, or Production data changed.
+- Implementation should begin with a read-only capture of hosted staging and Production Auth settings, followed by the shared auth boundary while the public UI remains Google-only.
+
+---
+
+## 2026-09-19 - Start the hosted authentication configuration audit
+
+### What we were trying to achieve
+
+Capture the existing staging and Production authentication boundary before writing email/password code or changing any hosted service.
+
+### Feature / change being made
+
+Read-only configuration inventory and a completed baseline for Slice 0.
+
+### Files changed
+
+- `AUTH_CONFIGURATION_AUDIT.md`
+- `EMAIL_PASSWORD_SIGNUP_AND_RECOVERY_JOURNEY.md`
+- `PRODUCT_BACKLOG.md`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Findings
+
+- Primary Vercel project `song-review-app-v2` uses Node 24.x. It has separate Production and Preview entries for Supabase URL, public key, and service-role key. `RESEND_API_KEY` is present across environments, but that does not prove Supabase Auth SMTP is configured.
+- Production Supabase publicly reports signup enabled, Google enabled, Email enabled, and email auto-confirm disabled. Confirmation is therefore required. The Song Room UI remains Google-only.
+- A read-only aggregate Auth inventory found five confirmed Production users, all with Google as their only provider. No email address or other user-level detail was printed.
+- Because the public Auth service has signup and Email enabled, direct password signup may already be possible outside the hidden Song Room UI. The audit did not create a user or send an email to prove that inference. After the dashboard settings are captured, decide whether to disable Production Email temporarily until the controlled rollout.
+- The primary project has no Email feature flag, auth-intent sealing secret, or CAPTCHA variables. `NEXT_PUBLIC_APP_URL` is listed only for Production.
+- Secondary Vercel project `song-review-app` has its core Supabase variables scoped across Production, Preview, and Development. Values were not read, so auth testing there must remain inert until its environment is classified.
+- Repository configuration intentionally omits hosted Supabase Auth settings and warns against `supabase config push` before they are captured.
+- After the user signed in to the correct Supabase account, both Song Room projects were inspected in read-only mode. Their provider, password, session, rate-limit, email, protection, URL, and audit-log settings were recorded without using any Save action.
+- Both projects have Google and Email enabled, signup enabled, and confirmation required. Secure email change is on. Secure password change, current-password enforcement, leaked-password protection, CAPTCHA, and security notification emails are off. No stronger minimum or composition rule is set beyond the dashboard's documented six-character platform minimum.
+- Both projects use Supabase's built-in trial email service and default confirmation/reset templates. Custom SMTP is off. Session time-box and inactivity timeout are unlimited, access tokens last one hour, compromised refresh-token detection is on, and signup/sign-in is limited to 30 requests per five minutes per IP.
+- Production Auth uses `https://song-room.live` as its Site URL while both root and `www` are redirect-allowlisted. Staging's Site URL points at an old Preview deployment; its team wildcard still covers Preview redirects. Canonical URL selection and allowlist clean-up need a separately approved change before auth email rollout.
+- Database-backed Auth audit logging is off in both projects, although the Auth log explorer remains available. Retention isn't shown in the dashboard setting.
+- The completed audit recommends temporarily disabling the hidden Production Email provider while there are no password identities. That configuration change was not made and requires explicit approval plus a Google sign-in regression check.
+- Vercel and Supabase secrets were not printed or written to disk. No hosted or application setting changed.
+
+### Status and next gate
+
+- Slice 0 is complete enough to start the local shared-auth-boundary work with Email defaulting off. No Email form or auth email should be enabled in any environment yet.
+- The next state-changing decision is whether to disable Production Email temporarily. After that, Slice 1 can proceed without changing hosted Auth or the public Google-only interface.
+
+---
+
+## 2026-09-19 - Temporarily disable Production Email authentication
+
+### What we were trying to achieve
+
+Close the hidden direct email/password signup surface while the public Song Room interface remains Google-only and the complete password journey is still being built.
+
+### Feature / change being made
+
+Production Supabase Auth configuration only. Disable the Email provider while keeping Google enabled. Staging remains unchanged for controlled development.
+
+### Files changed
+
+- `AUTH_CONFIGURATION_AUDIT.md`
+- `EMAIL_PASSWORD_SIGNUP_AND_RECOVERY_JOURNEY.md`
+- `PRODUCT_BACKLOG.md`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Change and verification
+
+- The user explicitly approved the Production-only setting change after the completed read-only baseline showed five confirmed Google-only users and no password identities.
+- In Supabase project `hxtsuhmqrufcdplidtov`, the Email provider was switched off. Google was left enabled. No other provider, signup, template, SMTP, URL, session, password, rate-limit, database, user, or application setting changed.
+- A clean dashboard reload showed Email `Disabled` and Google `Enabled`.
+- A fresh non-cached public Auth settings request returned `email: false` and `google: true`.
+- The live homepage and `/login` returned `200`. The Login page still showed the Google-only copy and `Continue with Google` control, and the Google continuation completed at the authenticated dashboard.
+- No email was sent, no user was created, and no application deployment was required.
+
+### Rollback
+
+Re-enable the Email provider in Production Supabase Auth > Sign In / Providers > Email. Do this only if an unexpected Google regression is traced to the safeguard or as part of the approved controlled email/password rollout.
+
+---
+
+## 2026-09-19 - Build the shared email/password auth boundary
+
+### What we were trying to achieve
+
+Create the security and continuation foundation for future email/password signup without exposing Email controls, sending mail, or changing hosted authentication.
+
+### Feature / change being made
+
+Slice 1 of the approved email/password journey: verified session protection, one destination allowlist, sealed cross-device intent, default-off Email flag, and server confirmation and continuation routes.
+
+### Files changed
+
+- `middleware.ts`
+- `app/login/page.tsx`
+- `app/auth/callback/route.ts`
+- `app/auth/confirm/route.ts`
+- `app/auth/continue/route.ts`
+- `app/api/auth/bootstrap/route.ts`
+- `lib/authDestination.ts`
+- `lib/authFeatureFlags.ts`
+- `lib/authIntent.ts`
+- `lib/authIntentCore.ts`
+- `lib/signupIntent.ts`
+- `next.config.js`
+- `playwright.config.mjs`
+- `tests/auth-boundary.test.mjs`
+- `tests/critical-contracts.test.mjs`
+- `AUTH_CONFIGURATION_AUDIT.md`
+- `EMAIL_PASSWORD_SIGNUP_AND_RECOVERY_JOURNEY.md`
+- `PRODUCT_BACKLOG.md`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Change and verification
+
+- Production middleware now requires verified signed Supabase claims. Legacy auth and identity cookies work only when the Playwright server explicitly enables its non-Production fixture switch.
+- One strict destination parser now covers middleware, Google callback, Login, auth bootstrap, and auth continuation. It retains known dashboard, settings, playlist, song, version, invite, and paid-plan journeys while rejecting external, malformed, unknown, or expanded targets.
+- Auth intent uses AES-256-GCM with a versioned payload, a one-hour limit, authenticated purpose and destination, optional referral code, and an optional SHA-256 normalized-email binding. The server secret is required and must contain at least 32 characters.
+- `EMAIL_PASSWORD_AUTH_ENABLED` is server-only and false unless explicitly set to `true`. The confirmation route stays unavailable while the flag is missing.
+- `/auth/confirm` accepts only the planned email token types, uses the Supabase SSR cookie client, avoids raw provider errors in URLs, and hands a valid session to `/auth/continue`.
+- Confirmation and continuation responses use `Cache-Control: no-store` and `Referrer-Policy: no-referrer` so one-time token and sealed-intent URLs are not retained or forwarded.
+- `/auth/continue` validates the session and email binding. Invite and recovery journeys skip normal direct-account bootstrap so a new invitee cannot receive an unnecessary personal workspace before joining the invited one.
+- Google-only Login copy and controls are unchanged. The existing Google callback persistence behavior remains in place for Preview regression testing.
+- No environment variable, Vercel setting, Supabase setting, SMTP configuration, template, database, user, or Production deployment changed.
+- `npm test` passed 77 tests. TypeScript and focused ESLint passed. The optimized Next.js build passed with inert build-time Supabase placeholders and only the repository's existing warnings. Playwright passed all 15 applicable desktop/mobile checks with seven expected project-specific skips, including the Google-only Login contract, tier entry, plan confirmation, CSP, and the 11-inch iPad composition check.
+
+### Rollback
+
+Revert this local Slice 1 change. The Production Email provider remains independently disabled, so reverting application code cannot expose password signup.
