@@ -6772,7 +6772,9 @@ Preview evidence for draft PR #54. No application behaviour changed in this foll
 - The deployed Login bundle contained `Continue with Google` and the Google-only beta message, with no Email continuation or forgotten-password control.
 - The primary Vercel environment inventory contains neither `EMAIL_PASSWORD_AUTH_ENABLED` nor `AUTH_INTENT_SECRET`. No hosted variable or service setting changed.
 - Deployment-scoped logs showed only the expected `200`, `303`, and `307` verification requests. The one-hour scan returned no 5xx or error-level event.
-- The Preview is protected by Vercel authentication. The authenticated Google return journey was not exercised in this follow-up and remains the final Slice 1 Preview gate. PR #54 stays draft. Production is unchanged.
+- The first Preview check stopped at the Vercel access boundary rather than using or transmitting the user's credentials. Final documentation-head Preview `dpl_D2b43o3ME9ydGU3jdgv1xLQf21w2` then reached Ready with all four checks passing.
+- The user completed the protected Preview journey and confirmed that Google login, the return destination, and session persistence after reload all passed. This closes the full Slice 1 Preview gate.
+- PR #54 stays draft pending code review and explicit rollout approval. Production is unchanged.
 
 ### Rollback
 

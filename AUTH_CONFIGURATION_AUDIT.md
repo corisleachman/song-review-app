@@ -175,4 +175,4 @@ Stop if any environment cannot be identified confidently. Do not use a Preview d
 
 The audit and Production safeguard are complete. Slice 1 is code-complete locally with Email defaulting off and no public Email controls. Hosted configuration is not ready for an Email UI or real signup test. No email was sent and no user was created.
 
-Rollback for the Production safeguard is to re-enable the Email provider in the same Supabase panel. Do not do that until the controlled rollout unless an unexpected Google regression is traced to this setting. The next gate is code review and Preview verification of Slice 1 before forms, SMTP, templates, or other hosted Auth changes begin.
+Rollback for the Production safeguard is to re-enable the Email provider in the same Supabase panel. Do not do that until the controlled rollout unless an unexpected Google regression is traced to this setting. Slice 1 Preview verification has passed; code review and explicit rollout approval are now required before forms, SMTP, templates, or other hosted Auth changes begin.
