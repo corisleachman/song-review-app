@@ -6169,3 +6169,277 @@ PR #50 Preview verification and rollout approval, without adding player or table
 - No migration or service configuration change is required. Existing audio and pending test data are preserved. Slow-network player resilience and AIFF playback support remain separate deferred work; iPad backlog additions are excluded from this PR.
 - Rollback is a revert of the PR #50 squash commit or restoration of the preceding primary Production deployment `dpl_3sL1SuU2q7LvzENQ4Li9JWmaBSzQ` at `6f655f238089678078db1307225782f580e78479`. The already-applied PR #48 migration stays in place.
 - Documentation-only verification update. Production is unchanged until the approved merge; live verification remains required.
+
+---
+
+## 2026-09-18 - Deploy approved PR #50 to primary Production
+
+### What we were trying to achieve
+
+Roll out the verified upload completion fix and temporary AIFF restriction without changing unrelated services or player behaviour.
+
+### Feature / change being made
+
+Approved PR #50 merge, deployment verification and explicit tracking of the remaining authenticated live smoke test.
+
+### Files changed
+
+- `CODEBASE_REVIEW.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Verification notes were committed as `4df535f9f1d01c18bbd0db3db3cdde7d6f39d75e` and pushed. All fresh checks passed: both Vercel Preview builds, Preview comments and browser accessibility CI (13 passed, 5 expected skips). Local reruns passed 47 contract tests, TypeScript and focused ESLint (zero errors, six existing warnings).
+- PR #50 was marked ready and squash-merged into `clone-clean` at 10:40:27 UTC as `6a09241ee4bcf8d0569d65f4645ad16e3e633248`. Its parent is the previous Production baseline `6f655f238089678078db1307225782f580e78479`.
+- Primary Production deployment `dpl_CGr85ktfsnHnR5syLVQnngEVDobL`, `https://song-review-app-v2-1a3wv5g21-corisleachmans-projects.vercel.app`, reached Ready with the merge SHA and aliases including `www.song-room.live` and `song-review-app-v2.vercel.app`. The deployment-specific hostname has Vercel SSO protection; public aliases were verified without changing protection.
+- Legacy project build `dpl_DKLwerEnw6hN5uF7WTEo3hayiSDy` also reached Ready with the merge SHA, but Vercel classifies it Preview (`target: null`). Read-only inspection shows that project's existing Production builds originate from `main`. This is a legacy project configuration distinction, not a change to the Song Room production branch. No promotion or configuration change was made; do not describe both builds as Production.
+- On both public primary aliases, homepage and login returned 200; signed-out dashboard returned 307 to `/login?redirectTo=%2Fdashboard`. Standard responses have enforced CSP, no report-only header, `frame-ancestors 'none'` and `X-Frame-Options: DENY`. The actual `/embed/playlist/*` route returned its unavailable-playlist gate with 200, `frame-ancestors *` and no X-Frame-Options. CSP contains Production Supabase `hxtsuhmqrufcdplidtov.supabase.co`, not staging. An earlier nonexistent `/embed/<song-id>` diagnostic returned expected 404; it wasn't a valid embed route.
+- Signed-out POSTs to upload creation and finalization returned 401. No test audio or database rows were created or deleted during these live checks.
+- After at least sixty seconds of observation following Ready, deployment-scoped Production logs from merge time through 10:43:30 UTC contained no error/fatal entries, 5xx responses or CSP-report matches. Status counts confirmed recorded requests. This is an early, bounded observation window, not proof of every authenticated journey or future traffic.
+- Deployed to Production; not yet production complete. Browser policy blocked agent access to the authenticated test journey. The remaining user check is a supported MP3 or WAV upload/playback plus AIFF rejection on `https://www.song-room.live`. Stop and report the URL, file type/size, exact error, console excerpt and screenshot if it fails. Don't submit a live Stripe payment.
+- No migration, dependency, environment, billing, authentication or Storage-policy change. Rollback is reverting `6a09241ee4bcf8d0569d65f4645ad16e3e633248` or restoring preceding primary deployment `dpl_3sL1SuU2q7LvzENQ4Li9JWmaBSzQ`; retain the already-applied PR #48 migration. Existing files, pending test data and separate iPad notes are preserved.
+- These post-deployment documentation notes remain local and uncommitted; the pre-merge verification notes are included in the merged PR. No additional branch push or direct write to `clone-clean` was made.
+
+---
+
+## 2026-09-18 - Record live AIFF rejection and intermittent MP3 first-play failure
+
+### What we were trying to achieve
+
+Close the live rollout checks using the user's actual result without treating playback recovery as an unqualified pass.
+
+### Feature / change being made
+
+Production smoke-test evidence and P1 first-play reliability backlog; no player implementation or further rollout.
+
+### Files changed
+
+- `CODEBASE_REVIEW.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The user confirmed the expected AIFF rejection message in Production and successful MP3 upload. The first Play press did nothing. After leaving and returning to the page, another Play press loaded the same MP3. Upload/rejection passed by user observation; first-play reliability didn't pass, so the full journey isn't production complete.
+- Promoted PLAYBACK-001 from P2 resilience to P1 beta journey reliability, before the iPad presentation items. This doesn't assert a blanket MP3 format failure or prove a PR #50 regression; earlier player lifecycle findings remain relevant and weren't changed by PR #50.
+- Source inspection found that the enabled Play button silently returns before WaveSurfer exists. Initialization debounces for 80 milliseconds and asynchronously imports WaveSurfer; the twelve-second timeout starts before lazy loading. Automatic retries reset their allowance and don't resume requested loading. These are observable code paths, not confirmed causes of this particular first-click failure.
+- Deployment-scoped Production logs in the thirty-minute window ending approximately 10:50:42 UTC showed no error/fatal entries, 5xx responses or CSP-report matches. Server logs don't capture browser-only playback failures. Existing client version-init logging is present; no new instrumentation was added.
+- Browser policy still prevents agent verification of the authenticated test journey. No exact tested live version URL, browser/device or first-click timing was supplied. Don't infer those from ambient UI context or claim independent reproduction. Collect that context and relevant version-init console lines before selecting a focused fix.
+- These documentation changes are local and uncommitted. No app code, service configuration, production data, commit, push, merge or deployment changed. Existing iPad notes and pending test files are preserved.
+
+---
+
+## 2026-09-18 - Identify affected live version and record successful immediate MP3 retest
+
+### What we were trying to achieve
+
+Refine the intermittent playback assessment with the exact affected page and the user's fresh first-press test.
+
+### Feature / change being made
+
+Production evidence update only; no player fix or further deployment.
+
+### Files changed
+
+- `CODEBASE_REVIEW.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The user supplied the affected live page: `https://www.song-room.live/songs/48da7337-f2fc-4df4-93e3-d4633aceae30/versions/c8b3db65-6c2a-4102-ac6e-16784bb6719b`. Browser/device: desktop Chrome. Play was pressed once the button was visible; exact elapsed initialization time wasn't measured.
+- A subsequent MP3 version played on the first press immediately after upload, after approximately three to four seconds of loading. That version's URL wasn't supplied. This is user-observed success, not independent agent browser verification.
+- Upload and AIFF rejection checks are passed, as is this fresh first-press playback smoke test. Retain the earlier intermittent failure as P1 first-play reliability; don't describe playback as consistently broken, assume background loading was the cause, or mark the full journey production complete.
+- Initialization timing remains a plausible explanation from prior source inspection, but browser console/network evidence is still missing. No regression attributable to PR #50 is established, and no rollback or player implementation was inferred from the retest.
+- Documentation-only update, local and uncommitted. No app code, data or production service changed. Existing iPad notes are preserved; diff checks passed.
+
+---
+
+## 2026-09-18 - Reproduce first-play initialization and retry lifecycle defects locally
+
+### What we were trying to achieve
+
+Test whether an early Play press is discarded and whether lazy waveform initialization produces idle timeout/retry failures, without touching Production or uploading more files.
+
+### Feature / change being made
+
+Controlled offline diagnosis of PLAYBACK-001. No application implementation or rollout.
+
+### Files changed
+
+- `CODEBASE_REVIEW.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+- Temporary diagnostic artifact: `/tmp/song-room-first-play.YMUnpQ/diagnose.cjs` (outside the repository).
+
+### Notes
+
+- The harness extracts the actual initialization callback, hero Play handler, disabled expression, waveform lifecycle effect and retry callback from the current TSX using TypeScript's AST. Type annotations are transpiled away. Only the WaveSurfer module import boundary is replaced with a controlled promise; media events, state setters, refs and timers are mocked. It doesn't access a browser, network, production data or audio files.
+- Four diagnostic scenarios passed. First, presses before the initialization debounce and during delayed import are accepted by the enabled button but cause no audio load, playback or pending request; completion of initialization doesn't resume them. Another press after initialization loads and plays. Second, a first press after initialization loads once, waits for ready and plays normally without navigation.
+- Third, an idle page triggers the twelve-second timeout despite zero audio loads. Three successive automatic retries each reset their allowance on lifecycle reinitialization. Fourth, a timeout after a requested load replaces the player but doesn't resume loading or playback. These reproduce current defects; they aren't regression acceptance tests for a future fix.
+- This confirms initialization and retry lifecycle defects under controlled conditions, not which defect occurred in the user's desktop Chrome session. It doesn't verify real WaveSurfer download/decoding, browser gesture restrictions, React scheduling, background playback or single-player coordination.
+- Command: `node /tmp/song-room-first-play.YMUnpQ/diagnose.cjs`. Baseline `npm test` also passed 47/47; documentation diff checks passed. No application TypeScript or production configuration changed.
+- Recommended next slice: preserve first-Play intent through initialization, start deadlines only during actual loads, bound retries across reinitialization and resume requested loading when retrying. Implement only after agreement on this focused scope, with a separate Preview and background-playback regression gate before any production rollout.
+- Documentation changes remain local and uncommitted. Existing iPad notes, pending test data and the deployed PR #50 upload fix are unchanged. The temporary diagnostic artifact is outside git and should be converted into repository regression tests alongside an approved fix.
+
+---
+
+## 2026-09-18 - Promote email/password signup and defer Microsoft login
+
+### What we were trying to achieve
+
+Reflect the user's near-term signup priorities without bundling password authentication with a second OAuth provider or changing current Production authentication.
+
+### Feature / change being made
+
+Backlog reprioritisation and planning requirements for complete signup and recovery journeys.
+
+### Files changed
+
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Email/password signup is now near-term P1 product work after the current playback and tablet fixes, rather than deferred until post-beta feedback. This placement is a scheduling assumption consistent with the user's request to continue the existing priority list.
+- The planning gate covers username versus display-name behaviour, neutral and tier-aware signup, referrals, invitations, verification/resend, protected-page return paths, forgot/reset/change password, expired links, existing Google identities, safe account linking and session recovery. Attribution, invite priority and owner-only billing must survive these journeys.
+- Microsoft login is a separate deferred growth-stage item to revisit when the app gains traction and income. It isn't a prerequisite for password signup.
+- No auth route, provider setting, schema, email service or Production configuration changed. Google-only describes current deployed behaviour, not the future product restriction. Auth implementation and external rollout will need separate review and approval after the journey plan.
+- Documentation changes are local and uncommitted. Existing iPad notes and earlier upload/playback rollout evidence are preserved.
+
+---
+
+## 2026-09-18 - Preserve first-Play intent and bound player retries
+
+### What we were trying to achieve
+
+Continue the priority list by addressing the controlled initialization and retry defects behind PLAYBACK-001, without treating the intermittent Production MP3 report as a file-format failure.
+
+### Feature / change being made
+
+A focused authenticated version-player lifecycle fix and regression tests. Repository work is complete locally; real-browser verification and rollout aren't complete.
+
+### Files changed
+
+- `app/songs/[id]/versions/[versionId]/page.tsx`
+- `tests/player-lifecycle.test.mjs`
+- `CODEBASE_REVIEW.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Implementation and status
+
+- Local branch: `codex/player-first-play-readiness`, based on Production `clone-clean` commit `6a09241ee4bcf8d0569d65f4645ad16e3e633248`. Nothing from this candidate is committed, pushed, in a PR or deployed. Production remains on PR #50.
+- The Play button previously discarded a press before WaveSurfer existed. Initialization also started a twelve-second failure deadline while audio was still deliberately unloaded, and retries reset their own allowance without resuming the requested load.
+- Preserve Play intent through delayed initialization and retry. Start the deadline only when an audio load starts; allow one automatic retry per version/audio session, reset that allowance on explicit manual retry, and keep exhausted failures stable and recoverable. Button and desktop Space share the handler.
+- Cancel stale initialization/polling callbacks and ignore old player events after navigation or retry. Keep the existing native fallback, but prevent duplicate fallback from its two error channels and stop asynchronous fallback from attaching to a newer session. Recheck reactive drawing when media becomes ready.
+- Canonical reads, upload finalization, authentication, billing, storage, dependencies and environment configuration are unchanged. The existing background and single-player architecture isn't redesigned. The specific user-observed Chrome failure still isn't independently reproduced in a real browser.
+
+### Local verification
+
+- `npm test`: 69 passed, including 22 new tests exercising actual page callbacks with mocked media, timers and delayed WaveSurfer import. Cases include early Play, idle initialization, automatic/manual retries, stable exhaustion, stale events, fallback, rejected playback, navigation, Strict Mode, missing containers and keyboard handling.
+- `npx tsc --noEmit --incremental false`: passed.
+- Focused ESLint on the page and new test: zero errors; five existing page warnings remain.
+- Optimized Next.js build: passed with existing lint warnings. The first run compiled but couldn't collect page data without a Supabase URL. The successful rerun used command-scoped, non-production placeholders for the Supabase URL and keys, not environment-file edits or real service credentials.
+- Build-generated cookie-consent additions in two previously clean blog files were removed from the candidate. Existing uncommitted documentation and upload-test fixtures are preserved.
+- No real browser gesture, media download, background/lock-screen playback or Preview journey was verified. An earlier browser-access policy block remains in force; don't bypass it with another browser mechanism. Offline callback tests aren't a substitute for authenticated browser checks.
+
+### Required Preview gate and ownership
+
+1. Agent, GitHub after explicit commit/push authority: commit the focused candidate, push `codex/player-first-play-readiness` and open a draft PR into `clone-clean`, never `main`. Expect passing checks and a Ready primary-project Preview matching the candidate SHA and staging Supabase origin. No new migration or external configuration is required.
+2. User, authenticated Preview: open MP3 and WAV versions, leave them idle beyond twelve seconds and expect no loading error or repeated initialization; audio should remain unloaded until requested.
+3. User, authenticated Preview: press Play immediately after upload and during delayed first initialization/direct version entry. Expect one visible loading state followed by playback without another press. Test desktop Space too, and confirm typing in a comment doesn't trigger playback.
+4. User, authenticated Preview with throttled/offline networking: interrupt a requested load. Expect at most one automatic retry, then a stable readable failure rather than flashing errors. Restore connectivity and press the manual retry or Play control; expect playback recovery.
+5. User, authenticated Preview: navigate between versions during initialization, loading and playback. Expect no old-version autoplay or overlapping audio. Check seeking, comments, recoverable drafts, visualizer and existing player coordination, plus pause/resume and background/lock-screen controls on supported desktop/mobile browsers.
+6. User, authenticated Preview: retain MP3/WAV upload/playback success and the AIFF rejection message. Never submit a live Stripe payment. If any step fails, stop rollout and return the URL, browser/device, exact step, visible error, console/network excerpt and screenshot where useful.
+7. Agent, GitHub/Vercel only after the Preview gate passes and rollout is explicitly authorised: merge into `clone-clean`, wait for primary Production, verify live routes and runtime logs, and obtain the same first-Play smoke test on the live app. Until then, don't claim Production complete.
+
+### Rollback and next step
+
+- No migration, dependency or service-setting rollback is involved. If this candidate is later merged, revert its future squash commit or restore the current PR #50 primary deployment `dpl_CGr85ktfsnHnR5syLVQnngEVDobL`. Record the actual merge/deployment IDs during rollout rather than inventing them now.
+- Recommended next step: obtain authority to commit/push the focused candidate and prepare its Preview PR before starting the tablet fixes. Email/password journey planning follows those fixes; Microsoft login stays deferred.
+
+---
+
+## 2026-09-18 - Prepare approved first-Play Preview PR
+
+### What we were trying to achieve
+
+Publish the focused player candidate for Preview verification after the user approved committing, pushing and opening a draft PR.
+
+### Feature / change being made
+
+Repository publication only. Approval doesn't include merging or deploying this candidate to Production.
+
+### Files changed
+
+- `app/songs/[id]/versions/[versionId]/page.tsx`
+- `tests/player-lifecycle.test.mjs`
+- `CODEBASE_REVIEW.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Rechecked the candidate on `codex/player-first-play-readiness`, based on the unchanged `origin/clone-clean` commit `6a09241e`. No existing PR for this branch was found.
+- Fresh local checks passed: 69 tests, TypeScript and focused ESLint with zero errors and five existing page warnings. The preceding optimized build passed with build-only placeholders as documented above.
+- Commit only the five named files. Preserve unrelated `.DS_Store` files and `.codex-upload-test/` outside git. Earlier upload rollout evidence, iPad notes and the approved password-signup priority remain in the documentation.
+- Open a draft PR with base `clone-clean`; wait for GitHub checks and the primary `song-review-app-v2` Preview to be Ready before requesting authenticated journey testing. No migration, credentials, service configuration or Production change is required for Preview preparation.
+- Published implementation commit `fae8ee0d20f6ebe335571b5febce330f9a5cb2ec` and opened [draft PR #52](https://github.com/corisleachman/song-review-app/pull/52), verified OPEN/draft with base `clone-clean` and the intended head branch. Both Vercel checks and the browser-accessibility workflow were pending at publication. The initial primary Preview is `dpl_GNXqSKKMcwxKh8vJt4wwGcajzAZu`; it was BUILDING when inspected. Check the final PR head after this publication-note commit rather than treating that initial deployment as final evidence.
+- Primary branch Preview alias: `https://song-review-app-v2-git-codex-pla-1e4eb4-corisleachmans-projects.vercel.app`. Use it only once the primary deployment is Ready and matches the final PR head. The existing staging test version is `/songs/08e6a6e2-a6b7-441a-b32d-fcec9d89dcb7/versions/8082846d-c43f-4d8f-9e61-0cab43f02466`; don't carry Production song IDs into staging or create more Production uploads for this gate.
+- The named implementation files and preserved review/backlog notes are now committed; unrelated upload fixtures and `.DS_Store` files remain untracked. Earlier local-only status statements above describe their checkpoints and are superseded by this publication entry.
+- Real-browser verification remains pending under the checklist above. Any failing check stops progression; don't merge or promote a staging-backed Preview to Production. The user still needs to test the authenticated journeys and separately approve rollout after they pass.
+
+---
+
+## 2026-09-19 - Approve PR #52 after authenticated Preview checks
+
+### What we were trying to achieve
+
+Close the manual Preview gate for the first-Play reliability fix and proceed through the approved Production rollout without changing the scope.
+
+### Feature / change being made
+
+PR #52 verification evidence and rollout approval. No new player behaviour, service configuration or data change.
+
+### Files changed
+
+- `CODEBASE_REVIEW.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- The user reported that all requested checks passed and instructed the agent to continue. Treat that as authenticated Preview evidence for the checklist recorded above and authority to mark PR #52 ready, squash-merge it into `clone-clean` and verify the resulting Production deployment.
+- The verified Preview candidate before this note was primary deployment `dpl_CpEoFwCV1bCAPhqrKL6MEnXTvJjD`, Ready against head `489cb1541dc38cc107ca1cf63bcaca14eab1bb92`. All four PR checks passed; the browser/accessibility workflow reported 13 passed and five expected skips.
+- This evidence is user-reported for the authenticated song/version journeys. The agent didn't independently operate the protected browser session. Don't broaden it into proof about untested browsers, devices or network conditions.
+- After committing this note, wait for every check on the new head. Stop if any fails. Then mark the PR ready and squash-merge only into `clone-clean`, never `main`.
+- Git-triggered Production is expected for both Vercel projects. Classify deployments by target and project: verify the primary `song-review-app-v2` Production artifact and the live domain; don't promote a staging-backed Preview. Confirm the legacy project's resulting target rather than assuming it is Production.
+- Production verification: homepage and login return 200; signed-out dashboard retains `/login?redirectTo=%2Fdashboard`; standard responses have enforced CSP, no report-only policy, `frame-ancestors 'none'` and `X-Frame-Options: DENY`; embed retains `frame-ancestors *` without X-Frame-Options; CSP contains Production Supabase and excludes staging. Scan deployment-scoped runtime errors and CSP reports. Browser-only first-Play success still requires a live authenticated smoke test before calling the journey Production complete.
+- No migration, dependency, environment variable, authentication, billing or storage change is involved. Rollback is a revert of the future PR #52 squash commit or restoration of current primary Production deployment `dpl_CGr85ktfsnHnR5syLVQnngEVDobL`.
+
+---
+
+## 2026-09-14 - Record 11-inch iPad homepage failures
+
+### What we were trying to achieve
+
+Capture real-device tablet problems before beta planning resumes so the homepage presentation isn't treated as finished based only on phone and desktop checks.
+
+### Feature / change being made
+
+High-priority backlog coverage for the 11-inch iPad homepage layout and display typography.
+
+### Files changed
+
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Three screenshots from the live homepage on an 11-inch iPad Air show two distinct P1 presentation failures: dense display headings and an unfinished tablet composition.
+- The code supports the reported breakpoint gap. Major sections collapse to one column at 900px, while the clearer phone typography, reworked hero, and returning-user Login action activate only at 600px and below.
+- The tablet backlog now calls for a content-driven composition rather than an enlarged phone stack. It also requires the returning-user route to stay visible.
+- Acceptance testing must include a real 11-inch iPad Air in both orientations, Safari and Chrome, rotation, font completion, touch use, and 200% zoom.
+- No application code, deployment, or production data was changed in this documentation-only update.
