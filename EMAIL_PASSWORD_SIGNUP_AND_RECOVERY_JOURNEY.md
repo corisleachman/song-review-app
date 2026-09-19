@@ -1,6 +1,6 @@
 # Email/Password Signup and Recovery Journey
 
-Status: Product and technical journey plan prepared on 19 September 2026. Slice 1 is code-complete and awaiting Preview verification. The email/password rollout has not started. Production remains Google-only.
+Status: Product and technical journey plan prepared on 19 September 2026. Slice 1 is code-complete in draft PR #54. Its automated Preview boundary gate has passed; the authenticated Google Preview regression is still required. The email/password rollout has not started. Production remains Google-only.
 
 Configuration audit: Slice 0 is complete. `AUTH_CONFIGURATION_AUDIT.md` records the repository, Vercel, Production public Auth behavior, and the hosted Supabase dashboard baseline for both environments. The approved temporary safeguard disabled Production Email while leaving Google enabled. No other hosted setting changed.
 
@@ -243,7 +243,9 @@ Code-complete locally on 19 September 2026. Production middleware no longer acce
 
 One destination allowlist now covers middleware, Google callback, Login, bootstrap, and the new continuation route. External, malformed, unknown, or query-expanded targets fall back to the dashboard. The new AES-256-GCM auth intent binds its purpose, destination, optional referral, optional normalized-email hash, issue time, expiry, and format version. Missing or short secrets, altered tokens, wrong keys, mismatched emails, and expired tokens fail closed.
 
-`/auth/confirm` performs the future SSR token-hash exchange and `/auth/continue` verifies the user before bootstrap. Invite and recovery destinations deliberately skip direct-account bootstrap so they cannot create an unwanted personal workspace. `EMAIL_PASSWORD_AUTH_ENABLED` is server-only and evaluates to false unless its value is exactly `true`. No Email UI was added, no intent secret was configured, and the existing Google journey remains on its established callback behavior until Preview testing approves a handoff change.
+`/auth/confirm` performs the future SSR token-hash exchange and `/auth/continue` verifies the user before bootstrap. Invite and recovery destinations deliberately skip direct-account bootstrap so they cannot create an unwanted personal workspace. `EMAIL_PASSWORD_AUTH_ENABLED` is server-only and evaluates to false unless its value is exactly `true`. No Email UI was added, no intent secret was configured, and the existing Google journey remains on its established callback behavior.
+
+Draft PR #54 passed all four GitHub checks. Primary Preview `dpl_FRi2S1GDVmFvbAATCoVEPKA6aYZL` reached Ready and passed the automated route, redirect, legacy-cookie rejection, disabled-Email, transition-header, staging-CSP, and runtime-log checks. The deployed Login bundle contains the Google control and Google-only beta copy, with no Email or forgotten-password control. Vercel confirms that neither `EMAIL_PASSWORD_AUTH_ENABLED` nor `AUTH_INTENT_SECRET` is configured. The Preview is access-protected, so the authenticated Google return journey remains a separate manual gate before the PR can leave draft.
 
 ### Slice 2: Login, signup, and email delivery in staging
 

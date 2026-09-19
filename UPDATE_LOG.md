@@ -6740,3 +6740,40 @@ Slice 1 of the approved email/password journey: verified session protection, one
 ### Rollback
 
 Revert this local Slice 1 change. The Production Email provider remains independently disabled, so reverting application code cannot expose password signup.
+
+---
+
+## 2026-09-19 - Verify the PR #54 Preview auth boundary
+
+### What we were trying to achieve
+
+Verify the deployed Slice 1 boundary without enabling Email, configuring an intent secret, creating a user, or changing hosted authentication.
+
+### Feature / change being made
+
+Preview evidence for draft PR #54. No application behaviour changed in this follow-up.
+
+### Files changed
+
+- `CODEBASE_REVIEW.md`
+- `PRODUCT_BACKLOG.md`
+- `EMAIL_PASSWORD_SIGNUP_AND_RECOVERY_JOURNEY.md`
+- `UPDATE_LOG.md`
+
+### Change and verification
+
+- All four PR checks passed, including both Vercel projects and the browser-accessibility workflow. GitHub reports the draft PR as cleanly mergeable into `clone-clean`.
+- Primary `song-review-app-v2` Preview deployment `dpl_FRi2S1GDVmFvbAATCoVEPKA6aYZL` reached Ready. Its branch alias is `https://song-review-app-v2-git-codex-ema-23142d-corisleachmans-projects.vercel.app`.
+- The homepage and Login returned `200`. Signed-out `/dashboard` returned `307` to `/login?redirectTo=%2Fdashboard`.
+- Supplying the retired `song_review_auth` and `song_review_identity` cookies did not bypass authentication; `/dashboard` still returned the same signed-out redirect.
+- With Email still default-off, a fake confirmation request returned `303` to `auth=email_unavailable`. A fake continuation intent returned `303` to `auth=invalid_intent`.
+- Confirmation and continuation responses contained `Cache-Control: no-store, max-age=0` and `Referrer-Policy: no-referrer`.
+- Preview CSP was enforced against staging Supabase `ivifkrtupqizyqqsxdty.supabase.co`, retained `frame-ancestors 'none'`, and included `X-Frame-Options: DENY`. No report-only header was present.
+- The deployed Login bundle contained `Continue with Google` and the Google-only beta message, with no Email continuation or forgotten-password control.
+- The primary Vercel environment inventory contains neither `EMAIL_PASSWORD_AUTH_ENABLED` nor `AUTH_INTENT_SECRET`. No hosted variable or service setting changed.
+- Deployment-scoped logs showed only the expected `200`, `303`, and `307` verification requests. The one-hour scan returned no 5xx or error-level event.
+- The Preview is protected by Vercel authentication. The authenticated Google return journey was not exercised in this follow-up and remains the final Slice 1 Preview gate. PR #54 stays draft. Production is unchanged.
+
+### Rollback
+
+No rollout occurred. Revert the PR branch commit if the candidate needs to be abandoned; the independently disabled Production Email provider remains the outer safeguard.
