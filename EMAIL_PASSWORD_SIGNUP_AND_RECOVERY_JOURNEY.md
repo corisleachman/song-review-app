@@ -1,6 +1,6 @@
 # Email/Password Signup and Recovery Journey
 
-Status: Product and technical journey plan prepared on 19 September 2026. Slice 1 reached Production through PR #54 as merge commit `fddab843`. Slice 2A is committed in draft PR #55 and passed its default-off Preview gate. Cloudflare Turnstile was explicitly selected for Slice 2B; the guarded widget, mandatory token forwarding, single-use reset behavior, and conditional CSP support are implemented locally. Hosted Turnstile keys, staging SMTP, templates, and redirect configuration remain rollout blockers. Production remains Google-only with Email disabled.
+Status: Product and technical journey plan prepared on 19 September 2026. Slice 1 reached Production through PR #54 as merge commit `fddab843`. Slice 2B is committed and pushed in draft PR #55, all four checks pass, and its default-off Preview gate passed. The staging-only Cloudflare widget and its Supabase Auth secret are configured, with CAPTCHA enabled in staging. Its public site key is scoped to the PR's Vercel Preview branch and awaits a fresh deployment. Staging SMTP, templates, redirect configuration, password policy, auth-intent secret, and feature flag remain rollout blockers. Production remains Google-only with Email disabled.
 
 Configuration audit: Slice 0 is complete. `AUTH_CONFIGURATION_AUDIT.md` records the repository, Vercel, Production public Auth behavior, and the hosted Supabase dashboard baseline for both environments. The approved temporary safeguard disabled Production Email while leaving Google enabled. No other hosted setting changed.
 
@@ -253,7 +253,7 @@ Slice 2A is committed in draft PR #55. It adds default-off Email login and tier-
 
 Slice 2B selects Cloudflare Turnstile. Email readiness now requires its public site key, the widget renders explicitly on login/signup and resend, every server route requires the bounded token and forwards it to Supabase Auth, each attempt resets the single-use token, and CSP permits only Cloudflare's documented challenge origin while configured. Cloudflare's official test key produced tokens on desktop and phone layouts without a form submission. The app does not call Siteverify itself because Supabase Auth performs the hosted verification after its Turnstile secret is configured.
 
-The remaining Slice 2 work is hosted: create environment-specific Turnstile widgets, configure the staging secret in Supabase Auth, configure custom SMTP and sender DNS, install the reviewed confirmation template, correct staging Site URL and redirects, strengthen the staging password policy, then enable the server flag in Preview only. No Production setting changes yet.
+The staging Turnstile widget, Supabase secret, and branch-scoped Vercel public site key are now configured. The remaining Slice 2 work is hosted: deploy and verify the site-key candidate, configure custom SMTP and sender DNS, install the reviewed confirmation template, correct staging Site URL and redirects, strengthen the staging password policy, create a staging-only auth-intent secret, then enable the server flag in Preview only. No Production setting changes yet.
 
 ### Slice 3: Recovery and account settings
 

@@ -1,6 +1,6 @@
 # Email/password staging rollout
 
-Status: Slice 2A is committed in draft PR #55 and passed its default-off Preview gate. Cloudflare Turnstile was selected for Slice 2B on 20 September 2026. Its explicit-render widget, required token path, conditional CSP sources, and reusable resend support are implemented locally. No hosted setting, secret, email template, user, or Production behavior changed.
+Status: Slice 2B is committed and pushed in draft PR #55, all four checks pass, and its default-off Preview gate passed. The staging-only Cloudflare Turnstile widget now allows only the stable PR branch hostname, uses Managed mode with pre-clearance off, and its secret is stored in staging Supabase Auth with CAPTCHA protection enabled. The public site key is configured only for the `codex/email-password-staging-forms` Vercel Preview branch. A new deployment is still required to consume it, and Email remains unavailable because the auth-intent secret and feature flag are absent. No email template, user, Production setting, or Production behavior changed.
 
 ## What the code now supports
 
@@ -15,8 +15,8 @@ Status: Slice 2A is committed in draft PR #55 and passed its default-off Preview
 
 ## Staging gates before the feature flag is enabled
 
-1. Create a Cloudflare Turnstile widget for the stable staging hostname. Record its public site key and secret separately. Do not allow Production or localhost on the staging widget.
-2. Add `NEXT_PUBLIC_TURNSTILE_SITE_KEY` to the primary Preview environment. Put the matching secret only in staging Supabase Auth > Bot and Abuse Protection, select Turnstile, and enable CAPTCHA there. Do not add the secret to Vercel.
+1. Complete: the staging Cloudflare Turnstile widget allows only the stable staging branch hostname. Production and localhost are excluded.
+2. Complete: the matching secret is stored only in staging Supabase Auth > Bot and Abuse Protection, Turnstile is selected, CAPTCHA is enabled, and the public `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is scoped to the primary Preview branch. The secret is not in Vercel.
 3. Choose and configure a custom SMTP provider in staging Supabase. The existing application Resend integration does not mean Supabase Auth mail is configured.
 4. Verify the sender domain with SPF and DKIM, publish the reviewed DMARC policy, and confirm bounce visibility.
 5. Disable click tracking for authentication mail. Link rewriting can break one-time confirmation links.

@@ -6889,3 +6889,40 @@ Slice 2B of the email/password journey: explicit-render Cloudflare Turnstile for
 ### Rollback
 
 Remove the public Turnstile site key or keep `EMAIL_PASSWORD_AUTH_ENABLED=false` to hide Email immediately. Before password users exist, the staging Supabase CAPTCHA setting can also be returned to its captured off state. Revert the Slice 2B commit if the provider integration itself must be removed.
+
+---
+
+## 2026-09-20 - Configure staging Turnstile hosted protection
+
+### What we were trying to achieve
+
+Connect the approved Turnstile integration to the staging authentication service without exposing Email, storing the secret in application configuration, or changing Production.
+
+### Feature / change being made
+
+Hosted staging configuration for Slice 2B of the email/password journey.
+
+### Files changed
+
+- `AUTH_CONFIGURATION_AUDIT.md`
+- `CODEBASE_REVIEW.md`
+- `EMAIL_PASSWORD_SIGNUP_AND_RECOVERY_JOURNEY.md`
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `TIER_SIGNUP_AND_UPGRADE_JOURNEY.md`
+- `UPDATE_LOG.md`
+
+### Change and verification
+
+- Created one Cloudflare Turnstile widget named `Song Room staging email auth` in the user's Cloudflare account.
+- Allowed only the stable `codex/email-password-staging-forms` Vercel branch hostname. Production and localhost are excluded.
+- Kept Cloudflare's Managed mode and left pre-clearance off.
+- Stored the generated secret only in staging Supabase project `ivifkrtupqizyqqsxdty`, selected Turnstile, and enabled CAPTCHA protection. Supabase confirmed the settings update.
+- Did not record either key in repository files or documentation, and did not repeat the secret in user-facing messages.
+- Added the public site key only to the `codex/email-password-staging-forms` Vercel Preview branch. A fresh deployment is still required to consume it.
+- The Email readiness check still fails closed because `AUTH_INTENT_SECRET` and `EMAIL_PASSWORD_AUTH_ENABLED` remain absent, so the Preview UI remains Google-only.
+- No email, user, database, billing, Production Supabase, or Production Vercel setting changed.
+
+### Rollback
+
+Disable CAPTCHA in staging Supabase and delete the staging-only Cloudflare widget if this hosted integration must be abandoned before password users exist. Production needs no rollback.
