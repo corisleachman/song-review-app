@@ -1,6 +1,6 @@
 # Email/Password Signup and Recovery Journey
 
-Status: Product and technical journey plan prepared on 19 September 2026. Slice 1 reached Production through PR #54 as merge commit `fddab843`. Slice 2A is now implemented locally on a fresh branch: default-off login/signup forms, server-side password routes, sealed continuation, check-email, and verification resend are ready for review. Hosted staging SMTP, templates, redirect configuration, and a selected CAPTCHA widget remain rollout blockers. Production remains Google-only with Email disabled.
+Status: Product and technical journey plan prepared on 19 September 2026. Slice 1 reached Production through PR #54 as merge commit `fddab843`. Slice 2A is committed as `c4b08016` in draft PR #55: default-off login/signup forms, server-side password routes, sealed continuation, check-email, and verification resend are ready for review. All PR checks and the default-off primary Preview gate passed. Hosted staging SMTP, templates, redirect configuration, and a selected CAPTCHA widget remain rollout blockers. Production remains Google-only with Email disabled.
 
 Configuration audit: Slice 0 is complete. `AUTH_CONFIGURATION_AUDIT.md` records the repository, Vercel, Production public Auth behavior, and the hosted Supabase dashboard baseline for both environments. The approved temporary safeguard disabled Production Email while leaving Google enabled. No other hosted setting changed.
 

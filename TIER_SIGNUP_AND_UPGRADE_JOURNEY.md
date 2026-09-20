@@ -1,6 +1,6 @@
 # Tier Signup and Upgrade Journey
 
-Status: Tier-aware Google signup is Production complete through PR #31 (`fad0df1a`). Durable funnel events remain pending. The planned email/password extension is defined in `EMAIL_PASSWORD_SIGNUP_AND_RECOVERY_JOURNEY.md` and is not implemented.
+Status: Tier-aware Google signup is Production complete through PR #31 (`fad0df1a`). Durable funnel events remain pending. The email/password extension is defined in `EMAIL_PASSWORD_SIGNUP_AND_RECOVERY_JOURNEY.md`; its shared boundary reached Production through PR #54, and its default-off account-entry forms are in draft PR #55 after a passing Preview gate.
 
 ## Goal
 

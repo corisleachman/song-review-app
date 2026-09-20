@@ -1,6 +1,6 @@
 # Email/password staging rollout
 
-Status: Repository preparation for Slice 2A is complete locally on 20 September 2026. No hosted setting, secret, email template, user, or Production behavior changed.
+Status: Slice 2A is committed as `c4b08016` in draft PR #55. All four PR checks passed, and primary Preview `dpl_4QFuynYcjNPN86xdmVwf9pKMpMpi` passed its default-off gate on 20 September 2026. No hosted setting, secret, email template, user, or Production behavior changed.
 
 ## What the code now supports
 

@@ -6811,6 +6811,7 @@ Slice 2A of the email/password journey: server-gated account-entry forms, bounde
 - `tests/critical-contracts.test.mjs`
 - `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
 - `EMAIL_PASSWORD_SIGNUP_AND_RECOVERY_JOURNEY.md`
+- `TIER_SIGNUP_AND_UPGRADE_JOURNEY.md`
 - `PRODUCT_BACKLOG.md`
 - `CODEBASE_REVIEW.md`
 - `UPDATE_LOG.md`
@@ -6826,6 +6827,13 @@ Slice 2A of the email/password journey: server-gated account-entry forms, bounde
 - The API can pass a CAPTCHA token to Supabase, but no provider widget or CSP allowance was added because the provider choice is still open.
 - Local TypeScript and focused ESLint passed. The test suite passed 80 tests. A local Playwright render check passed at 1440×900 and 390×844 with no page errors, error overlay, or horizontal overflow. The check-email route returned `200` and rendered correctly on the phone viewport. The default-off public Chromium suite then passed 15 applicable checks with seven expected project skips.
 - No form was submitted to Supabase. No email was sent and no account was created. No Vercel variable, Supabase Auth setting, SMTP setting, database, billing setting, or Production deployment changed.
+- Slice 2A was committed as `c4b08016`, pushed on `codex/email-password-staging-forms`, and opened as draft PR #55 against `clone-clean`. GitHub reports it as cleanly mergeable, and all four checks passed: `public-surfaces`, both Vercel projects, and Vercel Preview Comments.
+- Primary `song-review-app-v2` Preview deployment `dpl_4QFuynYcjNPN86xdmVwf9pKMpMpi` reached Ready at `https://song-review-app-v2-ne1hum2v0-corisleachmans-projects.vercel.app`.
+- The Preview homepage and Login returned `200`; signed-out `/dashboard` returned `307` to `/login?redirectTo=%2Fdashboard`. `/api/auth/email/config` returned `{\"enabled\":false}`, a disabled email-login request returned `404`, and a synthetic confirmation request returned `303` to `/login?auth=email_unavailable`.
+- A live Chrome check confirmed that Login rendered only the Google account option. Opening `/auth/check-email` returned to `/login?auth=email_unavailable`; no Email or password control was exposed.
+- Standard responses retained enforced CSP against staging Supabase `ivifkrtupqizyqqsxdty.supabase.co`, `frame-ancestors 'none'`, and `X-Frame-Options: DENY`, with no report-only header. `/embed/*` retained `frame-ancestors *` and omitted `X-Frame-Options`.
+- Deployment-scoped scans returned no error-level event or 5xx response. The only warnings were CSP reports for Vercel's injected Preview Toolbar script at `https://vercel.live`, not Song Room application code.
+- PR #55 remains draft. The enabled staging journey has not started: no Email form was submitted, no message was sent, no account was created, and no hosted or Production setting changed.
 
 ### Rollback
 
