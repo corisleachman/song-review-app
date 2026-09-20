@@ -1,6 +1,6 @@
 # Email/password staging rollout
 
-Status: Slice 2B is committed and pushed in draft PR #55, all four checks pass, and its default-off Preview gate passed. The staging-only Cloudflare Turnstile widget now allows only the stable PR branch hostname, uses Managed mode with pre-clearance off, and its secret is stored in staging Supabase Auth with CAPTCHA protection enabled. The public site key is configured only for the `codex/email-password-staging-forms` Vercel Preview branch. A new deployment is still required to consume it, and Email remains unavailable because the auth-intent secret and feature flag are absent. No email template, user, Production setting, or Production behavior changed.
+Status: Slice 2B is committed and pushed in draft PR #55. All four checks and the hosted-key default-off Preview gate pass. The staging-only Cloudflare Turnstile widget allows only the stable PR branch hostname, uses Managed mode with pre-clearance off, and its secret is stored in staging Supabase Auth with CAPTCHA protection enabled. The public site key is configured only for the `codex/email-password-staging-forms` Vercel Preview branch. Email remains unavailable because the auth-intent secret and feature flag are absent. No email template, user, Production setting, or Production behavior changed.
 
 ## What the code now supports
 
@@ -12,6 +12,16 @@ Status: Slice 2B is committed and pushed in draft PR #55, all four checks pass, 
 - Cloudflare Turnstile on login, signup, and verification resend. Tokens are mandatory, passed to Supabase Auth for hosted validation, and reset after every attempt because they are single-use.
 - Conditional CSP access to `https://challenges.cloudflare.com` for scripts and child frames. The allowance is absent while the public site key is missing and remains absent from `/embed/*`.
 - Default-off behavior. The UI stays Google-only unless `EMAIL_PASSWORD_AUTH_ENABLED` is exactly `true`, `AUTH_INTENT_SECRET` is at least 32 characters, and `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is present.
+
+## Completed hosted-key default-off Preview gate
+
+- Primary Preview `dpl_6aBS3Z21Radpg4MULqau2h1tGdjU` reached Ready at `https://song-review-app-v2-6i4x6pj3z-corisleachmans-projects.vercel.app`; all four PR checks passed.
+- Homepage and Login returned `200`. Signed-out Dashboard returned `307` to `/login?redirectTo=%2Fdashboard`.
+- `/api/auth/email/config` returned `{"enabled":false}` and a synthetic Email login request returned `404` with the unavailable response. Opening `/auth/check-email` returned to `/login?auth=email_unavailable`.
+- Rendered Login remained Google-only with one Google button, no Email or password fields, and no Turnstile script or frame.
+- Standard CSP included only the exact Cloudflare challenge origin in `script-src` and `frame-src`, retained staging Supabase, `frame-ancestors 'none'`, and `X-Frame-Options: DENY`, and omitted report-only CSP. `/embed/*` excluded Cloudflare, kept `frame-src 'none'` and `frame-ancestors *`, and omitted `X-Frame-Options`.
+- Deployment logs contained no error, fatal, or 5xx event. All four CSP reports were Vercel's injected Preview Toolbar script from `https://vercel.live`, not Song Room application code. Browser console errors came from a Chrome extension.
+- PR #55 remains draft. No Email form was exposed, no auth email was sent, and no account was created.
 
 ## Staging gates before the feature flag is enabled
 

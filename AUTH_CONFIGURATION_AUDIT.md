@@ -140,7 +140,7 @@ Production and staging also match here:
 | Confirmation template | Supabase default subject/body | Supabase default subject/body | Replace with reviewed Song Room copy using the planned confirmation route. |
 | Reset template | Supabase default subject/body | Supabase default subject/body | Replace with reviewed neutral recovery copy. |
 | Security notification emails | all listed password, email, phone, identity-link and MFA notifications off | same | Enable the applicable password and identity notifications before release. |
-| CAPTCHA | off; no provider configured | on; Cloudflare Turnstile selected and staging secret saved | The public site key is branch-scoped in Vercel Preview. Deploy and test the hosted path before enabling Email. |
+| CAPTCHA | off; no provider configured | on; Cloudflare Turnstile selected and staging secret saved | The branch-scoped public site key passed the default-off hosted Preview gate. Test the enabled Email path only after the remaining hosted safeguards are configured. |
 | Audit logs in database | off | off | Auth logs remain available in the log explorer; retention isn't shown in this screen and still needs an operational decision. |
 
 The full existing template set should be exported immediately before any edit. Authentication-email click tracking cannot be verified until a custom SMTP provider is selected; it must be disabled in the chosen provider.

@@ -6920,8 +6920,13 @@ Hosted staging configuration for Slice 2B of the email/password journey.
 - Kept Cloudflare's Managed mode and left pre-clearance off.
 - Stored the generated secret only in staging Supabase project `ivifkrtupqizyqqsxdty`, selected Turnstile, and enabled CAPTCHA protection. Supabase confirmed the settings update.
 - Did not record either key in repository files or documentation, and did not repeat the secret in user-facing messages.
-- Added the public site key only to the `codex/email-password-staging-forms` Vercel Preview branch. A fresh deployment is still required to consume it.
+- Added the public site key only to the `codex/email-password-staging-forms` Vercel Preview branch.
 - The first fresh `song-review-app-v2` build exposed a test isolation bug: the baseline CSP contract inherited the hosted public site key and expected the unconfigured policy. The test now explicitly clears and restores that variable, while the adjacent configured-policy contract continues to verify the Cloudflare sources. No application header behavior changed.
+- The replacement primary Preview `dpl_6aBS3Z21Radpg4MULqau2h1tGdjU` reached Ready at `https://song-review-app-v2-6i4x6pj3z-corisleachmans-projects.vercel.app`; all four PR checks passed.
+- Homepage and Login returned `200`; signed-out Dashboard returned `307` to `/login?redirectTo=%2Fdashboard`. Email config returned `{"enabled":false}`, a synthetic Email login returned `404`, and opening check-email returned to `/login?auth=email_unavailable`.
+- The rendered Login remained Google-only with no Email fields or Turnstile asset. Standard CSP included the Cloudflare challenge origin and staging Supabase while retaining `frame-ancestors 'none'` and `X-Frame-Options: DENY`; `/embed/*` excluded Cloudflare, retained `frame-src 'none'` and `frame-ancestors *`, and omitted `X-Frame-Options`.
+- Deployment logs contained no error, fatal, or 5xx event. All four CSP reports came from Vercel's injected Preview Toolbar script at `https://vercel.live`; browser console errors came from a Chrome extension. No genuine Song Room resource was blocked.
+- PR #55 remains draft. No Email form was exposed, no auth email was sent, and no account was created.
 - The Email readiness check still fails closed because `AUTH_INTENT_SECRET` and `EMAIL_PASSWORD_AUTH_ENABLED` remain absent, so the Preview UI remains Google-only.
 - No email, user, database, billing, Production Supabase, or Production Vercel setting changed.
 
