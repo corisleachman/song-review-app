@@ -54,11 +54,16 @@ STRIPE_WEBHOOK_SECRET=
 EMAIL_NOTIFICATIONS_ENABLED=false
 EMAIL_NOTIFICATIONS_FORCE_TO=
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+EMAIL_PASSWORD_AUTH_ENABLED=false
+AUTH_INTENT_SECRET=
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=
 ```
 
 `EMAIL_NOTIFICATIONS_ENABLED` defaults to `false` outside production and `true` in production if unset. Set `EMAIL_NOTIFICATIONS_FORCE_TO=coris@example.com` to safely reroute comment/reply emails during testing without notifying real collaborators.
 
 For Stripe webhook testing, point your Stripe endpoint at `/api/stripe/webhook` and configure `STRIPE_WEBHOOK_SECRET` with the signing secret for that endpoint.
+
+Email/password entry stays hidden unless all three Email variables are ready. `AUTH_INTENT_SECRET` is server-only and must differ by environment. `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is intentionally public. The matching Turnstile secret belongs in Supabase Auth bot-protection settings, not in this application or a `NEXT_PUBLIC_` variable.
 
 ## Documentation
 

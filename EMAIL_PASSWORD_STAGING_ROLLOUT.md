@@ -1,6 +1,6 @@
 # Email/password staging rollout
 
-Status: Slice 2A is committed as `c4b08016` in draft PR #55. All four PR checks passed, and primary Preview `dpl_4QFuynYcjNPN86xdmVwf9pKMpMpi` passed its default-off gate on 20 September 2026. No hosted setting, secret, email template, user, or Production behavior changed.
+Status: Slice 2A is committed in draft PR #55 and passed its default-off Preview gate. Cloudflare Turnstile was selected for Slice 2B on 20 September 2026. Its explicit-render widget, required token path, conditional CSP sources, and reusable resend support are implemented locally. No hosted setting, secret, email template, user, or Production behavior changed.
 
 ## What the code now supports
 
@@ -9,20 +9,22 @@ Status: Slice 2A is committed as `c4b08016` in draft PR #55. All four PR checks 
 - A sealed, email-bound continuation to the intended dashboard, protected page, or plan confirmation.
 - A check-email state with a visible resend cooldown and change-email escape.
 - Neutral provider responses for signup and resend so the public result does not reveal whether an account exists.
-- Optional forwarding of a CAPTCHA token to Supabase Auth. No provider widget has been selected or added yet.
-- Default-off behavior. The UI stays Google-only unless `EMAIL_PASSWORD_AUTH_ENABLED` is exactly `true` and `AUTH_INTENT_SECRET` is at least 32 characters.
+- Cloudflare Turnstile on login, signup, and verification resend. Tokens are mandatory, passed to Supabase Auth for hosted validation, and reset after every attempt because they are single-use.
+- Conditional CSP access to `https://challenges.cloudflare.com` for scripts and child frames. The allowance is absent while the public site key is missing and remains absent from `/embed/*`.
+- Default-off behavior. The UI stays Google-only unless `EMAIL_PASSWORD_AUTH_ENABLED` is exactly `true`, `AUTH_INTENT_SECRET` is at least 32 characters, and `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is present.
 
 ## Staging gates before the feature flag is enabled
 
-1. Choose the CAPTCHA provider. Cloudflare Turnstile and hCaptcha are the supported Supabase options. The choice changes the browser widget, Content Security Policy, public site key, and Supabase secret configuration, so it must be explicit.
-2. Choose and configure a custom SMTP provider in staging Supabase. The existing application Resend integration does not mean Supabase Auth mail is configured.
-3. Verify the sender domain with SPF and DKIM, publish the reviewed DMARC policy, and confirm bounce visibility.
-4. Disable click tracking for authentication mail. Link rewriting can break one-time confirmation links.
-5. Export every current staging Auth template before editing it.
-6. Set the stable staging Site URL and reviewed redirect allowlist. Do not use an expiring deployment URL as the only Auth destination.
-7. Require email confirmation, set a 12-character password minimum, review Auth rate limits, and enable the approved password protections supported by the project plan.
-8. Add separate Preview values for `AUTH_INTENT_SECRET` and `EMAIL_PASSWORD_AUTH_ENABLED`. Never copy the Production intent secret into Preview.
-9. Leave Production Email disabled and do not add the Production feature flag during this staging step.
+1. Create a Cloudflare Turnstile widget for the stable staging hostname. Record its public site key and secret separately. Do not allow Production or localhost on the staging widget.
+2. Add `NEXT_PUBLIC_TURNSTILE_SITE_KEY` to the primary Preview environment. Put the matching secret only in staging Supabase Auth > Bot and Abuse Protection, select Turnstile, and enable CAPTCHA there. Do not add the secret to Vercel.
+3. Choose and configure a custom SMTP provider in staging Supabase. The existing application Resend integration does not mean Supabase Auth mail is configured.
+4. Verify the sender domain with SPF and DKIM, publish the reviewed DMARC policy, and confirm bounce visibility.
+5. Disable click tracking for authentication mail. Link rewriting can break one-time confirmation links.
+6. Export every current staging Auth template before editing it.
+7. Set the stable staging Site URL and reviewed redirect allowlist. Do not use an expiring deployment URL as the only Auth destination.
+8. Require email confirmation, set a 12-character password minimum, review Auth rate limits, and enable the approved password protections supported by the project plan.
+9. Add separate Preview values for `AUTH_INTENT_SECRET` and `EMAIL_PASSWORD_AUTH_ENABLED`. Never copy the Production intent secret into Preview.
+10. Leave Production Email disabled and do not add the Production feature flag during this staging step.
 
 ## Confirmation template contract
 
@@ -53,9 +55,9 @@ Do not add email addresses, passwords, raw tokens, pricing claims, invite capabi
 ## Staging verification order
 
 1. With the feature flag absent, confirm Login remains Google-only and `/api/auth/email/config` returns `enabled: false`.
-2. Configure staging SMTP, the template, URL allowlist, password policy, and the selected CAPTCHA provider.
+2. Configure the staging Turnstile widget and Supabase secret, then configure staging SMTP, the template, URL allowlist, and password policy.
 3. Deploy code with the Email feature flag still absent. Confirm Google login and protected-page return still work.
-4. Add a staging-only `AUTH_INTENT_SECRET`, then set `EMAIL_PASSWORD_AUTH_ENABLED=true` in Preview.
+4. Add the Preview Turnstile site key and a staging-only `AUTH_INTENT_SECRET`, then set `EMAIL_PASSWORD_AUTH_ENABLED=true` in Preview.
 5. Confirm the Email UI appears only in the primary staging deployment.
 6. Create one staging account. Confirm no profile, workspace, membership, referral reward, or Stripe customer exists before email verification.
 7. Open the confirmation in the same browser and another browser. Confirm one account and one intended workspace are created.
@@ -65,4 +67,4 @@ Do not add email addresses, passwords, raw tokens, pricing claims, invite capabi
 
 ## Rollback
 
-Hide the Email UI by removing or setting `EMAIL_PASSWORD_AUTH_ENABLED=false` in Preview. Keep the staging Email provider available while test password identities exist so they are not locked out. Revert the application commit only if the hosted template and redirect contract remain compatible with the earlier code.
+Hide the Email UI by removing or setting `EMAIL_PASSWORD_AUTH_ENABLED=false` in Preview. Leave staging Turnstile enabled while the Email routes remain reachable to existing password users. Keep the staging Email provider available while test password identities exist so they are not locked out. Revert the application commit only if the hosted template and redirect contract remain compatible with the earlier code.

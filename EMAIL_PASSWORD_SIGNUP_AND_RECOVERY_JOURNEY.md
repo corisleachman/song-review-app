@@ -1,6 +1,6 @@
 # Email/Password Signup and Recovery Journey
 
-Status: Product and technical journey plan prepared on 19 September 2026. Slice 1 reached Production through PR #54 as merge commit `fddab843`. Slice 2A is committed as `c4b08016` in draft PR #55: default-off login/signup forms, server-side password routes, sealed continuation, check-email, and verification resend are ready for review. All PR checks and the default-off primary Preview gate passed. Hosted staging SMTP, templates, redirect configuration, and a selected CAPTCHA widget remain rollout blockers. Production remains Google-only with Email disabled.
+Status: Product and technical journey plan prepared on 19 September 2026. Slice 1 reached Production through PR #54 as merge commit `fddab843`. Slice 2A is committed in draft PR #55 and passed its default-off Preview gate. Cloudflare Turnstile was explicitly selected for Slice 2B; the guarded widget, mandatory token forwarding, single-use reset behavior, and conditional CSP support are implemented locally. Hosted Turnstile keys, staging SMTP, templates, and redirect configuration remain rollout blockers. Production remains Google-only with Email disabled.
 
 Configuration audit: Slice 0 is complete. `AUTH_CONFIGURATION_AUDIT.md` records the repository, Vercel, Production public Auth behavior, and the hosted Supabase dashboard baseline for both environments. The approved temporary safeguard disabled Production Email while leaving Google enabled. No other hosted setting changed.
 
@@ -185,7 +185,7 @@ Sign out clears the Supabase session, active workspace state that should not sur
 - Enable Supabase leaked-password protection if the project plan supports it.
 - Enable recent-login reauthentication for password changes.
 - Review and record Supabase limits for email sends, token verification, signup, login, refresh, and recovery in both environments.
-- Add CAPTCHA to signup and password recovery before public release. Select Turnstile or hCaptcha in the existing bot-protection planning slice rather than making a silent provider choice here.
+- Use Cloudflare Turnstile on signup, login, verification resend, and the future password-recovery request before public release. Supabase Auth validates the token using its hosted Turnstile secret; the application must never expose or duplicate that secret.
 - Use neutral login, signup, resend, and recovery responses that do not confirm whether an email exists.
 - Map Supabase failures to stable Song Room copy. Do not put raw provider messages in query parameters or user-visible URLs.
 - Keep confirmation and recovery tokens out of analytics, application logs, error reports, and referrer-bearing third-party requests.
@@ -247,11 +247,13 @@ One destination allowlist now covers middleware, Google callback, Login, bootstr
 
 Draft PR #54 passed all four GitHub checks. Primary Preview `dpl_FRi2S1GDVmFvbAATCoVEPKA6aYZL` reached Ready and passed the automated route, redirect, legacy-cookie rejection, disabled-Email, transition-header, staging-CSP, and runtime-log checks. The deployed Login bundle contains the Google control and Google-only beta copy, with no Email or forgotten-password control. Vercel confirms that neither `EMAIL_PASSWORD_AUTH_ENABLED` nor `AUTH_INTENT_SECRET` is configured. Final documentation-head Preview `dpl_D2b43o3ME9ydGU3jdgv1xLQf21w2` passed all four checks, and the user confirmed the protected Google login, return destination, and persisted session. The full Slice 1 Preview gate is complete; the PR remains draft pending code review and explicit rollout approval.
 
-### Slice 2: Login, signup, and email delivery in staging
+### Slice 2: Login, signup, bot protection, and email delivery in staging
 
-Slice 2A is code-complete locally on 20 September 2026. It adds default-off Email login and tier-aware signup controls, server-side name/email/password validation, a neutral login failure, enumeration-resistant signup and resend results, a sealed email-bound continuation, a reload-safe check-email state, and a 60-second resend cooldown. The routes accept an optional CAPTCHA token for Supabase Auth, but no provider widget or CSP source has been selected. `EMAIL_PASSWORD_STAGING_ROLLOUT.md` records the template contract and exact staging order.
+Slice 2A is committed in draft PR #55. It adds default-off Email login and tier-aware signup controls, server-side name/email/password validation, a neutral login failure, enumeration-resistant signup and resend results, a sealed email-bound continuation, a reload-safe check-email state, and a 60-second resend cooldown. Its default-off Preview gate passed.
 
-The remaining Slice 2 work is hosted and provider-dependent: choose and implement Turnstile or hCaptcha, configure custom SMTP and sender DNS, install the reviewed confirmation template, correct staging Site URL and redirects, strengthen the staging password policy, then enable the server flag in Preview only. No Production setting changes yet.
+Slice 2B selects Cloudflare Turnstile. Email readiness now requires its public site key, the widget renders explicitly on login/signup and resend, every server route requires the bounded token and forwards it to Supabase Auth, each attempt resets the single-use token, and CSP permits only Cloudflare's documented challenge origin while configured. Cloudflare's official test key produced tokens on desktop and phone layouts without a form submission. The app does not call Siteverify itself because Supabase Auth performs the hosted verification after its Turnstile secret is configured.
+
+The remaining Slice 2 work is hosted: create environment-specific Turnstile widgets, configure the staging secret in Supabase Auth, configure custom SMTP and sender DNS, install the reviewed confirmation template, correct staging Site URL and redirects, strengthen the staging password policy, then enable the server flag in Preview only. No Production setting changes yet.
 
 ### Slice 3: Recovery and account settings
 
@@ -305,7 +307,7 @@ Rollback first hides Email signup/login and keeps Google available. Existing pas
 - Add a dedicated auth-intent sealing secret to staging and Production Vercel environments.
 - Configure Supabase Auth settings separately in staging and Production.
 - Configure and verify custom SMTP credentials and sender DNS.
-- Select and configure Turnstile or hCaptcha.
+- Create separate Cloudflare Turnstile widgets for staging and Production, configure their public site keys in Vercel and their secrets only in the matching Supabase Auth projects.
 - Approve the final auth email copy and Production enablement.
 
 No migration is assumed by this plan. If invite-first membership cannot be made reliable without a server-side intent record, propose that schema change separately before implementation.
@@ -330,4 +332,6 @@ No migration is assumed by this plan. If invite-first membership cannot be made 
 - [Email Templates](https://supabase.com/docs/guides/auth/auth-email-templates)
 - [Rate limits](https://supabase.com/docs/guides/auth/rate-limits)
 - [CAPTCHA protection](https://supabase.com/docs/guides/auth/auth-captcha)
+- [Cloudflare Turnstile client rendering](https://developers.cloudflare.com/turnstile/get-started/client-side-rendering/)
+- [Cloudflare Turnstile CSP](https://developers.cloudflare.com/turnstile/reference/content-security-policy/)
 - [Signing out and session scopes](https://supabase.com/docs/guides/auth/signout)

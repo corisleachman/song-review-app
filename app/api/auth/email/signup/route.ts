@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     options: {
       data: { name: parsed.value.name, full_name: parsed.value.name },
       emailRedirectTo: buildAuthConfirmationRedirect(request, intentToken),
-      ...(parsed.value.captchaToken ? { captchaToken: parsed.value.captchaToken } : {}),
+      captchaToken: parsed.value.captchaToken,
     },
   });
 

@@ -13,10 +13,12 @@ import {
 import { normalizeAuthDestination, resolveAuthDestination } from '@/lib/authDestination';
 import styles from './page.module.css';
 import BetaBanner from '@/components/BetaBanner';
+import TurnstileWidget, { type TurnstileWidgetHandle } from '@/components/TurnstileWidget';
 
 const POST_LOGIN_INVITE_PATH_KEY = 'song_review_post_login_invite_path';
 const PENDING_AUTH_EMAIL_KEY = 'song_room_pending_auth_email';
 const PENDING_AUTH_RETURN_KEY = 'song_room_pending_auth_return';
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() ?? '';
 
 function normalizeRedirectTarget(value: string | null) {
   return normalizeAuthDestination(value);
@@ -80,6 +82,7 @@ function LoginContent() {
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState('');
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   // BG slideshow
@@ -87,6 +90,7 @@ function LoginContent() {
   const [previousBgIndex, setPreviousBgIndex] = useState<number | null>(null);
   const eqRef = useRef<HTMLDivElement>(null);
   const animRef = useRef<number>(0);
+  const turnstileRef = useRef<TurnstileWidgetHandle>(null);
 
   const googleStatus = searchParams.get('google');
   const signupPlanParam = searchParams.get('signupPlan');
@@ -326,6 +330,10 @@ function LoginContent() {
       setError('Please accept the Terms and Privacy notice to create your account.');
       return;
     }
+    if (!captchaToken) {
+      setError('Please complete the security check.');
+      return;
+    }
 
     setEmailLoading(true);
     try {
@@ -338,6 +346,7 @@ function LoginContent() {
           email,
           password,
           destination,
+          captchaToken,
         }),
       });
       const payload = await response.json().catch(() => null) as {
@@ -366,6 +375,7 @@ function LoginContent() {
     } catch {
       setError('That request could not be completed. Check your connection and try again.');
     } finally {
+      turnstileRef.current?.reset();
       setEmailLoading(false);
     }
   };
@@ -479,6 +489,24 @@ function LoginContent() {
                     </label>
                   </>
                 )}
+                <TurnstileWidget
+                  ref={turnstileRef}
+                  siteKey={TURNSTILE_SITE_KEY}
+                  action={isSignup ? 'email_signup' : 'email_login'}
+                  onTokenChange={token => {
+                    setCaptchaToken(token);
+                    if (token) {
+                      setError(current => current === 'Please complete the security check.'
+                        || current === 'The security check could not load. Refresh the page and try again.'
+                        ? ''
+                        : current);
+                    }
+                  }}
+                  onError={() => {
+                    setCaptchaToken('');
+                    setError('The security check could not load. Refresh the page and try again.');
+                  }}
+                />
                 <button className={styles.btnEmail} type="submit" disabled={emailLoading || googleLoading}>
                   {emailLoading ? 'Please wait…' : isSignup ? 'Create account' : 'Log in'}
                 </button>

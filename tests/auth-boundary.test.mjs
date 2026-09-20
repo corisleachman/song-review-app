@@ -136,6 +136,7 @@ test('email signup validates name, email, and a 12-character password server-sid
     email: 'alex@example.com',
     password: 'a useful passphrase',
     destination: '/songs/song_1',
+    captchaToken: 'captcha-result',
   });
   assert.equal(valid.ok, true);
   assert.equal(valid.value.name, 'Alex Rivers');
@@ -144,17 +145,39 @@ test('email signup validates name, email, and a 12-character password server-sid
     name: 'A',
     email: 'alex@example.com',
     password: 'a useful passphrase',
+    captchaToken: 'captcha-result',
   }).ok, false);
   assert.equal(parseEmailSignupInput({
     name: 'Alex Rivers',
     email: 'not-an-email',
     password: 'a useful passphrase',
+    captchaToken: 'captcha-result',
   }).ok, false);
   assert.equal(parseEmailSignupInput({
     name: 'Alex Rivers',
     email: 'alex@example.com',
     password: 'too-short',
+    captchaToken: 'captcha-result',
   }).ok, false);
+});
+
+test('email auth rejects missing or oversized Turnstile tokens', () => {
+  const login = {
+    email: 'alex@example.com',
+    password: 'a useful passphrase',
+    destination: '/dashboard',
+  };
+
+  assert.deepEqual(parseEmailLoginInput(login), {
+    ok: false,
+    error: 'Please complete the security check.',
+    field: 'captcha',
+  });
+  assert.equal(parseEmailLoginInput({
+    ...login,
+    captchaToken: 'x'.repeat(4097),
+  }).ok, false);
+  assert.equal(parseEmailResendInput({ email: 'alex@example.com' }).ok, false);
 });
 
 test('verification resend validates email without accepting password data', () => {

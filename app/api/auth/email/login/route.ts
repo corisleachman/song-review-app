@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
   const { error } = await supabase.auth.signInWithPassword({
     email: parsed.value.email,
     password: parsed.value.password,
-    options: parsed.value.captchaToken ? { captchaToken: parsed.value.captchaToken } : undefined,
+    options: { captchaToken: parsed.value.captchaToken },
   });
 
   if (error) {

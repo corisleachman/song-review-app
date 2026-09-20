@@ -75,6 +75,7 @@ test('response headers enforce a route-aware CSP without changing embed framing'
   assert.equal(standardHeaders.get('Reporting-Endpoints'), 'csp-endpoint="/api/csp-report"');
   assert.equal(standardHeaders.get('X-Frame-Options'), 'DENY');
   assert.equal(standardHeaders.has('Content-Security-Policy-Report-Only'), false);
+  assert.doesNotMatch(standardPolicy, /challenges\.cloudflare\.com/u);
 
   assert.match(embedPolicy, /frame-ancestors \*;/u);
   assert.match(
@@ -89,6 +90,40 @@ test('response headers enforce a route-aware CSP without changing embed framing'
     const headers = new Map(rule.headers.map(({ key, value }) => [key, value]));
     assert.equal(headers.get('Cache-Control'), 'no-store, max-age=0');
     assert.equal(headers.get('Referrer-Policy'), 'no-referrer');
+  }
+});
+
+test('Turnstile CSP sources appear only when its public site key is configured', async () => {
+  const configPath = path.join(repoRoot, 'next.config.js');
+  const previousSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
+  try {
+    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = '1x00000000000000000000AA';
+    delete require.cache[require.resolve(configPath)];
+    const turnstileConfig = require(configPath);
+    const headerRules = await turnstileConfig.headers();
+
+    const standardRule = headerRules.find(candidate => candidate.source === '/((?!embed).*)');
+    const embedRule = headerRules.find(candidate => candidate.source === '/embed/:path*');
+    const standardPolicy = standardRule?.headers.find(
+      header => header.key === 'Content-Security-Policy',
+    )?.value ?? '';
+    const embedPolicy = embedRule?.headers.find(
+      header => header.key === 'Content-Security-Policy',
+    )?.value ?? '';
+
+    assert.match(standardPolicy, /script-src [^;]*https:\/\/challenges\.cloudflare\.com[^;]*;/u);
+    assert.match(standardPolicy, /frame-src https:\/\/challenges\.cloudflare\.com;/u);
+    assert.doesNotMatch(standardPolicy, /frame-src 'none'/u);
+    assert.doesNotMatch(embedPolicy, /challenges\.cloudflare\.com/u);
+    assert.match(embedPolicy, /frame-src 'none';/u);
+  } finally {
+    if (previousSiteKey === undefined) {
+      delete process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+    } else {
+      process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = previousSiteKey;
+    }
+    delete require.cache[require.resolve(configPath)];
   }
 });
 
@@ -1386,6 +1421,8 @@ test('email login and signup stay default-off behind the server readiness bounda
   const resendRoute = read('app/api/auth/email/resend/route.ts');
   const checkEmail = read('app/auth/check-email/page.tsx');
   const checkEmailLayout = read('app/auth/check-email/layout.tsx');
+  const turnstile = read('components/TurnstileWidget.tsx');
+  const nextConfig = read('next.config.js');
 
   assertIncludesAll(login, [
     'Use Google to log in or create your Song Room account.',
@@ -1397,10 +1434,13 @@ test('email login and signup stay default-off behind the server readiness bounda
     'emailAuthEnabled && (',
     "fetch(endpoint, {",
     "window.location.assign('/auth/check-email')",
+    'captchaToken',
+    '<TurnstileWidget',
   ], 'flagged account-entry controls');
   assertIncludesAll(featureFlag, [
     "process.env.EMAIL_PASSWORD_AUTH_ENABLED?.trim().toLowerCase() === 'true'",
     'process.env.AUTH_INTENT_SECRET?.trim().length',
+    'getTurnstileSiteKey().length > 0',
   ], 'email auth readiness');
   assert.match(config, /enabled: isEmailPasswordAuthReady\(\)/u);
   assertIncludesAll(loginRoute, [
@@ -1409,6 +1449,7 @@ test('email login and signup stay default-off behind the server readiness bounda
     'supabase.auth.signInWithPassword',
     "Email or password wasn't recognised.",
     'AUTH_INTENT_COOKIE',
+    'options: { captchaToken: parsed.value.captchaToken }',
   ], 'password login route');
   assertIncludesAll(signupRoute, [
     'parseEmailSignupInput',
@@ -1417,6 +1458,7 @@ test('email login and signup stay default-off behind the server readiness bounda
     'supabase.auth.signUp',
     'emailRedirectTo: buildAuthConfirmationRedirect(request, intentToken)',
     'if (data.session)',
+    'captchaToken: parsed.value.captchaToken',
   ], 'password signup route');
   assertIncludesAll(resendRoute, [
     'authIntentEmailMatches',
@@ -1424,17 +1466,32 @@ test('email login and signup stay default-off behind the server readiness bounda
     'supabase.auth.resend',
     "type: 'signup'",
     'emailRedirectTo: buildAuthConfirmationRedirect(request, intentToken)',
+    'captchaToken: parsed.value.captchaToken',
   ], 'verification resend route');
   assertIncludesAll(checkEmail, [
     'RESEND_COOLDOWN_SECONDS = 60',
     "fetch('/api/auth/email/resend'",
     'If this address can be verified, a fresh email is on its way.',
     'Already use Google? Return to Login and continue with Google.',
+    'action="email_resend"',
+    'body: JSON.stringify({ email, captchaToken })',
   ], 'check-email state');
   assertIncludesAll(checkEmailLayout, [
     'isEmailPasswordAuthReady()',
     "redirect('/login?auth=email_unavailable')",
   ], 'check-email feature boundary');
+  assertIncludesAll(turnstile, [
+    'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit',
+    "action: 'email_login' | 'email_signup' | 'email_resend'",
+    "'expired-callback': reset",
+    "'timeout-callback': reset",
+    'window.turnstile.remove(widgetIdRef.current)',
+  ], 'Turnstile lifecycle');
+  assertIncludesAll(nextConfig, [
+    "const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com'",
+    'process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim()',
+    "['frame-src', ...(turnstileSources.length > 0 ? turnstileSources : [\"'none'\"])]",
+  ], 'Turnstile CSP boundary');
   assert.doesNotMatch(loginRoute + signupRoute + resendRoute, /error\.message/u);
 });
 

@@ -1,5 +1,6 @@
 const CSP_REPORT_ENDPOINT = '/api/csp-report';
 const CSP_REPORT_GROUP = 'csp-endpoint';
+const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com';
 
 function getSupabaseBrowserSources() {
   const configuredUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -29,8 +30,11 @@ function getSupabaseBrowserSources() {
   }
 }
 
-function buildContentSecurityPolicy(frameAncestors) {
+function buildContentSecurityPolicy(frameAncestors, allowTurnstile) {
   const supabase = getSupabaseBrowserSources();
+  const turnstileSources = allowTurnstile && process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim()
+    ? [TURNSTILE_ORIGIN]
+    : [];
   const developmentScriptSources = process.env.NODE_ENV === 'development'
     ? ["'unsafe-eval'"]
     : [];
@@ -46,6 +50,7 @@ function buildContentSecurityPolicy(frameAncestors) {
       "'unsafe-inline'",
       ...developmentScriptSources,
       'https://www.googletagmanager.com',
+      ...turnstileSources,
     ],
     ['script-src-attr', "'none'"],
     ['style-src', "'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
@@ -87,7 +92,7 @@ function buildContentSecurityPolicy(frameAncestors) {
       'https://*.googletagmanager.com',
     ],
     ['worker-src', "'self'", 'blob:'],
-    ['frame-src', "'none'"],
+    ['frame-src', ...(turnstileSources.length > 0 ? turnstileSources : ["'none'"])],
     ['manifest-src', "'self'"],
     ['report-uri', CSP_REPORT_ENDPOINT],
     ['report-to', CSP_REPORT_GROUP],
@@ -96,11 +101,11 @@ function buildContentSecurityPolicy(frameAncestors) {
   return directives.map((directive) => `${directive.join(' ')};`).join(' ');
 }
 
-function contentSecurityPolicyHeaders(frameAncestors) {
+function contentSecurityPolicyHeaders(frameAncestors, allowTurnstile = false) {
   return [
     {
       key: 'Content-Security-Policy',
-      value: buildContentSecurityPolicy(frameAncestors),
+      value: buildContentSecurityPolicy(frameAncestors, allowTurnstile),
     },
     {
       key: 'Reporting-Endpoints',
@@ -118,7 +123,7 @@ const securityHeaders = [
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), browsing-topics=()' },
   { key: 'Strict-Transport-Security', value: 'max-age=31536000' },
-  ...contentSecurityPolicyHeaders("'none'"),
+  ...contentSecurityPolicyHeaders("'none'", true),
 ];
 
 // Applied to /embed/* only. Identical to securityHeaders but WITHOUT

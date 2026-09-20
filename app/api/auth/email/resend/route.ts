@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     email: parsed.value.email,
     options: {
       emailRedirectTo: buildAuthConfirmationRedirect(request, intentToken),
-      ...(parsed.value.captchaToken ? { captchaToken: parsed.value.captchaToken } : {}),
+      captchaToken: parsed.value.captchaToken,
     },
   });
 

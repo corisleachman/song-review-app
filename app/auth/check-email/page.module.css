@@ -54,10 +54,14 @@
 }
 
 .note {
-  margin: 14px 0 30px;
+  margin: 14px 0 20px;
   color: rgba(244,240,232,0.54);
   font-size: 13px;
   line-height: 1.55;
+}
+
+.securityCheck {
+  margin-bottom: 18px;
 }
 
 .primaryButton,

@@ -12,7 +12,7 @@ type LoginInput = {
   email: string;
   password: string;
   destination: string | null;
-  captchaToken?: string;
+  captchaToken: string;
 };
 
 type SignupInput = LoginInput & {
@@ -21,7 +21,7 @@ type SignupInput = LoginInput & {
 
 type ResendInput = {
   email: string;
-  captchaToken?: string;
+  captchaToken: string;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -32,6 +32,13 @@ function readOptionalString(value: unknown, maxLength: number) {
   if (value === undefined || value === null || value === '') return undefined;
   if (typeof value !== 'string' || value.length > maxLength) return null;
   return value;
+}
+
+function readCaptchaToken(value: unknown) {
+  if (typeof value !== 'string') return null;
+  const token = value.trim();
+  if (!token || token.length > AUTH_CAPTCHA_TOKEN_MAX_LENGTH) return null;
+  return token;
 }
 
 export function normalizeAuthEmail(value: string) {
@@ -66,8 +73,8 @@ export function parseEmailLoginInput(input: unknown): AuthInputResult<LoginInput
 
   const destination = readOptionalString(input.destination, 1024);
   if (destination === null) return { ok: false, error: 'Invalid destination.' };
-  const captchaToken = readOptionalString(input.captchaToken, AUTH_CAPTCHA_TOKEN_MAX_LENGTH);
-  if (captchaToken === null) return { ok: false, error: 'Please complete the security check.', field: 'captcha' };
+  const captchaToken = readCaptchaToken(input.captchaToken);
+  if (!captchaToken) return { ok: false, error: 'Please complete the security check.', field: 'captcha' };
 
   return {
     ok: true,
@@ -75,7 +82,7 @@ export function parseEmailLoginInput(input: unknown): AuthInputResult<LoginInput
       email: normalizeAuthEmail(input.email),
       password: input.password,
       destination: destination ?? null,
-      ...(captchaToken ? { captchaToken } : {}),
+      captchaToken,
     },
   };
 }
@@ -85,14 +92,14 @@ export function parseEmailResendInput(input: unknown): AuthInputResult<ResendInp
   if (typeof input.email !== 'string' || !isValidAuthEmail(input.email)) {
     return { ok: false, error: 'Enter a valid email address.', field: 'email' };
   }
-  const captchaToken = readOptionalString(input.captchaToken, AUTH_CAPTCHA_TOKEN_MAX_LENGTH);
-  if (captchaToken === null) return { ok: false, error: 'Please complete the security check.', field: 'captcha' };
+  const captchaToken = readCaptchaToken(input.captchaToken);
+  if (!captchaToken) return { ok: false, error: 'Please complete the security check.', field: 'captcha' };
 
   return {
     ok: true,
     value: {
       email: normalizeAuthEmail(input.email),
-      ...(captchaToken ? { captchaToken } : {}),
+      captchaToken,
     },
   };
 }

@@ -6588,8 +6588,8 @@ Documentation-only product, security, rollout, and acceptance planning for email
 ### Files changed
 
 - `EMAIL_PASSWORD_SIGNUP_AND_RECOVERY_JOURNEY.md`
-- `PRODUCT_BACKLOG.md`
 - `TIER_SIGNUP_AND_UPGRADE_JOURNEY.md`
+- `PRODUCT_BACKLOG.md`
 - `WORKSPACE_MODEL.md`
 - `CODEBASE_REVIEW.md`
 - `UPDATE_LOG.md`
@@ -6838,3 +6838,54 @@ Slice 2A of the email/password journey: server-gated account-entry forms, bounde
 ### Rollback
 
 Discard or revert this Slice 2A branch. The default-off flag and independently disabled Production Email provider remain the outer safeguards.
+
+---
+
+## 2026-09-20 - Add Cloudflare Turnstile to the staged Email journey
+
+### What we were trying to achieve
+
+Close the bot-protection gap before Email is enabled in Preview, without creating hosted keys, exposing a secret, submitting an auth form, or changing Production.
+
+### Feature / change being made
+
+Slice 2B of the email/password journey: explicit-render Cloudflare Turnstile for login, signup, and verification resend, with mandatory server token forwarding and conditional CSP support.
+
+### Files changed
+
+- `components/TurnstileWidget.tsx`
+- `components/TurnstileWidget.module.css`
+- `app/login/page.tsx`
+- `app/auth/check-email/page.tsx`
+- `app/auth/check-email/page.module.css`
+- `app/api/auth/email/login/route.ts`
+- `app/api/auth/email/signup/route.ts`
+- `app/api/auth/email/resend/route.ts`
+- `lib/authFeatureFlags.ts`
+- `lib/emailPasswordAuthCore.ts`
+- `next.config.js`
+- `tests/auth-boundary.test.mjs`
+- `tests/critical-contracts.test.mjs`
+- `README.md`
+- `AUTH_CONFIGURATION_AUDIT.md`
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `EMAIL_PASSWORD_SIGNUP_AND_RECOVERY_JOURNEY.md`
+- `TIER_SIGNUP_AND_UPGRADE_JOURNEY.md`
+- `PRODUCT_BACKLOG.md`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Change and verification
+
+- Email readiness now requires `NEXT_PUBLIC_TURNSTILE_SITE_KEY` as well as the existing server flag and auth-intent secret. A missing site key therefore keeps the public interface Google-only.
+- The reusable widget loads Cloudflare's explicit-render script, reports load/challenge failures with Song Room copy, clears expired or timed-out tokens, removes its instance on unmount, and exposes a reset used after every request.
+- Login, tier signup, and verification resend require a non-empty token of at most 4,096 characters. The routes forward it to the matching Supabase Auth call; the Cloudflare secret stays in Supabase Auth and never enters the application.
+- CSP adds `https://challenges.cloudflare.com` to `script-src` and `frame-src` only when the public site key exists. `/embed/*` keeps `frame-src 'none'` and receives no Turnstile allowance.
+- Current Supabase and Cloudflare documentation was checked before implementation. No CAPTCHA-related breaking change applies. Supabase documents passing `captchaToken` to Auth, while Cloudflare requires server verification, five-minute single-use tokens, explicit lifecycle handling for SPAs, and its exact script/frame CSP origin.
+- Local TypeScript and focused ESLint passed. The suite passed 82 tests, including required-token and conditional-CSP coverage. The optimized Next.js build passed with its existing warnings after inert build-only Supabase placeholders were supplied.
+- Cloudflare's official always-pass test site key loaded locally. Login, Free signup, and check-email each produced a token at 1440×900 and 390×844, with no page error or horizontal overflow. No auth form was submitted.
+- No dependency, migration, database, Vercel variable, Cloudflare widget, Supabase Auth setting, email, user, billing setting, or Production deployment changed.
+
+### Rollback
+
+Remove the public Turnstile site key or keep `EMAIL_PASSWORD_AUTH_ENABLED=false` to hide Email immediately. Before password users exist, the staging Supabase CAPTCHA setting can also be returned to its captured off state. Revert the Slice 2B commit if the provider integration itself must be removed.
