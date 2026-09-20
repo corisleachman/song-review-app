@@ -140,21 +140,21 @@ Production and staging also match here:
 | Confirmation template | Supabase default subject/body | Supabase default subject/body | Replace with reviewed Song Room copy using the planned confirmation route. |
 | Reset template | Supabase default subject/body | Supabase default subject/body | Replace with reviewed neutral recovery copy. |
 | Security notification emails | all listed password, email, phone, identity-link and MFA notifications off | same | Enable the applicable password and identity notifications before release. |
-| CAPTCHA | off; no provider configured | off; no provider configured | Select Turnstile or hCaptcha and test it in staging. |
+| CAPTCHA | off; no provider configured | on; Cloudflare Turnstile selected and staging secret saved | The branch-scoped public site key passed the default-off hosted Preview gate. Test the enabled Email path only after the remaining hosted safeguards are configured. |
 | Audit logs in database | off | off | Auth logs remain available in the log explorer; retention isn't shown in this screen and still needs an operational decision. |
 
 The full existing template set should be exported immediately before any edit. Authentication-email click tracking cannot be verified until a custom SMTP provider is selected; it must be disabled in the chosen provider.
 
 ## Required environment additions for implementation
 
-These are names and scopes only. No value has been created.
+These are names and scopes. The staging Turnstile secret exists only in Supabase Auth, and the public site key exists only on the `codex/email-password-staging-forms` Vercel Preview branch. The Email flag and auth-intent secret remain absent.
 
 | Variable | Scope | Default |
 | --- | --- | --- |
 | `EMAIL_PASSWORD_AUTH_ENABLED` | Server-only, separate Preview and Production values | `false` when missing |
 | `AUTH_INTENT_SECRET` | Server-only sensitive value, different in Preview and Production | No fallback; intent creation fails closed |
-| CAPTCHA site key | Public, Preview and Production values after provider selection | Feature unavailable when missing |
-| CAPTCHA secret key | Server-only sensitive value, Preview and Production | Verification fails closed |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Public, separate Preview and Production values | Feature unavailable when missing |
+| Turnstile secret key | Sensitive value stored in each Supabase project's Auth bot-protection settings, not Vercel | Configured in staging only; Production remains off |
 
 Supabase SMTP credentials should remain in the Supabase Auth configuration unless the approved delivery design changes. They should not be copied into application variables without a reason.
 

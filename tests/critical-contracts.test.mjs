@@ -33,17 +33,35 @@ function assertOrdered(source, expected, context) {
 }
 
 test('response headers enforce a route-aware CSP without changing embed framing', async () => {
-  const nextConfig = require(path.join(repoRoot, 'next.config.js'));
-  const headerRules = await nextConfig.headers();
+  const configPath = path.join(repoRoot, 'next.config.js');
+  const previousSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  let headerRules;
+
+  try {
+    delete process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+    delete require.cache[require.resolve(configPath)];
+    const nextConfig = require(configPath);
+    headerRules = await nextConfig.headers();
+  } finally {
+    if (previousSiteKey === undefined) {
+      delete process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+    } else {
+      process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = previousSiteKey;
+    }
+    delete require.cache[require.resolve(configPath)];
+  }
+
   const standardRule = headerRules.find((rule) => rule.source === '/((?!embed).*)');
   const embedRule = headerRules.find((rule) => rule.source === '/embed/:path*');
   const authConfirmRule = headerRules.find((rule) => rule.source === '/auth/confirm');
   const authContinueRule = headerRules.find((rule) => rule.source === '/auth/continue');
+  const authCheckEmailRule = headerRules.find((rule) => rule.source === '/auth/check-email');
 
   assert.ok(standardRule, 'standard security header rule is missing');
   assert.ok(embedRule, 'embed security header rule is missing');
   assert.ok(authConfirmRule, 'auth confirmation header rule is missing');
   assert.ok(authContinueRule, 'auth continuation header rule is missing');
+  assert.ok(authCheckEmailRule, 'check-email header rule is missing');
 
   const standardHeaders = new Map(standardRule.headers.map(({ key, value }) => [key, value]));
   const embedHeaders = new Map(embedRule.headers.map(({ key, value }) => [key, value]));
@@ -73,6 +91,7 @@ test('response headers enforce a route-aware CSP without changing embed framing'
   assert.equal(standardHeaders.get('Reporting-Endpoints'), 'csp-endpoint="/api/csp-report"');
   assert.equal(standardHeaders.get('X-Frame-Options'), 'DENY');
   assert.equal(standardHeaders.has('Content-Security-Policy-Report-Only'), false);
+  assert.doesNotMatch(standardPolicy, /challenges\.cloudflare\.com/u);
 
   assert.match(embedPolicy, /frame-ancestors \*;/u);
   assert.match(
@@ -83,10 +102,44 @@ test('response headers enforce a route-aware CSP without changing embed framing'
   assert.equal(embedHeaders.has('Content-Security-Policy-Report-Only'), false);
   assert.equal(embedHeaders.has('X-Frame-Options'), false);
 
-  for (const rule of [authConfirmRule, authContinueRule]) {
+  for (const rule of [authConfirmRule, authContinueRule, authCheckEmailRule]) {
     const headers = new Map(rule.headers.map(({ key, value }) => [key, value]));
     assert.equal(headers.get('Cache-Control'), 'no-store, max-age=0');
     assert.equal(headers.get('Referrer-Policy'), 'no-referrer');
+  }
+});
+
+test('Turnstile CSP sources appear only when its public site key is configured', async () => {
+  const configPath = path.join(repoRoot, 'next.config.js');
+  const previousSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
+  try {
+    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = '1x00000000000000000000AA';
+    delete require.cache[require.resolve(configPath)];
+    const turnstileConfig = require(configPath);
+    const headerRules = await turnstileConfig.headers();
+
+    const standardRule = headerRules.find(candidate => candidate.source === '/((?!embed).*)');
+    const embedRule = headerRules.find(candidate => candidate.source === '/embed/:path*');
+    const standardPolicy = standardRule?.headers.find(
+      header => header.key === 'Content-Security-Policy',
+    )?.value ?? '';
+    const embedPolicy = embedRule?.headers.find(
+      header => header.key === 'Content-Security-Policy',
+    )?.value ?? '';
+
+    assert.match(standardPolicy, /script-src [^;]*https:\/\/challenges\.cloudflare\.com[^;]*;/u);
+    assert.match(standardPolicy, /frame-src https:\/\/challenges\.cloudflare\.com;/u);
+    assert.doesNotMatch(standardPolicy, /frame-src 'none'/u);
+    assert.doesNotMatch(embedPolicy, /challenges\.cloudflare\.com/u);
+    assert.match(embedPolicy, /frame-src 'none';/u);
+  } finally {
+    if (previousSiteKey === undefined) {
+      delete process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+    } else {
+      process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = previousSiteKey;
+    }
+    delete require.cache[require.resolve(configPath)];
   }
 });
 
@@ -155,6 +208,7 @@ test('shared auth boundary is session-backed, allowlisted, sealed, and default-o
     "process.env.PLAYWRIGHT_ALLOW_LEGACY_AUTH === 'true'",
     'supabase.auth.getClaims()',
     'normalizeAuthDestination',
+    "'/auth/check-email'",
   ], 'middleware auth boundary');
   assert.doesNotMatch(middleware, /supabase\.auth\.(?:getSession|getUser)\(\)/u);
   assertIncludesAll(destination, [
@@ -1374,8 +1428,17 @@ test('visualizer preference is editable, persisted, and respected by the song pl
   ], 'song player visualizer preference');
 });
 
-test('beta login and signup use a single Google account path', () => {
+test('email login and signup stay default-off behind the server readiness boundary', () => {
   const login = read('app/login/page.tsx');
+  const featureFlag = read('lib/authFeatureFlags.ts');
+  const config = read('app/api/auth/email/config/route.ts');
+  const loginRoute = read('app/api/auth/email/login/route.ts');
+  const signupRoute = read('app/api/auth/email/signup/route.ts');
+  const resendRoute = read('app/api/auth/email/resend/route.ts');
+  const checkEmail = read('app/auth/check-email/page.tsx');
+  const checkEmailLayout = read('app/auth/check-email/layout.tsx');
+  const turnstile = read('components/TurnstileWidget.tsx');
+  const nextConfig = read('next.config.js');
 
   assertIncludesAll(login, [
     'Use Google to log in or create your Song Room account.',
@@ -1383,11 +1446,69 @@ test('beta login and signup use a single Google account path', () => {
     "? 'Connecting...'",
     ": 'Continue with Google'",
     'During beta, Google is the only account option.',
-  ], 'Google-only authentication controls');
-  assert.doesNotMatch(
-    login,
-    /signInWithPassword|resetPasswordForEmail|\.auth\.signUp|Continue with email|Forgot password|type="password"/u
-  );
+    "fetch('/api/auth/email/config'",
+    'emailAuthEnabled && (',
+    "fetch(endpoint, {",
+    "window.location.assign('/auth/check-email')",
+    'captchaToken',
+    '<TurnstileWidget',
+  ], 'flagged account-entry controls');
+  assertIncludesAll(featureFlag, [
+    "process.env.EMAIL_PASSWORD_AUTH_ENABLED?.trim().toLowerCase() === 'true'",
+    'process.env.AUTH_INTENT_SECRET?.trim().length',
+    'getTurnstileSiteKey().length > 0',
+  ], 'email auth readiness');
+  assert.match(config, /enabled: isEmailPasswordAuthReady\(\)/u);
+  assertIncludesAll(loginRoute, [
+    'isSameOriginAuthRequest(request)',
+    'parseEmailLoginInput',
+    'supabase.auth.signInWithPassword',
+    "Email or password wasn't recognised.",
+    'AUTH_INTENT_COOKIE',
+    'options: { captchaToken: parsed.value.captchaToken }',
+  ], 'password login route');
+  assertIncludesAll(signupRoute, [
+    'parseEmailSignupInput',
+    'REFERRAL_COOKIE_NAME',
+    "purpose: 'signup'",
+    'supabase.auth.signUp',
+    'emailRedirectTo: buildAuthConfirmationRedirect(request, intentToken)',
+    'if (data.session)',
+    'captchaToken: parsed.value.captchaToken',
+  ], 'password signup route');
+  assertIncludesAll(resendRoute, [
+    'authIntentEmailMatches',
+    'parseEmailResendInput',
+    'supabase.auth.resend',
+    "type: 'signup'",
+    'emailRedirectTo: buildAuthConfirmationRedirect(request, intentToken)',
+    'captchaToken: parsed.value.captchaToken',
+  ], 'verification resend route');
+  assertIncludesAll(checkEmail, [
+    'RESEND_COOLDOWN_SECONDS = 60',
+    "fetch('/api/auth/email/resend'",
+    'If this address can be verified, a fresh email is on its way.',
+    'Already use Google? Return to Login and continue with Google.',
+    'action="email_resend"',
+    'body: JSON.stringify({ email, captchaToken })',
+  ], 'check-email state');
+  assertIncludesAll(checkEmailLayout, [
+    'isEmailPasswordAuthReady()',
+    "redirect('/login?auth=email_unavailable')",
+  ], 'check-email feature boundary');
+  assertIncludesAll(turnstile, [
+    'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit',
+    "action: 'email_login' | 'email_signup' | 'email_resend'",
+    "'expired-callback': reset",
+    "'timeout-callback': reset",
+    'window.turnstile.remove(widgetIdRef.current)',
+  ], 'Turnstile lifecycle');
+  assertIncludesAll(nextConfig, [
+    "const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com'",
+    'process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim()',
+    "['frame-src', ...(turnstileSources.length > 0 ? turnstileSources : [\"'none'\"])]",
+  ], 'Turnstile CSP boundary');
+  assert.doesNotMatch(loginRoute + signupRoute + resendRoute, /error\.message/u);
 });
 
 test('public song reads expose only public songs with finalized audio', () => {

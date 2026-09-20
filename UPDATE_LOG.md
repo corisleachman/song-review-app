@@ -6588,8 +6588,8 @@ Documentation-only product, security, rollout, and acceptance planning for email
 ### Files changed
 
 - `EMAIL_PASSWORD_SIGNUP_AND_RECOVERY_JOURNEY.md`
-- `PRODUCT_BACKLOG.md`
 - `TIER_SIGNUP_AND_UPGRADE_JOURNEY.md`
+- `PRODUCT_BACKLOG.md`
 - `WORKSPACE_MODEL.md`
 - `CODEBASE_REVIEW.md`
 - `UPDATE_LOG.md`
@@ -6779,3 +6779,157 @@ Preview evidence for draft PR #54. No application behaviour changed in this foll
 ### Rollback
 
 No rollout occurred. Revert the PR branch commit if the candidate needs to be abandoned; the independently disabled Production Email provider remains the outer safeguard.
+
+---
+
+## 2026-09-20 - Build default-off email signup and login forms
+
+### What we were trying to achieve
+
+Start Slice 2 without exposing an unfinished authentication method or changing any hosted service. The staging candidate needed coherent login, signup, verification, and resend states that reuse the shared boundary shipped in PR #54.
+
+### Feature / change being made
+
+Slice 2A of the email/password journey: server-gated account-entry forms, bounded server routes, check-email and resend UX, and a staging rollout contract.
+
+### Files changed
+
+- `app/login/page.tsx`
+- `app/login/page.module.css`
+- `app/auth/check-email/page.tsx`
+- `app/auth/check-email/page.module.css`
+- `app/api/auth/email/config/route.ts`
+- `app/api/auth/email/login/route.ts`
+- `app/api/auth/email/signup/route.ts`
+- `app/api/auth/email/resend/route.ts`
+- `lib/authFeatureFlags.ts`
+- `lib/emailPasswordAuthCore.ts`
+- `lib/emailPasswordAuthServer.ts`
+- `middleware.ts`
+- `next.config.js`
+- `tests/auth-boundary.test.mjs`
+- `tests/critical-contracts.test.mjs`
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `EMAIL_PASSWORD_SIGNUP_AND_RECOVERY_JOURNEY.md`
+- `TIER_SIGNUP_AND_UPGRADE_JOURNEY.md`
+- `PRODUCT_BACKLOG.md`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Change and verification
+
+- Email controls remain hidden unless the server-only Email flag is true and the auth-intent secret has at least 32 characters. The normal Production configuration therefore stays Google-only.
+- Login and tier-aware signup now use distinct states. Signup collects a display name rather than creating a username or handle, applies a 12-character password minimum, uses correct autocomplete values, and keeps Google available.
+- Server routes enforce same-origin JSON requests, a 16 KB request limit, normalized email validation, bounded names and passwords, strict destination normalization, and neutral public provider responses.
+- Password login returns through the existing sealed continuation. Signup binds the sealed intent to the normalized email, carries the existing referral code, and refuses to return an unexpected session when hosted email confirmation is misconfigured.
+- The check-email state survives a same-tab reload without putting the email address in the URL. It offers a 60-second resend cooldown, changed-email escape, and a neutral Google-account hint. Its server layout redirects to Login while Email auth is disabled.
+- Confirmation, continuation, and check-email responses now use no-store and no-referrer headers. Middleware treats check-email as public.
+- The API can pass a CAPTCHA token to Supabase, but no provider widget or CSP allowance was added because the provider choice is still open.
+- Local TypeScript and focused ESLint passed. The test suite passed 80 tests. A local Playwright render check passed at 1440×900 and 390×844 with no page errors, error overlay, or horizontal overflow. The check-email route returned `200` and rendered correctly on the phone viewport. The default-off public Chromium suite then passed 15 applicable checks with seven expected project skips.
+- No form was submitted to Supabase. No email was sent and no account was created. No Vercel variable, Supabase Auth setting, SMTP setting, database, billing setting, or Production deployment changed.
+- Slice 2A was committed as `c4b08016`, pushed on `codex/email-password-staging-forms`, and opened as draft PR #55 against `clone-clean`. GitHub reports it as cleanly mergeable, and all four checks passed: `public-surfaces`, both Vercel projects, and Vercel Preview Comments.
+- Primary `song-review-app-v2` Preview deployment `dpl_4QFuynYcjNPN86xdmVwf9pKMpMpi` reached Ready at `https://song-review-app-v2-ne1hum2v0-corisleachmans-projects.vercel.app`.
+- The Preview homepage and Login returned `200`; signed-out `/dashboard` returned `307` to `/login?redirectTo=%2Fdashboard`. `/api/auth/email/config` returned `{\"enabled\":false}`, a disabled email-login request returned `404`, and a synthetic confirmation request returned `303` to `/login?auth=email_unavailable`.
+- A live Chrome check confirmed that Login rendered only the Google account option. Opening `/auth/check-email` returned to `/login?auth=email_unavailable`; no Email or password control was exposed.
+- Standard responses retained enforced CSP against staging Supabase `ivifkrtupqizyqqsxdty.supabase.co`, `frame-ancestors 'none'`, and `X-Frame-Options: DENY`, with no report-only header. `/embed/*` retained `frame-ancestors *` and omitted `X-Frame-Options`.
+- Deployment-scoped scans returned no error-level event or 5xx response. The only warnings were CSP reports for Vercel's injected Preview Toolbar script at `https://vercel.live`, not Song Room application code.
+- PR #55 remains draft. The enabled staging journey has not started: no Email form was submitted, no message was sent, no account was created, and no hosted or Production setting changed.
+
+### Rollback
+
+Discard or revert this Slice 2A branch. The default-off flag and independently disabled Production Email provider remain the outer safeguards.
+
+---
+
+## 2026-09-20 - Add Cloudflare Turnstile to the staged Email journey
+
+### What we were trying to achieve
+
+Close the bot-protection gap before Email is enabled in Preview, without creating hosted keys, exposing a secret, submitting an auth form, or changing Production.
+
+### Feature / change being made
+
+Slice 2B of the email/password journey: explicit-render Cloudflare Turnstile for login, signup, and verification resend, with mandatory server token forwarding and conditional CSP support.
+
+### Files changed
+
+- `components/TurnstileWidget.tsx`
+- `components/TurnstileWidget.module.css`
+- `app/login/page.tsx`
+- `app/auth/check-email/page.tsx`
+- `app/auth/check-email/page.module.css`
+- `app/api/auth/email/login/route.ts`
+- `app/api/auth/email/signup/route.ts`
+- `app/api/auth/email/resend/route.ts`
+- `lib/authFeatureFlags.ts`
+- `lib/emailPasswordAuthCore.ts`
+- `next.config.js`
+- `tests/auth-boundary.test.mjs`
+- `tests/critical-contracts.test.mjs`
+- `README.md`
+- `AUTH_CONFIGURATION_AUDIT.md`
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `EMAIL_PASSWORD_SIGNUP_AND_RECOVERY_JOURNEY.md`
+- `TIER_SIGNUP_AND_UPGRADE_JOURNEY.md`
+- `PRODUCT_BACKLOG.md`
+- `CODEBASE_REVIEW.md`
+- `UPDATE_LOG.md`
+
+### Change and verification
+
+- Email readiness now requires `NEXT_PUBLIC_TURNSTILE_SITE_KEY` as well as the existing server flag and auth-intent secret. A missing site key therefore keeps the public interface Google-only.
+- The reusable widget loads Cloudflare's explicit-render script, reports load/challenge failures with Song Room copy, clears expired or timed-out tokens, removes its instance on unmount, and exposes a reset used after every request.
+- Login, tier signup, and verification resend require a non-empty token of at most 4,096 characters. The routes forward it to the matching Supabase Auth call; the Cloudflare secret stays in Supabase Auth and never enters the application.
+- CSP adds `https://challenges.cloudflare.com` to `script-src` and `frame-src` only when the public site key exists. `/embed/*` keeps `frame-src 'none'` and receives no Turnstile allowance.
+- Current Supabase and Cloudflare documentation was checked before implementation. No CAPTCHA-related breaking change applies. Supabase documents passing `captchaToken` to Auth, while Cloudflare requires server verification, five-minute single-use tokens, explicit lifecycle handling for SPAs, and its exact script/frame CSP origin.
+- Local TypeScript and focused ESLint passed. The suite passed 82 tests, including required-token and conditional-CSP coverage. The optimized Next.js build passed with its existing warnings after inert build-only Supabase placeholders were supplied.
+- Cloudflare's official always-pass test site key loaded locally. Login, Free signup, and check-email each produced a token at 1440×900 and 390×844, with no page error or horizontal overflow. No auth form was submitted.
+- No dependency, migration, database, Vercel variable, Cloudflare widget, Supabase Auth setting, email, user, billing setting, or Production deployment changed.
+
+### Rollback
+
+Remove the public Turnstile site key or keep `EMAIL_PASSWORD_AUTH_ENABLED=false` to hide Email immediately. Before password users exist, the staging Supabase CAPTCHA setting can also be returned to its captured off state. Revert the Slice 2B commit if the provider integration itself must be removed.
+
+---
+
+## 2026-09-20 - Configure staging Turnstile hosted protection
+
+### What we were trying to achieve
+
+Connect the approved Turnstile integration to the staging authentication service without exposing Email, storing the secret in application configuration, or changing Production.
+
+### Feature / change being made
+
+Hosted staging configuration for Slice 2B of the email/password journey.
+
+### Files changed
+
+- `tests/critical-contracts.test.mjs`
+- `AUTH_CONFIGURATION_AUDIT.md`
+- `CODEBASE_REVIEW.md`
+- `EMAIL_PASSWORD_SIGNUP_AND_RECOVERY_JOURNEY.md`
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `TIER_SIGNUP_AND_UPGRADE_JOURNEY.md`
+- `UPDATE_LOG.md`
+
+### Change and verification
+
+- Created one Cloudflare Turnstile widget named `Song Room staging email auth` in the user's Cloudflare account.
+- Allowed only the stable `codex/email-password-staging-forms` Vercel branch hostname. Production and localhost are excluded.
+- Kept Cloudflare's Managed mode and left pre-clearance off.
+- Stored the generated secret only in staging Supabase project `ivifkrtupqizyqqsxdty`, selected Turnstile, and enabled CAPTCHA protection. Supabase confirmed the settings update.
+- Did not record either key in repository files or documentation, and did not repeat the secret in user-facing messages.
+- Added the public site key only to the `codex/email-password-staging-forms` Vercel Preview branch.
+- The first fresh `song-review-app-v2` build exposed a test isolation bug: the baseline CSP contract inherited the hosted public site key and expected the unconfigured policy. The test now explicitly clears and restores that variable, while the adjacent configured-policy contract continues to verify the Cloudflare sources. No application header behavior changed.
+- The replacement primary Preview `dpl_6aBS3Z21Radpg4MULqau2h1tGdjU` reached Ready at `https://song-review-app-v2-6i4x6pj3z-corisleachmans-projects.vercel.app`; all four PR checks passed.
+- Homepage and Login returned `200`; signed-out Dashboard returned `307` to `/login?redirectTo=%2Fdashboard`. Email config returned `{"enabled":false}`, a synthetic Email login returned `404`, and opening check-email returned to `/login?auth=email_unavailable`.
+- The rendered Login remained Google-only with no Email fields or Turnstile asset. Standard CSP included the Cloudflare challenge origin and staging Supabase while retaining `frame-ancestors 'none'` and `X-Frame-Options: DENY`; `/embed/*` excluded Cloudflare, retained `frame-src 'none'` and `frame-ancestors *`, and omitted `X-Frame-Options`.
+- Deployment logs contained no error, fatal, or 5xx event. All four CSP reports came from Vercel's injected Preview Toolbar script at `https://vercel.live`; browser console errors came from a Chrome extension. No genuine Song Room resource was blocked.
+- PR #55 remains draft. No Email form was exposed, no auth email was sent, and no account was created.
+- The Email readiness check still fails closed because `AUTH_INTENT_SECRET` and `EMAIL_PASSWORD_AUTH_ENABLED` remain absent, so the Preview UI remains Google-only.
+- No email, user, database, billing, Production Supabase, or Production Vercel setting changed.
+
+### Rollback
+
+Disable CAPTCHA in staging Supabase and delete the staging-only Cloudflare widget if this hosted integration must be abandoned before password users exist. Production needs no rollback.

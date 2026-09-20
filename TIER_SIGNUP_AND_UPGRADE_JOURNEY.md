@@ -1,6 +1,6 @@
 # Tier Signup and Upgrade Journey
 
-Status: Tier-aware Google signup is Production complete through PR #31 (`fad0df1a`). Durable funnel events remain pending. The planned email/password extension is defined in `EMAIL_PASSWORD_SIGNUP_AND_RECOVERY_JOURNEY.md` and is not implemented.
+Status: Tier-aware Google signup is Production complete through PR #31 (`fad0df1a`). Durable funnel events remain pending. The email/password extension is defined in `EMAIL_PASSWORD_SIGNUP_AND_RECOVERY_JOURNEY.md`; its shared boundary reached Production through PR #54, Slice 2B is pushed in draft PR #55, and the staging Turnstile widget, Supabase secret, and branch-scoped Vercel public site key are configured. The hosted-key default-off Preview passed on primary deployment `dpl_6aBS3Z21Radpg4MULqau2h1tGdjU`. The remaining hosted Email settings are still pending.
 
 ## Goal
 
