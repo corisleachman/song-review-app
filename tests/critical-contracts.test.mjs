@@ -33,8 +33,24 @@ function assertOrdered(source, expected, context) {
 }
 
 test('response headers enforce a route-aware CSP without changing embed framing', async () => {
-  const nextConfig = require(path.join(repoRoot, 'next.config.js'));
-  const headerRules = await nextConfig.headers();
+  const configPath = path.join(repoRoot, 'next.config.js');
+  const previousSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  let headerRules;
+
+  try {
+    delete process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+    delete require.cache[require.resolve(configPath)];
+    const nextConfig = require(configPath);
+    headerRules = await nextConfig.headers();
+  } finally {
+    if (previousSiteKey === undefined) {
+      delete process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+    } else {
+      process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = previousSiteKey;
+    }
+    delete require.cache[require.resolve(configPath)];
+  }
+
   const standardRule = headerRules.find((rule) => rule.source === '/((?!embed).*)');
   const embedRule = headerRules.find((rule) => rule.source === '/embed/:path*');
   const authConfirmRule = headerRules.find((rule) => rule.source === '/auth/confirm');

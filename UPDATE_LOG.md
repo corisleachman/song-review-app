@@ -6904,6 +6904,7 @@ Hosted staging configuration for Slice 2B of the email/password journey.
 
 ### Files changed
 
+- `tests/critical-contracts.test.mjs`
 - `AUTH_CONFIGURATION_AUDIT.md`
 - `CODEBASE_REVIEW.md`
 - `EMAIL_PASSWORD_SIGNUP_AND_RECOVERY_JOURNEY.md`
@@ -6920,6 +6921,7 @@ Hosted staging configuration for Slice 2B of the email/password journey.
 - Stored the generated secret only in staging Supabase project `ivifkrtupqizyqqsxdty`, selected Turnstile, and enabled CAPTCHA protection. Supabase confirmed the settings update.
 - Did not record either key in repository files or documentation, and did not repeat the secret in user-facing messages.
 - Added the public site key only to the `codex/email-password-staging-forms` Vercel Preview branch. A fresh deployment is still required to consume it.
+- The first fresh `song-review-app-v2` build exposed a test isolation bug: the baseline CSP contract inherited the hosted public site key and expected the unconfigured policy. The test now explicitly clears and restores that variable, while the adjacent configured-policy contract continues to verify the Cloudflare sources. No application header behavior changed.
 - The Email readiness check still fails closed because `AUTH_INTENT_SECRET` and `EMAIL_PASSWORD_AUTH_ENABLED` remain absent, so the Preview UI remains Google-only.
 - No email, user, database, billing, Production Supabase, or Production Vercel setting changed.
 
