@@ -63,7 +63,12 @@
       "intent": "informational",
       "audience": "Songwriters, artists and producers",
       "priority": 5,
-      "status": "ready"
+      "status": "published",
+      "slug": "a-practical-remote-songwriting-workflow",
+      "generatedTitle": "A Practical Remote Songwriting Workflow",
+      "excerpt": "A concise, real-world workflow for remote songwriting: organising versions, sharing stems, giving timestamped feedback and tracking decisions so songs keep moving.",
+      "publishedAt": "2026-09-21",
+      "model": "gpt-5-mini"
     },
     {
       "id": "producer-revisions",
