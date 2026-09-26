@@ -6779,3 +6779,46 @@ Preview evidence for draft PR #54. No application behaviour changed in this foll
 ### Rollback
 
 No rollout occurred. Revert the PR branch commit if the candidate needs to be abandoned; the independently disabled Production Email provider remains the outer safeguard.
+
+## 2026-09-26 - Keep dashboard playback alive through long locked sessions
+
+### What we were trying to achieve
+
+Stop the dashboard mini-player from dying during long locked-phone sessions on iPhone (Chrome on iOS, car over Bluetooth, running). Two field reports after the 2026-08-28 auto-advance fix: (1) after five or six tracks playback stopped while the lock screen still showed "playing" with a moving clock, and only resumed once Chrome was opened; (2) other times, after unlocking, no track would play (including tapping other tracks) until a full page reload.
+
+### Feature / change being made
+
+Bug fix to the dashboard audio engine and the API session check. The 2026-08-28 fix is intact and unchanged in intent; long background sessions it made possible exposed these separate faults.
+
+### Files changed
+
+- `lib/currentUser.ts`
+- `app/dashboard/page.tsx`
+- `UPDATE_LOG.md`
+
+### Root cause
+
+- **Session expiry (the "needs a reload" failure).** The Supabase browser client stops refreshing tokens while the page is hidden (confirmed in `@supabase/auth-js` 2.110.7, `_onVisibilityChanged`). The API-side session check in `lib/currentUser.ts` used a no-op `setAll`, so a refresh performed by an API route was thrown away. After the access token expired, API calls from the dashboard could fail with 401 until a full page load ran the middleware (the only code that persisted refreshed cookies). On unlock, `loadAll` also replaced the song list with fresh rows that carry no resolved audio URLs, so every tap had to call `/api/versions`, and a failed call made `playSong` quietly clear the track with no message.
+- **Stalled changeovers (the "timer kept moving" failure).** The player had no `waiting`, `stalled` or `error` handling, so a load that stuck at a changeover (for example a cell handover while driving) never fired `ended` and nothing recovered it. `setMediaSession` forced `playbackState = 'playing'` and `setPositionState` let the OS extrapolate the clock, so a stall looked like playback. The hidden preload element added on 2026-08-28 is largely ignored on iOS, and storage responses are `Cache-Control: no-cache`, so changeovers were usually a cold network fetch.
+
+### Change and verification
+
+- `lib/currentUser.ts`: `setAll` now persists refreshed session cookies (Supabase's documented pattern); the expected throw from Server Components is caught.
+- Song-list refreshes keep audio URLs already resolved for the same `latestVersionId` (`carryResolvedAudioUrls`), in both the cached and fresh paths of `loadAll`.
+- `resolveLatestVersionAudioUrl` refreshes the session once and retries on a 401, and a user-initiated failure now shows a message (a sign-in message for 401) instead of failing silently.
+- Next-track preload now downloads the upcoming track into an in-memory Blob and switches the same `<audio>` element to its `blob:` URL at the changeover, so no network is needed at the handover. One track ahead only, capped at 64MB; oversize, unknown-size or non-media responses stream as before. The hidden preload `<audio>` element was removed. A second-element swap was rejected for iOS because Safari only allows background play on gesture-unlocked elements and moving Now Playing between elements risks dropping the car/lock-screen session.
+- Stall watchdog: on `waiting` / `stalled`, if the track makes no progress for 2.5s the lock screen is told it is not playing (the clock stops); after 10s the track reloads from the network at the position it stopped. After two failed recoveries it skips to the next track, or stops cleanly at the end of the queue. `error` triggers the same recovery.
+- Lock-screen and car Play now recover a stuck or errored track instead of calling `play()` on a dead element. The mini-player play/pause decides from the element's real state, not React state.
+- The `pause` fired just before `ended`, and transient pauses during a source swap, no longer flash "paused" to the car at each changeover.
+- Verified locally: `npx tsc --noEmit` passes; `npm test` passes; ESLint reports no new warnings on the changed files (the 10 existing warnings are unchanged).
+- Verified against production storage (read-only): all 40 most recent `song-files` objects are `audio/mpeg` between 2.9MB and 13.4MB, so every current track qualifies for preload. A live object returned `200`, `content-type: audio/mpeg`, an exact `content-length`, and `access-control-allow-origin: *`. Production CSP already allows `blob:` in `media-src` and the Supabase origin in `connect-src`.
+- **Not yet verified on device.** Real-world confirmation on the iPhone (locked, cellular, car and run) is pending.
+
+### Known limitations
+
+- If iOS suspends the page entirely while audio is stalled, the watchdog cannot run until the page wakes; the lock-screen or car Play control then recovers the track.
+- The head unit's track-list browse still shows only the current track (Web Media Session limitation, see 2026-08-28).
+
+### Rollback
+
+Revert this PR's commit. No migration, environment variable or hosted setting changed.
