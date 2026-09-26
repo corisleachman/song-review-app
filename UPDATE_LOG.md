@@ -6933,3 +6933,34 @@ Hosted staging configuration for Slice 2B of the email/password journey.
 ### Rollback
 
 Disable CAPTCHA in staging Supabase and delete the staging-only Cloudflare widget if this hosted integration must be abandoned before password users exist. Production needs no rollback.
+---
+
+## 2026-09-26 - Put Google and Email choices before the staged signup form
+
+### What we were trying to achieve
+
+Make the enabled Email Preview's phone entry screen usable without pushing Google below a long signup form or showing Cloudflare's automatic success state before Email is chosen.
+
+### Feature / change being made
+
+The account-entry UI now starts with one Google button for both new and returning users, followed by an Email choice that reveals the existing signup or login form.
+
+### Files changed
+
+- `app/login/page.tsx`
+- `app/login/page.module.css`
+- `tests/browser/public-accessibility.spec.mjs`
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `UPDATE_LOG.md`
+
+### Change and verification
+
+- The Email form and Turnstile are not mounted until Email is selected. A short slide-in transition reveals the form, with reduced-motion support. The security widget has a visible **Security check** label so its own success state is not confused with account creation.
+- The enabled Preview's two initial choices are **Log in or sign up with Google** and **Log in and sign up with email**. The supplied phone mockup guides their lower-page position over the photo, left-aligned copy, outlined Google style, and red Email style. Mobile allows the expanded form to scroll; the Google-only, default-off path keeps its prior button copy.
+- The Google OAuth handler and plan-aware destination were not changed. Switching between Email signup and login keeps the Email form open through an explicit query parameter.
+- TypeScript, focused ESLint, 82 contract tests, and the public-page browser suite passed. The browser suite had 16 applicable passes and 8 expected skips; the new phone test checked both choices in view, the initially absent fields and security widget, reveal, scrolling to submit, and collapse.
+- This change targets draft PR #55 and its protected Preview only. Hosted Auth settings and Production are unchanged. The real iPhone and hosted Turnstile check still need a fresh Preview.
+
+### Rollback
+
+Revert the focused entry-screen commit or set the branch-only Email flag false and redeploy while investigating. Preserve the other local documentation edits. Production needs no change.

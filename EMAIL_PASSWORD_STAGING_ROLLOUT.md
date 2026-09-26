@@ -1,6 +1,13 @@
 # Email/password staging rollout
 
-Status: Slice 2B is committed and pushed in draft PR #55. All four checks and the hosted-key default-off Preview gate pass. The staging-only Cloudflare Turnstile widget allows only the stable PR branch hostname, uses Managed mode with pre-clearance off, and its secret is stored in staging Supabase Auth with CAPTCHA protection enabled. The public site key is configured only for the `codex/email-password-staging-forms` Vercel Preview branch. Email remains unavailable because the auth-intent secret and feature flag are absent. No email template, user, Production setting, or Production behavior changed.
+Status: Slice 2B is committed and pushed in draft PR #55. The staging-only Cloudflare Turnstile widget allows only the stable PR branch hostname, uses Managed mode with pre-clearance off, and its secret is stored in staging Supabase Auth with CAPTCHA protection enabled. The public site key, server-only auth-intent secret, and Email feature flag are scoped only to `codex/email-password-staging-forms` Vercel Preview. Staging custom SMTP, the Confirm signup link, and the stable PR branch Site URL are configured. Enabled Preview `dpl_5XtatCMZYYbdtoPFo7MSRfe4EeBB` is Ready: config is on, Login shows Email and Google, and the security check renders. No form was submitted, Auth mail was sent, or account was created; delivery and confirmation remain untested. Production is Google-only and unchanged.
+
+## Entry-screen follow-up, 2026-09-26
+
+- A phone screenshot of the enabled Preview showed the whole signup form and Turnstile's automatic **Success!** state before the user chose Email; the Google option was below the viewport. The message confirms only the security check, not account creation.
+- The staged UI change puts **Log in or sign up with Google** first and **Log in and sign up with email** second. The later phone mockup confirms lower-page positioning over the photo, left-aligned copy, an outlined Google choice, and a red Email choice. The Email choice reveals the existing route-specific form with a short motion transition; Turnstile mounts only then, under a **Security check** label. The Google OAuth handler, selected plan, redirect destination, server gates, and hosted settings are unchanged.
+- A refreshed protected PR #55 Preview and a real-phone check are needed before the controlled staging signup and delivery test. Production remains Google-only.
+
 
 ## What the code now supports
 

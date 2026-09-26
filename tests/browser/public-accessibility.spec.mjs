@@ -216,6 +216,59 @@ test('login keeps the beta account journey Google-only and keyboard reachable', 
   await expectNoBlockingAxeViolations(page);
 });
 
+test('enabled mobile signup shows two choices before revealing the email form', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-chromium', 'The phone layout is the reported case.');
+  await prepareDeterministicPage(page);
+  await page.route('**/api/auth/email/config', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ enabled: true }),
+  }));
+  await page.route('https://challenges.cloudflare.com/**', route => route.fulfill({
+    status: 200,
+    contentType: 'application/javascript',
+    body: '',
+  }));
+  await page.goto('/signup/free', { waitUntil: 'domcontentloaded' });
+
+  const google = page.getByRole('button', { name: 'Log in or sign up with Google' });
+  const email = page.getByRole('button', { name: 'Log in and sign up with email' });
+  await expect(google).toBeVisible();
+  await expect(email).toBeVisible();
+  await expect(email).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.locator('input[type="email"], input[type="password"]')).toHaveCount(0);
+  await expect(page.getByRole('group', { name: 'Security check' })).toHaveCount(0);
+
+  const googleBox = await google.boundingBox();
+  const emailBox = await email.boundingBox();
+  expect(googleBox).not.toBeNull();
+  expect(emailBox).not.toBeNull();
+  expect(googleBox.y + googleBox.height).toBeLessThan(emailBox.y);
+  expect(emailBox.y + emailBox.height).toBeLessThan(testInfo.project.use.viewport.height);
+
+  await email.click();
+  await expect(page.getByRole('button', { name: 'Hide email form' })).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByRole('textbox', { name: 'Name' })).toBeVisible();
+  await expect(page.getByRole('textbox', { name: 'Email' })).toBeVisible();
+  await expect(page.getByText('Security check', { exact: true })).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Security check' })).toHaveCount(1);
+  await expect(page.getByRole('link', { name: 'Already have an account? Log in' }))
+    .toHaveAttribute('href', '/login?email=1');
+  const submit = page.getByRole('button', { name: 'Create account' });
+  await submit.scrollIntoViewIfNeeded();
+  await expect(submit).toBeInViewport();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)).toBe(false);
+  await page.getByRole('button', { name: 'Hide email form' }).click();
+  await expect(page.locator('input[type="email"], input[type="password"]')).toHaveCount(0);
+  await expect(page.getByRole('group', { name: 'Security check' })).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Log in and sign up with email' }).click();
+  await page.getByRole('link', { name: 'Already have an account? Log in' }).click();
+  await expect(page).toHaveURL(/\/login\?email=1$/);
+  await expect(page.getByRole('textbox', { name: 'Email' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Log in', exact: true })).toBeVisible();
+});
+
 test('cookie rejection is keyboard operable and persists', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-chromium', 'One browser is enough for consent persistence.');
   await prepareDeterministicPage(page, { consent: null });
