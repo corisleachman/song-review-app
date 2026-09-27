@@ -269,6 +269,39 @@ test('enabled mobile signup shows two choices before revealing the email form', 
   await expect(page.getByRole('button', { name: 'Log in', exact: true })).toBeVisible();
 });
 
+test('a reused confirmation link explains the next step only when email login is enabled', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-chromium', 'The phone layout is the reported case.');
+  await prepareDeterministicPage(page);
+  await page.route('**/api/auth/email/config', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ enabled: true }),
+  }));
+  await page.goto('/login?auth=confirmation_failed', { waitUntil: 'domcontentloaded' });
+
+  const linkAlert = page.getByRole('alert').filter({ hasText: 'That email link may have expired or already been used.' });
+  await expect(linkAlert).toBeVisible();
+  await expect(linkAlert).toBeInViewport();
+  const emailChoice = page.getByRole('button', { name: 'Log in and sign up with email' });
+  await expect(emailChoice).toBeInViewport();
+  await expectNoBlockingAxeViolations(page);
+  await emailChoice.click();
+  await expect(page.getByRole('textbox', { name: 'Email' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Log in', exact: true })).toBeVisible();
+
+  await page.goto('/login?auth=invalid_confirmation', { waitUntil: 'domcontentloaded' });
+  await expect(linkAlert).toBeVisible();
+
+  await page.route('**/api/auth/email/config', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ enabled: false }),
+  }));
+  await page.goto('/login?auth=confirmation_failed', { waitUntil: 'domcontentloaded' });
+  await expect(linkAlert).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Continue with Google' })).toBeVisible();
+});
+
 test('cookie rejection is keyboard operable and persists', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-chromium', 'One browser is enough for consent persistence.');
   await prepareDeterministicPage(page, { consent: null });

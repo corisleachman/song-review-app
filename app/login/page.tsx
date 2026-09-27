@@ -94,6 +94,9 @@ function LoginContent() {
   const turnstileRef = useRef<TurnstileWidgetHandle>(null);
 
   const googleStatus = searchParams.get('google');
+  const authStatus = searchParams.get('auth');
+  const confirmationLinkFailed = authStatus === 'confirmation_failed'
+    || authStatus === 'invalid_confirmation';
   const signupPlanParam = searchParams.get('signupPlan');
   const signupBillingParam = searchParams.get('billing');
   const signupIntent = useMemo(
@@ -415,6 +418,12 @@ function LoginContent() {
             <p className={styles.authIntro}>
               {signupDescription}
             </p>
+            {emailAuthEnabled && confirmationLinkFailed && (
+              <p className={styles.fieldError} role="alert">
+                That email link may have expired or already been used. If your account is confirmed,
+                choose email below to log in. Otherwise, request another link from the page where you started.
+              </p>
+            )}
 
             {/* Both Google account creation and login use the same OAuth handler. */}
             <button
