@@ -419,7 +419,7 @@ function LoginContent() {
               {signupDescription}
             </p>
             {emailAuthEnabled && confirmationLinkFailed && (
-              <p className={styles.fieldError} role="alert">
+              <p className={`${styles.fieldError} ${styles.confirmationNotice}`} role="alert">
                 That email link may have expired or already been used. If your account is confirmed,
                 choose email below to log in. Otherwise, request another link from the page where you started.
               </p>

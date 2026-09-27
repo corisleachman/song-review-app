@@ -302,6 +302,12 @@
   padding: 4px 2px;
 }
 
+.confirmationNotice {
+  margin: 0 0 8px;
+  padding: 10px 12px;
+  background: rgba(14, 10, 10, 0.9);
+}
+
 .emailAuthRoot .left {
   justify-content: flex-start;
   overflow-y: auto;

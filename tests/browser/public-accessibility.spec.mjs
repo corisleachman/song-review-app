@@ -269,8 +269,7 @@ test('enabled mobile signup shows two choices before revealing the email form', 
   await expect(page.getByRole('button', { name: 'Log in', exact: true })).toBeVisible();
 });
 
-test('a reused confirmation link explains the next step only when email login is enabled', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'mobile-chromium', 'The phone layout is the reported case.');
+test('a reused confirmation link explains the next step only when email login is enabled', async ({ page }) => {
   await prepareDeterministicPage(page);
   await page.route('**/api/auth/email/config', route => route.fulfill({
     status: 200,
