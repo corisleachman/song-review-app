@@ -24,6 +24,10 @@ type ResendInput = {
   captchaToken: string;
 };
 
+type ResetInput = {
+  password: string;
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
@@ -102,6 +106,26 @@ export function parseEmailResendInput(input: unknown): AuthInputResult<ResendInp
       captchaToken,
     },
   };
+}
+
+export function parsePasswordResetInput(input: unknown): AuthInputResult<ResetInput> {
+  if (!isRecord(input)) return { ok: false, error: 'Invalid request.' };
+  if (
+    typeof input.password !== 'string'
+    || input.password.length < AUTH_PASSWORD_MIN_LENGTH
+    || input.password.length > AUTH_PASSWORD_MAX_LENGTH
+    || /[\u0000]/.test(input.password)
+  ) {
+    return {
+      ok: false,
+      error: `Password must be ${AUTH_PASSWORD_MIN_LENGTH} to ${AUTH_PASSWORD_MAX_LENGTH} characters.`,
+      field: 'password',
+    };
+  }
+  if (input.password !== input.confirmPassword) {
+    return { ok: false, error: 'The passwords don’t match.', field: 'password' };
+  }
+  return { ok: true, value: { password: input.password } };
 }
 
 export function parseEmailSignupInput(input: unknown): AuthInputResult<SignupInput> {

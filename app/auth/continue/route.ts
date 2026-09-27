@@ -24,6 +24,10 @@ function redirectToLogin(request: NextRequest, reason: string, destination = '/d
   return redirectWithNoStore(url);
 }
 
+function redirectToRecoveryRequest(request: NextRequest) {
+  return redirectWithNoStore(new URL('/forgot-password?status=invalid_link', request.url));
+}
+
 export async function GET(request: NextRequest) {
   const queryIntent = request.nextUrl.searchParams.get('intent');
   const cookieIntent = request.cookies.get(AUTH_INTENT_COOKIE)?.value ?? null;
@@ -40,13 +44,20 @@ export async function GET(request: NextRequest) {
     if (!intent) return redirectToLogin(request, 'invalid_intent');
   }
 
+  if (intent?.purpose === 'recovery') return redirectToRecoveryRequest(request);
+  if (intent?.purpose === 'recovery_verified' && (queryIntent || !cookieIntent)) {
+    return redirectToRecoveryRequest(request);
+  }
+
   const destination = intent ? getAuthIntentDestination(intent) : fallbackDestination;
   const user = await getCurrentAuthenticatedUser();
   if (!user) {
+    if (intent?.purpose === 'recovery_verified') return redirectToRecoveryRequest(request);
     return redirectToLogin(request, 'session_missing', destination);
   }
 
   if (intent && !authIntentEmailMatches(intent, user.email)) {
+    if (intent.purpose === 'recovery_verified') return redirectToRecoveryRequest(request);
     return redirectToLogin(request, 'account_mismatch');
   }
 
@@ -61,9 +72,11 @@ export async function GET(request: NextRequest) {
   }
 
   const response = redirectWithNoStore(new URL(destination, request.url));
-  response.cookies.set(AUTH_INTENT_COOKIE, '', {
-    ...AUTH_INTENT_COOKIE_OPTIONS,
-    maxAge: 0,
-  });
+  if (intent?.purpose !== 'recovery_verified') {
+    response.cookies.set(AUTH_INTENT_COOKIE, '', {
+      ...AUTH_INTENT_COOKIE_OPTIONS,
+      maxAge: 0,
+    });
+  }
   return response;
 }

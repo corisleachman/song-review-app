@@ -5,14 +5,16 @@ import { isEmailPasswordAuthEnabled } from '@/lib/authFeatureFlags';
 import {
   AUTH_INTENT_COOKIE,
   AUTH_INTENT_COOKIE_OPTIONS,
+  authIntentEmailMatches,
+  createAuthIntent,
   readAuthIntent,
 } from '@/lib/authIntent';
 
 const ALLOWED_EMAIL_OTP_TYPES = new Set<EmailOtpType>(['email', 'recovery', 'signup']);
 
-function buildFailureResponse(request: NextRequest, reason: string) {
-  const url = new URL('/login', request.url);
-  url.searchParams.set('auth', reason);
+function buildFailureResponse(request: NextRequest, reason: string, recovery = false) {
+  const url = new URL(recovery ? '/forgot-password' : '/login', request.url);
+  url.searchParams.set(recovery ? 'status' : 'auth', recovery ? 'invalid_link' : reason);
   const response = NextResponse.redirect(url, 303);
   response.headers.set('Cache-Control', 'no-store, max-age=0');
   response.headers.set('Referrer-Policy', 'no-referrer');
@@ -27,6 +29,7 @@ export async function GET(request: NextRequest) {
   const tokenHash = request.nextUrl.searchParams.get('token_hash');
   const type = request.nextUrl.searchParams.get('type') as EmailOtpType | null;
   const intentToken = request.nextUrl.searchParams.get('intent');
+  const recovery = type === 'recovery';
 
   if (
     !tokenHash
@@ -36,18 +39,18 @@ export async function GET(request: NextRequest) {
     || !intentToken
     || intentToken.length > 4096
   ) {
-    return buildFailureResponse(request, 'invalid_confirmation');
+    return buildFailureResponse(request, 'invalid_confirmation', recovery);
   }
 
   let intent;
   try {
     intent = readAuthIntent(intentToken);
   } catch {
-    return buildFailureResponse(request, 'invalid_confirmation');
+    return buildFailureResponse(request, 'invalid_confirmation', recovery);
   }
 
   if (!intent) {
-    return buildFailureResponse(request, 'invalid_confirmation');
+    return buildFailureResponse(request, 'invalid_confirmation', recovery);
   }
 
   const validTypeForPurpose = intent.purpose === 'recovery'
@@ -55,11 +58,11 @@ export async function GET(request: NextRequest) {
     : (intent.purpose === 'signup' || intent.purpose === 'invite')
       && (type === 'signup' || type === 'email');
   if (!validTypeForPurpose) {
-    return buildFailureResponse(request, 'invalid_confirmation');
+    return buildFailureResponse(request, 'invalid_confirmation', recovery);
   }
 
   const continueUrl = new URL('/auth/continue', request.url);
-  continueUrl.searchParams.set('intent', intentToken);
+  if (!recovery) continueUrl.searchParams.set('intent', intentToken);
   const response = NextResponse.redirect(continueUrl, 303);
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -76,12 +79,27 @@ export async function GET(request: NextRequest) {
     },
   );
 
-  const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
-  if (error) {
-    return buildFailureResponse(request, 'confirmation_failed');
+  const { data, error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
+  if (
+    error
+    || (recovery && (
+      !data.session
+      || !data.user?.email
+      || !intent.emailHash
+      || !authIntentEmailMatches(intent, data.user.email)
+    ))
+  ) {
+    return buildFailureResponse(request, 'confirmation_failed', recovery);
   }
 
-  response.cookies.set(AUTH_INTENT_COOKIE, intentToken, AUTH_INTENT_COOKIE_OPTIONS);
+  const verifiedIntentToken = recovery
+    ? createAuthIntent({
+      purpose: 'recovery_verified',
+      destination: '/auth/reset-password',
+      email: data.user!.email,
+    })
+    : intentToken;
+  response.cookies.set(AUTH_INTENT_COOKIE, verifiedIntentToken, AUTH_INTENT_COOKIE_OPTIONS);
   response.headers.set('Cache-Control', 'no-store, max-age=0');
   response.headers.set('Referrer-Policy', 'no-referrer');
   return response;

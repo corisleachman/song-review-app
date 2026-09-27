@@ -510,6 +510,11 @@ function LoginContent() {
                     required
                   />
                 </label>
+                {!isSignup && (
+                  <div className={styles.forgotLink}>
+                    <Link href="/forgot-password">Forgot password?</Link>
+                  </div>
+                )}
                 {isSignup && (
                   <>
                     <p id="password-requirements" className={styles.fieldHint}>Use at least 12 characters. Password-manager paste is welcome.</p>

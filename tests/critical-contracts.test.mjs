@@ -1498,7 +1498,7 @@ test('email login and signup stay default-off behind the server readiness bounda
   ], 'check-email feature boundary');
   assertIncludesAll(turnstile, [
     'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit',
-    "action: 'email_login' | 'email_signup' | 'email_resend'",
+    "action: 'email_login' | 'email_signup' | 'email_resend' | 'password_recovery'",
     "'expired-callback': reset",
     "'timeout-callback': reset",
     'window.turnstile.remove(widgetIdRef.current)',
@@ -1509,6 +1509,56 @@ test('email login and signup stay default-off behind the server readiness bounda
     "['frame-src', ...(turnstileSources.length > 0 ? turnstileSources : [\"'none'\"])]",
   ], 'Turnstile CSP boundary');
   assert.doesNotMatch(loginRoute + signupRoute + resendRoute, /error\.message/u);
+});
+
+test('password recovery stays server-gated and requires a verified email-bound session', () => {
+  const request = read('app/api/auth/email/recover/route.ts');
+  const reset = read('app/api/auth/email/reset/route.ts');
+  const confirm = read('app/auth/confirm/route.ts');
+  const continuation = read('app/auth/continue/route.ts');
+  const page = read('app/auth/reset-password/page.tsx');
+  const forgot = read('app/forgot-password/page.tsx');
+
+  assertIncludesAll(request, [
+    'isEmailPasswordAuthReady()',
+    'isSameOriginAuthRequest(request)',
+    'parseEmailResendInput',
+    "purpose: 'recovery'",
+    'supabase.auth.resetPasswordForEmail',
+    'captchaToken: parsed.value.captchaToken',
+  ], 'recovery request boundary');
+  assertIncludesAll(confirm, [
+    'authIntentEmailMatches(intent, data.user.email)',
+    "purpose: 'recovery_verified'",
+    "if (!recovery) continueUrl.searchParams.set('intent', intentToken)",
+  ], 'recovery confirmation exchange');
+  assertIncludesAll(continuation, [
+    "intent?.purpose === 'recovery'",
+    "intent?.purpose === 'recovery_verified' && (queryIntent || !cookieIntent)",
+    "intent?.purpose !== 'recovery_verified'",
+  ], 'recovery-only continuation');
+  assertIncludesAll(page, [
+    'isEmailPasswordAuthReady()',
+    "intent?.purpose === 'recovery_verified'",
+    'getCurrentAuthenticatedUser()',
+    'authIntentEmailMatches(intent, user.email)',
+  ], 'reset-page session check');
+  assertIncludesAll(reset, [
+    'isSameOriginAuthRequest(request)',
+    'parsePasswordResetInput',
+    "intent?.purpose !== 'recovery_verified'",
+    'supabase.auth.getUser()',
+    'authIntentEmailMatches(intent, data.user.email)',
+    'supabase.auth.updateUser',
+    "supabase.auth.signOut({ scope: 'others' })",
+    "response.cookies.set(AUTH_INTENT_COOKIE, '',",
+  ], 'password update boundary');
+  assertIncludesAll(forgot, [
+    "action=\"password_recovery\"",
+    "fetch('/api/auth/email/recover'",
+    'RESEND_COOLDOWN_SECONDS = 60',
+  ], 'recovery request screen');
+  assert.doesNotMatch(request + reset, /error\.message/u);
 });
 
 test('public song reads expose only public songs with finalized audio', () => {

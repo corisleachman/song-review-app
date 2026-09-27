@@ -38,7 +38,7 @@ export type TurnstileWidgetHandle = {
 };
 
 type TurnstileWidgetProps = {
-  action: 'email_login' | 'email_signup' | 'email_resend';
+  action: 'email_login' | 'email_signup' | 'email_resend' | 'password_recovery';
   onError: () => void;
   onTokenChange: (token: string) => void;
   siteKey: string;

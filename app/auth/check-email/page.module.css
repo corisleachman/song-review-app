@@ -64,6 +64,42 @@
   margin-bottom: 18px;
 }
 
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.fieldLabel,
+.securityLabel {
+  color: rgba(244,240,232,0.82);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.fieldInput {
+  width: 100%;
+  min-height: 46px;
+  box-sizing: border-box;
+  margin-bottom: 10px;
+  border: 1px solid rgba(244,240,232,0.36);
+  border-radius: 0;
+  background: rgba(14,10,10,0.72);
+  color: #f4f0e8;
+  font: inherit;
+  font-size: 16px;
+  padding: 10px 12px;
+}
+
+.fieldInput:focus-visible,
+.primaryButton:focus-visible,
+.primaryLink:focus-visible,
+.textLink:focus-visible {
+  outline: 2px solid #f4f0e8;
+  outline-offset: 3px;
+}
+
 .primaryButton,
 .textButton {
   min-height: 46px;
@@ -79,6 +115,39 @@
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.04em;
+}
+
+.primaryLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  margin-top: 24px;
+  background: #cf382b;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+}
+
+.textLink {
+  display: block;
+  margin-top: 22px;
+  color: #f4f0e8;
+  font-size: 13px;
+  text-align: center;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.error {
+  margin: 18px 0 0;
+  padding: 10px 12px;
+  background: rgba(14,10,10,0.9);
+  color: #ff8b8b;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .primaryButton:disabled {

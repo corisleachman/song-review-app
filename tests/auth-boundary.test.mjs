@@ -28,6 +28,7 @@ const {
   parseEmailLoginInput,
   parseEmailResendInput,
   parseEmailSignupInput,
+  parsePasswordResetInput,
 } = emailPasswordModule;
 
 test('auth destinations allow only named Song Room journeys', () => {
@@ -102,6 +103,25 @@ test('sealed auth intents reject tampering, wrong secrets, and expiry', () => {
     null,
   );
   assert.equal(unsealAuthIntent(token, secret, now + AUTH_INTENT_TTL_SECONDS), null);
+});
+
+test('verified recovery intent is distinct from a recovery request', () => {
+  const secret = 'staging-auth-intent-secret-that-is-long-and-random';
+  const now = 2_000_000_000;
+  const request = sealAuthIntent({
+    purpose: 'recovery',
+    destination: { kind: 'recovery', path: '/auth/reset-password' },
+    emailHash: hashAuthIntentEmail('person@example.com'),
+  }, secret, now);
+  const verified = sealAuthIntent({
+    purpose: 'recovery_verified',
+    destination: { kind: 'recovery', path: '/auth/reset-password' },
+    emailHash: hashAuthIntentEmail('person@example.com'),
+  }, secret, now);
+
+  assert.equal(unsealAuthIntent(request, secret, now + 1)?.purpose, 'recovery');
+  assert.equal(unsealAuthIntent(verified, secret, now + 1)?.purpose, 'recovery_verified');
+  assert.equal(authIntentEmailMatches(unsealAuthIntent(verified, secret, now + 1), 'else@example.com'), false);
 });
 
 test('auth intent secrets fail closed when too short', () => {
@@ -192,4 +212,20 @@ test('verification resend validates email without accepting password data', () =
     captchaToken: 'captcha-result',
   });
   assert.equal(parseEmailResendInput({ email: 'invalid' }).ok, false);
+});
+
+test('password reset enforces the signup policy and matching confirmation', () => {
+  assert.deepEqual(parsePasswordResetInput({
+    password: '  long passphrase  ',
+    confirmPassword: '  long passphrase  ',
+  }), { ok: true, value: { password: '  long passphrase  ' } });
+  assert.equal(parsePasswordResetInput({ password: 'short', confirmPassword: 'short' }).ok, false);
+  assert.equal(parsePasswordResetInput({
+    password: 'a useful passphrase',
+    confirmPassword: 'a different passphrase',
+  }).ok, false);
+  assert.equal(parsePasswordResetInput({
+    password: 'x'.repeat(129),
+    confirmPassword: 'x'.repeat(129),
+  }).ok, false);
 });

@@ -273,6 +273,16 @@
   font-size: 12px;
 }
 
+.forgotLink {
+  text-align: right;
+  font-size: 12px;
+}
+
+.forgotLink a {
+  color: #F4F0E8;
+  text-underline-offset: 3px;
+}
+
 .formFooter {
   padding-top: 2px;
   color: rgba(244,240,232,0.42);
