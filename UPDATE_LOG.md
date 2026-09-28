@@ -7480,3 +7480,27 @@ Add an Account security Settings section, a conditional reauthentication-code re
 - The update asks Supabase to sign out other sessions and returns a warning state if that call fails. Supabase documents that existing access JWTs can remain valid until expiry after refresh-token revocation; two-browser staging behavior is not yet proven.
 - Local TypeScript, focused ESLint, and all 87 repository tests passed. The optimized build passed with synthetic, non-production Supabase variables and the pre-existing lint warnings. Local default-off probes returned `enabled:false`, `passwordManagementEnabled:false`, and 404 for both new endpoints. After adding the route to the return-target allowlist, a local signed-out visit redirected to `/login?redirectTo=%2Fsettings%2Fsecurity`. No hosted setting, identity, mail, commit, PR, Preview, or Production deployment changed.
 - Supabase's Auth implementation skips nonce validation for sessions created in the last 24 hours. The UI now asks for an emailed code only when `updateUser` reports `reauthentication_needed`; this corrects the initial unconditional-code candidate. Before an approved Preview test, review the staging reauthentication and Password changed notification templates, then enable staging Secure password change and the Password changed notification. Keep the new flag off until those hosted gates are verified, then test recent and older sessions, notification delivery, Google Add password, password-account Change password, unchanged account/workspace IDs, and other-session behavior. The separate PR #55 documentation conflict also remains open.
+
+---
+
+## 2026-09-28 - Push and verify the default-off Account security Preview
+
+### What we were trying to achieve
+
+Place the candidate in draft PR #55 while proving that it cannot be used before an intentional staging rollout.
+
+### Feature / change being made
+
+Committed the Account security code and staged verification notes, then checked the new protected Preview without changing a hosted feature flag or Auth setting.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Verification and open risk
+
+- Commit `3616b40e` was pushed to draft PR #55. All 87 repository tests, TypeScript, and focused ESLint passed. Both Vercel project checks and Preview Comments passed. Primary Preview `dpl_9wyjQmNGRoPStyj7AGEdz3xAKSSF` is Ready from that commit at the stable branch alias.
+- Authorized `/api/auth/email/config` returned `{"enabled":true,"passwordManagementEnabled":false}`. Both new POST routes returned 404. In an authenticated Chrome session, Settings contained no Account security link, and the direct `/settings/security` page showed 404. Browser console errors, deployment-scoped runtime errors, and 5xx logs were absent in the checked window.
+- The feature is code-complete but not activated. No password or one-time code was entered, no email was sent, and no Supabase, Vercel variable, or Production configuration was changed. Before staging activation, review the reauthentication and Password changed templates, then obtain separate approval for hosted switches and the branch-only flag. PR #55 remains draft and has its pre-existing documentation-only `UPDATE_LOG.md` merge conflict.
