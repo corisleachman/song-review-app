@@ -28,6 +28,10 @@ type ResetInput = {
   password: string;
 };
 
+type ManagedPasswordInput = ResetInput & {
+  nonce?: string;
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
@@ -126,6 +130,16 @@ export function parsePasswordResetInput(input: unknown): AuthInputResult<ResetIn
     return { ok: false, error: 'The passwords don’t match.', field: 'password' };
   }
   return { ok: true, value: { password: input.password } };
+}
+
+export function parseManagedPasswordInput(input: unknown): AuthInputResult<ManagedPasswordInput> {
+  const parsed = parsePasswordResetInput(input);
+  if (parsed.ok === false) return parsed;
+  if (!isRecord(input) || input.nonce === undefined || input.nonce === '') return parsed;
+  if (typeof input.nonce !== 'string' || !/^[a-zA-Z0-9]{1,64}$/.test(input.nonce.trim())) {
+    return { ok: false, error: 'Enter the verification code from your email.' };
+  }
+  return { ok: true, value: { ...parsed.value, nonce: input.nonce.trim() } };
 }
 
 export function parseEmailSignupInput(input: unknown): AuthInputResult<SignupInput> {

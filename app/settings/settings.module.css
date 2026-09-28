@@ -217,6 +217,31 @@
   line-height: 1.5;
 }
 
+.securityForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.securityForm label {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.securityForm .textInput {
+  flex: none;
+  width: 100%;
+  min-height: 44px;
+}
+
+.securityHint {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .blockNotice {
   font-size: 13px;
   color: #6ee7b7;

@@ -6933,6 +6933,330 @@ Hosted staging configuration for Slice 2B of the email/password journey.
 ### Rollback
 
 Disable CAPTCHA in staging Supabase and delete the staging-only Cloudflare widget if this hosted integration must be abandoned before password users exist. Production needs no rollback.
+
+---
+
+## 2026-09-25 - Check staging Auth sender readiness
+
+### What we were trying to achieve
+
+Identify the next safe staging email-delivery step before enabling the password journey.
+
+### Feature / change being made
+
+Documentation-only sender and DNS preflight for PR #55.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Change and verification
+
+- Confirmed Resend lists `song-room.live` as verified, sending enabled, and its DKIM and SPF records as verified. Resend offers tracking setup rather than showing it enabled.
+- Confirmed public DNS returns two conflicting DMARC TXT records at `_dmarc.song-room.live` through multiple resolvers. The user confirmed 123 Reg is the registrar and signed in; its authoritative DNS zone contains those exact two records. This must be corrected before Auth delivery testing. Resend recommends `p=none` until all legitimate senders pass DMARC, then tightening the policy.
+- Identified a dedicated Resend sending-access key as the narrow credential to use for staging Supabase SMTP. No key was created, read, copied, or transmitted.
+- The user restored the staging Supabase session. Project `ivifkrtupqizyqqsxdty` confirms custom SMTP is off. Its setup form was inspected, then cancelled without saving. No DNS, email, user, Vercel, Supabase, or Production setting changed.
+
+### Rollback
+
+Documentation-only. Revert this entry and its companion notes if the observations are superseded; no service rollback is needed.
+
+---
+
+## 2026-09-25 - Configure staging Auth SMTP and repair duplicate DMARC
+
+### What we were trying to achieve
+
+Give staging Supabase Auth a verified sender for the password journey while keeping the app's Email entry and Production off.
+
+### Feature / change being made
+
+Hosted sender configuration for draft PR #55, plus an exact 123 Reg DNS correction.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Change and verification
+
+- In the authoritative 123 Reg zone, removed only the `_dmarc` TXT record containing `p=quarantine; adkim=r; aspf=r; rua=mailto:dmarc_rua@onsecureserver.net;`. Retained `v=DMARC1; p=none;`. 123 Reg reported successful deletion and showed one remaining DMARC record. Both authoritative nameservers and a public resolver subsequently returned only the retained policy.
+- Created a Resend key named `Song Room staging Supabase Auth SMTP` with Sending access restricted to `song-room.live`. The key value was entered directly into staging Supabase Auth project `ivifkrtupqizyqqsxdty` and was not placed in the repository, Vercel, or this log.
+- Enabled custom SMTP in staging with sender `noreply@song-room.live`, name `Song Room`, host `smtp.resend.com`, port `465`, username `resend`, and a 60-second minimum interval per user. Supabase showed `Successfully updated settings`; the enabled switch, host, port, and stored-password indicator persisted after reload. Resend showed the new key's sending-only, domain-restricted scope.
+- No Auth message was sent, so inbox delivery, DKIM/SPF/DMARC header results, and bounce handling remain unverified. No template, user, application feature flag, Vercel variable, Production service, or app code changed.
+
+### Rollback
+
+If staging SMTP must be disabled, turn off custom SMTP in staging Supabase, then revoke this dedicated Resend key after confirming no staging password users rely on mail recovery. Do not re-add a second DMARC TXT record: if a stricter policy is later warranted, replace the single `p=none` record after validating all senders.
+
+---
+
+## 2026-09-25 - Capture staging Auth templates and redirect baseline
+
+### What we were trying to achieve
+
+Preserve staging's current email-template and redirect settings before changing the signup confirmation journey in PR #55.
+
+### Feature / change being made
+
+Read-only hosted Auth review and local recovery documentation for the Email/password rollout.
+
+### Files changed
+
+- `STAGING_AUTH_TEMPLATE_BASELINE.md`
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Change and verification
+
+- Captured the dashboard-visible subjects and Source bodies for all six staging Auth templates. Also captured all seven security notification templates and verified their switches were off. Some dashboard subject inputs expose an empty raw value while displaying a default subject, so the baseline records the displayed value and does not claim to be a raw Management API export.
+- Recorded the current staging Site URL and eight redirect allowlist entries without changing them. The Site URL is an older Preview. The wildcard appears to cover the current PR Preview, but that remains unproven until a live Auth email is tested.
+- Compared the stock Confirm signup link `{{ .ConfirmationURL }}` with PR #55's `/auth/confirm?intent=...` route, which needs `token_hash` and `type`. The hosted template must be changed before enabling Email in Preview.
+- The latest observed PR #55 Preview was `dpl_6cfGzJb6c8oZh5kftFdDCdejNyFP` at commit `8fa4557d`. No template, Site URL, redirect, user, flag, Production setting, or application code was changed.
+
+### Rollback
+
+Documentation-only. No hosted rollback is needed. Keep the captured baseline when making any later staging template or URL change so exact prior values remain available.
+
+---
+
+## 2026-09-25 - Apply approved staging signup template and Site URL
+
+### What we were trying to achieve
+
+Make staging Auth's signup email compatible with PR #55's confirmation route and give Auth a stable default staging destination.
+
+### Feature / change being made
+
+Two approved hosted settings in staging Supabase project `ivifkrtupqizyqqsxdty`. Email entry remains default-off in the app.
+
+### Files changed
+
+- `STAGING_AUTH_TEMPLATE_BASELINE.md`
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Change and verification
+
+- Kept the existing Confirm signup subject and visible copy. Replaced only its link target, from `{{ .ConfirmationURL }}` to `{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=signup`. Supabase reported `Successfully updated email template`; the exact Source body persisted after reload.
+- Changed staging Site URL from the older Preview recorded in `STAGING_AUTH_TEMPLATE_BASELINE.md` to `https://song-review-app-v2-git-codex-ema-c75749-corisleachmans-projects.vercel.app`. Vercel lists that alias on ready PR #55 deployment `dpl_6cfGzJb6c8oZh5kftFdDCdejNyFP`. Supabase reported `Successfully updated site URL`; the new value persisted after reload.
+- Confirmed the eight redirect allowlist entries remained unchanged. A protected fetch of the PR branch alias `/api/auth/email/config` returned `200` with `{"enabled":false}` after the hosted changes. No Auth email, user, application flag, Vercel variable, or Production setting was changed. Live delivery, confirmation, and Google callback behavior remain to be tested.
+
+### Rollback
+
+In staging Supabase, restore the prior Confirm signup source and Site URL from `STAGING_AUTH_TEMPLATE_BASELINE.md`. No database migration or application rollback is involved. Keep Email hidden while reverting; Production requires no rollback.
+
+---
+
+## 2026-09-25 - Review staging Auth password policy and rate limits
+
+### What we were trying to achieve
+
+Identify the remaining hosted password and abuse-protection gates before testing PR #55's Email journey.
+
+### Feature / change being made
+
+Read-only staging Auth review and rollout/backlog documentation. No hosted setting or app code was changed.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Change and verification
+
+- Staging Supabase Auth shows a 6-character minimum with no composition rule; leaked-password protection, secure password change, and require-current-password are off. Signup confirmation remains on. PR #55's new input requires 12 to 128 characters, while the dormant reset page still checks and advertises 8 characters.
+- Rate Limits shows 30 Auth emails per hour project-wide, 30 signup/sign-in and 30 OTP/magic-link verification requests per five minutes per IP, and 150 refreshes per five minutes per IP. IP forwarding is off. Staging SMTP retains its 60-second per-user interval. Save controls remained disabled; no hosted change was made.
+- The new server routes use the Supabase public anon key and have no independent per-client-IP throttle. Effective hosted rate limiting through Vercel remains unverified; do not change rate limits or enable secret-key IP forwarding based on an assumption.
+- The next proposed hosted action is an approved staging-only increase to a 12-character minimum and, if available, leaked-password protection. Leave the other password-change switches off until recovery, change-password, and reauthentication are complete. Production Email stays disabled and PR #55 stays draft.
+
+### Rollback
+
+Documentation-only. No hosted or application rollback is required for this review.
+
+---
+
+## 2026-09-25 - Align staging Auth password policy
+
+### What we were trying to achieve
+
+Make staging's hosted password rules match PR #55's 12-character signup requirement before any Email account is created.
+
+### Feature / change being made
+
+Two user-approved staging Supabase Auth settings: a 12-character minimum and leaked-password protection.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Change and verification
+
+- In staging project `ivifkrtupqizyqqsxdty`, raised the Email provider's minimum password length from 6 to 12 and enabled `Prevent use of leaked passwords`. Supabase reported `Successfully updated settings`.
+- Reloaded the dashboard and reopened Email. The minimum remained 12, leaked-password protection remained on, and Save was disabled. Email, Google, signup confirmation, secure email change, the composition rule, OTP settings, secure password change, and require-current-password retained their prior states.
+- No Auth email or account was created. No rate limit, user, Vercel variable, application flag, Production setting, or app code changed. PR #55 remains draft and Email remains hidden in its Preview.
+
+### Rollback
+
+Before staging password identities exist, the two settings can be restored in staging Auth > Sign In / Providers > Email to the captured baseline of minimum 6 and leaked-password protection off. Once identities exist, assess their recovery path first; do not casually weaken the policy. Production requires no rollback.
+
+---
+
+## 2026-09-25 - Review PR #55 controlled Preview test gates
+
+### What we were trying to achieve
+
+Determine the safe order for testing the staged Email journey without exposing it in Production or creating an account prematurely.
+
+### Feature / change being made
+
+Read-only PR, deployment, environment-scope, and code review; local rollout documentation only.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Change and verification
+
+- PR #55 remains open and draft against `clone-clean` at `8fa4557d`, mergeable, with four successful checks. Vercel deployment `dpl_6cfGzJb6c8oZh5kftFdDCdejNyFP` remains Ready with the stable branch alias.
+- Vercel's variable-name listing shows only the public Turnstile key scoped to `codex/email-password-staging-forms` Preview. Neither `AUTH_INTENT_SECRET` nor `EMAIL_PASSWORD_AUTH_ENABLED` is present in Preview; none of the three is present in Production. Values were not read or exported.
+- An unauthenticated protected-Preview fetch of `/api/auth/email/config` returned a Vercel SSO `302`, not an application response. The earlier authorized default-off check remains the last application-level evidence. The next live test needs an authorized Preview session.
+- Inspected the signup, login, confirmation, continuation, and feature-gate code. The gate needs the exact flag, a server-only intent secret of at least 32 characters, and the public Turnstile key. Targeted auth-boundary and contract tests passed: 56/56. No application code, hosted setting, user, flag, secret, or deployment was changed.
+- Documented a two-deployment activation: add a fresh branch-only intent secret and verify default-off again, then add the branch-only flag and verify the enabled UI before a separately approved test signup. The dormant reset page remains out of scope for the narrow test and a blocker for public Email rollout.
+
+### Rollback
+
+Documentation-only for this review. If a later Preview Email test fails, remove or disable the branch-scoped flag and redeploy; keep staging Auth and mail services available for any password identities already created. Production remains unchanged.
+
+---
+
+## 2026-09-25 - Verify PR #55 default-off Preview and Google return
+
+### What we were trying to achieve
+
+Confirm the current protected Preview still exposes only Google and preserves the intended destination before adding any Email configuration.
+
+### Feature / change being made
+
+Read-only live Preview verification and documentation of the remaining staging gate.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Change and verification
+
+- After the user signed in to Vercel, an authorized `vercel curl` request to primary deployment `dpl_6cfGzJb6c8oZh5kftFdDCdejNyFP` returned `{"enabled":false}` from `/api/auth/email/config`. An earlier unauthenticated request had returned Vercel SSO `302`; that was not an application error.
+- The protected Preview Login rendered one Google option and no Email fields. A signed-out Dashboard request redirected to `/login?redirectTo=%2Fdashboard`. Clicking Google returned to `/dashboard` in the existing Coris workspace, which loaded four songs. No new test identity was deliberately created.
+- The deployment's recent Preview runtime logs contained no error, fatal, or 5xx entries around the check. No hosted setting, application flag, secret, account, deployment, or app code was changed.
+- While reading Vercel environment-variable names, the dashboard flagged Production `SUPABASE_SERVICE_ROLE_KEY` and shared `RESEND_API_KEY` as Config variables needing attention. Values were not revealed. Their classification and rotation implications are a separate security-hardening follow-up, not an Email-test gate change.
+- The next gate remains a read-only confirmation that Auth-mail click tracking is off and that a designated test mailbox can use the protected Preview. Only then should a branch-only intent secret and later the Email flag be requested for approval.
+- A Resend dashboard check could not proceed because the authorized browser was signed out of Resend. No mail was sent and no Resend setting was changed; click tracking remains unverified.
+
+### Rollback
+
+Documentation-only. The live checks made no configuration or application change. Production remains unchanged.
+
+---
+
+## 2026-09-25 - Verify Resend tracking and staging Auth delivery visibility
+
+### What we were trying to achieve
+
+Close the read-only sender preflight before an approved staging Email journey test.
+
+### Feature / change being made
+
+Inspect the verified `song-room.live` Resend domain and the dedicated staging Supabase Auth sending-key view without sending mail or changing settings.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Change and verification
+
+- Resend showed `song-room.live` Verified in `eu-west-1`. Its Configuration page offered tracking setup, leading to a **New tracking subdomain** form rather than an existing tracking configuration. The checked click-tracking option on that unsaved form is only its creation default. Resend documents both click and open tracking as off by default. No option was saved.
+- The Emails > Sending list can filter to `Song Room staging Supabase Auth SMTP` and exposes Bounced, Delivery delayed, Failed, Delivered, and Suppressed statuses. With that key and the default Last 15 days window, it showed **No results found**. No staging Auth email has been verified, so mailbox receipt, authentication headers, and confirmation-link integrity remain open.
+- No email, user, DNS record, Resend setting, Supabase setting, Vercel variable, application code, PR, or Production service changed.
+
+### Rollback
+
+Documentation-only. No hosted or application state was changed.
+
+---
+
+## 2026-09-26 - Add branch-only Preview auth-intent secret and recheck default-off gate
+
+### What we were trying to achieve
+
+Prepare PR #55's controlled staging Email test without exposing signup or changing Production.
+
+### Feature / change being made
+
+Add the server-only auth-intent secret only to the named Vercel Preview branch, rebuild the existing commit, and verify Email remains off.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Change and verification
+
+- Confirmed local branch `codex/email-password-staging-forms`, PR #55 base `clone-clean`, head `8fa4557d`, draft status, four successful checks, and primary Vercel project `song-review-app-v2`. The branch's Preview variables initially listed only the public Turnstile key.
+- Generated a new 64-character random `AUTH_INTENT_SECRET` and sent it directly through Vercel CLI stdin as a sensitive variable for Preview branch `codex/email-password-staging-forms` only. The value was not printed, saved locally, or committed. A read-only listing confirmed its encrypted value and exact branch scope. `EMAIL_PASSWORD_AUTH_ENABLED` remains absent; Production lists none of the three Email rollout variables.
+- Redeployed prior Preview `dpl_6cfGzJb6c8oZh5kftFdDCdejNyFP` as Preview `dpl_BknpVEitWoPL53PcMs91YyWaNZxQ` without using local dirty files. The new deployment is Ready, and its stable branch alias resolves to it.
+- An authorized config request on the new deployment returned `{"enabled":false}`. The branch-alias Login displayed only Continue with Google. A cookie-free Dashboard request returned `307` to `/login?redirectTo=%2Fdashboard`; an existing browser session loaded the Coris workspace with four songs. OAuth itself was not repeated. New-deployment runtime searches found no error, fatal, or 5xx events.
+- Vercel CLI linkage created a local `.vercel` directory; its automatic tracked `.gitignore` addition was removed, and `.vercel/` is ignored through local Git exclude. No app code, account, Auth email, Supabase setting, feature flag, PR commit, or Production service changed.
+
+### Rollback
+
+Remove only the branch-scoped `AUTH_INTENT_SECRET` from Vercel Preview and redeploy the same branch. Email is already off because the branch-scoped feature flag is absent. Do not alter Production.
+
+---
+
+## 2026-09-26 - Enable branch-only Email UI on protected PR #55 Preview
+
+### What we were trying to achieve
+
+Expose the new Email login UI only on the staging Preview and verify it before any account or mail test.
+
+### Feature / change being made
+
+Set the exact-true Email feature flag on PR #55's Preview branch and rebuild the existing deployment.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Change and verification
+
+- Confirmed PR #55 was still draft against `clone-clean` at `8fa4557d`, with the prior Preview Ready. Vercel listed `AUTH_INTENT_SECRET` and `NEXT_PUBLIC_TURNSTILE_SITE_KEY` on `codex/email-password-staging-forms` Preview before the change.
+- With the user's approval, added `EMAIL_PASSWORD_AUTH_ENABLED=true` only to that branch in primary Vercel project `song-review-app-v2`. Its read-only variable listing now shows all three rollout variables under that exact Preview branch; Production lists none. No secret value was opened.
+- Redeployed the same PR commit as Preview `dpl_5XtatCMZYYbdtoPFo7MSRfe4EeBB`, Ready at `https://song-review-app-v2-k05bqeqmh-corisleachmans-projects.vercel.app`; the stable branch alias points to it. An unauthorized request to the branch alias still returned `302`, showing Vercel protection remains in place.
+- The authorized `/api/auth/email/config` request returned `200` and `{"enabled":true}`. In the authorized browser, Login showed Email and Password, Cloudflare security check with Success, Log in, and Continue with Google. No credentials were entered or form submitted. The Create account link redirected this already signed-in session to its existing Dashboard; a cookie-free `/signup/free` returned `200`, so signed-out signup rendering remains unverified.
+- A cookie-free Dashboard request returned `307` to `/login?redirectTo=%2Fdashboard`; deployment-scoped error and 5xx log searches found no entries. Google OAuth was not repeated. No Auth email, user, Supabase setting, application code, PR commit, or Production service changed.
+
+### Rollback
+
+Remove or set `EMAIL_PASSWORD_AUTH_ENABLED=false` only on the PR's Vercel Preview branch and redeploy. Keep the staging intent secret, SMTP, Turnstile, and Email provider configured if a later test creates password identities. Production needs no rollback.
+
 ---
 
 ## 2026-09-26 - Put Google and Email choices before the staged signup form
@@ -6959,8 +7283,200 @@ The account-entry UI now starts with one Google button for both new and returnin
 - The enabled Preview's two initial choices are **Log in or sign up with Google** and **Log in and sign up with email**. The supplied phone mockup guides their lower-page position over the photo, left-aligned copy, outlined Google style, and red Email style. Mobile allows the expanded form to scroll; the Google-only, default-off path keeps its prior button copy.
 - The Google OAuth handler and plan-aware destination were not changed. Switching between Email signup and login keeps the Email form open through an explicit query parameter.
 - TypeScript, focused ESLint, 82 contract tests, and the public-page browser suite passed. The browser suite had 16 applicable passes and 8 expected skips; the new phone test checked both choices in view, the initially absent fields and security widget, reveal, scrolling to submit, and collapse.
-- This change targets draft PR #55 and its protected Preview only. Hosted Auth settings and Production are unchanged. The real iPhone and hosted Turnstile check still need a fresh Preview.
+- Focused commit `c489353e` is pushed to draft PR #55. Primary protected Preview `dpl_2b9hadtZ8PADRmb7xtqfZuZC4mEJ` is Ready. Hosted phone-width inspection confirmed both choices before the form, no initial Turnstile, then the form and hosted security check after choosing Email. Closing Email removed them. Both Vercel checks and a manually dispatched browser-accessibility workflow passed. Deployment error and 5xx searches were clean. One CSP report came from Vercel's Preview Toolbar, not application code. No form was submitted or account created; a real-phone check remains. Hosted Auth settings and Production are unchanged.
+- PR #55 has a documentation-only merge conflict in `UPDATE_LOG.md` against the advancing `clone-clean` branch. Resolve it separately, preserving these uncommitted notes, before considering merge.
+- The user confirmed the new two-choice signup entry screen on a real phone. A read-only staging Auth preflight found no existing user for the designated test mailbox. No account was submitted, no Auth email was sent, and no hosted configuration changed during this follow-up.
 
 ### Rollback
 
 Revert the focused entry-screen commit or set the branch-only Email flag false and redeploy while investigating. Preserve the other local documentation edits. Production needs no change.
+
+---
+
+## 2026-09-27 - Verify the first staging Email signup and delivery
+
+### What we were trying to achieve
+
+Check the complete first Free signup path behind PR #55 without enabling Production Email or opening a payment flow.
+
+### Feature / change being made
+
+Recorded the controlled staging Auth, Resend, and account-bootstrap result. No app code or hosted configuration changed.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `UPDATE_LOG.md`
+
+### Verification and open risk
+
+- The user saw **Check your email** after submitting the designated test signup. Staging Auth recorded one user at 15:19:12 UTC and confirmation at 15:19:34 UTC. One profile, one Free workspace, and one owner membership followed, with no Stripe customer or subscription ID and no referral row.
+- Resend marked one **Confirm Your Signup** message Sent and Delivered. Its link used the stable protected staging `/auth/confirm` route with the expected parameter names; no token value was recorded. Resend recognized the DMARC record. Its link-domain and no-reply recommendations remain before public Email rollout.
+- The user confirmed that the first email-link click on desktop opened the empty Free workspace with the first-song prompt. A second click of the same link on mobile returned to generic Login; email/password login then opened the same empty dashboard. A fresh read-only staging query found exactly one Auth user, profile, owner membership, and workspace. The later sign-in was recorded at 15:28:46 UTC.
+- Code inspection found that a rejected confirmation token redirects with `auth=confirmation_failed`, but Login does not show that reason. A one-time link reused across devices fits the observed sequence, though the exact provider error was not captured. The used-or-expired-link explanation and recovery path remain staging UX follow-ups. Primary Preview `dpl_2b9hadtZ8PADRmb7xtqfZuZC4mEJ` had no error or 5xx event in the checked earlier window. PR #55 stays draft with its documentation-only merge conflict, and Production remains Google-only.
+
+---
+
+## 2026-09-27 - Explain an invalid or reused Email confirmation link
+
+### What we were trying to achieve
+
+Make the second-click Login landing understandable without changing account verification or the default-off Production experience.
+
+### Feature / change being made
+
+Show a short, actionable message for the existing failed confirmation-link reasons when Email authentication is enabled.
+
+### Files changed
+
+- `app/login/page.tsx`
+- `app/login/page.module.css`
+- `tests/browser/public-accessibility.spec.mjs`
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Verification and open risk
+
+- The explanation and Email choice contrast fix were committed as `da94f1de`. A desktop visual check found the red warning faint over the photograph, so `5ac85eb7` added a dark backing and extended the browser regression to desktop as well as mobile. Both commits are pushed to draft PR #55. TypeScript, focused ESLint, all 82 repository tests, and the final public browser run passed (18 applicable passes, 8 expected skips). A prior four-worker run had one homepage navigation timeout that passed alone and in the two-worker rerun.
+- Primary protected Preview `dpl_8HAb1BuCyZiFPJcRnzKhZgNQVMp6` is Ready, with both Vercel checks and Preview Comments passing. Authorized `/api/auth/email/config` returned `{"enabled":true}`. Protected-browser checks showed the warning on synthetic `confirmation_failed` and `invalid_confirmation` URLs, no warning on ordinary Login, both Google and Email choices, and readable desktop contrast. No real one-time token was reused. Browser console errors, deployment error logs, and 5xx searches were empty. The only CSP report was for Vercel's Preview Toolbar script.
+- No Supabase setting, email template, token-verification behavior, account, or Production service changed. PR #55 remains draft and has a documentation-only `UPDATE_LOG.md` merge conflict. A physical-phone recheck, the forgot/reset-password journey, and a cross-device resend path remain open. These documentation edits are still local and uncommitted.
+
+---
+
+## 2026-09-28 - Add the Email password-recovery journey to draft PR #55
+
+### What we were trying to achieve
+
+Let an Email user request a reset link, verify it, and set a new password without exposing an account-existence signal or accepting an unverified recovery intent.
+
+### Feature / change being made
+
+Added a feature-gated Forgot password page and server request route, verified-token handling, a session-bound reset page and POST route, and consistent 12-to-128-character password validation.
+
+### Files changed
+
+- `app/login/page.tsx`, `app/login/page.module.css`
+- `app/forgot-password/layout.tsx`, `app/forgot-password/page.tsx`
+- `app/auth/confirm/route.ts`, `app/auth/continue/route.ts`
+- `app/auth/reset-password/page.tsx`, `app/auth/reset-password/ResetPasswordForm.tsx`
+- `app/auth/check-email/page.module.css`
+- `app/api/auth/email/recover/route.ts`, `app/api/auth/email/reset/route.ts`
+- `components/TurnstileWidget.tsx`, `lib/authIntentCore.ts`, `lib/emailPasswordAuthCore.ts`, `middleware.ts`
+- `tests/auth-boundary.test.mjs`, `tests/critical-contracts.test.mjs`, `tests/browser/password-recovery.spec.mjs`
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`, `PRODUCT_BACKLOG.md`, `UPDATE_LOG.md`
+
+### Verification and rollout status
+
+- Focused TypeScript and ESLint checks passed. All 85 repository tests and the optimized Next.js build passed, with the build's existing lint warnings. The default-off public browser suite passed 20 applicable checks with 10 expected skips; the enabled recovery form and neutral result passed separately with a mocked CAPTCHA and request endpoint at desktop and phone widths. Local route probes returned 403 for a cross-origin request, a CAPTCHA error for a same-origin request without a token, 401 for a reset without a verified cookie, and a 303 invalid-link redirect for a malformed recovery URL.
+- A local browser surfaced an existing root-layout script-placement hydration warning on the recovery route. It was outside this focused slice. On the hosted stable staging alias, the recovery page rendered with a successful Turnstile check; Return to Login opened the expanded Email form with a Forgot password link. No application browser-console error was observed. Cloudflare emitted internal `%c%d ... NaN` console messages while its widget succeeded. The one-off deployment URL, unlike the configured stable alias, showed Turnstile error `110200` because its hostname is not authorized.
+- Focused code commit `ffb7fb2d` is pushed to draft PR #55. Primary protected Preview `dpl_9bbBYhTZu2P1z1eysELMqyyGSbbQ` is Ready, its stable alias resolves to that deployment, and both Vercel deployment checks plus Preview Comments passed. Authorized requests returned `enabled:true`, the recovery page, the invalid-link explanation, and a 401-equivalent reset rejection without a verified cookie. Signed-out Dashboard kept its Login redirect. Deployment runtime logs had no application error or 5xx in the inspected window; one CSP report blocked Vercel's Preview Toolbar script, not Song Room code.
+- The staging Reset password email template still uses its old link contract, so no real recovery mail or password change was attempted. No Supabase, Resend, or Production setting changed. PR #55 remains draft and has a pre-existing documentation-only merge conflict.
+
+### Rollout and rollback
+
+The code is pushed and the protected Preview checks have passed. The staging Reset password template change is recorded in the next entry; a controlled recovery test still needs separate approval. If Preview behavior regresses, keep Email hidden with the branch-only feature flag and revert `ffb7fb2d`. If a template test fails, restore its captured original source. Production remains Google-only.
+
+---
+
+## 2026-09-28 - Configure the staging Reset password email link
+
+### What we were trying to achieve
+
+Make staging recovery emails enter the verified `/auth/confirm` route introduced by PR #55, without changing the subject or visible email copy.
+
+### Feature / change being made
+
+Changed only the staging Supabase Auth Reset password template link target to `{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=recovery`.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Verification and open risk
+
+- Confirmed project `ivifkrtupqizyqqsxdty` was the persistent code-review-staging project. Before editing, the Reset password subject and complete source matched `STAGING_AUTH_TEMPLATE_BASELINE.md`. The subject remained `Reset Your Password` and the heading, sentence, and link text were not changed.
+- Saved the exact new source in Supabase. A full dashboard reload showed the new link and a disabled Save button. No other template, Auth setting, Vercel variable, account, or Production service changed. No recovery email was sent, so the rendered link and end-to-end reset remain unverified.
+
+### Rollout and rollback
+
+The staging template is now ready for one separately approved recovery test on the stable protected PR #55 Preview. Stop if the message lands on the wrong host, the link omits `token_hash` or `type=recovery`, verification fails, account identity changes, or the new password cannot be used. Restore only the prior Reset password link from `STAGING_AUTH_TEMPLATE_BASELINE.md` if the template contract must be rolled back. Keep the branch-only Email flag available while the staging password user needs access; Production is unchanged.
+
+---
+
+## 2026-09-28 - Verify one staging password-recovery email
+
+### What we were trying to achieve
+
+Confirm that the protected Preview can request a reset email and that staging Supabase renders a usable-looking recovery destination without consuming the one-time link or changing the account password.
+
+### Feature / change being made
+
+Controlled staging recovery-mail verification and documentation. No app code or hosted configuration changed.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Verification and open risk
+
+- Submitted one request for the designated staging test address on the stable protected PR #55 Preview. Turnstile completed automatically; the form displayed its neutral result and resend cooldown. The deployment logged the `/api/auth/email/recover` request without a provider warning in the filtered check.
+- Resend record `01a0e971-956c-7c01-ac53-6a52c8710aea` shows a **Reset Your Password** message from `noreply@song-room.live` to the test address, marked **Sent** and **Delivered** at 20:15 UK time. Delivery to the user's inbox has not been independently confirmed.
+- The rendered email link uses the stable protected Preview hostname and `/auth/confirm` path, with `intent`, `token_hash`, and `type=recovery`. No token value was recorded and the link was not opened. The live confirmation redirect, password change, sign-out/re-entry, and other-session behavior remain unverified and must be completed by the user without sharing a password or raw link.
+- PR #55 stays draft with its existing documentation-only merge conflict. Production remains Google-only. If the live link or reset fails, stop the rollout and inspect the visible error and relevant logs before resending or changing configuration.
+
+---
+
+## 2026-09-28 - Record the user-completed staging password reset
+
+### What we were trying to achieve
+
+Close the controlled password-recovery test after the user completed its credential steps, while keeping unverified session behavior and public rollout separate.
+
+### Feature / change being made
+
+Document the user's successful reset-link, password-change, and sign-out/re-entry report, plus a read-only staging Auth sign-in check.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Verification and open risk
+
+- The user reported that all three requested live checks passed. The agent did not see or enter a password or click the one-time link.
+- Staging Supabase Auth shows exactly one user for the designated test address and a new `last_sign_in_at` at 20:19:26 UTC, after Resend marked the reset email Delivered at 20:15 UK time. This supports re-entry but does not independently verify the reset screen, password update, or other-session revocation.
+- PR #55 remains draft with its existing documentation-only `UPDATE_LOG.md` merge conflict. Production Email remains disabled. Broader referral, invite, existing-Google-account, paid-tier, cross-device resend, browser, and session checks remain open before public rollout.
+
+---
+
+## 2026-09-28 - Build a default-off signed-in password-management candidate
+
+### What we were trying to achieve
+
+Give an authenticated user a safe way to add or change a password without silently weakening the Google-only Production boundary or relying on the recovery link for routine account settings.
+
+### Feature / change being made
+
+Add an Account security Settings section, a conditional reauthentication-code request endpoint, a password update endpoint, bounded validation, and a separate default-off rollout flag.
+
+### Files changed
+
+- `lib/authFeatureFlags.ts`, `lib/authDestination.ts`, `lib/emailPasswordAuthCore.ts`
+- `app/api/auth/email/config/route.ts`
+- `app/api/auth/email/manage/request/route.ts`, `app/api/auth/email/manage/update/route.ts`
+- `app/settings/layout.tsx`, `app/settings/security/page.tsx`, `app/settings/security/PasswordManagementForm.tsx`, `app/settings/settings.module.css`
+- `tests/auth-boundary.test.mjs`, `tests/critical-contracts.test.mjs`
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`, `PRODUCT_BACKLOG.md`, `UPDATE_LOG.md`
+
+### Verification and open risk
+
+- The new flag is absent in every hosted environment and evaluates false by default. The page and both mutation endpoints require it plus the existing Email readiness gate. Each POST also requires same origin and a validated Supabase user. Only Supabase's reauthentication code is sent with `updateUser`; no password or code is logged.
+- The update asks Supabase to sign out other sessions and returns a warning state if that call fails. Supabase documents that existing access JWTs can remain valid until expiry after refresh-token revocation; two-browser staging behavior is not yet proven.
+- Local TypeScript, focused ESLint, and all 87 repository tests passed. The optimized build passed with synthetic, non-production Supabase variables and the pre-existing lint warnings. Local default-off probes returned `enabled:false`, `passwordManagementEnabled:false`, and 404 for both new endpoints. After adding the route to the return-target allowlist, a local signed-out visit redirected to `/login?redirectTo=%2Fsettings%2Fsecurity`. No hosted setting, identity, mail, commit, PR, Preview, or Production deployment changed.
+- Supabase's Auth implementation skips nonce validation for sessions created in the last 24 hours. The UI now asks for an emailed code only when `updateUser` reports `reauthentication_needed`; this corrects the initial unconditional-code candidate. Before an approved Preview test, review the staging reauthentication and Password changed notification templates, then enable staging Secure password change and the Password changed notification. Keep the new flag off until those hosted gates are verified, then test recent and older sessions, notification delivery, Google Add password, password-account Change password, unchanged account/workspace IDs, and other-session behavior. The separate PR #55 documentation conflict also remains open.

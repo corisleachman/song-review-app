@@ -28,12 +28,14 @@ const {
   parseEmailLoginInput,
   parseEmailResendInput,
   parseEmailSignupInput,
+  parseManagedPasswordInput,
   parsePasswordResetInput,
 } = emailPasswordModule;
 
 test('auth destinations allow only named Song Room journeys', () => {
   assert.equal(normalizeAuthDestination('/dashboard'), '/dashboard');
   assert.equal(normalizeAuthDestination('/settings/referrals'), '/settings/referrals');
+  assert.equal(normalizeAuthDestination('/settings/security'), '/settings/security');
   assert.equal(normalizeAuthDestination('/songs/song_1/upload'), '/songs/song_1/upload');
   assert.equal(
     normalizeAuthDestination('/songs/song_1/versions/version_2'),
@@ -227,5 +229,26 @@ test('password reset enforces the signup policy and matching confirmation', () =
   assert.equal(parsePasswordResetInput({
     password: 'x'.repeat(129),
     confirmPassword: 'x'.repeat(129),
+  }).ok, false);
+});
+
+test('signed-in password updates accept an optional bounded code and require a matching strong password', () => {
+  assert.deepEqual(parseManagedPasswordInput({
+    password: 'a useful passphrase',
+    confirmPassword: 'a useful passphrase',
+  }), { ok: true, value: { password: 'a useful passphrase' } });
+  assert.deepEqual(parseManagedPasswordInput({
+    nonce: ' 123456 ',
+    password: 'a useful passphrase',
+    confirmPassword: 'a useful passphrase',
+  }), { ok: true, value: { nonce: '123456', password: 'a useful passphrase' } });
+  assert.equal(parseManagedPasswordInput({
+    nonce: 'not a code', password: 'a useful passphrase', confirmPassword: 'a useful passphrase',
+  }).ok, false);
+  assert.equal(parseManagedPasswordInput({
+    nonce: '123456', password: 'short', confirmPassword: 'short',
+  }).ok, false);
+  assert.equal(parseManagedPasswordInput({
+    nonce: '123456', password: 'a useful passphrase', confirmPassword: 'something else',
   }).ok, false);
 });

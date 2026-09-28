@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import AppShell from '@/components/AppShell';
@@ -24,6 +25,12 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Privacy & cookies', href: '/settings/privacy',  ownerOnly: false },
 ];
 
+const SECURITY_NAV_ITEM: NavItem = {
+  label: 'Account security',
+  href: '/settings/security',
+  ownerOnly: false,
+};
+
 // ── Inner layout (has access to context) ─────────────────────────
 
 function SettingsLayoutInner({ children }: { children: React.ReactNode }) {
@@ -31,8 +38,21 @@ function SettingsLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { identityLabel, avatarUrl, workspaceName, workspaceImageUrl, workspacePlan, membershipRole, isOwner, loading } = useSettingsData();
   const { upgradeModalType, setUpgradeModalType } = useSettingsActions();
+  const [passwordManagementEnabled, setPasswordManagementEnabled] = useState(false);
 
-  const visibleNav = NAV_ITEMS.filter(item => !item.ownerOnly || isOwner);
+  useEffect(() => {
+    let active = true;
+    fetch('/api/auth/email/config', { cache: 'no-store' })
+      .then(response => response.ok ? response.json() : null)
+      .then((config: { passwordManagementEnabled?: boolean } | null) => {
+        if (active) setPasswordManagementEnabled(config?.passwordManagementEnabled === true);
+      })
+      .catch(() => { if (active) setPasswordManagementEnabled(false); });
+    return () => { active = false; };
+  }, []);
+
+  const visibleNav = [...NAV_ITEMS, ...(passwordManagementEnabled ? [SECURITY_NAV_ITEM] : [])]
+    .filter(item => !item.ownerOnly || isOwner);
   const activeNav = visibleNav.find(
     item => pathname === item.href || pathname?.startsWith(item.href + '/'),
   );

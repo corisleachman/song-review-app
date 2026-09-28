@@ -13,3 +13,8 @@ export function isEmailPasswordAuthReady() {
     && (process.env.AUTH_INTENT_SECRET?.trim().length ?? 0) >= 32
     && getTurnstileSiteKey().length > 0;
 }
+
+export function isSignedInPasswordManagementReady() {
+  return isEmailPasswordAuthReady()
+    && process.env.SIGNED_IN_PASSWORD_MANAGEMENT_ENABLED?.trim().toLowerCase() === 'true';
+}

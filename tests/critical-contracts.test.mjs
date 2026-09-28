@@ -803,7 +803,8 @@ test('mobile Settings uses one permission-aware section control', () => {
   const settingsCss = read('app/settings/settings.module.css');
 
   assertIncludesAll(settingsLayout, [
-    "const visibleNav = NAV_ITEMS.filter(item => !item.ownerOnly || isOwner)",
+    'const visibleNav = [...NAV_ITEMS, ...(passwordManagementEnabled ? [SECURITY_NAV_ITEM] : [])]',
+    '.filter(item => !item.ownerOnly || isOwner)',
     'const activeNav = visibleNav.find(',
     '<nav className={styles.settingsNavList}>',
     'className={styles.settingsSectionPicker}',
@@ -1559,6 +1560,40 @@ test('password recovery stays server-gated and requires a verified email-bound s
     'RESEND_COOLDOWN_SECONDS = 60',
   ], 'recovery request screen');
   assert.doesNotMatch(request + reset, /error\.message/u);
+});
+
+test('signed-in password management stays separately gated and requires Supabase reauthentication', () => {
+  const flag = read('lib/authFeatureFlags.ts');
+  const config = read('app/api/auth/email/config/route.ts');
+  const layout = read('app/settings/layout.tsx');
+  const page = read('app/settings/security/page.tsx');
+  const request = read('app/api/auth/email/manage/request/route.ts');
+  const update = read('app/api/auth/email/manage/update/route.ts');
+
+  assertIncludesAll(flag, [
+    'isEmailPasswordAuthReady()',
+    "process.env.SIGNED_IN_PASSWORD_MANAGEMENT_ENABLED?.trim().toLowerCase() === 'true'",
+  ], 'separate management gate');
+  assertIncludesAll(config, ['passwordManagementEnabled: isSignedInPasswordManagementReady()'], 'public nav gate');
+  assertIncludesAll(layout, ['config?.passwordManagementEnabled === true', "href: '/settings/security'"], 'settings navigation');
+  assertIncludesAll(page, ['isSignedInPasswordManagementReady()', 'notFound()'], 'server page gate');
+  assertIncludesAll(request, [
+    'isSignedInPasswordManagementReady()',
+    'isSameOriginAuthRequest(request)',
+    'supabase.auth.getUser()',
+    'supabase.auth.reauthenticate()',
+  ], 'reauthentication request');
+  assertIncludesAll(update, [
+    'isSignedInPasswordManagementReady()',
+    'isSameOriginAuthRequest(request)',
+    'parseManagedPasswordInput',
+    'supabase.auth.getUser()',
+    'nonce: parsed.value.nonce',
+    "updateError.code === 'reauthentication_needed'",
+    "supabase.auth.signOut({ scope: 'others' })",
+    "response.headers.set('X-Other-Sessions-Signed-Out'",
+  ], 'signed-in password update');
+  assert.doesNotMatch(request + update, /error\.message/u);
 });
 
 test('public song reads expose only public songs with finalized audio', () => {

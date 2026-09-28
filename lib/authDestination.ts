@@ -71,7 +71,7 @@ export function resolveAuthDestination(value: string | null | undefined): AuthDe
   }
 
   const protectedPatterns = [
-    /^\/settings(?:\/(?:workspace|collaborators|plan|appearance|privacy|referrals))?$/,
+    /^\/settings(?:\/(?:workspace|collaborators|plan|appearance|privacy|referrals|security))?$/,
     /^\/playlists$/,
     new RegExp(`^/playlists/${SAFE_SEGMENT}$`),
     new RegExp(`^/songs/${SAFE_SEGMENT}$`),
