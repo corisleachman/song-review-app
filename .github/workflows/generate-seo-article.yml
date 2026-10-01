@@ -35,7 +35,7 @@ jobs:
         run: node scripts/generate-seo-article.mjs
 
       - name: Create review pull request
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           base: clone-clean
