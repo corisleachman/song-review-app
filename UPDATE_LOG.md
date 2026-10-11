@@ -7821,3 +7821,31 @@ Committed and pushed the reviewed application, migration, test, and documentatio
 ### Rollback
 
 Remove the branch-only Email flag and redeploy if live acceptance finds an authentication or invitation regression. Keep RLS and the revoked old invitation links in place. Revert `358b90b5` on the feature branch if the application candidate itself must be withdrawn.
+
+---
+
+## 2026-10-11 - Reject malformed workspace invitation tokens before lookup
+
+### What we were trying to achieve
+
+Make every malformed public invitation link fail as an ordinary invalid invite instead of allowing PostgreSQL's UUID cast to produce a server error.
+
+### Feature / change being made
+
+Added canonical UUID-shape validation inside the shared invite lookup before the server-only Supabase query. Both the public invite page and its API route now use the same fail-closed boundary.
+
+### Files changed
+
+- `lib/accountInvites.ts`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Verification and open risk
+
+- The guard trims the token, accepts canonical hexadecimal UUIDs case-insensitively, and returns no invite before any database request when the shape is invalid.
+- The existing invalid-invite state remains the response path, so no provider error, token, address, or database detail is exposed.
+- Live protected-Preview verification must confirm that the earlier malformed diagnostic path now returns 404 and produces no runtime error before controlled staging referral or invitation records are created.
+
+### Rollback
+
+Revert this focused change if it rejects a real canonical invite token. Do not weaken the database RLS boundary or restore direct client access as a workaround.

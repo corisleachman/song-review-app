@@ -286,6 +286,7 @@ test('pending workspace invites preserve Google and add gated Email account entr
   const actions = read('app/invite/[token]/InviteActions.tsx');
   const page = read('app/invite/[token]/page.tsx');
   const login = read('app/login/page.tsx');
+  const invites = read('lib/accountInvites.ts');
 
   assertIncludesAll(actions, [
     'supabase.auth.signInWithOAuth({',
@@ -310,6 +311,11 @@ test('pending workspace invites preserve Google and add gated Email account entr
     'This address comes from the invite and can’t be changed here.',
     "isInviteDestination && inviteEmailStatus !== 'ready'",
   ], 'invite email lock');
+  assertIncludesAll(invites, [
+    'const INVITE_TOKEN_PATTERN =',
+    'if (!isValidInviteToken(normalizedInviteToken)) return null;',
+    ".eq('invite_token', normalizedInviteToken)",
+  ], 'invite token validation');
   assert.doesNotMatch(actions, /signInWithPassword|invite-password/u);
 });
 
