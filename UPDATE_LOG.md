@@ -7783,3 +7783,41 @@ After explicit approval, changed only the four Production `account_invites` rows
 ### Rollback
 
 The old bearer links should not be restored. Workspace owners can create fresh invitations after the secured application candidate reaches the intended environment.
+
+---
+
+## 2026-10-11 - Publish the secured referral and Email invite candidate to Preview
+
+### What we were trying to achieve
+
+Put the reviewed referral-intent and Email invitation fixes on the protected staging Preview without changing Production authentication or creating live test records.
+
+### Feature / change being made
+
+Committed and pushed the reviewed application, migration, test, and documentation set to `codex/email-password-staging-forms` as `358b90b5`. The Git-integrated Vercel Preview built that exact commit.
+
+### Files changed
+
+- `supabase/migrations/20261011161736_harden_account_invites_access.sql`
+- `lib/bootstrapAccount.ts`
+- `app/auth/continue/route.ts`
+- `app/invite/[token]/InviteActions.tsx`
+- `app/invite/[token]/page.tsx`
+- `app/login/page.tsx`
+- `tests/critical-contracts.test.mjs`
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Verification and open risk
+
+- Local verification passed all 89 repository tests, TypeScript, focused ESLint, and `git diff --check` before the commit. The Vercel build repeated all 89 tests and completed its Next.js build.
+- Primary protected Preview `dpl_7jt3sH5JvKrQwUifG6p52XenUBUy` reached Ready from `358b90b5`. Both Vercel project checks and Preview Comments passed. PR #55 remains draft and conflicting against `clone-clean`.
+- The three authentication variables remain encrypted and scoped only to Preview branch `codex/email-password-staging-forms`. None of their names appears in Production. The Preview config returns `{"enabled":true,"passwordManagementEnabled":true}`, and an unauthenticated `/settings/security` request redirects to Login with the destination preserved.
+- The canonical invite API returned 404 with `state: "invalid"` for a syntactically valid unused UUID, confirming that the server-only lookup still works after RLS hardening. A prior deliberately malformed non-UUID probe returned a generic 500 because Postgres rejected the input before lookup; it exposed no record or secret and is a bounded validation follow-up.
+- The deployment's only error log was created by that malformed diagnostic probe. No real invite, referral, password, identity, membership, email, or payment was created or changed during verification.
+- Implementation status: the database hardening is applied in staging and Production, and the application candidate is committed, pushed, and deployed to protected Preview. It is not merged or deployed to Production. Production Email remains disabled and Google remains available.
+
+### Rollback
+
+Remove the branch-only Email flag and redeploy if live acceptance finds an authentication or invitation regression. Keep RLS and the revoked old invitation links in place. Revert `358b90b5` on the feature branch if the application candidate itself must be withdrawn.
