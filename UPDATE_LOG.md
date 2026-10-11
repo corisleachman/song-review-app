@@ -7849,3 +7849,59 @@ Added canonical UUID-shape validation inside the shared invite lookup before the
 ### Rollback
 
 Revert this focused change if it rejects a real canonical invite token. Do not weaken the database RLS boundary or restore direct client access as a workaround.
+
+---
+
+## 2026-10-11 - Stop staging invite acceptance on the missing switch-account action
+
+### What we were trying to achieve
+
+Run the approved referral and workspace-invitation acceptance matrix on the protected staging Preview using only controlled test records and inboxes.
+
+### Feature / change being made
+
+Verified the deployed malformed-token repair, created the documented expired and revoked staging invite fixtures, and sent three real staging invitations through the application for the invite-first, existing-password, and existing-Google journeys. Acceptance stopped at the first live mismatch-path failure.
+
+### Files changed
+
+- `UPDATE_LOG.md`
+
+### Verification and open risk
+
+- Preview deployment `dpl_B5eP8Eyhxp6HKbQKcLxZbmZGKQsL` is Ready from commit `000ec1de`. Malformed and well-formed unused tokens return the safe invalid state without a runtime error.
+- The expired and revoked fixtures render their correct read-only pages. An existing accepted invite renders the used-invite state without an acceptance control.
+- The application created exactly three pending controlled invites, and the connected staging inbox received exactly three matching invitation emails. No invite token was copied into this log.
+- A user signed in with the wrong email was blocked from accepting the fresh invite, but the page offered only explanatory text. It did not provide the documented switch-account action. This fails the workspace-invite acceptance criterion and leaves the user without a usable recovery path.
+- The post-failure staging state remains three Auth users, three profiles, three workspaces, four memberships, zero referrals, zero checkout sessions, and zero billing subscriptions. All three new invitations remain pending. The deployment had no error, warning, or fatal runtime entries in the checked window.
+- The new-user, existing-password, existing-Google, and referral completion journeys were not attempted after this failure. Production Email remains disabled and Production was not changed.
+
+### Rollback
+
+No application rollback is needed because the failed path already existed. If the staging fixtures must be withdrawn, revoke the three pending invitations through the owner controls. Keep the expired, revoked, and accepted history as non-secret staging evidence unless a separately approved cleanup is required.
+
+---
+
+## 2026-10-11 - Add the missing invite switch-account recovery action
+
+### What we were trying to achieve
+
+Let a user who opens a workspace invite under the wrong signed-in account recover without losing the invite destination.
+
+### Feature / change being made
+
+Added a focused `Sign out and continue` action to the mismatched invite state. It signs out the Supabase session, clears the legacy local auth and identity markers, keeps the invite page open, and then reveals the existing Google and Email choices for the invited address.
+
+### Files changed
+
+- `app/invite/[token]/InviteActions.tsx`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Verification and open risk
+
+- Contract coverage now requires the sign-out call, legacy-marker cleanup, signed-out state transition, and visible recovery label.
+- All 89 repository tests, TypeScript, focused ESLint, and `git diff --check` pass locally. Protected-Preview verification is still required. The invite matrix must remain paused until the deployed control signs out the mismatched session without changing the pending invite or losing its token.
+
+### Rollback
+
+Revert the focused component and contract change if sign-out fails or the invite destination is lost. The controlled staging invitations can remain pending for a corrected redeployment or be revoked through the owner controls.

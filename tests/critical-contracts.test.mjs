@@ -298,6 +298,12 @@ test('pending workspace invites preserve Google and add gated Email account entr
     'Log in with email',
     'Create account with email',
     'we&apos;ll create your account automatically',
+    'handleSwitchAccount',
+    'supabase.auth.signOut()',
+    'clearAuth()',
+    'clearIdentity()',
+    "setActionState('signed_out')",
+    'Sign out and continue',
   ], 'invite account entry');
   assertIncludesAll(page, [
     'isEmailPasswordAuthReady()',

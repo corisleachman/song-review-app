@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { clearAuth, clearIdentity } from '@/lib/auth';
 import { createClient } from '@/lib/supabase';
 
 interface InviteActionsProps {
@@ -29,6 +30,7 @@ export default function InviteActions({ token, inviteEmail, emailAuthEnabled }: 
 
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
+  const [isSwitchingAccount, setIsSwitchingAccount] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -140,6 +142,25 @@ export default function InviteActions({ token, inviteEmail, emailAuthEnabled }: 
     }
   };
 
+  const handleSwitchAccount = async () => {
+    setError('');
+    setIsSwitchingAccount(true);
+
+    try {
+      const { error: signOutError } = await supabase.auth.signOut();
+      if (signOutError) throw signOutError;
+
+      clearAuth();
+      clearIdentity();
+      setSignedInEmail('');
+      setActionState('signed_out');
+    } catch (signOutError) {
+      setError(getErrorMessage(signOutError));
+    } finally {
+      setIsSwitchingAccount(false);
+    }
+  };
+
   const buttonBase: React.CSSProperties = {
     border: 'none',
     borderRadius: '10px',
@@ -215,10 +236,25 @@ export default function InviteActions({ token, inviteEmail, emailAuthEnabled }: 
       )}
 
       {actionState === 'mismatched' && (
-        <p style={{ margin: 0, color: '#fca5a5', lineHeight: 1.6 }}>
-          This invite was sent to <strong>{inviteEmail}</strong>, but you are signed in as{' '}
-          <strong>{signedInEmail || 'a different account'}</strong>. Please sign in with the invited account to accept it.
-        </p>
+        <>
+          <p style={{ margin: 0, color: '#fca5a5', lineHeight: 1.6 }}>
+            This invite was sent to <strong>{inviteEmail}</strong>, but you are signed in as{' '}
+            <strong>{signedInEmail || 'a different account'}</strong>. Sign out to continue with the invited account.
+          </p>
+          <button
+            type="button"
+            onClick={handleSwitchAccount}
+            disabled={isSwitchingAccount}
+            style={{
+              ...buttonBase,
+              background: '#ffffff',
+              color: '#111111',
+              cursor: isSwitchingAccount ? 'default' : 'pointer',
+            }}
+          >
+            {isSwitchingAccount ? 'Signing out…' : 'Sign out and continue'}
+          </button>
+        </>
       )}
 
       {error && (
