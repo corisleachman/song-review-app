@@ -84,6 +84,7 @@ function LoginContent() {
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [captchaToken, setCaptchaToken] = useState('');
+  const [inviteEmailStatus, setInviteEmailStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   // BG slideshow
@@ -103,12 +104,23 @@ function LoginContent() {
     () => getSignupIntent(signupPlanParam, signupBillingParam),
     [signupBillingParam, signupPlanParam],
   );
+  const requestedDestination = useMemo(
+    () => resolveAuthDestination(searchParams.get('redirectTo')),
+    [searchParams],
+  );
+  const isInviteDestination = requestedDestination.kind === 'invite';
   const isSignup = Boolean(signupIntent);
-  const destination = signupIntent
+  const destination = isInviteDestination
+    ? requestedDestination.path
+    : signupIntent
     ? buildSignupDestination(signupIntent)
-    : normalizeAuthDestination(searchParams.get('redirectTo'));
+    : requestedDestination.path;
 
-  const signupHeading = emailAuthEnabled
+  const signupHeading = isInviteDestination
+    ? isSignup
+      ? 'Create your account to accept the invite'
+      : 'Log in to accept your invite'
+    : emailAuthEnabled
     ? signupIntent
       ? `Create your ${signupIntent.plan === 'free' ? 'Free' : signupIntent.plan === 'pro' ? 'Pro' : 'Studio'} workspace`
       : 'Welcome back'
@@ -117,6 +129,11 @@ function LoginContent() {
       : 'Log in or create your account';
 
   const signupDescription = (() => {
+    if (isInviteDestination) {
+      return isSignup
+        ? 'Create an account with the invited email address. You will join the existing workspace after verification.'
+        : 'Log in with the invited email address, then return to accept the workspace invite.';
+    }
     if (!signupIntent) {
       return emailAuthEnabled
         ? 'Log in with your email and password, or continue with Google.'
@@ -153,6 +170,45 @@ function LoginContent() {
     void loadEmailAuthStatus();
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    if (!isInviteDestination) {
+      setInviteEmailStatus('idle');
+      return;
+    }
+
+    const controller = new AbortController();
+    const token = requestedDestination.path.slice('/invite/'.length);
+    setInviteEmailStatus('loading');
+
+    const loadInviteEmail = async () => {
+      try {
+        const response = await fetch(`/api/invites/${encodeURIComponent(token)}`, {
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+        const payload = await response.json().catch(() => null) as {
+          state?: string;
+          invite?: { email?: string };
+        } | null;
+        const inviteEmail = payload?.invite?.email?.trim() ?? '';
+
+        if (!response.ok || payload?.state !== 'pending' || !inviteEmail) {
+          throw new Error('Invite email unavailable.');
+        }
+
+        setEmail(inviteEmail);
+        setInviteEmailStatus('ready');
+      } catch (inviteError) {
+        if (inviteError instanceof DOMException && inviteError.name === 'AbortError') return;
+        setInviteEmailStatus('error');
+        setError('The invited email address could not be loaded. Return to the invite link and try again.');
+      }
+    };
+
+    void loadInviteEmail();
+    return () => controller.abort();
+  }, [isInviteDestination, requestedDestination.path]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -492,9 +548,20 @@ function LoginContent() {
                     maxLength={254}
                     value={email}
                     onChange={event => setEmail(event.target.value)}
+                    readOnly={isInviteDestination}
+                    aria-describedby={isInviteDestination ? 'invite-email-hint' : undefined}
                     required
                   />
                 </label>
+                {isInviteDestination && (
+                  <p id="invite-email-hint" className={styles.fieldHint}>
+                    {inviteEmailStatus === 'ready'
+                      ? 'This address comes from the invite and can’t be changed here.'
+                      : inviteEmailStatus === 'error'
+                        ? 'Return to the invite link and try again.'
+                        : 'Loading the invited email address…'}
+                  </p>
+                )}
                 <label className={styles.fieldLabel}>
                   <span>Password</span>
                   <input
@@ -562,14 +629,18 @@ function LoginContent() {
                     setError('The security check could not load. Refresh the page and try again.');
                   }}
                 />
-                <button className={styles.btnEmail} type="submit" disabled={emailLoading || googleLoading}>
+                <button
+                  className={styles.btnEmail}
+                  type="submit"
+                  disabled={emailLoading || googleLoading || (isInviteDestination && inviteEmailStatus !== 'ready')}
+                >
                   {emailLoading ? 'Please wait…' : isSignup ? 'Create account' : 'Log in'}
                 </button>
                 <div className={styles.modeLinks}>
                   {isSignup ? (
                     <Link href={`/login?email=1${destination === '/dashboard' ? '' : `&redirectTo=${encodeURIComponent(destination)}`}`}>Already have an account? Log in</Link>
                   ) : (
-                    <Link href="/login?signupPlan=free&email=1">New to The Song Room? Create account</Link>
+                    <Link href={`/login?signupPlan=free&email=1${isInviteDestination ? `&redirectTo=${encodeURIComponent(destination)}` : ''}`}>New to The Song Room? Create account</Link>
                   )}
                 </div>
               </form>

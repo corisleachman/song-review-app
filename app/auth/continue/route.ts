@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
   const destinationKind = intent?.destination.kind;
   if (destinationKind !== 'invite' && destinationKind !== 'recovery') {
     try {
-      await bootstrapAccountForUser(user);
+      await bootstrapAccountForUser(user, undefined, intent?.referralCode);
     } catch (error) {
       console.error('[auth-continue] Account bootstrap failed:', error);
       return redirectToLogin(request, 'bootstrap_failed', destination);

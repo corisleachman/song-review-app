@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase';
 interface InviteActionsProps {
   token: string;
   inviteEmail: string;
+  emailAuthEnabled: boolean;
 }
 
 type InviteActionState = 'checking' | 'signed_out' | 'matched' | 'mismatched';
@@ -21,7 +22,7 @@ function getErrorMessage(error: unknown) {
   return 'Could not complete invite action.';
 }
 
-export default function InviteActions({ token, inviteEmail }: InviteActionsProps) {
+export default function InviteActions({ token, inviteEmail, emailAuthEnabled }: InviteActionsProps) {
   const [supabase] = useState(() => createClient());
   const [actionState, setActionState] = useState<InviteActionState>('checking');
   const [signedInEmail, setSignedInEmail] = useState('');
@@ -94,6 +95,15 @@ export default function InviteActions({ token, inviteEmail }: InviteActionsProps
     }
   };
 
+  const handleEmailEntry = (mode: 'login' | 'signup') => {
+    const params = new URLSearchParams({
+      email: '1',
+      redirectTo: `/invite/${token}`,
+    });
+    if (mode === 'signup') params.set('signupPlan', 'free');
+    window.location.assign(`/login?${params.toString()}`);
+  };
+
   const handleAcceptInvite = async () => {
     setError('');
     setIsAccepting(true);
@@ -153,7 +163,7 @@ export default function InviteActions({ token, inviteEmail }: InviteActionsProps
       {actionState === 'signed_out' && (
         <>
           <p style={{ margin: 0, color: 'rgba(255,255,255,0.76)', lineHeight: 1.6 }}>
-            Continue with the Google account for <strong>{inviteEmail}</strong>. If you&apos;re new to Song Room, we&apos;ll create your account automatically.
+            Continue with the account for <strong>{inviteEmail}</strong>. If you&apos;re new to Song Room, we&apos;ll create your account automatically.
           </p>
 
           <button
@@ -164,6 +174,27 @@ export default function InviteActions({ token, inviteEmail }: InviteActionsProps
           >
             {isSigningIn ? 'Connecting…' : 'Continue with Google'}
           </button>
+
+          {emailAuthEnabled && (
+            <>
+              <button
+                type="button"
+                onClick={() => handleEmailEntry('login')}
+                disabled={isSigningIn}
+                style={{ ...buttonBase, background: '#cf382b', color: '#ffffff', cursor: isSigningIn ? 'default' : 'pointer' }}
+              >
+                Log in with email
+              </button>
+              <button
+                type="button"
+                onClick={() => handleEmailEntry('signup')}
+                disabled={isSigningIn}
+                style={{ ...buttonBase, background: 'transparent', color: '#ffffff', border: '1px solid rgba(255,255,255,0.3)', cursor: isSigningIn ? 'default' : 'pointer' }}
+              >
+                Create account with email
+              </button>
+            </>
+          )}
         </>
       )}
 

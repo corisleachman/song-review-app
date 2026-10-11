@@ -7504,3 +7504,282 @@ Committed the Account security code and staged verification notes, then checked 
 - Commit `3616b40e` was pushed to draft PR #55. All 87 repository tests, TypeScript, and focused ESLint passed. Both Vercel project checks and Preview Comments passed. Primary Preview `dpl_9wyjQmNGRoPStyj7AGEdz3xAKSSF` is Ready from that commit at the stable branch alias.
 - Authorized `/api/auth/email/config` returned `{"enabled":true,"passwordManagementEnabled":false}`. Both new POST routes returned 404. In an authenticated Chrome session, Settings contained no Account security link, and the direct `/settings/security` page showed 404. Browser console errors, deployment-scoped runtime errors, and 5xx logs were absent in the checked window.
 - The feature is code-complete but not activated. No password or one-time code was entered, no email was sent, and no Supabase, Vercel variable, or Production configuration was changed. Before staging activation, review the reauthentication and Password changed templates, then obtain separate approval for hosted switches and the branch-only flag. PR #55 remains draft and has its pre-existing documentation-only `UPDATE_LOG.md` merge conflict.
+
+---
+
+## 2026-09-29 - Configure staging Account security safeguards
+
+### What we were trying to achieve
+
+Prepare staging Supabase for an enabled Account security test without opening the app route, changing Vercel, or touching Production.
+
+### Feature / change being made
+
+Updated the staging Reauthentication and Password changed email copy, enabled the Password changed notification, and enabled Secure password change after explicit approval.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Verification and open risk
+
+- Confirmed the target was persistent staging project `ivifkrtupqizyqqsxdty`. The Reauthentication subject is now `{{ .Token }} is your Song Room verification code`; its source names the password-change purpose, presents the token, and explains the safe ignore case. The Password changed subject is now `Your Song Room password was changed`; its source identifies `{{ .Email }}` and gives password-recovery and `hello@song-room.live` actions for an unexpected change.
+- Enabled only the Password changed notification and Secure password change. Require current password remains off. Leaked-password protection remains on, minimum length remains 12, composition requirements remain unset, and email OTP expiry and length remain 3,600 seconds and 8 digits.
+- Fresh dashboard loads showed both approved template sources and both enabled switches, with disabled Save controls. No email was sent and no password, account, identity, database record, Vercel setting, deployment, or Production service changed.
+- `SIGNED_IN_PASSWORD_MANAGEMENT_ENABLED` remains absent, so the Account security Settings link, page, and mutation routes remain closed. An enabled Preview test still needs separate approval for that branch-only Vercel flag and a redeployment. After activation, stop on a failed password change, unexpected host, missing notification, exposed secret, duplicate identity, changed user/profile/workspace IDs, or undocumented other-session behavior.
+
+### Rollback
+
+Keep or restore the branch-only Account security flag to absent first. Disable the staging Password changed notification and Secure password change, then restore both original template sources from `STAGING_AUTH_TEMPLATE_BASELINE.md`. Do not disable staging Email or alter Production.
+
+---
+
+## 2026-09-29 - Enable Account security on the protected staging Preview
+
+### What we were trying to achieve
+
+Open the already-reviewed Account security candidate for controlled staging tests without exposing it in Production or rebuilding from local uncommitted files.
+
+### Feature / change being made
+
+Added `SIGNED_IN_PASSWORD_MANAGEMENT_ENABLED=true` only to the `codex/email-password-staging-forms` Vercel Preview branch and redeployed the known `776682a0` artifact.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Verification and open risk
+
+- Before the change, the exact branch-scoped variable was absent. After the approved change, Vercel listed it only for Preview branch `codex/email-password-staging-forms`; the Production count remained zero.
+- Redeployed existing Preview `dpl_DxPTrNDHfzz66C8giqPSV3B8pJbW`, which was previously verified from commit `776682a0`, instead of deploying the dirty local checkout. Replacement deployment `dpl_GsmKKaH22T8Dcg4dpDzV9D8Umgf2` reached Ready and owns the stable branch alias.
+- The deployment and stable alias both returned `{"enabled":true,"passwordManagementEnabled":true}`. Without an application session, the reauthentication request route returned 401 rather than its former 404, the update route rejected an empty body with the expected 12-to-128-character password rule, and `/settings/security` redirected to `/login?redirectTo=%2Fsettings%2Fsecurity`. These probes did not send mail or change a password.
+- Deployment-scoped error and 5xx searches returned zero. Production has no Account security flag and its existing Google-only boundary was not redeployed or reconfigured.
+- The enabled recent-session Change password path, older-session email-code path, Password changed notification, Google-account Add password flow, identity and workspace preservation, and two-browser session behavior remain unverified. Stop and remove the Preview flag if any route opens outside the protected branch, mail reaches the wrong host, a secret enters logs, an identity duplicates, a password change fails, or another session behaves outside the documented expectation.
+
+### Rollback
+
+Remove `SIGNED_IN_PASSWORD_MANAGEMENT_ENABLED` from Preview branch `codex/email-password-staging-forms` and redeploy the last known artifact. This closes the Settings link, page, and mutation routes without a migration. Keep the reviewed staging Supabase templates and safeguards unless a hosted-setting failure requires their separate rollback.
+
+---
+
+## 2026-09-30 - Pass the recent-session Account security test
+
+### What we were trying to achieve
+
+Prove that a freshly signed-in staging password user can change their password through Account security, receive the configured security notification, and re-enter the same account without duplicating identity or workspace data.
+
+### Feature / change being made
+
+Recorded the user-completed recent-session acceptance result and independently checked the staging records and deployment logs. No application, Supabase, or Vercel setting changed.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Verification and open risk
+
+- The user reported that all requested recent-session steps passed: Account security opened after a fresh sign-in, the new password was accepted without an emailed reauthentication code, the Password changed notification arrived, and sign-out followed by password re-entry succeeded. The agent did not see or enter the password.
+- A read-only query against staging project `ivifkrtupqizyqqsxdty` found exactly one Email Auth user and identity, one matching profile, one owner membership, and one Free workspace created by that user. Their original 27 September creation timestamps remain. No Stripe customer, Stripe subscription, billing subscription, or referral row exists.
+- Auth recorded a user update at 09:37:12 UTC and a sign-in at 09:36:51 UTC on 30 September. These timestamps support the report but do not disclose or independently validate the password value.
+- Deployment `dpl_GsmKKaH22T8Dcg4dpDzV9D8Umgf2` returned zero errors, warnings, and 5xx responses in the following 24-hour scan.
+- This closes only the recent-session password-account gate. The older-session emailed-code path, existing-Google-account Add password flow, exact identity-link preservation, and two-browser session behavior remain open. Existing access JWTs may continue until expiry after other refresh tokens are revoked.
+
+### Rollback
+
+If a remaining Account security test hits a stop condition, remove `SIGNED_IN_PASSWORD_MANAGEMENT_ENABLED` from Preview branch `codex/email-password-staging-forms` and redeploy the known artifact. No database migration needs reversal. Production remains Google-only.
+
+---
+
+## 2026-10-09 - Pass the older-session Account security test
+
+### What we were trying to achieve
+
+Prove that a staging password user whose session is older than 24 hours cannot change their password until Supabase sends and accepts the reviewed reauthentication code.
+
+### Feature / change being made
+
+Recorded the user-completed older-session acceptance result and independently checked the staging account graph, retained Auth events, Preview state, and runtime health. No application, Supabase, or Vercel setting changed.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Verification and open risk
+
+- The user reported that the aged session required the emailed verification code and accepted the password change after that code was entered. The agent did not see or enter the password or code.
+- A read-only query against staging project `ivifkrtupqizyqqsxdty` still found exactly one Email Auth user and identity, one matching profile, one owner membership, and one Free workspace created by that user. The original 27 September creation timestamps remain. No Stripe customer, Stripe subscription, billing subscription, or referral row exists.
+- `auth.users.updated_at` moved to 12:12:19 UTC on 5 October. In the surrounding two-hour window, retained Supabase Auth platform events were all informational: login activity, one token refresh, and one token revocation. The database audit table had no retained row for that window, so the code step is not independently proven by audit data.
+- Deployment `dpl_GsmKKaH22T8Dcg4dpDzV9D8Umgf2` remains Ready at the stable branch alias and still returns `{"enabled":true,"passwordManagementEnabled":true}`. The matching Vercel window contained zero errors, warnings, and 5xx responses.
+- A header-only search of the connected Gmail mailbox found no matching reauthentication or Password changed messages. The test inbox may be a different account or the messages may be unavailable there, so delivery remains user-reported.
+- Both password-account session-age paths now pass. Existing-Google-account Add password with exact UUID preservation and deliberate two-browser session behavior remain open. Existing access JWTs may continue until expiry after other refresh tokens are revoked.
+
+### Rollback
+
+If a remaining Account security test hits a stop condition, remove `SIGNED_IN_PASSWORD_MANAGEMENT_ENABLED` from Preview branch `codex/email-password-staging-forms` and redeploy the known artifact. No database migration needs reversal. Production remains Google-only.
+
+---
+
+## 2026-10-09 - Pass the existing-Google-account Add password test
+
+### What we were trying to achieve
+
+Prove that an existing staging Google account can add password login through Account security, receive the security notification, and return by Email/password without creating a second user or changing its canonical account records.
+
+### Feature / change being made
+
+Recorded the user-completed Add password acceptance result and compared read-only staging Auth and account data before and after the change. No application code, hosted setting, Vercel variable, or Production service changed.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Verification and open risk
+
+- Before the change, the designated staging account had one Google identity and no password. It had one matching profile and one owner membership in its existing Free workspace.
+- The user reported that Add password succeeded, the Password changed notification arrived, and sign-out followed by Email/password re-entry returned to the same workspace. The agent did not see or enter the password.
+- The post-change query matched the exact Auth user and workspace from the saved baseline through non-identifying fingerprints. The original Auth user now has a password, retains one Google identity, and is still the only Auth user for its email. The profile, membership, role, plan, creation timestamps, existing Stripe customer, absent Stripe subscription, referral code, and zero sent or received referral rows are unchanged.
+- Supabase's current Identity Linking documentation confirms `updateUser({ password })` as the supported OAuth-account path. The password belongs to the existing Auth user and does not create a separate Email row in `auth.identities`.
+- This closes the existing-Google-account Add password and canonical-ID preservation gate. Deliberate two-browser session behavior remains open. The separate staging advisory that `public.account_invites` lacks RLS still needs its own policy review and wasn't changed here.
+
+### Rollback
+
+If a remaining Account security test hits a stop condition, remove `SIGNED_IN_PASSWORD_MANAGEMENT_ENABLED` from Preview branch `codex/email-password-staging-forms` and redeploy the known artifact. No database migration needs reversal. Production remains Google-only.
+
+---
+
+## 2026-10-09 - Pass the two-browser Account security session test
+
+### What we were trying to achieve
+
+Prove that a successful Account security password change removes other refresh sessions without signing out the browser that made the change, while accurately accounting for the remaining lifetime of an already-issued access token.
+
+### Feature / change being made
+
+Recorded the user-completed two-browser acceptance result and compared staging `auth.sessions` plus the canonical account graph before and after the password change. No application code, hosted setting, Vercel variable, or Production service changed.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Verification and open risk
+
+- Two isolated browsers signed in as the same staging user and loaded the same workspace. The read-only baseline contained exactly two live `aal1` sessions.
+- The user changed the password in Browser B through Account security. The next query contained one live session: Browser A's saved session was absent and Browser B's saved session remained.
+- The user reported that Browser A subsequently returned to Login while Browser B survived a hard refresh and remained in the same workspace. This matches Supabase's documented behavior: `scope: 'others'` removes the affected refresh sessions, but an issued access token can remain valid until it expires.
+- The final query still found one password-bearing Auth user with one Google identity, one matching profile, and one owner membership in the same Free workspace. The existing Stripe customer remained, no Stripe subscription appeared, and referral counts were unchanged.
+- This closes the Account security staging acceptance gate. Referrals, invitations, paid-tier entry, abuse behavior, the wider browser matrix, PR #55's conflict and stale description, and Production rollout remain open. The separate staging advisory that `public.account_invites` lacks RLS still needs its own policy review.
+
+### Rollback
+
+If the enabled Account security path regresses, remove `SIGNED_IN_PASSWORD_MANAGEMENT_ENABLED` from Preview branch `codex/email-password-staging-forms` and redeploy the known artifact. No database migration needs reversal. Production remains Google-only.
+
+---
+
+## 2026-10-09 - Block referral and invite testing on security and flow gaps
+
+### What we were trying to achieve
+
+Establish a safe read-only baseline for the referral and workspace-invitation acceptance matrix before creating a record, sending mail, or asking the user to follow another live link.
+
+### Feature / change being made
+
+Traced the current referral, invite, auth-intent, confirmation, continuation, bootstrap, membership, and email paths. Compared table security and uniqueness controls in staging and Production without reading invite contents. No application behavior, database row, hosted setting, email, or Production configuration changed.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Verification and open risk
+
+- Supabase's security advisor reports `rls_disabled_in_public` for `public.account_invites` in both staging and Production. Direct schema checks confirmed RLS off, zero policies, and full table privileges for `anon` and `authenticated`. The Data API is used by the app, so invite rows and bearer invite tokens are inside an exposed table boundary.
+- Every repository query against `account_invites` uses the server-only service-role client. The smallest safe database repair is a reviewed migration that enables RLS, revokes direct client table privileges, retains service-role access, and hardens the trigger helper's search path and execute grants. This needs explicit approval before it is applied to either hosted project.
+- Staging currently has two accepted invite rows, two referral-code rows, and no referral rows. Unique invite tokens, one pending invite per workspace and normalized email, and one referral row per referred user are enforced. The audit found no duplicate pending target, active-code owner, or referred-user row. No raw address, token, code, or UUID was returned.
+- The invite page and its contract test remain intentionally Google-only. The planned Email choice, locked invited address, and invite-specific Email signup continuation are absent, so the Email invitation matrix cannot begin without an auth-flow code change.
+- Referral signup stores the cookie value in the sealed auth intent and resend preserves it, but `/auth/continue` does not give that value to bootstrap. Bootstrap reads only the original-browser cookie and starts attribution without awaiting the promise. Cross-device confirmation can therefore lose attribution, and serverless completion is not guaranteed even in the same browser.
+- Live referral and invite testing is paused. The next order is security remediation first, then focused local code and contract changes, then a new protected Preview and controlled staging records. Production Email remains disabled and no payment should be submitted.
+
+### Rollback
+
+No rollback is needed for this read-only audit. The proposed security migration has not been created or applied. If approved, its rollback must not restore anonymous or authenticated direct access to invite rows; an application regression should be repaired in the server route instead of reopening the table.
+
+---
+
+## 2026-10-11 - Secure workspace invitations and complete the local Email invite boundary
+
+### What we were trying to achieve
+
+Close the exposed invite-table boundary before live testing, then make referral attribution and Email invitation entry safe across browsers without enabling Email in Production.
+
+### Feature / change being made
+
+Applied one reviewed invite-table hardening migration to staging first and then Production. Implemented the bounded referral-intent handoff and feature-gated Email invite login/signup locally. No application code was deployed.
+
+### Files changed
+
+- `supabase/migrations/20261011161736_harden_account_invites_access.sql`
+- `lib/bootstrapAccount.ts`
+- `app/auth/continue/route.ts`
+- `app/invite/[token]/InviteActions.tsx`
+- `app/invite/[token]/page.tsx`
+- `app/login/page.tsx`
+- `tests/critical-contracts.test.mjs`
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Verification and open risk
+
+- Staging and Production now have RLS enabled on `public.account_invites`, no direct table privileges for `anon` or `authenticated`, a fixed empty search path on the derived-field trigger, and no public/client execute permission on that helper. Service-role reads still return the existing row counts. The previous external `rls_disabled_in_public` advisor error and this function's mutable-search-path warning are gone in both projects. Both hosted migration ledgers match repository version `20261011161736`, and the linked Production migration list is aligned.
+- Production contained six accepted invites, four pending invites, and one revoked invite at the aggregate baseline. No raw invite data was returned. The four pending bearer tokens existed before the boundary was closed and were not rotated or revoked under this approval.
+- The local invite entry keeps Google available and reveals Email choices only when Email readiness passes. Email login/signup reloads the invite through the canonical server route, locks the invited address, preserves the invite destination, and leaves final normalized-email enforcement in the accept route.
+- The local continuation route passes the sealed referral code into bootstrap. Bootstrap prefers that sealed value, falls back to the referral cookie, awaits the best-effort attribution write, and clears the cookie after the attempt.
+- All 89 repository tests passed. `npx tsc --noEmit`, focused ESLint, and `git diff --check` passed. The React review found no new client/server, hook, accessibility, or rendering blocker in the changed components.
+- Implementation status: hosted database hardening is complete in staging and Production. Application and migration files are local only, uncommitted, unpushed, and undeployed. Production Email remains disabled and Google remains available.
+
+### Rollback
+
+Do not disable RLS or restore client table privileges. If the application path regresses, fix the server route while retaining the closed database boundary. The local application work can be reverted before deployment. After deployment, the Email feature flag remains the first rollback control.
+
+---
+
+## 2026-10-11 - Revoke the pending Production invitations from the exposed period
+
+### What we were trying to achieve
+
+Invalidate every still-live Production invitation token that existed before the invite table was removed from the client-facing database boundary.
+
+### Feature / change being made
+
+After explicit approval, changed only the four Production `account_invites` rows whose status was still `pending` to `revoked` and recorded their revocation time. No email route was invoked.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Verification and open risk
+
+- The read-only baseline immediately before the update contained exactly four pending, six accepted, one revoked, and eleven total Production invites.
+- The single guarded update ran only because its statement-level pending count was exactly four. It reported four updated rows without returning an address, token, user ID, workspace ID, or invite ID.
+- The after-state contains zero pending, six accepted, five revoked, and eleven total rows. Four revoked timestamps fall inside the update window. Accepted rows and the total row count are unchanged.
+- The change ran directly against Production Postgres and did not call the application or Resend, so no invitation email was sent. Existing memberships were outside the update.
+- Production Email remains disabled. The local referral and Email invite application changes remain uncommitted, unpushed, and undeployed.
+
+### Rollback
+
+The old bearer links should not be restored. Workspace owners can create fresh invitations after the secured application candidate reaches the intended environment.

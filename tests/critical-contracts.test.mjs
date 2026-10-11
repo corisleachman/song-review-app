@@ -238,7 +238,7 @@ test('shared auth boundary is session-backed, allowlisted, sealed, and default-o
     'getCurrentAuthenticatedUser()',
     'authIntentEmailMatches',
     "destinationKind !== 'invite' && destinationKind !== 'recovery'",
-    'bootstrapAccountForUser(user)',
+    'bootstrapAccountForUser(user, undefined, intent?.referralCode)',
   ], 'auth continuation boundary');
   assert.doesNotMatch(callback, /error\.message|searchParams\.set\('message'/u);
 });
@@ -282,18 +282,52 @@ test('referral links build full URLs from the request origin', () => {
   assert.doesNotMatch(entryRoute, /NEXT_PUBLIC_APP_URL/u);
 });
 
-test('pending workspace invites use Google-only account entry during beta', () => {
+test('pending workspace invites preserve Google and add gated Email account entry', () => {
   const actions = read('app/invite/[token]/InviteActions.tsx');
   const page = read('app/invite/[token]/page.tsx');
+  const login = read('app/login/page.tsx');
 
   assertIncludesAll(actions, [
     'supabase.auth.signInWithOAuth({',
     "provider: 'google'",
     'Continue with Google',
+    'emailAuthEnabled',
+    "handleEmailEntry('login')",
+    "handleEmailEntry('signup')",
+    'Log in with email',
+    'Create account with email',
     'we&apos;ll create your account automatically',
-  ], 'invite Google account entry');
-  assert.match(page, /Continue with Google using the invited email address/u);
-  assert.doesNotMatch(actions, /signInWithPassword|Sign in with email|invite-password/u);
+  ], 'invite account entry');
+  assertIncludesAll(page, [
+    'isEmailPasswordAuthReady()',
+    'Continue with Google or Email using the invited email address',
+    'emailAuthEnabled={emailAuthEnabled}',
+  ], 'invite feature boundary');
+  assertIncludesAll(login, [
+    "requestedDestination.kind === 'invite'",
+    "fetch(`/api/invites/${encodeURIComponent(token)}`",
+    'readOnly={isInviteDestination}',
+    'This address comes from the invite and can’t be changed here.',
+    "isInviteDestination && inviteEmailStatus !== 'ready'",
+  ], 'invite email lock');
+  assert.doesNotMatch(actions, /signInWithPassword|invite-password/u);
+});
+
+test('sealed referral attribution survives cross-browser email confirmation', () => {
+  const continuation = read('app/auth/continue/route.ts');
+  const bootstrap = read('lib/bootstrapAccount.ts');
+
+  assertIncludesAll(continuation, [
+    'intent?.referralCode',
+    'bootstrapAccountForUser(user, undefined, intent?.referralCode)',
+  ], 'sealed referral handoff');
+  assertIncludesAll(bootstrap, [
+    'sealedReferralCode?.trim()',
+    'refCode ??= cookieRefCode',
+    'await attributeReferralOnSignup({',
+    'cookieStore.delete(REFERRAL_COOKIE_NAME)',
+  ], 'referral bootstrap');
+  assert.doesNotMatch(bootstrap, /void attributeReferralOnSignup/u);
 });
 
 test('authenticated playlist access stays inside the active workspace', () => {
@@ -1701,6 +1735,17 @@ test('privileged upload and deletion functions remain service-role-only', () => 
       `${functionName} must be granted only to service_role`
     );
   }
+});
+
+test('workspace invitations remain behind the server-only database boundary', () => {
+  const migration = compactSql('supabase/migrations/20261011161736_harden_account_invites_access.sql');
+
+  assertIncludesAll(migration, [
+    'alter table public.account_invites enable row level security',
+    'revoke all privileges on table public.account_invites from anon, authenticated',
+    "alter function public.account_invites_sync_derived_fields() set search_path = ''",
+    'revoke execute on function public.account_invites_sync_derived_fields() from public, anon, authenticated',
+  ], 'account invite hardening');
 });
 
 test('RLS cleanup removes blanket policies and its rollback cannot restore them', () => {
