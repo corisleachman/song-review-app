@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     destination,
     email: parsed.value.email,
   });
-  const response = emailAuthJson({ ok: true, continueTo: `/auth/continue?intent=${encodeURIComponent(intentToken)}` });
+  const response = emailAuthJson({ ok: true, continueTo: '/auth/continue' });
   const supabase = createEmailAuthClient(request, response);
   const { error } = await supabase.auth.signInWithPassword({
     email: parsed.value.email,

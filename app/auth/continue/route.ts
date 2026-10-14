@@ -29,15 +29,13 @@ function redirectToRecoveryRequest(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const queryIntent = request.nextUrl.searchParams.get('intent');
   const cookieIntent = request.cookies.get(AUTH_INTENT_COOKIE)?.value ?? null;
-  const intentToken = queryIntent || cookieIntent;
   const fallbackDestination = normalizeAuthDestination(request.nextUrl.searchParams.get('next'));
 
   let intent = null;
-  if (intentToken) {
+  if (cookieIntent) {
     try {
-      intent = readAuthIntent(intentToken);
+      intent = readAuthIntent(cookieIntent);
     } catch {
       return redirectToLogin(request, 'invalid_intent');
     }
@@ -45,9 +43,6 @@ export async function GET(request: NextRequest) {
   }
 
   if (intent?.purpose === 'recovery') return redirectToRecoveryRequest(request);
-  if (intent?.purpose === 'recovery_verified' && (queryIntent || !cookieIntent)) {
-    return redirectToRecoveryRequest(request);
-  }
 
   const destination = intent ? getAuthIntentDestination(intent) : fallbackDestination;
   const user = await getCurrentAuthenticatedUser();

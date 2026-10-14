@@ -165,15 +165,6 @@
   text-underline-offset: 3px;
 }
 
-.googleHelp {
-  display: block;
-  margin-top: 18px;
-  color: rgba(244,240,232,0.66);
-  font-size: 13px;
-  line-height: 1.5;
-  text-align: center;
-}
-
 .status {
   margin: 18px 0 0;
   color: rgba(244,240,232,0.76);

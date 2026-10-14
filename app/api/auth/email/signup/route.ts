@@ -7,6 +7,7 @@ import {
   createAuthIntent,
 } from '@/lib/authIntent';
 import { parseEmailSignupInput } from '@/lib/emailPasswordAuthCore';
+import { consumeEmailAuthFlow, createEmailAuthFlow } from '@/lib/emailAuthFlows';
 import {
   buildAuthConfirmationRedirect,
   createEmailAuthClient,
@@ -31,6 +32,17 @@ export async function POST(request: NextRequest) {
     referralCode,
     email: parsed.value.email,
   });
+  let flowId: string;
+  try {
+    flowId = await createEmailAuthFlow({
+      email: parsed.value.email,
+      purpose: 'signup',
+      sealedIntent: intentToken,
+    });
+  } catch {
+    console.error('[email-auth] Signup confirmation flow could not be created.');
+    return emailAuthJson({ error: 'Email signup is temporarily unavailable.' }, 503);
+  }
   const response = emailAuthJson({ ok: true, email: parsed.value.email });
   const supabase = createEmailAuthClient(request, response);
   const { data, error } = await supabase.auth.signUp({
@@ -38,16 +50,22 @@ export async function POST(request: NextRequest) {
     password: parsed.value.password,
     options: {
       data: { name: parsed.value.name, full_name: parsed.value.name },
-      emailRedirectTo: buildAuthConfirmationRedirect(request, intentToken),
+      emailRedirectTo: buildAuthConfirmationRedirect(request, flowId),
       captchaToken: parsed.value.captchaToken,
     },
   });
 
   if (error) {
     console.warn('[email-auth] Signup request was not accepted.', { code: error.code ?? 'unknown' });
+    await consumeEmailAuthFlow(flowId).catch(() => {
+      console.warn('[email-auth] Unused signup confirmation flow could not be removed.');
+    });
   }
   if (data.session) {
     console.error('[email-auth] Email confirmation is disabled; signup session was not returned.');
+    await consumeEmailAuthFlow(flowId).catch(() => {
+      console.warn('[email-auth] Unexpected signup confirmation flow could not be removed.');
+    });
     return emailAuthJson({ error: 'Email verification is not configured.' }, 503);
   }
 

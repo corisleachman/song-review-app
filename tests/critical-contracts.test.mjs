@@ -1482,6 +1482,7 @@ test('email login and signup stay default-off behind the server readiness bounda
   const loginRoute = read('app/api/auth/email/login/route.ts');
   const signupRoute = read('app/api/auth/email/signup/route.ts');
   const resendRoute = read('app/api/auth/email/resend/route.ts');
+  const authFlows = read('lib/emailAuthFlows.ts');
   const checkEmail = read('app/auth/check-email/page.tsx');
   const checkEmailLayout = read('app/auth/check-email/layout.tsx');
   const turnstile = read('components/TurnstileWidget.tsx');
@@ -1512,14 +1513,16 @@ test('email login and signup stay default-off behind the server readiness bounda
     'supabase.auth.signInWithPassword',
     "Email or password wasn't recognised.",
     'AUTH_INTENT_COOKIE',
+    "continueTo: '/auth/continue'",
     'options: { captchaToken: parsed.value.captchaToken }',
   ], 'password login route');
   assertIncludesAll(signupRoute, [
     'parseEmailSignupInput',
     'REFERRAL_COOKIE_NAME',
     "purpose: 'signup'",
+    'createEmailAuthFlow({',
     'supabase.auth.signUp',
-    'emailRedirectTo: buildAuthConfirmationRedirect(request, intentToken)',
+    'emailRedirectTo: buildAuthConfirmationRedirect(request, flowId)',
     'if (data.session)',
     'captchaToken: parsed.value.captchaToken',
   ], 'password signup route');
@@ -1528,17 +1531,28 @@ test('email login and signup stay default-off behind the server readiness bounda
     'parseEmailResendInput',
     'supabase.auth.resend',
     "type: 'signup'",
-    'emailRedirectTo: buildAuthConfirmationRedirect(request, intentToken)',
+    'emailRedirectTo: buildAuthConfirmationRedirect(request, flowId)',
     'captchaToken: parsed.value.captchaToken',
   ], 'verification resend route');
   assertIncludesAll(checkEmail, [
     'RESEND_COOLDOWN_SECONDS = 60',
     "fetch('/api/auth/email/resend'",
     'If this address can be verified, a fresh email is on its way.',
-    'Already use Google? Return to Login and continue with Google.',
+    'Already have an account? Log in instead',
+    'getSignupReturnPath(storedPath)',
+    'getExistingAccountReturnPath(storedPath)',
     'action="email_resend"',
     'body: JSON.stringify({ email, captchaToken })',
   ], 'check-email state');
+  assertIncludesAll(authFlows, [
+    "from('email_auth_flows')",
+    'hashAuthIntentEmail(input.email)',
+    ".select('id, email_hash, purpose, sealed_intent')",
+    ".gt('expires_at', new Date().toISOString())",
+    ".delete()",
+    ".select('id')",
+    'if (error || !data?.id)',
+  ], 'server-only confirmation flow store');
   assertIncludesAll(checkEmailLayout, [
     'isEmailPasswordAuthReady()',
     "redirect('/login?auth=email_unavailable')",
@@ -1565,25 +1579,38 @@ test('password recovery stays server-gated and requires a verified email-bound s
   const continuation = read('app/auth/continue/route.ts');
   const page = read('app/auth/reset-password/page.tsx');
   const forgot = read('app/forgot-password/page.tsx');
+  const redirectBuilder = read('lib/emailPasswordAuthServer.ts');
 
   assertIncludesAll(request, [
     'isEmailPasswordAuthReady()',
     'isSameOriginAuthRequest(request)',
     'parseEmailResendInput',
     "purpose: 'recovery'",
+    'createEmailAuthFlow({',
     'supabase.auth.resetPasswordForEmail',
+    'redirectTo: buildAuthConfirmationRedirect(request, flowId)',
     'captchaToken: parsed.value.captchaToken',
   ], 'recovery request boundary');
   assertIncludesAll(confirm, [
+    'readEmailAuthFlow(flowId)',
+    'intent.emailHash !== flow.emailHash',
     'authIntentEmailMatches(intent, data.user.email)',
+    'await consumeEmailAuthFlow(flow.id)',
     "purpose: 'recovery_verified'",
-    "if (!recovery) continueUrl.searchParams.set('intent', intentToken)",
+    ': flow.sealedIntent',
   ], 'recovery confirmation exchange');
   assertIncludesAll(continuation, [
+    'const cookieIntent = request.cookies.get(AUTH_INTENT_COOKIE)?.value ?? null',
     "intent?.purpose === 'recovery'",
-    "intent?.purpose === 'recovery_verified' && (queryIntent || !cookieIntent)",
     "intent?.purpose !== 'recovery_verified'",
   ], 'recovery-only continuation');
+  assertIncludesAll(redirectBuilder, [
+    "redirect.searchParams.set('flow', flowId)",
+  ], 'log-safe confirmation redirect');
+  assert.doesNotMatch(
+    request + confirm + continuation + redirectBuilder,
+    /searchParams\.set\(['"]intent['"]/u,
+  );
   assertIncludesAll(page, [
     'isEmailPasswordAuthReady()',
     "intent?.purpose === 'recovery_verified'",
@@ -1758,6 +1785,20 @@ test('workspace invitations remain behind the server-only database boundary', ()
     "alter function public.account_invites_sync_derived_fields() set search_path = ''",
     'revoke execute on function public.account_invites_sync_derived_fields() from public, anon, authenticated',
   ], 'account invite hardening');
+});
+
+test('email confirmation state stays short-lived and server-only', () => {
+  const migration = compactSql('supabase/migrations/20261013171251_create_email_auth_flows.sql');
+
+  assertIncludesAll(migration, [
+    'create table public.email_auth_flows',
+    "check (purpose in ('signup', 'recovery'))",
+    "expires_at <= created_at + interval '1 hour'",
+    'create index email_auth_flows_expires_at_idx on public.email_auth_flows (expires_at)',
+    'alter table public.email_auth_flows enable row level security',
+    'revoke all privileges on table public.email_auth_flows from public, anon, authenticated, service_role',
+    'grant select, insert, delete on table public.email_auth_flows to service_role',
+  ], 'email auth flow migration');
 });
 
 test('RLS cleanup removes blanket policies and its rollback cannot restore them', () => {

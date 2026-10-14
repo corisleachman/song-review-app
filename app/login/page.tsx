@@ -427,7 +427,7 @@ function LoginContent() {
         return;
       }
 
-      if (!payload.continueTo?.startsWith('/auth/continue?intent=')) {
+      if (payload.continueTo !== '/auth/continue') {
         setError('Login completed, but the next page could not be opened. Please try again.');
         return;
       }

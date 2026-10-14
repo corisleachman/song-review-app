@@ -8,6 +8,7 @@ import {
   readAuthIntent,
 } from '@/lib/authIntent';
 import { parseEmailResendInput } from '@/lib/emailPasswordAuthCore';
+import { consumeEmailAuthFlow, createEmailAuthFlow } from '@/lib/emailAuthFlows';
 import {
   buildAuthConfirmationRedirect,
   createEmailAuthClient,
@@ -44,19 +45,33 @@ export async function POST(request: NextRequest) {
     referralCode: previousIntent.referralCode,
     email: parsed.value.email,
   });
+  let flowId: string;
+  try {
+    flowId = await createEmailAuthFlow({
+      email: parsed.value.email,
+      purpose: 'signup',
+      sealedIntent: intentToken,
+    });
+  } catch {
+    console.error('[email-auth] Resend confirmation flow could not be created.');
+    return emailAuthJson({ error: 'Email verification is temporarily unavailable.' }, 503);
+  }
   const response = emailAuthJson({ ok: true });
   const supabase = createEmailAuthClient(request, response);
   const { error } = await supabase.auth.resend({
     type: 'signup',
     email: parsed.value.email,
     options: {
-      emailRedirectTo: buildAuthConfirmationRedirect(request, intentToken),
+      emailRedirectTo: buildAuthConfirmationRedirect(request, flowId),
       captchaToken: parsed.value.captchaToken,
     },
   });
 
   if (error) {
     console.warn('[email-auth] Verification resend was not accepted.', { code: error.code ?? 'unknown' });
+    await consumeEmailAuthFlow(flowId).catch(() => {
+      console.warn('[email-auth] Unused resend confirmation flow could not be removed.');
+    });
   }
 
   response.cookies.set(AUTH_INTENT_COOKIE, intentToken, AUTH_INTENT_COOKIE_OPTIONS);

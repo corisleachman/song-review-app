@@ -48,8 +48,8 @@ export function createEmailAuthClient(request: NextRequest, response: NextRespon
   );
 }
 
-export function buildAuthConfirmationRedirect(request: NextRequest, intentToken: string) {
+export function buildAuthConfirmationRedirect(request: NextRequest, flowId: string) {
   const redirect = new URL('/auth/confirm', request.nextUrl.origin);
-  redirect.searchParams.set('intent', intentToken);
+  redirect.searchParams.set('flow', flowId);
   return redirect.toString();
 }

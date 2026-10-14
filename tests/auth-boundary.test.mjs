@@ -10,6 +10,9 @@ const intentModule = await import(pathToFileURL(path.join(repoRoot, 'lib/authInt
 const emailPasswordModule = await import(
   pathToFileURL(path.join(repoRoot, 'lib/emailPasswordAuthCore.ts')).href
 );
+const pendingEmailAuthModule = await import(
+  pathToFileURL(path.join(repoRoot, 'lib/pendingEmailAuthCore.ts')).href
+);
 
 const {
   normalizeAuthDestination,
@@ -31,6 +34,10 @@ const {
   parseManagedPasswordInput,
   parsePasswordResetInput,
 } = emailPasswordModule;
+const {
+  getExistingAccountReturnPath,
+  getSignupReturnPath,
+} = pendingEmailAuthModule;
 
 test('auth destinations allow only named Song Room journeys', () => {
   assert.equal(normalizeAuthDestination('/dashboard'), '/dashboard');
@@ -214,6 +221,18 @@ test('verification resend validates email without accepting password data', () =
     captchaToken: 'captcha-result',
   });
   assert.equal(parseEmailResendInput({ email: 'invalid' }).ok, false);
+});
+
+test('check-email returns preserve invite destinations without allowing external paths', () => {
+  const inviteSignup = '/login?email=1&redirectTo=%2Finvite%2F12345678-1234-1234-1234-123456789abc&signupPlan=free';
+
+  assert.equal(getSignupReturnPath(inviteSignup), inviteSignup);
+  assert.equal(
+    getExistingAccountReturnPath(inviteSignup),
+    '/login?email=1&redirectTo=%2Finvite%2F12345678-1234-1234-1234-123456789abc',
+  );
+  assert.equal(getSignupReturnPath('https://attacker.example/login?signupPlan=free'), '/signup/free');
+  assert.equal(getExistingAccountReturnPath('//attacker.example/login'), '/login?email=1');
 });
 
 test('password reset enforces the signup policy and matching confirmation', () => {

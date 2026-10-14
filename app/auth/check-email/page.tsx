@@ -3,6 +3,10 @@
 import { useEffect, useRef, useState } from 'react';
 import BetaBanner from '@/components/BetaBanner';
 import TurnstileWidget, { type TurnstileWidgetHandle } from '@/components/TurnstileWidget';
+import {
+  getExistingAccountReturnPath,
+  getSignupReturnPath,
+} from '@/lib/pendingEmailAuthCore';
 import styles from './page.module.css';
 
 const PENDING_AUTH_EMAIL_KEY = 'song_room_pending_auth_email';
@@ -58,8 +62,12 @@ export default function CheckEmailPage() {
   const changeEmail = () => {
     const storedPath = window.sessionStorage.getItem(PENDING_AUTH_RETURN_KEY) ?? '';
     window.sessionStorage.removeItem(PENDING_AUTH_EMAIL_KEY);
-    const returnPath = storedPath.startsWith('/login?signupPlan=') ? storedPath : '/signup/free';
-    window.location.assign(returnPath);
+    window.location.assign(getSignupReturnPath(storedPath));
+  };
+
+  const useExistingAccount = () => {
+    const storedPath = window.sessionStorage.getItem(PENDING_AUTH_RETURN_KEY) ?? '';
+    window.location.assign(getExistingAccountReturnPath(storedPath));
   };
 
   return (
@@ -109,7 +117,9 @@ export default function CheckEmailPage() {
               : 'Send another email'}
         </button>
         <button className={styles.textButton} type="button" onClick={changeEmail}>Use a different email</button>
-        <a className={styles.googleHelp} href="/login">Already use Google? Return to Login and continue with Google.</a>
+        <button className={styles.textButton} type="button" onClick={useExistingAccount}>
+          Already have an account? Log in instead
+        </button>
         {message && <p className={styles.status} role="status">{message}</p>}
       </section>
     </main>
