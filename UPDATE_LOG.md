@@ -8030,7 +8030,9 @@ Added a short-lived server-only Email auth flow, changed confirmation redirects 
 - Signup, resend, and recovery create a flow before calling Supabase. Confirmation validates the unexpired flow, intent, purpose, token type, and verified email binding before consuming it. Password login and continuation no longer expose sealed intent in their URLs.
 - The check-email page still gives a neutral response. Its existing-account action removes signup mode without losing the invite path, while `Use a different email` also retains that path. External stored return paths fail closed to local fallbacks.
 - All 91 repository tests pass. TypeScript, focused ESLint, and `git diff --check` pass. `npm ci` reported the lockfile's existing package audit findings; no dependency or lockfile change was made and no automated audit rewrite was attempted.
-- Code is complete locally but not yet pushed or deployed. Email remains closed on the branch Preview until the reviewed commit is live. The two controlled existing-account invitations remain pending. Production Email remains disabled.
+- Documentation commit `2a351139` and implementation commit `2b588af2` are pushed. Ready protected Preview `dpl_BTDqD23EZpVF6pGRzy69Pwmn191j` builds the implementation commit, owns the stable branch alias, and returns `{"enabled":true,"passwordManagementEnabled":true}` after the branch-only Email flag was restored.
+- An invalid flow UUID fails closed to `auth=invalid_confirmation`. A fake legacy query-carried intent is ignored and reaches `auth=session_missing`, confirming the continuation route no longer reads it. Deployment-scoped error, fatal, 5xx, and sealed `v1.` searches returned no log entries around the checks.
+- Live signup, recovery delivery, confirmation, flow consumption, and the post-email Supabase log check remain pending. The two controlled existing-account invitations stay untouched. Production Email remains disabled and no Production service changed.
 
 ### Rollback
 
