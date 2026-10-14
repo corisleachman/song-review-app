@@ -7905,3 +7905,133 @@ Added a focused `Sign out and continue` action to the mismatched invite state. I
 ### Rollback
 
 Revert the focused component and contract change if sign-out fails or the invite destination is lost. The controlled staging invitations can remain pending for a corrected redeployment or be revoked through the owner controls.
+
+---
+
+## 2026-10-13 - Capture missing song-screen transport controls
+
+### What we were trying to achieve
+
+Record the user's comparison with the previous song screen without mixing an unrelated playback change into the active authentication candidate.
+
+### Feature / change being made
+
+Added a scoped P1 backlog item to restore Play from Start and Loop Song beside the main song-screen Play or Pause control. The entry records the observed regression, current code finding, required behaviour, preserved playback boundaries, and acceptance checks.
+
+### Files changed
+
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Verification and open risk
+
+- The supplied previous-version screenshot shows both controls to the right of the elapsed and total time.
+- The current authenticated song/version control row renders only Play or Pause and time. It has no button or handler for either missing action, so the problem is not limited to CSS visibility.
+- This update changes documentation only. No player code, authentication code, hosted setting, staging data, deployment, or Production behaviour changed.
+- Implementation must cover both WaveSurfer and native-audio fallback playback without breaking first-Play recovery, single-player coordination, background playback, waveform seeking, comments, or version cleanup.
+
+### Rollback
+
+Remove the two documentation entries if the product decision changes. There is no application or hosted-state rollback for this capture-only update.
+
+---
+
+## 2026-10-13 - Stop invite acceptance after Auth log intent disclosure
+
+### What we were trying to achieve
+
+Verify the new invite-first account, then continue the controlled existing-password and existing-Google invitation journeys.
+
+### Feature / change being made
+
+Recorded the completed invite-first result and diagnosed why the two existing accounts did not receive signup-confirmation mail. Acceptance stopped when the staging Supabase Auth log was found to include the sealed auth intent inside its recorded redirect URL.
+
+### Files changed
+
+- `UPDATE_LOG.md`
+
+### Verification and open risk
+
+- The new invite-first alias received one confirmation email, confirmed successfully, and accepted its invitation. Staging now has four Auth users, four profiles, three workspaces, and five memberships. The new user has exactly one profile and one member membership, owns no workspace, and created no referral. This is the expected invite-before-workspace result.
+- The existing password address and existing Google address each still have exactly one confirmed Auth user and one pending controlled invitation. Auth recorded both submissions as repeated signup attempts, and the connected inbox contained no new confirmation message for either address. This is Supabase's expected anti-enumeration behaviour for an existing confirmed user, although the application's neutral check-email screen is misleading in this invite context.
+- The resend attempt for the existing password user did not produce mail. That account must use Log in with email, while the existing Google account must use Continue with Google.
+- The staging Supabase Auth log recorded the full confirmation redirect under its `referer` field, including the sealed one-hour auth-intent value. No password, OTP hash, or invite token was observed, and the intent value has not been copied into this log. Supabase Auth derives this field from the supplied `redirect_to`, so the application's response-level Referrer Policy cannot prevent this server-side record.
+- This matches the documented stop condition for a token appearing in logs. The invitation matrix is paused with one controlled invitation accepted and two still pending. Production Email remains disabled and Production was not changed.
+
+### Rollback
+
+No data rollback is required for the successful invite-first account. Do not revoke or accept the two remaining invitations while the matrix is paused. The existing sealed intent expires after at most one hour, but future confirmation requests will repeat the logging behaviour until the redirect-state design is changed.
+
+---
+
+## 2026-10-13 - Prepare the confirmation-state log-safety repair
+
+### What we were trying to achieve
+
+Define the smallest safe change that preserves cross-device Email confirmation while keeping sealed auth intent out of Supabase and application request URLs.
+
+### Feature / change being made
+
+Added a reviewed proposal for a server-only, short-lived Email auth flow record keyed by a non-secret random identifier. The plan also removes sealed intent from the password-login continuation URL and adds a neutral existing-account route from the check-email screen.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `UPDATE_LOG.md`
+
+### Verification and open risk
+
+- Supabase Auth's current request helper prioritizes `redirect_to` when deriving the value recorded as `referer`, which explains the live staging log without relying on the browser's Referer header.
+- The proposed flow stores no raw email or provider credential, is accessible only through the server role, and still requires a successful Supabase OTP exchange plus an exact email-hash and purpose match before continuation.
+- A random flow UUID may appear in ordinary request logs, but it carries no state and grants no authority by itself. The sealed intent remains encrypted at rest in the server-only row and moves into the existing HTTP-only cookie only after verification.
+- The current templates can stay unchanged. The proposed redirect still has one query parameter before the template appends `token_hash` and `type`.
+- This is documentation only. No migration was created or applied, no code was changed, and no deployment or hosted setting changed. The two remaining controlled invitations stay pending.
+
+### Rollback
+
+There is nothing to roll back from this planning step. If implementation is approved later, disable the Preview-only Email flag and redeploy first on failure; keep the additive protected table until no deployed code references it and all rows have expired.
+
+---
+
+## 2026-10-13 - Apply the staging Email confirmation log-safety repair
+
+### What we were trying to achieve
+
+Keep the sealed Email auth intent out of Supabase and application request URLs while preserving cross-device confirmation, recovery, referrals, paid-plan returns, and invitations.
+
+### Feature / change being made
+
+Added a short-lived server-only Email auth flow, changed confirmation redirects to carry only its random UUID, removed query-carried intent from password login and continuation, and added a neutral existing-account return that keeps the invitation destination.
+
+### Files changed
+
+- `supabase/migrations/20261013171251_create_email_auth_flows.sql`
+- `lib/emailAuthFlows.ts`
+- `lib/emailPasswordAuthServer.ts`
+- `lib/pendingEmailAuthCore.ts`
+- `app/api/auth/email/signup/route.ts`
+- `app/api/auth/email/resend/route.ts`
+- `app/api/auth/email/recover/route.ts`
+- `app/api/auth/email/login/route.ts`
+- `app/auth/confirm/route.ts`
+- `app/auth/continue/route.ts`
+- `app/auth/check-email/page.tsx`
+- `app/auth/check-email/page.module.css`
+- `app/login/page.tsx`
+- `tests/auth-boundary.test.mjs`
+- `tests/critical-contracts.test.mjs`
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `UPDATE_LOG.md`
+
+### Verification and rollout state
+
+- Set `EMAIL_PASSWORD_AUTH_ENABLED=false` only for Preview branch `codex/email-password-staging-forms`, then rebuilt commit `8493a0df` as Ready deployment `dpl_6zvB8REtKWDa1euF1tGnu898YpjJ`. Its live config returns `{"enabled":false,"passwordManagementEnabled":false}`. Production was not changed.
+- Applied the reviewed additive migration to staging project `ivifkrtupqizyqqsxdty` only. RLS is enabled with no client policy. Browser-facing roles have no table privilege, while `service_role` has only `SELECT`, `INSERT`, and `DELETE`. The expiry and integrity constraints and expiry index exist, and a service-role insert/delete check passed without leaving a row.
+- Signup, resend, and recovery create a flow before calling Supabase. Confirmation validates the unexpired flow, intent, purpose, token type, and verified email binding before consuming it. Password login and continuation no longer expose sealed intent in their URLs.
+- The check-email page still gives a neutral response. Its existing-account action removes signup mode without losing the invite path, while `Use a different email` also retains that path. External stored return paths fail closed to local fallbacks.
+- All 91 repository tests pass. TypeScript, focused ESLint, and `git diff --check` pass. `npm ci` reported the lockfile's existing package audit findings; no dependency or lockfile change was made and no automated audit rewrite was attempted.
+- Code is complete locally but not yet pushed or deployed. Email remains closed on the branch Preview until the reviewed commit is live. The two controlled existing-account invitations remain pending. Production Email remains disabled.
+
+### Rollback
+
+Keep the branch-only Email flag false if the new Preview fails. The protected additive staging table can remain inert. Do not restore sealed intent to a query string. Dropping the table or changing Production requires separate review and approval.

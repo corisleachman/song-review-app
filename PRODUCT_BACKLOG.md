@@ -14,6 +14,16 @@ The iPad homepage work is now in Production. A physical 11-inch iPad check remai
 
 ## Bugs
 
+### Song review: Play from Start and Loop Song controls are missing
+- Priority: P1 beta playback regression; keep separate from the active authentication rollout.
+- Logged: 2026-10-13
+- Status: Captured from the user's comparison with the previous song-screen design. No implementation, deployment, or live verification has been approved or completed.
+- Observed: the authenticated song/version screen currently renders the main Play or Pause button and elapsed/total time, but not the two adjacent transport controls shown in the previous version: Play from Start and Loop Song.
+- Code finding: the current hero control row has no buttons or handlers for either action, so this is not a CSS visibility problem. The dashboard mini-player has separate loop behaviour, but that does not restore the missing song-screen controls.
+- Expected: restore both compact buttons immediately to the right of the time display, following the previous control order and the current song-screen visual system. Play from Start must seek the current version to zero and start playback. Loop Song must visibly toggle repeat for the current version and expose its state to assistive technology.
+- Preserve: first-Play recovery, the WaveSurfer and native-audio fallback paths, single-player coordination, background and lock-screen playback, waveform seeking, timestamped commenting, version switching, and playback cleanup.
+- Acceptance: verify both controls with paused and playing audio on desktop and mobile; confirm Loop persists only for the intended current playback session, repeats without an audible second player, and can be switched off; confirm Play from Start works after seeking and near track end. Buttons need keyboard focus, accurate accessible names and state, and at least a 44-pixel touch target without crowding the time display.
+
 ### Song review: first Play press can silently do nothing
 - Priority: P1 beta journey reliability, ahead of tablet presentation work.
 - Logged: 2026-09-18
