@@ -8037,3 +8037,33 @@ Added a short-lived server-only Email auth flow, changed confirmation redirects 
 ### Rollback
 
 Keep the branch-only Email flag false if the new Preview fails. The protected additive staging table can remain inert. Do not restore sealed intent to a query string. Dropping the table or changing Production requires separate review and approval.
+
+---
+
+## 2026-10-14 - Pass the log-safe signup and recovery staging gate
+
+### What we were trying to achieve
+
+Prove that the replacement confirmation flow works for real signup and recovery mail without putting sealed intent, token hashes, or the wrong host into provider or application logs.
+
+### Feature / change being made
+
+Recorded the user's successful controlled signup and password-recovery journeys, then verified their database and log effects before resuming the invitation matrix.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `UPDATE_LOG.md`
+
+### Verification and rollout state
+
+- The user reported both live protected-Preview tests passed. Supabase logged one successful signup, one recovery request, two successful verification exchanges, and no failed Auth route in the inspected window.
+- Both mail requests logged only `flow=UUID` on the expected stable protected host. Aggregate checks returned zero legacy `intent=` redirects, sealed `v1.` values, token hashes, and wrong-host redirects. Recent deployment-scoped Vercel searches returned no error, fatal, 5xx, or sealed-intent match.
+- `public.email_auth_flows` is empty after the two completed journeys, confirming both records were consumed.
+- Staging contains five Auth users, five profiles, four workspaces, six memberships, zero referrals, and two pending controlled invitations. There are no orphan profiles or memberships.
+- The newest confirmed user has one Auth identity, one profile, one owned Free workspace, one owner membership, and no Stripe customer. This is the expected ordinary Free signup result with no duplicate record.
+- Production was not queried for user data and was not changed. Production Email remains disabled.
+
+### Rollback
+
+No rollback is required. If a later matrix case exposes a regression, set the branch-only Email flag to false and redeploy. Leave the protected staging table in place while the application references it.
