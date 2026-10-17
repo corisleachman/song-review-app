@@ -44,6 +44,18 @@ Status: the existing-Google invitation case passes for `corisleachman@googlemail
 - Referral baseline: the documented fresh referral-test alias does not exist in Auth. Staging still has zero referral rows, and the chosen referrer has one active workspace-bound referral code. The next case is a new direct Free Email signup entered through that referral link, with confirmation completed in another browser to prove the sealed referral context survives cross-browser confirmation.
 - Production remains unchanged and Google-only.
 
+## Cross-browser referral checkpoint, 2026-10-18
+
+Status: the cross-browser Email referral case passes. The user entered through the controlled staging referral link in one browser, completed signup confirmation in another browser, and reached the new Free workspace.
+
+- Account evidence: the designated alias has exactly one Auth user, one identity, one profile, one Free workspace, and one owner membership. The account has no Stripe customer, subscription, or checkout session.
+- Referral evidence: exactly one referral row was created for the new user and workspace, attributed to the intended referrer. It is `pending`, has no ineligible reason, and has not had the referee coupon applied. Staging moved from zero referral rows to one.
+- Timing evidence: Auth creation preceded email confirmation, which preceded profile, workspace, membership, and referral creation. The referral row was written after first-account bootstrap, matching the intended verification-before-attribution order.
+- Flow and log evidence: `public.email_auth_flows` is empty after confirmation. In the inspected window, Auth recorded one signup and one verification. The stable protected host was used, with one non-secret `flow` identifier and zero legacy `intent`, sealed `v1.` value, token hash, or wrong Preview host. Recent Preview runtime searches found no error, warning, fatal, `500`, or sealed-intent match.
+- Global staging counts are six Auth users, six profiles, five workspaces, nine memberships, one pending referral, and zero pending invitations. There are still zero billing checkout sessions and zero billing subscriptions.
+- The Pro and Studio controlled aliases do not exist in Auth. Paid-tier Email entry is next, starting with Pro annual. It must stop on the preselected upgrade confirmation and must not open Stripe automatically.
+- Production remains unchanged and Google-only.
+
 ## Referral and invitation repair, 2026-10-11
 
 - Migration `supabase/migrations/20261011161736_harden_account_invites_access.sql` enables RLS on the server-only invite table, revokes all table privileges from `anon` and `authenticated`, fixes `account_invites_sync_derived_fields()` to `search_path = ''`, and revokes its execute permission from `PUBLIC` and both client roles. The migration was applied to staging first and then Production only after the staging state, advisor result, and service-role read were verified. Both hosted migration ledgers were aligned to the repository version and the linked Production migration list has no gap.

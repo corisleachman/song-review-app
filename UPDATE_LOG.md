@@ -8127,3 +8127,35 @@ Recorded the user's successful Google sign-in and invitation acceptance, verifie
 ### Rollback
 
 No application rollback is required. Any later cleanup of controlled staging memberships must be separately approved and must not be mixed into the acceptance matrix.
+
+---
+
+## 2026-10-18 - Pass cross-browser referral attribution
+
+### What we were trying to achieve
+
+Prove that a valid referral survives Email signup when the confirmation message is opened in another browser, without duplicate bootstrap records or billing activity.
+
+### Feature / change being made
+
+Recorded the user's successful cross-browser referral signup and verified the resulting Auth, account, referral, flow-consumption, and log state.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `UPDATE_LOG.md`
+
+### Verification and rollout state
+
+- The designated alias has exactly one Auth user, one identity, one profile, one Free workspace, and one owner membership. It has no Stripe customer, subscription, or checkout session.
+- Exactly one referral row was created for the intended new user and workspace and attributed to the intended referrer. It is `pending`, has no ineligible reason, and has not had a coupon applied.
+- Auth creation preceded confirmation, which preceded profile, workspace, membership, and referral creation. This matches the required verification-before-bootstrap sequence.
+- The temporary Email auth flow was consumed. Auth logs recorded one signup and one verification on the stable protected host, with one non-secret flow identifier and no legacy intent, sealed intent, token hash, or wrong Preview host.
+- Recent Preview runtime searches returned no error, warning, fatal, `500`, or sealed-intent match.
+- Global staging counts are six Auth users, six profiles, five workspaces, nine memberships, one pending referral, zero pending invitations, zero checkout sessions, and zero billing subscriptions.
+- The Pro and Studio controlled aliases do not exist in Auth. The next paid-tier test starts with Pro annual and must stop before Stripe Checkout.
+- Production was not changed and Production Email remains disabled.
+
+### Rollback
+
+No application rollback is required. Keep the controlled pending referral for the paid-tier discount inspection; any later staging-data cleanup requires separate approval.
