@@ -8067,3 +8067,33 @@ Recorded the user's successful controlled signup and password-recovery journeys,
 ### Rollback
 
 No rollback is required. If a later matrix case exposes a regression, set the branch-only Email flag to false and redeploy. Leave the protected staging table in place while the application references it.
+
+---
+
+## 2026-10-18 - Pass the existing-password invitation journey
+
+### What we were trying to achieve
+
+Complete the controlled existing-password invitation journey after the log-safe signup and recovery gate passed.
+
+### Feature / change being made
+
+Recorded the user's successful switch-account, Email/password login, and final invitation acceptance, then checked that the staging records changed exactly once.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `UPDATE_LOG.md`
+
+### Verification and rollout state
+
+- The existing confirmed user signed in successfully at `2026-10-17 22:57:54 UTC` and still has exactly one Auth user, identity, profile, owned workspace, and no Stripe customer.
+- The first database check correctly found that login had passed before the final acceptance was submitted. The user reopened the same invitation, clicked `Accept invite`, and reported that the remaining checks passed.
+- One member membership was created at `2026-10-17 23:07:45.704621 UTC`. The invitation was accepted by the intended user at `2026-10-17 23:07:45.762 UTC`.
+- The target user now has exactly two memberships: the original owned workspace and the invited workspace. The invitation is accepted with one matching invited-workspace membership.
+- Global staging counts are five Auth users, five profiles, four workspaces, seven memberships, and one pending invitation. No Auth user, profile, identity, workspace, or billing record was duplicated.
+- The existing-password invitation gate passes. The final pending controlled invitation is the existing-Google case. Production was not changed and Production Email remains disabled.
+
+### Rollback
+
+No rollback is required. If this controlled membership must be removed later, treat that as separately approved staging-data cleanup rather than part of the acceptance test.

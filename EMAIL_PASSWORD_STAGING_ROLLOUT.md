@@ -24,6 +24,16 @@ Status: the confirmation-state log-safety staging gate passes. Email was tempora
 - Acceptance: cross-device signup, resend, recovery, invite, referral, and paid-plan intent must survive; expired, missing, reused, mismatched-email, and wrong-purpose flows must fail closed; concurrent flows must not overwrite one another; successful flows must be consumed; first-account bootstrap and invite-before-workspace behavior must remain unchanged. The ordinary log record may contain the non-secret flow UUID, but no sealed intent, OTP hash, password, invite token, raw email, or provider error.
 - Rollback: remove the branch-only Email flag and redeploy first. The additive server-only table can remain inert and protected while the application is rolled back. Do not restore the query-carried intent implementation merely to resume testing. Drop the table only in a separately reviewed cleanup after no deployed code references it and all rows have expired. No hosted template rollback is required because the template shape does not change.
 
+## Existing-password invitation checkpoint, 2026-10-18
+
+Status: the existing-password invitation case passes for `corisleachman+songroomtest@googlemail.com`. The initial verification correctly caught that login had succeeded before the final acceptance was submitted. The user then reopened the same invitation, completed acceptance, and reported that the remaining checks passed.
+
+- Auth evidence: the existing confirmed user signed in successfully at `2026-10-17 22:57:54 UTC`. The account still has exactly one Auth user, one identity, one profile, one owned workspace, and no Stripe customer.
+- Invite evidence: one member membership was created at `2026-10-17 23:07:45.704621 UTC`, and the controlled invitation was accepted by the intended user at `2026-10-17 23:07:45.762 UTC`. The target user now has exactly two memberships: the original owned workspace and the invited workspace.
+- Invariant evidence: global staging counts are five Auth users, five profiles, four workspaces, seven memberships, and one pending invitation. No Auth user, profile, identity, or workspace was duplicated.
+- The final pending controlled invitation is the existing-Google case for `corisleachman@googlemail.com`. Run that case next through `Continue with Google`, keeping Email signup out of the path.
+- Production remains unchanged and Google-only.
+
 ## Referral and invitation repair, 2026-10-11
 
 - Migration `supabase/migrations/20261011161736_harden_account_invites_access.sql` enables RLS on the server-only invite table, revokes all table privileges from `anon` and `authenticated`, fixes `account_invites_sync_derived_fields()` to `search_path = ''`, and revokes its execute permission from `PUBLIC` and both client roles. The migration was applied to staging first and then Production only after the staging state, advisor result, and service-role read were verified. Both hosted migration ledgers were aligned to the repository version and the linked Production migration list has no gap.
