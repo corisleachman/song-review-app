@@ -8097,3 +8097,33 @@ Recorded the user's successful switch-account, Email/password login, and final i
 ### Rollback
 
 No rollback is required. If this controlled membership must be removed later, treat that as separately approved staging-data cleanup rather than part of the acceptance test.
+
+---
+
+## 2026-10-18 - Pass the existing-Google invitation journey
+
+### What we were trying to achieve
+
+Complete the final controlled workspace invitation with an existing Google account while preserving its canonical identity and owned workspace.
+
+### Feature / change being made
+
+Recorded the user's successful Google sign-in and invitation acceptance, verified the resulting staging records, and prepared the bounded referral-signup baseline.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `UPDATE_LOG.md`
+
+### Verification and rollout state
+
+- The target remains one Auth user, one Google identity, one profile, and one owned workspace. No duplicate Auth identity, profile, or workspace was created.
+- One member membership was created at `2026-10-17 23:13:02.121756 UTC`, and the invitation was accepted by the intended user at `2026-10-17 23:13:02.21 UTC`.
+- The target now has exactly two memberships: the original owned workspace and the invited workspace. Its existing Stripe customer remains on the original owned workspace.
+- Global staging counts are five Auth users, five profiles, four workspaces, eight memberships, and zero pending invitations. The controlled invitation matrix passes.
+- The documented fresh referral-test alias has no Auth user. Staging has zero referral rows, and the selected referrer has one active workspace-bound code. This is the clean baseline for the cross-browser referral signup.
+- Production was not changed and Production Email remains disabled.
+
+### Rollback
+
+No application rollback is required. Any later cleanup of controlled staging memberships must be separately approved and must not be mixed into the acceptance matrix.

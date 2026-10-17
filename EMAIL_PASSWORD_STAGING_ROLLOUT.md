@@ -34,6 +34,16 @@ Status: the existing-password invitation case passes for `corisleachman+songroom
 - The final pending controlled invitation is the existing-Google case for `corisleachman@googlemail.com`. Run that case next through `Continue with Google`, keeping Email signup out of the path.
 - Production remains unchanged and Google-only.
 
+## Existing-Google invitation checkpoint, 2026-10-18
+
+Status: the existing-Google invitation case passes for `corisleachman@googlemail.com`. The protected Preview reused the existing canonical Google identity and accepted the final controlled invitation.
+
+- Identity evidence: the target remains one Auth user, one Google identity, one profile, and one owned workspace. The existing Stripe customer on that owned workspace is unchanged; no new Auth identity, profile, or workspace was created.
+- Invite evidence: one member membership was created at `2026-10-17 23:13:02.121756 UTC`, and the controlled invitation was accepted by the intended user at `2026-10-17 23:13:02.21 UTC`. The target now has exactly two memberships: the original owned workspace and the invited workspace.
+- Invariant evidence: global staging counts are five Auth users, five profiles, four workspaces, eight memberships, and zero pending invitations. All three controlled live invitations are resolved.
+- Referral baseline: the documented fresh referral-test alias does not exist in Auth. Staging still has zero referral rows, and the chosen referrer has one active workspace-bound referral code. The next case is a new direct Free Email signup entered through that referral link, with confirmation completed in another browser to prove the sealed referral context survives cross-browser confirmation.
+- Production remains unchanged and Google-only.
+
 ## Referral and invitation repair, 2026-10-11
 
 - Migration `supabase/migrations/20261011161736_harden_account_invites_access.sql` enables RLS on the server-only invite table, revokes all table privileges from `anon` and `authenticated`, fixes `account_invites_sync_derived_fields()` to `search_path = ''`, and revokes its execute permission from `PUBLIC` and both client roles. The migration was applied to staging first and then Production only after the staging state, advisor result, and service-role read were verified. Both hosted migration ledgers were aligned to the repository version and the linked Production migration list has no gap.
