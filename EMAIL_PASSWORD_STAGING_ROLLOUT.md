@@ -68,6 +68,19 @@ Status: the Pro annual Email journey passes. The user reported that cross-browse
 - Run Studio monthly next in a brand-new private browser session that has never opened the referral link. It must stop on the preselected Studio monthly confirmation and must not open Stripe automatically.
 - Production remains unchanged and Google-only.
 
+## Studio monthly Email checkpoint, 2026-10-21
+
+Status: the Studio monthly Email journey passes, with a deliberate recovery from an interrupted confirmation handoff. The user first opened the single-use confirmation link in the original browser and closed that window before continuation completed. Opening the same link in a fresh private browser then showed the intended expired-or-used explanation. Staging confirmed that the Auth user and Email identity existed and the address was verified, while no profile, workspace, or membership had yet been created.
+
+- The user opened an allowlisted Studio monthly login destination in the fresh private browser, signed in with the newly confirmed account, and reported that every remaining check passed. The journey stopped on Song Room's Studio monthly confirmation at £19 per month and did not open Stripe automatically.
+- Account evidence: the designated Studio alias has exactly one Auth user, one identity, one profile, one Free workspace, and one owner membership. The account has no Stripe customer, subscription, checkout session, or referral attribution.
+- Timing evidence: Auth creation and confirmation occurred at 11:05 and 11:06 UTC. The recovery login occurred at 12:03:50 UTC, followed by profile, workspace, and membership creation over the next two seconds. This matches confirmation succeeding before the interrupted continuation and the later login safely completing first-account bootstrap.
+- Flow evidence: the original successful confirmation flow was consumed. Two later unused signup flow rows were created for the already-confirmed address during the retry sequence, matching two successful signup requests and one resend request in Auth logs. They are server-only, email-hash-bound, non-authoritative without a successful OTP exchange, and expired closed by 12:09:56 UTC.
+- Log evidence: Auth recorded successful verification and password login activity on the stable protected host. The checked window contained non-secret `flow` identifiers and zero legacy `intent`, sealed `v1.` value, or token hash. The retained Preview runtime window contained no error, warning, fatal, `500`, sealed-intent, or token-hash match.
+- Global staging counts are eight Auth users, eight profiles, seven workspaces, eleven memberships, two pending referrals, zero checkout sessions, and zero billing subscriptions.
+- The paid-tier Email entry gate now passes for Pro annual and Studio monthly. Broader plan variations, abuse checks, remaining browser coverage, PR conflict resolution, and Production rollout remain separate work.
+- Production remains unchanged and Google-only.
+
 ## Referral and invitation repair, 2026-10-11
 
 - Migration `supabase/migrations/20261011161736_harden_account_invites_access.sql` enables RLS on the server-only invite table, revokes all table privileges from `anon` and `authenticated`, fixes `account_invites_sync_derived_fields()` to `search_path = ''`, and revokes its execute permission from `PUBLIC` and both client roles. The migration was applied to staging first and then Production only after the staging state, advisor result, and service-role read were verified. Both hosted migration ledgers were aligned to the repository version and the linked Production migration list has no gap.

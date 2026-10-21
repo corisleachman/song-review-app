@@ -8191,3 +8191,35 @@ Recorded the user's successful Pro annual journey and verified its account, bill
 ### Rollback
 
 No application rollback is required. Do not delete the incidental controlled referral during the active matrix; any staging-data cleanup requires separate approval.
+
+---
+
+## 2026-10-21 - Pass Studio monthly Email intent
+
+### What we were trying to achieve
+
+Prove that Studio monthly selection reaches Song Room's plan confirmation without automatic Stripe entry, while safely recovering from a confirmation window closed before account bootstrap finished.
+
+### Feature / change being made
+
+Recorded the user's successful Studio monthly journey and verified its Auth, account, billing, referral, flow, and log effects.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `UPDATE_LOG.md`
+
+### Verification and rollout state
+
+- The first confirmation click successfully verified the address and consumed its one-time link, but the browser closed before `/auth/continue` created the profile and workspace. Reopening the link in a fresh browser showed the intended expired-or-used explanation.
+- A read-only staging check at that point found one confirmed Auth user and one identity, with no profile, workspace, or membership. The user then signed in through an allowlisted Studio monthly destination and reported that the journey reached Studio at £19 per month without opening Stripe automatically.
+- The completed state has exactly one Auth user, one identity, one profile, one Free workspace, and one owner membership for the designated alias. It has no Stripe customer, subscription, checkout session, or referral row.
+- The timestamps show the recovery login at 12:03:50 UTC, followed by profile, workspace, and membership creation over the next two seconds. Staging still has zero checkout sessions and zero billing subscriptions.
+- The original successful confirmation flow was consumed. Two later retry flow rows for the already-confirmed address matched two additional signup requests and one resend request. They were server-only, short-lived, and expired closed by 12:09:56 UTC.
+- Auth logs contained successful verification and password login activity on the stable protected host, with no legacy intent, sealed intent, or token hash. The retained Preview window had no error, warning, fatal, `500`, sealed-intent, or token-hash match.
+- Global staging counts are eight Auth users, eight profiles, seven workspaces, eleven memberships, two pending referrals, zero checkout sessions, and zero billing subscriptions.
+- This passes the Studio monthly Email entry case and closes the selected paid-tier gate alongside the earlier Pro annual pass. Production was not changed and Production Email remains disabled.
+
+### Rollback
+
+No application rollback is required. The retry flow rows are inert after expiry and will be removed by the next flow-creation cleanup; no manual database change is needed.
