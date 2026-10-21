@@ -305,7 +305,7 @@
 
 .ghost {
   background: var(--color-glass-light);
-  color: var(--color-text-secondary);
+  color: rgba(244, 237, 228, 0.62);
   border: 1px solid var(--color-border);
 }
 

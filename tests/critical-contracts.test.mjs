@@ -1103,7 +1103,9 @@ test('mobile marketing leads with the approved Song Room bento wordmark', () => 
 
 test('mobile homepage keeps its primary CTA visible in the thumb zone', () => {
   const marketing = read('public/marketing.html');
+  const responsiveStart = marketing.indexOf('@media (max-width: 900px) {', marketing.indexOf('RESPONSIVE'));
   const phoneStart = marketing.indexOf('@media (max-width: 600px), (max-width: 900px) and (max-height: 600px) {', marketing.indexOf('RESPONSIVE'));
+  const responsiveCss = marketing.slice(responsiveStart, phoneStart);
   const phoneEnd = marketing.indexOf('@media (prefers-reduced-motion: reduce)', phoneStart);
   const phoneCss = marketing.slice(phoneStart, phoneEnd);
   const heroCtaStart = marketing.indexOf('<div class="hero-cta-row" id="hero-cta">');
@@ -1119,6 +1121,8 @@ test('mobile homepage keeps its primary CTA visible in the thumb zone', () => {
   assert.match(phoneCss, /\.btn-ghost\s*\{[^}]*min-height:\s*44px;[^}]*justify-content:\s*center;/u);
   assert.match(phoneCss, /\.desktop-hero-secondary\s*\{[^}]*display:\s*none;/u);
   assert.match(phoneCss, /\.mobile-login-cta\s*\{[^}]*display:\s*flex;/u);
+  assert.match(responsiveCss, /\.feature-row\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/u);
+  assert.match(responsiveCss, /\.feature-row > \*\s*\{[^}]*min-width:\s*0;/u);
   assertIncludesAll(heroCta, [
     'class="btn-primary" href="/signup/free"',
     'class="btn-ghost desktop-hero-secondary" href="#features"',
@@ -1256,6 +1260,7 @@ test('tier-aware signup preserves a strict plan choice through Google auth and c
   const upgrade = read('app/upgrade/page.tsx');
   const checkout = read('app/api/billing/checkout/route.ts');
   const planSettings = read('app/settings/plan/page.tsx');
+  const upgradeCss = read('app/upgrade/upgrade.module.css');
 
   assertIncludesAll(signupPage, [
     'getSignupIntent(plan, billing)',
@@ -1311,6 +1316,7 @@ test('tier-aware signup preserves a strict plan choice through Google auth and c
   assertIncludesAll(planSettings, [
     "router.push('/upgrade?returnTo=settings')",
   ], 'Plan & Billing upgrade origin');
+  assert.match(upgradeCss, /\.ghost\s*\{[^}]*color:\s*rgba\(244, 237, 228, 0\.62\);/u);
   assertIncludesAll(checkout, [
     "resolved.identity.membershipRole !== 'owner'",
     'body.plan === \'studio\' ? \'studio\' : \'pro\'',

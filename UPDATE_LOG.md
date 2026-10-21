@@ -8223,3 +8223,34 @@ Recorded the user's successful Studio monthly journey and verified its Auth, acc
 ### Rollback
 
 No application rollback is required. The retry flow rows are inert after expiry and will be removed by the next flow-creation cleanup; no manual database change is needed.
+
+---
+
+## 2026-10-21 - Fix WebKit homepage overflow and plan-button contrast
+
+### What we were trying to achieve
+
+Remove two real browser-matrix failures found after the paid-tier Email journeys passed: horizontal page overflow on a phone-sized WebKit viewport and an inactive plan button that narrowly missed WCAG AA contrast.
+
+### Feature / change being made
+
+Allowed the stacked feature grid to shrink below its content's intrinsic width on narrow screens, and raised the inactive plan button text opacity enough to provide a safe contrast margin without changing the button hierarchy.
+
+### Files changed
+
+- `public/marketing.html`
+- `app/upgrade/upgrade.module.css`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Verification and rollout state
+
+- Contract coverage now protects the narrow feature-grid sizing rule and the stronger inactive plan-button text color.
+- All 91 repository tests and TypeScript passed.
+- The Chromium browser suite passed all 20 applicable tests, with 10 intentional skips.
+- In the WebKit browser suite, the Studio plan contrast check and 390px homepage overflow check now pass. The suite completed with 15 passes, 10 intentional skips, and five keyboard-focus failures caused by WebKit following Safari's macOS Full Keyboard Access preference rather than tabbing through otherwise native links and buttons.
+- This change is scoped to the protected branch Preview. It does not alter Production configuration or Production data.
+
+### Rollback
+
+Revert these two selector changes. There is no migration, hosted configuration change, or data rollback.
