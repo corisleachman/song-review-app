@@ -56,6 +56,18 @@ Status: the cross-browser Email referral case passes. The user entered through t
 - The Pro and Studio controlled aliases do not exist in Auth. Paid-tier Email entry is next, starting with Pro annual. It must stop on the preselected upgrade confirmation and must not open Stripe automatically.
 - Production remains unchanged and Google-only.
 
+## Pro annual Email checkpoint, 2026-10-21
+
+Status: the Pro annual Email journey passes. The user reported that cross-browser confirmation opened Song Room's preselected Pro annual confirmation at £86 per year and did not open Stripe automatically.
+
+- Account evidence: the designated Pro alias has exactly one Auth user, one identity, one profile, one workspace, and one owner membership. The workspace remains Free until checkout completes and has no Stripe customer or subscription.
+- Billing evidence: staging still has zero checkout sessions and zero billing subscriptions. The temporary Email flow was consumed.
+- Log evidence: the inspected Auth window contains one signup, one verification, one non-secret `flow` identifier, and zero legacy `intent`, sealed `v1.` value, token hash, or wrong Preview host. Recent Preview runtime searches found no error, warning, fatal, `500`, or sealed-intent match.
+- Test-isolation note: the Pro account also received one valid pending referral from the earlier controlled referrer. The original referral-entry browser retained its 30-day referral cookie because confirmation and bootstrap finished in a different browser; reusing that original browser carried the cookie into the Pro signup. This does not invalidate the Pro plan-intent or no-auto-checkout result, but the case is not referral-neutral.
+- Global staging counts are seven Auth users, seven profiles, six workspaces, ten memberships, two pending referrals, zero pending invitations, zero checkout sessions, and zero billing subscriptions.
+- Run Studio monthly next in a brand-new private browser session that has never opened the referral link. It must stop on the preselected Studio monthly confirmation and must not open Stripe automatically.
+- Production remains unchanged and Google-only.
+
 ## Referral and invitation repair, 2026-10-11
 
 - Migration `supabase/migrations/20261011161736_harden_account_invites_access.sql` enables RLS on the server-only invite table, revokes all table privileges from `anon` and `authenticated`, fixes `account_invites_sync_derived_fields()` to `search_path = ''`, and revokes its execute permission from `PUBLIC` and both client roles. The migration was applied to staging first and then Production only after the staging state, advisor result, and service-role read were verified. Both hosted migration ledgers were aligned to the repository version and the linked Production migration list has no gap.

@@ -8159,3 +8159,35 @@ Recorded the user's successful cross-browser referral signup and verified the re
 ### Rollback
 
 No application rollback is required. Keep the controlled pending referral for the paid-tier discount inspection; any later staging-data cleanup requires separate approval.
+
+---
+
+## 2026-10-21 - Pass Pro annual Email intent
+
+### What we were trying to achieve
+
+Prove that Pro annual selection survives Email signup and cross-browser confirmation, then stops on Song Room's plan confirmation without opening Stripe automatically.
+
+### Feature / change being made
+
+Recorded the user's successful Pro annual journey and verified its account, billing, flow-consumption, referral, and log effects.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `UPDATE_LOG.md`
+
+### Verification and rollout state
+
+- The user reported that confirmation opened the preselected Pro annual screen at £86 per year and did not open Stripe automatically.
+- The designated Pro alias has exactly one Auth user, one identity, one profile, one Free workspace, and one owner membership. There is no Stripe customer or subscription.
+- Staging still has zero checkout sessions and zero billing subscriptions. The temporary Email flow was consumed.
+- Auth logs recorded one signup and one verification on the stable protected host, with one non-secret flow identifier and no legacy intent, sealed intent, token hash, or wrong Preview host. Recent Preview runtime searches returned no error, warning, fatal, `500`, or sealed-intent match.
+- The Pro account also received one valid pending referral because the original referral-entry browser still held its 30-day referral cookie after the prior cross-browser confirmation. This does not invalidate the Pro intent result, but it means the test was not referral-neutral.
+- Global staging counts are seven Auth users, seven profiles, six workspaces, ten memberships, two pending referrals, zero pending invitations, zero checkout sessions, and zero billing subscriptions.
+- The next Studio monthly test must use a brand-new private browser session that has never opened the referral link.
+- Production was not changed and Production Email remains disabled.
+
+### Rollback
+
+No application rollback is required. Do not delete the incidental controlled referral during the active matrix; any staging-data cleanup requires separate approval.
