@@ -10,6 +10,9 @@ const intentModule = await import(pathToFileURL(path.join(repoRoot, 'lib/authInt
 const emailPasswordModule = await import(
   pathToFileURL(path.join(repoRoot, 'lib/emailPasswordAuthCore.ts')).href
 );
+const emailLoginRateLimitModule = await import(
+  pathToFileURL(path.join(repoRoot, 'lib/emailLoginRateLimitCore.ts')).href
+);
 const pendingEmailAuthModule = await import(
   pathToFileURL(path.join(repoRoot, 'lib/pendingEmailAuthCore.ts')).href
 );
@@ -34,6 +37,13 @@ const {
   parseManagedPasswordInput,
   parsePasswordResetInput,
 } = emailPasswordModule;
+const {
+  EMAIL_LOGIN_RATE_LIMIT_MAX_ATTEMPTS,
+  EMAIL_LOGIN_RATE_LIMIT_WINDOW_SECONDS,
+  hashEmailLoginVisitorIp,
+  parseEmailLoginRateLimitDecision,
+  readVercelVisitorIp,
+} = emailLoginRateLimitModule;
 const {
   getExistingAccountReturnPath,
   getSignupReturnPath,
@@ -207,6 +217,58 @@ test('email auth rejects missing or oversized Turnstile tokens', () => {
     captchaToken: 'x'.repeat(4097),
   }).ok, false);
   assert.equal(parseEmailResendInput({ email: 'alex@example.com' }).ok, false);
+});
+
+test('email login limiter derives a private stable key from Vercel visitor IP', () => {
+  const ipv4Headers = new Headers({ 'x-vercel-forwarded-for': '203.0.113.42' });
+  const ipv6Headers = new Headers({ 'x-vercel-forwarded-for': '2001:db8::42' });
+  const secret = 'preview-only-email-login-rate-limit-secret';
+
+  assert.equal(readVercelVisitorIp(ipv4Headers), '203.0.113.42');
+  assert.equal(readVercelVisitorIp(ipv6Headers), '2001:db8::42');
+  assert.equal(readVercelVisitorIp(new Headers()), null);
+  assert.equal(
+    readVercelVisitorIp(new Headers({ 'x-vercel-forwarded-for': '203.0.113.42, 198.51.100.4' })),
+    null,
+  );
+
+  const hash = hashEmailLoginVisitorIp('203.0.113.42', secret);
+  assert.match(hash, /^[0-9a-f]{64}$/u);
+  assert.equal(hash.includes('203.0.113.42'), false);
+  assert.equal(hash, hashEmailLoginVisitorIp('203.0.113.42', secret));
+  assert.notEqual(hash, hashEmailLoginVisitorIp('203.0.113.42', `${secret}-other-environment`));
+  assert.throws(() => hashEmailLoginVisitorIp('not-an-ip', secret), /visitor address is invalid/u);
+  assert.throws(() => hashEmailLoginVisitorIp('203.0.113.42', 'too-short'), /at least 32 bytes/u);
+});
+
+test('email login limiter accepts only one bounded database decision row', () => {
+  assert.equal(EMAIL_LOGIN_RATE_LIMIT_MAX_ATTEMPTS, 15);
+  assert.equal(EMAIL_LOGIN_RATE_LIMIT_WINDOW_SECONDS, 300);
+  assert.deepEqual(parseEmailLoginRateLimitDecision([{
+    allowed: true,
+    attempt_count: 15,
+    retry_after_seconds: 42,
+  }]), {
+    allowed: true,
+    attemptCount: 15,
+    retryAfterSeconds: 42,
+  });
+  assert.deepEqual(parseEmailLoginRateLimitDecision([{
+    allowed: false,
+    attempt_count: 16,
+    retry_after_seconds: 300,
+  }]), {
+    allowed: false,
+    attemptCount: 16,
+    retryAfterSeconds: 300,
+  });
+  assert.equal(parseEmailLoginRateLimitDecision([]), null);
+  assert.equal(parseEmailLoginRateLimitDecision([{ allowed: false, attempt_count: 16 }]), null);
+  assert.equal(parseEmailLoginRateLimitDecision([{
+    allowed: false,
+    attempt_count: 16,
+    retry_after_seconds: 301,
+  }]), null);
 });
 
 test('verification resend validates email without accepting password data', () => {

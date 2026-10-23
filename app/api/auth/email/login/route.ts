@@ -7,6 +7,7 @@ import {
   createAuthIntent,
 } from '@/lib/authIntent';
 import { parseEmailLoginInput } from '@/lib/emailPasswordAuthCore';
+import { consumeEmailLoginAttempt } from '@/lib/emailLoginRateLimit';
 import {
   createEmailAuthClient,
   emailAuthJson,
@@ -20,6 +21,23 @@ export async function POST(request: NextRequest) {
 
   const parsed = parseEmailLoginInput(await readEmailAuthJson(request));
   if (parsed.ok === false) return emailAuthJson({ error: parsed.error, field: parsed.field }, 400);
+
+  const rateLimit = await consumeEmailLoginAttempt(request);
+  if (rateLimit.ok === false) {
+    console.error(`[email-login-rate-limit] ${rateLimit.reason}`);
+    return emailAuthJson(
+      { error: 'Email login is temporarily unavailable. Please try again shortly.' },
+      503,
+    );
+  }
+  if (!rateLimit.decision.allowed) {
+    const response = emailAuthJson(
+      { error: 'Too many login attempts. Please wait a few minutes and try again.' },
+      429,
+    );
+    response.headers.set('Retry-After', String(rateLimit.decision.retryAfterSeconds));
+    return response;
+  }
 
   const destination = normalizeAuthDestination(parsed.value.destination);
   const intentToken = createAuthIntent({

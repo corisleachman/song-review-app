@@ -14,6 +14,10 @@ export function isEmailPasswordAuthReady() {
     && getTurnstileSiteKey().length > 0;
 }
 
+export function isEmailLoginRateLimitEnabled() {
+  return process.env.EMAIL_LOGIN_RATE_LIMIT_ENABLED?.trim().toLowerCase() === 'true';
+}
+
 export function isSignedInPasswordManagementReady() {
   return isEmailPasswordAuthReady()
     && process.env.SIGNED_IN_PASSWORD_MANAGEMENT_ENABLED?.trim().toLowerCase() === 'true';

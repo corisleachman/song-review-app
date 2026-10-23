@@ -1486,6 +1486,9 @@ test('email login and signup stay default-off behind the server readiness bounda
   const featureFlag = read('lib/authFeatureFlags.ts');
   const config = read('app/api/auth/email/config/route.ts');
   const loginRoute = read('app/api/auth/email/login/route.ts');
+  const loginRateLimit = read('lib/emailLoginRateLimit.ts');
+  const loginRateLimitCore = read('lib/emailLoginRateLimitCore.ts');
+  const loginRateLimitMigration = read('supabase/migrations/20261023174605_email_login_rate_limits.sql');
   const signupRoute = read('app/api/auth/email/signup/route.ts');
   const resendRoute = read('app/api/auth/email/resend/route.ts');
   const authFlows = read('lib/emailAuthFlows.ts');
@@ -1511,6 +1514,7 @@ test('email login and signup stay default-off behind the server readiness bounda
     "process.env.EMAIL_PASSWORD_AUTH_ENABLED?.trim().toLowerCase() === 'true'",
     'process.env.AUTH_INTENT_SECRET?.trim().length',
     'getTurnstileSiteKey().length > 0',
+    "process.env.EMAIL_LOGIN_RATE_LIMIT_ENABLED?.trim().toLowerCase() === 'true'",
   ], 'email auth readiness');
   assert.match(config, /enabled: isEmailPasswordAuthReady\(\)/u);
   assertIncludesAll(loginRoute, [
@@ -1521,7 +1525,43 @@ test('email login and signup stay default-off behind the server readiness bounda
     'AUTH_INTENT_COOKIE',
     "continueTo: '/auth/continue'",
     'options: { captchaToken: parsed.value.captchaToken }',
+    'await consumeEmailLoginAttempt(request)',
+    "response.headers.set('Retry-After'",
+    '429',
+    '503',
   ], 'password login route');
+  assertOrdered(loginRoute, [
+    'parseEmailLoginInput',
+    'await consumeEmailLoginAttempt(request)',
+    'const intentToken = createAuthIntent',
+    'supabase.auth.signInWithPassword',
+  ], 'password login limiter order');
+  assertIncludesAll(loginRateLimit, [
+    'isEmailLoginRateLimitEnabled()',
+    'readVercelVisitorIp(request.headers)',
+    'EMAIL_LOGIN_RATE_LIMIT_SECRET',
+    "supabaseServer.rpc('consume_email_login_attempt'",
+    "reason: 'rpc_failed'",
+    "reason: 'invalid_result'",
+  ], 'server-only password login limiter');
+  assertIncludesAll(loginRateLimitCore, [
+    "headers.get('x-vercel-forwarded-for')",
+    "createHmac('sha256'",
+    'EMAIL_LOGIN_RATE_LIMIT_MAX_ATTEMPTS = 15',
+    'EMAIL_LOGIN_RATE_LIMIT_WINDOW_SECONDS = 300',
+  ], 'password login limiter privacy boundary');
+  assertIncludesAll(loginRateLimitMigration, [
+    'alter table public.email_login_rate_limits enable row level security',
+    'from public, anon, authenticated, service_role',
+    'to service_role',
+    'security invoker',
+    "set search_path = ''",
+    'for update skip locked',
+    'limit 100',
+    'on conflict (client_hash) do update',
+    'v_attempt_count <= 15',
+  ], 'password login limiter database boundary');
+  assert.doesNotMatch(loginRateLimitMigration, /security definer/iu);
   assertIncludesAll(signupRoute, [
     'parseEmailSignupInput',
     'REFERRAL_COOKIE_NAME',

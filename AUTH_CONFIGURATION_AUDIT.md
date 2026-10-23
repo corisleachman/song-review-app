@@ -127,8 +127,8 @@ Production and staging also match here:
 - Single-session enforcement is off. Session time-box and inactivity timeout are both `0` (never).
 - Access tokens expire after 3,600 seconds.
 - Compromised refresh-token detection is on with a 10-second reuse interval.
-- Token refresh is limited to 150 requests per five minutes per IP. Token or magic-link verification is limited to 30 per five minutes per IP.
-- Signup and sign-in are limited to 30 requests per five minutes per IP. Anonymous and Web3 limits are present but their providers are disabled.
+- The token endpoint is limited to 150 requests per five minutes per IP, with a burst capacity of 30. Supabase's current documentation says this bucket covers password, refresh-token, ID-token, and PKCE grants. Token or magic-link verification is limited to 30 per five minutes per IP.
+- The dashboard's separate signup and sign-in field is limited to 30 requests per five minutes per IP, but the app's password login uses the `/auth/v1/token` password grant and therefore does not use that bucket. Anonymous and Web3 limits are present but their providers are disabled.
 - IP address forwarding is off.
 - The email-send rate field is locked while the built-in email service is active and the dashboard does not show a numeric value. Custom SMTP and its intended beta send rate must be configured and tested before release.
 
@@ -154,6 +154,8 @@ These are names and scopes. The staging Turnstile secret exists only in Supabase
 | `EMAIL_PASSWORD_AUTH_ENABLED` | Server-only, separate Preview and Production values | `false` when missing |
 | `AUTH_INTENT_SECRET` | Server-only sensitive value, different in Preview and Production | No fallback; intent creation fails closed |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Public, separate Preview and Production values | Feature unavailable when missing |
+| `EMAIL_LOGIN_RATE_LIMIT_ENABLED` | Server-only, separate Preview and Production values | `false` when missing; the implemented login route returns `503` instead of bypassing the limiter |
+| `EMAIL_LOGIN_RATE_LIMIT_SECRET` | Server-only sensitive value, different in Preview and Production | No fallback; the implemented login route returns `503` before Supabase Auth |
 | Turnstile secret key | Sensitive value stored in each Supabase project's Auth bot-protection settings, not Vercel | Configured in staging only; Production remains off |
 
 Supabase SMTP credentials should remain in the Supabase Auth configuration unless the approved delivery design changes. They should not be copied into application variables without a reason.
