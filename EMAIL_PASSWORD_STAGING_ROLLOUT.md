@@ -319,3 +319,231 @@ Hide the Email UI by removing or setting `EMAIL_PASSWORD_AUTH_ENABLED=false` on 
 - The old browser-only reset page's eight-character instruction was replaced with the hosted 12-to-128-character rule. Focused TypeScript, lint, contract, and mocked desktop/phone browser checks passed locally. Code commit `ffb7fb2d` is pushed to draft PR #55. Primary protected Preview `dpl_9bbBYhTZu2P1z1eysELMqyyGSbbQ` is Ready at the stable `codex/email-password-staging-forms` alias, and both Vercel checks plus Preview Comments passed. The enabled config endpoint, invalid-link page, unsigned-reset rejection, and Email Login return path passed read-only hosted checks. No real recovery email, Auth token, password update, or other-session revocation has been tested yet.
 - Completed with separate approval: the staging Supabase **Reset password** template link changed from `{{ .ConfirmationURL }}` to `{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=recovery`. Before saving, the subject and full source matched the original captured in `STAGING_AUTH_TEMPLATE_BASELINE.md`. The subject stayed `Reset Your Password`; the heading, sentence, and button text were unchanged. Supabase disabled Save after the edit, and a full reload showed the exact new source with Save disabled. No Auth email was sent. The generated URL and token must be checked during a separately approved live staging test, using the stable protected Preview alias without recording or sharing the token.
 - Keep PR #55 draft and Production Google-only. The unique deployment URL produced Turnstile `110200`, which Cloudflare defines as an unauthorized hostname; use the configured stable branch alias for real tests. That alias rendered a successful widget. The deployed recovery pages are not a complete live reset test. With separate approval, change the staging template and run a controlled reset using the designated test mailbox. Stop on any broken redirect, Auth error, duplicate identity, unexpected email disclosure, or failed login with the new password. If needed, disable only the branch-scoped Email flag and redeploy; restore the captured staging template if the link contract must be rolled back.
+
+## Browser matrix checkpoint, 2026-10-21
+
+Status: the available Chromium, Firefox, WebKit, and desktop Safari coverage passes for the public Email entry boundary on protected Preview `dpl_CrWtwDedS4JR9NGhSJntxjmvbCa6` at commit `696869740dea136ab43bedca0c7ef531cb05fbbd`.
+
+- Chromium passed all 20 applicable browser tests, with 10 intentional project skips.
+- WebKit passed the repaired 390-pixel homepage overflow and upgrade-plan contrast checks. Its five automated focus failures were traced to Safari's macOS Full Keyboard Access preference rather than missing native controls.
+- Real desktop Safari confirmed that plain Tab stays on page content while Full Keyboard Access is off. Safari's standard Option-Tab reached the homepage `Start for free` link, the signed-out Google login button, and the cookie `Reject` button. Enter opened the signup route and dismissed the cookie panel. The Google button showed a clear visible focus outline. No system setting was changed.
+- Firefox passed all 20 applicable tests in the serial warm-build rerun, with 10 intentional skips. Four failures in the initial parallel run were Next.js development compilation timeouts; each passed with one worker and a longer assertion window.
+- The protected branch config remained `{"enabled":true,"passwordManagementEnabled":true}`. The deployment-scoped error, warning, and fatal log search around the hosted Safari checks was empty. No account was created, no credential was submitted, and no email or Stripe journey ran.
+- Two temporary Vercel share links were used to keep the browser checks signed out without weakening Deployment Protection. They expire automatically on 22 October 2026. Production was not changed and Production Email remains disabled.
+- Effective staging abuse and rate-limit behavior remains open. It needs a separately approved bounded test because repeated invalid sign-ins could temporarily rate-limit other staging traffic through shared Vercel egress.
+
+## Rate-limit preflight refresh, 2026-10-21
+
+Status: the read-only configuration review is complete. The approved live run stopped safely before the rate-limit boundary because its second provider-intended submission failed between Safari and Vercel. No hosted setting, user, email, application flag, or Production service was changed.
+
+- Staging still allows 30 Auth emails per hour project-wide, 30 signup/sign-in requests per five minutes per IP, 30 token verifications per five minutes per IP, and 150 token refreshes per five minutes per IP. The custom-SMTP per-user email interval remains 60 seconds.
+- IP address forwarding remains off. The Email routes still call Supabase server-side with the public anon key, so the hosted per-IP sign-in limit may see Vercel egress rather than the visitor's address. The app has no independent login-attempt throttle.
+- The proposed live proof is a five-minute quiet window followed by no more than 31 sequential login submissions for a controlled, confirmed-absent staging alias and a known-invalid password. Each submission must pass a fresh Turnstile check. Reconfirm that the alias is absent immediately before the run. Do not request recovery, resend verification, create an account, or use Production.
+- Stop immediately if any email is sent, a correct session is created, an account or identity changes, a token or password appears in a URL or log, a non-uniform provider message reaches the UI, or another staging sign-in is affected unexpectedly. Capture the attempt number, visible copy, response status, relevant redacted Auth/runtime log line, and screenshot before retrying.
+- After the bounded run, wait at least six minutes before the success-path control login. Review Supabase Auth logs and Preview runtime logs for the observed throttle boundary and secret-safe error handling. If no throttle appears by attempt 31, stop rather than increasing the burst; that result is evidence that the hosted limit is not a reliable visitor-level control through the current proxy path.
+- Immediately before the live run, the controlled alias was reconfirmed as absent in staging Auth. Chrome loaded the app but not the Cloudflare Turnstile runtime, so it sent no login request. Real Safari on the stable branch host rendered Turnstile and reached `Success!` without changing any browser or hosted setting.
+- One harness setup submission reached the application with an empty React password state and returned the expected validation `400`; it did not reach Supabase Auth. After entering the invalid password through normal browser input, the first provider-intended submission returned the uniform `Email or password wasn't recognised.` copy. Vercel recorded one `401`, and Supabase Auth recorded one password-grant `/token` request with `invalid_credentials` and status `400`.
+- The next provider-intended submission displayed `That request could not be completed. Check your connection and try again.` Vercel recorded no corresponding request and Supabase recorded no second password-grant request, locating the failure between Safari and Vercel rather than inside Supabase Auth. The run stopped immediately and no later attempt was sent.
+- The post-stop check still found zero Auth users for the controlled alias. No Auth mail endpoint was called. Preview logs contained neither the alias nor the test password, CAPTCHA token, token hash, or sealed intent, and there was no Email-login `5xx`. The hosted rate-limit boundary remains untested.
+- A later read-only inspection of the preserved Safari page found the exact browser error for the failed POST: `Failed to load resource: The network connection was lost.` The page still showed the generic connection copy and Turnstile subsequently returned to `Success!`. Vercel request logs contained only the expected validation `400` and first provider-intended `401`; staging Supabase logs contained only one password-grant `/token` request with `invalid_credentials` and status `400`. There was no second application or provider request. This confirms a browser or network transport interruption before Vercel, but does not identify why Safari lost that connection.
+- The retry harness must use a fresh stable-alias page with Safari Web Inspector open before the first submission. Submit only through the normal form, once per visibly successful Turnstile token. After every response, wait until the button is idle and the reset widget has visibly returned to `Success!` before the next submission. Count only requests present in Vercel's request log, retain Safari Network and Console evidence, and stop at the first browser transport error or any existing safety condition.
+- Do not resume the burst from attempt 3. The next run starts from zero after a new five-minute quiet window, rechecks that the controlled alias is absent, retains the original maximum of 31 provider-intended requests, and requires fresh approval.
+
+## Bounded rate-limit retry result, 2026-10-21
+
+Status: the approved retry completed safely at the 31-request cap, but it did not reach the configured 30-per-five-minute threshold. The rate-limit gate therefore remains open.
+
+- After a fresh five-minute quiet window, the controlled alias was reconfirmed as absent from staging Auth. The Safari harness used the stable protected branch alias, normal form submission, and a fresh successful Turnstile check for every attempt.
+- Exactly 31 provider-intended submissions reached the Preview between 22:11:31 and 22:21:06 UTC. Vercel recorded 31 Email-login responses, all `401`. Staging Supabase Auth recorded 31 password-grant `/token` requests, all status `400` with `invalid_credentials`. The page kept the same `Email or password wasn't recognised.` copy throughout.
+- No browser transport error, application `5xx`, provider throttle, session, account creation, or Auth email occurred. A post-run query still found zero Auth users for the controlled alias. The checked Preview log messages contained no controlled alias, password, CAPTCHA value, or Turnstile value.
+- The careful batch reconciliation stretched the run across 9 minutes 34 seconds. The busiest rolling five-minute window contained 19 requests, so the run never put 31 requests inside the provider's five-minute window. The absence of `429` is expected at that measured cadence and is not evidence that the hosted limit works or fails through Vercel.
+- Submissions stopped at the approved cap. Do not append more attempts to this run. The route and bucket review below supersedes the earlier proposal for a faster 31-request provider test.
+- Production was not touched. No hosted setting, deployment, database row, email, or payment changed.
+
+## Password-login rate-limit model correction, 2026-10-21
+
+Status: the previous test targeted the wrong hosted bucket. Do not repeat it with a faster Safari harness. The remaining abuse-control gap is visitor-level throttling before the Vercel function, not proof that a single interactive user can empty Supabase's token bucket.
+
+- The application route calls `supabase.auth.signInWithPassword`. The staging Auth evidence confirms that every provider-intended request reached `/auth/v1/token` with `grant_type=password`.
+- Supabase's current [Auth rate-limit documentation](https://supabase.com/docs/guides/auth/rate-limits) puts password, refresh-token, ID-token, and PKCE grants in the token-endpoint bucket. This project has that field set to 150 requests per five minutes per IP. The bucket can hold a burst of 30 and refills at the configured rate. The separate 30-per-five-minute signup and sign-in field does not govern these password grants.
+- At 150 requests per five minutes, the token bucket refills by roughly one request every two seconds. A sequential Turnstile flow taking several seconds per attempt cannot drain it, even if 31 submissions finish inside five minutes. A useful provider test would require a much faster request rate and would no longer represent the reviewed interactive flow.
+- The 31-request run reached two provider-visible source addresses, split 30 requests and one request. Because IP forwarding is off, those are Vercel source addresses rather than the browser visitor. This confirms that the hosted per-IP bucket is not a dependable visitor-level control for this server-proxied route.
+- A read-only Vercel Firewall lookup found no active custom firewall configuration for this project. No firewall rule or draft was created. The installed local Vercel CLI also lacks the current `firewall` subcommand, so any approved rule should be prepared through the current Vercel API or dashboard and independently inspected before publication.
+- The recommended next gate is a Preview-only Vercel Firewall rate-limit rule matching exactly `POST /api/auth/email/login`, keyed by visitor IP, using a fixed five-minute window. Start with a generous threshold of 15 and log excess requests without blocking. After reviewing the matches, separately approve a Preview `429` action and verify the 16th controlled attempt is stopped before the application and Supabase. Production stays unchanged until the Preview rule and normal login recovery both pass.
+- Rollback is to disable the rule or return its excess action to log-only. This approach needs no database table, secret, migration, or application deployment.
+
+## Preview firewall draft, 2026-10-21
+
+Status: the visitor-level observation rule is staged in Vercel and remains unpublished. It is not live on Preview or Production.
+
+- Draft rule: `Preview email login rate observation` (`rule_preview_email_login_rate_observation_nrjuSZ`).
+- Conditions are combined with AND: Request Path equals `/api/auth/email/login`, Method equals `POST`, and Environment equals `Preview`.
+- Rate limit configuration: Fixed Window, 300 seconds, 15 requests, keyed only by IP Address.
+- Threshold action: `Log`. The rule does not deny, challenge, redirect, or return `429` in this first stage.
+- Vercel shows one pending change and the message `Review changes to publish the updated Firewall configuration to production`. The rule detail page and review dialog were inspected; Publish was not selected.
+- An active-config API lookup still returned `Seawall Config not found`, consistent with there being no published custom firewall configuration for this project. The dashboard is the authoritative source for the staged draft because the available API lookup did not expose it under the attempted draft selector.
+- No request was sent through the draft, no deployment occurred, and no Vercel variable, Supabase setting, database row, email, or Production service changed.
+
+### Publication and rollback
+
+- Publishing is a separate external action and still needs the user's explicit decision in Vercel. Do not publish the current draft automatically.
+- After publication, the first check is that ordinary Preview Email login still returns its existing application result and Production remains unaffected. The observation test then sends at most 16 controlled Preview attempts with fresh Turnstile checks and confirms that only traffic over the threshold is logged.
+- Before any enforcement test, change only the Preview rule's threshold action from Log to `429`, stage that edit, inspect it, and obtain a separate publish decision. Rollback is to stage and publish either Log again or a disabled rule.
+
+## Preview firewall publication, 2026-10-23
+
+Status: the visitor-level observation rule is published and active. It matches Preview traffic only and remains log-only, so it does not block requests or return `429`.
+
+- Active rule: `Preview email login rate observation` (`rule_preview_email_login_rate_observation_nrjuSZ`).
+- The published detail page confirms the AND-combined conditions: Request Path equals `/api/auth/email/login`, Method equals `POST`, and Environment equals `Preview`.
+- The published rate limit remains Fixed Window, 300 seconds, 15 requests, keyed only by IP Address. The threshold action remains `Log`.
+- Vercel displayed `Firewall changes published`, the pending-change dialog cleared, and the enabled rule appeared in the active Project rules list with the Log action.
+- No login request, deployment, environment variable, Supabase setting, database row, email, or Production application configuration changed during publication verification.
+- The next gate is a bounded Preview observation run of at most 16 controlled attempts with fresh Turnstile checks. That test has not been started.
+
+### Rollback
+
+- Stage a change that disables the rule, inspect it, and have the user publish it. Because the active action is Log, the current rule cannot deny a legitimate request while rollback is being prepared.
+
+## Preview firewall observation run stopped safely, 2026-10-23
+
+Status: the approved 16-attempt observation run stopped after seven provider-intended requests when Safari lost the test window. The run did not reach the firewall threshold, so it neither passes nor fails the Preview rule.
+
+- Before the run, the controlled rate-limit alias was reconfirmed as absent from staging Auth. The published Vercel rule was active with its exact Preview-only path and method conditions, 15-request fixed-window threshold, visitor-IP key, and Log action. Its filtered traffic view contained no earlier match.
+- One initial form submission returned the application's local password-length validation because Safari's accessibility value setter had not updated React state. It did not reach Supabase and is not counted as a provider-intended request.
+- Exactly seven provider-intended password grants reached staging between 10:24:16 and 10:25:30 UTC. All seven returned provider status `400` with `invalid_credentials`; the Preview showed the same neutral `Email or password wasn't recognised.` copy after each attempt. Before every next counted submission, the reset Turnstile widget visibly returned to `Success!`.
+- After attempt seven, the Safari automation handle switched to a Start Page and the test window was no longer present in Safari's Window menu. The test stopped immediately and no eighth provider request was sent. This is a harness interruption, not evidence of an application or firewall defect.
+- The filtered Vercel Firewall traffic view remained empty. That is expected below the 15-request threshold because this rule logs only excess traffic. A post-stop staging query still found zero Auth users for the controlled alias.
+- No email, successful session, account, database row, hosted configuration, deployment, or Production service changed. The inspected provider entries contained no password or controlled alias.
+- Do not append nine attempts to this run. A valid retry starts from zero after a fresh five-minute quiet window and requires separate approval for at most 16 provider-intended submissions. Keep one Safari test window visible for the whole run and stop on the first transport or window-control anomaly.
+
+### Rollback
+
+No rollback is required for this stopped test. The active rule remains Preview-only and log-only. Its existing rollback is to stage and publish a disabled rule if observation later shows an unexpected match.
+
+## Second Preview firewall observation run expired below threshold, 2026-10-23
+
+Status: the separately approved restart reached nine provider-intended requests before Turnstile changed from automatic completion to an explicit human-verification checkbox. The fixed five-minute test window expired while waiting at that safety boundary, so the run stopped without sending request ten and remains inconclusive.
+
+- The run started only after a fresh five-minute quiet window and a read-only staging query reconfirmed that the controlled alias had zero Auth users.
+- Exactly nine distinct password grants reached staging between 10:30:51 and 10:32:43 UTC. All nine returned `invalid_credentials`, and the Preview retained the neutral `Email or password wasn't recognised.` response. Fresh Turnstile success was observed before each submitted request.
+- After request nine, Turnstile presented a `Verify you are human` checkbox rather than completing automatically. No checkbox click or tenth submission occurred. The user later reported that the same widget displayed `Success!`, but the original five-minute firewall window had already expired.
+- Seven later requests would not have proved the 15-request threshold inside the original window, so they were not sent. Do not append them to this run.
+- A post-run query still found zero staging Auth users for the controlled alias. No email, successful session, account, database row, hosted setting, deployment, or Production service changed.
+- The filtered firewall dashboard could not be re-read after the window because browser access to the existing tab was unavailable. Since the run stayed below the threshold, a missing excess-traffic match would not close the observation gate anyway.
+- Another valid observation requires a fresh five-minute quiet window, a new run from zero, and separate approval for at most 16 provider-intended requests. Stop again if Turnstile requires an explicit user action; do not continue the count across an expired fixed window.
+
+### Rollback
+
+No rollback is required. The active firewall rule remains Preview-only and log-only, and this run created no persistent application data.
+
+## Preview firewall observation gate passed, 2026-10-23
+
+Status: the fresh bounded run completed all sixteen provider-intended requests inside one five-minute window. Vercel logged exactly one excess request, so the Preview-only observation rule matched at the reviewed threshold without blocking the journey.
+
+- Before the run, more than five minutes had passed since earlier test traffic and the controlled alias was reconfirmed as absent from staging Auth.
+- Exactly sixteen distinct password grants reached staging between 13:38:40 and 13:40:28 UTC, a span of 1 minute 48 seconds. All sixteen returned status `400` with `invalid_credentials`.
+- Safari showed the same neutral `Email or password wasn't recognised.` response throughout. A fresh automatic Turnstile `Success!` preceded every submission, including request sixteen. No explicit human-verification click was needed.
+- The filtered Vercel Firewall traffic page showed `Logged 1`, with `/api/auth/email/login` as the single top request path and the protected Preview host as the single top host. The active firewall and one active custom rule remained visible.
+- Request sixteen still reached staging Auth, which is correct for the current Log action. The observation result proves the excess request is matched; it does not yet prove enforcement before the application or provider.
+- A post-run query still found zero staging Auth users for the controlled alias. No email, successful session, account, database row, deployment, hosted setting, or Production service changed.
+- The observation gate is complete. The next controlled gate is to change only this Preview rule's excess action from Log to `429` in a draft, inspect the retained path, method, environment, window, threshold, and visitor-IP key, then obtain a separate publication approval. Do not stage or publish that edit without explicit approval.
+
+### Rollback
+
+No rollback is required for the observation test. The active rule remains Preview-only and log-only. If a later enforcement test fails, stage and publish a return to Log before any broader rollout.
+
+## Preview 429 enforcement draft blocked by Vercel plan gate, 2026-10-23
+
+Status: no enforcement draft was created. The published rule remains Preview-only and its excess action remains `Log`.
+
+- Before editing, the rule was rechecked in Vercel: Request Path equals `/api/auth/email/login`, Method equals `POST`, Environment equals `Preview`, Fixed Window is 300 seconds, the threshold is 15 requests, the key is IP Address, and the action is `Log`.
+- Selecting `Too Many Requests (429)` opened Vercel's Upgrade to Pro panel. The panel lists Advanced WAF protection, including custom rules and rate limiting, as a Pro capability.
+- The upgrade was not continued. `Save Rule`, review, and publish were not selected, so there is no pending firewall change.
+- No billing, plan, deployment, environment variable, Supabase setting, database row, email, or Production configuration changed.
+- The observation gate remains complete. The enforcement gate is blocked until there is a separate decision either to approve the Vercel plan change or to review an application-level Preview-only control.
+
+### Rollback
+
+No rollback is required because the requested edit was not staged. The existing published Log rule remains the current safe state.
+
+## Application-level Email login limiter plan, 2026-10-23
+
+Status: design complete and reviewed against the current route, migration patterns, Supabase guidance, and Vercel request-header contract. Nothing in this section has been implemented or applied. The existing Preview firewall rule remains log-only and Production remains unchanged.
+
+### Decision
+
+Do not upgrade Vercel for WAF enforcement at this stage. Add one shared, database-backed fixed-window limiter immediately before `supabase.auth.signInWithPassword` in `POST /api/auth/email/login`. It is a credential-abuse control, not a replacement for Vercel's automatic DDoS protection, because the request will still invoke the Vercel function and make one database call before rejection.
+
+The limit remains the already observed value: fifteen syntactically valid login submissions per visitor IP in a database-clock five-minute window. Submissions one through fifteen may reach Supabase Auth. Submission sixteen returns `429` before the password grant. Successful and failed logins both count, and a successful login does not clear the bucket.
+
+### Privacy and request identity
+
+- Read the visitor address from Vercel's `x-vercel-forwarded-for` header. Vercel documents it as equivalent to its client-IP header and less exposed to an upstream proxy overwriting `x-forwarded-for`.
+- Convert the address to an HMAC-SHA-256 digest with a new server-only `EMAIL_LOGIN_RATE_LIMIT_SECRET`. Use a different generated secret in Preview and Production. Do not reuse `AUTH_INTENT_SECRET`, `FEEDBACK_IP_SALT`, or any Supabase credential.
+- Never store or log the raw IP, normalized email, password, CAPTCHA token, sealed intent, or full digest. The database stores only the 64-character digest, window start, attempt count, and expiry.
+- If the trusted visitor header, secret, or limiter result is unavailable while the limiter is enabled, fail closed with a generic `503` and do not call Supabase Auth. A database outage would already make the provider journey unreliable; silently bypassing the new control is the less safe failure mode.
+
+### Proposed database contract
+
+Create one additive migration with:
+
+- `public.email_login_rate_limits`, keyed by the client digest, with `window_started_at`, positive `attempt_count`, and `expires_at` columns plus an expiry index.
+- RLS enabled and no client policy. Revoke every table privilege from `PUBLIC`, `anon`, and `authenticated`. Grant only the minimum `SELECT`, `INSERT`, `UPDATE`, and `DELETE` privileges to `service_role`.
+- `public.consume_email_login_attempt(p_client_hash text)`, returning `allowed`, `attempt_count`, and `retry_after_seconds`. It uses one captured database timestamp, resets an expired bucket, and atomically increments an active bucket with `INSERT ... ON CONFLICT DO UPDATE`.
+- Keep cleanup bounded and inside the same short function call: delete at most a small batch of expired rows selected through the expiry index with `FOR UPDATE SKIP LOCKED` before upserting the current client. Every caller follows the same cleanup-then-upsert lock order, avoiding an unbounded delete and reducing deadlock risk under concurrent login attempts.
+- The function remains `SECURITY INVOKER`, sets `search_path = ''`, and fully qualifies every database object. Revoke execute from `PUBLIC`, `anon`, and `authenticated`; grant execute only to `service_role`.
+- The threshold and window live in the function as reviewed constants, fifteen and 300 seconds. Changing either later requires a migration review rather than an unnoticed environment edit.
+
+Explicit grants are required in the migration. Supabase's 23 October changelog reminder says existing projects move to non-exposed defaults on 30 October 2026, while RLS and grants remain separate controls. The migration must behave safely before and after that platform change.
+
+### Proposed application contract
+
+- Add a small server-only helper that extracts the Vercel visitor IP, produces the environment-specific HMAC, calls the service-role RPC, validates its response, and returns the allowance plus retry time.
+- Add `EMAIL_LOGIN_RATE_LIMIT_ENABLED`, exact-true and default-off. Once this code is deployed, the login route must never treat a missing or false limiter flag as permission to bypass the counter. If Email is enabled while the limiter flag or secret is unavailable, return the generic `503` before Supabase Auth. Production Email must not be enabled unless this flag and its secret are present.
+- Call the helper after same-origin and input validation but before creating the auth intent or calling Supabase Auth. This avoids spending a bucket entry on malformed bodies while ensuring every provider-intended password submission is counted.
+- On denial, return the existing no-store Auth JSON shape with status `429`, a bounded `Retry-After` header, and neutral copy that does not reveal whether the email exists. Do not create an auth-intent cookie.
+- On limiter failure, return the same no-store shape with status `503`. Server logging may include a stable limiter error code, but no address, digest, email, password, CAPTCHA value, or provider response.
+
+### Implementation and staging order
+
+1. Create the migration with `supabase migration new`; do not invent its timestamp. Add the helper, login-route integration, feature-flag checks, and focused tests locally. Do not deploy yet.
+2. Run the repository test suite, TypeScript, focused ESLint, migration review, and `git diff --check`. Confirm the app builds with the limiter missing and Email defaulting closed.
+3. After separate approval, apply the reviewed migration to staging only. Verify table RLS, grants, no policies, function ownership and `prosecdef = false`, empty search path, service-role execution, client denial, atomic concurrency, expiry reset, and Security Advisor results.
+4. Add the generated secret and exact-true limiter flag only to the named Preview branch, without reading either value back. Redeploy the reviewed commit and confirm the protected alias owns the new deployment.
+5. Recheck normal invalid and valid login behavior. Then run a fresh bounded sixteen-request test: requests one through fifteen must reach staging Auth, request sixteen must return application `429` with `Retry-After`, and no sixteenth password grant may appear in Supabase Auth logs.
+6. After the window resets, confirm a normal Email login and recovery still work, Google remains available, no limiter field appears in logs, and the controlled absent alias still has no Auth user. Keep Production unchanged.
+
+### Production gate and rollback
+
+Production rollout remains separate. Apply the same reviewed migration before enabling its limiter configuration or Email UI. Add a different Production limiter secret, deploy with Production Email still hidden, verify the server-only RPC and Google regression, then enable the limiter before enabling Email.
+
+Preview rollback is to remove or set `EMAIL_LOGIN_RATE_LIMIT_ENABLED=false` and redeploy, which deliberately closes Email login if readiness requires the limiter. The additive table and function may remain inert and inaccessible. Do not drop them during an incident. A later cleanup migration may remove them only after no deployed code references the RPC and all buckets have expired.
+
+### Accepted limitations
+
+- People sharing one public IP share one bucket, so a busy household or office can receive a temporary five-minute block. Monitor real `429` counts before changing the threshold.
+- Rotating IPs can evade an IP-only counter. Turnstile, neutral responses, Supabase's provider limits, and the existing log-only firewall observation remain additional layers.
+- This protects the password-login route only. Signup, resend, and recovery retain their current Turnstile and hosted email/provider limits unless later evidence justifies a separate reviewed control.
+
+## Application-level Email login limiter implementation, 2026-10-23
+
+Status: code commit `0da27eaf69051d1df28640269014f39986339acf` is pushed to `codex/email-password-staging-forms`, the reviewed migration is applied and recorded on staging project `ivifkrtupqizyqqsxdty`, and the limiter is enabled only on that protected Preview branch. Deployment `dpl_3i71r5L9AnitUFWvmnYntkr8rbbW` is Ready from the exact commit. Production database objects, Vercel limiter variables, Email configuration, and application remain unchanged.
+
+- The migration was scaffolded with Supabase CLI 2.122.0, then applied atomically to staging with migration-history version `20261023174605`. The recorded statement is the exact local migration content apart from its final newline: 3,824 bytes with MD5 `90c19caf8431d162f969e84498de0279`. It creates the RLS-enabled `public.email_login_rate_limits` table with no client policy, explicit service-role-only table grants, an expiry index, and a service-role-only `SECURITY INVOKER` RPC with an empty search path.
+- The RPC uses one database timestamp and an atomic `INSERT ... ON CONFLICT DO UPDATE`. It allows attempts one through fifteen in an aligned five-minute window and denies attempt sixteen. Expired-row cleanup is limited to 100 indexed rows, uses `FOR UPDATE SKIP LOCKED`, and runs before the current-client upsert.
+- The server helper accepts only one valid `x-vercel-forwarded-for` IPv4 or IPv6 value, derives a SHA-256 HMAC using `EMAIL_LOGIN_RATE_LIMIT_SECRET`, and validates the single RPC result row. It neither logs nor stores the address, email, password, CAPTCHA value, auth intent, or full digest.
+- `POST /api/auth/email/login` calls the limiter after same-origin and body validation but before creating the auth intent or calling `signInWithPassword`. Disabled or unavailable limiter configuration returns neutral `503`; a denied decision returns neutral `429` with bounded `Retry-After`. Neither path creates the auth-intent cookie or contacts Supabase Auth.
+- `EMAIL_LOGIN_RATE_LIMIT_ENABLED=true` and a new sensitive `EMAIL_LOGIN_RATE_LIMIT_SECRET` exist only for the `codex/email-password-staging-forms` Preview branch. The same keys are absent from Production. Preview and Production require separate secrets, and login deliberately fails closed when the limiter is unavailable.
+- All 93 repository tests pass, as do TypeScript, focused ESLint, `git diff --check`, and the optimized Next.js build with synthetic non-production Supabase placeholders. Staging PostgreSQL verification now passes: catalog objects, constraints, RLS, zero policies, exact table and function privileges, `SECURITY INVOKER`, empty search path, attempts one through sixteen, invalid-hash rejection, five-minute window reset, and a two-session atomic concurrency test all returned the expected values.
+- The refreshed staging Security Advisor has zero errors. Its five warnings are pre-existing mutable-search-path findings on other functions. The limiter adds one intentional `RLS Enabled No Policy` information item because it is server-only; direct catalog checks confirm `anon` and `authenticated` have neither table access nor RPC execution. The refreshed Performance Advisor has zero errors and no warning or information item for the limiter. A read-only Production check confirms the table, function, and migration record remain absent.
+- Two optional package-run SQL parsers could not be loaded by the local `npx` environment. No parser or dependency was added to the project, and the failed tooling attempts did not modify the repository.
+- The protected deployment reports `{"enabled":true,"passwordManagementEnabled":true}` with `200` and no-store headers. A same-origin malformed login POST returns the expected validation `400` before the limiter or Supabase Auth. Build output completed successfully with all 93 tests, and the checked Preview runtime error and fatal logs were empty.
+
+### Remaining staging gate
+
+The staging migration, branch-only configuration, deployment, and non-consuming smoke checks are complete. The bounded sixteen-request proof must still confirm that request sixteen returns `429` and produces no matching Supabase password grant. Production stays unchanged.
+
+### Rollback
+
+Before real Production password users exist, removing the limiter flag closes Email login and the previous Preview deployment can be restored while the server-only objects remain inert. Once Production password users exist, deliberately closing login is an outage control, not a normal rollback. Restore the last verified limiter configuration or deployment instead; do not expose an unthrottled password route or drop the table during an incident.
