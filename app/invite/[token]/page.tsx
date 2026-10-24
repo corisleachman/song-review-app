@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getPublicInviteByToken, type PublicInviteState } from '@/lib/accountInvites';
+import { isEmailPasswordAuthReady } from '@/lib/authFeatureFlags';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import InviteActions from './InviteActions';
 
@@ -33,10 +34,12 @@ function getStateTitle(state: PublicInviteState) {
   }
 }
 
-function getStateMessage(state: PublicInviteState) {
+function getStateMessage(state: PublicInviteState, emailAuthEnabled: boolean) {
   switch (state) {
     case 'pending':
-      return 'This invite is ready to use. Continue with Google using the invited email address, then accept the workspace invite.';
+      return emailAuthEnabled
+        ? 'This invite is ready to use. Continue with Google or Email using the invited email address, then accept the workspace invite.'
+        : 'This invite is ready to use. Continue with Google using the invited email address, then accept the workspace invite.';
     case 'revoked':
       return 'The workspace owner revoked this invite. Ask them to send a new one if you still need access.';
     case 'expired':
@@ -55,6 +58,7 @@ export default async function InvitePage(props: InvitePageProps) {
 
   const state = result.state;
   const invite = result.invite;
+  const emailAuthEnabled = isEmailPasswordAuthReady();
 
   // If the invite is accepted and the current user is already authenticated,
   // they're already a member — redirect to dashboard instead of a dead-end page.
@@ -98,7 +102,7 @@ export default async function InvitePage(props: InvitePageProps) {
           {getStateTitle(state)}
         </h1>
         <p style={{ margin: 0, color: 'rgba(255,255,255,0.76)', lineHeight: 1.6 }}>
-          {getStateMessage(state)}
+          {getStateMessage(state, emailAuthEnabled)}
         </p>
 
         {invite && (
@@ -135,7 +139,11 @@ export default async function InvitePage(props: InvitePageProps) {
         )}
 
         {state === 'pending' && invite ? (
-          <InviteActions token={params.token} inviteEmail={invite.email} />
+          <InviteActions
+            token={params.token}
+            inviteEmail={invite.email}
+            emailAuthEnabled={emailAuthEnabled}
+          />
         ) : (
           <p style={{ marginTop: '24px', color: 'rgba(255,255,255,0.56)', fontSize: '14px' }}>
             This invite page stays read-only when the invite is unavailable or already used.

@@ -9,7 +9,7 @@ import {
 export const AUTH_INTENT_VERSION = 1;
 export const AUTH_INTENT_TTL_SECONDS = 60 * 60;
 
-export type AuthIntentPurpose = 'invite' | 'login' | 'recovery' | 'signup';
+export type AuthIntentPurpose = 'invite' | 'login' | 'recovery' | 'recovery_verified' | 'signup';
 export type AuthIntentDestinationKind = 'dashboard' | 'invite' | 'paid_plan' | 'protected_route' | 'recovery';
 
 export interface AuthIntentPayload {
@@ -49,7 +49,8 @@ function decode(value: string) {
 }
 
 function isPurpose(value: unknown): value is AuthIntentPurpose {
-  return value === 'invite' || value === 'login' || value === 'recovery' || value === 'signup';
+  return value === 'invite' || value === 'login' || value === 'recovery'
+    || value === 'recovery_verified' || value === 'signup';
 }
 
 function isDestinationKind(value: unknown): value is AuthIntentDestinationKind {

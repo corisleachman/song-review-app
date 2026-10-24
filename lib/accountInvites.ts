@@ -55,6 +55,12 @@ const ACCOUNT_INVITE_SELECT = `
   updated_at
 `;
 
+const INVITE_TOKEN_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isValidInviteToken(input: string) {
+  return INVITE_TOKEN_PATTERN.test(input.trim());
+}
+
 export function normalizeInviteEmail(input: string) {
   const email = input.trim();
   const normalizedEmail = email.toLowerCase();
@@ -129,10 +135,13 @@ export async function findWorkspaceInviteById(workspaceId: string, inviteId: str
 }
 
 export async function findInviteByToken(inviteToken: string): Promise<AccountInvite | null> {
+  const normalizedInviteToken = inviteToken.trim();
+  if (!isValidInviteToken(normalizedInviteToken)) return null;
+
   const { data, error } = await supabaseServer
     .from('account_invites')
     .select(ACCOUNT_INVITE_SELECT)
-    .eq('invite_token', inviteToken)
+    .eq('invite_token', normalizedInviteToken)
     .maybeSingle();
 
   if (error) throw error;

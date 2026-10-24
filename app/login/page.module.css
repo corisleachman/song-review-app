@@ -101,7 +101,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-width: 320px;
+  max-width: 360px;
 }
 
 .authHeading {
@@ -142,7 +142,153 @@
 .btnGoogle:hover:not(:disabled) { background: rgba(244,240,232,0.14); border-color: rgba(244,240,232,0.3); }
 .btnGoogle:disabled { opacity: 0.6; cursor: not-allowed; }
 
-.formFooter { padding-top: 2px; }
+.btnEmailChoice {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #cf382b;
+  background: #cf382b;
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 140ms, border-color 140ms;
+}
+.btnEmailChoice:hover:not(:disabled) {
+  background: #e04a3c;
+  border-color: #e04a3c;
+}
+.btnEmailChoice:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btnGoogle:focus-visible,
+.btnEmailChoice:focus-visible,
+.btnEmail:focus-visible {
+  outline: 2px solid #F4F0E8;
+  outline-offset: 3px;
+}
+
+.emailForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(244,240,232,0.2);
+  animation: emailFormReveal 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes emailFormReveal {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.securityCheckLabel {
+  color: rgba(244,240,232,0.82);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.fieldLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: rgba(244,240,232,0.82);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.fieldInput {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  border: 1px solid rgba(244,240,232,0.2);
+  border-radius: 0;
+  background: rgba(14,10,10,0.72);
+  color: #F4F0E8;
+  font: inherit;
+  font-size: 16px;
+  padding: 10px 12px;
+  outline: none;
+  transition: border-color 140ms, background 140ms;
+}
+
+.fieldInput:focus {
+  border-color: #F4F0E8;
+  background: rgba(14,10,10,0.88);
+}
+
+.fieldHint {
+  margin: -4px 0 0;
+  color: rgba(244,240,232,0.56);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.checkboxLabel {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 9px;
+  align-items: start;
+  color: rgba(244,240,232,0.7);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.checkboxLabel input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #cf382b;
+}
+
+.checkboxLabel a,
+.modeLinks a {
+  color: #F4F0E8;
+}
+
+.btnEmail {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid #cf382b;
+  background: #cf382b;
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 140ms, border-color 140ms;
+}
+
+.btnEmail:hover:not(:disabled) {
+  border-color: #e04a3c;
+  background: #e04a3c;
+}
+
+.btnEmail:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.modeLinks {
+  min-height: 20px;
+  text-align: center;
+  font-size: 12px;
+}
+
+.forgotLink {
+  text-align: right;
+  font-size: 12px;
+}
+
+.forgotLink a {
+  color: #F4F0E8;
+  text-underline-offset: 3px;
+}
+
+.formFooter {
+  padding-top: 2px;
+  color: rgba(244,240,232,0.42);
+  font-size: 11px;
+  line-height: 1.45;
+}
 .formSeparator { color: rgba(244,240,232,0.28); }
 .formLink {
   background: none;
@@ -164,6 +310,21 @@
   color: #ff6b6b;
   line-height: 1.45;
   padding: 4px 2px;
+}
+
+.confirmationNotice {
+  margin: 0 0 8px;
+  padding: 10px 12px;
+  background: rgba(14, 10, 10, 0.9);
+}
+
+.emailAuthRoot .left {
+  justify-content: flex-start;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.emailAuthRoot .authPanel {
+  margin-block: auto;
 }
 /* Right - SVG headline */
 .right {
@@ -330,12 +491,57 @@
   /* Auth panel: full width, tight gap, centred */
   .authPanel {
     width: 100%;
-    max-width: 320px;
+    max-width: 360px;
     gap: 8px;
     margin-top: 0;
     align-items: stretch;
   }
 
+  .emailAuthRoot .right {
+    display: none;
+  }
+
+  .emailAuthRoot .page {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .emailAuthRoot .betaBannerRow,
+  .emailAuthRoot .nav,
+  .emailAuthRoot .left {
+    position: relative;
+    top: auto;
+    bottom: auto;
+    left: auto;
+    right: auto;
+  }
+
+  .emailAuthRoot .nav {
+    padding: 24px 24px 0;
+  }
+
+  .emailAuthRoot .left {
+    flex: 1 0 auto;
+    box-sizing: border-box;
+    min-height: calc(100dvh - 116px);
+    justify-content: flex-start;
+    padding: 40px clamp(24px, 9vw, 40px) max(48px, env(safe-area-inset-bottom));
+    overflow: visible;
+  }
+
+  .emailAuthRoot .footer {
+    display: none;
+  }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .emailForm {
+    animation: none;
+  }
 }
 
 .betaBannerRow {

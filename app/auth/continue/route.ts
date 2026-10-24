@@ -24,36 +24,42 @@ function redirectToLogin(request: NextRequest, reason: string, destination = '/d
   return redirectWithNoStore(url);
 }
 
+function redirectToRecoveryRequest(request: NextRequest) {
+  return redirectWithNoStore(new URL('/forgot-password?status=invalid_link', request.url));
+}
+
 export async function GET(request: NextRequest) {
-  const queryIntent = request.nextUrl.searchParams.get('intent');
   const cookieIntent = request.cookies.get(AUTH_INTENT_COOKIE)?.value ?? null;
-  const intentToken = queryIntent || cookieIntent;
   const fallbackDestination = normalizeAuthDestination(request.nextUrl.searchParams.get('next'));
 
   let intent = null;
-  if (intentToken) {
+  if (cookieIntent) {
     try {
-      intent = readAuthIntent(intentToken);
+      intent = readAuthIntent(cookieIntent);
     } catch {
       return redirectToLogin(request, 'invalid_intent');
     }
     if (!intent) return redirectToLogin(request, 'invalid_intent');
   }
 
+  if (intent?.purpose === 'recovery') return redirectToRecoveryRequest(request);
+
   const destination = intent ? getAuthIntentDestination(intent) : fallbackDestination;
   const user = await getCurrentAuthenticatedUser();
   if (!user) {
+    if (intent?.purpose === 'recovery_verified') return redirectToRecoveryRequest(request);
     return redirectToLogin(request, 'session_missing', destination);
   }
 
   if (intent && !authIntentEmailMatches(intent, user.email)) {
+    if (intent.purpose === 'recovery_verified') return redirectToRecoveryRequest(request);
     return redirectToLogin(request, 'account_mismatch');
   }
 
   const destinationKind = intent?.destination.kind;
   if (destinationKind !== 'invite' && destinationKind !== 'recovery') {
     try {
-      await bootstrapAccountForUser(user);
+      await bootstrapAccountForUser(user, undefined, intent?.referralCode);
     } catch (error) {
       console.error('[auth-continue] Account bootstrap failed:', error);
       return redirectToLogin(request, 'bootstrap_failed', destination);
@@ -61,9 +67,11 @@ export async function GET(request: NextRequest) {
   }
 
   const response = redirectWithNoStore(new URL(destination, request.url));
-  response.cookies.set(AUTH_INTENT_COOKIE, '', {
-    ...AUTH_INTENT_COOKIE_OPTIONS,
-    maxAge: 0,
-  });
+  if (intent?.purpose !== 'recovery_verified') {
+    response.cookies.set(AUTH_INTENT_COOKIE, '', {
+      ...AUTH_INTENT_COOKIE_OPTIONS,
+      maxAge: 0,
+    });
+  }
   return response;
 }

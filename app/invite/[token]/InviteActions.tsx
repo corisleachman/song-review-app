@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { clearAuth, clearIdentity } from '@/lib/auth';
 import { createClient } from '@/lib/supabase';
 
 interface InviteActionsProps {
   token: string;
   inviteEmail: string;
+  emailAuthEnabled: boolean;
 }
 
 type InviteActionState = 'checking' | 'signed_out' | 'matched' | 'mismatched';
@@ -21,13 +23,14 @@ function getErrorMessage(error: unknown) {
   return 'Could not complete invite action.';
 }
 
-export default function InviteActions({ token, inviteEmail }: InviteActionsProps) {
+export default function InviteActions({ token, inviteEmail, emailAuthEnabled }: InviteActionsProps) {
   const [supabase] = useState(() => createClient());
   const [actionState, setActionState] = useState<InviteActionState>('checking');
   const [signedInEmail, setSignedInEmail] = useState('');
 
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
+  const [isSwitchingAccount, setIsSwitchingAccount] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -94,6 +97,15 @@ export default function InviteActions({ token, inviteEmail }: InviteActionsProps
     }
   };
 
+  const handleEmailEntry = (mode: 'login' | 'signup') => {
+    const params = new URLSearchParams({
+      email: '1',
+      redirectTo: `/invite/${token}`,
+    });
+    if (mode === 'signup') params.set('signupPlan', 'free');
+    window.location.assign(`/login?${params.toString()}`);
+  };
+
   const handleAcceptInvite = async () => {
     setError('');
     setIsAccepting(true);
@@ -130,6 +142,25 @@ export default function InviteActions({ token, inviteEmail }: InviteActionsProps
     }
   };
 
+  const handleSwitchAccount = async () => {
+    setError('');
+    setIsSwitchingAccount(true);
+
+    try {
+      const { error: signOutError } = await supabase.auth.signOut();
+      if (signOutError) throw signOutError;
+
+      clearAuth();
+      clearIdentity();
+      setSignedInEmail('');
+      setActionState('signed_out');
+    } catch (signOutError) {
+      setError(getErrorMessage(signOutError));
+    } finally {
+      setIsSwitchingAccount(false);
+    }
+  };
+
   const buttonBase: React.CSSProperties = {
     border: 'none',
     borderRadius: '10px',
@@ -153,7 +184,7 @@ export default function InviteActions({ token, inviteEmail }: InviteActionsProps
       {actionState === 'signed_out' && (
         <>
           <p style={{ margin: 0, color: 'rgba(255,255,255,0.76)', lineHeight: 1.6 }}>
-            Continue with the Google account for <strong>{inviteEmail}</strong>. If you&apos;re new to Song Room, we&apos;ll create your account automatically.
+            Continue with the account for <strong>{inviteEmail}</strong>. If you&apos;re new to Song Room, we&apos;ll create your account automatically.
           </p>
 
           <button
@@ -164,6 +195,27 @@ export default function InviteActions({ token, inviteEmail }: InviteActionsProps
           >
             {isSigningIn ? 'Connecting…' : 'Continue with Google'}
           </button>
+
+          {emailAuthEnabled && (
+            <>
+              <button
+                type="button"
+                onClick={() => handleEmailEntry('login')}
+                disabled={isSigningIn}
+                style={{ ...buttonBase, background: '#cf382b', color: '#ffffff', cursor: isSigningIn ? 'default' : 'pointer' }}
+              >
+                Log in with email
+              </button>
+              <button
+                type="button"
+                onClick={() => handleEmailEntry('signup')}
+                disabled={isSigningIn}
+                style={{ ...buttonBase, background: 'transparent', color: '#ffffff', border: '1px solid rgba(255,255,255,0.3)', cursor: isSigningIn ? 'default' : 'pointer' }}
+              >
+                Create account with email
+              </button>
+            </>
+          )}
         </>
       )}
 
@@ -184,10 +236,25 @@ export default function InviteActions({ token, inviteEmail }: InviteActionsProps
       )}
 
       {actionState === 'mismatched' && (
-        <p style={{ margin: 0, color: '#fca5a5', lineHeight: 1.6 }}>
-          This invite was sent to <strong>{inviteEmail}</strong>, but you are signed in as{' '}
-          <strong>{signedInEmail || 'a different account'}</strong>. Please sign in with the invited account to accept it.
-        </p>
+        <>
+          <p style={{ margin: 0, color: '#fca5a5', lineHeight: 1.6 }}>
+            This invite was sent to <strong>{inviteEmail}</strong>, but you are signed in as{' '}
+            <strong>{signedInEmail || 'a different account'}</strong>. Sign out to continue with the invited account.
+          </p>
+          <button
+            type="button"
+            onClick={handleSwitchAccount}
+            disabled={isSwitchingAccount}
+            style={{
+              ...buttonBase,
+              background: '#ffffff',
+              color: '#111111',
+              cursor: isSwitchingAccount ? 'default' : 'pointer',
+            }}
+          >
+            {isSwitchingAccount ? 'Signing out…' : 'Sign out and continue'}
+          </button>
+        </>
       )}
 
       {error && (
