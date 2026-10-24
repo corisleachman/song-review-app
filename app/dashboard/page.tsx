@@ -123,6 +123,48 @@ interface DashboardPerformanceTrace {
 
 const DASHBOARD_CACHE_TTL_MS = 5 * 60 * 1000;
 
+// Next-track preload is held in memory, so cap it. Uploads can be WAVs up to
+// 200MB; anything over this streams from the network as before.
+const MAX_PRELOAD_BYTES = 64 * 1024 * 1024;
+// Background playback watchdog: if the audio makes no progress for this long
+// while it should be playing, report it as not playing (so the lock screen
+// clock stops) and then reload the track from where it stopped.
+const STALL_REPORT_MS = 2500;
+const STALL_RECOVER_MS = 10000;
+const MAX_RECOVERY_ATTEMPTS = 2;
+
+type PreloadedAudio = {
+  status: 'loading' | 'ready' | 'skipped';
+  objectUrl: string | null;
+  controller: AbortController;
+};
+
+// Keep audio URLs already resolved for the current version when the song list
+// is refreshed (e.g. on returning to the tab), so playback never has to
+// re-resolve them. A newer version (different latestVersionId) is not carried.
+function carryResolvedAudioUrls(nextSongs: Song[], known: Song[]): Song[] {
+  const resolved = new Map<string, { versionId: string | null; url: string; filePath: string | null }>();
+  for (const song of known) {
+    if (song.latestVersionAudioUrl) {
+      resolved.set(song.id, {
+        versionId: song.latestVersionId ?? null,
+        url: song.latestVersionAudioUrl,
+        filePath: song.latestVersionFilePath ?? null,
+      });
+    }
+  }
+  if (resolved.size === 0) return nextSongs;
+  return nextSongs.map(song => {
+    const hit = resolved.get(song.id);
+    if (!hit || song.latestVersionAudioUrl || hit.versionId !== (song.latestVersionId ?? null)) return song;
+    return {
+      ...song,
+      latestVersionAudioUrl: hit.url,
+      latestVersionFilePath: song.latestVersionFilePath ?? hit.filePath,
+    };
+  });
+}
+
 function createDashboardPerformanceTrace(): DashboardPerformanceTrace | null {
   if (typeof window === 'undefined') return null;
   if (new URLSearchParams(window.location.search).get('perf') !== '1') return null;
@@ -270,9 +312,32 @@ function DashboardContent() {
 
   // Dashboard audio player
   const audioRef = useRef<HTMLAudioElement>(null);
-  // Hidden second element used only to warm the *next* track's bytes into the
-  // browser cache while the current track plays. Never played directly.
-  const preloadAudioRef = useRef<HTMLAudioElement>(null);
+  // Next-track preload: the upcoming track is downloaded into an in-memory
+  // Blob so the end-of-track changeover needs no network at all. iOS ignores
+  // preload on hidden media elements, so a second <audio> did not help there.
+  // Keyed by the track's public audio URL.
+  const preloadedAudioRef = useRef(new Map<string, PreloadedAudio>());
+  // The network URL of the track currently loaded in audioRef (its src may be
+  // a blob: URL). Stall/error recovery reloads from this.
+  const currentNetworkUrlRef = useRef<string | null>(null);
+  const stallWatchRef = useRef<{ timers: number[]; armedAt: number } | null>(null);
+  const recoveryAttemptsRef = useRef(0);
+  const pendingResumeAtRef = useRef<number | null>(null);
+
+  // Free preloaded audio and pending stall timers when leaving the dashboard.
+  useEffect(() => {
+    const preloaded = preloadedAudioRef.current;
+    const stallWatch = stallWatchRef;
+    return () => {
+      stallWatch.current?.timers.forEach(timer => window.clearTimeout(timer));
+      stallWatch.current = null;
+      preloaded.forEach(entry => {
+        entry.controller.abort();
+        if (entry.objectUrl) URL.revokeObjectURL(entry.objectUrl);
+      });
+      preloaded.clear();
+    };
+  }, []);
   const miniPlayerRef = useRef<HTMLDivElement>(null);
   const queueRef = useRef<Song[]>([]);
   const sourceQueueRef = useRef<Song[]>([]);
@@ -561,7 +626,7 @@ function DashboardContent() {
           && Number.isFinite(cachedPayload.cachedAt)
           && Date.now() - cachedPayload.cachedAt < DASHBOARD_CACHE_TTL_MS;
         if (isFresh && Array.isArray(cachedPayload.songs) && cachedPayload.songs.length > 0) {
-          setSongs(cachedPayload.songs);
+          setSongs(prev => carryResolvedAudioUrls(cachedPayload.songs, [...prev, ...queueRef.current]));
           setLoading(false); // show cached songs immediately
           logDashboardVisible(performanceTrace, 'cache');
           // Fetch fresh in background — no loading spinner
@@ -685,7 +750,7 @@ function DashboardContent() {
       }
     }
 
-    setSongs(assembled);
+    setSongs(prev => carryResolvedAudioUrls(assembled, [...prev, ...queueRef.current]));
     if (Array.isArray(payload.actions)) {
       setActions(payload.actions);
     }
@@ -988,8 +1053,7 @@ function DashboardContent() {
     });
 
     navigator.mediaSession.setActionHandler('play', () => {
-      audioRef.current?.play().catch(() => {});
-      setIsPlaying(true);
+      resumeOrRecover();
     });
     navigator.mediaSession.setActionHandler('pause', () => {
       audioRef.current?.pause();
@@ -1001,7 +1065,14 @@ function DashboardContent() {
     navigator.mediaSession.setActionHandler('nexttrack', () => {
       void skipTrack('next');
     });
+    // Intent at track start. The element's own events (playing / waiting /
+    // pause) keep this truthful afterwards — see the stall watchdog.
     navigator.mediaSession.playbackState = 'playing';
+  }
+
+  function setMediaPlaybackState(state: MediaSessionPlaybackState) {
+    if (!('mediaSession' in navigator)) return;
+    try { navigator.mediaSession.playbackState = state; } catch { /* ignore */ }
   }
 
   function getDashboardAudioError() {
@@ -1010,7 +1081,7 @@ function DashboardContent() {
 
   // When `silent` is true (background hydration / preloading upcoming tracks)
   // we never surface alerts — the user may be running with the phone locked.
-  async function resolveLatestVersionAudioUrl(song: Song, opts?: { silent?: boolean }) {
+  async function resolveLatestVersionAudioUrl(song: Song, opts?: { silent?: boolean; retried?: boolean }) {
     const silent = opts?.silent ?? false;
     if (song.latestVersionAudioUrl) return song.latestVersionAudioUrl;
     if (!song.latestVersionId) return null;
@@ -1019,8 +1090,23 @@ function DashboardContent() {
       const response = await fetch(`/api/versions/${song.latestVersionId}`, { cache: 'no-store' });
       const payload = await response.json().catch(() => null) as VersionPayload | null;
 
+      if (response.status === 401 && !opts?.retried) {
+        // The session can expire while the phone is locked (the Supabase client
+        // pauses token refresh on hidden pages). Refresh once and retry rather
+        // than failing silently.
+        const { error: refreshError } = await supabase.auth.refreshSession();
+        if (!refreshError) {
+          return resolveLatestVersionAudioUrl(song, { ...opts, retried: true });
+        }
+      }
+
       if (!response.ok) {
         console.error('Dashboard version load error:', payload);
+        if (!silent) {
+          window.alert(response.status === 401
+            ? 'You have been signed out. Reload the page to sign back in.'
+            : getDashboardAudioError());
+        }
         return null;
       }
 
@@ -1077,17 +1163,165 @@ function DashboardContent() {
     } catch { /* some browsers reject positionState in cross-origin frames */ }
   }
 
-  // Warm the *next* track's bytes into the browser cache via the hidden
-  // preloader element. One track only — buffering further ahead is throttled on
-  // mobile and just wastes data. Safe to call repeatedly; it no-ops if the next
-  // URL isn't resolved yet or is already primed.
+  // Download the *next* track into an in-memory Blob while the current one
+  // plays, so the changeover swaps to a local blob: URL with no network. One
+  // track only (plus the current one), capped at MAX_PRELOAD_BYTES; larger or
+  // failed downloads fall back to streaming. Safe to call repeatedly.
   function primeNextPreload() {
-    const el = preloadAudioRef.current;
-    if (!el) return;
-    const nextUrl = queueRef.current[queueIndexRef.current + 1]?.latestVersionAudioUrl;
-    if (!nextUrl) return;
-    if (el.getAttribute('src') === nextUrl) return;
-    try { el.src = nextUrl; el.load(); } catch { /* ignore */ }
+    const nextUrl = queueRef.current[queueIndexRef.current + 1]?.latestVersionAudioUrl ?? null;
+    releasePreloadsExcept([currentNetworkUrlRef.current, nextUrl]);
+    if (!nextUrl || preloadedAudioRef.current.has(nextUrl)) return;
+
+    const entry: PreloadedAudio = { status: 'loading', objectUrl: null, controller: new AbortController() };
+    preloadedAudioRef.current.set(nextUrl, entry);
+
+    void (async () => {
+      try {
+        const response = await fetch(nextUrl, { signal: entry.controller.signal });
+        const length = Number(response.headers.get('content-length') ?? 0);
+        const type = response.headers.get('content-type') ?? '';
+        // Too big to hold in memory, unknown size, or not labelled as media
+        // (Safari may refuse an unlabelled blob): stream it as before.
+        if (!response.ok || !length || length > MAX_PRELOAD_BYTES || !/^(audio|video)\//i.test(type)) {
+          entry.controller.abort();
+          entry.status = 'skipped';
+          return;
+        }
+        const blob = await response.blob();
+        // Released (queue moved on) while downloading.
+        if (preloadedAudioRef.current.get(nextUrl) !== entry) return;
+        entry.objectUrl = URL.createObjectURL(blob);
+        entry.status = 'ready';
+      } catch {
+        // Network hiccup: forget it so the next prime can try again.
+        if (preloadedAudioRef.current.get(nextUrl) === entry) {
+          preloadedAudioRef.current.delete(nextUrl);
+        }
+      }
+    })();
+  }
+
+  function releasePreloadsExcept(keep: (string | null)[]) {
+    const map = preloadedAudioRef.current;
+    Array.from(map.keys()).forEach(url => {
+      if (keep.includes(url)) return;
+      const entry = map.get(url);
+      entry?.controller.abort();
+      if (entry?.objectUrl) URL.revokeObjectURL(entry.objectUrl);
+      map.delete(url);
+    });
+  }
+
+  // What to put in audio.src for a track: its preloaded blob if ready,
+  // otherwise the network URL.
+  function playableSrcFor(networkUrl: string) {
+    const entry = preloadedAudioRef.current.get(networkUrl);
+    return entry?.status === 'ready' && entry.objectUrl ? entry.objectUrl : networkUrl;
+  }
+
+  // Point the player at a track. Every src change goes through here so the
+  // recovery state always knows the real network URL behind a blob: src.
+  function loadTrackSource(networkUrl: string, opts?: { preferNetwork?: boolean; resumeAt?: number | null }) {
+    const audio = audioRef.current;
+    if (!audio) return;
+    clearStallWatch();
+    currentNetworkUrlRef.current = networkUrl;
+    pendingResumeAtRef.current = opts?.resumeAt ?? null;
+    audio.src = opts?.preferNetwork ? networkUrl : playableSrcFor(networkUrl);
+  }
+
+  // --- Stall / error recovery -------------------------------------------
+  // The element can get stuck loading (e.g. a cell handover mid-changeover)
+  // without ever firing `ended`, so nothing advanced and the lock screen kept
+  // "playing" with a moving clock. The watchdog checks for real progress.
+
+  function clearStallWatch() {
+    const watch = stallWatchRef.current;
+    if (!watch) return;
+    watch.timers.forEach(timer => window.clearTimeout(timer));
+    stallWatchRef.current = null;
+  }
+
+  function armStallWatch() {
+    const audio = audioRef.current;
+    if (!audio || audio.paused || stallWatchRef.current) return;
+    const armedAt = audio.currentTime;
+    const stillStuck = () => {
+      const el = audioRef.current;
+      if (!el || el.paused || stallWatchRef.current?.armedAt !== armedAt) return false;
+      return el.currentTime <= armedAt + 0.25;
+    };
+    const timers = [
+      window.setTimeout(() => {
+        // Stop the lock-screen clock running over silence.
+        if (stillStuck()) setMediaPlaybackState('paused');
+      }, STALL_REPORT_MS),
+      window.setTimeout(() => {
+        if (stillStuck()) {
+          stallWatchRef.current = null;
+          reloadCurrentTrack();
+        } else {
+          clearStallWatch();
+        }
+      }, STALL_RECOVER_MS),
+    ];
+    stallWatchRef.current = { timers, armedAt };
+  }
+
+  // Reload the current track from the network at the position it stopped.
+  // After MAX_RECOVERY_ATTEMPTS, move on to the next track instead of sitting
+  // silent.
+  function reloadCurrentTrack() {
+    const audio = audioRef.current;
+    const networkUrl = currentNetworkUrlRef.current;
+    if (!audio || !networkUrl) return;
+
+    if (recoveryAttemptsRef.current >= MAX_RECOVERY_ATTEMPTS) {
+      recoveryAttemptsRef.current = 0;
+      console.error('Dashboard playback: track failed to recover, skipping');
+      if (!moveToIndex(queueIndexRef.current + 1)) stopPlayback();
+      return;
+    }
+
+    recoveryAttemptsRef.current += 1;
+    const resumeAt = Number.isFinite(audio.currentTime) ? audio.currentTime : 0;
+    loadTrackSource(networkUrl, { preferNetwork: true, resumeAt });
+    audio.play().catch(error => {
+      console.error('Dashboard playback recovery error:', error);
+    });
+  }
+
+  // Play from the mini player / lock screen / car: resume normally, but if
+  // the element is errored or stuck, reload instead of calling play() on a
+  // dead element (which previously did nothing until a page reload).
+  function resumeOrRecover() {
+    const audio = audioRef.current;
+    if (!audio) return;
+    // Errored, or holding no playable data (stalled load, or iOS dropped the
+    // buffer): reload at the current position rather than play() a dead element.
+    const stuck = !!audio.error || audio.readyState < HTMLMediaElement.HAVE_FUTURE_DATA;
+    if (stuck && currentNetworkUrlRef.current) {
+      recoveryAttemptsRef.current = 0;
+      reloadCurrentTrack();
+    } else {
+      audio.play().catch(() => {});
+    }
+    setIsPlaying(true);
+    setMediaPlaybackState('playing');
+  }
+
+  function stopPlayback() {
+    clearStallWatch();
+    setIsPlaying(false);
+    setPlayingId(null);
+    setMediaPlaybackState('none');
+  }
+
+  function handleAudioError() {
+    const audio = audioRef.current;
+    if (!audio?.error) return;
+    console.error('Dashboard audio element error:', audio.error.code, audio.error.message);
+    reloadCurrentTrack();
   }
 
   // Resolve audio URLs for every upcoming track once, in play order, so no
@@ -1144,7 +1378,8 @@ function DashboardContent() {
     setPlayingId(song.id);
     setIsPlaying(true);
     setPlayerCurrentTime(0);
-    audioRef.current.src = audioUrl;
+    recoveryAttemptsRef.current = 0;
+    loadTrackSource(audioUrl);
     audioRef.current.play().catch(error => {
       console.error('Dashboard playback error:', error);
       window.alert(getDashboardAudioError());
@@ -1175,7 +1410,9 @@ function DashboardContent() {
     setPlayingId(track.id);
     setIsPlaying(true);
     setPlayerCurrentTime(0);
-    audioRef.current.src = audioUrl;
+    recoveryAttemptsRef.current = 0;
+    // Uses the preloaded blob when ready: no network at the changeover.
+    loadTrackSource(audioUrl);
     audioRef.current.play().catch(error => {
       console.error('Dashboard playback error:', error);
     });
@@ -1215,11 +1452,7 @@ function DashboardContent() {
       return;
     }
 
-    setIsPlaying(false);
-    setPlayingId(null);
-    if ('mediaSession' in navigator) {
-      navigator.mediaSession.playbackState = 'none';
-    }
+    stopPlayback();
   }
 
   function skipTrack(direction: 'prev' | 'next') {
@@ -1228,20 +1461,17 @@ function DashboardContent() {
   }
 
   function togglePlayPause() {
-    if (!audioRef.current) return;
+    const audio = audioRef.current;
+    if (!audio) return;
 
-    if (isPlaying) {
-      audioRef.current.pause();
+    // Decide from the element's real state, not React state (which can drift
+    // when playback stalls). Pause always pauses; play goes through recovery.
+    if (!audio.paused && !audio.error) {
+      audio.pause();
       setIsPlaying(false);
-      if ('mediaSession' in navigator) {
-        navigator.mediaSession.playbackState = 'paused';
-      }
+      setMediaPlaybackState('paused');
     } else {
-      audioRef.current.play().catch(() => {});
-      setIsPlaying(true);
-      if ('mediaSession' in navigator) {
-        navigator.mediaSession.playbackState = 'playing';
-      }
+      resumeOrRecover();
     }
   }
 
@@ -1262,6 +1492,8 @@ function DashboardContent() {
     shuffleEnabledRef.current = nextEnabled;
     setQueueIndex(nextIndex);
     setShuffleEnabled(nextEnabled);
+    // "Next" changed: preload the new upcoming track instead.
+    primeNextPreload();
   }
 
   function handleArtworkPlayClick(event: React.MouseEvent<HTMLDivElement>, song: Song, queue: Song[]) {
@@ -2548,7 +2780,20 @@ function DashboardContent() {
         loop={loopEnabled}
         onEnded={handlePlayerEnded}
         onLoadedMetadata={() => {
-          setPlayerDuration(audioRef.current?.duration ?? 0);
+          const audio = audioRef.current;
+          // After a recovery reload, pick up where the track stopped.
+          const resumeAt = pendingResumeAtRef.current;
+          pendingResumeAtRef.current = null;
+          if (audio && resumeAt && Number.isFinite(audio.duration) && resumeAt < audio.duration) {
+            audio.currentTime = resumeAt;
+            // Restart the watchdog baseline from the resume point, so the jump
+            // itself isn't mistaken for playback progress.
+            if (stallWatchRef.current) {
+              clearStallWatch();
+              armStallWatch();
+            }
+          }
+          setPlayerDuration(audio?.duration ?? 0);
           updatePositionState();
         }}
         onTimeUpdate={() => {
@@ -2560,11 +2805,27 @@ function DashboardContent() {
           updatePositionState();
         }}
         onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
+        onPlaying={() => {
+          // Real audio is flowing: clear any stall watch and report truthfully.
+          clearStallWatch();
+          setMediaPlaybackState('playing');
+          updatePositionState();
+        }}
+        onWaiting={armStallWatch}
+        onStalled={armStallWatch}
+        onError={handleAudioError}
+        onPause={() => {
+          const audio = audioRef.current;
+          // Ignore the transient pause some browsers dispatch while swapping
+          // src mid-play (play() has already run by the time it arrives), and
+          // the pause fired just before `ended` (handlePlayerEnded takes over),
+          // so the car/lock screen doesn't flash "paused" at each changeover.
+          if (!audio?.paused || audio.ended) return;
+          clearStallWatch();
+          setIsPlaying(false);
+          setMediaPlaybackState('paused');
+        }}
       />
-
-      {/* Hidden preloader: warms the next track's bytes into cache. Never played. */}
-      <audio ref={preloadAudioRef} preload="auto" muted aria-hidden="true" tabIndex={-1} style={{ display: 'none' }} />
 
       {playingId && (() => {
         const playingSong = queueRef.current.find(song => song.id === playingId);

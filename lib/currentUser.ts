@@ -41,7 +41,21 @@ export async function getCurrentAuthenticatedUser(): Promise<AuthenticatedUser |
     {
       cookies: {
         getAll: () => cookieStore.getAll(),
-        setAll: () => {},
+        // Persist refreshed session cookies. When the access token has expired,
+        // getUser() refreshes it; discarding the result (the old no-op) left the
+        // browser holding an expired token, so long-lived pages (e.g. the
+        // dashboard playing in a pocket for an hour) started getting 401s from
+        // every API route until a full page reload ran the middleware. Server
+        // Components can't set cookies, so the throw there is expected and safe.
+        setAll: (cookiesToSet) => {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          } catch {
+            // Called from a Server Component: page loads are refreshed by middleware.
+          }
+        },
       },
     }
   );
