@@ -8778,3 +8778,101 @@ Committed and pushed the limiter code and migration, added its generated secret 
 ### Rollback
 
 Remove or set the branch-only `EMAIL_LOGIN_RATE_LIMIT_ENABLED` value to false and redeploy the previous verified Preview if the limiter fails. That intentionally closes Email login because the route fails closed. Leave the additive staging database objects in place during an incident.
+
+---
+
+## 2026-10-23 - Stop the first application-level limiter run after a harness mismatch
+
+### What we were trying to achieve
+
+Prove that the protected Preview sends the first fifteen password-login attempts to staging Auth and rejects attempt sixteen in the application before the provider.
+
+### Feature / change being made
+
+Ran the approved bounded test with the controlled absent alias and a fresh automatic Turnstile result before each submitted Email login. No application or hosted setting was changed.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Verification and rollout state
+
+- At `18:20:28 UTC`, the controlled alias had zero staging Auth users and the current limiter window had zero rows and zero attempts.
+- Attempts one through three returned the neutral invalid-credentials result and visibly refreshed Turnstile to `Success!` before the next submission.
+- The shared staging limiter row reached exactly three attempts. Auth logs show exactly three password grants with `invalid_credentials` and status `400`, at `18:20:58`, `18:21:14`, and `18:21:32 UTC`.
+- While preparing attempt four, the native Safari harness used a prefix match that selected `Log in or sign up with Google` instead of the exact `Log in` button. Google's account chooser opened, so the run stopped and captured the URL and screenshot. No account was selected and no fourth Email login request was sent.
+- The controlled alias still has zero Auth users. No email, password session, account, database identity, hosted setting, deployment, or Production service changed.
+- A later retry must begin from zero after a fresh five-minute window and select only an accessibility row whose label is exactly `Log in`.
+
+### Rollback
+
+No rollback is required. The interrupted run created only an expiring staging limiter count and no user or session.
+
+---
+
+## 2026-10-24 - Pass the protected Preview Email login limiter gate
+
+### What we were trying to achieve
+
+Prove that the application permits fifteen password-login attempts per visitor in one five-minute window and blocks request sixteen before Supabase Auth.
+
+### Feature / change being made
+
+Completed the approved bounded protected-Preview run with a controlled absent alias, exact Email-button targeting, a test-only invalid password, and a fresh automatic Turnstile result before each submission.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Verification and rollout state
+
+- The corrected run began from zero in the aligned `18:25 UTC` window. The controlled alias had zero staging Auth users and the limiter had zero current-window rows.
+- Two local password-field setup submissions were rejected by client validation and did not reach the limiter or provider. They were excluded from the bounded request count.
+- Attempts one through fifteen each followed a fresh automatic Turnstile `Success!` and returned the neutral invalid-credentials message.
+- Before the final request, the authoritative staging row held exactly fifteen attempts in the `18:25 UTC` window.
+- Attempt sixteen displayed `Too many login attempts. Please wait a few minutes and try again.` The persisted row then held exactly sixteen attempts.
+- Staging Auth logs contain exactly fifteen password grants for the Preview host between `18:27:47` and `18:28:40 UTC`, all status `400` with `invalid_credentials`. There is no sixteenth password grant.
+- The controlled alias still has zero Auth users. No email, session, account, identity, hosted setting, deployment, or Production service changed.
+- Reconciliation happened on 24 October, after Vercel Hobby's one-hour runtime-log retention window. The historical request-log query was unavailable, so the live `429` branch is supported by the visible response, counter/provider split, reviewed route contract, and focused tests rather than a retained Vercel request record.
+
+### Rollback
+
+No rollback is required because the limiter behaved as designed. If a later Preview regression appears, remove or disable the branch-only limiter flag and restore the previous verified deployment; Email login then fails closed while the additive staging table remains inert.
+
+---
+
+## 2026-10-24 - Run the post-window Preview login regression checks
+
+### What we were trying to achieve
+
+Confirm that ordinary Email entry recovered after the limiter window, recovery and Google remained available, the controlled absent alias stayed absent, and the login path did not expose sensitive inputs in current logs.
+
+### Feature / change being made
+
+Ran read-only route and availability checks plus one bounded provider-intended invalid login against protected Preview deployment `dpl_24PkbV6qUrAwrdtmYnoQZbM6NNdL`. No recovery request was submitted and Production was not touched.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Verification and rollout state
+
+- Before the request, the controlled alias had zero staging Auth users and the current limiter window had zero rows and zero attempts.
+- The protected Email config returned `200` with both Email and password-management flags enabled. Login and Forgot password returned `200`.
+- Safari showed Google, the Email form, Forgot password, and automatic Turnstile success. The recovery page rendered its form and security check, but Send reset link was not selected.
+- One invalid Email login returned the neutral unrecognised-credentials message. The database then held one current-window attempt, and staging Auth logs showed one matching password grant with status `400` and `invalid_credentials`.
+- The controlled alias still has zero Auth users. No account, session, email, hosted setting, variable, deployment, or Production resource changed.
+- Current deployment runtime warnings, errors, and fatal entries were empty. Exact log searches found neither the controlled alias nor the test-only password in Vercel runtime output or Supabase event-message text. The inspected limiter RPC and password-grant events contained no limiter input field.
+- The user then completed the successful Email/password login with an existing staging account. Staging Auth independently recorded one password grant with status `200` from the protected Preview at `16:46:02 UTC`, and the current limiter window held exactly one attempt.
+- The controlled rate-limit alias still has zero Auth users. The checked deployment had no warning, error, or fatal runtime entries in the current window, and its exact alias search remained empty.
+- The post-window Preview regression gate is complete. Browser AutoFill and saved credentials were not accessed or recorded by the agent.
+
+### Rollback
+
+No rollback is required. The only state change is one expiring staging limiter count from the deliberately invalid request. Production remains Google-only and unchanged.

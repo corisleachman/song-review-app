@@ -540,9 +540,22 @@ Status: code commit `0da27eaf69051d1df28640269014f39986339acf` is pushed to `cod
 - Two optional package-run SQL parsers could not be loaded by the local `npx` environment. No parser or dependency was added to the project, and the failed tooling attempts did not modify the repository.
 - The protected deployment reports `{"enabled":true,"passwordManagementEnabled":true}` with `200` and no-store headers. A same-origin malformed login POST returns the expected validation `400` before the limiter or Supabase Auth. Build output completed successfully with all 93 tests, and the checked Preview runtime error and fatal logs were empty.
 
-### Remaining staging gate
+### Staging gate result
 
-The staging migration, branch-only configuration, deployment, and non-consuming smoke checks are complete. The bounded sixteen-request proof must still confirm that request sixteen returns `429` and produces no matching Supabase password grant. Production stays unchanged.
+The application-level limiter gate passes. A corrected live run on 23 October started from zero in the `18:25 UTC` aligned window and used an exact Email `Log in` button match. Attempts one through fifteen each had a fresh automatic Turnstile `Success!`, returned the neutral invalid-credentials message, and produced exactly fifteen staging password grants between `18:27:47` and `18:28:40 UTC`. The database row held count fifteen before the final request. Attempt sixteen showed `Too many login attempts. Please wait a few minutes and try again.`, advanced the shared counter to sixteen, and produced no sixteenth Supabase password grant. The controlled alias still has zero Auth users. The direct historical Vercel request record was no longer available when reconciled on 24 October because the Hobby plan retains runtime logs for one hour, but the visible response, persisted counter, exact provider count, route contract, and focused tests agree. Production stays unchanged.
+
+### Post-window Preview regression, 2026-10-24
+
+Status: complete. The availability, invalid-login, successful-login, controlled-alias, limiter, and log-safety checks all pass.
+
+- The protected config route returned `200` with `{"enabled":true,"passwordManagementEnabled":true}`. The Login and Forgot password routes both returned `200` on deployment `dpl_24PkbV6qUrAwrdtmYnoQZbM6NNdL`.
+- Safari showed the Google sign-in button, the expanded Email form, the Forgot password link, and automatic Turnstile `Success!`. The recovery page showed its Email field, security check, and Send reset link action. The form was not submitted, so no recovery email was sent.
+- Before the login request, the controlled rate-limit alias had zero staging Auth users and the current limiter window had zero rows. One fresh automatic Turnstile result and one provider-intended invalid login then returned the neutral `Email or password wasn't recognised.` response.
+- Staging reconciliation found one current-window limiter row at attempt count one, exactly one password grant with status `400` and `invalid_credentials`, and still zero Auth users for the controlled alias.
+- The checked Preview runtime warnings, errors, and fatal entries were empty. Exact searches found neither the controlled alias nor the test-only password in Vercel runtime logs. The same exact values were absent from Supabase event-message text. No limiter input field was present in the inspected provider or RPC events.
+- The user then completed a successful Email/password login with an existing staging account. Staging Auth independently recorded one password grant with status `200` from the protected Preview at `16:46:02 UTC`; the current limiter window held exactly one attempt. No browser credential was inspected or recorded by the agent.
+- Google availability was verified without opening an account chooser.
+- Production was not queried or changed. No hosted setting, environment variable, deployment, user, email, session, or application code changed. The single limiter row expires normally.
 
 ### Rollback
 
