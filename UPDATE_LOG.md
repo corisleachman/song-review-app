@@ -8921,3 +8921,34 @@ Ran read-only route and availability checks plus one bounded provider-intended i
 ### Rollback
 
 No rollback is required. The only state change is one expiring staging limiter count from the deliberately invalid request. Production remains Google-only and unchanged.
+
+---
+
+## 2026-10-24 - Resolve PR #55 against the current Production base
+
+### What we were trying to achieve
+
+Make the completed Email/password candidate reviewable against the latest `clone-clean` branch without merging the pull request or changing Production.
+
+### Feature / change being made
+
+Merged Production commit `ac0fe655` into the feature branch. The only conflict was the append-only `UPDATE_LOG.md` history; both histories were retained, with the incoming 26 September playback entry placed in chronological order.
+
+### Files changed
+
+- `app/dashboard/page.tsx`
+- `lib/currentUser.ts`
+- `UPDATE_LOG.md`
+
+### Verification and rollout state
+
+- Merge commit `2f432bbc` contains the current Production playback/session changes alongside the staged Email/password work.
+- All 93 repository tests passed. TypeScript passed. Full ESLint completed with zero errors and the existing 48 warnings.
+- The optimized Next.js build passed with synthetic non-Production Supabase placeholders. No hosted credential was read. An initial build without placeholders compiled successfully and stopped only when page-data collection found the expected missing local Supabase URL.
+- `git diff --check` passed, no conflict markers remain, and the build-generated blog injection was removed from the working tree.
+- `tsconfig.tsbuildinfo`, the existing `.DS_Store` files, `.codex-upload-test/`, and `STAGING_AUTH_TEMPLATE_BASELINE.md` remain outside the commit.
+- The pull request remains draft. Nothing was merged into `clone-clean`, deployed to Production, or changed in any hosted Production service.
+
+### Rollback
+
+If this branch sync proves unsuitable, revert merge commit `2f432bbc` on the feature branch. Do not change the already-shipped `clone-clean` commit or Production deployment.
