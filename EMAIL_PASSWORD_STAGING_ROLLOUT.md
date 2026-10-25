@@ -680,3 +680,30 @@ The Song Room project link remains `prj_GoSvIjynlundQRAjTe4NIrwY0Gz0`. Its lates
 No rollback is currently needed. Before activation, restore only the recorded changed settings or remove the new unused variables if a configuration problem appears; retain Google and both existing public redirect hosts. Keep the server-only migrations in place. Do not revoke the dedicated SMTP key while Supabase still depends on it without replacing the credential first.
 
 The hidden configuration gate is complete. Prepare the documentation push and PR refresh, then separately approve the hidden application deployment and Google regression. Public Email activation still needs its later approval and controlled live delivery tests.
+
+## Local PR refresh preparation, 2026-10-25
+
+Status: prepared locally only. `PR_55_DESCRIPTION.md` contains the proposed replacement description. GitHub PR #55 is still open, draft, and mergeable against `clone-clean` at `ac0fe655`. The remote branch remains at `2c07d3f1`; six later documentation commits and this local preparation have not been pushed. No PR body, deployment, or hosted configuration changed during this review.
+
+The remote description predates the atomic invitation migration and the completed Production schema/configuration gates. It also incorrectly implies that token hashes never enter confirmation URLs and that removing new Email entry can preserve login/recovery through an independent switch. The replacement describes the actual confirmation-link contract and shared flag boundary. The dated historical checkpoints above remain evidence of their own state, not current rollout instructions.
+
+### Refreshed verification
+
+- All 94 repository tests passed. TypeScript passed with `--noEmit --incremental false`. Full ESLint returned zero errors and the existing 48 warnings. `npm audit --omit=dev` returned zero vulnerabilities, and `git diff --check origin/clone-clean...HEAD` passed.
+- The prior optimized build passed at the unchanged application code using synthetic Supabase placeholders. No new live Auth, email, CAPTCHA, or browser journey was run in this local review.
+- Fresh GitHub metadata reports PR #55 draft, open, and mergeable. Both Vercel commit statuses pass on the currently pushed head. These checks do not cover the unpushed documentation; recheck the exact resulting head after an approved push.
+- Reviewed Email route readiness and validation, confirmation/recovery state handling, login-limit enforcement, signed-in password management, and the atomic invitation acceptance boundary. No application edit was made.
+
+### Exact next gate
+
+Seek approval to commit this documentation preparation, push the pending documentation commits to `codex/email-password-staging-forms`, and publish the prepared PR description. A push triggers the configured Preview builds, so that Preview redeployment is part of the approval request. Keep PR #55 draft. Do not merge, deploy Production, enable its Email provider, or add either public Email flag.
+
+After the push, verify the exact remote head and required checks, primary protected Preview Ready state and stable-alias configuration, and deployment error logs. Stop on any failed check or unexpected configuration change; capture the safe URL, step, visible error, relevant redacted log excerpt, and screenshot where useful. Only then seek the separate hidden Production application rollout approval.
+
+Rollback clarification: before real Production password users exist, the absent flags and previous verified application deployment remain the closed boundary. After password users exist, removing `EMAIL_PASSWORD_AUTH_ENABLED` closes login and recovery, not just signup. It is an outage control, not a routine rollback. Preserve the Email provider, Google, and working login/recovery while restoring the last verified application configuration. The Account security flag remains independently controllable.
+
+## Approved documentation publication, 2026-10-25
+
+The user approved committing and pushing the prepared documentation, replacing PR #55's description, and verifying the resulting protected Preview. The approval explicitly keeps the PR draft and forbids a merge or Production change. The pending commits contain documentation only. The existing local hygiene files, including the untracked template baseline, are excluded.
+
+The publication must be checked against its exact commit, not the older passing head. Verify both Vercel project checks and Preview Comments, the primary Preview's Ready state and stable branch alias, `enabled:true` with `passwordManagementEnabled:true`, safe signed-out route behavior, and deployment-scoped error/5xx logs. Do not submit credentials, send email, create fixtures, or run a new limiter burst for this documentation-only gate. Confirm the Production deployment stays `dpl_CwLtEzDWi1ShB67yZeFp5T9H14tp` at `ac0fe655`. Record the actual results in the final handoff and PR after the asynchronous build completes; this entry records approval, not a claim that publication or verification has already succeeded.

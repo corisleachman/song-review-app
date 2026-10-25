@@ -9169,3 +9169,55 @@ Read-only hosted verification and status updates in `EMAIL_PASSWORD_STAGING_ROLL
 ### Rollout and rollback
 
 Prepare the documentation push and PR description, then obtain approval for the hidden application deployment and Google regression. Public Email activation remains separate. No rollback is needed; preserve Google and the additive migrations, and do not disable the Email provider after real password users exist.
+
+---
+
+## 2026-10-25 - Prepare the final PR description and rollout handoff
+
+### What we were trying to achieve
+
+Bring PR #55's proposed description up to date before requesting a documentation push and any later hidden Production application deployment.
+
+### Feature / change being made
+
+Local documentation preparation only. No application, hosted setting, PR state, or deployment changed.
+
+### Files changed
+
+- `PR_55_DESCRIPTION.md`
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `UPDATE_LOG.md`
+
+### Verification and rollout state
+
+- Refreshed repository checks passed: 94 tests, TypeScript, full ESLint with zero errors and 48 existing warnings, zero production dependency vulnerabilities, and branch whitespace checks. The earlier optimized build passed at the same application code; it was not repeated as a live integration test.
+- Fresh GitHub metadata shows PR #55 open, draft, and mergeable. Both Vercel commit statuses pass on remote head `2c07d3f1`. Six later local documentation commits remain unpushed, and the new description is not yet published.
+- The description now includes atomic invitation acceptance, completed staging/Production schema prerequisites, and the verified hidden Production configuration package. It separates repository checks from previously recorded hosted journeys and their browser coverage limits.
+- Corrected the proposed security wording: confirmation URLs contain the required token hash, while sealed continuation and referral state remain server-side. Corrected the rollback wording: the shared Email flag disables login/recovery as well as signup; there is no independent signup-only switch.
+- Existing local hygiene files were left untouched and unstaged. No production mail, credential submission, database fixture, or browser test was performed in this review.
+
+### Rollout and rollback
+
+The next approval is to commit and push this documentation, refresh the PR description, and verify the resulting protected Preview while retaining draft status. Do not merge, deploy Production, or activate its Email. A subsequent hidden application rollout requires separate authority and Google regression before public activation. Preserve the additive migrations and working authentication paths during any later rollback.
+
+---
+
+## 2026-10-25 - Publish the approved documentation and PR refresh
+
+### What we were trying to achieve
+
+Publish the completed readiness record and correct PR #55's description without changing application code or advancing the Production rollout.
+
+### Feature / change being made
+
+Approved documentation-only publication to `codex/email-password-staging-forms`, followed by exact-head protected Preview verification. PR #55 must remain draft. No merge or Production change is authorized.
+
+### Files changed
+
+- `PR_55_DESCRIPTION.md`
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `UPDATE_LOG.md`
+
+### Verification and rollout boundaries
+
+The prepared documentation and pending local commits were inspected before staging. They contain no application edit. Only the named documentation files are included; existing hygiene files remain excluded. The resulting GitHub checks, Preview commit and configuration, guarded routes, runtime logs, and unchanged Production deployment must be verified after the push. Actual results belong to the subsequent final handoff and PR update, not this pre-publication approval record.
