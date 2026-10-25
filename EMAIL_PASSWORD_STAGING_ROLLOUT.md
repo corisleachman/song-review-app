@@ -603,7 +603,7 @@ The next gate is a read-only Production hosted-configuration audit followed by a
 
 ## Production hosted-configuration audit, 2026-10-25
 
-Status: the read-only audit is complete apart from the Cloudflare widget hostname check, which could not be opened because the Mac was locked. No hosted setting, environment variable, credential, template, deployment, pull-request state, user, or database row changed. Production Email remains disabled and Google remains enabled.
+Status: complete. No hosted setting, environment variable, credential, template, deployment, pull-request state, user, or database row changed. Production Email remains disabled and Google remains enabled.
 
 ### Verified Production state
 
@@ -613,8 +613,9 @@ Status: the read-only audit is complete apart from the Cloudflare widget hostnam
 - Vercel redirects `https://song-room.live` to `https://www.song-room.live`, while Production `NEXT_PUBLIC_APP_URL` still uses the non-www host. The repository metadata, robots, and sitemap fallbacks already use `https://www.song-room.live`.
 - Production Vercel has the current Supabase and Resend application variables, but it does not have `EMAIL_PASSWORD_AUTH_ENABLED`, `SIGNED_IN_PASSWORD_MANAGEMENT_ENABLED`, `AUTH_INTENT_SECRET`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `EMAIL_LOGIN_RATE_LIMIT_ENABLED`, or `EMAIL_LOGIN_RATE_LIMIT_SECRET`.
 - Resend reports both `song-room.live` and `corisleachman.com` as verified sending domains in `eu-west-1`. No secret value was read or written.
+- The existing Cloudflare widget `Song Room staging email auth` is owned by the expected account and allows exactly one hostname: the stable `codex/email-password-staging-forms` Preview alias. It uses Managed mode with pre-clearance off. Production and localhost are excluded, so its staging boundary is intact.
 - `SUPABASE_SERVICE_ROLE_KEY` and `RESEND_API_KEY` are existing Vercel Config variables rather than Secret variables. Treat that as a separate credential-hygiene review, not an unreviewed part of this rollout.
-- PR #55 remains open and draft. Its reported checks pass and GitHub reports it cleanly mergeable. Including this audit, the local branch has three unpushed documentation commits after the pushed application head.
+- PR #55 remains open and draft. Its reported checks pass and GitHub reports it cleanly mergeable. Including the completed Cloudflare audit, the local branch has four unpushed documentation commits after the pushed application head.
 
 ### Proposed hidden configuration package
 
@@ -631,9 +632,9 @@ The stale Preview wildcard and localhost callback should be classified before re
 
 ### Deployment and activation order
 
-1. Finish the Cloudflare widget read-only check after the Mac is unlocked, then request approval for the hidden configuration package above.
+1. Obtain approval for the hidden configuration package above.
 2. Apply and verify that package while the current Google-only Production application remains live.
-3. Push the three local documentation commits, refresh PR #55's description, and seek approval to mark it ready, merge it, and deploy with Email still hidden.
+3. Push the four local documentation commits, refresh PR #55's description, and seek approval to mark it ready, merge it, and deploy with Email still hidden.
 4. Verify Google login, protected-route redirects, the default-off Email routes, logs, and the server-only Production objects before asking for activation approval.
 5. Under a separate approval, enable the Supabase Email provider while the application flag stays off. Verify no public Email entry appears, then add `EMAIL_PASSWORD_AUTH_ENABLED=true` and redeploy.
 6. Run one controlled Production signup, confirmation, password login, recovery-delivery, account-graph, limiter, and log-safety smoke test. Enable `SIGNED_IN_PASSWORD_MANAGEMENT_ENABLED=true` only after that gate passes.

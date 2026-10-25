@@ -9097,8 +9097,10 @@ Recorded the exact hidden Production configuration package and rollout order. No
 - Vercel metadata confirms that all six rollout variables exist only on the protected Preview branch and are absent from Production. No variable value was read.
 - Vercel redirects the apex public domain to `www`, while Supabase's Site URL and Production `NEXT_PUBLIC_APP_URL` still use the apex. The proposed canonical value is `https://www.song-room.live`, retaining both hosts in the redirect allowlist.
 - Resend reports `song-room.live` as a verified sending domain. The proposal uses a separate Production Auth sending credential rather than moving the staging credential.
-- The Cloudflare widget hostname check remains open because the Mac was locked and could not be unlocked automatically. The safer proposal is a separate Production widget restricted to the apex and `www` public hosts.
-- PR #55 remains open, draft, cleanly mergeable, and green. Including this audit, three documentation commits remain local and unpushed. Production application code and deployment are unchanged.
+- The Cloudflare dashboard was then inspected read-only through the expected `corisleachman@googlemail.com` account. Its only widget is `Song Room staging email auth`, restricted to the stable protected Preview hostname. Managed mode is selected and pre-clearance is off. No field or key changed, and the secret stayed concealed.
+- A separate Production widget restricted to `song-room.live` and `www.song-room.live` remains the approved design boundary. The staging widget and secret must not be reused or widened.
+- Current Supabase documentation still supports Turnstile for signup, sign-in, and password reset, custom SMTP for Production delivery, one-hour or shorter OTP expiry, and the tested CAPTCHA token flow. The 25 October changelog review found no Auth or SMTP breaking change that alters this package.
+- PR #55 remains open, draft, cleanly mergeable, and green. Including this completed audit, four documentation commits remain local and unpushed. Production application code and deployment are unchanged.
 
 ### Rollout and rollback
 
