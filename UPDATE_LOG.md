@@ -9144,3 +9144,28 @@ Production SMTP, templates, password safeguards, canonical URL, separate Turnsti
 - Keep the existing saved configuration while the final CAPTCHA handoff waits. Verify the saved CAPTCHA provider/secret and the closed Email boundary before completing this package.
 - Vercel variable changes apply only on a later approved deployment. The next rollout gate is the separately approved documentation push, PR refresh, and hidden application deployment followed by Google regression.
 - No rollback is currently needed. Preserve Google and the additive server-only migrations. Once a real Production password user exists, do not disable the Supabase Email provider.
+
+---
+
+## 2026-10-25 - Verify the completed hidden Production configuration
+
+### What we were trying to achieve
+
+Close the approved configuration gate after the user entered and saved the Production Turnstile secret.
+
+### Feature / change being made
+
+Read-only hosted verification and status updates in `EMAIL_PASSWORD_STAGING_ROLLOUT.md`, `PRODUCT_BACKLOG.md`, and `UPDATE_LOG.md`. No further hosted write occurred.
+
+### Verification and rollout state
+
+- Production reports CAPTCHA enabled, provider Turnstile, and a stored secret. The Vercel public site key matches the new Production widget. No secret value was printed or written to source files.
+- The final comparison reports zero mismatches across the approved SMTP, password safeguards, canonical URL, CAPTCHA settings, or the four tested staging template subjects and bodies.
+- Both private Vercel rollout values are Secret variables scoped only to Production. The limiter Config flag is exact true; the canonical URL and Turnstile public key are also Production-only. Both public Email flags remain absent.
+- The live Supabase settings endpoint returned `200`, Email false, and Google true. Staging still reports its existing provider, CAPTCHA, and protected Preview Site URL boundaries.
+- Song Room's latest Production deployment is still `dpl_CwLtEzDWi1ShB67yZeFp5T9H14tp`, Ready from `ac0fe655` on `clone-clean`. No application deployment or PR transition occurred.
+- Configuration verification is complete. A live Production CAPTCHA challenge, actual Auth email delivery, and Google browser round trip were not run; they belong to the later deployment and activation gates.
+
+### Rollout and rollback
+
+Prepare the documentation push and PR description, then obtain approval for the hidden application deployment and Google regression. Public Email activation remains separate. No rollback is needed; preserve Google and the additive migrations, and do not disable the Email provider after real password users exist.

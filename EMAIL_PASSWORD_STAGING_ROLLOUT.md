@@ -645,7 +645,7 @@ Before any real Production password user exists, remove the public Email flag an
 
 ## Hidden Production configuration progress, 2026-10-25
 
-Status: applied and verified apart from the final Production CAPTCHA secret entry and save. The user approved the package and subsequently selected the narrower `www.song-room.live` Turnstile hostname. No Song Room application deployment or PR transition occurred. Production Email stays disabled.
+Status: complete for the approved hidden configuration package. After the user saved the Production CAPTCHA secret, fresh Supabase and Vercel reads verified every expected setting. The user selected the narrower `www.song-room.live` Turnstile hostname. No Song Room application deployment or PR transition occurred. Production Email stays disabled; live Email journeys remain a later gate.
 
 ### Saved and verified
 
@@ -661,11 +661,13 @@ Status: applied and verified apart from the final Production CAPTCHA secret entr
 - A fresh public Auth settings read returned `200`, Email false, and Google true. Production remains at five Auth users, five Google identities, zero password users, zero pending invitations, zero Email flow rows, and zero limiter rows. The live Login route returned `200`; the Google browser round trip was not repeated.
 - The refreshed Security Advisor has no errors. Its five mutable-search-path warnings are existing functions outside this slice, and server-only tables retain their intentional RLS-without-client-policy information notices.
 
-### Final CAPTCHA handoff
+### Final CAPTCHA verification
 
-The Production Supabase Attack Protection form is prepared with CAPTCHA on and Turnstile selected, but its secret field remains blank and the form is not saved. The persisted API state still has CAPTCHA off and no secret. The user must copy the new Production widget's Secret key from the open Cloudflare tab, paste it into that exact Production form, and click Save changes. Do not paste the secret into chat.
+The user completed the Production secret entry and reported Saved. A fresh Management API read confirms `security_captcha_enabled=true`, provider `turnstile`, and a stored secret. The Production Vercel public site key matches the newly created Production widget; both new private Vercel values remain Secret variables scoped only to Production. Both public Email flags remain absent.
 
-The browser-control tool's current rule requires a user handoff before entering a new authentication credential. After the user reports Saved, re-read the Production Auth config and runtime settings, confirm Turnstile with a stored secret and CAPTCHA enabled, recheck that Email is off and Google is on, and compare the Production public site key with the new widget. Do not mark this configuration package complete until those reads pass.
+The final comparison found zero mismatches in the approved SMTP, safeguards, URL, CAPTCHA settings, or four template subjects and bodies. The live Auth settings endpoint returned `200`, Email false, and Google true. A fresh Vercel deployment read confirms the same Production deployment and `clone-clean` commit. No secret was printed or added to a repository file.
+
+This verifies stored configuration, not a live Production CAPTCHA challenge or mail delivery. Those tests require the later approved application deployment and controlled Email activation. The Google browser round trip also remains part of the hidden deployment regression gate.
 
 ### Tooling incident and cleanup
 
@@ -675,6 +677,6 @@ The Song Room project link remains `prj_GoSvIjynlundQRAjTe4NIrwY0Gz0`. Its lates
 
 ### Rollback and next gate
 
-The saved settings and unused Vercel variables can remain while the final handoff waits. No rollback is currently needed. Before activation, restore only the recorded changed settings or remove the new unused variables if a configuration problem appears; retain Google and both existing public redirect hosts. Keep the server-only migrations in place. Do not revoke the dedicated SMTP key while Supabase still depends on it without replacing the credential first.
+No rollback is currently needed. Before activation, restore only the recorded changed settings or remove the new unused variables if a configuration problem appears; retain Google and both existing public redirect hosts. Keep the server-only migrations in place. Do not revoke the dedicated SMTP key while Supabase still depends on it without replacing the credential first.
 
-Finish the CAPTCHA save and verification before considering this package complete. Then separately approve the documentation push, PR refresh, hidden application deployment, and Google regression. Public Email activation still needs its later approval and controlled live delivery tests.
+The hidden configuration gate is complete. Prepare the documentation push and PR refresh, then separately approve the hidden application deployment and Google regression. Public Email activation still needs its later approval and controlled live delivery tests.
