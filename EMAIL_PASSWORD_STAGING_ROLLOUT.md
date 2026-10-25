@@ -642,3 +642,39 @@ The stale Preview wildcard and localhost callback should be classified before re
 ### Rollback boundary
 
 Before any real Production password user exists, remove the public Email flag and restore the last verified deployment if the application smoke fails. The additive database objects can remain inert. After a real password user exists, do not disable the Supabase Email provider because that would lock the user out. Restore the last verified application configuration or deployment instead, and keep Google enabled throughout.
+
+## Hidden Production configuration progress, 2026-10-25
+
+Status: applied and verified apart from the final Production CAPTCHA secret entry and save. The user approved the package and subsequently selected the narrower `www.song-room.live` Turnstile hostname. No Song Room application deployment or PR transition occurred. Production Email stays disabled.
+
+### Saved and verified
+
+- Production Supabase Site URL is now `https://www.song-room.live`; the redirect allowlist was retained. Google remains enabled, Email remains disabled, confirmations remain required, and the eight-digit OTP and one-hour expiry are unchanged.
+- Confirmation, recovery, reauthentication, and Password changed subjects and bodies match the tested staging values byte for byte. No staging secret was copied.
+- The minimum password length is 12 with no composition requirement. Leaked-password protection, Secure password change, and Password changed notifications are on; current-password enforcement is off.
+- Custom SMTP uses `smtp.resend.com:465`, user `resend`, sender `noreply@song-room.live`, sender name `Song Room`, a 60-second frequency limit, and a 30-message hourly limit.
+- Resend credential `fc88b68c-1eb4-4970-b2f8-421ae6a68cb5`, named `Song Room Production Supabase Auth SMTP`, was created through the API with `sending_access` restricted to the verified `song-room.live` domain. It passed authenticated TLS and SMTP `235` before being saved only to Production Supabase. No message was sent. Supabase conceals the saved credential on read-back, so verification covers the successful save, stored-credential presence, and independent SMTP authentication. The first newly generated credential was superseded and revoked during verification; one final dedicated credential remains.
+- Fresh independent 48-byte random values were saved as Production-only Secret variables `AUTH_INTENT_SECRET` and `EMAIL_LOGIN_RATE_LIMIT_SECRET`. Values were passed through stdin and were not printed or saved to a file. Production-only `EMAIL_LOGIN_RATE_LIMIT_ENABLED=true` is Config, and Production-only `NEXT_PUBLIC_APP_URL` is now `https://www.song-room.live`.
+- The separate Cloudflare widget `Song Room Production email auth` was created with `www.song-room.live` as its only configured hostname, Managed mode, and pre-clearance off. Cloudflare automatically includes descendants of an allowed hostname. The user chose this narrower scope after learning that allowing the apex would also authorize every subdomain. Vercel already redirects the apex to `www`.
+- The Production widget's public site key is saved as Production-only Config variable `NEXT_PUBLIC_TURNSTILE_SITE_KEY`. Its secret was kept out of tool output, repository files, and Vercel. The staging widget remains separate.
+- `EMAIL_PASSWORD_AUTH_ENABLED` and `SIGNED_IN_PASSWORD_MANAGEMENT_ENABLED` remain absent. Vercel changes will take effect only in a later separately approved deployment.
+- A fresh public Auth settings read returned `200`, Email false, and Google true. Production remains at five Auth users, five Google identities, zero password users, zero pending invitations, zero Email flow rows, and zero limiter rows. The live Login route returned `200`; the Google browser round trip was not repeated.
+- The refreshed Security Advisor has no errors. Its five mutable-search-path warnings are existing functions outside this slice, and server-only tables retain their intentional RLS-without-client-policy information notices.
+
+### Final CAPTCHA handoff
+
+The Production Supabase Attack Protection form is prepared with CAPTCHA on and Turnstile selected, but its secret field remains blank and the form is not saved. The persisted API state still has CAPTCHA off and no secret. The user must copy the new Production widget's Secret key from the open Cloudflare tab, paste it into that exact Production form, and click Save changes. Do not paste the secret into chat.
+
+The browser-control tool's current rule requires a user handoff before entering a new authentication credential. After the user reports Saved, re-read the Production Auth config and runtime settings, confirm Turnstile with a stored secret and CAPTCHA enabled, recheck that Email is off and Google is on, and compare the Production public site key with the new widget. Do not mark this configuration package complete until those reads pass.
+
+### Tooling incident and cleanup
+
+Vercel CLI 65.2.0's documented `env run` path re-entered Vercel instead of running the local Node audit. A temporary credential-free audit script was accidentally deployed as a separate `resend-audit` project (`prj_O7JssL8fDmMWphieODsNYG66jNUT`, deployment `dpl_Cjk7rK9CBRhgb6KQ8tMZTpR4WrA9`). The newly created project and deployment were immediately deleted; both resource reads now return `404`. The temporary local source contains no credential and can be recreated. Do not use `env run` again in this environment until its subprocess behaviour is understood.
+
+The Song Room project link remains `prj_GoSvIjynlundQRAjTe4NIrwY0Gz0`. Its latest Production deployment remains `dpl_CwLtEzDWi1ShB67yZeFp5T9H14tp`, from `clone-clean` commit `ac0fe655`; no Song Room deployment was created. Successful operations used explicit project-scoped environment commands and authenticated API calls with credentials kept in memory.
+
+### Rollback and next gate
+
+The saved settings and unused Vercel variables can remain while the final handoff waits. No rollback is currently needed. Before activation, restore only the recorded changed settings or remove the new unused variables if a configuration problem appears; retain Google and both existing public redirect hosts. Keep the server-only migrations in place. Do not revoke the dedicated SMTP key while Supabase still depends on it without replacing the credential first.
+
+Finish the CAPTCHA save and verification before considering this package complete. Then separately approve the documentation push, PR refresh, hidden application deployment, and Google regression. Public Email activation still needs its later approval and controlled live delivery tests.
