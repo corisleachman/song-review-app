@@ -1515,6 +1515,9 @@ test('email login and signup stay default-off behind the server readiness bounda
     'process.env.AUTH_INTENT_SECRET?.trim().length',
     'getTurnstileSiteKey().length > 0',
     "process.env.EMAIL_LOGIN_RATE_LIMIT_ENABLED?.trim().toLowerCase() === 'true'",
+    'EMAIL_LOGIN_RATE_LIMIT_SECRET',
+    "Buffer.byteLength(secret, 'utf8') >= 32",
+    'isEmailLoginRateLimitReady()',
   ], 'email auth readiness');
   assert.match(config, /enabled: isEmailPasswordAuthReady\(\)/u);
   assertIncludesAll(loginRoute, [
@@ -1823,14 +1826,51 @@ test('privileged upload and deletion functions remain service-role-only', () => 
 });
 
 test('workspace invitations remain behind the server-only database boundary', () => {
-  const migration = compactSql('supabase/migrations/20261011161736_harden_account_invites_access.sql');
+  const hardeningMigration = compactSql('supabase/migrations/20261011161736_harden_account_invites_access.sql');
+  const acceptanceMigration = compactSql('supabase/migrations/20261024165859_accept_workspace_invite_atomically.sql');
+  const route = read('app/api/invites/[token]/accept/route.ts');
+  const invites = read('lib/accountInvites.ts');
 
-  assertIncludesAll(migration, [
+  assertIncludesAll(hardeningMigration, [
     'alter table public.account_invites enable row level security',
     'revoke all privileges on table public.account_invites from anon, authenticated',
     "alter function public.account_invites_sync_derived_fields() set search_path = ''",
     'revoke execute on function public.account_invites_sync_derived_fields() from public, anon, authenticated',
   ], 'account invite hardening');
+  assertIncludesAll(acceptanceMigration, [
+    'create or replace function public.accept_workspace_invite_atomically(',
+    'security invoker',
+    "set search_path = ''",
+    'for update',
+    'on conflict on constraint account_members_pkey do nothing',
+    "where invite.id = v_invite.id and invite.status = 'pending'",
+    'from public, anon, authenticated, service_role',
+    'to service_role',
+  ], 'atomic account invite acceptance');
+  assert.doesNotMatch(acceptanceMigration, /security definer/iu);
+  assertIncludesAll(invites, [
+    "supabaseServer.rpc('accept_workspace_invite_atomically'",
+    'p_invite_token: params.inviteToken',
+    'p_user_id: params.userId',
+    'p_user_email: params.userEmail',
+    'data.length === 1',
+  ], 'atomic invite result boundary');
+  assertIncludesAll(route, [
+    'await acceptWorkspaceInviteAtomically({',
+    "acceptance.result === 'email_mismatch'",
+    "acceptance.result === 'already_used'",
+    'writeActiveWorkspaceCookie(response, acceptance.accountId)',
+  ], 'atomic invite route');
+  assert.doesNotMatch(route, /createWorkspaceMembership|markInviteAccepted/u);
+});
+
+test('runtime image dependencies use the patched security releases', () => {
+  const packageJson = JSON.parse(read('package.json'));
+
+  assert.equal(packageJson.dependencies.next, '15.5.28');
+  assert.equal(packageJson.dependencies.sharp, '0.35.5');
+  assert.equal(packageJson.devDependencies['eslint-config-next'], '15.5.28');
+  assert.equal(packageJson.overrides.sharp, '0.35.5');
 });
 
 test('email confirmation state stays short-lived and server-only', () => {

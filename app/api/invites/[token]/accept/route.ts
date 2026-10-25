@@ -1,12 +1,9 @@
 import { NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import {
-  createWorkspaceMembership,
-  findInviteByToken,
-  findWorkspaceMembership,
-  getInviteState,
+  acceptWorkspaceInviteAtomically,
   getInviteWorkspace,
-  markInviteAccepted,
+  isValidInviteToken,
 } from '@/lib/accountInvites';
 import { getCurrentAuthenticatedUser } from '@/lib/currentUser';
 import { writeActiveWorkspaceCookie } from '@/lib/activeWorkspace';
@@ -39,73 +36,59 @@ export async function POST(_request: Request, props: { params: Promise<{ token: 
 
     const token = params.token;
 
-    if (!token) {
-      return NextResponse.json({ error: 'Invite not found.' }, { status: 404 });
-    }
-
-    const invite = await findInviteByToken(token);
-
-    if (!invite) {
+    if (!token || !isValidInviteToken(token)) {
       return NextResponse.json({ error: 'Invite not found.' }, { status: 404 });
     }
 
     const currentUserEmail = lowerEmail(user.email);
 
-    if (!currentUserEmail || currentUserEmail !== invite.normalized_email) {
+    if (!currentUserEmail) {
       return NextResponse.json(
-        {
-          error: `This invite was sent to ${invite.email}, but you are signed in as ${user.email ?? 'an unknown email'}.`,
-        },
+        { error: 'Sign in with the email address that received this invite.' },
         { status: 400 }
       );
     }
 
-    const workspace = await getInviteWorkspace(invite.account_id);
-    const existingMembership = await findWorkspaceMembership(invite.account_id, user.id);
-    const state = getInviteState(invite);
+    const acceptance = await acceptWorkspaceInviteAtomically({
+      inviteToken: token,
+      userId: user.id,
+      userEmail: currentUserEmail,
+    });
 
-    if (state === 'revoked') {
+    if (acceptance.result === 'not_found') {
+      return NextResponse.json({ error: 'Invite not found.' }, { status: 404 });
+    }
+    if (acceptance.result === 'email_mismatch') {
+      return NextResponse.json(
+        { error: 'Sign in with the email address that received this invite.' },
+        { status: 400 }
+      );
+    }
+    if (acceptance.result === 'revoked') {
       return NextResponse.json({ error: 'This invite has been revoked.' }, { status: 400 });
     }
-
-    if (state === 'expired') {
+    if (acceptance.result === 'expired') {
       return NextResponse.json({ error: 'This invite has expired.' }, { status: 400 });
     }
-
-    if (state === 'accepted') {
-      if (invite.accepted_by_user_id === user.id || existingMembership) {
-        const response = NextResponse.json(
-          {
-            accepted: true,
-            alreadyMember: true,
-            workspace,
-          },
-          { status: 200 }
-        );
-
-        writeActiveWorkspaceCookie(response, invite.account_id);
-        return response;
-      }
-
+    if (acceptance.result === 'already_used') {
       return NextResponse.json({ error: 'This invite has already been accepted.' }, { status: 400 });
     }
-
-    if (!existingMembership) {
-      await createWorkspaceMembership(invite.account_id, user.id);
+    if (!acceptance.accountId) {
+      throw new Error('Accepted invite did not return a workspace.');
     }
 
-    await markInviteAccepted(invite.id, user.id);
+    const workspace = await getInviteWorkspace(acceptance.accountId);
 
     const response = NextResponse.json(
       {
         accepted: true,
-        alreadyMember: Boolean(existingMembership),
+        alreadyMember: acceptance.alreadyMember,
         workspace,
       },
       { status: 200 }
     );
 
-    writeActiveWorkspaceCookie(response, invite.account_id);
+    writeActiveWorkspaceCookie(response, acceptance.accountId);
     return response;
   } catch (error) {
     console.error('Error accepting invite:', error);

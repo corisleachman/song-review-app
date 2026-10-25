@@ -8952,3 +8952,53 @@ Merged Production commit `ac0fe655` into the feature branch. The only conflict w
 ### Rollback
 
 If this branch sync proves unsuitable, revert merge commit `2f432bbc` on the feature branch. Do not change the already-shipped `clone-clean` commit or Production deployment.
+
+---
+
+## 2026-10-24 - Close the pre-Production security review findings
+
+### What we were trying to achieve
+
+Remove the runtime dependency advisories, keep Email entry closed unless its application-level login limiter is fully configured, and prevent workspace access being granted separately from invitation acceptance.
+
+### Feature / change being made
+
+Local-only security and transaction hardening for the staged Email/password and invitation journeys.
+
+### Files changed
+
+- `package.json`
+- `package-lock.json`
+- `lib/authFeatureFlags.ts`
+- `lib/accountInvites.ts`
+- `app/api/invites/[token]/accept/route.ts`
+- `supabase/migrations/20261024165859_accept_workspace_invite_atomically.sql`
+- `tests/critical-contracts.test.mjs`
+- `UPDATE_LOG.md`
+
+### Implementation and rollout state
+
+- Pinned Next.js to `15.5.28`, Sharp to `0.35.5`, and the matching Next.js ESLint configuration to `15.5.28`.
+- Email/password readiness now requires the login-limiter flag and a limiter secret of at least 32 bytes, so the public entry controls stay closed when the login route would fail closed.
+- Added a service-role-only `SECURITY INVOKER` function that locks one invitation, checks its state and invited email, upserts membership through the named membership primary-key constraint, and marks the invitation accepted in one database transaction. Naming the constraint avoids a PL/pgSQL ambiguity with the returned `account_id` column found by the staging branch test.
+- Replaced the route's separate membership and invitation writes with the bounded RPC result.
+- Refreshed patched transitive packages in the lockfile so both production-only and full dependency audits are clean.
+- The migration is applied to staging only and recorded in the hosted ledger as `20261024165859 accept_workspace_invite_atomically`. Production remains unchanged. The hosted function, bounded result branches, concurrent calls, cleanup, and advisors now pass, so the protected Preview application deployment can follow.
+
+### Verification
+
+- All 94 repository tests passed.
+- TypeScript passed, focused ESLint passed, and full ESLint completed with zero errors and the existing 48 warnings.
+- The optimized Next.js `15.5.28` build passed with synthetic non-Production Supabase placeholders.
+- The full `npm audit` and production-only audit both reported zero vulnerabilities.
+- `git diff --check` passed.
+- The first hosted branch test exposed an ambiguous `account_id` reference in the membership upsert. The fixture transaction rolled back. The migration now names `account_members_pkey`, and the corrected staging function passed every bounded result: not found, mismatched email, revoked, expired, accepted, already accepted, and already used.
+- Staging confirms owner `postgres`, `SECURITY INVOKER`, empty `search_path`, the invitation row lock, the idempotent membership constraint, and the conditional pending-state update. `PUBLIC`, `anon`, and `authenticated` cannot execute it; `service_role` can.
+- Two simultaneous staging calls against one synthetic invitation settled as `accepted` and `already_accepted`, produced exactly one membership, and left the invitation accepted by the intended user. The synthetic invitation and membership were removed, and zero remaining fixture rows were verified.
+- Supabase security and performance advisors reported their existing project notices. The new function has no mutable-search-path or exposed-execution finding.
+
+### Rollout and rollback
+
+- The additive invitation migration is applied and verified in staging. Commit and push the matching application code before allowing the Git-triggered protected Preview deployment to become the test target.
+- If Preview verification fails after deployment, restore the previous verified deployment. The unused additive function can remain or be removed in a separately reviewed down migration.
+- Do not enable Production Email or deploy this change to Production without a separate approval and completed Preview verification.

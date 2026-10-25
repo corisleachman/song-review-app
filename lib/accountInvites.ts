@@ -38,6 +38,21 @@ export interface AcceptedInviteWorkspace {
   name: string;
 }
 
+export type AcceptWorkspaceInviteResultCode =
+  | 'accepted'
+  | 'already_accepted'
+  | 'already_used'
+  | 'email_mismatch'
+  | 'expired'
+  | 'not_found'
+  | 'revoked';
+
+export interface AcceptWorkspaceInviteResult {
+  result: AcceptWorkspaceInviteResultCode;
+  accountId: string | null;
+  alreadyMember: boolean;
+}
+
 const ACCOUNT_INVITE_SELECT = `
   id,
   account_id,
@@ -201,52 +216,48 @@ export async function revokeWorkspaceInvite(inviteId: string): Promise<AccountIn
   return data as AccountInvite;
 }
 
-export async function findWorkspaceMembership(accountId: string, userId: string) {
-  const { data, error } = await supabaseServer
-    .from('account_members')
-    .select('account_id, user_id, role, joined_at')
-    .eq('account_id', accountId)
-    .eq('user_id', userId)
-    .maybeSingle();
+const ACCEPT_WORKSPACE_INVITE_RESULTS = new Set<AcceptWorkspaceInviteResultCode>([
+  'accepted',
+  'already_accepted',
+  'already_used',
+  'email_mismatch',
+  'expired',
+  'not_found',
+  'revoked',
+]);
+
+export async function acceptWorkspaceInviteAtomically(params: {
+  inviteToken: string;
+  userId: string;
+  userEmail: string;
+}): Promise<AcceptWorkspaceInviteResult> {
+  const { data, error } = await supabaseServer.rpc('accept_workspace_invite_atomically', {
+    p_invite_token: params.inviteToken,
+    p_user_id: params.userId,
+    p_user_email: params.userEmail,
+  });
 
   if (error) throw error;
 
-  return data;
-}
+  const row = Array.isArray(data) && data.length === 1 ? data[0] : null;
+  const result = row && typeof row === 'object' ? Reflect.get(row, 'result') : null;
+  const accountId = row && typeof row === 'object' ? Reflect.get(row, 'account_id') : null;
+  const alreadyMember = row && typeof row === 'object' ? Reflect.get(row, 'already_member') : null;
 
-export async function createWorkspaceMembership(accountId: string, userId: string) {
-  const { data, error } = await supabaseServer
-    .from('account_members')
-    .insert([
-      {
-        account_id: accountId,
-        user_id: userId,
-        role: 'member',
-      },
-    ])
-    .select('account_id, user_id, role, joined_at')
-    .single();
+  if (
+    typeof result !== 'string'
+    || !ACCEPT_WORKSPACE_INVITE_RESULTS.has(result as AcceptWorkspaceInviteResultCode)
+    || (accountId !== null && typeof accountId !== 'string')
+    || typeof alreadyMember !== 'boolean'
+  ) {
+    throw new Error('Invite acceptance returned an invalid result.');
+  }
 
-  if (error) throw error;
-
-  return data;
-}
-
-export async function markInviteAccepted(inviteId: string, userId: string): Promise<AccountInvite> {
-  const { data, error } = await supabaseServer
-    .from('account_invites')
-    .update({
-      status: 'accepted',
-      accepted_by_user_id: userId,
-      accepted_at: new Date().toISOString(),
-    })
-    .eq('id', inviteId)
-    .select(ACCOUNT_INVITE_SELECT)
-    .single();
-
-  if (error) throw error;
-
-  return data as AccountInvite;
+  return {
+    result: result as AcceptWorkspaceInviteResultCode,
+    accountId,
+    alreadyMember,
+  };
 }
 
 export async function getInviteWorkspace(accountId: string): Promise<AcceptedInviteWorkspace> {
