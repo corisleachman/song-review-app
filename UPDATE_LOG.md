@@ -9037,3 +9037,37 @@ Ran one controlled staging invitation acceptance for an existing Google user, ve
 - The protected Preview invitation gate now passes. Production remains Google-only and unchanged.
 - The next separately approved step is to apply the reviewed `create_email_auth_flows`, `email_login_rate_limits`, and `accept_workspace_invite_atomically` migrations to Production in that order while leaving Email disabled, PR #55 unmerged, and application code undeployed.
 - The migrations are additive and can remain inert if rollout stops. Once real Production password users exist, disabling the Supabase Email provider is not a safe rollback because it would lock them out.
+
+---
+
+## 2026-10-25 - Complete the Production Email schema gate
+
+### What we were trying to achieve
+
+Install the three already-reviewed server-only migrations in Production without exposing Email, changing application configuration, or deploying code.
+
+### Feature / change being made
+
+Applied the Email confirmation-state table, application login limiter, and atomic invitation acceptance function in their repository order, then verified their security and runtime contracts with bounded fixtures.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Verification and rollout state
+
+- Production records the exact migration versions `20261013171251`, `20261023174605`, and `20261024165859`. The linked CLI dry run is now clean.
+- An initial hosted branch-merge request returned success but made no schema or ledger change. The immediate check caught that no-op, and the three reviewed repository files were then applied through the linked CLI in their displayed order with Vault updates skipped.
+- Both tables have RLS enabled, zero policies, no client read privilege, and only their intended `service_role` grants. Both functions are `SECURITY INVOKER`, owned by `postgres`, fixed to an empty search path, and executable only by `service_role`.
+- The Email flow create/read/delete round trip passed. Limiter validation, attempts one through sixteen, expiry reset, and two-call concurrency all passed.
+- The invitation function returned all seven reviewed result branches. Two simultaneous calls produced `accepted` and `already_accepted`, with one membership and the correct accepted user.
+- Every controlled row was removed. Production ends with five Auth users, zero pending invitations, zero Email flow rows, zero limiter rows, and no controlled invitation or membership.
+- Refreshed security and performance advisors show only intentional information notices for the new server-only objects. No new function warning was reported.
+- Production Email, Vercel variables, application code, PR state, and deployment were not changed.
+
+### Rollout and rollback
+
+- These additive objects are inert until matching application code and Production-only configuration are deployed. They may remain in place if rollout pauses.
+- Do not enable Production Email yet. The next gate is a read-only hosted-configuration audit followed by a separate approval for Production-specific configuration while both public Email flags remain off.

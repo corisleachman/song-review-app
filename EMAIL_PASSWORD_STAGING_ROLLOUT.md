@@ -586,3 +586,17 @@ Status: read-only preflight complete. Production remains on `clone-clean` commit
 ### Production rollback boundary
 
 The three migrations are additive server-only objects and may remain inert if application rollout stops. Before real Production password users exist, the UI can be closed by removing the Email flag and restoring the last verified deployment. Once real password users exist, disabling the Supabase Email provider would lock them out and is not a safe rollback. Google must remain enabled throughout.
+
+## Production schema gate, 2026-10-25
+
+Status: complete. The three reviewed migrations are applied to Production in their original order and version numbers. Production Email, Vercel variables, application code, and deployment remain unchanged.
+
+- Production now records `20261013171251_create_email_auth_flows`, `20261023174605_email_login_rate_limits`, and `20261024165859_accept_workspace_invite_atomically`. A final dry run reports the remote database is up to date.
+- Both server-only tables have RLS enabled, no client policy, no `anon` or `authenticated` read access, and only the reviewed `service_role` privileges. Both expiry indexes exist.
+- Both functions are owned by `postgres`, remain `SECURITY INVOKER`, use an empty search path, deny execute to `PUBLIC`, `anon`, and `authenticated`, and allow only `service_role`.
+- The Email flow table passed a create, read, and delete round trip. The limiter rejected a malformed hash, allowed attempts one through fifteen, denied attempt sixteen, reset an expired bucket to attempt one, and serialized two simultaneous calls as counts one and two.
+- Invitation acceptance returned every reviewed branch: not found, email mismatch, revoked, expired, already used, accepted, and already accepted. Two simultaneous acceptance calls settled as `accepted` and `already_accepted`, produced exactly one membership, and left the invitation accepted by the intended user.
+- All verification fixtures were removed. Production returned to five Auth users, zero pending invitations, zero Email flow rows, zero limiter rows, and no remaining controlled invitation or membership.
+- The refreshed advisors add only the intentional `RLS Enabled No Policy` information notices for the two server-only tables and an expected unused-index information notice while the Email flow table is empty. They add no mutable-search-path, exposed-execution, or other warning for the new functions.
+
+The next gate is a read-only Production hosted-configuration audit followed by a precise approval request. Keep the Supabase Email provider disabled and keep both application Email flags absent during that review.
