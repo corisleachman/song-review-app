@@ -9221,3 +9221,45 @@ Approved documentation-only publication to `codex/email-password-staging-forms`,
 ### Verification and rollout boundaries
 
 The prepared documentation and pending local commits were inspected before staging. They contain no application edit. Only the named documentation files are included; existing hygiene files remain excluded. The resulting GitHub checks, Preview commit and configuration, guarded routes, runtime logs, and unchanged Production deployment must be verified after the push. Actual results belong to the subsequent final handoff and PR update, not this pre-publication approval record.
+
+---
+
+## 2026-10-25 - Restore song-screen restart and loop controls locally
+
+### What we were trying to achieve
+
+Restore the Play from Start and Loop Song controls from the user's previous-version screenshot, without creating another player or changing the canonical song/version reads.
+
+### Feature / change being made
+
+Local playback controls on `codex/song-player-transport-controls`, based on Production merge `b9d665f5`. No commit, push, hosted configuration, schema change or deployment has been performed for this slice. Earlier uncommitted authentication completion notes and local hygiene files are preserved.
+
+### Files changed
+
+- `app/songs/[id]/versions/[versionId]/page.tsx`
+- `app/songs/[id]/versions/[versionId]/version.module.css`
+- `tests/player-lifecycle.test.mjs`
+- `tests/browser/song-player.spec.mjs`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Root cause and implementation
+
+The current song screen had neither the adjacent buttons nor their handlers. Play from Start now seeks the active media to zero and plays, including the existing lazy first-Play path. Loop Song sets the active audio element's native loop property, stays selected across waveform retry and native fallback, and resets for a new version/audio session. It never creates a separate repeat player. Existing cleanup and background-audio architecture are unchanged.
+
+The controls follow the current warm dark design rather than recreating the older screenshot's theme. They have 44-pixel targets, accessible names, visible keyboard focus and a pressed Loop state. Phone layout uses a full-width controls row below title/artwork to keep both buttons next to the timer. Browser testing exposed the existing global desktop Space shortcut consuming focused-button input; it now leaves native buttons alone.
+
+### Verification
+
+- All 100 repository tests pass, including six new lifecycle cases and focused-button keyboard coverage. The extracted-callback harness covers cold start, paused/playing restart, loop toggling, retry/fallback transfer, version reset and rejected/stale playback.
+- Ten local browser cases pass: WaveSurfer and forced native fallback in desktop/phone Chromium, desktop/phone WebKit and 320-pixel Chromium. Tests use intercepted API fixtures and generated silent WAV audio, block external requests, and do not access hosted accounts or media. Actual browser media repeat wraps, disabling Loop permits a natural end, restart seeks and resumes, keyboard activation works, version navigation stops old playback and resets Loop, and exactly one tested media element is active. No page exceptions or unexpected API fixture requests were recorded. Desktop, phone and narrow screenshots were inspected; controls stay together without page overflow.
+- TypeScript passes with incremental writes disabled. Its first run overlapped Next's generated-types refresh and reported missing generated files; the settled rerun passed. Focused ESLint has zero errors and five existing page warnings. The browser harness was corrected to wait for WebKit's asynchronous seek completion rather than immediately reading a stale playhead value.
+- The optimized Next.js 15.5.28 build passes with explicit non-production Supabase placeholders and existing lint warnings. `git diff --check` passes. No Preview/live playback or real-device lock-screen test is claimed, and a silent test clip does not establish audible gaplessness.
+
+### Rollout, rollback, and next gate
+
+No migration, new dependency, environment variable or hosted setting is required. Commit/push and protected Preview deployment need the user's approval. After that deployment, verify restart and repeat with a real song on desktop and a physical phone, then confirm waveform/comment seeking, version navigation and background/lock-screen playback. Expected: one audible player, accurate timer, Loop state reset on version change, and normal pause/resume. Stop on failure and capture the URL, exact step, visible error, relevant console excerpt and screenshot before retrying. Production stays unchanged until a separate release approval. A rollback must revert only this player slice or restore an Email-capable deployment, preserving the completed authentication rollout and working password login/recovery.
+
+### Approved Preview publication
+
+The user approved committing/pushing the player controls and deploying protected Preview only. Preflight confirmed primary project `song-review-app-v2`, team `team_z9MLYFXhcAfyoZfq63V6NDri`, GitHub repository `corisleachman/song-review-app`, Production branch `clone-clean`, and its unchanged deployed commit `b9d665f5`. The feature branch uses the project's default Preview configuration, not the Email rollout branch's separately scoped flags. No variable or protection change is authorized or required for this slice. Only the player code/tests and this slice's documentation hunks will be staged; earlier authentication completion notes and hygiene files remain local. Hosted verification and the actual deployment identifier will be recorded after the push.

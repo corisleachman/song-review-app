@@ -40,7 +40,7 @@ const init = callback('initWaveSurfer');
 assert.equal(init.split("await import('wavesurfer.js')").length, 2);
 const code = [
   ...['clearWaveTimers', 'retryWaveform', 'attachNativeAudioEvents', 'playNativeAudioFallback',
-    'reportPlaybackFailure', 'handlePlaybackToggle', 'stopPlayback', 'pauseForComment']
+    'reportPlaybackFailure', 'handlePlaybackToggle', 'handlePlayFromStart', 'handleLoopSong', 'stopPlayback', 'pauseForComment']
     .map(name => `globalThis.${name} = ${callback(name)};`),
   `globalThis.initWaveSurfer = ${init.replace("await import('wavesurfer.js')", 'await loadWaveSurferModule()')};`,
   `globalThis.lifecycle = ${lifecycle.arguments[0].getText(ast)};`,
@@ -74,7 +74,7 @@ function harness() {
     navigator: { userAgent: 'Desktop Chrome' },
     audioUrl: 'https://example.invalid/fixture.mp3', versionId: 'version-one', loading: false,
     waveReloadNonce: 0, isReady: false, isPlaying: false, waveErr: null, isRetryingWave: false,
-    currentTime: 0, duration: 0,
+    currentTime: 0, duration: 0, isLooping: false,
     logVersionInit: (event, details) => logs.push({ event, details }),
     stopReactiveDrawing() {}, drawReactiveIdle() {},
     setTimeout(fn, ms) { const id = ++nextTimer; timers.set(id, { fn, ms }); return id; },
@@ -85,13 +85,14 @@ function harness() {
     waveLoadIdRef: { current: 0 }, waveAutoRetryUsedRef: { current: false },
     audioLoadedRef: { current: false }, playRequestedRef: { current: false },
     nativeAudioFallbackRef: { current: false },
+    loopSongRef: { current: false },
     waveformRef: { current: { isConnected: true } },
   });
   ctx.window = {
     innerWidth: 1440, setTimeout: ctx.setTimeout, clearTimeout: ctx.clearTimeout,
     addEventListener: (name, fn) => keys.set(name, fn), removeEventListener: name => keys.delete(name),
   };
-  for (const name of ['IsReady', 'IsPlaying', 'WaveErr', 'IsRetryingWave', 'Duration', 'CurrentTime', 'WaveReloadNonce']) {
+  for (const name of ['IsReady', 'IsPlaying', 'IsLooping', 'WaveErr', 'IsRetryingWave', 'Duration', 'CurrentTime', 'WaveReloadNonce']) {
     const key = name[0].toLowerCase() + name.slice(1);
     ctx[`set${name}`] = value => { ctx[key] = typeof value === 'function' ? value(ctx[key]) : value; };
   }
@@ -99,7 +100,7 @@ function harness() {
   function media() {
     const listeners = new Map();
     return {
-      paused: true, src: '', duration: 123, currentTime: 0, playCalls: 0,
+      paused: true, loop: false, src: '', duration: 123, currentTime: 0, playCalls: 0,
       playError: null, loadCalls: 0,
       addEventListener(name, fn) { const list = listeners.get(name) || []; list.push(fn); listeners.set(name, list); },
       removeEventListener(name, fn) { listeners.set(name, (listeners.get(name) || []).filter(f => f !== fn)); },
@@ -126,6 +127,7 @@ function harness() {
       getMediaElement: () => audio,
       load() { ws.loadCalls++; return loadGate.promise; },
       isPlaying: () => !audio.paused,
+      setTime(time) { audio.currentTime = time; ws.emit('seeking', time); },
       async play() {
         ws.playCalls++;
         if (ws.playError) throw ws.playError;
@@ -154,6 +156,72 @@ function harness() {
     rerender, initialize, press: () => ctx.handlePlaybackToggle(),
     resolveImport: async () => { gate.resolve(waveModule); await flush(); } };
 }
+
+test('Play from Start queues a cold first play through delayed initialization', async () => {
+  const h = harness(); h.mount(); h.ctx.handlePlayFromStart(); h.fire(80);
+  await h.resolveImport(); const ws = h.instances[0];
+  assert.equal(ws.loadCalls, 1); ws.ready(); await flush();
+  assert.equal(ws.audio.currentTime, 0); assert.equal(ws.playCalls, 1);
+});
+
+test('Play from Start seeks and plays WaveSurfer whether paused or playing', async () => {
+  for (const paused of [true, false]) {
+    const h = harness(); await h.initialize(); h.press();
+    const ws = h.instances[0]; ws.ready(); await flush();
+    if (paused) h.press();
+    ws.audio.currentTime = 122;
+    h.ctx.handlePlayFromStart(); await flush();
+    assert.equal(ws.audio.currentTime, 0); assert.equal(ws.audio.paused, false);
+    assert.equal(h.ctx.currentTime, 0); assert.equal(h.instances.length, 1);
+    assert.equal(ws.loadCalls, 1); assert.equal(h.ctx.isPlaying, true);
+  }
+});
+
+test('Loop Song toggles the existing media without playing, loading or recreating it', async () => {
+  const h = harness(); await h.initialize(); const ws = h.instances[0];
+  h.ctx.handleLoopSong();
+  assert.equal(ws.audio.loop, true); assert.equal(h.ctx.isLooping, true);
+  assert.equal(ws.loadCalls, 0); assert.equal(ws.playCalls, 0);
+  h.press(); ws.ready(); await flush();
+  h.ctx.handleLoopSong();
+  assert.equal(ws.audio.loop, false); assert.equal(h.ctx.isLooping, false);
+  assert.equal(ws.audio.paused, false); assert.equal(h.instances.length, 1);
+});
+
+test('loop selection survives retry and transfers to native fallback, with restart support', async () => {
+  const h = harness(); await h.initialize(); h.ctx.handleLoopSong(); h.press();
+  h.fire(12000); h.fire(350); h.rerender(); await flush();
+  assert.equal(h.instances[1].audio.loop, true);
+  h.instances[1].emit('error', new Error('Failed to fetch')); await flush();
+  const audio = h.native[0]; assert.equal(audio.loop, true);
+  for (const paused of [true, false]) {
+    if (paused) audio.pause();
+    audio.currentTime = 122;
+    h.ctx.handlePlayFromStart(); await flush();
+    assert.equal(audio.currentTime, 0); assert.equal(audio.paused, false);
+  }
+  h.ctx.handleLoopSong(); assert.equal(audio.loop, false);
+  assert.equal(h.native.length, 1); assert.equal(h.instances[1].audio.paused, true);
+});
+
+test('new version resets loop and cleans up the old player', async () => {
+  const h = harness(); await h.initialize(); h.ctx.handleLoopSong();
+  const old = h.instances[0]; h.unmount(); h.ctx.versionId = 'version-two';
+  h.mount(); h.fire(80); await flush();
+  assert.equal(h.ctx.isLooping, false); assert.equal(h.ctx.loopSongRef.current, false);
+  assert.equal(h.instances[1].audio.loop, false); assert.equal(old.destroyed, true);
+  assert.equal(old.audio.paused, true);
+});
+
+test('Play from Start reports rejected playback and ignores stale failures', async () => {
+  const h = harness(); await h.initialize(); h.press();
+  const ws = h.instances[0]; ws.ready(); await flush(); h.press();
+  ws.playError = new Error('Playback blocked'); h.ctx.handlePlayFromStart(); await flush();
+  assert.equal(h.ctx.waveErr, 'Playback blocked'); assert.equal(h.ctx.isPlaying, false);
+  h.ctx.handlePlayFromStart(); h.unmount(); h.ctx.versionId = 'version-two';
+  h.mount(); h.fire(80); await flush();
+  assert.equal(h.ctx.waveErr, null); assert.equal(h.ctx.isPlaying, false);
+});
 
 test('idle version initializes without downloading audio or arming a load deadline', async () => {
   const h = harness(); await h.initialize();
@@ -352,11 +420,13 @@ test('reactive drawing rechecks readiness after a Play queued before media initi
   assert.ok(dependencies.includes('isReady'), 'newly initialized media must trigger the drawing effect');
 });
 
-test('Space requests first Play through the same handler and ignores text inputs and mobile', async () => {
+test('Space requests first Play but preserves native button, text input and mobile behaviour', async () => {
   const h = harness(); await h.initialize(); h.ctx.keyboard();
   const handler = h.keys.get('keydown'); let prevented = 0;
   const event = { code: 'Space', target: { tagName: 'TEXTAREA' }, preventDefault() { prevented++; } };
   handler(event); assert.equal(h.instances[0].loadCalls, 0);
+  handler({ ...event, target: { tagName: 'BUTTON' } });
+  assert.equal(h.instances[0].loadCalls, 0); assert.equal(prevented, 0);
   h.ctx.window.innerWidth = 600; handler({ ...event, target: null });
   assert.equal(h.instances[0].loadCalls, 0);
   h.ctx.window.innerWidth = 1440; handler({ ...event, target: null });

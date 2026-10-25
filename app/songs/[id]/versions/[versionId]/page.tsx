@@ -562,6 +562,8 @@ function VersionPageInner() {
   const [initError, setInitError] = useState<{ message: string; status: number | null } | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isLooping, setIsLooping] = useState(false);
+  const loopSongRef = useRef(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [waveErr, setWaveErr] = useState<string | null>(null);
@@ -1003,6 +1005,7 @@ function VersionPageInner() {
   }, []);
 
   const attachNativeAudioEvents = useCallback((audio: HTMLAudioElement, loadId: number) => {
+    audio.loop = loopSongRef.current;
     nativeAudioCleanupRef.current?.();
 
     const updateDuration = () => {
@@ -1152,6 +1155,34 @@ function VersionPageInner() {
     setWaveErr(null);
     void ws.playPause().catch(error => reportPlaybackFailure(error, loadId));
   }, [audioUrl, isReady, loading, reportPlaybackFailure, retryWaveform, waveErr]);
+
+  const handlePlayFromStart = useCallback(() => {
+    if (!audioUrl || loading) return;
+    if (!isReady) {
+      handlePlaybackToggle();
+      return;
+    }
+
+    const loadId = waveLoadIdRef.current;
+    const audio = audioRef.current;
+    const ws = wavesurferRef.current;
+    setWaveErr(null);
+    if (nativeAudioFallbackRef.current && audio) {
+      audio.currentTime = 0;
+      setCurrentTime(0);
+      void audio.play().catch(error => reportPlaybackFailure(error, loadId));
+    } else if (ws) {
+      ws.setTime(0);
+      setCurrentTime(0);
+      void ws.play().catch(error => reportPlaybackFailure(error, loadId));
+    }
+  }, [audioUrl, handlePlaybackToggle, isReady, loading, reportPlaybackFailure]);
+
+  const handleLoopSong = useCallback(() => {
+    loopSongRef.current = !loopSongRef.current;
+    setIsLooping(loopSongRef.current);
+    if (audioRef.current) audioRef.current.loop = loopSongRef.current;
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -1377,6 +1408,7 @@ function VersionPageInner() {
           target.tagName === 'INPUT' ||
           target.tagName === 'TEXTAREA' ||
           target.tagName === 'SELECT' ||
+          target.tagName === 'BUTTON' ||
           target.isContentEditable
         )
       ) {
@@ -1911,6 +1943,8 @@ function VersionPageInner() {
     const sessionKey = `${versionId}:${audioUrl}`;
     if (waveSessionKeyRef.current !== sessionKey) {
       waveSessionKeyRef.current = sessionKey;
+      loopSongRef.current = false;
+      setIsLooping(false);
       waveAutoRetryUsedRef.current = false;
       playRequestedRef.current = false;
     }
@@ -2913,9 +2947,13 @@ function VersionPageInner() {
                   <p className={styles.heroVersionNotesText}>{versionNotes}</p>
                 </div>
               )}
+            </div>{/* /heroLeft */}
+
               <div className={styles.heroControls}>
                 <button
+                  type="button"
                   className={styles.heroPlayBtn}
+                  aria-label={isPlaying ? 'Pause' : 'Play'}
                   onClick={handlePlaybackToggle}
                   disabled={isPlaying && !isReady}
                 >
@@ -2929,6 +2967,31 @@ function VersionPageInner() {
                   <span className={styles.heroTimeSep}> / </span>
                   {formatTimestamp(Math.floor(duration))}
                 </span>
+                <button
+                  type="button"
+                  className={styles.heroTransportBtn}
+                  aria-label="Play from Start"
+                  title="Play from Start"
+                  onClick={handlePlayFromStart}
+                  disabled={!audioUrl || loading || (isPlaying && !isReady)}
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M6 5v14M19 5 9 12l10 7V5Z" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  className={styles.heroTransportBtn}
+                  aria-label="Loop Song"
+                  aria-pressed={isLooping}
+                  title={isLooping ? 'Loop Song: on' : 'Loop Song: off'}
+                  onClick={handleLoopSong}
+                  disabled={!audioUrl || loading}
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="m17 2 4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4m14-1v2a3 3 0 0 1-3 3H3" />
+                  </svg>
+                </button>
                 {!isReady && audioUrl && !waveErr && isPlaying && (
                   <span className={styles.loadingWave}>
                     {isRetryingWave ? 'Retrying…' : 'Loading…'}
@@ -2949,8 +3012,6 @@ function VersionPageInner() {
                   </span>
                 )}
               </div>
-
-            </div>{/* /heroLeft */}
 
             {/* Right: artwork */}
             <div className={styles.heroArtwork}>
