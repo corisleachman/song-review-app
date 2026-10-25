@@ -560,3 +560,29 @@ Status: complete. The availability, invalid-login, successful-login, controlled-
 ### Rollback
 
 Before real Production password users exist, removing the limiter flag closes Email login and the previous Preview deployment can be restored while the server-only objects remain inert. Once Production password users exist, deliberately closing login is an outage control, not a normal rollback. Restore the last verified limiter configuration or deployment instead; do not expose an unthrottled password route or drop the table during an incident.
+
+## Atomic invitation acceptance smoke, 2026-10-25
+
+Status: passed on the protected Preview. The staging-only fixture was removed after verification, and Production was not changed.
+
+- A single pending invitation was created directly in staging for the existing Google user `corisleachman@googlemail.com`, without sending email. The target was not already a member of the selected controlled Studio workspace.
+- The protected Preview opened the invitation, reused the expected Google identity, showed the signed-in acceptance state, and redirected to the authenticated Dashboard after `Accept invite` was selected.
+- Staging recorded the invitation as accepted by the expected user and created exactly one `member` membership. The Auth user, profile, workspace, and identity counts did not increase.
+- The exact invitation and exact membership were then deleted inside one count-guarded cleanup transaction. Staging returned to eight Auth users, eight profiles, seven workspaces, eleven memberships, zero pending invitations, and the target user's original two memberships.
+- The checked deployment error and fatal logs were empty. The route does not write a success log, so the visible redirect plus the database state transition are the acceptance evidence.
+- No invitation email, hosted-setting change, environment-variable change, deployment, or Production write occurred.
+
+## Production rollout preparation, 2026-10-25
+
+Status: read-only preflight complete. Production remains on `clone-clean` commit `ac0fe655`, its latest deployment is Ready, and PR #55 remains open and draft with passing checks. Production Email has not been enabled.
+
+- Production has five Auth users, all using Google, and zero pending workspace invitations.
+- Production does not yet contain `public.email_auth_flows`, `public.email_login_rate_limits`, or `public.accept_workspace_invite_atomically(uuid, uuid, text)`.
+- The Production migration ledger ends at `20261011161736_harden_account_invites_access`. The three reviewed migrations required before application deployment are `20261013171251_create_email_auth_flows`, `20261023174605_email_login_rate_limits`, and `20261024165859_accept_workspace_invite_atomically`, in that order.
+- The Production Vercel environment does not contain `EMAIL_PASSWORD_AUTH_ENABLED`, `AUTH_INTENT_SECRET`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `EMAIL_LOGIN_RATE_LIMIT_ENABLED`, `EMAIL_LOGIN_RATE_LIMIT_SECRET`, or `SIGNED_IN_PASSWORD_MANAGEMENT_ENABLED`.
+- Apply and verify the three additive migrations while the current Google-only application remains live. Do not enable the Supabase Email provider, add rollout variables, merge PR #55, or deploy application code in the same approval step.
+- After the migrations pass, configure Production-specific SMTP, templates, password safeguards, Turnstile, and fresh Production-only secrets while keeping both public Email flags off. Deploy the reviewed application with Email hidden and recheck Google before asking for a separate controlled activation approval.
+
+### Production rollback boundary
+
+The three migrations are additive server-only objects and may remain inert if application rollout stops. Before real Production password users exist, the UI can be closed by removing the Email flag and restoring the last verified deployment. Once real password users exist, disabling the Supabase Email provider would lock them out and is not a safe rollback. Google must remain enabled throughout.

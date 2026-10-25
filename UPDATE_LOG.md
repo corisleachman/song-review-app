@@ -9004,3 +9004,36 @@ Local-only security and transaction hardening for the staged Email/password and 
 - The additive invitation migration is applied and verified in staging. The matching application code is committed, pushed, and verified on the protected Preview.
 - If Preview verification fails after deployment, restore the previous verified deployment. The unused additive function can remain or be removed in a separately reviewed down migration.
 - Do not enable Production Email or deploy this change to Production without a separate approval and completed Preview verification.
+
+---
+
+## 2026-10-25 - Pass the atomic invitation acceptance smoke test
+
+### What we were trying to achieve
+
+Confirm that the protected Preview completes one real invitation acceptance through the new atomic database function without duplicating account data or leaving test records behind.
+
+### Feature / change being made
+
+Ran one controlled staging invitation acceptance for an existing Google user, verified the application redirect and database transition, removed the exact fixture, and prepared the next Production rollout gate from read-only evidence.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Verification and rollout state
+
+- One staging invitation was created without sending email for `corisleachman@googlemail.com`. The user was not already a member of the controlled workspace.
+- The protected Preview showed the signed-in invitation state. Selecting `Accept invite` redirected to the authenticated Dashboard.
+- Staging marked the invitation accepted by the expected user and created exactly one `member` membership. No Auth user, profile, workspace, or identity was duplicated.
+- A count-guarded cleanup removed only that invitation and membership. Staging returned to eight Auth users, eight profiles, seven workspaces, eleven memberships, zero pending invitations, and the target user's original two memberships.
+- The checked Preview error and fatal logs were empty. No email was sent, and no hosted configuration or deployment changed.
+- Production was inspected read-only. It has five Google-only Auth users, zero pending invitations, none of the three new server-only objects, and none of the new Email rollout variables. PR #55 remains draft with passing checks.
+
+### Rollout and rollback
+
+- The protected Preview invitation gate now passes. Production remains Google-only and unchanged.
+- The next separately approved step is to apply the reviewed `create_email_auth_flows`, `email_login_rate_limits`, and `accept_workspace_invite_atomically` migrations to Production in that order while leaving Email disabled, PR #55 unmerged, and application code undeployed.
+- The migrations are additive and can remain inert if rollout stops. Once real Production password users exist, disabling the Supabase Email provider is not a safe rollback because it would lock them out.
