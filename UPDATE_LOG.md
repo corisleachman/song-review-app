@@ -8996,9 +8996,11 @@ Local-only security and transaction hardening for the staged Email/password and 
 - Staging confirms owner `postgres`, `SECURITY INVOKER`, empty `search_path`, the invitation row lock, the idempotent membership constraint, and the conditional pending-state update. `PUBLIC`, `anon`, and `authenticated` cannot execute it; `service_role` can.
 - Two simultaneous staging calls against one synthetic invitation settled as `accepted` and `already_accepted`, produced exactly one membership, and left the invitation accepted by the intended user. The synthetic invitation and membership were removed, and zero remaining fixture rows were verified.
 - Supabase security and performance advisors reported their existing project notices. The new function has no mutable-search-path or exposed-execution finding.
+- Application commit `556d009c` was pushed to `codex/email-password-staging-forms` and deployed to protected Preview deployment `dpl_3GYpZ8DjLkFEuZnPk5Qa6R4b7osY`. The stable branch URL returned `200` for `/login`, while `/api/auth/email/config` returned `{"enabled":true,"passwordManagementEnabled":true}`.
+- Both Vercel project checks, Preview Comments, and the public-surface check passed. The checked Preview runtime error and fatal logs were empty. Production was not changed.
 
 ### Rollout and rollback
 
-- The additive invitation migration is applied and verified in staging. Commit and push the matching application code before allowing the Git-triggered protected Preview deployment to become the test target.
+- The additive invitation migration is applied and verified in staging. The matching application code is committed, pushed, and verified on the protected Preview.
 - If Preview verification fails after deployment, restore the previous verified deployment. The unused additive function can remain or be removed in a separately reviewed down migration.
 - Do not enable Production Email or deploy this change to Production without a separate approval and completed Preview verification.
