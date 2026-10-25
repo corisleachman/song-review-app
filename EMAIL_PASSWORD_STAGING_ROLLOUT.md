@@ -600,3 +600,44 @@ Status: complete. The three reviewed migrations are applied to Production in the
 - The refreshed advisors add only the intentional `RLS Enabled No Policy` information notices for the two server-only tables and an expected unused-index information notice while the Email flow table is empty. They add no mutable-search-path, exposed-execution, or other warning for the new functions.
 
 The next gate is a read-only Production hosted-configuration audit followed by a precise approval request. Keep the Supabase Email provider disabled and keep both application Email flags absent during that review.
+
+## Production hosted-configuration audit, 2026-10-25
+
+Status: the read-only audit is complete apart from the Cloudflare widget hostname check, which could not be opened because the Mac was locked. No hosted setting, environment variable, credential, template, deployment, pull-request state, user, or database row changed. Production Email remains disabled and Google remains enabled.
+
+### Verified Production state
+
+- Supabase Auth has Email disabled, Google enabled, confirmations required, an eight-digit OTP with a one-hour expiry, a 60-second Email frequency limit, a six-character password minimum, leaked-password protection off, Secure password change off, the Password changed notification off, CAPTCHA off, and no custom SMTP.
+- Production still has the default confirmation, recovery, reauthentication, and Password changed templates. They do not match the staging templates that passed the protected Preview journeys.
+- The Supabase Site URL is `https://song-room.live`. Its allowlist includes both public hosts, the current Production callback, localhost, and an old Preview wildcard.
+- Vercel redirects `https://song-room.live` to `https://www.song-room.live`, while Production `NEXT_PUBLIC_APP_URL` still uses the non-www host. The repository metadata, robots, and sitemap fallbacks already use `https://www.song-room.live`.
+- Production Vercel has the current Supabase and Resend application variables, but it does not have `EMAIL_PASSWORD_AUTH_ENABLED`, `SIGNED_IN_PASSWORD_MANAGEMENT_ENABLED`, `AUTH_INTENT_SECRET`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `EMAIL_LOGIN_RATE_LIMIT_ENABLED`, or `EMAIL_LOGIN_RATE_LIMIT_SECRET`.
+- Resend reports both `song-room.live` and `corisleachman.com` as verified sending domains in `eu-west-1`. No secret value was read or written.
+- `SUPABASE_SERVICE_ROLE_KEY` and `RESEND_API_KEY` are existing Vercel Config variables rather than Secret variables. Treat that as a separate credential-hygiene review, not an unreviewed part of this rollout.
+- PR #55 remains open and draft. Its reported checks pass and GitHub reports it cleanly mergeable. Including this audit, the local branch has three unpushed documentation commits after the pushed application head.
+
+### Proposed hidden configuration package
+
+Apply this package only after separate approval, and keep the Supabase Email provider and both public Email flags off throughout:
+
+1. Make `https://www.song-room.live` canonical. Set the Supabase Site URL and Production `NEXT_PUBLIC_APP_URL` to that value, retaining both public hosts in the redirect allowlist.
+2. Configure Production Supabase custom SMTP with Resend at `smtp.resend.com`, port `465`, user `resend`, sender `noreply@song-room.live`, sender name `Song Room`, a dedicated Production sending credential, a 60-second frequency limit, and a 30-message hourly Auth limit.
+3. Copy the four tested staging templates exactly: the token-hash confirmation and recovery links, the Song Room reauthentication code message, and the Password changed warning with the `hello@song-room.live` contact.
+4. Raise the password minimum to 12 characters, keep composition requirements off, enable leaked-password protection, enable Secure password change, leave current-password enforcement off, and enable the Password changed notification. Keep the eight-digit OTP and one-hour expiry.
+5. Create a separate Production Turnstile widget restricted to `www.song-room.live` and `song-room.live`. Store its public site key in Production Vercel and its secret in Production Supabase Auth, then enable CAPTCHA. Do not reuse or move the staging widget secret.
+6. Add fresh Production-only `AUTH_INTENT_SECRET` and `EMAIL_LOGIN_RATE_LIMIT_SECRET` Secret variables. Add `EMAIL_LOGIN_RATE_LIMIT_ENABLED=true` and the Production Turnstile site key as Config variables. Keep `EMAIL_PASSWORD_AUTH_ENABLED` and `SIGNED_IN_PASSWORD_MANAGEMENT_ENABLED` absent.
+
+The stale Preview wildcard and localhost callback should be classified before removal. Narrowing the redirect allowlist is useful security cleanup, but it should not be bundled into this activation without confirming they have no current operator workflow.
+
+### Deployment and activation order
+
+1. Finish the Cloudflare widget read-only check after the Mac is unlocked, then request approval for the hidden configuration package above.
+2. Apply and verify that package while the current Google-only Production application remains live.
+3. Push the three local documentation commits, refresh PR #55's description, and seek approval to mark it ready, merge it, and deploy with Email still hidden.
+4. Verify Google login, protected-route redirects, the default-off Email routes, logs, and the server-only Production objects before asking for activation approval.
+5. Under a separate approval, enable the Supabase Email provider while the application flag stays off. Verify no public Email entry appears, then add `EMAIL_PASSWORD_AUTH_ENABLED=true` and redeploy.
+6. Run one controlled Production signup, confirmation, password login, recovery-delivery, account-graph, limiter, and log-safety smoke test. Enable `SIGNED_IN_PASSWORD_MANAGEMENT_ENABLED=true` only after that gate passes.
+
+### Rollback boundary
+
+Before any real Production password user exists, remove the public Email flag and restore the last verified deployment if the application smoke fails. The additive database objects can remain inert. After a real password user exists, do not disable the Supabase Email provider because that would lock the user out. Restore the last verified application configuration or deployment instead, and keep Google enabled throughout.

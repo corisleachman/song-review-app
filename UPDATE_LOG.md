@@ -9071,3 +9071,37 @@ Applied the Email confirmation-state table, application login limiter, and atomi
 
 - These additive objects are inert until matching application code and Production-only configuration are deployed. They may remain in place if rollout pauses.
 - Do not enable Production Email yet. The next gate is a read-only hosted-configuration audit followed by a separate approval for Production-specific configuration while both public Email flags remain off.
+
+---
+
+## 2026-10-25 - Audit Production Email hosted configuration
+
+### What we were trying to achieve
+
+Compare the current Production Supabase, Vercel, Resend, URL, and Turnstile boundaries with the staging configuration that passed before asking to change any hosted setting.
+
+### Feature / change being made
+
+Recorded the exact hidden Production configuration package and rollout order. No hosted configuration or application behaviour changed.
+
+### Files changed
+
+- `EMAIL_PASSWORD_STAGING_ROLLOUT.md`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Verification and rollout state
+
+- A fresh Production Supabase Auth read confirmed Email disabled, Google enabled, default SMTP and templates, a six-character password minimum, leaked-password protection off, Secure password change off, Password changed notification off, and CAPTCHA off.
+- The tested staging values were read for comparison: Resend SMTP, the four custom templates, a 12-character minimum, leaked-password protection, Secure password change, Password changed notification, and Turnstile are enabled there.
+- Vercel metadata confirms that all six rollout variables exist only on the protected Preview branch and are absent from Production. No variable value was read.
+- Vercel redirects the apex public domain to `www`, while Supabase's Site URL and Production `NEXT_PUBLIC_APP_URL` still use the apex. The proposed canonical value is `https://www.song-room.live`, retaining both hosts in the redirect allowlist.
+- Resend reports `song-room.live` as a verified sending domain. The proposal uses a separate Production Auth sending credential rather than moving the staging credential.
+- The Cloudflare widget hostname check remains open because the Mac was locked and could not be unlocked automatically. The safer proposal is a separate Production widget restricted to the apex and `www` public hosts.
+- PR #55 remains open, draft, cleanly mergeable, and green. Including this audit, three documentation commits remain local and unpushed. Production application code and deployment are unchanged.
+
+### Rollout and rollback
+
+- The next approved write should configure the hidden Production SMTP, templates, password safeguards, Turnstile, canonical URL, and server-only secrets while keeping the Email provider and both public Email flags off.
+- Deploy the reviewed application only after that hidden package passes. Recheck Google and the closed Email boundary before seeking a separate activation approval.
+- Before a real password user exists, remove the Email flag and restore the last verified deployment if needed. After a real password user exists, do not disable the Supabase Email provider because it would lock the user out.
