@@ -9,9 +9,11 @@ export async function middleware(request: NextRequest) {
   const publicRoutes = [
     '/',
     '/login',
+    '/forgot-password',
     '/marketing.html',
     '/identify',
     '/auth/callback',
+    '/auth/check-email',
     '/auth/confirm',
     '/auth/continue',
     '/auth/reset-password',

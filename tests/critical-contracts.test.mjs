@@ -33,17 +33,35 @@ function assertOrdered(source, expected, context) {
 }
 
 test('response headers enforce a route-aware CSP without changing embed framing', async () => {
-  const nextConfig = require(path.join(repoRoot, 'next.config.js'));
-  const headerRules = await nextConfig.headers();
+  const configPath = path.join(repoRoot, 'next.config.js');
+  const previousSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  let headerRules;
+
+  try {
+    delete process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+    delete require.cache[require.resolve(configPath)];
+    const nextConfig = require(configPath);
+    headerRules = await nextConfig.headers();
+  } finally {
+    if (previousSiteKey === undefined) {
+      delete process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+    } else {
+      process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = previousSiteKey;
+    }
+    delete require.cache[require.resolve(configPath)];
+  }
+
   const standardRule = headerRules.find((rule) => rule.source === '/((?!embed).*)');
   const embedRule = headerRules.find((rule) => rule.source === '/embed/:path*');
   const authConfirmRule = headerRules.find((rule) => rule.source === '/auth/confirm');
   const authContinueRule = headerRules.find((rule) => rule.source === '/auth/continue');
+  const authCheckEmailRule = headerRules.find((rule) => rule.source === '/auth/check-email');
 
   assert.ok(standardRule, 'standard security header rule is missing');
   assert.ok(embedRule, 'embed security header rule is missing');
   assert.ok(authConfirmRule, 'auth confirmation header rule is missing');
   assert.ok(authContinueRule, 'auth continuation header rule is missing');
+  assert.ok(authCheckEmailRule, 'check-email header rule is missing');
 
   const standardHeaders = new Map(standardRule.headers.map(({ key, value }) => [key, value]));
   const embedHeaders = new Map(embedRule.headers.map(({ key, value }) => [key, value]));
@@ -73,6 +91,7 @@ test('response headers enforce a route-aware CSP without changing embed framing'
   assert.equal(standardHeaders.get('Reporting-Endpoints'), 'csp-endpoint="/api/csp-report"');
   assert.equal(standardHeaders.get('X-Frame-Options'), 'DENY');
   assert.equal(standardHeaders.has('Content-Security-Policy-Report-Only'), false);
+  assert.doesNotMatch(standardPolicy, /challenges\.cloudflare\.com/u);
 
   assert.match(embedPolicy, /frame-ancestors \*;/u);
   assert.match(
@@ -83,10 +102,44 @@ test('response headers enforce a route-aware CSP without changing embed framing'
   assert.equal(embedHeaders.has('Content-Security-Policy-Report-Only'), false);
   assert.equal(embedHeaders.has('X-Frame-Options'), false);
 
-  for (const rule of [authConfirmRule, authContinueRule]) {
+  for (const rule of [authConfirmRule, authContinueRule, authCheckEmailRule]) {
     const headers = new Map(rule.headers.map(({ key, value }) => [key, value]));
     assert.equal(headers.get('Cache-Control'), 'no-store, max-age=0');
     assert.equal(headers.get('Referrer-Policy'), 'no-referrer');
+  }
+});
+
+test('Turnstile CSP sources appear only when its public site key is configured', async () => {
+  const configPath = path.join(repoRoot, 'next.config.js');
+  const previousSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
+  try {
+    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = '1x00000000000000000000AA';
+    delete require.cache[require.resolve(configPath)];
+    const turnstileConfig = require(configPath);
+    const headerRules = await turnstileConfig.headers();
+
+    const standardRule = headerRules.find(candidate => candidate.source === '/((?!embed).*)');
+    const embedRule = headerRules.find(candidate => candidate.source === '/embed/:path*');
+    const standardPolicy = standardRule?.headers.find(
+      header => header.key === 'Content-Security-Policy',
+    )?.value ?? '';
+    const embedPolicy = embedRule?.headers.find(
+      header => header.key === 'Content-Security-Policy',
+    )?.value ?? '';
+
+    assert.match(standardPolicy, /script-src [^;]*https:\/\/challenges\.cloudflare\.com[^;]*;/u);
+    assert.match(standardPolicy, /frame-src https:\/\/challenges\.cloudflare\.com;/u);
+    assert.doesNotMatch(standardPolicy, /frame-src 'none'/u);
+    assert.doesNotMatch(embedPolicy, /challenges\.cloudflare\.com/u);
+    assert.match(embedPolicy, /frame-src 'none';/u);
+  } finally {
+    if (previousSiteKey === undefined) {
+      delete process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+    } else {
+      process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = previousSiteKey;
+    }
+    delete require.cache[require.resolve(configPath)];
   }
 });
 
@@ -155,6 +208,7 @@ test('shared auth boundary is session-backed, allowlisted, sealed, and default-o
     "process.env.PLAYWRIGHT_ALLOW_LEGACY_AUTH === 'true'",
     'supabase.auth.getClaims()',
     'normalizeAuthDestination',
+    "'/auth/check-email'",
   ], 'middleware auth boundary');
   assert.doesNotMatch(middleware, /supabase\.auth\.(?:getSession|getUser)\(\)/u);
   assertIncludesAll(destination, [
@@ -184,7 +238,7 @@ test('shared auth boundary is session-backed, allowlisted, sealed, and default-o
     'getCurrentAuthenticatedUser()',
     'authIntentEmailMatches',
     "destinationKind !== 'invite' && destinationKind !== 'recovery'",
-    'bootstrapAccountForUser(user)',
+    'bootstrapAccountForUser(user, undefined, intent?.referralCode)',
   ], 'auth continuation boundary');
   assert.doesNotMatch(callback, /error\.message|searchParams\.set\('message'/u);
 });
@@ -228,18 +282,64 @@ test('referral links build full URLs from the request origin', () => {
   assert.doesNotMatch(entryRoute, /NEXT_PUBLIC_APP_URL/u);
 });
 
-test('pending workspace invites use Google-only account entry during beta', () => {
+test('pending workspace invites preserve Google and add gated Email account entry', () => {
   const actions = read('app/invite/[token]/InviteActions.tsx');
   const page = read('app/invite/[token]/page.tsx');
+  const login = read('app/login/page.tsx');
+  const invites = read('lib/accountInvites.ts');
 
   assertIncludesAll(actions, [
     'supabase.auth.signInWithOAuth({',
     "provider: 'google'",
     'Continue with Google',
+    'emailAuthEnabled',
+    "handleEmailEntry('login')",
+    "handleEmailEntry('signup')",
+    'Log in with email',
+    'Create account with email',
     'we&apos;ll create your account automatically',
-  ], 'invite Google account entry');
-  assert.match(page, /Continue with Google using the invited email address/u);
-  assert.doesNotMatch(actions, /signInWithPassword|Sign in with email|invite-password/u);
+    'handleSwitchAccount',
+    'supabase.auth.signOut()',
+    'clearAuth()',
+    'clearIdentity()',
+    "setActionState('signed_out')",
+    'Sign out and continue',
+  ], 'invite account entry');
+  assertIncludesAll(page, [
+    'isEmailPasswordAuthReady()',
+    'Continue with Google or Email using the invited email address',
+    'emailAuthEnabled={emailAuthEnabled}',
+  ], 'invite feature boundary');
+  assertIncludesAll(login, [
+    "requestedDestination.kind === 'invite'",
+    "fetch(`/api/invites/${encodeURIComponent(token)}`",
+    'readOnly={isInviteDestination}',
+    'This address comes from the invite and can’t be changed here.',
+    "isInviteDestination && inviteEmailStatus !== 'ready'",
+  ], 'invite email lock');
+  assertIncludesAll(invites, [
+    'const INVITE_TOKEN_PATTERN =',
+    'if (!isValidInviteToken(normalizedInviteToken)) return null;',
+    ".eq('invite_token', normalizedInviteToken)",
+  ], 'invite token validation');
+  assert.doesNotMatch(actions, /signInWithPassword|invite-password/u);
+});
+
+test('sealed referral attribution survives cross-browser email confirmation', () => {
+  const continuation = read('app/auth/continue/route.ts');
+  const bootstrap = read('lib/bootstrapAccount.ts');
+
+  assertIncludesAll(continuation, [
+    'intent?.referralCode',
+    'bootstrapAccountForUser(user, undefined, intent?.referralCode)',
+  ], 'sealed referral handoff');
+  assertIncludesAll(bootstrap, [
+    'sealedReferralCode?.trim()',
+    'refCode ??= cookieRefCode',
+    'await attributeReferralOnSignup({',
+    'cookieStore.delete(REFERRAL_COOKIE_NAME)',
+  ], 'referral bootstrap');
+  assert.doesNotMatch(bootstrap, /void attributeReferralOnSignup/u);
 });
 
 test('authenticated playlist access stays inside the active workspace', () => {
@@ -749,7 +849,8 @@ test('mobile Settings uses one permission-aware section control', () => {
   const settingsCss = read('app/settings/settings.module.css');
 
   assertIncludesAll(settingsLayout, [
-    "const visibleNav = NAV_ITEMS.filter(item => !item.ownerOnly || isOwner)",
+    'const visibleNav = [...NAV_ITEMS, ...(passwordManagementEnabled ? [SECURITY_NAV_ITEM] : [])]',
+    '.filter(item => !item.ownerOnly || isOwner)',
     'const activeNav = visibleNav.find(',
     '<nav className={styles.settingsNavList}>',
     'className={styles.settingsSectionPicker}',
@@ -1002,7 +1103,9 @@ test('mobile marketing leads with the approved Song Room bento wordmark', () => 
 
 test('mobile homepage keeps its primary CTA visible in the thumb zone', () => {
   const marketing = read('public/marketing.html');
+  const responsiveStart = marketing.indexOf('@media (max-width: 900px) {', marketing.indexOf('RESPONSIVE'));
   const phoneStart = marketing.indexOf('@media (max-width: 600px), (max-width: 900px) and (max-height: 600px) {', marketing.indexOf('RESPONSIVE'));
+  const responsiveCss = marketing.slice(responsiveStart, phoneStart);
   const phoneEnd = marketing.indexOf('@media (prefers-reduced-motion: reduce)', phoneStart);
   const phoneCss = marketing.slice(phoneStart, phoneEnd);
   const heroCtaStart = marketing.indexOf('<div class="hero-cta-row" id="hero-cta">');
@@ -1018,6 +1121,8 @@ test('mobile homepage keeps its primary CTA visible in the thumb zone', () => {
   assert.match(phoneCss, /\.btn-ghost\s*\{[^}]*min-height:\s*44px;[^}]*justify-content:\s*center;/u);
   assert.match(phoneCss, /\.desktop-hero-secondary\s*\{[^}]*display:\s*none;/u);
   assert.match(phoneCss, /\.mobile-login-cta\s*\{[^}]*display:\s*flex;/u);
+  assert.match(responsiveCss, /\.feature-row\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/u);
+  assert.match(responsiveCss, /\.feature-row > \*\s*\{[^}]*min-width:\s*0;/u);
   assertIncludesAll(heroCta, [
     'class="btn-primary" href="/signup/free"',
     'class="btn-ghost desktop-hero-secondary" href="#features"',
@@ -1155,6 +1260,7 @@ test('tier-aware signup preserves a strict plan choice through Google auth and c
   const upgrade = read('app/upgrade/page.tsx');
   const checkout = read('app/api/billing/checkout/route.ts');
   const planSettings = read('app/settings/plan/page.tsx');
+  const upgradeCss = read('app/upgrade/upgrade.module.css');
 
   assertIncludesAll(signupPage, [
     'getSignupIntent(plan, billing)',
@@ -1210,6 +1316,7 @@ test('tier-aware signup preserves a strict plan choice through Google auth and c
   assertIncludesAll(planSettings, [
     "router.push('/upgrade?returnTo=settings')",
   ], 'Plan & Billing upgrade origin');
+  assert.match(upgradeCss, /\.ghost\s*\{[^}]*color:\s*rgba\(244, 237, 228, 0\.62\);/u);
   assertIncludesAll(checkout, [
     "resolved.identity.membershipRole !== 'owner'",
     'body.plan === \'studio\' ? \'studio\' : \'pro\'',
@@ -1374,8 +1481,21 @@ test('visualizer preference is editable, persisted, and respected by the song pl
   ], 'song player visualizer preference');
 });
 
-test('beta login and signup use a single Google account path', () => {
+test('email login and signup stay default-off behind the server readiness boundary', () => {
   const login = read('app/login/page.tsx');
+  const featureFlag = read('lib/authFeatureFlags.ts');
+  const config = read('app/api/auth/email/config/route.ts');
+  const loginRoute = read('app/api/auth/email/login/route.ts');
+  const loginRateLimit = read('lib/emailLoginRateLimit.ts');
+  const loginRateLimitCore = read('lib/emailLoginRateLimitCore.ts');
+  const loginRateLimitMigration = read('supabase/migrations/20261023174605_email_login_rate_limits.sql');
+  const signupRoute = read('app/api/auth/email/signup/route.ts');
+  const resendRoute = read('app/api/auth/email/resend/route.ts');
+  const authFlows = read('lib/emailAuthFlows.ts');
+  const checkEmail = read('app/auth/check-email/page.tsx');
+  const checkEmailLayout = read('app/auth/check-email/layout.tsx');
+  const turnstile = read('components/TurnstileWidget.tsx');
+  const nextConfig = read('next.config.js');
 
   assertIncludesAll(login, [
     'Use Google to log in or create your Song Room account.',
@@ -1383,11 +1503,219 @@ test('beta login and signup use a single Google account path', () => {
     "? 'Connecting...'",
     ": 'Continue with Google'",
     'During beta, Google is the only account option.',
-  ], 'Google-only authentication controls');
+    "fetch('/api/auth/email/config'",
+    'emailAuthEnabled && (',
+    "fetch(endpoint, {",
+    "window.location.assign('/auth/check-email')",
+    'captchaToken',
+    '<TurnstileWidget',
+  ], 'flagged account-entry controls');
+  assertIncludesAll(featureFlag, [
+    "process.env.EMAIL_PASSWORD_AUTH_ENABLED?.trim().toLowerCase() === 'true'",
+    'process.env.AUTH_INTENT_SECRET?.trim().length',
+    'getTurnstileSiteKey().length > 0',
+    "process.env.EMAIL_LOGIN_RATE_LIMIT_ENABLED?.trim().toLowerCase() === 'true'",
+    'EMAIL_LOGIN_RATE_LIMIT_SECRET',
+    "Buffer.byteLength(secret, 'utf8') >= 32",
+    'isEmailLoginRateLimitReady()',
+  ], 'email auth readiness');
+  assert.match(config, /enabled: isEmailPasswordAuthReady\(\)/u);
+  assertIncludesAll(loginRoute, [
+    'isSameOriginAuthRequest(request)',
+    'parseEmailLoginInput',
+    'supabase.auth.signInWithPassword',
+    "Email or password wasn't recognised.",
+    'AUTH_INTENT_COOKIE',
+    "continueTo: '/auth/continue'",
+    'options: { captchaToken: parsed.value.captchaToken }',
+    'await consumeEmailLoginAttempt(request)',
+    "response.headers.set('Retry-After'",
+    '429',
+    '503',
+  ], 'password login route');
+  assertOrdered(loginRoute, [
+    'parseEmailLoginInput',
+    'await consumeEmailLoginAttempt(request)',
+    'const intentToken = createAuthIntent',
+    'supabase.auth.signInWithPassword',
+  ], 'password login limiter order');
+  assertIncludesAll(loginRateLimit, [
+    'isEmailLoginRateLimitEnabled()',
+    'readVercelVisitorIp(request.headers)',
+    'EMAIL_LOGIN_RATE_LIMIT_SECRET',
+    "supabaseServer.rpc('consume_email_login_attempt'",
+    "reason: 'rpc_failed'",
+    "reason: 'invalid_result'",
+  ], 'server-only password login limiter');
+  assertIncludesAll(loginRateLimitCore, [
+    "headers.get('x-vercel-forwarded-for')",
+    "createHmac('sha256'",
+    'EMAIL_LOGIN_RATE_LIMIT_MAX_ATTEMPTS = 15',
+    'EMAIL_LOGIN_RATE_LIMIT_WINDOW_SECONDS = 300',
+  ], 'password login limiter privacy boundary');
+  assertIncludesAll(loginRateLimitMigration, [
+    'alter table public.email_login_rate_limits enable row level security',
+    'from public, anon, authenticated, service_role',
+    'to service_role',
+    'security invoker',
+    "set search_path = ''",
+    'for update skip locked',
+    'limit 100',
+    'on conflict (client_hash) do update',
+    'v_attempt_count <= 15',
+  ], 'password login limiter database boundary');
+  assert.doesNotMatch(loginRateLimitMigration, /security definer/iu);
+  assertIncludesAll(signupRoute, [
+    'parseEmailSignupInput',
+    'REFERRAL_COOKIE_NAME',
+    "purpose: 'signup'",
+    'createEmailAuthFlow({',
+    'supabase.auth.signUp',
+    'emailRedirectTo: buildAuthConfirmationRedirect(request, flowId)',
+    'if (data.session)',
+    'captchaToken: parsed.value.captchaToken',
+  ], 'password signup route');
+  assertIncludesAll(resendRoute, [
+    'authIntentEmailMatches',
+    'parseEmailResendInput',
+    'supabase.auth.resend',
+    "type: 'signup'",
+    'emailRedirectTo: buildAuthConfirmationRedirect(request, flowId)',
+    'captchaToken: parsed.value.captchaToken',
+  ], 'verification resend route');
+  assertIncludesAll(checkEmail, [
+    'RESEND_COOLDOWN_SECONDS = 60',
+    "fetch('/api/auth/email/resend'",
+    'If this address can be verified, a fresh email is on its way.',
+    'Already have an account? Log in instead',
+    'getSignupReturnPath(storedPath)',
+    'getExistingAccountReturnPath(storedPath)',
+    'action="email_resend"',
+    'body: JSON.stringify({ email, captchaToken })',
+  ], 'check-email state');
+  assertIncludesAll(authFlows, [
+    "from('email_auth_flows')",
+    'hashAuthIntentEmail(input.email)',
+    ".select('id, email_hash, purpose, sealed_intent')",
+    ".gt('expires_at', new Date().toISOString())",
+    ".delete()",
+    ".select('id')",
+    'if (error || !data?.id)',
+  ], 'server-only confirmation flow store');
+  assertIncludesAll(checkEmailLayout, [
+    'isEmailPasswordAuthReady()',
+    "redirect('/login?auth=email_unavailable')",
+  ], 'check-email feature boundary');
+  assertIncludesAll(turnstile, [
+    'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit',
+    "action: 'email_login' | 'email_signup' | 'email_resend' | 'password_recovery'",
+    "'expired-callback': reset",
+    "'timeout-callback': reset",
+    'window.turnstile.remove(widgetIdRef.current)',
+  ], 'Turnstile lifecycle');
+  assertIncludesAll(nextConfig, [
+    "const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com'",
+    'process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim()',
+    "['frame-src', ...(turnstileSources.length > 0 ? turnstileSources : [\"'none'\"])]",
+  ], 'Turnstile CSP boundary');
+  assert.doesNotMatch(loginRoute + signupRoute + resendRoute, /error\.message/u);
+});
+
+test('password recovery stays server-gated and requires a verified email-bound session', () => {
+  const request = read('app/api/auth/email/recover/route.ts');
+  const reset = read('app/api/auth/email/reset/route.ts');
+  const confirm = read('app/auth/confirm/route.ts');
+  const continuation = read('app/auth/continue/route.ts');
+  const page = read('app/auth/reset-password/page.tsx');
+  const forgot = read('app/forgot-password/page.tsx');
+  const redirectBuilder = read('lib/emailPasswordAuthServer.ts');
+
+  assertIncludesAll(request, [
+    'isEmailPasswordAuthReady()',
+    'isSameOriginAuthRequest(request)',
+    'parseEmailResendInput',
+    "purpose: 'recovery'",
+    'createEmailAuthFlow({',
+    'supabase.auth.resetPasswordForEmail',
+    'redirectTo: buildAuthConfirmationRedirect(request, flowId)',
+    'captchaToken: parsed.value.captchaToken',
+  ], 'recovery request boundary');
+  assertIncludesAll(confirm, [
+    'readEmailAuthFlow(flowId)',
+    'intent.emailHash !== flow.emailHash',
+    'authIntentEmailMatches(intent, data.user.email)',
+    'await consumeEmailAuthFlow(flow.id)',
+    "purpose: 'recovery_verified'",
+    ': flow.sealedIntent',
+  ], 'recovery confirmation exchange');
+  assertIncludesAll(continuation, [
+    'const cookieIntent = request.cookies.get(AUTH_INTENT_COOKIE)?.value ?? null',
+    "intent?.purpose === 'recovery'",
+    "intent?.purpose !== 'recovery_verified'",
+  ], 'recovery-only continuation');
+  assertIncludesAll(redirectBuilder, [
+    "redirect.searchParams.set('flow', flowId)",
+  ], 'log-safe confirmation redirect');
   assert.doesNotMatch(
-    login,
-    /signInWithPassword|resetPasswordForEmail|\.auth\.signUp|Continue with email|Forgot password|type="password"/u
+    request + confirm + continuation + redirectBuilder,
+    /searchParams\.set\(['"]intent['"]/u,
   );
+  assertIncludesAll(page, [
+    'isEmailPasswordAuthReady()',
+    "intent?.purpose === 'recovery_verified'",
+    'getCurrentAuthenticatedUser()',
+    'authIntentEmailMatches(intent, user.email)',
+  ], 'reset-page session check');
+  assertIncludesAll(reset, [
+    'isSameOriginAuthRequest(request)',
+    'parsePasswordResetInput',
+    "intent?.purpose !== 'recovery_verified'",
+    'supabase.auth.getUser()',
+    'authIntentEmailMatches(intent, data.user.email)',
+    'supabase.auth.updateUser',
+    "supabase.auth.signOut({ scope: 'others' })",
+    "response.cookies.set(AUTH_INTENT_COOKIE, '',",
+  ], 'password update boundary');
+  assertIncludesAll(forgot, [
+    "action=\"password_recovery\"",
+    "fetch('/api/auth/email/recover'",
+    'RESEND_COOLDOWN_SECONDS = 60',
+  ], 'recovery request screen');
+  assert.doesNotMatch(request + reset, /error\.message/u);
+});
+
+test('signed-in password management stays separately gated and requires Supabase reauthentication', () => {
+  const flag = read('lib/authFeatureFlags.ts');
+  const config = read('app/api/auth/email/config/route.ts');
+  const layout = read('app/settings/layout.tsx');
+  const page = read('app/settings/security/page.tsx');
+  const request = read('app/api/auth/email/manage/request/route.ts');
+  const update = read('app/api/auth/email/manage/update/route.ts');
+
+  assertIncludesAll(flag, [
+    'isEmailPasswordAuthReady()',
+    "process.env.SIGNED_IN_PASSWORD_MANAGEMENT_ENABLED?.trim().toLowerCase() === 'true'",
+  ], 'separate management gate');
+  assertIncludesAll(config, ['passwordManagementEnabled: isSignedInPasswordManagementReady()'], 'public nav gate');
+  assertIncludesAll(layout, ['config?.passwordManagementEnabled === true', "href: '/settings/security'"], 'settings navigation');
+  assertIncludesAll(page, ['isSignedInPasswordManagementReady()', 'notFound()'], 'server page gate');
+  assertIncludesAll(request, [
+    'isSignedInPasswordManagementReady()',
+    'isSameOriginAuthRequest(request)',
+    'supabase.auth.getUser()',
+    'supabase.auth.reauthenticate()',
+  ], 'reauthentication request');
+  assertIncludesAll(update, [
+    'isSignedInPasswordManagementReady()',
+    'isSameOriginAuthRequest(request)',
+    'parseManagedPasswordInput',
+    'supabase.auth.getUser()',
+    'nonce: parsed.value.nonce',
+    "updateError.code === 'reauthentication_needed'",
+    "supabase.auth.signOut({ scope: 'others' })",
+    "response.headers.set('X-Other-Sessions-Signed-Out'",
+  ], 'signed-in password update');
+  assert.doesNotMatch(request + update, /error\.message/u);
 });
 
 test('public song reads expose only public songs with finalized audio', () => {
@@ -1495,6 +1823,68 @@ test('privileged upload and deletion functions remain service-role-only', () => 
       `${functionName} must be granted only to service_role`
     );
   }
+});
+
+test('workspace invitations remain behind the server-only database boundary', () => {
+  const hardeningMigration = compactSql('supabase/migrations/20261011161736_harden_account_invites_access.sql');
+  const acceptanceMigration = compactSql('supabase/migrations/20261024165859_accept_workspace_invite_atomically.sql');
+  const route = read('app/api/invites/[token]/accept/route.ts');
+  const invites = read('lib/accountInvites.ts');
+
+  assertIncludesAll(hardeningMigration, [
+    'alter table public.account_invites enable row level security',
+    'revoke all privileges on table public.account_invites from anon, authenticated',
+    "alter function public.account_invites_sync_derived_fields() set search_path = ''",
+    'revoke execute on function public.account_invites_sync_derived_fields() from public, anon, authenticated',
+  ], 'account invite hardening');
+  assertIncludesAll(acceptanceMigration, [
+    'create or replace function public.accept_workspace_invite_atomically(',
+    'security invoker',
+    "set search_path = ''",
+    'for update',
+    'on conflict on constraint account_members_pkey do nothing',
+    "where invite.id = v_invite.id and invite.status = 'pending'",
+    'from public, anon, authenticated, service_role',
+    'to service_role',
+  ], 'atomic account invite acceptance');
+  assert.doesNotMatch(acceptanceMigration, /security definer/iu);
+  assertIncludesAll(invites, [
+    "supabaseServer.rpc('accept_workspace_invite_atomically'",
+    'p_invite_token: params.inviteToken',
+    'p_user_id: params.userId',
+    'p_user_email: params.userEmail',
+    'data.length === 1',
+  ], 'atomic invite result boundary');
+  assertIncludesAll(route, [
+    'await acceptWorkspaceInviteAtomically({',
+    "acceptance.result === 'email_mismatch'",
+    "acceptance.result === 'already_used'",
+    'writeActiveWorkspaceCookie(response, acceptance.accountId)',
+  ], 'atomic invite route');
+  assert.doesNotMatch(route, /createWorkspaceMembership|markInviteAccepted/u);
+});
+
+test('runtime image dependencies use the patched security releases', () => {
+  const packageJson = JSON.parse(read('package.json'));
+
+  assert.equal(packageJson.dependencies.next, '15.5.28');
+  assert.equal(packageJson.dependencies.sharp, '0.35.5');
+  assert.equal(packageJson.devDependencies['eslint-config-next'], '15.5.28');
+  assert.equal(packageJson.overrides.sharp, '0.35.5');
+});
+
+test('email confirmation state stays short-lived and server-only', () => {
+  const migration = compactSql('supabase/migrations/20261013171251_create_email_auth_flows.sql');
+
+  assertIncludesAll(migration, [
+    'create table public.email_auth_flows',
+    "check (purpose in ('signup', 'recovery'))",
+    "expires_at <= created_at + interval '1 hour'",
+    'create index email_auth_flows_expires_at_idx on public.email_auth_flows (expires_at)',
+    'alter table public.email_auth_flows enable row level security',
+    'revoke all privileges on table public.email_auth_flows from public, anon, authenticated, service_role',
+    'grant select, insert, delete on table public.email_auth_flows to service_role',
+  ], 'email auth flow migration');
 });
 
 test('RLS cleanup removes blanket policies and its rollback cannot restore them', () => {

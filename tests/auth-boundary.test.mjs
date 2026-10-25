@@ -7,6 +7,15 @@ import { fileURLToPath } from 'node:url';
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const destinationModule = await import(pathToFileURL(path.join(repoRoot, 'lib/authDestination.ts')).href);
 const intentModule = await import(pathToFileURL(path.join(repoRoot, 'lib/authIntentCore.ts')).href);
+const emailPasswordModule = await import(
+  pathToFileURL(path.join(repoRoot, 'lib/emailPasswordAuthCore.ts')).href
+);
+const emailLoginRateLimitModule = await import(
+  pathToFileURL(path.join(repoRoot, 'lib/emailLoginRateLimitCore.ts')).href
+);
+const pendingEmailAuthModule = await import(
+  pathToFileURL(path.join(repoRoot, 'lib/pendingEmailAuthCore.ts')).href
+);
 
 const {
   normalizeAuthDestination,
@@ -19,10 +28,31 @@ const {
   sealAuthIntent,
   unsealAuthIntent,
 } = intentModule;
+const {
+  isValidAuthEmail,
+  normalizeAuthEmail,
+  parseEmailLoginInput,
+  parseEmailResendInput,
+  parseEmailSignupInput,
+  parseManagedPasswordInput,
+  parsePasswordResetInput,
+} = emailPasswordModule;
+const {
+  EMAIL_LOGIN_RATE_LIMIT_MAX_ATTEMPTS,
+  EMAIL_LOGIN_RATE_LIMIT_WINDOW_SECONDS,
+  hashEmailLoginVisitorIp,
+  parseEmailLoginRateLimitDecision,
+  readVercelVisitorIp,
+} = emailLoginRateLimitModule;
+const {
+  getExistingAccountReturnPath,
+  getSignupReturnPath,
+} = pendingEmailAuthModule;
 
 test('auth destinations allow only named Song Room journeys', () => {
   assert.equal(normalizeAuthDestination('/dashboard'), '/dashboard');
   assert.equal(normalizeAuthDestination('/settings/referrals'), '/settings/referrals');
+  assert.equal(normalizeAuthDestination('/settings/security'), '/settings/security');
   assert.equal(normalizeAuthDestination('/songs/song_1/upload'), '/songs/song_1/upload');
   assert.equal(
     normalizeAuthDestination('/songs/song_1/versions/version_2'),
@@ -94,6 +124,25 @@ test('sealed auth intents reject tampering, wrong secrets, and expiry', () => {
   assert.equal(unsealAuthIntent(token, secret, now + AUTH_INTENT_TTL_SECONDS), null);
 });
 
+test('verified recovery intent is distinct from a recovery request', () => {
+  const secret = 'staging-auth-intent-secret-that-is-long-and-random';
+  const now = 2_000_000_000;
+  const request = sealAuthIntent({
+    purpose: 'recovery',
+    destination: { kind: 'recovery', path: '/auth/reset-password' },
+    emailHash: hashAuthIntentEmail('person@example.com'),
+  }, secret, now);
+  const verified = sealAuthIntent({
+    purpose: 'recovery_verified',
+    destination: { kind: 'recovery', path: '/auth/reset-password' },
+    emailHash: hashAuthIntentEmail('person@example.com'),
+  }, secret, now);
+
+  assert.equal(unsealAuthIntent(request, secret, now + 1)?.purpose, 'recovery');
+  assert.equal(unsealAuthIntent(verified, secret, now + 1)?.purpose, 'recovery_verified');
+  assert.equal(authIntentEmailMatches(unsealAuthIntent(verified, secret, now + 1), 'else@example.com'), false);
+});
+
 test('auth intent secrets fail closed when too short', () => {
   assert.throws(
     () => sealAuthIntent({
@@ -102,4 +151,185 @@ test('auth intent secrets fail closed when too short', () => {
     }, 'too-short'),
     /at least 32 characters/,
   );
+});
+
+test('email auth input normalizes identifiers and preserves password characters', () => {
+  const parsed = parseEmailLoginInput({
+    email: ' Person@Example.com ',
+    password: '  long passphrase  ',
+    destination: '/dashboard',
+    captchaToken: 'captcha-result',
+  });
+
+  assert.equal(parsed.ok, true);
+  assert.equal(parsed.value.email, 'person@example.com');
+  assert.equal(parsed.value.password, '  long passphrase  ');
+  assert.equal(parsed.value.captchaToken, 'captcha-result');
+  assert.equal(normalizeAuthEmail(' Person@Example.com '), 'person@example.com');
+  assert.equal(isValidAuthEmail('person@example.com'), true);
+});
+
+test('email signup validates name, email, and a 12-character password server-side', () => {
+  const valid = parseEmailSignupInput({
+    name: '  Alex   Rivers ',
+    email: 'alex@example.com',
+    password: 'a useful passphrase',
+    destination: '/songs/song_1',
+    captchaToken: 'captcha-result',
+  });
+  assert.equal(valid.ok, true);
+  assert.equal(valid.value.name, 'Alex Rivers');
+
+  assert.equal(parseEmailSignupInput({
+    name: 'A',
+    email: 'alex@example.com',
+    password: 'a useful passphrase',
+    captchaToken: 'captcha-result',
+  }).ok, false);
+  assert.equal(parseEmailSignupInput({
+    name: 'Alex Rivers',
+    email: 'not-an-email',
+    password: 'a useful passphrase',
+    captchaToken: 'captcha-result',
+  }).ok, false);
+  assert.equal(parseEmailSignupInput({
+    name: 'Alex Rivers',
+    email: 'alex@example.com',
+    password: 'too-short',
+    captchaToken: 'captcha-result',
+  }).ok, false);
+});
+
+test('email auth rejects missing or oversized Turnstile tokens', () => {
+  const login = {
+    email: 'alex@example.com',
+    password: 'a useful passphrase',
+    destination: '/dashboard',
+  };
+
+  assert.deepEqual(parseEmailLoginInput(login), {
+    ok: false,
+    error: 'Please complete the security check.',
+    field: 'captcha',
+  });
+  assert.equal(parseEmailLoginInput({
+    ...login,
+    captchaToken: 'x'.repeat(4097),
+  }).ok, false);
+  assert.equal(parseEmailResendInput({ email: 'alex@example.com' }).ok, false);
+});
+
+test('email login limiter derives a private stable key from Vercel visitor IP', () => {
+  const ipv4Headers = new Headers({ 'x-vercel-forwarded-for': '203.0.113.42' });
+  const ipv6Headers = new Headers({ 'x-vercel-forwarded-for': '2001:db8::42' });
+  const secret = 'preview-only-email-login-rate-limit-secret';
+
+  assert.equal(readVercelVisitorIp(ipv4Headers), '203.0.113.42');
+  assert.equal(readVercelVisitorIp(ipv6Headers), '2001:db8::42');
+  assert.equal(readVercelVisitorIp(new Headers()), null);
+  assert.equal(
+    readVercelVisitorIp(new Headers({ 'x-vercel-forwarded-for': '203.0.113.42, 198.51.100.4' })),
+    null,
+  );
+
+  const hash = hashEmailLoginVisitorIp('203.0.113.42', secret);
+  assert.match(hash, /^[0-9a-f]{64}$/u);
+  assert.equal(hash.includes('203.0.113.42'), false);
+  assert.equal(hash, hashEmailLoginVisitorIp('203.0.113.42', secret));
+  assert.notEqual(hash, hashEmailLoginVisitorIp('203.0.113.42', `${secret}-other-environment`));
+  assert.throws(() => hashEmailLoginVisitorIp('not-an-ip', secret), /visitor address is invalid/u);
+  assert.throws(() => hashEmailLoginVisitorIp('203.0.113.42', 'too-short'), /at least 32 bytes/u);
+});
+
+test('email login limiter accepts only one bounded database decision row', () => {
+  assert.equal(EMAIL_LOGIN_RATE_LIMIT_MAX_ATTEMPTS, 15);
+  assert.equal(EMAIL_LOGIN_RATE_LIMIT_WINDOW_SECONDS, 300);
+  assert.deepEqual(parseEmailLoginRateLimitDecision([{
+    allowed: true,
+    attempt_count: 15,
+    retry_after_seconds: 42,
+  }]), {
+    allowed: true,
+    attemptCount: 15,
+    retryAfterSeconds: 42,
+  });
+  assert.deepEqual(parseEmailLoginRateLimitDecision([{
+    allowed: false,
+    attempt_count: 16,
+    retry_after_seconds: 300,
+  }]), {
+    allowed: false,
+    attemptCount: 16,
+    retryAfterSeconds: 300,
+  });
+  assert.equal(parseEmailLoginRateLimitDecision([]), null);
+  assert.equal(parseEmailLoginRateLimitDecision([{ allowed: false, attempt_count: 16 }]), null);
+  assert.equal(parseEmailLoginRateLimitDecision([{
+    allowed: false,
+    attempt_count: 16,
+    retry_after_seconds: 301,
+  }]), null);
+});
+
+test('verification resend validates email without accepting password data', () => {
+  const valid = parseEmailResendInput({
+    email: ' Listener@Example.com ',
+    captchaToken: 'captcha-result',
+    password: 'must-not-be-used',
+  });
+  assert.equal(valid.ok, true);
+  assert.deepEqual(valid.value, {
+    email: 'listener@example.com',
+    captchaToken: 'captcha-result',
+  });
+  assert.equal(parseEmailResendInput({ email: 'invalid' }).ok, false);
+});
+
+test('check-email returns preserve invite destinations without allowing external paths', () => {
+  const inviteSignup = '/login?email=1&redirectTo=%2Finvite%2F12345678-1234-1234-1234-123456789abc&signupPlan=free';
+
+  assert.equal(getSignupReturnPath(inviteSignup), inviteSignup);
+  assert.equal(
+    getExistingAccountReturnPath(inviteSignup),
+    '/login?email=1&redirectTo=%2Finvite%2F12345678-1234-1234-1234-123456789abc',
+  );
+  assert.equal(getSignupReturnPath('https://attacker.example/login?signupPlan=free'), '/signup/free');
+  assert.equal(getExistingAccountReturnPath('//attacker.example/login'), '/login?email=1');
+});
+
+test('password reset enforces the signup policy and matching confirmation', () => {
+  assert.deepEqual(parsePasswordResetInput({
+    password: '  long passphrase  ',
+    confirmPassword: '  long passphrase  ',
+  }), { ok: true, value: { password: '  long passphrase  ' } });
+  assert.equal(parsePasswordResetInput({ password: 'short', confirmPassword: 'short' }).ok, false);
+  assert.equal(parsePasswordResetInput({
+    password: 'a useful passphrase',
+    confirmPassword: 'a different passphrase',
+  }).ok, false);
+  assert.equal(parsePasswordResetInput({
+    password: 'x'.repeat(129),
+    confirmPassword: 'x'.repeat(129),
+  }).ok, false);
+});
+
+test('signed-in password updates accept an optional bounded code and require a matching strong password', () => {
+  assert.deepEqual(parseManagedPasswordInput({
+    password: 'a useful passphrase',
+    confirmPassword: 'a useful passphrase',
+  }), { ok: true, value: { password: 'a useful passphrase' } });
+  assert.deepEqual(parseManagedPasswordInput({
+    nonce: ' 123456 ',
+    password: 'a useful passphrase',
+    confirmPassword: 'a useful passphrase',
+  }), { ok: true, value: { nonce: '123456', password: 'a useful passphrase' } });
+  assert.equal(parseManagedPasswordInput({
+    nonce: 'not a code', password: 'a useful passphrase', confirmPassword: 'a useful passphrase',
+  }).ok, false);
+  assert.equal(parseManagedPasswordInput({
+    nonce: '123456', password: 'short', confirmPassword: 'short',
+  }).ok, false);
+  assert.equal(parseManagedPasswordInput({
+    nonce: '123456', password: 'a useful passphrase', confirmPassword: 'something else',
+  }).ok, false);
 });

@@ -155,7 +155,8 @@ async function loadActiveWorkspaceCandidate(
 
 export async function bootstrapAccountForUser(
   user: AuthenticatedUser,
-  timing?: RequestTiming
+  timing?: RequestTiming,
+  sealedReferralCode?: string | null,
 ): Promise<BootstrapResult> {
   const profilePayload: Record<string, unknown> = {
     id: user.id,
@@ -284,20 +285,28 @@ export async function bootstrapAccountForUser(
       : await loadWorkspace(membership.account_id);
   }
 
-  // ── Referral attribution (best-effort, non-blocking) ───────────────────────
+  // ── Referral attribution (best-effort) ──────────────────────────────────
   // Only runs when a brand-new account was just created (first-ever sign-in).
-  // Reads the tsr_ref cookie set by /r/[code] and writes a referrals row.
+  // Prefer the sealed signup intent so confirmation can finish in another browser.
+  // Fall back to the tsr_ref cookie for OAuth and same-browser flows.
   if (newAccountId) {
+    let refCode = sealedReferralCode?.trim() || null;
+
     try {
       const { cookies } = await import('next/headers');
       const cookieStore = await cookies();
-      const refCode = cookieStore.get(REFERRAL_COOKIE_NAME)?.value ?? null;
+      const cookieRefCode = cookieStore.get(REFERRAL_COOKIE_NAME)?.value ?? null;
+      refCode ??= cookieRefCode;
+
       if (refCode) {
-        void attributeReferralOnSignup({
+        await attributeReferralOnSignup({
           referralCode:      refCode,
           referredUserId:    profile.id,
           referredAccountId: newAccountId,
         });
+      }
+
+      if (cookieRefCode) {
         cookieStore.delete(REFERRAL_COOKIE_NAME);
       }
     } catch (refErr) {

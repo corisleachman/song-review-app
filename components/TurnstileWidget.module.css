@@ -1,0 +1,9 @@
+.root {
+  width: 100%;
+  min-height: 65px;
+  overflow: hidden;
+}
+
+.root > div {
+  width: 100%;
+}

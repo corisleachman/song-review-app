@@ -1189,7 +1189,8 @@ footer {
 
   .problem { grid-template-columns: 1fr; }
   .product-header { grid-template-columns: 1fr; }
-  .feature-row { grid-template-columns: 1fr; }
+  .feature-row { grid-template-columns: minmax(0, 1fr); }
+  .feature-row > * { min-width: 0; }
   .feature-row:nth-child(even) { direction: ltr; }
   .proof { grid-template-columns: 1fr; }
   .pricing-header { grid-template-columns: 1fr; }
