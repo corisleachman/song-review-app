@@ -1045,7 +1045,7 @@ test('mobile marketing leads with a generous centre-cropped image and attached c
   const phoneEnd = marketing.indexOf('@media (prefers-reduced-motion: reduce)', phoneStart);
   const phoneCss = marketing.slice(phoneStart, phoneEnd);
 
-  assert.match(phoneCss, /\.hero-bento\s*\{[^}]*grid-template-rows:\s*minmax\(280px, 52svh\) 1fr 1fr;/u);
+  assert.match(phoneCss, /\.hero-bento\s*\{[^}]*grid-template-rows:\s*max-content 1fr 1fr;/u);
   assert.match(phoneCss, /\.cell-a\s*\{[^}]*display:\s*none;/u);
   assert.match(phoneCss, /\.cell-d\s*\{[^}]*grid-column:\s*1 \/ 3;[^}]*grid-row:\s*1;[^}]*opacity:\s*1;/u);
   assert.match(phoneCss, /\.cell-b\s*\{[^}]*grid-row:\s*2;/u);
@@ -1067,7 +1067,7 @@ test('mobile marketing leads with the approved Song Room bento wordmark', () => 
   const leadCell = marketing.slice(leadCellStart, leadCellEnd);
 
   assertIncludesAll(phoneCss, [
-    '.nav { display: none; }',
+    '.nav-actions { margin-left: auto; }',
     '.hero-headline-wrap,',
     '.hero-tagline { display: none; }',
     '.cell-b,',
@@ -1113,7 +1113,7 @@ test('mobile homepage keeps its primary CTA visible in the thumb zone', () => {
   const heroCta = marketing.slice(heroCtaStart, heroCtaEnd);
 
   assert.match(phoneCss, /\.nav-cta\s*\{[^}]*display:\s*none;/u);
-  assert.match(phoneCss, /\.hero\s*\{[^}]*height:\s*auto;[^}]*min-height:\s*100svh;/u);
+  assert.match(phoneCss, /\.hero\s*\{[^}]*height:\s*auto;[^}]*min-height:\s*max\(100svh, 680px\);/u);
   assert.match(phoneCss, /padding-bottom:\s*max\(28px, calc\(18px \+ env\(safe-area-inset-bottom\)\)\);/u);
   assert.match(phoneCss, /\.hero-content\s*\{[^}]*padding-left:\s*max\(20px, env\(safe-area-inset-left\)\);/u);
   assert.match(phoneCss, /\.hero-cta-row\s*\{[^}]*width:\s*100%;[^}]*justify-content:\s*center;/u);
@@ -1145,7 +1145,6 @@ test('tall tablet marketing keeps a composed layout and readable display type', 
     '@media (min-width: 601px) and (max-width: 900px) and (min-height: 601px)',
     '.nav-links {',
     'display: flex;',
-    '.nav-link[href="/login"]',
     'min-height: 44px;',
     'grid-template-columns: minmax(0, 1.4fr) minmax(260px, 1fr);',
     '.cell-a {',

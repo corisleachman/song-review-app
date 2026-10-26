@@ -1,0 +1,272 @@
+[
+  {
+    "source": "https://corisleachman.github.io/song-review-app/wireframes/Song%20Room%20Branding/Be-Kind.mp4",
+    "path": "/marketing-assets/be-kind.mp4",
+    "bytes": 1156512,
+    "sha256": "e4e695f753060b05beee55ebaab8ee0b643e3c3ff9acce973ac10ce2f175d8e3"
+  },
+  {
+    "source": "https://corisleachman.github.io/song-review-app/wireframes/Song%20Room%20Branding/apple-touch-icon.png",
+    "path": "/marketing-assets/apple-touch-icon.png",
+    "bytes": 10847,
+    "sha256": "aa80ad0917a6968c7dc017bcfb54a82b344b87d2d2a8ee04ad3ed217719e7dbc"
+  },
+  {
+    "source": "https://corisleachman.github.io/song-review-app/wireframes/Song%20Room%20Branding/favicon.png",
+    "path": "/marketing-assets/favicon.png",
+    "bytes": 3922,
+    "sha256": "5a285bedaccfa6544982c21240a285958a8e8b04cacb65347dc8c768e98eb172"
+  },
+  {
+    "source": "https://corisleachman.github.io/song-review-app/wireframes/Song%20Room%20Branding/public-sharing-view.jpeg",
+    "path": "/marketing-assets/public-sharing-view.jpeg",
+    "bytes": 146672,
+    "sha256": "51ffc52b3b8ac2fd80cc42ed668e26797b09ea3795c96f097ca4642e3e3e12bc"
+  },
+  {
+    "source": "https://corisleachman.github.io/song-review-app/wireframes/fonts/Thunder-BlackLC.woff2",
+    "path": "/marketing-assets/thunder-blacklc.woff2",
+    "bytes": 17396,
+    "sha256": "bdd55c5432cbfdf7793fe1bc3613393f398b4c3e25116272d3682b6ee80bb483"
+  },
+  {
+    "source": "https://corisleachman.github.io/song-review-app/wireframes/fonts/Thunder-BoldLC.woff2",
+    "path": "/marketing-assets/thunder-boldlc.woff2",
+    "bytes": 15972,
+    "sha256": "720e94e559e0f87f3f8787123eead6543ad8f48ad69d7e654b55de371379bcd3"
+  },
+  {
+    "source": "https://corisleachman.github.io/song-review-app/wireframes/fonts/Thunder-LC.woff2",
+    "path": "/marketing-assets/thunder-lc.woff2",
+    "bytes": 16660,
+    "sha256": "f3e7a59f17f179606dcd894f4c44fb5110c00f0a9aea52652b0b7ec76bc1cd45"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/SONGROOM-logo-white.png",
+    "path": "/marketing-assets/songroom-logo-white.png",
+    "bytes": 4426,
+    "sha256": "f9a384fc2ebc7efa2f823c1964ee21b76f4853fbcb99eaa310940db4e3547a88"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR11.jpeg",
+    "path": "/marketing-assets/tsr11.jpeg",
+    "bytes": 245524,
+    "sha256": "c6eba264fb069aad93459115547accab51719c73470af62f17d4e73cc302a9aa"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR13.jpeg",
+    "path": "/marketing-assets/tsr13.jpeg",
+    "bytes": 231508,
+    "sha256": "a23cc6af4c91279e2395b23b005eca18ad64c226e186b6d7bb54236fc29517a8"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR14.jpeg",
+    "path": "/marketing-assets/tsr14.jpeg",
+    "bytes": 201589,
+    "sha256": "87fa88457dfe736a3604171fe7e55ae1f7448fe3c1dc9dced18534a1deeecbc1"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR15.jpeg",
+    "path": "/marketing-assets/tsr15.jpeg",
+    "bytes": 262709,
+    "sha256": "780832e89342826ecaf8d37b9fcbc1a5b655fbb770b60afab95bdb94dc0f7273"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR16.jpeg",
+    "path": "/marketing-assets/tsr16.jpeg",
+    "bytes": 272390,
+    "sha256": "b5b662c5c0c4ed3ff29f1df30e0707d580e7b01b7970ee6035c573bd184106d4"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR17.jpeg",
+    "path": "/marketing-assets/tsr17.jpeg",
+    "bytes": 227576,
+    "sha256": "d1ca5fd7c1af1e255e7f513ec9ab259d2adbcc6754b023cbea6395c672bf3825"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR18.jpeg",
+    "path": "/marketing-assets/tsr18.jpeg",
+    "bytes": 226884,
+    "sha256": "c592404a885a02bdcff0466e31ea6c4be42f807815c8c6c41b9624f290fc22ed"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR20.jpeg",
+    "path": "/marketing-assets/tsr20.jpeg",
+    "bytes": 157046,
+    "sha256": "941066cb24c73622907f65a34d7fb2cdab0eee02f0368a5ae1fbb33121c3e80b"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR22.jpeg",
+    "path": "/marketing-assets/tsr22.jpeg",
+    "bytes": 191142,
+    "sha256": "4a4383838016786c01f6ffffb03b2c61ed53698f2e375c86aaeccfc29bb64f7a"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR23.jpeg",
+    "path": "/marketing-assets/tsr23.jpeg",
+    "bytes": 177416,
+    "sha256": "6caea4218a652337d7a5ebf6e545c90b8b917e4658d76ab1e52845750dfc569b"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR24.jpeg",
+    "path": "/marketing-assets/tsr24.jpeg",
+    "bytes": 178309,
+    "sha256": "e3549aebb3180e4ebea4b99dc03f774633ba12b61b5e85cb10ab644165d41672"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR25.jpeg",
+    "path": "/marketing-assets/tsr25.jpeg",
+    "bytes": 189258,
+    "sha256": "edbb41ca4a599191e1b1f8a29bc8917b9379b84df28a343c05e90d4dc68cf03d"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR7.jpeg",
+    "path": "/marketing-assets/tsr7.jpeg",
+    "bytes": 250962,
+    "sha256": "d949617ae5d007b736c44e556ccc15a5c233a4155433b52ce0f9274e48d90b93"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR8.jpeg",
+    "path": "/marketing-assets/tsr8.jpeg",
+    "bytes": 285977,
+    "sha256": "73d2ee4a9e6df64299290cc69d835a76b83bd7ec3e2ec18359aaa9858cf5ea47"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/lock-screen-view-2.jpeg",
+    "path": "/marketing-assets/lock-screen-view-2.jpeg",
+    "bytes": 107254,
+    "sha256": "45e4a3839429d5d72a20a7ac5983dbe870588a1883847cf7346a41cae4c20b11"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/lock-screen-view.jpeg",
+    "path": "/marketing-assets/lock-screen-view.jpeg",
+    "bytes": 111296,
+    "sha256": "cd8d2423109ab37ee7c06b2293ca7d27810e71c075a98bebc5881b8b52502763"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/mobile-comment-view.jpeg",
+    "path": "/marketing-assets/mobile-comment-view.jpeg",
+    "bytes": 98682,
+    "sha256": "e1e1411442106d2d5cd3f47fb3f5741ddb806c7aefbdd0b46a364946e21f52d8"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/mobile-dashboard-view.jpeg",
+    "path": "/marketing-assets/mobile-dashboard-view.jpeg",
+    "bytes": 106490,
+    "sha256": "1a13e8a78163a1206fe5a9cdf6c4e1c208e2dc8ca00e21d601838cfcb40ada51"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/mobile-song-view.jpeg",
+    "path": "/marketing-assets/mobile-song-view.jpeg",
+    "bytes": 95502,
+    "sha256": "3fecf55ad54872d606e9174bb41f78cbbe124bc4d082cf7b2c1de80ce147fb93"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/sign-in-page.jpeg",
+    "path": "/marketing-assets/sign-in-page.jpeg",
+    "bytes": 84221,
+    "sha256": "0d0c8b33e642721f320f8c8bb80f854ea278cbc9ef226b29786641324fcad10e"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-2.jpeg",
+    "path": "/marketing-assets/song-room-2.jpeg",
+    "bytes": 150082,
+    "sha256": "6602f37343e61b41352e6b9004ef5436c062c4f9b385a90d43122987135c96dc"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-3.jpeg",
+    "path": "/marketing-assets/song-room-3.jpeg",
+    "bytes": 178076,
+    "sha256": "b9f745603168d9e0530487ddf6a1b8ea7adb2b88440232740e5048c5594911f9"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-4.jpeg",
+    "path": "/marketing-assets/song-room-4.jpeg",
+    "bytes": 135410,
+    "sha256": "00a0110eb00eb7a6f4755329f0f705f08951c5cccf28d08ed601e4567fd53ce8"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-comment-view%20Large.jpeg",
+    "path": "/marketing-assets/song-room-comment-view-large.jpeg",
+    "bytes": 120140,
+    "sha256": "9a13f9c9b238adec2ee4943c945da8637b23395efc463ab6eec5efffdc80d474"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-desktop-card%20view%20Large.jpeg",
+    "path": "/marketing-assets/song-room-desktop-card-view-large.jpeg",
+    "bytes": 176304,
+    "sha256": "b3c6bd249522114a4f7feb9f97699e8969fa009e76f7cee74d7169297b60b1e8"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-desktop-list-view%20Large.jpeg",
+    "path": "/marketing-assets/song-room-desktop-list-view-large.jpeg",
+    "bytes": 106719,
+    "sha256": "9dd32728248dd4b7af279f744a90902c2975df4c8cfb16c5bc5c3a35b9c03e5b"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-settings%20Large.jpeg",
+    "path": "/marketing-assets/song-room-settings-large.jpeg",
+    "bytes": 73545,
+    "sha256": "7099970403e8e3e66653325b49338f07d542c6d0833fc90140ce6264f4ff015c"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-song-view%20Large.jpeg",
+    "path": "/marketing-assets/song-room-song-view-large.jpeg",
+    "bytes": 127234,
+    "sha256": "5a6c99f378a739478eb156dea46e7ba9603c829425ee46ad9915d81cfa28972d"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-BlackLC.otf",
+    "path": "/marketing-assets/thunder-blacklc.otf",
+    "bytes": 30212,
+    "sha256": "ebadeef1205a1f476daaabb708e7bd6816ee8b895797b2eb5b0aeba46b39dd0b"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-BoldLC.ttf",
+    "path": "/marketing-assets/thunder-boldlc.ttf",
+    "bytes": 46720,
+    "sha256": "887cbb3439c60c7c22034e1e45013b4bc513ccebb47ed76d56abbda1d22ba616"
+  },
+  {
+    "source": "https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-LC.ttf",
+    "path": "/marketing-assets/thunder-lc.ttf",
+    "bytes": 48376,
+    "sha256": "767f256d62b6b53403c6512366beb5307e3d687a041a612765eca92f01b83400"
+  },
+  {
+    "source": "https://fonts.gstatic.com/s/dmsans/v17/rP2rp2ywxg089UriCZaSExd86J3t9jz86Mvy4qCRAL19DksVat_XDW3z.ttf",
+    "path": "/marketing-assets/dm-sans-italic-300.ttf",
+    "bytes": 51264,
+    "sha256": "047adb5ebc2cfebf0a721f727c054121ee624df9c7809d631eb83747bed77974"
+  },
+  {
+    "source": "https://fonts.gstatic.com/s/dmsans/v17/rP2rp2ywxg089UriCZaSExd86J3t9jz86Mvy4qCRAL19DksVat-JDW3z.ttf",
+    "path": "/marketing-assets/dm-sans-italic-400.ttf",
+    "bytes": 51144,
+    "sha256": "cb30796ef338a70498e301f2c333f00d4fc23bacfa267be09673fdac43356a96"
+  },
+  {
+    "source": "https://fonts.gstatic.com/s/dmsans/v17/rP2tp2ywxg089UriI5-g4vlH9VoD8CmcqZG40F9JadbnoEwA_JxhTg.ttf",
+    "path": "/marketing-assets/dm-sans-normal-300.ttf",
+    "bytes": 48296,
+    "sha256": "1e943db6ea127d08309dccae4b15b2a827ef9d2cf2ef9a4df81bcb1800567d72"
+  },
+  {
+    "source": "https://fonts.gstatic.com/s/dmsans/v17/rP2tp2ywxg089UriI5-g4vlH9VoD8CmcqZG40F9JadbnoEwAopxhTg.ttf",
+    "path": "/marketing-assets/dm-sans-normal-400.ttf",
+    "bytes": 48280,
+    "sha256": "b0ae3e89a7d3ef2b1838bb4b1ceb0b17cc3435af061eee809d76aa623ff116e9"
+  },
+  {
+    "source": "https://fonts.gstatic.com/s/dmsans/v17/rP2tp2ywxg089UriI5-g4vlH9VoD8CmcqZG40F9JadbnoEwAkJxhTg.ttf",
+    "path": "/marketing-assets/dm-sans-normal-500.ttf",
+    "bytes": 48308,
+    "sha256": "376427b5322148d8de1e03f263bcca4935a2d60ba71d9f94f4947ab664c711ae"
+  },
+  {
+    "source": "https://fonts.gstatic.com/s/dmsans/v17/rP2tp2ywxg089UriI5-g4vlH9VoD8CmcqZG40F9JadbnoEwAfJthTg.ttf",
+    "path": "/marketing-assets/dm-sans-normal-600.ttf",
+    "bytes": 48280,
+    "sha256": "b79a2ea7a38f33fd96a282fadb9ce97626bb0724a44d21075859f0e50239993a"
+  }
+]

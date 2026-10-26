@@ -9263,3 +9263,112 @@ No migration, new dependency, environment variable or hosted setting is required
 ### Approved Preview publication
 
 The user approved committing/pushing the player controls and deploying protected Preview only. Preflight confirmed primary project `song-review-app-v2`, team `team_z9MLYFXhcAfyoZfq63V6NDri`, GitHub repository `corisleachman/song-review-app`, Production branch `clone-clean`, and its unchanged deployed commit `b9d665f5`. The feature branch uses the project's default Preview configuration, not the Email rollout branch's separately scoped flags. No variable or protection change is authorized or required for this slice. Only the player code/tests and this slice's documentation hunks will be staged; earlier authentication completion notes and hygiene files remain local. Hosted verification and the actual deployment identifier will be recorded after the push.
+
+
+## 2026-10-26 - Homepage login visibility
+
+### What we were trying to achieve
+
+Make the account entrance easy to find for returning visitors on desktop and phones, including while the cookie banner is visible.
+
+### Feature / change being made
+
+- Move Log in out of the section navigation into an outlined button beside Start for free.
+- Keep the phone header visible while scrolling, with the existing hero composition offset beneath it.
+- Add a footer Log in link. Existing authentication and signup destinations are preserved.
+
+### Files changed
+
+- `public/marketing.html`
+- `tests/critical-contracts.test.mjs` (update the existing phone composition expectation for the visible header)
+- `UPDATE_LOG.md`
+
+### Rollout
+
+Local implementation only. No deployment, service configuration, or database change.
+
+### Verification
+
+- All 53 existing critical contract tests pass; adjusted the old hidden-navigation expectations for the new account-button structure.
+- Browser checked at 320x568, 390x844, 844x390, 768x1024 and 1440x900 with the cookie banner present. Login remains visible and unobstructed, with no horizontal overflow.
+- Confirmed the fixed header remains available after scrolling and keyboard focus moves between Log in and Start for free with a visible outline.
+- Static local preview verifies the layout and existing link destinations; full authentication and production deployment were not exercised.
+
+
+## 2026-10-26 - Remaining homepage navigation, media and layout review fixes
+
+### What we were trying to achieve
+
+Make homepage exploration work reliably for first-time visitors and remove fragile media dependencies while preserving the existing signup/authentication paths.
+
+### Feature / change being made
+
+- Repair footer Features/Pricing anchors, Privacy/Terms destinations and Contact using the address already published in the legal pages. Point the header logo at the hero.
+- Bundle 39 previously GitHub-hosted assets and six DM Sans font files under `public/marketing-assets/`. Include source hashes and DM Sans licence. Existing app/login and legal-page asset usage is outside this change.
+- Move the existing waveform screenshot directly below the hero and retain its shared lightbox behaviour.
+- Let phone introduction contents determine the lead row height to prevent text clipping.
+- Increase visibility of existing billing total notes without changing prices or intervals.
+- Add a 40-check user test plan and asset integrity tests.
+
+### Files changed
+
+- `public/marketing.html`
+- `public/marketing-assets/*`
+- `tests/critical-contracts.test.mjs` (update phone row expectation)
+- `tests/marketing-assets.test.mjs`
+- `HOMEPAGE_REVIEW_TEST_PLAN.md`
+- `UPDATE_LOG.md`
+
+### Verification and status
+
+- `npm test`: 102 passed. Targeted ESLint for the new test file passed. Diff whitespace checks passed.
+- Browser checked through local Next.js at five viewport sizes. Copy fit, login stayed visible and there was no horizontal overflow.
+- Privacy/Terms destinations, early screenshot viewer, and monthly/annual price/link changes verified locally.
+- Local login was reached but cannot render successfully without the absent Supabase URL/public key. The development overlay also reports the pre-existing cookie script placement in `app/layout.tsx`. Authentication and service configuration were not modified.
+- Pending: marketing wording needs the required but unavailable write-like-coris skill. The advertised Free three-version limit was not found in inspected upload/read code or the upload-integrity migration; do not invent deletion behaviour. Google-only disclosure must follow existing email-auth configuration.
+- Local only, not committed/pushed/deployed. No migrations or external configuration changes made. This is not completion of all requested homepage recommendations.
+- Rollout: finish pending copy, verify on configured preview, then obtain production deployment authority. Rollback uses the prior deployment or a focused revert; no data migration is involved.
+
+
+## 2026-10-26 - Homepage copy completed with write-like-coris
+
+### What we were trying to achieve
+
+Finish the homepage wording after the required writing skill became available, keeping signup expectations and plan descriptions grounded in the app.
+
+### Feature / change being made
+
+- Installed `.agents/skills/write-like-coris/SKILL.md` and both supplied references from the user-provided ZIP, then read all three files before editing.
+- Clarified Free's 500 MB allowance and five collaborators in addition to the owner in the pricing introduction, final invitation and social/search descriptions.
+- Removed the unsupported three-version retention claim and plan-exclusive format/share/branding promises. Paid plan differences follow the existing app upgrade definitions; no entitlements or backend logic changed.
+- Added signup notes alongside the hero and final call to action, using the existing public email-auth configuration with a neutral fallback if loading fails.
+- Allowed extra vertical space on short phone viewports so the added signup note and buttons remain clear of the introduction.
+- Updated the user test plan to 43 checks and removed the resolved missing-skill blocker.
+
+### Files changed
+
+- `.agents/skills/write-like-coris/SKILL.md`
+- `.agents/skills/write-like-coris/references/voice-profile.md`
+- `.agents/skills/write-like-coris/references/editing-checks.md`
+- `public/marketing.html`
+- `tests/marketing-signup-disclosure.test.mjs`
+- `tests/critical-contracts.test.mjs`
+- `HOMEPAGE_REVIEW_TEST_PLAN.md`
+- `UPDATE_LOG.md`
+
+### Verification and rollout
+
+- `npm test`: 105 passed, including enabled/disabled email auth, failed/invalid configuration fallback and inline JavaScript parsing. Targeted ESLint for the new test file passed.
+- Browser verified both disclosure notes against the real local configuration; Google-only text appeared. Five viewport checks confirmed readable copy, visible login and no horizontal page overflow.
+- Repository work is code complete locally. No commit, push, preview or production deployment has been made.
+- Full authentication remains unverified because the local Supabase URL/public key are absent. Complete the configured-preview checks before production rollout. No migrations or service configuration changes are required by this homepage change.
+- Rollback: previous deployment or a focused revert of the homepage changes; no data migration.
+
+
+## 2026-10-26 - Focused homepage Preview preparation
+
+- User approved a focused branch, push, draft PR and Preview deployment. Production is not authorised.
+- Isolated homepage files on `codex/homepage-first-visit-login`, based on `clone-clean` at `940cfd72`, the verified current production revision. Existing shipped player changes stay in the base and are not part of this PR diff.
+- Copied only this task's update-log sections. Unrelated authentication notes, backlog edits, local upload files and personal writing-skill references remain outside the release.
+- Changed files: homepage HTML, bundled marketing assets, homepage tests, this log and the homepage user test plan.
+- Verification: all 105 tests pass in the isolated worktree. Preview build and configured authentication checks follow after push. No migration or external configuration change is needed.
