@@ -341,7 +341,7 @@ test('11-inch iPad portrait keeps tablet composition, account routes and readabl
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/', { waitUntil: 'domcontentloaded' });
 
-  await expect(page.locator('.nav').getByRole('link', { name: 'Sign in' })).toBeVisible();
+  await expect(page.locator('.nav').getByRole('link', { name: 'Log in', exact: true })).toBeVisible();
   await expect(page.locator('.nav').getByRole('link', { name: 'Start for free' })).toBeVisible();
   await expect(page.locator('.hero-headline-wrap path').first()).toHaveCSS('stroke-opacity', '1');
 
@@ -351,7 +351,7 @@ test('11-inch iPad portrait keeps tablet composition, account routes and readabl
     const headingStyle = getComputedStyle(heading);
     const fontSize = Number.parseFloat(headingStyle.fontSize);
     const lineHeight = Number.parseFloat(headingStyle.lineHeight);
-    const login = document.querySelector('.nav-link[href="/login"]');
+    const login = document.querySelector('.nav-login[href="/login"]');
     return {
       heroColumns: columns('.hero-bento'),
       problemColumns: columns('.problem'),

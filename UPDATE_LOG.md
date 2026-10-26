@@ -9372,3 +9372,5 @@ Finish the homepage wording after the required writing skill became available, k
 - Copied only this task's update-log sections. Unrelated authentication notes, backlog edits, local upload files and personal writing-skill references remain outside the release.
 - Changed files: homepage HTML, bundled marketing assets, homepage tests, this log and the homepage user test plan.
 - Verification: all 105 tests pass in the isolated worktree. Preview build and configured authentication checks follow after push. No migration or external configuration change is needed.
+
+- Preview follow-up: updated the existing tablet browser test to use the new Log in name and account-button selector; its previous Sign in/nav-link expectation described the old navigation. Font licence whitespace was normalised without changing its wording.
