@@ -109,8 +109,10 @@ Use this protocol after any substantial update, including changes that affect mu
    - Identify the relevant down migration, revert commit, feature flag, or previous deployment when a rollback exists.
    - Flag irreversible or data-destructive steps before they happen.
 5. **Assign ownership clearly.**
-   - Say which actions the agent can perform if authorised and which require the user because they involve credentials, dashboards, billing, production data, or approval.
-   - Offer to perform safe repository/GitHub actions, but do not push, merge, deploy, or change production services without authority.
+   - The user grants standing authorisation to commit and push focused branches, create or update pull requests, merge tested changes, and deploy requested work to Preview, staging, or Production using the existing release configuration. Do not ask for separate confirmation for these routine release steps.
+   - Respect explicit task limits. If the user requests Preview only, do not merge or deploy to Production until the user extends that scope. Standing release authority does not override a requested pause or environment restriction.
+   - Before release, verify the repository, branch, exact commit, deployment project and target environment; complete the relevant checks and keep unrelated local work out of the release. Report the resulting URL, verification limits and rollback route.
+   - Ask only for actions not already authorised by the task that are destructive or irreversible, incur a new financial commitment, materially change security/access or billing boundaries, or alter unrelated production services. Never expose credentials or broaden service permissions to make a deployment work.
 6. **Close the loop.**
    - End with one recommended next step.
    - After the user completes an external step, verify the result where access allows and update the status from code-complete toward production-complete.
@@ -163,7 +165,7 @@ Do not, unless explicitly required by the task:
 - modify database schema
 - alter deploy configuration
 
-These require explicit justification and likely approval.
+These require explicit justification and, where not already authorised by the task, approval. Routine deployment using the existing configuration is covered by the standing release authority above; changing deployment configuration remains subject to this boundary.
 
 ---
 
