@@ -6,21 +6,21 @@
 <title>The Song Room - Where songs get finished</title>
 
 <!-- ══ SEO ══ -->
-<meta name="description" content="Share versions, leave timestamped comments on the waveform, and track every decision in one place. Invite your whole band free - you only pay for storage.">
+<meta name="description" content="Share versions, leave timestamped comments on the waveform, and track every decision in one place. Start free with 500 MB of storage and up to five collaborators.">
 <meta name="author" content="The Song Room">
 <meta name="theme-color" content="#0E0A0A">
 
 
 <!-- Favicon (generated from the TSR logo) -->
-<link rel="icon" type="image/png" sizes="64x64" href="https://corisleachman.github.io/song-review-app/wireframes/Song%20Room%20Branding/favicon.png">
-<link rel="apple-touch-icon" sizes="180x180" href="https://corisleachman.github.io/song-review-app/wireframes/Song%20Room%20Branding/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="64x64" href="/marketing-assets/favicon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/marketing-assets/apple-touch-icon.png">
 <link rel="canonical" href="https://song-room.live/">
 
 <!-- ══ OPEN GRAPH (WhatsApp, Facebook, LinkedIn, iMessage, Slack) ══ -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="The Song Room">
 <meta property="og:title" content="The Song Room - Where songs get finished">
-<meta property="og:description" content="Share versions, leave timestamped comments on the waveform, and track every decision in one place. Invite your whole band free - you only pay for storage.">
+<meta property="og:description" content="Share versions, leave timestamped comments on the waveform, and track every decision in one place. Start free with 500 MB of storage and up to five collaborators.">
 <meta property="og:url" content="https://song-room.live/">
 <meta property="og:image" content="https://www.song-room.live/song-room-preview.jpg">
 <meta property="og:image:secure_url" content="https://www.song-room.live/song-room-preview.jpg">
@@ -33,31 +33,36 @@
 <!-- ══ TWITTER / X ══ -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="The Song Room - Where songs get finished">
-<meta name="twitter:description" content="Share versions, leave timestamped comments on the waveform, and track every decision in one place. Invite your whole band free - you only pay for storage.">
+<meta name="twitter:description" content="Share versions, leave timestamped comments on the waveform, and track every decision in one place. Start free with 500 MB of storage and up to five collaborators.">
 <meta name="twitter:image" content="https://www.song-room.live/song-room-preview.jpg">
 <meta name="twitter:image:alt" content="The Song Room - collaborative music review for serious artists">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<link href="/marketing-assets/dm-sans.css" rel="stylesheet">
 <style>
 @font-face {
   font-family: 'ThunderBlack';
-  src: url('https://corisleachman.github.io/song-review-app/wireframes/fonts/Thunder-BlackLC.woff2') format('woff2'),
-       url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-BlackLC.otf') format('opentype');
+  src: url('/marketing-assets/thunder-blacklc.woff2') format('woff2'),
+       url('/marketing-assets/thunder-blacklc.otf') format('opentype');
   font-display: swap;
 }
 @font-face {
   font-family: 'ThunderBold';
-  src: url('https://corisleachman.github.io/song-review-app/wireframes/fonts/Thunder-BoldLC.woff2') format('woff2'),
-       url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-BoldLC.ttf') format('truetype');
+  src: url('/marketing-assets/thunder-boldlc.woff2') format('woff2'),
+       url('/marketing-assets/thunder-boldlc.ttf') format('truetype');
   font-display: swap;
 }
 @font-face {
   font-family: 'ThunderReg';
-  src: url('https://corisleachman.github.io/song-review-app/wireframes/fonts/Thunder-LC.woff2') format('woff2'),
-       url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/fonts/Thunder-LC.ttf') format('truetype');
+  src: url('/marketing-assets/thunder-lc.woff2') format('woff2'),
+       url('/marketing-assets/thunder-lc.ttf') format('truetype');
   font-display: swap;
 }
+
+.early-product-preview {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: clamp(28px, 5vw, 64px) max(20px, env(safe-area-inset-left));
+}
+section[id] { scroll-margin-top: 110px; }
 
 /* ═══════════════════════════════════
    TOKENS
@@ -83,7 +88,7 @@
   --treg:   'ThunderReg',   Impact, 'Arial Narrow Bold', sans-serif;
   --ui:     'DM Sans', -apple-system, sans-serif;
 
-  --img: 'https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/';
+  --img: '/marketing-assets/';
 
   --ease: cubic-bezier(0.23, 1, 0.32, 1);
 }
@@ -188,9 +193,43 @@ a { color: inherit; text-decoration: none; }
   color: var(--off-white);
   padding: 10px 20px;
   transition: background 150ms;
-  margin-left: 8px;
 }
 .nav-cta:hover { background: var(--red-b); }
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-login,
+.nav-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.nav-login {
+  padding: 10px 20px;
+  border: 1px solid var(--off-white);
+  background: var(--black);
+  color: var(--off-white);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: background 150ms, color 150ms;
+}
+.nav-login:hover {
+  background: var(--off-white);
+  color: var(--black);
+}
+.nav-login:focus-visible,
+.nav-cta:focus-visible {
+  outline: 3px solid var(--straw);
+  outline-offset: 3px;
+}
 
 /* ═══════════════════════════════════
    SECTION 1 - HERO
@@ -366,6 +405,14 @@ a { color: inherit; text-decoration: none; }
   transition: opacity 0.6s 0.6s var(--ease), transform 0.6s 0.6s var(--ease);
 }
 .hero-cta-row.on { opacity: 1; transform: translateY(0); }
+.signup-disclosure {
+  font-family: var(--ui);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--sand);
+  margin-top: 12px;
+}
+
 
 .btn-primary {
   display: inline-flex;
@@ -699,7 +746,7 @@ a { color: inherit; text-decoration: none; }
 .proof-image-bg {
   position: absolute;
   inset: 0;
-  background-image: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR20.jpeg');
+  background-image: url('/marketing-assets/tsr20.jpeg');
   background-size: cover;
   background-position: center;
 }
@@ -744,7 +791,7 @@ a { color: inherit; text-decoration: none; }
 .proof-avatar-img {
   width: 100%;
   height: 100%;
-  background-image: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR25.jpeg');
+  background-image: url('/marketing-assets/tsr25.jpeg');
   background-size: cover;
   background-position: center top;
 }
@@ -1014,9 +1061,9 @@ a { color: inherit; text-decoration: none; }
 .tier-billing-note {
   display: block;
   font-family: var(--ui);
-  font-size: 11px;
-  font-style: italic;
-  color: var(--dune);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--off-white);
   margin-top: 7px;
 }
 
@@ -1037,7 +1084,7 @@ a { color: inherit; text-decoration: none; }
 .final-bg {
   position: absolute;
   inset: 0;
-  background-image: url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR22.jpeg');
+  background-image: url('/marketing-assets/tsr22.jpeg');
   background-size: cover;
   background-position: center 30%;
   filter: brightness(0.35);
@@ -1205,7 +1252,7 @@ footer {
   .nav-cta { display: none; }
 
   /* Lead with one generous, centre-cropped image and keep its copy attached. */
-  .hero-bento { grid-template-rows: minmax(280px, 52svh) 1fr 1fr; }
+  .hero-bento { grid-template-rows: max-content 1fr 1fr; }
   .cell-a { display: none; }
   .cell-d { grid-column: 1 / 3; grid-row: 1; opacity: 1; }
   .cell-b { grid-column: 1;     grid-row: 2; }
@@ -1214,6 +1261,7 @@ footer {
   .cell-f { grid-column: 2;     grid-row: 3; }
   .bento-cell-img { background-position: center; }
   .bento-cell-text {
+    position: relative;
     justify-content: flex-end;
     background: linear-gradient(to bottom,
       rgba(14,10,10,0.08) 0%,
@@ -1225,7 +1273,7 @@ footer {
   .hero {
     height: auto;
     min-height: 100vh;
-    min-height: 100svh;
+    min-height: max(100svh, 680px);
     padding-top: calc(98px + env(safe-area-inset-top));
     padding-bottom: max(28px, calc(18px + env(safe-area-inset-bottom)));
   }
@@ -1259,9 +1307,18 @@ footer {
 }
 
 @media (max-width: 600px) {
-  /* The approved phone composition starts with the animated brand, not a
-     second small logo or the desktop Create Together sign-off. */
-  .nav { display: none; }
+  /* Keep the account entrance above the hero and the bottom cookie banner. */
+  .nav {
+    display: flex;
+    height: 56px;
+    padding: 0 max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left));
+    background: var(--black);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-actions { margin-left: auto; }
+  .hero-bento { top: 56px; }
+
+  /* Preserve the existing phone composition below the account header. */
   .hero-headline-wrap,
   .hero-tagline { display: none; }
 
@@ -1287,7 +1344,8 @@ footer {
   }
 
   .hero {
-    padding-top: calc(34px + env(safe-area-inset-top));
+    min-height: max(calc(100svh + 56px), 680px);
+    padding-top: calc(90px + env(safe-area-inset-top));
   }
 
   .mobile-hero-wordmark {
@@ -1793,12 +1851,6 @@ footer {
     display: none;
   }
 
-  .nav-link[href="/login"] {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-  }
-
   .nav-cta {
     display: inline-flex;
     align-items: center;
@@ -2048,15 +2100,17 @@ footer {
 
 <!-- ══ NAV ══ -->
 <nav class="nav" id="nav">
-  <a class="nav-brand" href="#" aria-label="The Song Room - home">
-    <img src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/SONGROOM-logo-white.png" alt="The Song Room">
+  <a class="nav-brand" href="#hero" aria-label="The Song Room - home">
+    <img src="/marketing-assets/songroom-logo-white.png" alt="The Song Room">
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#features">Features</a>
     <a class="nav-link" href="#pricing">Pricing</a>
-    <a class="nav-link" href="/login">Sign in</a>
   </div>
-  <a class="nav-cta" href="/signup/free">Start for free</a>
+  <div class="nav-actions">
+    <a class="nav-login" href="/login">Log in</a>
+    <a class="nav-cta" href="/signup/free">Start for free</a>
+  </div>
 </nav>
 
 <!-- ══ HERO ══ -->
@@ -2152,10 +2206,24 @@ footer {
           </svg>
         </a>
       </div>
+      <p class="signup-disclosure" data-signup-disclosure>You'll choose how to sign in on the next page.</p>
     </div>
 
   </div>
 
+</section>
+
+<!-- ══ EARLY PRODUCT PREVIEW ══ -->
+<section class="early-product-preview" aria-label="Song view preview">
+    <button class="shot lead" data-src="/marketing-assets/song-room-song-view-large.jpeg" data-cap="The song view - leave feedback on the waveform at the exact moment you mean it." aria-label="Enlarge screenshot: The song view - leave feedback on the waveform at the exact moment you mean it.">
+      <div class="shot-frame">
+        <img src="/marketing-assets/song-room-song-view-large.jpeg" alt="The song view - leave feedback on the waveform at the exact moment you mean it." loading="lazy">
+        <span class="shot-expand" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+        </span>
+      </div>
+      <p class="shot-cap">The song view - leave feedback on the waveform at the exact moment you mean it.</p>
+    </button>
 </section>
 
 <!-- ══ PROBLEM ══ -->
@@ -2212,9 +2280,9 @@ footer {
   <!-- Mock song page -->
   <div class="mock-player reveal">
     <div class="mock-artwork">
-      <div class="mock-artwork-bg is-active" style="background-image:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-4.jpeg')"></div>
-      <div class="mock-artwork-bg" style="background-image:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-2.jpeg')"></div>
-      <div class="mock-artwork-bg" style="background-image:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-3.jpeg')"></div>
+      <div class="mock-artwork-bg is-active" style="background-image:url('/marketing-assets/song-room-4.jpeg')"></div>
+      <div class="mock-artwork-bg" style="background-image:url('/marketing-assets/song-room-2.jpeg')"></div>
+      <div class="mock-artwork-bg" style="background-image:url('/marketing-assets/song-room-3.jpeg')"></div>
     </div>
   </div>
 </section>
@@ -2224,7 +2292,7 @@ footer {
 
   <div class="feature-row">
     <div class="feature-img">
-      <div class="feature-img-bg" style="background-image:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR11.jpeg')"></div>
+      <div class="feature-img-bg" style="background-image:url('/marketing-assets/tsr11.jpeg')"></div>
       <div class="feature-img-veil"></div>
     </div>
     <div class="feature-body">
@@ -2233,7 +2301,7 @@ footer {
         Upload it.<br><em>Everyone<br>hears it.</em>
       </h3>
       <p class="feature-desc reveal reveal-d1">
-        Every version is stored, labelled, and instantly accessible to everyone in your workspace. No more sending files. No more "which one did you send me?" The moment you upload, your collaborators are notified.
+        Upload a version and everyone in your workspace can find it in the same place. No more sending files or wondering which one to listen to. Your collaborators are notified when it's ready.
       </p>
       <p class="feature-quote reveal reveal-d2">"V7 just dropped. Your producer wakes up to it."</p>
     </div>
@@ -2241,7 +2309,7 @@ footer {
 
   <div class="feature-row">
     <div class="feature-img">
-      <div class="feature-img-bg" style="background-image:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR23.jpeg')"></div>
+      <div class="feature-img-bg" style="background-image:url('/marketing-assets/tsr23.jpeg')"></div>
       <div class="feature-img-veil"></div>
     </div>
     <div class="feature-body">
@@ -2258,7 +2326,7 @@ footer {
 
   <div class="feature-row">
     <div class="feature-img">
-      <div class="feature-img-bg" style="background-image:url('https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/TSR24.jpeg')"></div>
+      <div class="feature-img-bg" style="background-image:url('/marketing-assets/tsr24.jpeg')"></div>
       <div class="feature-img-veil"></div>
     </div>
     <div class="feature-body">
@@ -2283,45 +2351,37 @@ footer {
     <p class="showcase-sub reveal reveal-d1">Real screens from the app. Tap any shot to take a closer look.</p>
   </div>
   <div class="shot-grid reveal reveal-d2">
-    <button class="shot lead" data-src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-song-view%20Large.jpeg" data-cap="The song view - leave feedback on the waveform at the exact moment you mean it." aria-label="Enlarge screenshot: The song view - leave feedback on the waveform at the exact moment you mean it.">
+
+    <button class="shot" data-src="/marketing-assets/song-room-desktop-card-view-large.jpeg" data-cap="Your library, coloured by your own artwork." aria-label="Enlarge screenshot: Your library, coloured by your own artwork.">
       <div class="shot-frame">
-        <img src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-song-view%20Large.jpeg" alt="The song view - leave feedback on the waveform at the exact moment you mean it." loading="lazy">
-        <span class="shot-expand" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
-        </span>
-      </div>
-      <p class="shot-cap">The song view - leave feedback on the waveform at the exact moment you mean it.</p>
-    </button>
-    <button class="shot" data-src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-desktop-card%20view%20Large.jpeg" data-cap="Your library, coloured by your own artwork." aria-label="Enlarge screenshot: Your library, coloured by your own artwork.">
-      <div class="shot-frame">
-        <img src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-desktop-card%20view%20Large.jpeg" alt="Your library, coloured by your own artwork." loading="lazy">
+        <img src="/marketing-assets/song-room-desktop-card-view-large.jpeg" alt="Your library, coloured by your own artwork." loading="lazy">
         <span class="shot-expand" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
         </span>
       </div>
       <p class="shot-cap">Your library, coloured by your own artwork.</p>
     </button>
-    <button class="shot" data-src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-desktop-list-view%20Large.jpeg" data-cap="Every version and every action, in one workspace." aria-label="Enlarge screenshot: Every version and every action, in one workspace.">
+    <button class="shot" data-src="/marketing-assets/song-room-desktop-list-view-large.jpeg" data-cap="Every version and every action, in one workspace." aria-label="Enlarge screenshot: Every version and every action, in one workspace.">
       <div class="shot-frame">
-        <img src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-desktop-list-view%20Large.jpeg" alt="Every version and every action, in one workspace." loading="lazy">
+        <img src="/marketing-assets/song-room-desktop-list-view-large.jpeg" alt="Every version and every action, in one workspace." loading="lazy">
         <span class="shot-expand" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
         </span>
       </div>
       <p class="shot-cap">Every version and every action, in one workspace.</p>
     </button>
-    <button class="shot" data-src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-comment-view%20Large.jpeg" data-cap="Timestamped notes, pinned in context." aria-label="Enlarge screenshot: Timestamped notes, pinned in context.">
+    <button class="shot" data-src="/marketing-assets/song-room-comment-view-large.jpeg" data-cap="Timestamped notes, pinned in context." aria-label="Enlarge screenshot: Timestamped notes, pinned in context.">
       <div class="shot-frame">
-        <img src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-comment-view%20Large.jpeg" alt="Timestamped notes, pinned in context." loading="lazy">
+        <img src="/marketing-assets/song-room-comment-view-large.jpeg" alt="Timestamped notes, pinned in context." loading="lazy">
         <span class="shot-expand" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
         </span>
       </div>
       <p class="shot-cap">Timestamped notes, pinned in context.</p>
     </button>
-    <button class="shot" data-src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-settings%20Large.jpeg" data-cap="Make the room yours." aria-label="Enlarge screenshot: Make the room yours.">
+    <button class="shot" data-src="/marketing-assets/song-room-settings-large.jpeg" data-cap="Make the room yours." aria-label="Enlarge screenshot: Make the room yours.">
       <div class="shot-frame">
-        <img src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/song-room-settings%20Large.jpeg" alt="Make the room yours." loading="lazy">
+        <img src="/marketing-assets/song-room-settings-large.jpeg" alt="Make the room yours." loading="lazy">
         <span class="shot-expand" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
         </span>
@@ -2330,8 +2390,8 @@ footer {
     </button>
     <div class="shot-video">
       <div class="shot-frame">
-        <video class="shot-vid" autoplay muted loop playsinline preload="auto" poster="https://corisleachman.github.io/song-review-app/wireframes/Song%20Room%20Branding/public-sharing-view.jpeg">
-          <source src="https://corisleachman.github.io/song-review-app/wireframes/Song%20Room%20Branding/Be-Kind.mp4" type="video/mp4">
+        <video class="shot-vid" autoplay muted loop playsinline preload="auto" poster="/marketing-assets/public-sharing-view.jpeg">
+          <source src="/marketing-assets/be-kind.mp4" type="video/mp4">
         </video>
         <button class="vid-mute" type="button" aria-pressed="false" aria-label="Turn sound on">
           <svg class="ic-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
@@ -2345,54 +2405,54 @@ footer {
   <p class="eyebrow reveal phone-eyebrow">In your pocket</p>
   <h3 class="phone-title reveal reveal-d1">Built for the phone in your hand.</h3>
   <div class="phone-row reveal reveal-d2">
-    <button class="shot phone" data-src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/mobile-dashboard-view.jpeg" data-cap="Your whole workspace, in your pocket." aria-label="Enlarge screenshot: Your whole workspace, in your pocket.">
+    <button class="shot phone" data-src="/marketing-assets/mobile-dashboard-view.jpeg" data-cap="Your whole workspace, in your pocket." aria-label="Enlarge screenshot: Your whole workspace, in your pocket.">
       <div class="shot-frame">
-        <img src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/mobile-dashboard-view.jpeg" alt="Your whole workspace, in your pocket." loading="lazy">
+        <img src="/marketing-assets/mobile-dashboard-view.jpeg" alt="Your whole workspace, in your pocket." loading="lazy">
         <span class="shot-expand" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
         </span>
       </div>
       <p class="shot-cap">Your whole workspace, in your pocket.</p>
     </button>
-    <button class="shot phone" data-src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/mobile-song-view.jpeg" data-cap="Play, scrub and add a timestamped comment when you need one." aria-label="Enlarge screenshot: Play, scrub and add a timestamped comment when you need one.">
+    <button class="shot phone" data-src="/marketing-assets/mobile-song-view.jpeg" data-cap="Play, scrub and add a timestamped comment when you need one." aria-label="Enlarge screenshot: Play, scrub and add a timestamped comment when you need one.">
       <div class="shot-frame">
-        <img src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/mobile-song-view.jpeg" alt="Play, scrub and add a timestamped comment when you need one." loading="lazy">
+        <img src="/marketing-assets/mobile-song-view.jpeg" alt="Play, scrub and add a timestamped comment when you need one." loading="lazy">
         <span class="shot-expand" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
         </span>
       </div>
       <p class="shot-cap">Play, scrub and add a timestamped comment when you need one.</p>
     </button>
-    <button class="shot phone" data-src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/mobile-comment-view.jpeg" data-cap="Drop a timestamped note from anywhere." aria-label="Enlarge screenshot: Drop a timestamped note from anywhere.">
+    <button class="shot phone" data-src="/marketing-assets/mobile-comment-view.jpeg" data-cap="Drop a timestamped note from anywhere." aria-label="Enlarge screenshot: Drop a timestamped note from anywhere.">
       <div class="shot-frame">
-        <img src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/mobile-comment-view.jpeg" alt="Drop a timestamped note from anywhere." loading="lazy">
+        <img src="/marketing-assets/mobile-comment-view.jpeg" alt="Drop a timestamped note from anywhere." loading="lazy">
         <span class="shot-expand" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
         </span>
       </div>
       <p class="shot-cap">Drop a timestamped note from anywhere.</p>
     </button>
-    <button class="shot phone" data-src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/lock-screen-view.jpeg" data-cap="The moment a version drops, everyone knows." aria-label="Enlarge screenshot: The moment a version drops, everyone knows.">
+    <button class="shot phone" data-src="/marketing-assets/lock-screen-view.jpeg" data-cap="The moment a version drops, everyone knows." aria-label="Enlarge screenshot: The moment a version drops, everyone knows.">
       <div class="shot-frame">
-        <img src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/lock-screen-view.jpeg" alt="The moment a version drops, everyone knows." loading="lazy">
+        <img src="/marketing-assets/lock-screen-view.jpeg" alt="The moment a version drops, everyone knows." loading="lazy">
         <span class="shot-expand" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
         </span>
       </div>
       <p class="shot-cap">The moment a version drops, everyone knows.</p>
     </button>
-    <button class="shot phone" data-src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/lock-screen-view-2.jpeg" data-cap="New comment? It's already on their lock screen." aria-label="Enlarge screenshot: New comment? It's already on their lock screen.">
+    <button class="shot phone" data-src="/marketing-assets/lock-screen-view-2.jpeg" data-cap="New comment? It's already on their lock screen." aria-label="Enlarge screenshot: New comment? It's already on their lock screen.">
       <div class="shot-frame">
-        <img src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/lock-screen-view-2.jpeg" alt="New comment? It's already on their lock screen." loading="lazy">
+        <img src="/marketing-assets/lock-screen-view-2.jpeg" alt="New comment? It's already on their lock screen." loading="lazy">
         <span class="shot-expand" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
         </span>
       </div>
       <p class="shot-cap">New comment? It's already on their lock screen.</p>
     </button>
-    <button class="shot phone" data-src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/sign-in-page.jpeg" data-cap="One tap to sign in and you're in the room." aria-label="Enlarge screenshot: One tap to sign in and you're in the room.">
+    <button class="shot phone" data-src="/marketing-assets/sign-in-page.jpeg" data-cap="One tap to sign in and you're in the room." aria-label="Enlarge screenshot: One tap to sign in and you're in the room.">
       <div class="shot-frame">
-        <img src="https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/sign-in-page.jpeg" alt="One tap to sign in and you're in the room." loading="lazy">
+        <img src="/marketing-assets/sign-in-page.jpeg" alt="One tap to sign in and you're in the room." loading="lazy">
         <span class="shot-expand" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
         </span>
@@ -2435,7 +2495,7 @@ footer {
       <h2 class="pricing-heading reveal reveal-d1">Simple.<br>Honest.</h2>
     </div>
     <p class="pricing-note reveal reveal-d1">
-      <strong>We never charge per person.</strong> Invite your whole band, your producer, your mixing engineer - on every plan, for free. You pay for the space your music takes up and the tools you actually need. That's the way it should be.
+      <strong>There's no per-person charge.</strong> Free includes 500 MB of storage and up to five collaborators, as well as you. Pro and Studio give you more storage and unlimited collaborators, so you can bring everyone into the same room.
     </p>
   </div>
 
@@ -2468,9 +2528,6 @@ footer {
         <li>Timestamped comments</li>
         <li>Action tracking</li>
         <li>Email notifications</li>
-        <li>Last 3 versions per song</li>
-        <li>MP3 uploads</li>
-        <li>1 public share link</li>
       </ul>
       <a class="tier-cta" href="/signup/free">Start for free</a>
     </div>
@@ -2493,11 +2550,8 @@ footer {
       </div>
       <ul class="tier-features">
         <li><strong>Everything in Free, plus:</strong></li>
+        <li>10 GB of storage</li>
         <li>Unlimited collaborators</li>
-        <li>Full version history - nothing ever dropped</li>
-        <li>Lossless WAV &amp; FLAC uploads</li>
-        <li>Unlimited public share links</li>
-        <li>Referral rewards</li>
       </ul>
       <a class="tier-cta" data-signup-plan="pro" href="/signup/pro?billing=year">Choose Pro</a>
     </div>
@@ -2519,8 +2573,7 @@ footer {
       </div>
       <ul class="tier-features">
         <li><strong>Everything in Pro, plus:</strong></li>
-        <li>Multiple workspaces - one per act or client</li>
-        <li>Client-facing shares without TSR branding</li>
+        <li>50 GB of storage</li>
         <li>Priority support</li>
       </ul>
       <a class="tier-cta" data-signup-plan="studio" href="/signup/studio?billing=year">Choose Studio</a>
@@ -2539,7 +2592,7 @@ footer {
       Ready to finish<br>more songs?
     </h2>
     <p class="final-sub reveal reveal-d1">
-      Free forever. No credit card. Your whole band in on day one.
+      Start with 500 MB and invite up to five collaborators. No credit card needed.
     </p>
     <div class="final-cta-row reveal reveal-d2">
       <a class="btn-primary" href="/signup/free">
@@ -2549,6 +2602,7 @@ footer {
         </svg>
       </a>
     </div>
+    <p class="signup-disclosure" data-signup-disclosure>You'll choose how to sign in on the next page.</p>
   </div>
 </section>
 
@@ -2556,11 +2610,12 @@ footer {
 <footer>
   <div class="footer-brand">The Song <em>Room</em></div>
   <div class="footer-links">
-    <a class="footer-link" href="#">Features</a>
-    <a class="footer-link" href="#">Pricing</a>
-    <a class="footer-link" href="#">Privacy</a>
-    <a class="footer-link" href="#">Terms</a>
-    <a class="footer-link" href="#">Contact</a>
+    <a class="footer-link" href="/login">Log in</a>
+    <a class="footer-link" href="#features">Features</a>
+    <a class="footer-link" href="#pricing">Pricing</a>
+    <a class="footer-link" href="/privacy">Privacy</a>
+    <a class="footer-link" href="/terms">Terms</a>
+    <a class="footer-link" href="mailto:hello@song-room.live">Contact</a>
   </div>
   <div class="footer-copy">© The Song Room 2026</div>
 </footer>
@@ -2584,6 +2639,24 @@ footer {
 </div>
 
 <script>
+// ── SIGNUP OPTIONS: use the same public configuration as the login page ──
+(async function loadSignupDisclosure() {
+  const notes = document.querySelectorAll('[data-signup-disclosure]');
+  if (!notes.length) return;
+  try {
+    const response = await fetch('/api/auth/email/config', { cache: 'no-store' });
+    if (!response.ok) return;
+    const config = await response.json();
+    if (typeof config?.enabled !== 'boolean') return;
+    const text = config.enabled
+      ? 'Sign up with Google or your email address.'
+      : 'During beta, you\'ll need a Google account to sign up.';
+    notes.forEach(note => { note.textContent = text; });
+  } catch {
+    // Keep the general next-page note if configuration cannot be loaded.
+  }
+})();
+
 // ── NAV SCROLL ──
 const nav = document.getElementById('nav');
 window.addEventListener('scroll', () => {
@@ -2592,9 +2665,9 @@ window.addEventListener('scroll', () => {
 
 // ── BENTO -- sequential fade in then continuous crossfade rotation ──
 // No image ever appears in two cells at the same time.
-const BASE_URL = 'https://raw.githubusercontent.com/corisleachman/song-review-app/main/wireframes/Song%20Room%20Branding/';
+const BASE_URL = '/marketing-assets/';
 
-const ALL_IMGS = [7,8,11,13,14,15,16,17,18,20,22,23,24,25].map(n => BASE_URL + 'TSR' + n + '.jpeg');
+const ALL_IMGS = [7,8,11,13,14,15,16,17,18,20,22,23,24,25].map(n => BASE_URL + 'tsr' + n + '.jpeg');
 const CELL_IDS = ['a','b','c','d','e','f'];
 const FADE_IN_STAGGER  = 1400;
 const ROTATION_INTERVAL = 5000;
