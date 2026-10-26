@@ -9374,3 +9374,49 @@ Finish the homepage wording after the required writing skill became available, k
 - Verification: all 105 tests pass in the isolated worktree. Preview build and configured authentication checks follow after push. No migration or external configuration change is needed.
 
 - Preview follow-up: updated the existing tablet browser test to use the new Log in name and account-button selector; its previous Sign in/nav-link expectation described the old navigation. Font licence whitespace was normalised without changing its wording.
+
+
+## 2026-10-26 - Homepage first-load fade delay
+
+### What we were trying to achieve
+
+Address the backlog item "Marketing homepage: staged hero fades make first load feel slow" without changing the page composition, account routes or image bundle.
+
+### Root cause and baseline
+
+- The old JavaScript revealed six cells at 300 ms plus 1,400 ms per cell, with a further 1,400 ms opacity transition. The last cell therefore finished around 8.7 seconds after the script ran.
+- The tagline had a 4-second JavaScript wait and a separate 4-second CSS delay, followed by a 0.6-second transition. The CTA also had stacked JavaScript/CSS entrance waits.
+- Six existing hero JPEGs were fetched twice from Production in this environment. Individual requests took 207–436 ms. This is a network spot check, not browser image-decode or cold-cache/throttled performance evidence. Browser Resource Timing was unavailable through the read-only browser API, so no FCP/LCP/CLS numbers are claimed.
+
+### Feature / change being made
+
+- Make all bento containers, the tagline and hero account controls visible by default, without entrance opacity delays.
+- Assign the existing six unique starting images synchronously, with no new preload gate or additional image assets.
+- Keep later image crossfades, beginning after five seconds; reduced-motion users get the full initial composition without background rotation.
+- Preserve the decorative outlined-letter animation, responsive layout, crop rules and account destinations.
+
+### Files changed
+
+- `public/marketing.html`
+- `tests/marketing-first-paint.test.mjs`
+- `tests/browser/public-accessibility.spec.mjs`
+- `PRODUCT_BACKLOG.md`
+- `UPDATE_LOG.md`
+
+### Verification and rollout
+
+- All 108 unit/contract tests pass, including immediate initial image/cell setup, replacement-image gating for later crossfades, and reduced-motion behaviour.
+- Added a browser regression that aborts hero image requests and checks text/CTA visibility immediately, rather than waiting until the old entrance sequence eventually completes. Hosted CI for that case is pending a push.
+- Local browser checks and static CSS inspection compare the new zero-delay visibility against the old scheduled waits. Asset files, source count and formats are unchanged.
+- Code complete locally on `codex/homepage-first-paint`; not committed, pushed or deployed. No environment, schema, authentication or service change.
+- Cold-cache/throttled-network, real-device and hosted Preview checks remain pending. Rollback is a focused revert of the homepage presentation change.
+
+- Final local browser verification: 320x568, 390x844, 820x1180 and 1440x900 all show visible cells and CTA at opacity 1 with zero tagline delay and no horizontal overflow. Reload check passed. Targeted ESLint and diff whitespace checks passed. Screenshots saved for desktop and phone.
+
+
+## 2026-10-26 - Standing release authority and first-paint Preview
+
+- User approved pushing/deploying the homepage first-paint fix to Preview and requested an AGENTS.md change removing repeated push/deployment approval requests.
+- Updated `AGENTS.md` in the active project and release worktree: routine commits, pushes, PRs, tested merges and deployments for requested work now have standing authorisation. Explicit Preview-only limits and destructive/security/billing boundaries remain in force.
+- This slice remains Preview only. Standing authority is not being used to override the current task's environment limit.
+- Release files: `AGENTS.md`, `public/marketing.html`, `tests/marketing-first-paint.test.mjs`, `tests/browser/public-accessibility.spec.mjs`, `PRODUCT_BACKLOG.md`, `UPDATE_LOG.md`. Unrelated local changes and writing references remain excluded.

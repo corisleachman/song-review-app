@@ -78,6 +78,30 @@ test('homepage exposes its primary account journey without blocking accessibilit
   await expect(page.getByRole('heading', { name: 'Create your Free workspace' })).toBeVisible();
 });
 
+test('hero copy and account controls are immediately visible when images fail', async ({ page }) => {
+  await prepareDeterministicPage(page);
+  await page.route('**/marketing-assets/**', (route) => {
+    return route.request().resourceType() === 'image' ? route.abort() : route.continue();
+  });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+
+  // Read immediately instead of letting an eventual-visibility assertion mask
+  // a decorative multi-second entrance sequence.
+  const state = await page.evaluate(() => ({
+    cells: Array.from(document.querySelectorAll('.bento-cell'))
+      .filter(cell => getComputedStyle(cell).display !== 'none')
+      .map(cell => getComputedStyle(cell).opacity),
+    cta: getComputedStyle(document.querySelector('#hero-cta')).opacity,
+    tagline: getComputedStyle(document.querySelector('#hero-tagline')).opacity,
+  }));
+  expect(state.cells.length).toBeGreaterThan(0);
+  expect(state.cells.every(opacity => opacity === '1')).toBe(true);
+  expect(state.cta).toBe('1');
+  expect(state.tagline).toBe('1');
+  await expect(page.getByText('What is The Song Room?', { exact: true })).toBeVisible();
+  await expect(page.locator('#hero-cta').getByRole('link', { name: 'Start for free' })).toBeVisible();
+});
+
 test('desktop homepage keeps its display headings readable at the wide breakpoint', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-chromium', 'One desktop project supplies the wide viewport.');
   await page.setViewportSize({ width: 1440, height: 900 });
