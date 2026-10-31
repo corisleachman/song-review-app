@@ -36,8 +36,54 @@
 <meta name="twitter:description" content="Share versions, leave timestamped comments on the waveform, and track every decision in one place. Start free with 500 MB of storage and up to five collaborators.">
 <meta name="twitter:image" content="https://www.song-room.live/song-room-preview.jpg">
 <meta name="twitter:image:alt" content="The Song Room - collaborative music review for serious artists">
-<link href="/marketing-assets/dm-sans.css" rel="stylesheet">
+<script>document.documentElement.classList.add('js');</script>
+<!-- ══ PERFORMANCE: first-view hero image + font preloads ══
+     The first bento images are fixed in the HTML so the browser can fetch the
+     LCP image before any script runs. Phone LCP = cell d, wider screens = cell a. -->
+<link rel="preload" as="image" href="/marketing-assets/tsr17-768.webp" imagesrcset="/marketing-assets/tsr17-480.webp 480w, /marketing-assets/tsr17-768.webp 768w, /marketing-assets/tsr17-1024.webp 1024w" imagesizes="(min-width: 901px) 48vw, (min-width: 601px) and (min-height: 601px) 42vw, 100vw" fetchpriority="high" media="(max-width: 600px), (max-width: 900px) and (max-height: 600px)">
+<link rel="preload" as="image" href="/marketing-assets/tsr7-768.webp" imagesrcset="/marketing-assets/tsr7-480.webp 480w, /marketing-assets/tsr7-768.webp 768w, /marketing-assets/tsr7-1024.webp 1024w" imagesizes="(min-width: 901px) 53vw, 59vw" fetchpriority="high" media="(min-width: 901px), (min-width: 601px) and (min-height: 601px)">
+<link rel="preload" as="font" type="font/woff2" href="/marketing-assets/dm-sans-normal-400.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="/marketing-assets/dm-sans-normal-500.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="/marketing-assets/dm-sans-normal-600.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="/marketing-assets/thunder-lc.woff2" crossorigin media="(min-width: 601px)">
 <style>
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/marketing-assets/dm-sans-normal-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/marketing-assets/dm-sans-normal-500.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/marketing-assets/dm-sans-normal-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'DM Sans';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/marketing-assets/dm-sans-italic-400.woff2') format('woff2');
+}
+/* Fallback sized to DM Sans metrics so text does not move when the web font arrives. */
+@font-face {
+  font-family: 'DM Sans Fallback';
+  src: local('Arial'), local('ArialMT'), local('Liberation Sans'), local('Arimo'), local('Helvetica');
+  size-adjust: 104.53%;
+  ascent-override: 94.90%;
+  descent-override: 29.66%;
+  line-gap-override: 0%;
+}
 @font-face {
   font-family: 'ThunderBlack';
   src: url('/marketing-assets/thunder-blacklc.woff2') format('woff2'),
@@ -86,7 +132,7 @@ section[id] { scroll-margin-top: 110px; }
   --tblack: 'ThunderBlack', Impact, 'Arial Narrow Bold', sans-serif;
   --tbold:  'ThunderBold',  Impact, 'Arial Narrow Bold', sans-serif;
   --treg:   'ThunderReg',   Impact, 'Arial Narrow Bold', sans-serif;
-  --ui:     'DM Sans', -apple-system, sans-serif;
+  --ui:     'DM Sans', 'DM Sans Fallback', -apple-system, sans-serif;
 
   --img: '/marketing-assets/';
 
@@ -266,19 +312,23 @@ a { color: inherit; text-decoration: none; }
 
 .bento-cell.on { opacity: 1; }
 
+/* First-view images are real <img> elements so they paint immediately (no
+   entrance animation). The "next" layer crossfades with opacity only. */
 .bento-cell-img {
   position: absolute;
   inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
   background-size: cover;
   background-position: center;
-  transform: scale(1.05);
-  transition: transform 10s ease-in-out, opacity 1.4s ease-in-out;
 }
-.bento-cell.on .bento-cell-img { transform: scale(1); }
 .bento-cell-img-next {
   opacity: 0;
-  transform: scale(1);
   z-index: 1;
+  will-change: opacity;
 }
 .bento-cell-img-next.fading-in {
   opacity: 1;
@@ -457,6 +507,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .hero-headline-wrap { width: 100%; max-width: 610px; }
+.hero-headline-wrap svg { display: block; aspect-ratio: 563 / 290; }
 
 /* Phone-only brand artwork. The desktop headline remains injected below. */
 .mobile-hero-wordmark { display: none; }
@@ -743,7 +794,7 @@ a { color: inherit; text-decoration: none; }
 .proof-image-bg {
   position: absolute;
   inset: 0;
-  background-image: url('/marketing-assets/tsr20.jpeg');
+  background-image: url('/marketing-assets/tsr20-720.webp');
   background-size: cover;
   background-position: center;
 }
@@ -788,7 +839,7 @@ a { color: inherit; text-decoration: none; }
 .proof-avatar-img {
   width: 100%;
   height: 100%;
-  background-image: url('/marketing-assets/tsr25.jpeg');
+  background-image: url('/marketing-assets/tsr25-480.webp');
   background-size: cover;
   background-position: center top;
 }
@@ -1081,7 +1132,7 @@ a { color: inherit; text-decoration: none; }
 .final-bg {
   position: absolute;
   inset: 0;
-  background-image: url('/marketing-assets/tsr22.jpeg');
+  background-image: url('/marketing-assets/tsr22-720.webp');
   background-size: cover;
   background-position: center 30%;
   filter: brightness(0.35);
@@ -1177,6 +1228,9 @@ footer {
 /* ═══════════════════════════════════
    SCROLL REVEAL
 ═══════════════════════════════════ */
+/* Below-the-fold background images wait until they are near the viewport. */
+.js .lazy-bg:not(.bg-in) { background-image: none !important; }
+
 .reveal {
   opacity: 0;
   transform: translateY(24px);
@@ -2085,7 +2139,11 @@ footer {
   }
 </style>
 <!-- Cookie consent and consent-gated analytics -->
-<link rel="stylesheet" href="/cookie-consent.css" data-tsr-cookie-consent>
+<!-- Loaded without blocking first paint. The CSP blocks inline onload="" handlers
+     (script-src-attr 'none'), so the media switch is done by this inline script. -->
+<link rel="stylesheet" href="/cookie-consent.css" media="print" id="tsr-cookie-css" data-tsr-cookie-consent>
+<script>(function(l){if(!l)return;var on=function(){l.media='all'};if(l.sheet){on()}else{l.addEventListener('load',on);l.addEventListener('error',on)}})(document.getElementById('tsr-cookie-css'));</script>
+<noscript><link rel="stylesheet" href="/cookie-consent.css"></noscript>
 <script defer src="/cookie-consent.js" data-tsr-cookie-consent></script>
 </head>
 <body>
@@ -2098,7 +2156,7 @@ footer {
 <!-- ══ NAV ══ -->
 <nav class="nav" id="nav">
   <a class="nav-brand" href="#hero" aria-label="The Song Room - home">
-    <img src="/marketing-assets/songroom-logo-white.png" alt="The Song Room">
+    <img src="/marketing-assets/songroom-logo-white.png" alt="The Song Room" width="195" height="187">
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#features">Features</a>
@@ -2115,19 +2173,19 @@ footer {
 
   <div class="hero-bento" id="bento">
     <div class="bento-cell cell-a" id="bc-a">
-      <div class="bento-cell-img" id="bci-a"></div>
+      <picture><source media="(max-width: 600px), (max-width: 900px) and (max-height: 600px)" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"><img class="bento-cell-img" id="bci-a" src="/marketing-assets/tsr7-768.webp" srcset="/marketing-assets/tsr7-480.webp 480w, /marketing-assets/tsr7-768.webp 768w, /marketing-assets/tsr7-1024.webp 1024w" sizes="(min-width: 901px) 53vw, 59vw" width="1024" height="1280" alt="" decoding="async" fetchpriority="high" data-tsr="7"></picture>
       <div class="bento-cell-img bento-cell-img-next" id="bcn-a"></div>
     </div>
     <div class="bento-cell cell-b" id="bc-b">
-      <div class="bento-cell-img" id="bci-b"></div>
+      <img class="bento-cell-img" id="bci-b" src="/marketing-assets/tsr13-768.webp" srcset="/marketing-assets/tsr13-480.webp 480w, /marketing-assets/tsr13-768.webp 768w, /marketing-assets/tsr13-1024.webp 1024w" sizes="(min-width: 901px) 24vw, 50vw" width="1024" height="1280" alt="" decoding="async" data-tsr="13">
       <div class="bento-cell-img bento-cell-img-next" id="bcn-b"></div>
     </div>
     <div class="bento-cell cell-c" id="bc-c">
-      <div class="bento-cell-img" id="bci-c"></div>
+      <img class="bento-cell-img" id="bci-c" src="/marketing-assets/tsr14-768.webp" srcset="/marketing-assets/tsr14-480.webp 480w, /marketing-assets/tsr14-768.webp 768w, /marketing-assets/tsr14-1024.webp 1024w" sizes="(min-width: 901px) 24vw, 50vw" width="1024" height="1280" alt="" decoding="async" data-tsr="14">
       <div class="bento-cell-img bento-cell-img-next" id="bcn-c"></div>
     </div>
     <div class="bento-cell cell-d" id="bc-d">
-      <div class="bento-cell-img" id="bci-d"></div>
+      <img class="bento-cell-img" id="bci-d" src="/marketing-assets/tsr17-768.webp" srcset="/marketing-assets/tsr17-480.webp 480w, /marketing-assets/tsr17-768.webp 768w, /marketing-assets/tsr17-1024.webp 1024w" sizes="(min-width: 901px) 48vw, (min-width: 601px) and (min-height: 601px) 42vw, 100vw" width="1024" height="1280" alt="" decoding="async" fetchpriority="high" data-tsr="17">
       <div class="bento-cell-img bento-cell-img-next" id="bcn-d"></div>
       <div class="mobile-hero-wordmark">
         <svg viewBox="0 0 342.8 334" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mobile-wordmark-title">
@@ -2165,11 +2223,11 @@ footer {
       </div>
     </div>
     <div class="bento-cell cell-e" id="bc-e">
-      <div class="bento-cell-img" id="bci-e"></div>
+      <img class="bento-cell-img" id="bci-e" src="/marketing-assets/tsr15-768.webp" srcset="/marketing-assets/tsr15-480.webp 480w, /marketing-assets/tsr15-768.webp 768w, /marketing-assets/tsr15-1024.webp 1024w" sizes="(min-width: 901px) 24vw, 50vw" width="1024" height="1280" alt="" decoding="async" data-tsr="15">
       <div class="bento-cell-img bento-cell-img-next" id="bcn-e"></div>
     </div>
     <div class="bento-cell cell-f" id="bc-f">
-      <div class="bento-cell-img" id="bci-f"></div>
+      <img class="bento-cell-img" id="bci-f" src="/marketing-assets/tsr16-768.webp" srcset="/marketing-assets/tsr16-480.webp 480w, /marketing-assets/tsr16-768.webp 768w, /marketing-assets/tsr16-1024.webp 1024w" sizes="(min-width: 901px) 24vw, 50vw" width="1024" height="1280" alt="" decoding="async" data-tsr="16">
       <div class="bento-cell-img bento-cell-img-next" id="bcn-f"></div>
     </div>
   </div>
@@ -2180,7 +2238,7 @@ footer {
 
     <div class="hero-left">
       <div class="hero-headline-wrap" id="hero-svg-wrap">
-        <!-- SVG draw animation injected by JS -->
+        <svg viewBox="0 22 563 290" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;overflow:visible"><g transform="translate(0,0)"><path d="M37.2 56.39999999999999C37.2 54.0 37.6 53.19999999999999 38.400000000000006 53.19999999999999C39.2 53.19999999999999 39.6 54.0 39.6 56.39999999999999V92.0H75.60000000000001V59.0C75.60000000000001 35.400000000000006 61.800000000000004 22.0 37.800000000000004 22.0C14.200000000000001 22.0 1.2000000000000002 34.79999999999998 1.2000000000000002 59.0V128.8C1.2000000000000002 153.0 14.200000000000001 166.0 37.800000000000004 166.0C61.800000000000004 166.0 75.60000000000001 152.6 75.60000000000001 128.8V96.0H39.6V131.6C39.6 133.8 39.2 134.8 38.400000000000006 134.8C37.6 134.8 37.2 133.8 37.2 131.6Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="810" stroke-dashoffset="810" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="810" to="0" dur="3.8s" begin="0.179s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.179s" fill="freeze"/></path></g><g transform="translate(0,0)"><path d="M78.00000000000001 24.0V164.0H114.00000000000001V114.0H114.4C116.4 114.0 116.4 114.4 116.4 117.19999999999999V135.2C116.4 146.0 116.60000000000002 155.2 118.4 164.0H154.40000000000003C152.60000000000002 155.4 152.40000000000003 146.2 152.40000000000003 135.6V134.0C152.40000000000003 112.6 140.4 99.6 132.0 99.6V97.2C140.60000000000002 97.2 152.40000000000003 85.8 152.40000000000003 62.39999999999999V61.39999999999999C152.40000000000003 36.0 138.60000000000002 24.0 114.80000000000001 24.0ZM114.00000000000001 55.19999999999999H114.4C116.4 55.19999999999999 116.4 55.599999999999994 116.4 58.19999999999999V79.6C116.4 82.39999999999999 116.4 82.8 114.4 82.8H114.00000000000001Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="788" stroke-dashoffset="788" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="788" to="0" dur="3.8s" begin="0.007s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.007s" fill="freeze"/></path></g><g transform="translate(0,0)"><path d="M206.8 55.19999999999999V24.0H154.8V164.0H206.8V132.8H190.8V105.8H206.8V74.6H190.8V55.19999999999999Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="610" stroke-dashoffset="610" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="610" to="0" dur="3.8s" begin="0.077s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.077s" fill="freeze"/></path></g><g transform="translate(0,0)"><path d="M218.20000000000002 24.0 208.60000000000002 164.0H244.60000000000002V135.2H247.00000000000003V164.0H283.0L274.20000000000005 24.0ZM244.60000000000002 104.0V86.8H247.00000000000003V104.0Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="632" stroke-dashoffset="632" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="632" to="0" dur="3.8s" begin="0.062s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.062s" fill="freeze"/></path></g><g transform="translate(0,0)"><path d="M356.40000000000003 24.0H284.40000000000003V55.19999999999999H302.40000000000003V164.0H338.40000000000003V55.19999999999999H356.40000000000003Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="580" stroke-dashoffset="580" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="580" to="0" dur="3.8s" begin="0.206s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.206s" fill="freeze"/></path></g><g transform="translate(0,0)"><path d="M410.40000000000003 55.19999999999999V24.0H358.40000000000003V164.0H410.40000000000003V132.8H394.40000000000003V105.8H410.40000000000003V74.6H394.40000000000003V55.19999999999999Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="610" stroke-dashoffset="610" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="610" to="0" dur="3.8s" begin="0.189s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.189s" fill="freeze"/></path></g><g transform="translate(0,144)"><path d="M72.8 24.0H0.8V55.19999999999999H18.8V164.0H54.800000000000004V55.19999999999999H72.8Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="580" stroke-dashoffset="580" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="580" to="0" dur="3.8s" begin="0.25s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.25s" fill="freeze"/></path></g><g transform="translate(0,144)"><path d="M74.80000000000001 59.0V128.8C74.80000000000001 153.0 87.80000000000001 166.0 111.4 166.0C135.4 166.0 149.20000000000002 152.6 149.20000000000002 128.8V59.0C149.20000000000002 35.400000000000006 135.4 22.0 111.4 22.0C87.80000000000001 22.0 74.80000000000001 34.79999999999998 74.80000000000001 59.0ZM110.80000000000001 56.39999999999999C110.80000000000001 54.0 111.20000000000002 53.19999999999999 112.00000000000001 53.19999999999999C112.80000000000001 53.19999999999999 113.20000000000002 54.0 113.20000000000002 56.39999999999999V131.6C113.20000000000002 133.8 112.80000000000001 134.8 112.00000000000001 134.8C111.20000000000002 134.8 110.80000000000001 133.8 110.80000000000001 131.6Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="730" stroke-dashoffset="730" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="730" to="0" dur="3.8s" begin="0.024s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.024s" fill="freeze"/></path></g><g transform="translate(0,144)"><path d="M187.60000000000002 56.39999999999999C187.60000000000002 54.0 188.00000000000003 53.19999999999999 188.80000000000004 53.19999999999999C189.60000000000002 53.19999999999999 190.00000000000003 54.0 190.00000000000003 56.39999999999999V81.6H226.00000000000006V59.0C226.00000000000006 35.400000000000006 212.20000000000005 22.0 188.20000000000005 22.0C164.60000000000002 22.0 151.60000000000002 34.79999999999998 151.60000000000002 59.0V128.8C151.60000000000002 155.4 166.40000000000003 166.0 179.60000000000002 166.0C188.60000000000002 166.0 197.00000000000003 161.2 199.20000000000005 152.8H201.60000000000002V164.0H226.00000000000006V85.6H187.60000000000002ZM187.60000000000002 108.8H190.00000000000003V131.6C190.00000000000003 133.8 189.60000000000002 134.8 188.80000000000004 134.8C188.00000000000003 134.8 187.60000000000002 133.8 187.60000000000002 131.6Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="796" stroke-dashoffset="796" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="796" to="0" dur="3.8s" begin="0.118s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.118s" fill="freeze"/></path></g><g transform="translate(0,144)"><path d="M280.40000000000003 55.19999999999999V24.0H228.40000000000003V164.0H280.40000000000003V132.8H264.40000000000003V105.8H280.40000000000003V74.6H264.40000000000003V55.19999999999999Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="610" stroke-dashoffset="610" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="610" to="0" dur="3.8s" begin="0.008s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.008s" fill="freeze"/></path></g><g transform="translate(0,144)"><path d="M354.40000000000003 24.0H282.40000000000003V55.19999999999999H300.40000000000003V164.0H336.40000000000003V55.19999999999999H354.40000000000003Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="580" stroke-dashoffset="580" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="580" to="0" dur="3.8s" begin="0.061s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.061s" fill="freeze"/></path></g><g transform="translate(0,144)"><path d="M394.80000000000007 24.0V76.6H392.40000000000003V24.0H356.40000000000003V164.0H392.40000000000003V107.8H394.80000000000007V164.0H430.80000000000007V24.0Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="858" stroke-dashoffset="858" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="858" to="0" dur="3.8s" begin="0.141s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.141s" fill="freeze"/></path></g><g transform="translate(0,144)"><path d="M485.20000000000005 55.19999999999999V24.0H433.20000000000005V164.0H485.20000000000005V132.8H469.20000000000005V105.8H485.20000000000005V74.6H469.20000000000005V55.19999999999999Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="610" stroke-dashoffset="610" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="610" to="0" dur="3.8s" begin="0.007s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.007s" fill="freeze"/></path></g><g transform="translate(0,144)"><path d="M487.6000000000001 24.0V164.0H523.6000000000001V114.0H524.0000000000001C526.0000000000001 114.0 526.0000000000001 114.4 526.0000000000001 117.19999999999999V135.2C526.0000000000001 146.0 526.2 155.2 528.0000000000001 164.0H564.0000000000001C562.2 155.4 562.0000000000001 146.2 562.0000000000001 135.6V134.0C562.0000000000001 112.6 550.0000000000001 99.6 541.6000000000001 99.6V97.2C550.2 97.2 562.0000000000001 85.8 562.0000000000001 62.39999999999999V61.39999999999999C562.0000000000001 36.0 548.2 24.0 524.4000000000001 24.0ZM523.6000000000001 55.19999999999999H524.0000000000001C526.0000000000001 55.19999999999999 526.0000000000001 55.599999999999994 526.0000000000001 58.19999999999999V79.6C526.0000000000001 82.39999999999999 526.0000000000001 82.8 524.0000000000001 82.8H523.6000000000001Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="788" stroke-dashoffset="788" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="788" to="0" dur="3.8s" begin="0.056s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.056s" fill="freeze"/></path></g></svg>
       </div>
       <p class="hero-tagline" id="hero-tagline">Every version. Every note. One room.</p>
       <div class="hero-cta-row" id="hero-cta">
@@ -2212,9 +2270,9 @@ footer {
 
 <!-- ══ EARLY PRODUCT PREVIEW ══ -->
 <section class="early-product-preview" aria-label="Song view preview">
-    <button class="shot lead" data-src="/marketing-assets/song-room-song-view-large.jpeg" data-cap="The song view - leave feedback on the waveform at the exact moment you mean it." aria-label="Enlarge screenshot: The song view - leave feedback on the waveform at the exact moment you mean it.">
+    <button class="shot lead" data-src="/marketing-assets/song-room-song-view-large.webp" data-cap="The song view - leave feedback on the waveform at the exact moment you mean it." aria-label="Enlarge screenshot: The song view - leave feedback on the waveform at the exact moment you mean it.">
       <div class="shot-frame">
-        <img src="/marketing-assets/song-room-song-view-large.jpeg" alt="The song view - leave feedback on the waveform at the exact moment you mean it." loading="lazy">
+        <img src="/marketing-assets/song-room-song-view-large.webp" alt="The song view - leave feedback on the waveform at the exact moment you mean it." width="1280" height="800" loading="lazy" decoding="async">
         <span class="shot-expand" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
         </span>
@@ -2277,9 +2335,9 @@ footer {
   <!-- Mock song page -->
   <div class="mock-player reveal">
     <div class="mock-artwork">
-      <div class="mock-artwork-bg is-active" style="background-image:url('/marketing-assets/song-room-4.jpeg')"></div>
-      <div class="mock-artwork-bg" style="background-image:url('/marketing-assets/song-room-2.jpeg')"></div>
-      <div class="mock-artwork-bg" style="background-image:url('/marketing-assets/song-room-3.jpeg')"></div>
+      <div class="mock-artwork-bg is-active lazy-bg" style="background-image:url('/marketing-assets/song-room-4.webp')"></div>
+      <div class="mock-artwork-bg lazy-bg" style="background-image:url('/marketing-assets/song-room-2.webp')"></div>
+      <div class="mock-artwork-bg lazy-bg" style="background-image:url('/marketing-assets/song-room-3.webp')"></div>
     </div>
   </div>
 </section>
@@ -2289,7 +2347,7 @@ footer {
 
   <div class="feature-row">
     <div class="feature-img">
-      <div class="feature-img-bg" style="background-image:url('/marketing-assets/tsr11.jpeg')"></div>
+      <div class="feature-img-bg lazy-bg" style="background-image:url('/marketing-assets/tsr11-768.webp')"></div>
       <div class="feature-img-veil"></div>
     </div>
     <div class="feature-body">
@@ -2306,7 +2364,7 @@ footer {
 
   <div class="feature-row">
     <div class="feature-img">
-      <div class="feature-img-bg" style="background-image:url('/marketing-assets/tsr23.jpeg')"></div>
+      <div class="feature-img-bg lazy-bg" style="background-image:url('/marketing-assets/tsr23-720.webp')"></div>
       <div class="feature-img-veil"></div>
     </div>
     <div class="feature-body">
@@ -2323,7 +2381,7 @@ footer {
 
   <div class="feature-row">
     <div class="feature-img">
-      <div class="feature-img-bg" style="background-image:url('/marketing-assets/tsr24.jpeg')"></div>
+      <div class="feature-img-bg lazy-bg" style="background-image:url('/marketing-assets/tsr24-720.webp')"></div>
       <div class="feature-img-veil"></div>
     </div>
     <div class="feature-body">
@@ -2349,36 +2407,36 @@ footer {
   </div>
   <div class="shot-grid reveal reveal-d2">
 
-    <button class="shot" data-src="/marketing-assets/song-room-desktop-card-view-large.jpeg" data-cap="Your library, coloured by your own artwork." aria-label="Enlarge screenshot: Your library, coloured by your own artwork.">
+    <button class="shot" data-src="/marketing-assets/song-room-desktop-card-view-large.webp" data-cap="Your library, coloured by your own artwork." aria-label="Enlarge screenshot: Your library, coloured by your own artwork.">
       <div class="shot-frame">
-        <img src="/marketing-assets/song-room-desktop-card-view-large.jpeg" alt="Your library, coloured by your own artwork." loading="lazy">
+        <img src="/marketing-assets/song-room-desktop-card-view-large.webp" alt="Your library, coloured by your own artwork." width="1280" height="800" loading="lazy" decoding="async">
         <span class="shot-expand" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
         </span>
       </div>
       <p class="shot-cap">Your library, coloured by your own artwork.</p>
     </button>
-    <button class="shot" data-src="/marketing-assets/song-room-desktop-list-view-large.jpeg" data-cap="Every version and every action, in one workspace." aria-label="Enlarge screenshot: Every version and every action, in one workspace.">
+    <button class="shot" data-src="/marketing-assets/song-room-desktop-list-view-large.webp" data-cap="Every version and every action, in one workspace." aria-label="Enlarge screenshot: Every version and every action, in one workspace.">
       <div class="shot-frame">
-        <img src="/marketing-assets/song-room-desktop-list-view-large.jpeg" alt="Every version and every action, in one workspace." loading="lazy">
+        <img src="/marketing-assets/song-room-desktop-list-view-large.webp" alt="Every version and every action, in one workspace." width="1280" height="800" loading="lazy" decoding="async">
         <span class="shot-expand" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
         </span>
       </div>
       <p class="shot-cap">Every version and every action, in one workspace.</p>
     </button>
-    <button class="shot" data-src="/marketing-assets/song-room-comment-view-large.jpeg" data-cap="Timestamped notes, pinned in context." aria-label="Enlarge screenshot: Timestamped notes, pinned in context.">
+    <button class="shot" data-src="/marketing-assets/song-room-comment-view-large.webp" data-cap="Timestamped notes, pinned in context." aria-label="Enlarge screenshot: Timestamped notes, pinned in context.">
       <div class="shot-frame">
-        <img src="/marketing-assets/song-room-comment-view-large.jpeg" alt="Timestamped notes, pinned in context." loading="lazy">
+        <img src="/marketing-assets/song-room-comment-view-large.webp" alt="Timestamped notes, pinned in context." width="1280" height="702" loading="lazy" decoding="async">
         <span class="shot-expand" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
         </span>
       </div>
       <p class="shot-cap">Timestamped notes, pinned in context.</p>
     </button>
-    <button class="shot" data-src="/marketing-assets/song-room-settings-large.jpeg" data-cap="Make the room yours." aria-label="Enlarge screenshot: Make the room yours.">
+    <button class="shot" data-src="/marketing-assets/song-room-settings-large.webp" data-cap="Make the room yours." aria-label="Enlarge screenshot: Make the room yours.">
       <div class="shot-frame">
-        <img src="/marketing-assets/song-room-settings-large.jpeg" alt="Make the room yours." loading="lazy">
+        <img src="/marketing-assets/song-room-settings-large.webp" alt="Make the room yours." width="1280" height="633" loading="lazy" decoding="async">
         <span class="shot-expand" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
         </span>
@@ -2387,7 +2445,7 @@ footer {
     </button>
     <div class="shot-video">
       <div class="shot-frame">
-        <video class="shot-vid" autoplay muted loop playsinline preload="auto" poster="/marketing-assets/public-sharing-view.jpeg">
+        <video class="shot-vid" muted loop playsinline preload="none" width="960" height="540" poster="/marketing-assets/public-sharing-view.webp">
           <source src="/marketing-assets/be-kind.mp4" type="video/mp4">
         </video>
         <button class="vid-mute" type="button" aria-pressed="false" aria-label="Turn sound on">
@@ -2402,54 +2460,54 @@ footer {
   <p class="eyebrow reveal phone-eyebrow">In your pocket</p>
   <h3 class="phone-title reveal reveal-d1">Built for the phone in your hand.</h3>
   <div class="phone-row reveal reveal-d2">
-    <button class="shot phone" data-src="/marketing-assets/mobile-dashboard-view.jpeg" data-cap="Your whole workspace, in your pocket." aria-label="Enlarge screenshot: Your whole workspace, in your pocket.">
+    <button class="shot phone" data-src="/marketing-assets/mobile-dashboard-view.webp" data-cap="Your whole workspace, in your pocket." aria-label="Enlarge screenshot: Your whole workspace, in your pocket.">
       <div class="shot-frame">
-        <img src="/marketing-assets/mobile-dashboard-view.jpeg" alt="Your whole workspace, in your pocket." loading="lazy">
+        <img src="/marketing-assets/mobile-dashboard-view.webp" alt="Your whole workspace, in your pocket." width="589" height="1280" loading="lazy" decoding="async">
         <span class="shot-expand" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
         </span>
       </div>
       <p class="shot-cap">Your whole workspace, in your pocket.</p>
     </button>
-    <button class="shot phone" data-src="/marketing-assets/mobile-song-view.jpeg" data-cap="Play, scrub and add a timestamped comment when you need one." aria-label="Enlarge screenshot: Play, scrub and add a timestamped comment when you need one.">
+    <button class="shot phone" data-src="/marketing-assets/mobile-song-view.webp" data-cap="Play, scrub and add a timestamped comment when you need one." aria-label="Enlarge screenshot: Play, scrub and add a timestamped comment when you need one.">
       <div class="shot-frame">
-        <img src="/marketing-assets/mobile-song-view.jpeg" alt="Play, scrub and add a timestamped comment when you need one." loading="lazy">
+        <img src="/marketing-assets/mobile-song-view.webp" alt="Play, scrub and add a timestamped comment when you need one." width="589" height="1280" loading="lazy" decoding="async">
         <span class="shot-expand" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
         </span>
       </div>
       <p class="shot-cap">Play, scrub and add a timestamped comment when you need one.</p>
     </button>
-    <button class="shot phone" data-src="/marketing-assets/mobile-comment-view.jpeg" data-cap="Drop a timestamped note from anywhere." aria-label="Enlarge screenshot: Drop a timestamped note from anywhere.">
+    <button class="shot phone" data-src="/marketing-assets/mobile-comment-view.webp" data-cap="Drop a timestamped note from anywhere." aria-label="Enlarge screenshot: Drop a timestamped note from anywhere.">
       <div class="shot-frame">
-        <img src="/marketing-assets/mobile-comment-view.jpeg" alt="Drop a timestamped note from anywhere." loading="lazy">
+        <img src="/marketing-assets/mobile-comment-view.webp" alt="Drop a timestamped note from anywhere." width="589" height="1280" loading="lazy" decoding="async">
         <span class="shot-expand" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
         </span>
       </div>
       <p class="shot-cap">Drop a timestamped note from anywhere.</p>
     </button>
-    <button class="shot phone" data-src="/marketing-assets/lock-screen-view.jpeg" data-cap="The moment a version drops, everyone knows." aria-label="Enlarge screenshot: The moment a version drops, everyone knows.">
+    <button class="shot phone" data-src="/marketing-assets/lock-screen-view.webp" data-cap="The moment a version drops, everyone knows." aria-label="Enlarge screenshot: The moment a version drops, everyone knows.">
       <div class="shot-frame">
-        <img src="/marketing-assets/lock-screen-view.jpeg" alt="The moment a version drops, everyone knows." loading="lazy">
+        <img src="/marketing-assets/lock-screen-view.webp" alt="The moment a version drops, everyone knows." width="589" height="1280" loading="lazy" decoding="async">
         <span class="shot-expand" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
         </span>
       </div>
       <p class="shot-cap">The moment a version drops, everyone knows.</p>
     </button>
-    <button class="shot phone" data-src="/marketing-assets/lock-screen-view-2.jpeg" data-cap="New comment? It's already on their lock screen." aria-label="Enlarge screenshot: New comment? It's already on their lock screen.">
+    <button class="shot phone" data-src="/marketing-assets/lock-screen-view-2.webp" data-cap="New comment? It's already on their lock screen." aria-label="Enlarge screenshot: New comment? It's already on their lock screen.">
       <div class="shot-frame">
-        <img src="/marketing-assets/lock-screen-view-2.jpeg" alt="New comment? It's already on their lock screen." loading="lazy">
+        <img src="/marketing-assets/lock-screen-view-2.webp" alt="New comment? It's already on their lock screen." width="589" height="1280" loading="lazy" decoding="async">
         <span class="shot-expand" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
         </span>
       </div>
       <p class="shot-cap">New comment? It's already on their lock screen.</p>
     </button>
-    <button class="shot phone" data-src="/marketing-assets/sign-in-page.jpeg" data-cap="One tap to sign in and you're in the room." aria-label="Enlarge screenshot: One tap to sign in and you're in the room.">
+    <button class="shot phone" data-src="/marketing-assets/sign-in-page.webp" data-cap="One tap to sign in and you're in the room." aria-label="Enlarge screenshot: One tap to sign in and you're in the room.">
       <div class="shot-frame">
-        <img src="/marketing-assets/sign-in-page.jpeg" alt="One tap to sign in and you're in the room." loading="lazy">
+        <img src="/marketing-assets/sign-in-page.webp" alt="One tap to sign in and you're in the room." width="589" height="1280" loading="lazy" decoding="async">
         <span class="shot-expand" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
         </span>
@@ -2462,7 +2520,7 @@ footer {
 <!-- ══ SOCIAL PROOF ══ -->
 <section class="proof">
   <div class="proof-image reveal">
-    <div class="proof-image-bg"></div>
+    <div class="proof-image-bg lazy-bg"></div>
   </div>
   <div class="proof-content">
     <p class="eyebrow reveal">From the room</p>
@@ -2474,7 +2532,7 @@ footer {
     </p>
     <div class="proof-attr reveal reveal-d3">
       <div class="proof-avatar">
-        <div class="proof-avatar-img"></div>
+        <div class="proof-avatar-img lazy-bg"></div>
       </div>
       <div>
         <div class="proof-name">Marcus Webb</div>
@@ -2582,7 +2640,7 @@ footer {
 
 <!-- ══ FINAL CTA ══ -->
 <section class="final-cta">
-  <div class="final-bg"></div>
+  <div class="final-bg lazy-bg"></div>
   <div class="final-veil"></div>
   <div class="final-content">
     <h2 class="final-heading reveal">
@@ -2664,21 +2722,25 @@ window.addEventListener('scroll', () => {
 // No image ever appears in two cells at the same time.
 const BASE_URL = '/marketing-assets/';
 
-const ALL_IMGS = [7,8,11,13,14,15,16,17,18,20,22,23,24,25].map(n => BASE_URL + 'tsr' + n + '.jpeg');
+// Image ids -> source width. Each id has 480w + 720w/768w (+1024w) WebP variants.
+const IMG_WIDTHS = {7:1024,8:1024,11:1024,13:1024,14:1024,15:1024,16:1024,17:1024,18:1024,20:720,22:720,23:720,24:720,25:720};
+const ALL_IMGS = Object.keys(IMG_WIDTHS).map(Number);
 const CELL_IDS = ['a','b','c','d','e','f'];
 const ROTATION_INTERVAL = 5000;
 
+function imgVariants(n) {
+  return IMG_WIDTHS[n] === 1024 ? [480, 768, 1024] : [480, 720];
+}
+// Smallest variant that covers the cell at this screen's pixel density.
+function imgUrlFor(n, cell) {
+  const need = (cell ? cell.clientWidth : 480) * (window.devicePixelRatio || 1);
+  const ws = imgVariants(n);
+  const w = ws.find(x => x >= need) || ws[ws.length - 1];
+  return BASE_URL + 'tsr' + n + '-' + w + '.webp';
+}
+
 // Track which image is currently showing in each cell
 const currentImg = {};
-
-function shuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
 
 // Pick next image for a cell -- never one already showing elsewhere
 function pickNext(cellId) {
@@ -2687,13 +2749,6 @@ function pickNext(cellId) {
   // Fallback: if somehow all images are in use, allow any except this cell's current
   const pool = available.length > 0 ? available : ALL_IMGS.filter(img => img !== currentImg[cellId]);
   return pool[Math.floor(Math.random() * pool.length)];
-}
-
-// Set initial image
-function setCellImage(cellId, imgUrl) {
-  const el = document.getElementById('bci-' + cellId);
-  if (el) el.style.backgroundImage = "url('" + imgUrl + "')";
-  currentImg[cellId] = imgUrl;
 }
 
 // Crossfade a cell to a new unique image
@@ -2705,11 +2760,12 @@ function crossfadeCell(cellId) {
   const next    = document.getElementById('bcn-' + cellId);
   if (!current || !next) return;
 
-  const nextUrl = pickNext(cellId);
-  if (!nextUrl) return;
+  const nextId = pickNext(cellId);
+  if (!nextId) return;
+  const nextUrl = imgUrlFor(nextId, cell);
 
   // Reserve this image immediately so no other cell picks it while loading
-  currentImg[cellId] = nextUrl;
+  currentImg[cellId] = nextId;
 
   const img = new Image();
   img.onload = function() {
@@ -2721,19 +2777,20 @@ function crossfadeCell(cellId) {
     next.style.opacity = '1';
 
     setTimeout(() => {
-      current.style.backgroundImage = "url('" + nextUrl + "')";
-      next.style.transition = 'none';
-      next.style.opacity = '0';
+      // Swap the base <img> underneath, then drop the overlay once it has decoded.
+      current.removeAttribute('srcset');
+      current.src = nextUrl;
+      const done = () => { next.style.transition = 'none'; next.style.opacity = '0'; };
+      (current.decode ? current.decode() : Promise.resolve()).then(done, done);
     }, 2600);
   };
   img.src = nextUrl;
 }
 
-// Assign unique starting images immediately. Image delivery must not gate the
-// surrounding copy or account controls.
-const startImgs = shuffle(ALL_IMGS);
-CELL_IDS.forEach((id, i) => {
-  setCellImage(id, startImgs[i]);
+// The opening images are fixed in the HTML (so the LCP image can be preloaded).
+CELL_IDS.forEach(id => {
+  const el = document.getElementById('bci-' + id);
+  if (el && el.dataset.tsr) currentImg[id] = Number(el.dataset.tsr);
   document.getElementById('bc-' + id)?.classList.add('on');
 });
 
@@ -2749,7 +2806,7 @@ if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
 }
 
 // ── SVG DRAW HEADLINE ──
-document.getElementById('hero-svg-wrap').innerHTML = '<svg viewBox="0 22 563 290" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;overflow:visible"><g transform="translate(0,0)"><path d="M37.2 56.39999999999999C37.2 54.0 37.6 53.19999999999999 38.400000000000006 53.19999999999999C39.2 53.19999999999999 39.6 54.0 39.6 56.39999999999999V92.0H75.60000000000001V59.0C75.60000000000001 35.400000000000006 61.800000000000004 22.0 37.800000000000004 22.0C14.200000000000001 22.0 1.2000000000000002 34.79999999999998 1.2000000000000002 59.0V128.8C1.2000000000000002 153.0 14.200000000000001 166.0 37.800000000000004 166.0C61.800000000000004 166.0 75.60000000000001 152.6 75.60000000000001 128.8V96.0H39.6V131.6C39.6 133.8 39.2 134.8 38.400000000000006 134.8C37.6 134.8 37.2 133.8 37.2 131.6Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="810" stroke-dashoffset="810" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="810" to="0" dur="3.8s" begin="0.179s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.179s" fill="freeze"/></path></g><g transform="translate(0,0)"><path d="M78.00000000000001 24.0V164.0H114.00000000000001V114.0H114.4C116.4 114.0 116.4 114.4 116.4 117.19999999999999V135.2C116.4 146.0 116.60000000000002 155.2 118.4 164.0H154.40000000000003C152.60000000000002 155.4 152.40000000000003 146.2 152.40000000000003 135.6V134.0C152.40000000000003 112.6 140.4 99.6 132.0 99.6V97.2C140.60000000000002 97.2 152.40000000000003 85.8 152.40000000000003 62.39999999999999V61.39999999999999C152.40000000000003 36.0 138.60000000000002 24.0 114.80000000000001 24.0ZM114.00000000000001 55.19999999999999H114.4C116.4 55.19999999999999 116.4 55.599999999999994 116.4 58.19999999999999V79.6C116.4 82.39999999999999 116.4 82.8 114.4 82.8H114.00000000000001Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="788" stroke-dashoffset="788" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="788" to="0" dur="3.8s" begin="0.007s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.007s" fill="freeze"/></path></g><g transform="translate(0,0)"><path d="M206.8 55.19999999999999V24.0H154.8V164.0H206.8V132.8H190.8V105.8H206.8V74.6H190.8V55.19999999999999Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="610" stroke-dashoffset="610" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="610" to="0" dur="3.8s" begin="0.077s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.077s" fill="freeze"/></path></g><g transform="translate(0,0)"><path d="M218.20000000000002 24.0 208.60000000000002 164.0H244.60000000000002V135.2H247.00000000000003V164.0H283.0L274.20000000000005 24.0ZM244.60000000000002 104.0V86.8H247.00000000000003V104.0Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="632" stroke-dashoffset="632" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="632" to="0" dur="3.8s" begin="0.062s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.062s" fill="freeze"/></path></g><g transform="translate(0,0)"><path d="M356.40000000000003 24.0H284.40000000000003V55.19999999999999H302.40000000000003V164.0H338.40000000000003V55.19999999999999H356.40000000000003Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="580" stroke-dashoffset="580" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="580" to="0" dur="3.8s" begin="0.206s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.206s" fill="freeze"/></path></g><g transform="translate(0,0)"><path d="M410.40000000000003 55.19999999999999V24.0H358.40000000000003V164.0H410.40000000000003V132.8H394.40000000000003V105.8H410.40000000000003V74.6H394.40000000000003V55.19999999999999Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="610" stroke-dashoffset="610" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="610" to="0" dur="3.8s" begin="0.189s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.189s" fill="freeze"/></path></g><g transform="translate(0,144)"><path d="M72.8 24.0H0.8V55.19999999999999H18.8V164.0H54.800000000000004V55.19999999999999H72.8Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="580" stroke-dashoffset="580" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="580" to="0" dur="3.8s" begin="0.25s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.25s" fill="freeze"/></path></g><g transform="translate(0,144)"><path d="M74.80000000000001 59.0V128.8C74.80000000000001 153.0 87.80000000000001 166.0 111.4 166.0C135.4 166.0 149.20000000000002 152.6 149.20000000000002 128.8V59.0C149.20000000000002 35.400000000000006 135.4 22.0 111.4 22.0C87.80000000000001 22.0 74.80000000000001 34.79999999999998 74.80000000000001 59.0ZM110.80000000000001 56.39999999999999C110.80000000000001 54.0 111.20000000000002 53.19999999999999 112.00000000000001 53.19999999999999C112.80000000000001 53.19999999999999 113.20000000000002 54.0 113.20000000000002 56.39999999999999V131.6C113.20000000000002 133.8 112.80000000000001 134.8 112.00000000000001 134.8C111.20000000000002 134.8 110.80000000000001 133.8 110.80000000000001 131.6Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="730" stroke-dashoffset="730" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="730" to="0" dur="3.8s" begin="0.024s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.024s" fill="freeze"/></path></g><g transform="translate(0,144)"><path d="M187.60000000000002 56.39999999999999C187.60000000000002 54.0 188.00000000000003 53.19999999999999 188.80000000000004 53.19999999999999C189.60000000000002 53.19999999999999 190.00000000000003 54.0 190.00000000000003 56.39999999999999V81.6H226.00000000000006V59.0C226.00000000000006 35.400000000000006 212.20000000000005 22.0 188.20000000000005 22.0C164.60000000000002 22.0 151.60000000000002 34.79999999999998 151.60000000000002 59.0V128.8C151.60000000000002 155.4 166.40000000000003 166.0 179.60000000000002 166.0C188.60000000000002 166.0 197.00000000000003 161.2 199.20000000000005 152.8H201.60000000000002V164.0H226.00000000000006V85.6H187.60000000000002ZM187.60000000000002 108.8H190.00000000000003V131.6C190.00000000000003 133.8 189.60000000000002 134.8 188.80000000000004 134.8C188.00000000000003 134.8 187.60000000000002 133.8 187.60000000000002 131.6Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="796" stroke-dashoffset="796" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="796" to="0" dur="3.8s" begin="0.118s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.118s" fill="freeze"/></path></g><g transform="translate(0,144)"><path d="M280.40000000000003 55.19999999999999V24.0H228.40000000000003V164.0H280.40000000000003V132.8H264.40000000000003V105.8H280.40000000000003V74.6H264.40000000000003V55.19999999999999Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="610" stroke-dashoffset="610" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="610" to="0" dur="3.8s" begin="0.008s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.008s" fill="freeze"/></path></g><g transform="translate(0,144)"><path d="M354.40000000000003 24.0H282.40000000000003V55.19999999999999H300.40000000000003V164.0H336.40000000000003V55.19999999999999H354.40000000000003Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="580" stroke-dashoffset="580" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="580" to="0" dur="3.8s" begin="0.061s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.061s" fill="freeze"/></path></g><g transform="translate(0,144)"><path d="M394.80000000000007 24.0V76.6H392.40000000000003V24.0H356.40000000000003V164.0H392.40000000000003V107.8H394.80000000000007V164.0H430.80000000000007V24.0Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="858" stroke-dashoffset="858" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="858" to="0" dur="3.8s" begin="0.141s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.141s" fill="freeze"/></path></g><g transform="translate(0,144)"><path d="M485.20000000000005 55.19999999999999V24.0H433.20000000000005V164.0H485.20000000000005V132.8H469.20000000000005V105.8H485.20000000000005V74.6H469.20000000000005V55.19999999999999Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="610" stroke-dashoffset="610" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="610" to="0" dur="3.8s" begin="0.007s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.007s" fill="freeze"/></path></g><g transform="translate(0,144)"><path d="M487.6000000000001 24.0V164.0H523.6000000000001V114.0H524.0000000000001C526.0000000000001 114.0 526.0000000000001 114.4 526.0000000000001 117.19999999999999V135.2C526.0000000000001 146.0 526.2 155.2 528.0000000000001 164.0H564.0000000000001C562.2 155.4 562.0000000000001 146.2 562.0000000000001 135.6V134.0C562.0000000000001 112.6 550.0000000000001 99.6 541.6000000000001 99.6V97.2C550.2 97.2 562.0000000000001 85.8 562.0000000000001 62.39999999999999V61.39999999999999C562.0000000000001 36.0 548.2 24.0 524.4000000000001 24.0ZM523.6000000000001 55.19999999999999H524.0000000000001C526.0000000000001 55.19999999999999 526.0000000000001 55.599999999999994 526.0000000000001 58.19999999999999V79.6C526.0000000000001 82.39999999999999 526.0000000000001 82.8 524.0000000000001 82.8H523.6000000000001Z" fill="none" stroke="#F4F0E8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="788" stroke-dashoffset="788" stroke-opacity="0"><animate attributeName="stroke-dashoffset" from="788" to="0" dur="3.8s" begin="0.056s" calcMode="spline" keySplines="0.25 0.1 0.25 1" fill="freeze"/><animate attributeName="stroke-opacity" values="0;1" keyTimes="0;1" dur="0.05s" begin="0.056s" fill="freeze"/></path></g></svg>';
+// Hero headline SVG is now in the HTML so it reserves its space before first paint.
 
 // ── SCROLL REVEAL ──
 const reveals = document.querySelectorAll('.reveal');
@@ -3010,13 +3067,37 @@ reveals.forEach(el => observer.observe(el));
   }, HOLD);
 })();
 
+// ── Lazy background images (below the fold) ──
+(function(){
+  const els = document.querySelectorAll('.lazy-bg');
+  if (!('IntersectionObserver' in window)) { els.forEach(el => el.classList.add('bg-in')); return; }
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('bg-in'); io.unobserve(e.target); }
+    });
+  }, { rootMargin: '600px 0px' });
+  els.forEach(el => io.observe(el));
+})();
+
 // ── Hero-showcase video: mute/unmute toggle ──
 (function(){
   const v = document.querySelector('.shot-video video');
   const btn = document.querySelector('.vid-mute');
   if (!v || !btn) return;
   v.muted = true;
-  v.play().catch(() => {});
+  // Only fetch and play the clip while it is on screen.
+  let inView = false;
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        inView = e.isIntersecting;
+        if (inView) v.play().catch(() => {});
+        else v.pause();
+      });
+    }, { rootMargin: '200px 0px', threshold: 0 }).observe(v);
+  } else {
+    v.play().catch(() => {});
+  }
   btn.addEventListener('click', () => {
     v.muted = !v.muted;
     const on = !v.muted;

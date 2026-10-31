@@ -9420,3 +9420,48 @@ Address the backlog item "Marketing homepage: staged hero fades make first load 
 - Updated `AGENTS.md` in the active project and release worktree: routine commits, pushes, PRs, tested merges and deployments for requested work now have standing authorisation. Explicit Preview-only limits and destructive/security/billing boundaries remain in force.
 - This slice remains Preview only. Standing authority is not being used to override the current task's environment limit.
 - Release files: `AGENTS.md`, `public/marketing.html`, `tests/marketing-first-paint.test.mjs`, `tests/browser/public-accessibility.spec.mjs`, `PRODUCT_BACKLOG.md`, `UPDATE_LOG.md`. Unrelated local changes and writing references remain excluded.
+
+
+## 2026-10-31 - Homepage page speed: LCP, CLS and page weight
+
+### What we were trying to achieve
+
+Fix the PageSpeed Insights results for song-room.live: mobile LCP 7.2 s (score 75) and desktop CLS 0.122 (score 91). The target is LCP under 2.5 s, CLS under 0.1 and total page weight under 1.5 MB.
+
+### Root cause
+
+- The six opening bento images were picked at random by the script at the end of `<body>`. The browser could not find the LCP image (`#bci-d` on phones, `#bci-a` on desktop) until all ~105 KB of HTML had been parsed and that script had run, which caused the ~1.5 s render delay. A preload was impossible because the image changed on every visit.
+- The hero headline SVG was injected by JavaScript after first paint. That grew `.hero-content` and moved it, which was the 0.12 desktop CLS.
+- The page loaded about 4.3 MB on desktop and 5.7 MB on a throttled phone: full-size 1024x1280 JPEGs, TTF fonts, render-blocking `dm-sans.css` and `cookie-consent.css`, and a 1.1 MB autoplaying video with `preload="auto"`.
+
+### Feature / change being made
+
+- The opening bento images are now fixed `<img>` elements in the HTML, with WebP `srcset`/`sizes`, `width`/`height` and `fetchpriority="high"` on the LCP cells. A media-scoped `<link rel="preload">` covers each layout: `tsr17` on phones, `tsr7` on wider screens. Phones get a 1px placeholder for the hidden cell a. The 10 s entrance zoom is removed. Rotation still starts after 5 s, still picks images at random and still crossfades with opacity only.
+- The hero headline SVG is now in the HTML.
+- DM Sans `@font-face` is inlined as woff2 (normal 400/500/600 and italic 400) with font-display swap. The above-the-fold weights are preloaded, and Thunder Reg is preloaded for 601px and up. A metric-matched "DM Sans Fallback" (Arial with size-adjust and ascent/descent overrides) stops text jumping when the font arrives.
+- `cookie-consent.css` loads as `media="print"` and is switched to `all` by a small inline script. The CSP has `script-src-attr 'none'`, which blocks an `onload=""` attribute.
+- All marketing JPEGs are converted to WebP (480/768/1024 variants for `tsr*`). Every `<img>` has `width`/`height`. Below-the-fold CSS backgrounds (features, proof, final CTA, product mock) load only when near the viewport (`.lazy-bg`).
+- `be-kind.mp4` is re-encoded from 1.1 MB to 250 KB (960x540) and uses `preload="none"`. It plays only while on screen, through IntersectionObserver.
+- `dm-sans.css` (blog) now serves woff2 with a TTF fallback.
+
+### Files changed
+
+- `public/marketing.html`
+- `public/marketing-assets/*.webp` (new), `public/marketing-assets/dm-sans-*.woff2` (new)
+- `public/marketing-assets/be-kind.mp4` (re-encoded), `public/marketing-assets/manifest.json` (video hash and bytes)
+- `public/marketing-assets/dm-sans.css`
+- `tests/marketing-first-paint.test.mjs`
+- `UPDATE_LOG.md`
+
+### Notes
+
+- Local Playwright measurement, cold cache. Phone: Slow 4G with 4x CPU. Desktop: 10 Mbps.
+  - Phone LCP went from 12.3 s to 1.26 s, and phone bytes from 5.7 MB to 445 KB.
+  - Desktop CLS went from 0.118 to 0.002, and desktop bytes from 4.3 MB to 492 KB.
+- `npm test` passes 109/109. `tsc --noEmit` passes. The Vercel Preview build is READY (PR #63).
+- Not done:
+  - The duplicate desktop/mobile bento copy is kept. The page has 482 DOM nodes, which is under Lighthouse's warning level, and merging the two would mean choosing one version of the copy.
+  - The outlined-letter stroke-draw animations are kept. They show up as "non-composited animations" but do not affect LCP.
+- The first view is now the same six images on every visit, and rotation randomises after 5 s.
+- The original JPEG/TTF files stay in the repo because `manifest.json` records them, but the homepage no longer requests them.
+- A PageSpeed Insights re-test is still pending. It needs Production, because Preview sits behind Vercel Authentication.
