@@ -1,16 +1,21 @@
 # Product Backlog
 
-Bugs and feature ideas for beta readiness and later product work. The current priority order below identifies the near-term queue; other entries remain unscheduled. When an item becomes an active slice, move it into `public-mvp-roadmap.md`.
+> Current progress: [Launch checklist](LAUNCH_CHECKLIST.md). Updated 1 November 2026. This document retains historical detail; the checklist controls current stage status and priorities.
+
+
+Bugs and feature ideas for beta readiness and later product work. The current priority order below identifies the near-term queue; other entries remain unscheduled. Track active stages and every new backlog request in `LAUNCH_CHECKLIST.md`; keep detailed task evidence here.
 
 ---
 
 ## Current priority order
 
-1. Implement the approved email/password journey in focused slices, including referrals, invites, existing Google accounts, and complete recovery. Microsoft login isn't part of this work.
-2. Continue the remaining security-hardening and review findings.
-3. Complete SEO, discoverability, and final pre-launch QA.
+1. L5: close the remaining security findings, beginning with API and direct-database workspace isolation. The 1 November read-only inventory confirms RLS is already enabled on all 24 public tables; correctness checks remain.
+2. L6: run consolidated launch QA, including payments in an isolated test environment and production performance after PR #63.
+3. L7: finish discoverability, then L8: review the evidence for wider launch.
 
-The iPad homepage work is now in Production. A physical 11-inch iPad check remains useful coverage, but it no longer blocks this queue. Microsoft login stays deferred until traction and income justify it.
+Core public Email signup/login/recovery is Production complete (25 October); signed-in Add/Change password remains separately gated off. Homepage/iPad work and player restart/loop fixes are shipped. A physical 11-inch iPad check remains useful additional coverage. Microsoft login stays deferred.
+
+Current checklist IDs and all later items: [Launch checklist](LAUNCH_CHECKLIST.md).
 
 ## Bugs
 
@@ -203,7 +208,7 @@ The iPad homepage work is now in Production. A physical 11-inch iPad check remai
 ### Email/password signup and complete account-recovery journeys
 - Priority: P1 active planning, now first in the implementation queue; no dependency on Microsoft login.
 - Logged: 2026-09-18
-- Status: Slice 1 reached Production through PR #54 as merge commit `fddab843`; its live Google-only boundary and deployment passed verification. Slice 2B is committed and pushed in draft PR #55. The staging-only Cloudflare widget is created, its secret is stored in staging Supabase Auth with CAPTCHA enabled, and its public site key is scoped to the PR's Vercel Preview branch. Staging custom SMTP, the signup email link, the stable Site URL, and a 12-character hosted password minimum with leaked-password protection are configured. The branch-only auth-intent secret and Email feature flag expose the Email UI on protected Preview `dpl_2b9hadtZ8PADRmb7xtqfZuZC4mEJ`. A controlled Free signup, delivered confirmation email, cross-device confirmation, and later password login passed; the account and workspace remain singletons. Production remains Google-only and unchanged.
+- Current status (2026-11-01): Core public Email signup, verification, password login and recovery/reset are Production complete, with controlled live acceptance on 25 October. Signed-in Account security remains off as a separate release. PR #55 is merged; the earlier staging notes below are historical. See `EMAIL_PASSWORD_STAGING_ROLLOUT.md` current-status checkpoint.
 - Controlled Free journey (2026-09-27): the first confirmation click on desktop opened the new empty workspace. Reusing that link on mobile returned to generic Login, where password login reached the same empty dashboard. Code passes `auth=confirmation_failed` on a rejected confirmation token; draft PR #55's current protected Preview now explains an expired or used link behind the Email flag. Synthetic browser checks passed on the hosted Preview, but a real-phone recheck remains open. A cross-device way to request a fresh link, full recovery, referral, invitation, paid-tier, and cross-browser acceptance remain open. Don't treat the second click as a failed initial signup.
 - Sender progress (2026-09-25): 123 Reg's duplicate DMARC record was removed; authoritative and public DNS now return only `p=none`. Staging Supabase Auth custom SMTP is enabled through a dedicated Resend sending-only key restricted to `song-room.live`. A real Auth delivery, authentication-header, and bounce-visibility check still precede exposing Email in Preview. Production remains unchanged.
 - Template preflight (2026-09-25): all six staging Auth templates and seven disabled security notifications have a dashboard-visible recovery baseline in `STAGING_AUTH_TEMPLATE_BASELINE.md`. With approval, the Confirm signup link was changed to PR #55's `/auth/confirm` contract and the staging Site URL was changed to the stable PR branch alias. Both persisted after reload. The redirect allowlist was left unchanged. A live confirmation, Google callback, and delivery test still need to pass before exposing Email in Preview.
@@ -270,7 +275,7 @@ The iPad homepage work is now in Production. A physical 11-inch iPad check remai
 - Priority: Deferred growth-stage work, independent of email/password signup.
 - Logged: 2026-08-14; reprioritised 2026-09-18.
 - Status: Deprioritised at the user's request. Revisit if the app gains traction and generates income; no implementation now.
-- Email/password signup is now a separate near-term P1 item above, including referrals and account recovery. Google remains the only currently deployed method.
+- Google and public Email signup/login/recovery are deployed. Microsoft remains deferred; it is not required to complete the separate Account security release.
 - Before adding Microsoft, plan identity linking and recovery so existing users don't create duplicate Song Room accounts or workspaces.
 
 ### Multi-upload + revamped uploader  ✅ DONE (2026-08-10)
@@ -292,6 +297,7 @@ The iPad homepage work is now in Production. A physical 11-inch iPad check remai
 Captured from a launch-readiness review (TikTok launch checklists cross-referenced against the build). Secret rotation is being handled outside the backlog. robots.txt, sitemap.xml and Dependabot shipped 2026-08-26; npm-audit CI workflow pending manual add (token lacks Workflows permission).
 
 ### Security hardening
+- Current status (2026-11-01): Active L5. RLS, CSP enforcement, upload validation, public Email CAPTCHA and the login limiter already exist. Older unchecked bullets below are historical scope, not evidence that each protection is missing. Remaining findings and verification are tracked in `LAUNCH_SECURITY_REVIEW.md`.
 - Logged: 2026-08-26
 - Separate Vercel secret-handling review: the `song-review-app-v2` dashboard marked Production `SUPABASE_SERVICE_ROLE_KEY` and shared `RESEND_API_KEY` as Config variables needing attention because their names look secret-like. No value was revealed or changed during the PR #55 Preview check. Confirm their intended scopes, review exposure and rotation implications, then move them to appropriate secret handling in a separate approved rollout. This is not part of the Email test activation.
 - Add login/auth rate limiting (verify Supabase defaults, add app-level throttle).

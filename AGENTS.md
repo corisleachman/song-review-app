@@ -210,3 +210,12 @@ Escalate or flag clearly if:
 - the issue involves auth/session/account boundaries
 - the issue needs production logs or data you cannot access
 - the safe fix is unclear and multiple architectural options exist
+
+
+## Launch progress reporting
+
+- `LAUNCH_CHECKLIST.md` is the current stage/status page. Read it when planning work; older roadmaps retain historical evidence only.
+- Update its stage and backlog tables whenever a task changes their status. Keep dated evidence and distinguish local, merged and Production-verified work.
+- Include a clickable link to the current checklist in every completed-action response, even when reporting a small fix. Use the same page and append a dated checkpoint when a stage completes.
+- Add every new backlog request to its table with a stable ID, status and launch-stage assignment or Later. Keep detailed requirements in `PRODUCT_BACKLOG.md`. Do not silently make new requests launch blockers.
+- Don't mark a stage Done until its exit conditions are verified or its remaining limits are explicitly accepted.
