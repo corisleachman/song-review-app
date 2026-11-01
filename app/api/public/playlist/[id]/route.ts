@@ -1,3 +1,4 @@
+import { artworkDeliveryUrl } from '@/lib/artworkAccess';
 import { NextRequest, NextResponse } from 'next/server';
 import { RequestTiming } from '@/lib/requestTiming';
 import { supabaseServer } from '@/lib/supabaseServer';
@@ -192,7 +193,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
         return {
           id: r.song_id,
           title: meta.title,
-          image_url: meta.image_url,
+          image_url: artworkDeliveryUrl('song', r.song_id, meta.image_url, { playlistId: playlist.id }),
           audioUrl: latestBySong.get(r.song_id)?.file_path
             ? audioDeliveryUrl(latestBySong.get(r.song_id)!.id, { playlistId: playlist.id }) : null,
         };

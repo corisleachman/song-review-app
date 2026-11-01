@@ -1,3 +1,4 @@
+import { artworkDeliveryUrl } from '@/lib/artworkAccess';
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -165,7 +166,7 @@ export async function POST(request: NextRequest) {
         workspace: {
           id: data.id,
           name: data.name,
-          imageUrl: data.image_url,
+          imageUrl: artworkDeliveryUrl('workspace', data.id, data.image_url),
         },
       },
       {

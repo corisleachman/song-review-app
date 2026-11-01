@@ -1,5 +1,7 @@
 'use client';
 
+import { resumeNativeAudio } from '@/lib/resumeNativeAudio';
+
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { Suspense } from 'react';
@@ -372,6 +374,7 @@ function ListenPageInner() {
     const onPlay = () => {
       if (loadId !== waveLoadIdRef.current) return;
       setIsPlaying(true);
+      setWaveErr(null);
       startReactiveDrawing();
       if ('mediaSession' in navigator) {
         const artwork: MediaImage[] = songImageRef.current
@@ -382,7 +385,14 @@ function ListenPageInner() {
           artist: '',
           artwork,
         });
-        navigator.mediaSession.setActionHandler('play', () => { void audio.play(); });
+        navigator.mediaSession.setActionHandler('play', () => {
+          void resumeNativeAudio(audio, { isCurrent: () => loadId === waveLoadIdRef.current })
+            .catch(error => {
+              if (loadId !== waveLoadIdRef.current || (error instanceof Error && error.name === 'AbortError')) return;
+              setIsPlaying(false);
+              setWaveErr('Audio could not resume. Press Play to try again.');
+            });
+        });
         navigator.mediaSession.setActionHandler('pause', () => audio.pause());
         navigator.mediaSession.setActionHandler('previoustrack', null);
         navigator.mediaSession.setActionHandler('nexttrack', null);
@@ -421,7 +431,12 @@ function ListenPageInner() {
 
   const playNativeAudioFallback = useCallback(async (url: string) => {
     let audio = nativeAudioRef.current;
-    if (!audio) { audio = new Audio(); audio.preload = 'metadata'; nativeAudioRef.current = audio; }
+    if (!audio) {
+      audio = new Audio();
+      audio.preload = 'metadata';
+      audio.crossOrigin = 'anonymous';
+      nativeAudioRef.current = audio;
+    }
     nativeAudioFallbackRef.current = true;
     audioRef.current = audio;
     const loadId = ++waveLoadIdRef.current;
@@ -445,7 +460,7 @@ function ListenPageInner() {
       } catch {}
     }
     setIsPlaying(true);
-    await audio.play();
+    await resumeNativeAudio(audio, { isCurrent: () => loadId === waveLoadIdRef.current });
   }, [attachNativeAudioEvents, ensureReactiveAudioGraph, startReactiveDrawing]);
 
   // ── WaveSurfer init ───────────────────────────────────────────────────────
@@ -583,7 +598,16 @@ function ListenPageInner() {
     if (!audioUrl) return;
 
     if (nativeAudioFallbackRef.current && audio) {
-      if (audio.paused) { setIsPlaying(true); void audio.play(); }
+      if (audio.paused) {
+        const loadId = waveLoadIdRef.current;
+        setIsPlaying(true);
+        void resumeNativeAudio(audio, { isCurrent: () => loadId === waveLoadIdRef.current })
+          .catch(error => {
+            if (loadId !== waveLoadIdRef.current || (error instanceof Error && error.name === 'AbortError')) return;
+            setIsPlaying(false);
+            setWaveErr('Audio could not resume. Press Play to try again.');
+          });
+      }
       else { setIsPlaying(false); audio.pause(); }
       return;
     }

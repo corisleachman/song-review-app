@@ -12,7 +12,7 @@ function silentWav() {
   return wav;
 }
 
-async function preparePlayer(page, fallback) {
+async function preparePlayer(page, fallback, renewal = false) {
   const errors = [];
   const unexpectedRequests = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -26,12 +26,16 @@ async function preparePlayer(page, fallback) {
     const play = HTMLMediaElement.prototype.play;
     HTMLMediaElement.prototype.play = function () {
       if (!window.playerTestMedia.includes(this)) window.playerTestMedia.push(this);
+      if (window.failNextNativeResume) {
+        window.failNextNativeResume = false;
+        return Promise.reject(new DOMException('Fixture expired-source failure', 'NotSupportedError'));
+      }
       return play.call(this);
     };
   });
   const versions = ['version-one', 'version-two'].map((id, index) => ({
     id, version_number: index + 1, label: null, file_path: 'fixture.wav',
-    file_name: 'fixture.wav', audioUrl: '/fixture.wav', created_by: 'Player tester',
+    file_name: 'fixture.wav', audioUrl: renewal ? `/api/media/audio/${id}` : '/fixture.wav', created_by: 'Player tester',
   }));
   const payloads = {
     '/api/auth/bootstrap': { identity: {
@@ -49,11 +53,13 @@ async function preparePlayer(page, fallback) {
     payloads[`/api/versions/${version.id}/threads`] = { threads: [] };
   }
   let waveformFailures = 0;
+  const renewedSources = new Set();
   await page.route('**/*', async route => {
     const request = route.request();
     const url = new URL(request.url());
     if (url.hostname !== '127.0.0.1') return route.abort();
-    if (url.pathname === '/fixture.wav') {
+    if (url.pathname === '/fixture.wav' || (renewal && url.pathname.startsWith('/api/media/audio/'))) {
+      if (url.searchParams.has('renew')) renewedSources.add(url.search);
       if (fallback && request.resourceType() === 'fetch') {
         waveformFailures++;
         return route.abort('failed');
@@ -68,7 +74,7 @@ async function preparePlayer(page, fallback) {
   });
   await page.goto('/songs/song-one/versions/version-one');
   await expect(page.getByRole('heading', { name: 'Player fixture', exact: true })).toBeVisible();
-  return { errors, unexpectedRequests, waveformFailures: () => waveformFailures };
+  return { errors, unexpectedRequests, waveformFailures: () => waveformFailures, renewalSources: () => renewedSources.size };
 }
 
 async function mediaState(page) {
@@ -154,3 +160,26 @@ for (const fallback of [false, true]) {
     expect(fixture.unexpectedRequests).toEqual([]);
   });
 }
+
+
+test('native media resume reauthorises once without losing position or loop state', async ({ page }) => {
+  const fixture = await preparePlayer(page, true, true);
+  await page.getByRole('button', { name: 'Loop Song', exact: true }).click();
+  await page.getByRole('button', { name: 'Play from Start', exact: true }).click();
+  await expect.poll(async () => (await mediaState(page))?.paused).toBe(false);
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  await seekAudio(page, 2);
+  // Simulate the browser refusing an old native source. The replacement request
+  // serves real PCM bytes, so metadata/seek/play recovery runs in the browser.
+  await page.evaluate(() => { window.failNextNativeResume = true; });
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect.poll(async () => (await mediaState(page))?.paused).toBe(false);
+  const state = await mediaState(page);
+  expect(state.time).toBeGreaterThanOrEqual(1.8);
+  expect(state.time).toBeLessThan(3.5);
+  expect(state.loop).toBe(true);
+  expect(state.activePlayers).toBe(1);
+  expect(fixture.renewalSources()).toBe(1);
+  expect(fixture.errors).toEqual([]);
+  expect(fixture.unexpectedRequests).toEqual([]);
+});

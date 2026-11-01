@@ -1,3 +1,4 @@
+import { artworkDeliveryUrl } from '@/lib/artworkAccess';
 import { NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -65,7 +66,7 @@ export async function GET() {
       return {
         id: song.id,
         title: song.title,
-        image_url: song.image_url ?? null,
+        image_url: artworkDeliveryUrl('song', song.id, song.image_url),
         created_at: song.created_at ?? null,
         status: normalizeSongStatus(song.status),
         latestVersionId: latest?.id ?? null,

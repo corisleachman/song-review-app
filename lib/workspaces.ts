@@ -1,3 +1,4 @@
+import { artworkDeliveryUrl } from '@/lib/artworkAccess';
 import { supabaseServer } from '@/lib/supabaseServer';
 import {
   isMissingPlanColumnError,
@@ -153,7 +154,7 @@ export async function listUserWorkspaces(userId: string, activeWorkspaceId: stri
       return {
         id: account.id,
         name: account.name,
-        imageUrl: account.image_url ?? null,
+        imageUrl: artworkDeliveryUrl('workspace', account.id, account.image_url),
         slug: account.slug,
         role: membership.role,
         plan: normalizeAccountPlan(account.plan),

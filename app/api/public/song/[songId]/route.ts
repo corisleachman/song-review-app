@@ -1,3 +1,4 @@
+import { artworkDeliveryUrl } from '@/lib/artworkAccess';
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { withVersionDisplayName } from '@/lib/versionDisplay';
@@ -94,7 +95,7 @@ export async function GET(_req: NextRequest, props: { params: Promise<{ songId: 
         song: {
           id: song.id,
           title: song.title,
-          image_url: song.image_url,
+          image_url: artworkDeliveryUrl('song', song.id, song.image_url, { publicSong: true }),
           workspace_name: workspaceName,
           comments_enabled: song.public_comments_enabled ?? false,
         },

@@ -62,7 +62,7 @@ function routeHarness(route, { identity = null, user = null, tables = {}, storag
     const exports = {};
     cache.set(filename, exports);
     const compiled = ts.transpileModule(readFileSync(filename, 'utf8'), {
-      compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+      compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
     }).outputText;
     const localRequire = specifier => {
       if (Object.hasOwn(stubs, specifier)) return stubs[specifier];
@@ -363,4 +363,148 @@ test('public playlist API returns playlist-scoped stable media URLs', async () =
   const response = await h.handler.GET(getRequest(), params({ id: 'playlist-a' }));
   assert.equal(response.status, 200);
   assert.equal((await response.json()).tracks[0].audioUrl, '/api/media/audio/version-a?playlist=playlist-a');
+});
+
+test('artwork HTTP capability and renewal boundaries', async t => {
+  const key = 'artwork-http-signing-key-at-least-32-characters';
+  const oldKey = process.env.INTERNAL_API_SECRET;
+  const oldProject = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  process.env.INTERNAL_API_SECRET = key;
+  process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://storage.invalid';
+  t.after(() => {
+    if (oldKey === undefined) delete process.env.INTERNAL_API_SECRET; else process.env.INTERNAL_API_SECRET = oldKey;
+    if (oldProject === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_URL; else process.env.NEXT_PUBLIC_SUPABASE_URL = oldProject;
+  });
+  const access = routeHarness('lib/artworkAccess.ts').handler;
+  const record = { ...song, is_public: true, image_url: 'https://storage.invalid/storage/v1/object/public/song-images/song-a-123.jpg' };
+  const claims = { kind: 'song', id: 'song-a', path: 'song-a-123.jpg' };
+  const now = () => Math.floor(Date.now() / 1000);
+  function h({ identity = null, tables = { songs: [record] }, contentType = 'image/jpeg', bytes = 12, error = null } = {}) {
+    const downloads = [];
+    return { ...routeHarness('app/api/media/artwork/route.ts', {
+      identity, tables,
+      storage: { from(bucket) { return { async download(path) {
+        downloads.push({ bucket, path });
+        return { data: error ? null : new Blob([new Uint8Array(bytes)], { type: contentType }), error };
+      } }; } },
+    }), downloads };
+  }
+  function request(token) { return mediaRequest(`?access=${encodeURIComponent(token)}`); }
+  await t.test('valid issued token serves privately cached raster without identity/database round trips', async () => {
+    const token = access.signArtworkAccess(claims, key, now());
+    const harness = h();
+    const response = await harness.handler.GET(request(token));
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('content-type'), 'image/jpeg');
+    assert.match(response.headers.get('cache-control'), /^private, max-age=\d+, must-revalidate$/);
+    assert.match(response.headers.get('content-security-policy'), /sandbox/);
+    assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
+    assert.equal(harness.reads.length, 0);
+    assert.deepEqual(harness.downloads, [{ bucket: 'song-images', path: 'song-a-123.jpg' }]);
+  });
+  await t.test('tampered token cannot trigger a Storage read', async () => {
+    const harness = h();
+    const response = await harness.handler.GET(request('invalid.token'));
+    assert.equal(response.status, 404);
+    assert.equal(harness.reads.length, 0);
+    assert.equal(harness.downloads.length, 0);
+  });
+  for (const [label, identity] of [['signed-out', null], ['other-workspace', { identity: { workspaceId: 'other' } }]]) {
+    await t.test(`expired private capability cannot renew for ${label}`, async () => {
+      const harness = h({ identity });
+      const response = await harness.handler.GET(request(access.signArtworkAccess(claims, key, now() - 700)));
+      assert.equal(response.status, 404);
+      assert.equal(harness.downloads.length, 0);
+    });
+  }
+  await t.test('expired private capability rechecks current workspace and resolves current artwork', async () => {
+    const harness = h({ identity: session('member') });
+    const response = await harness.handler.GET(request(access.signArtworkAccess(claims, key, now() - 700)));
+    assert.equal(response.status, 307);
+    assert.match(response.headers.get('cache-control'), /no-store/);
+    const location = new URL(response.headers.get('location'), 'https://staging.invalid');
+    assert.equal(access.readArtworkAccess(location.searchParams.get('access'), key).path, claims.path);
+    assert.equal(harness.downloads.length, 0);
+  });
+  for (const is_public of [true, false]) {
+    await t.test(`expired public-song image renewal respects current sharing ${is_public}`, async () => {
+      const harness = h({ tables: { songs: [{ ...record, is_public }] } });
+      const response = await harness.handler.GET(request(access.signArtworkAccess({ ...claims, publicSong: true }, key, now() - 700)));
+      assert.equal(response.status, is_public ? 307 : 404);
+      assert.equal(harness.downloads.length, 0);
+    });
+  }
+  for (const [label, account, entry, published, expected] of [
+    ['allowed', 'workspace-a', true, true, 307],
+    ['foreign song', 'other', true, true, 404],
+    ['removed entry', 'workspace-a', false, true, 404],
+    ['revoked playlist', 'workspace-a', true, false, 404],
+  ]) {
+    await t.test(`expired public-playlist image: ${label}`, async () => {
+      const harness = h({ tables: {
+        songs: [record], playlists: [{ id: 'list-a', account_id: account, is_public: published }],
+        playlist_songs: entry ? [{ playlist_id: 'list-a', song_id: 'song-a' }] : [],
+      } });
+      const response = await harness.handler.GET(request(access.signArtworkAccess({ ...claims, playlistId: 'list-a' }, key, now() - 700)));
+      assert.equal(response.status, expected);
+      assert.equal(harness.downloads.length, 0);
+    });
+  }
+  for (const [label, type, bytes, expected] of [['SVG', 'image/svg+xml', 10, 404], ['HTML', 'text/html', 10, 404], ['oversized', 'image/jpeg', 5 * 1024 * 1024 + 1, 404], ['PNG', 'image/png', 10, 200]]) {
+    await t.test(`image response ${label}`, async () => {
+      const harness = h({ contentType: type, bytes });
+      const response = await harness.handler.GET(request(access.signArtworkAccess(claims, key)));
+      assert.equal(response.status, expected);
+    });
+  }
+  await t.test('upstream errors disclose neither path nor provider URL', async () => {
+    const harness = h({ error: new Error('SECRET-STORAGE-URL') });
+    const response = await harness.handler.GET(request(access.signArtworkAccess(claims, key)));
+    assert.equal(response.status, 404);
+    assert.doesNotMatch(await response.text(), /SECRET|song-a/);
+  });
+  for (const member of [true, false]) {
+    await t.test(`expired workspace image requires current membership ${member}`, async () => {
+      const harness = h({ identity: session('member'), tables: {
+        accounts: [{ id: 'workspace-a', image_url: 'https://storage.invalid/storage/v1/object/public/song-images/workspace-images/workspace-a-123.png' }],
+        account_members: member ? [{ account_id: 'workspace-a', user_id: 'user-member' }] : [],
+      } });
+      const token = access.signArtworkAccess({ kind: 'workspace', id: 'workspace-a', path: 'workspace-images/workspace-a-123.png' }, key, now() - 700);
+      const response = await harness.handler.GET(request(token));
+      assert.equal(response.status, member ? 307 : 404);
+      assert.equal(harness.downloads.length, 0);
+    });
+  }
+  for (const is_public of [true, false]) {
+    await t.test(`expired playlist custom cover respects current sharing ${is_public}`, async () => {
+      const harness = h({ tables: { playlists: [{ id: 'list-a', account_id: 'workspace-a', is_public, image_url: 'https://storage.invalid/storage/v1/object/public/song-images/playlist-list-a-123.jpg' }] } });
+      const token = access.signArtworkAccess({ kind: 'playlist', id: 'list-a', path: 'playlist-list-a-123.jpg', publicPlaylist: true }, key, now() - 700);
+      assert.equal((await harness.handler.GET(request(token))).status, is_public ? 307 : 404);
+      assert.equal(harness.downloads.length, 0);
+    });
+  }
+  await t.test('renewal resolves replacement artwork instead of retaining removed canonical path', async () => {
+    const harness = h({ identity: session('member'), tables: { songs: [{ ...record, image_url: record.image_url.replace('123.jpg', '456.jpg') }] } });
+    const response = await harness.handler.GET(request(access.signArtworkAccess(claims, key, now() - 700)));
+    const renewed = new URL(response.headers.get('location'), 'https://staging.invalid');
+    assert.equal(access.readArtworkAccess(renewed.searchParams.get('access'), key).path, 'song-a-456.jpg');
+  });
+  await t.test('public song API projects an image token with only public-song scope', async () => {
+    const harness = routeHarness('app/api/public/song/[songId]/route.ts', { tables: { songs: [record], song_versions: [finalizedVersion], accounts: [] } });
+    const response = await harness.handler.GET(getRequest(), params({ songId: 'song-a' }));
+    const image = new URL((await response.json()).song.image_url, 'https://staging.invalid');
+    const token = access.readArtworkAccess(image.searchParams.get('access'), key);
+    assert.equal(token.publicSong, true); assert.equal(token.playlistId, undefined);
+    assert.equal(harness.writes.length, 0);
+  });
+  await t.test('public playlist metadata cannot mint artwork access for another workspace', async () => {
+    const harness = routeHarness('app/listen/playlist/[id]/layout.tsx', { tables: {
+      playlists: [{ id: 'list-a', account_id: 'workspace-a', is_public: true, image_url: null }],
+      playlist_songs: [{ playlist_id: 'list-a', song_id: 'song-b', position: 0 }],
+      songs: [{ ...foreignSong, image_url: 'https://storage.invalid/storage/v1/object/public/song-images/song-b-123.jpg' }],
+    } });
+    const metadata = await harness.handler.generateMetadata(params({ id: 'list-a' }));
+    assert.equal(metadata.openGraph.images, undefined);
+  });
+
 });
