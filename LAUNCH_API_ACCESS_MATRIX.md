@@ -8,10 +8,10 @@ For each method, record the final route class, identity check, resource/workspac
 
 | Route | Class | Exported methods | Boundary reference to inspect | Negative-access verification |
 | --- | --- | --- | --- |
-| `/api/actions/[actionId]` | Session + resource/workspace scope | PATCH | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/actions/by-song/[songId]` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/actions/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/actions` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/actions/[actionId]` | Session + resource/workspace scope | PATCH | `resolveCanonicalIdentity` | Local signed-out PATCH tests pass; hosted matrix pending |
+| `/api/actions/by-song/[songId]` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Local signed-out GET tests pass; hosted matrix pending |
+| `/api/actions/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Local signed-out POST tests pass; hosted matrix pending |
+| `/api/actions` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Local signed-out GET tests pass; hosted matrix pending |
 | `/api/admin/feedback/[id]` | Application admin | PATCH | `getCurrentAuthenticatedUser`, `isAdmin` | Local handler tests pass; hosted negatives pending |
 | `/api/admin/feedback` | Application admin | GET | `getCurrentAuthenticatedUser`, `isAdmin` | Local handler tests pass; hosted negatives pending |
 | `/api/auth/bootstrap` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
@@ -36,10 +36,10 @@ For each method, record the final route class, identity check, resource/workspac
 | `/api/invites/[token]` | Public token lookup | GET | Inspect route / delegated helper | Not yet exercised |
 | `/api/plan-events` | Public submission / optional identity | POST | Inspect route / delegated helper | Not yet exercised |
 | `/api/playlists/[id]/image` | Session + resource/workspace scope | POST, DELETE | `resolvePlaylistAccess` | Not yet exercised |
-| `/api/playlists/[id]` | Session + resource/workspace scope | GET, PATCH, DELETE | `resolvePlaylistAccess` | Not yet exercised |
-| `/api/playlists/[id]/songs/[songId]` | Session + resource/workspace scope | DELETE | `resolvePlaylistAccess` | Not yet exercised |
-| `/api/playlists/[id]/songs` | Session + resource/workspace scope | POST, PATCH | `resolvePlaylistAccess` | Not yet exercised |
-| `/api/playlists` | Session + resource/workspace scope | GET, POST | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/playlists/[id]` | Session + resource/workspace scope | GET, PATCH, DELETE | `resolvePlaylistAccess` | Local signed-out GET, PATCH, DELETE tests pass; hosted matrix pending |
+| `/api/playlists/[id]/songs/[songId]` | Session + resource/workspace scope | DELETE | `resolvePlaylistAccess` | Local signed-out DELETE tests pass; hosted matrix pending |
+| `/api/playlists/[id]/songs` | Session + resource/workspace scope | POST, PATCH | `resolvePlaylistAccess` | Local signed-out POST, PATCH tests pass; hosted matrix pending |
+| `/api/playlists` | Session + resource/workspace scope | GET, POST | `resolveCanonicalIdentity` | Local signed-out GET, POST tests pass; hosted matrix pending |
 | `/api/profile/settings` | Session + resource/workspace scope | GET, POST | `resolveCanonicalIdentity` | Not yet exercised |
 | `/api/profile/visualizer` | Session + resource/workspace scope | GET, POST | `resolveCanonicalIdentity` | Not yet exercised |
 | `/api/public/playlist/[id]` | Public-share projection | GET | Inspect route / delegated helper | Not yet exercised |
@@ -49,23 +49,23 @@ For each method, record the final route class, identity check, resource/workspac
 | `/api/referrals/summary` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
 | `/api/settings` | Session + resource/workspace scope | GET, POST (forwarded to profile/settings) | Inspect route / delegated helper | Not yet exercised |
 | `/api/settings/summary` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/songs/[songId]/public-comments/[commentId]` | Session + resource/workspace scope | DELETE | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/songs/[songId]/public-comments` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/songs/[songId]` | Session + resource/workspace scope | GET, PATCH, DELETE | `resolveCanonicalIdentity` | Local handler tests pass; hosted negatives pending |
-| `/api/songs/[songId]/tasks` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/songs/[songId]/versions` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/songs/[songId]/visibility` | Session + resource/workspace scope | PATCH | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/songs/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/songs/[songId]/public-comments/[commentId]` | Session + resource/workspace scope | DELETE | `resolveCanonicalIdentity` | Local signed-out DELETE tests pass; hosted matrix pending |
+| `/api/songs/[songId]/public-comments` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Local signed-out GET tests pass; hosted matrix pending |
+| `/api/songs/[songId]` | Session + resource/workspace scope | GET, PATCH, DELETE | `resolveCanonicalIdentity` | Local signed-out PATCH, DELETE tests pass; hosted matrix pending |
+| `/api/songs/[songId]/tasks` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Local signed-out GET tests pass; hosted matrix pending |
+| `/api/songs/[songId]/versions` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Local signed-out GET tests pass; hosted matrix pending |
+| `/api/songs/[songId]/visibility` | Session + resource/workspace scope | PATCH | `resolveCanonicalIdentity` | Local signed-out PATCH tests pass; hosted matrix pending |
+| `/api/songs/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Local signed-out POST tests pass; hosted matrix pending |
 | `/api/songs/upload-image` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Not yet exercised |
 | `/api/stripe/webhook` | Signed Stripe webhook | POST | `stripe.webhooks.constructEvent` | Not yet exercised |
-| `/api/tasks/[taskId]` | Session + resource/workspace scope | PATCH, DELETE | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/tasks/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/tasks/reorder` | Session + resource/workspace scope | PATCH | `resolveCanonicalIdentity` | Local handler tests pass; hosted negatives pending |
-| `/api/threads/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/threads/reply` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/versions/[versionId]/finalize` | Session + resource/workspace scope | POST, DELETE | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/versions/[versionId]` | Session + resource/workspace scope | GET, PATCH | `resolveCanonicalIdentity` | Local handler tests pass; hosted negatives pending |
-| `/api/versions/[versionId]/threads` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/tasks/[taskId]` | Session + resource/workspace scope | PATCH, DELETE | `resolveCanonicalIdentity` | Local signed-out PATCH, DELETE tests pass; hosted matrix pending |
+| `/api/tasks/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Local signed-out POST tests pass; hosted matrix pending |
+| `/api/tasks/reorder` | Session + resource/workspace scope | PATCH | `resolveCanonicalIdentity` | Local signed-out PATCH tests pass; hosted matrix pending |
+| `/api/threads/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Local signed-out POST tests pass; hosted matrix pending |
+| `/api/threads/reply` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Local signed-out POST tests pass; hosted matrix pending |
+| `/api/versions/[versionId]/finalize` | Session + resource/workspace scope | POST, DELETE | `resolveCanonicalIdentity` | Local signed-out POST, DELETE tests pass; hosted matrix pending |
+| `/api/versions/[versionId]` | Session + resource/workspace scope | GET, PATCH | `resolveCanonicalIdentity` | Local signed-out PATCH tests pass; hosted matrix pending |
+| `/api/versions/[versionId]/threads` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Local signed-out GET tests pass; hosted matrix pending |
 | `/api/versions/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Not yet exercised |
 | `/api/workspace/invites/[inviteId]` | Session + resource/workspace scope | PATCH | `resolveCanonicalIdentity` | Not yet exercised |
 | `/api/workspace/invites` | Session + resource/workspace scope | GET, POST | `resolveCanonicalIdentity` | Not yet exercised |
@@ -85,8 +85,8 @@ These are sampled paths, not completed dynamic access verification. Every method
 | --- | --- |
 | `/api/dashboard` | Session + resource/workspace scope | GET: canonical identity; songs filtered by active workspace |
 | `/api/dashboard/summary` | Session + resource/workspace scope | Local handler tests pass; hosted negatives pending |
-| `/api/songs/[songId]` | Session + resource/workspace scope | Local handler tests pass; hosted negatives pending |
-| `/api/versions/[versionId]` | Session + resource/workspace scope | Local handler tests pass; hosted negatives pending |
+| `/api/songs/[songId]` | Session + resource/workspace scope | Local signed-out PATCH, DELETE tests pass; hosted matrix pending |
+| `/api/versions/[versionId]` | Session + resource/workspace scope | Local signed-out PATCH tests pass; hosted matrix pending |
 | `/api/admin/feedback` | Application admin | Local handler tests pass; hosted negatives pending |
 | `/api/admin/feedback/[id]` | Application admin | Local handler tests pass; hosted negatives pending |
 | `/api/email/notify-thread` | Signed internal request | Local handler tests pass; hosted negatives pending |
@@ -115,3 +115,14 @@ Stop if fixtures, test destination or expected permissions aren't established. R
 ## Production signed-out smoke, 1 November 2026
 
 On PR #66 merge revision `6e770973`, unauthenticated bootstrap/dashboard GETs returned 401, admin feedback GET returned 404, unsigned internal notification POST returned 401 and empty legacy verification POST returned 401 with success false and no session cookie. These narrow hosted checks don't constitute owner/member/outsider coverage or an RLS repair.
+
+## Expanded checks and migration review, 1 November 2026
+
+API runtime coverage is now 42 passing mocked-I/O tests, adding 30 signed-out method checks across action, task, thread, song, version/upload and playlist handlers. The harness models NextRequest.nextUrl and resolves existing .mjs helpers; initial harness failures were corrected without changing application access behaviour. Full suite: 151 passed.
+
+B21/S3 SQL candidates passed 34 actual staging role/function checks inside transactions that rolled back, plus idempotency and reverse rollback checks. No installed migration or full hosted API/browser pass is claimed. [Review gate](B21_SECURITY_REPAIR_REVIEW.md) is the next step.
+
+
+## Installed staging repair checks, 1 November 2026
+
+Following explicit staging approval, both reviewed migrations are installed. The installed-mode probe passed 34 role/function checks without reapplying DDL; six further rolled-back invitation acceptance/idempotency checks passed. Authenticated browser checks passed for switching between existing member/owner workspaces, dashboard songs, song/version reads, the direct upload-title read and collaborator listing. No new invitation email/browser acceptance was replayed. This scoped gate doesn't replace all route-by-method owner/member/outsider API tests. Production remains on its original policies.

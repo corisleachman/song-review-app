@@ -83,3 +83,23 @@ PR #66 merged with exact tested head `a9d598c9` as `6e770973a7e65aee0444d4ef0acc
 Production `dpl_iwxMHCuc3D5dxh7q6fGmkPHSauc3` is READY and the live www alias resolves to that exact merge revision. Eight safe HTTP checks passed: homepage/Login/config, signed-out bootstrap/dashboard/admin feedback, empty legacy verifier and unsigned internal notification. Public Email config stays true/false. The deployment-scoped last-ten-minute error/fatal scan returned no matching logs. No password, valid signature, account creation, notification send or payment was submitted.
 
 B22 is Production complete. S2 and B21 remain open. No database migration or service configuration change was needed. Rollback target: previous deployment `dpl_DSGYU6ifueQ6QhDPhCNGWC6X6euM` at `d8621df2`, or focused revert of the application guard; this restores the documented false-success response. No rollback was performed.
+
+
+## B21/S3 candidate ready for security review, 1 November 2026
+
+[Review and rollout package](B21_SECURITY_REPAIR_REVIEW.md) contains two ordered migrations, reverse-order rollback scripts, first-apply drift checks and a reproducible rollback-only SQL probe. Candidate preserves workspace-member SELECT visibility and existing owner/admin insert/delete and owner-only update rules, using two private SECURITY DEFINER boolean lookups bound to auth.uid(). Five existing public functions get fixed empty search paths without body/grant/owner changes.
+
+The first SELECT-only candidate passed reads but failed an insert; final repair covers all six membership predicates. Final access suite passed 27 checks, duplicate membership application passed, and the combined search-path/access suite passed 34 checks from checked-in composer output. Reverse rollback restored exact policy expressions/roles and function settings. Post-test read-back found no private schema or fixture accounts. No transaction was committed and neither hosted environment was repaired permanently.
+
+Current local suite: 151 passing tests, including 42 real-handler mocked-I/O cases; focused lint and TypeScript pass. Staging/Production policy/body fingerprints match, and staging first-apply preflight passes. These don't replace installed-definition, exposed-schema, hosted API/browser and Production verification. S2/S3 remain In progress; permanent staging installation now requires review of the new privileged lookup boundary.
+
+
+## Approved staging installation and verification, 1 November 2026
+
+The user approved staging only. Supabase applied the unchanged reviewed SQL as ledger versions `20261101153149_fix_membership_rls_recursion` and `20261101153157_pin_function_search_paths`. Repository migration/rollback names and current links were aligned to that ledger; original candidate timestamps were 20261101112636/20261101113332. SQL bytes were compared with the approved source and are unchanged.
+
+Installed definitions were inspected before tests. The composer now supports `--installed`, which omits candidate DDL. All 34 installed-schema checks and six rollback-only invitation RPC checks passed. Staging Advisor has no errors/warnings; eight existing RLS-without-policy INFO notices remain. PostgREST rejects the private schema with 406/PGRST106, so no new schema exposure was enabled. The root OpenAPI probe required a secret key and wasn't used as exposure evidence; the zero-row table request supplied the decisive schema response. No key value was printed or persisted.
+
+The existing Google session completed Vercel protection and staging login. The checked source `c4652810` Preview points to staging; workspace switching, four-song library, song/version reads, direct upload-page title and collaborator list passed in browser. No new account, audio, comment, real invitation email or paid action occurred. Invitation backend/idempotency was verified in rolled-back fixtures; a fresh invitation-email/browser journey wasn't replayed. Snapshot remained eight users/profiles, seven workspaces, eleven memberships and zero test workspaces. The bounded Preview error/fatal log scan was empty.
+
+Production preflight still returns its five original true baseline checks; it was not migrated. Staging is verified for this repair; S2/S3 remain in progress and Production needs its own approval. See B21_SECURITY_REPAIR_REVIEW.md for rollout/rollback order and remaining limits.
