@@ -7,7 +7,7 @@ export const ARTWORK_TTL_SECONDS = 600;
 export type ArtworkKind = 'song' | 'playlist' | 'workspace';
 export type ArtworkContext = { publicSong?: true; publicPlaylist?: true; playlistId?: string };
 export type ArtworkAccess = ArtworkContext & {
-  kind: ArtworkKind; id: string; path: string; issuedAt: number; expiresAt: number;
+  kind: ArtworkKind; id: string; path: string; audience: string; issuedAt: number; expiresAt: number;
 };
 
 export function artworkSigningKey() {
@@ -36,11 +36,17 @@ export function artworkStoragePath(kind: ArtworkKind, id: string, value: string 
   } catch { return null; }
 }
 
+function projectAudience(value: string) {
+  const url = new URL(value);
+  if (url.protocol !== 'https:' && url.protocol !== 'http:') throw new Error('Artwork configuration is unavailable.');
+  return url.origin;
+}
+
 function digest(payload: string, key: string) {
   return createHmac('sha256', key).update(`${CONTEXT}.${payload}`).digest('base64url');
 }
 
-export function signArtworkAccess(input: Omit<ArtworkAccess, 'issuedAt' | 'expiresAt'>, key: string, now = Math.floor(Date.now() / 1000)) {
+export function signArtworkAccess(input: Omit<ArtworkAccess, 'issuedAt' | 'expiresAt' | 'audience'>, key: string, now = Math.floor(Date.now() / 1000), audience = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '') {
   if (key.length < 32 || !validArtworkPath(input.kind, input.id, input.path)) throw new Error('Invalid artwork access.');
   if ((input.publicSong || input.playlistId) && input.kind !== 'song') throw new Error('Invalid artwork context.');
   if (input.publicPlaylist && input.kind !== 'playlist') throw new Error('Invalid artwork context.');
@@ -49,11 +55,11 @@ export function signArtworkAccess(input: Omit<ArtworkAccess, 'issuedAt' | 'expir
   // Identical image references within a minute reuse a browser-cache key. Every
   // issued capability has at least nine and at most ten minutes remaining.
   const issuedAt = Math.floor(now / 60) * 60;
-  const payload = Buffer.from(JSON.stringify({ ...input, issuedAt, expiresAt: issuedAt + ARTWORK_TTL_SECONDS })).toString('base64url');
+  const payload = Buffer.from(JSON.stringify({ ...input, audience: projectAudience(audience), issuedAt, expiresAt: issuedAt + ARTWORK_TTL_SECONDS })).toString('base64url');
   return `${payload}.${digest(payload, key)}`;
 }
 
-export function readArtworkAccess(token: string | null, key: string, now = Math.floor(Date.now() / 1000), allowExpired = false): ArtworkAccess | null {
+export function readArtworkAccess(token: string | null, key: string, now = Math.floor(Date.now() / 1000), allowExpired = false, audience = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''): ArtworkAccess | null {
   if (!token || token.length > 4096 || key.length < 32) return null;
   const parts = token.split('.');
   if (parts.length !== 2 || !parts.every(part => /^[a-zA-Z0-9_-]+$/.test(part))) return null;
@@ -62,6 +68,7 @@ export function readArtworkAccess(token: string | null, key: string, now = Math.
   if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) return null;
   try {
     const value = JSON.parse(Buffer.from(parts[0], 'base64url').toString()) as ArtworkAccess;
+    if (value.audience !== projectAudience(audience)) return null;
     if (!['song', 'playlist', 'workspace'].includes(value.kind) || typeof value.id !== 'string' || typeof value.path !== 'string') return null;
     if (!validArtworkPath(value.kind, value.id, value.path)) return null;
     if (!Number.isInteger(value.issuedAt) || !Number.isInteger(value.expiresAt) || value.issuedAt > now + 60 || value.expiresAt - value.issuedAt !== ARTWORK_TTL_SECONDS) return null;

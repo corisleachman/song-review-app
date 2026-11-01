@@ -9,7 +9,9 @@ const exports = {};
 new Function('require', 'exports', ts.transpileModule(readFileSync(new URL('../lib/artworkAccess.ts', import.meta.url), 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText)(createRequire(import.meta.url), exports);
-const { signArtworkAccess, readArtworkAccess, artworkStoragePath, validArtworkPath } = exports;
+const { artworkStoragePath, validArtworkPath } = exports;
+const signArtworkAccess = (input, key, now) => exports.signArtworkAccess(input, key, now, 'https://storage.invalid');
+const readArtworkAccess = (token, key, now, allowExpired) => exports.readArtworkAccess(token, key, now, allowExpired, 'https://storage.invalid');
 const key = 'artwork-test-signing-key-with-at-least-32-characters';
 const now = 1800000030;
 const input = { kind: 'song', id: 'song-a', path: 'song-a-123.jpg' };
@@ -61,4 +63,9 @@ test('artwork: rejects ambiguous or resource-inappropriate public context', () =
   assert.throws(() => signArtworkAccess({ ...input, publicSong: true, playlistId: 'list-a' }, key, now));
   assert.throws(() => signArtworkAccess({ ...input, publicPlaylist: true }, key, now));
   assert.throws(() => signArtworkAccess({ kind: 'workspace', id: 'workspace-a', path: 'workspace-images/workspace-a-123.png', publicSong: true }, key, now));
+});
+
+test('artwork: a staging token cannot be replayed against another project even with a shared signing key', () => {
+  const token = signArtworkAccess(input, key, now);
+  assert.equal(exports.readArtworkAccess(token, key, now, false, 'https://other-project.invalid'), null);
 });
