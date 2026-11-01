@@ -9501,3 +9501,11 @@ Fix the PageSpeed Insights results for song-room.live: mobile LCP 7.2 s (score 7
 - Updated `LAUNCH_API_ACCESS_MATRIX.md`, `LAUNCH_SECURITY_REVIEW.md`, `PRODUCT_BACKLOG.md`, `LAUNCH_CHECKLIST.md`: classified 68 API files, recorded actual staging SQL-role evidence, opened B21 and B22 without marking S2 complete.
 - Read-only staging owner probe failed with 42P17 membership-policy recursion; anon saw one public song, zero private songs and three finalized versions. Production metadata has the same self-referential membership SELECT predicate; no authenticated Production probe. No account data, RLS, function, grant, Storage, email or billing mutation occurred.
 - B21 repair needs scoped dependency/permission design and staging verification before any hosted policy change. No migration accompanies this app patch. B22 rollback is the focused application revert/previous deployment, restoring the known false-success response. Next: review B21 repair, then complete staged owner/member/outsider API and Data API cases.
+
+
+## 2026-11-01 - B22 production verification and S2 handoff
+
+- PR #66 exact tested head `a9d598c9` merged as `6e770973`. All four PR checks passed; browser CI 26 passed and 10 skipped. Primary Production `dpl_iwxMHCuc3D5dxh7q6fGmkPHSauc3` READY; live alias exact revision verified.
+- Eight public/signed-out HTTP probes pass, including empty verifier 401/success false/no session cookie. Email remains enabled and Account security off. Bounded deployment error/fatal scan has no matching logs. No valid credentials, real signup, notification or payment submitted.
+- Updated `LAUNCH_CHECKLIST.md`, `PRODUCT_BACKLOG.md`, `LAUNCH_SECURITY_REVIEW.md` and `LAUNCH_API_ACCESS_MATRIX.md`: B22 Production complete; B21 membership RLS recursion remains unresolved and S2 In progress. No migration or hosted configuration change.
+- Previous Production rollback target: `dpl_DSGYU6ifueQ6QhDPhCNGWC6X6euM` / `d8621df2`, or focused application revert, both restoring the false-success verifier response. Next: prepare and verify a narrowly scoped staging policy repair for B21.

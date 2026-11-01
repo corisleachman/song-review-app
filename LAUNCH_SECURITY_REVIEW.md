@@ -74,3 +74,12 @@ The real legacy handler returned 200/success for an empty JSON object when SHARE
 - All 68 API files now have an intended boundary classification in the matrix. These classifications aren't a route-by-method security pass.
 
 S2 remains In progress. No hosted migration, grant or policy change has occurred. The legacy-verifier application patch can roll back through its focused commit/previous deployment; doing so restores the documented false-success behaviour.
+
+
+## B22 production release verified, 1 November 2026
+
+PR #66 merged with exact tested head `a9d598c9` as `6e770973a7e65aee0444d4ef0acca8a4464552b7`. Both Preview builds, Preview Comments and browser CI passed (26 passed, 10 skipped). Protected primary Preview's empty-verifier HTTP probe returned 401/success false with no session cookie.
+
+Production `dpl_iwxMHCuc3D5dxh7q6fGmkPHSauc3` is READY and the live www alias resolves to that exact merge revision. Eight safe HTTP checks passed: homepage/Login/config, signed-out bootstrap/dashboard/admin feedback, empty legacy verifier and unsigned internal notification. Public Email config stays true/false. The deployment-scoped last-ten-minute error/fatal scan returned no matching logs. No password, valid signature, account creation, notification send or payment was submitted.
+
+B22 is Production complete. S2 and B21 remain open. No database migration or service configuration change was needed. Rollback target: previous deployment `dpl_DSGYU6ifueQ6QhDPhCNGWC6X6euM` at `d8621df2`, or focused revert of the application guard; this restores the documented false-success response. No rollback was performed.

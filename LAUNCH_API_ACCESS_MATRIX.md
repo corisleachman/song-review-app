@@ -110,3 +110,8 @@ Stop if fixtures, test destination or expected permissions aren't established. R
 - A separate read-only staging anon-role transaction returned one public song, zero private songs and three versions, all three finalized by a separate privileged aggregate. This is row-count evidence only, not a full column/projection or revocation test.
 - Production policy metadata has the same self-referential membership SELECT structure. No authenticated-role Production execution, policy change or user-data mutation was performed.
 - The recursion blocks a successful member/outsider database matrix. S2 is incomplete; B21 tracks the repair and required tests.
+
+
+## Production signed-out smoke, 1 November 2026
+
+On PR #66 merge revision `6e770973`, unauthenticated bootstrap/dashboard GETs returned 401, admin feedback GET returned 404, unsigned internal notification POST returned 401 and empty legacy verification POST returned 401 with success false and no session cookie. These narrow hosted checks don't constitute owner/member/outsider coverage or an RLS repair.

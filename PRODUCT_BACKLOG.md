@@ -95,7 +95,7 @@ Capture and organise only. These requirements don't authorise implementation or 
 - Dependencies/decisions: review whether clients need own-row or workspace-member visibility; any privileged helper design, migration/rollback and hosted policy change need a focused security review before application. See LAUNCH_SECURITY_REVIEW.md.
 
 ### B22. Legacy password verifier reports success when unconfigured
-- Logged: 2026-11-01. Priority: P2 fail-closed hardening, L5/S2. Status: regression reproduced and local fix/tests pass; hosted release pending.
+- Logged: 2026-11-01. Priority: P2 fail-closed hardening, L5/S2. Status: Production complete. PR #66 merged as `6e770973`; deployment `dpl_iwxMHCuc3D5dxh7q6fGmkPHSauc3` is READY on the live domain. Empty input returns 401/success false without a session cookie; 121 tests and eight production smoke checks pass.
 - Observed/root cause: empty JSON input and absent SHARED_PASSWORD compare undefined === undefined, returning success. This endpoint doesn't create a Supabase session; no session-access bypass demonstrated.
 - Intended outcome: absent/empty configuration or missing/non-string/incorrect input always fails; valid configured legacy input retains its response.
 - Acceptance: test absent/empty configuration, empty/missing/null/non-string input and valid/invalid configured input; verify no session cookie is set; run relevant checks and hosted missing-input smoke.
