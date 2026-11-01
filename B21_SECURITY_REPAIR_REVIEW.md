@@ -1,6 +1,6 @@
 # Membership policy repair: review and rollout
 
-1 November 2026. [Current launch checklist](LAUNCH_CHECKLIST.md). The user approved staging installation. Both migrations are installed and verified on staging; Production is unchanged. The Production gate remains separate.
+1 November 2026. [Current launch checklist](LAUNCH_CHECKLIST.md). The user separately approved staging and Production installation. Both migrations are installed and verified in both environments; PR #67 merged as `a66c24fa`. Broader S2/S3 work remains open.
 
 ## Reviewed design
 
@@ -42,7 +42,7 @@ Supporting files: [first-apply preflight](supabase/tests/membership_rls_prefligh
 - Read-only staging/Production fingerprints match for the six membership policies and bodies of the five public functions. First-apply preflight checks also verify owner/settings and unused private schema; recheck immediately before applying.
 - Local checks: 151 tests pass, including 42 actual-handler tests with mocked I/O. TypeScript and focused lint pass. These are not hosted authenticated API/browser tests.
 
-No permanent advisor improvement is claimed. The original policy failure and five warnings remain until a reviewed migration is installed and checked again.
+The original candidate evidence above is historical. Installed staging and Production results follow below.
 
 ## Approved staging sequence (completed)
 
@@ -61,7 +61,7 @@ Sequence and acceptance criteria:
 
 ## Production gate and rollback
 
-Production remains unchanged. Before any later Production approval, rerun first-apply fingerprints, review staging results, confirm recovery/Google and role scopes, and record the current app/database rollback boundary. Install the same migrations in the same order; repeat safe role/privilege checks and the authenticated app checks. Do not create or delete real users as a smoke test.
+The separately approved Production rollout is complete. All five first-apply drift checks passed immediately before installation. The unchanged reviewed migrations were applied in order, followed by read-only role/privilege and authenticated app checks. No real users were created or deleted.
 
 Rollback scripts are [search paths](supabase/rollback/20261101153157_pin_function_search_paths.sql), then [membership](supabase/rollback/20261101153149_fix_membership_rls_recursion.sql). They were verified inside a rolled-back staging transaction. Rollback restores the known recursion and five warnings, so prefer fix-forward unless a regression makes rollback necessary. It doesn't restore permissive policies, drop tables or delete member data. The private schema drop uses RESTRICT, never CASCADE; stop if later objects depend on it.
 
@@ -76,6 +76,22 @@ An app deployment rollback cannot undo database policies. Don't run hosted confi
 - No audio upload, playback, edit, real invitation/email or billing action occurred. The invitation backend was tested, not a fresh email-link/browser invite journey. All eight Auth users/profiles, seven workspaces and eleven memberships remain; zero test workspaces remain. The checked Preview's ten-minute error/fatal scan is empty.
 - Production's five original preflight checks still pass, confirming that its membership/private-schema/public-function baseline is unchanged.
 
-## Next reviewer decision: Production only
+## Production verification, 1 November 2026
 
-Staging database and scoped browser verification pass. Review the recorded limits, then approve the same two migrations on Production or identify concerns. No Production migration, PR merge or new notification activation has happened under the staging-only approval. S2/S3 include further access/Storage work and aren't overall complete.
+- Sixteen read-only owner/member/outsider/anonymous checks passed against existing identities, with transaction-local roles and claims. Own workspace/membership reads succeeded and unrelated rows stayed hidden. No customer fixtures or membership writes were used.
+- Six installed metadata checks passed. Staging/Production policy, helper, ownership, settings and grant fingerprints match. Private namespace Data API access returns 406/PGRST106. Production Security Advisor has zero ERROR/WARN findings and eight existing INFO notices.
+- Existing signed-in Production session loaded the 25-song owner dashboard, song/version, direct upload title and collaborators. The switcher displayed only its authorised current workspace; actual multi-workspace switching was verified on staging, not Production.
+- Eight signed-out HTTP probes passed. Email remains enabled and Account security remains off. Bounded live error/fatal scan found no matching logs. No fresh login/recovery email, audio upload, playback, invitation, plan change or payment was performed.
+- Production counts remain seven users, seven profiles, seven workspaces and ten memberships. This is the rollout baseline, not the older October snapshot.
+- Previous app deployment: `dpl_2pgxJRR9nzXC2qH2Kv8SmFSag4Ak` at `1fb97802`. Application rollback cannot undo these database changes. Use the reviewed reverse-order SQL rollback only if required; it restores the known defect/warnings.
+
+## Migration history mapping
+
+Supabase MCP assigned timestamps at application time. SQL bytes are identical across environments, but ledger versions differ:
+
+| Migration | Repository / staging ledger | Production ledger |
+| --- | --- | --- |
+| fix_membership_rls_recursion | 20261101153149 | 20261101160651 |
+| pin_function_search_paths | 20261101153157 | 20261101160657 |
+
+Before any future CLI database push, compare the target ledger with this map and stop on unmatched versions. Do not blindly replay these files or silently repair hosted history. Repository filenames remain aligned with staging; no hosted ledger was rewritten. Both SQL files are already installed in Production.

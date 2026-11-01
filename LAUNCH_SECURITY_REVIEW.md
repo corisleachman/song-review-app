@@ -103,3 +103,8 @@ Installed definitions were inspected before tests. The composer now supports `--
 The existing Google session completed Vercel protection and staging login. The checked source `c4652810` Preview points to staging; workspace switching, four-song library, song/version reads, direct upload-page title and collaborator list passed in browser. No new account, audio, comment, real invitation email or paid action occurred. Invitation backend/idempotency was verified in rolled-back fixtures; a fresh invitation-email/browser journey wasn't replayed. Snapshot remained eight users/profiles, seven workspaces, eleven memberships and zero test workspaces. The bounded Preview error/fatal log scan was empty.
 
 Production preflight still returns its five original true baseline checks; it was not migrated. Staging is verified for this repair; S2/S3 remain in progress and Production needs its own approval. See B21_SECURITY_REPAIR_REVIEW.md for rollout/rollback order and remaining limits.
+
+
+## Approved Production repair, 1 November 2026
+
+B21 and the five function search-path fixes are installed and verified on Production after separate user approval. Sixteen read-only role checks, six metadata checks, private-schema Data API exclusion and eight public HTTP probes pass. Scoped signed-in dashboard/song/version/upload-title/collaborator checks pass. Both environments have zero Security Advisor errors/warnings. PR #67 merged as `a66c24fa`. Earlier pending statements are historical; broader S2/S3 access and Storage checks remain open. See [rollout evidence and cross-environment migration ledger mapping](B21_SECURITY_REPAIR_REVIEW.md#production-verification-1-november-2026).

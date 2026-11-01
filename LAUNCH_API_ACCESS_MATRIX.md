@@ -126,3 +126,8 @@ B21/S3 SQL candidates passed 34 actual staging role/function checks inside trans
 ## Installed staging repair checks, 1 November 2026
 
 Following explicit staging approval, both reviewed migrations are installed. The installed-mode probe passed 34 role/function checks without reapplying DDL; six further rolled-back invitation acceptance/idempotency checks passed. Authenticated browser checks passed for switching between existing member/owner workspaces, dashboard songs, song/version reads, the direct upload-title read and collaborator listing. No new invitation email/browser acceptance was replayed. This scoped gate doesn't replace all route-by-method owner/member/outsider API tests. Production remains on its original policies.
+
+
+## Approved Production repair, 1 November 2026
+
+B21 and the five function search-path fixes are installed and verified on Production after separate user approval. Sixteen read-only role checks, six metadata checks, private-schema Data API exclusion and eight public HTTP probes pass. Scoped signed-in dashboard/song/version/upload-title/collaborator checks pass. Both environments have zero Security Advisor errors/warnings. PR #67 merged as `a66c24fa`. Earlier pending statements are historical; broader S2/S3 access and Storage checks remain open. See [rollout evidence and cross-environment migration ledger mapping](B21_SECURITY_REPAIR_REVIEW.md#production-verification-1-november-2026).
