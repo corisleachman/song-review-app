@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { withVersionDisplayName } from '@/lib/versionDisplay';
+import { audioDeliveryUrl } from '@/lib/mediaDelivery';
 
 export const dynamic = 'force-dynamic';
-
-function normalizeStoragePath(value: string | null | undefined) {
-  const trimmed = value?.trim() ?? '';
-  const prefix = 'song-files/';
-  return trimmed.startsWith(prefix) ? trimmed.slice(prefix.length) : trimmed;
-}
 
 function isMissingUploadFinalizedColumn(error: unknown) {
   if (!error || typeof error !== 'object') return false;
@@ -92,15 +87,7 @@ export async function GET(_req: NextRequest, props: { params: Promise<{ songId: 
       return NextResponse.json({ error: 'No versions available' }, { status: 404 });
     }
 
-    // Resolve audio URL
-    let audioUrl: string | null = null;
-    if (version.file_path) {
-      const normalized = normalizeStoragePath(version.file_path);
-      const { data: publicAudio } = supabaseServer.storage
-        .from('song-files')
-        .getPublicUrl(normalized);
-      audioUrl = publicAudio?.publicUrl ?? null;
-    }
+    const audioUrl = version.file_path ? audioDeliveryUrl(version.id, { songId }) : null;
 
     return NextResponse.json(
       {

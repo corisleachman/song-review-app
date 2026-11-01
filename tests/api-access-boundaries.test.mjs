@@ -11,7 +11,7 @@ const require = createRequire(import.meta.url);
 
 // Execute the real handler, replacing only framework/I/O boundaries. This
 // checks runtime decisions; it is not a Supabase, cookie or hosted HTTP test.
-function routeHarness(route, { identity = null, user = null, tables = {} } = {}) {
+function routeHarness(route, { identity = null, user = null, tables = {}, storage = null } = {}) {
   const reads = [];
   const writes = [];
   let notifications = 0;
@@ -30,6 +30,8 @@ function routeHarness(route, { identity = null, user = null, tables = {} } = {})
           predicates.push(row => row[key] !== value); return query;
         },
         order() { return query; },
+        range() { return query; },
+        returns() { return query; },
         limit() { return query; },
         maybeSingle() { single = true; return query; },
         single() { single = true; return query; },
@@ -43,7 +45,7 @@ function routeHarness(route, { identity = null, user = null, tables = {} } = {})
       };
       return query;
     },
-    storage: { from() { throw new Error('Unexpected access to audio/storage'); } },
+    storage: storage ?? { from() { throw new Error('Unexpected access to audio/storage'); } },
   };
   const stubs = {
     'next/server': { NextResponse: { json: (body, init) => Response.json(body, init) } },
@@ -238,3 +240,127 @@ for (const [route, methods] of [
     });
   }
 }
+
+
+const mediaRoute = 'app/api/media/audio/[versionId]/route.ts';
+const finalizedVersion = { id: 'version-a', song_id: 'song-a', version_number: 2, file_path: 'song-files/songs/song-a/uploads/audio.mp3', upload_finalized_at: '2026-11-01' };
+function mediaHarness({ identity = session('member'), publicSong = false, version = finalizedVersion, playlistPublic = true, entry = true, signingError = false, latest = version } = {}) {
+  const signs = [];
+  const h = routeHarness(mediaRoute, {
+    identity,
+    tables: {
+      songs: [{ ...song, is_public: publicSong }],
+      song_versions: latest.id === version.id ? [version] : [latest, version],
+      playlists: [{ id: 'playlist-a', account_id: 'workspace-a', is_public: playlistPublic }],
+      playlist_songs: entry ? [{ playlist_id: 'playlist-a', song_id: 'song-a' }] : [],
+    },
+    storage: { from(bucket) { return { async createSignedUrl(path, seconds) {
+      signs.push({ bucket, path, seconds });
+      return signingError ? { data: null, error: new Error('SECRET-PROVIDER-URL') }
+        : { data: { signedUrl: 'https://storage.invalid/signed?token=SECRET-TOKEN' }, error: null };
+    } }; } },
+  });
+  return { ...h, signs };
+}
+function mediaRequest(query = '') {
+  const request = new Request(`https://staging.invalid/api/media/audio/version-a${query}`);
+  request.nextUrl = new URL(request.url);
+  return request;
+}
+for (const role of ['owner', 'member']) {
+  test(`media: ${role} gets uncached ten-minute access without proxying audio`, async () => {
+    const h = mediaHarness({ identity: session(role) });
+    const response = await h.handler.GET(mediaRequest(), params({ versionId: 'version-a' }));
+    assert.equal(response.status, 307);
+    assert.match(response.headers.get('cache-control'), /private.*no-store/);
+    assert.equal(response.headers.get('referrer-policy'), 'no-referrer');
+    assert.equal(response.headers.get('location'), 'https://storage.invalid/signed?token=SECRET-TOKEN');
+    assert.equal(await response.text(), '');
+    assert.deepEqual(h.signs, [{ bucket: 'song-files', path: 'songs/song-a/uploads/audio.mp3', seconds: 600 }]);
+  });
+}
+for (const [name, options, query, status] of [
+  ['signed out', { identity: null }, '', 401],
+  ['outsider', { identity: { identity: { workspaceId: 'other' } } }, '', 404],
+  ['private public-song context', { identity: null }, '?song=song-a', 404],
+  ['mismatched public-song context', { identity: null, publicSong: true }, '?song=other', 404],
+  ['revoked playlist', { identity: null, playlistPublic: false }, '?playlist=playlist-a', 404],
+  ['removed playlist entry', { identity: null, entry: false }, '?playlist=playlist-a', 404],
+  ['ambiguous context', { publicSong: true }, '?song=song-a&playlist=playlist-a', 404],
+  ['empty public context', {}, '?song=', 404],
+  ['pending upload', { version: { ...finalizedVersion, upload_finalized_at: null } }, '', 404],
+  ['public history', { identity: null, publicSong: true, latest: { ...finalizedVersion, id: 'newer' } }, '?song=song-a', 404],
+]) {
+  test(`media: denies ${name} before signing`, async () => {
+    const h = mediaHarness(options);
+    const response = await h.handler.GET(mediaRequest(query), params({ versionId: 'version-a' }));
+    assert.equal(response.status, status);
+    assert.equal(response.headers.get('location'), null);
+    assert.equal(h.signs.length, 0);
+    assert.doesNotMatch(await response.text(), /audio.mp3|SECRET/);
+  });
+}
+for (const query of ['?song=song-a', '?playlist=playlist-a']) {
+  test(`media: permits intended anonymous public context ${query}`, async () => {
+    const h = mediaHarness({ identity: null, publicSong: true });
+    const response = await h.handler.HEAD(mediaRequest(query), params({ versionId: 'version-a' }));
+    assert.equal(response.status, 307);
+    assert.equal(h.signs.length, 1);
+  });
+}
+test('media: public playlist can intentionally share a private song in its own workspace', async () => {
+  const h = mediaHarness({ identity: null });
+  const response = await h.handler.GET(mediaRequest('?playlist=playlist-a'), params({ versionId: 'version-a' }));
+  assert.equal(response.status, 307);
+});
+for (const file_path of ['../audio.mp3', 'folder/../audio.mp3', 'https://other.invalid/file', '/file', 'folder\\file', 'file?token=x', 'file#fragment', '', 'songs/other-song/uploads/file.mp3', 'songs/song-a/%2e%2e/file.mp3']) {
+  test(`media: refuses malformed storage reference ${JSON.stringify(file_path)}`, async () => {
+    const h = mediaHarness({ version: { ...finalizedVersion, file_path } });
+    const response = await h.handler.GET(mediaRequest(), params({ versionId: 'version-a' }));
+    assert.equal(response.status, 404);
+    assert.equal(h.signs.length, 0);
+  });
+}
+test('media: signing failure has safe uncached error', async () => {
+  const h = mediaHarness({ signingError: true });
+  const response = await h.handler.GET(mediaRequest(), params({ versionId: 'version-a' }));
+  assert.equal(response.status, 503);
+  assert.match(response.headers.get('cache-control'), /no-store/);
+  assert.doesNotMatch(await response.text(), /SECRET/);
+});
+test('media: each request renews access without changing the player source', async () => {
+  const h = mediaHarness();
+  for (let i = 0; i < 2; i++) assert.equal((await h.handler.GET(mediaRequest(), params({ versionId: 'version-a' }))).status, 307);
+  assert.equal(h.signs.length, 2);
+});
+
+
+test('version API returns stable media access URL after workspace and object checks', async () => {
+  const h = routeHarness('app/api/versions/[versionId]/route.ts', {
+    identity: session('member'), tables: { songs: [song], song_versions: [finalizedVersion] },
+    storage: { from() { return { list: async () => ({ data: [{ name: 'audio.mp3' }], error: null }) }; } },
+  });
+  const response = await h.handler.GET(getRequest(), params({ versionId: 'version-a' }));
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).version.audioUrl, '/api/media/audio/version-a');
+});
+test('public song API returns song-scoped media URL, never a permanent Storage URL', async () => {
+  const h = routeHarness('app/api/public/song/[songId]/route.ts', {
+    tables: { songs: [{ ...song, is_public: true }], song_versions: [finalizedVersion], accounts: [] },
+  });
+  const response = await h.handler.GET(getRequest(), params({ songId: 'song-a' }));
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).version.audioUrl, '/api/media/audio/version-a?song=song-a');
+});
+test('public playlist API returns playlist-scoped stable media URLs', async () => {
+  const h = routeHarness('app/api/public/playlist/[id]/route.ts', {
+    tables: {
+      songs: [song], song_versions: [finalizedVersion], accounts: [],
+      playlists: [{ id: 'playlist-a', account_id: 'workspace-a', is_public: true }],
+      playlist_songs: [{ playlist_id: 'playlist-a', song_id: 'song-a', position: 0 }],
+    },
+  });
+  const response = await h.handler.GET(getRequest(), params({ id: 'playlist-a' }));
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).tracks[0].audioUrl, '/api/media/audio/version-a?playlist=playlist-a');
+});
