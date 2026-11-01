@@ -64,7 +64,16 @@ async function preparePlayer(page, fallback, renewal = false) {
         waveformFailures++;
         return route.abort('failed');
       }
-      return route.fulfill({ status: 200, contentType: 'audio/wav', body: silentWav(renewal ? 12 : 4) });
+      const body = silentWav(renewal ? 12 : 4);
+      const range = /^bytes=(\d+)-(\d*)$/.exec(request.headers().range || '');
+      const headers = { 'accept-ranges': 'bytes', 'cache-control': 'no-store' };
+      if (range) {
+        const start = Number(range[1]);
+        const end = Math.min(range[2] ? Number(range[2]) : body.length - 1, body.length - 1);
+        if (start > end) return route.fulfill({ status: 416, headers: { ...headers, 'content-range': `bytes */${body.length}` } });
+        return route.fulfill({ status: 206, contentType: 'audio/wav', headers: { ...headers, 'content-range': `bytes ${start}-${end}/${body.length}` }, body: body.subarray(start, end + 1) });
+      }
+      return route.fulfill({ status: 200, contentType: 'audio/wav', headers, body });
     }
     if (url.pathname.startsWith('/api/')) {
       if (!(url.pathname in payloads)) unexpectedRequests.push(url.pathname);
@@ -82,6 +91,8 @@ async function mediaState(page) {
     const audio = window.playerTestMedia.at(-1);
     return audio ? {
       time: audio.currentTime, paused: audio.paused, loop: audio.loop,
+      duration: audio.duration, readyState: audio.readyState,
+      seekableEnd: audio.seekable.length ? audio.seekable.end(audio.seekable.length - 1) : 0,
       activePlayers: window.playerTestMedia.filter(media => !media.paused).length,
     } : null;
   });
@@ -167,6 +178,10 @@ test('native media resume reauthorises once without losing position or loop stat
   await page.getByRole('button', { name: 'Loop Song', exact: true }).click();
   await page.getByRole('button', { name: 'Play from Start', exact: true }).click();
   await expect.poll(async () => (await mediaState(page))?.paused).toBe(false);
+  await expect.poll(async () => {
+    const state = await mediaState(page);
+    return state && state.readyState >= 2 && state.duration > 3 && state.seekableEnd > 3;
+  }).toBe(true);
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
   await seekAudio(page, 2);
   const before = await mediaState(page);
