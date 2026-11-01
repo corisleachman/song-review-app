@@ -55,7 +55,7 @@ Run [read-only metadata inventory](supabase/tests/storage_access_inventory.sql) 
 
 ## Audio preparation checkpoint, 1 November 2026
 
-Local candidate only; no bucket or Production app change. `lib/mediaDelivery.ts` builds stable player URLs and validates storage references. The new audio GET/HEAD route checks canonical workspace identity or the explicitly requested public song/playlist context before returning an uncached 307 to a 600-second Storage URL. Public contexts permit only the latest finalized version; members retain private version-history access. Paths must belong to the authorised song. Public playlists retain their existing ability to share private songs from the same workspace.
+Candidate pushed in draft [PR #68](https://github.com/corisleachman/song-review-app/pull/68), head `eb262bee`; no bucket or Production app change. `lib/mediaDelivery.ts` builds stable player URLs and validates storage references. The new audio GET/HEAD route checks canonical workspace identity or the explicitly requested public song/playlist context before returning an uncached 307 to a 600-second Storage URL. Public contexts permit only the latest finalized version; members retain private version-history access. Paths must belong to the authorised song. Public playlists retain their existing ability to share private songs from the same workspace.
 
 Version, public song and public playlist APIs now return stable app URLs. No timer changes the active media source and no audio bytes proxy through application Functions. Browser handling of expired final redirects, seeking and resume must still be tested; local tests do not prove seamless renewal.
 

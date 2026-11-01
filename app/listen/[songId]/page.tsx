@@ -466,7 +466,7 @@ function ListenPageInner() {
       height: 80,
       normalize: true,
       interact: true,
-      fetchParams: { credentials: 'omit' },
+      fetchParams: { credentials: 'same-origin' },
     });
 
     const internalAudio = (ws as any).getMediaElement?.() ?? null;

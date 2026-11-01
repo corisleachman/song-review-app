@@ -34,7 +34,7 @@ Done means the named scope has recorded evidence, not that every future improvem
 
 Performance is the user's main MVP concern. B17-B19 are queued as the leading L6 workstream; capture does not interrupt the current L5 task. B06 six-month Free-to-Pro beta grants have confirmed product rules; implementation and expiry/billing boundary tests remain open.
 
-Next action: confirm existing protected staging configuration, verify the B23 audio candidate there, and finish artwork/cache support before any private-bucket cutover. Continue remaining S2 access checks alongside it. B21 and the five function search-path fixes are Production complete; the broader security stage remains open.
+Next action: confirm existing protected staging configuration, verify the [PR #68 audio candidate](https://github.com/corisleachman/song-review-app/pull/68) there, and finish artwork/cache support before any private-bucket cutover. Continue remaining S2 access checks alongside it. B21 and the five function search-path fixes are Production complete; the broader security stage remains open.
 
 ## L6 acceptance checklist
 

@@ -9553,3 +9553,12 @@ Fix the PageSpeed Insights results for song-room.live: mobile LCP 7.2 s (score 7
 - Expanded tests/api-access-boundaries.test.mjs by 30 actual-handler cases. All 181 tests, TypeScript, focused lint and production build pass. Build used non-secret placeholders; generated blog injection changes restored/excluded.
 - Read-only inventory: 21/21 staging and 48/48 Production version paths are song-scoped. Audio metadata no-cache in both environments; images max-age=3600. CDN may serve signed responses beyond token expiry, so actual expiry/cache and phone playback remain unverified. No bucket, object, user, billing or hosted environment change.
 - Updated STORAGE_ACCESS_REVIEW.md, PRODUCT_BACKLOG.md, LAUNCH_CHECKLIST.md and LAUNCH_API_ACCESS_MATRIX.md with decision, scoped status, exact hosted/manual gate and limits. Vercel metadata read returned 403; CLI fallback supplied empty Supabase values. No usable staging configuration substituted or permissions widened; temporary pull file removed. B23/L5 remain open.
+
+- Publication: audio candidate pushed as eb262bee to draft PR #68. Current launch records published separately without merging application code. No Production media release or bucket cutover.
+
+
+## 2026-11-01 - Staging audio route verified; waveform credential fix
+
+- Verified PR #68 eb262bee Preview dpl_FTBinSWi9itgkkd5mYcxstFHQTCZ is Ready; all four checks pass. Client bundle has staging project ref only. Server public song returns expected staging version/stable URL; audio issues staging signed redirect, signed-out private access returns 401, wrong public context returns 404. Signed Storage HEAD returns 200/private no-cache; one-byte Range returns 206. No hosted setting changed.
+- Browser comparison found public waveform fetch credentials omitted Vercel protection cookies on the new app media URL. Candidate fell back to native playback with an error while baseline played normally. Changed app/listen/[songId]/page.tsx and lib/usePlaylistPlayer.ts to same-origin fetch credentials; cookies remain omitted on cross-origin Storage requests. This specific regression needs a fresh Preview/browser retest.
+- Earlier configuration blocker is superseded: deployed candidate is usable without reading env values. Connector env-list 403 remains unexplained; empty CLI pulls were not proof that deployment settings were absent. No permission change needed. Expiry, authenticated matrix, artwork and private-bucket cutover remain open.
