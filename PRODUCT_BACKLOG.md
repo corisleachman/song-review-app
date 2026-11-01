@@ -76,12 +76,12 @@ Capture and organise only. These requirements don't authorise implementation or 
 - Implementation inspected: `lib/threadNotifications.ts` handles thread/comment email and existing `all_members` / `owner_only` recipient policy. No explicit new-version notification dispatch was found in the inspected `versions/create` and `versions/[versionId]/finalize` routes. Thread notifications alone aren't proof of upload notifications; inspect indirect jobs/hooks and delivered-message evidence before deciding a feature is missing.
 - Acceptance criteria:
   - Trace a controlled successfully finalized new version from uploader through any event/job/provider to the intended other workspace members; verify delivery evidence and a link to the correct song/version.
-  - Exclude the uploader and unrelated workspaces; confirm intended handling of existing notification settings and recipient eligibility.
+  - Notify every member of the workspace under the confirmed 1 November requirement, including the uploader under the literal all-members rule; exclude unrelated workspaces. New-version alerts must not be restricted by the existing owner-only comment-notification setting. Preserve that setting for unrelated comment notifications.
   - No misleading notification for failed/cancelled uploads, and retries/repeated finalization don't generate duplicate messages.
   - Record recipient selection, whether a send was attempted, delivery/failure outcome and safe diagnostics without exposing tokens or private song content in logs.
   - If already working, record the tested evidence; don't replace it or mark complete based only on a code path.
 - Dependencies: Existing workspace membership/notification policy, upload finalization, provider configuration and a controlled multi-member test with authorised test email delivery. No real email send is part of this capture task.
-- Decisions still needed: If current settings limit recipients, should new-version alerts honour that policy or deliberately notify all other participants? Confirm channel if the existing email pattern doesn't meet the need; don't add push/in-app channels by assumption.
+- Confirmed decision (2026-11-01): Version-upload alerts notify every workspace member, rather than applying an owner-only recipient policy. Keep the existing email delivery approach in scope; no new push/in-app channel requested. Delivery remains untested and the item remains open.
 
 
 ## Bugs
@@ -360,18 +360,22 @@ Capture and organise only. These requirements don't authorise implementation or 
 - Acceptance criteria:
   - Only the explicitly authorised application owner can read the directory, receive owner-only signup data or grant Pro. Enforce the boundary on every server read/mutation; test signed-out and ordinary workspace-owner/member denial. Existing ADMIN_EMAILS behaviour must be reconciled with the requested owner-only scope.
   - Show enough information to identify/search users, signup date and current effective access/plan; pagination/search should avoid an unnecessarily heavy all-users load. Keep the interface simple.
-  - Notify the owner once per genuine new signup at the agreed signup milestone; existing login, bootstrap retries and invite acceptance must not create duplicate signup alerts.
+  - Notify `corisleachman@googlemail.com` once per genuinely new account creation, across every signup tier; existing login, bootstrap retries and invite acceptance must not create duplicate signup alerts.
   - Require an unambiguous target workspace and apply the agreed promotional entitlement so all intended Pro features/limits and account/settings displays agree.
   - Show successful completion and visible actionable errors. Record grantor, recipient, target workspace, time, grant scope/duration and outcome in an audit trail.
   - Repeated clicks/retries create neither duplicate grants nor duplicate recipient notifications. Partial notification failure must leave entitlement state clear and permit a safe retry without granting twice.
   - The recipient receives one upgrade notification with clear wording reflecting actual grant duration and any expiry. Delivery outcome is inspectable. Final outward-facing copy uses write-like-coris.
   - No charge, checkout or new paid subscription is created by a promotional grant. Existing paid subscriptions, renewal/cancellation and Stripe webhook reconciliation remain correct; a webhook must not accidentally erase or extend a grant.
-- Dependencies: Owner identity/authorisation decision, existing admin gate, workspace entitlement source of truth, subscription reconciliation, idempotent grant/notification records, delivery configuration and S2 negative-access tests. Any later schema or billing-boundary change needs a scoped reviewed implementation; none is performed now.
-- Decisions required before implementation:
-  1. Current plans attach to workspaces. Confirm which owned workspace a selected beta tester receives Pro on, and how to handle a member who doesn't own a workspace; don't introduce personal Pro implicitly.
-  2. Are grants permanent or time-limited? If limited, specify duration/start/expiry behaviour while preserving stored data.
-  3. How should a grant interact with an existing paid Pro/Studio subscription: refuse, defer or another explicit policy? No automatic cancellation/refund/charge change is authorised.
-  4. Which application-owner identity is authorised, and where should signup alerts go? Define new signup as Auth creation, confirmed registration or completed workspace onboarding, and agree notification channel. Reuse established delivery where appropriate; don't silently pick the milestone.
+- Dependencies: Existing owner-only admin gate, workspace entitlement source of truth, subscription reconciliation, idempotent grant/notification records, delivery configuration and S2 negative-access tests. Any later schema or billing-boundary change needs a scoped reviewed implementation; none is performed now.
+- Confirmed user decisions (2026-11-01):
+  - Beta testers first sign up on Free, then message Coris outside the app. Coris manually selects them in the admin area and converts their Free workspace to promotional Pro. No automatic grant, messaging integration or code-redemption requirement.
+  - Grants last six months from the grant action. Record the start and explicit expiry and show both in the admin confirmation and recipient notification. No permanent grant or charge is implied.
+  - This grant flow is for beta users starting from Free. Paid Pro/Studio subscriptions are ineligible for this action and must remain unchanged; don't cancel, refund or modify them. Re-check eligibility server-side at grant time.
+  - Application owner and signup-alert recipient: `corisleachman@googlemail.com`. Alert on new account creation for any tier, not only Free. Existing login/retry activity must not generate a new-account alert. Capture the requested tier separately from effective Free bootstrap state so paid-intent registrations aren't missed.
+- Remaining implementation details to resolve in the scoped design, not new features:
+  - Map new account creation to the canonical lifecycle once, covering Google/Email and tier-aware entry without duplicate alerts. Account creation is the confirmed milestone; don't silently substitute each sign-in, payment or verification retry.
+  - Plans remain workspace-scoped. Require an explicit target owned Free workspace; if several are available, select one rather than granting every membership. Don't grant a workspace the beta user merely belongs to, or create a new personal entitlement model.
+  - Specify expiry scheduling, the safe over-limit state after expiry, and precedence if the tester purchases a paid subscription during the six months. Preserve data and valid paid access, never auto-charge, and don't let duplicate clicks renew/extend the six-month period unintentionally. Implementation and tests must settle these boundaries before release.
 - Existing redemption-code assignment remains a separate later part of the original console idea. It isn't required for this simple button flow. No broader administration system is requested.
 
 ---

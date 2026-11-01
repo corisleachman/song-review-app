@@ -9485,3 +9485,10 @@ Fix the PageSpeed Insights results for song-room.live: mobile LCP 7.2 s (score 7
 - Confirmed existing plans are workspace-scoped. Grant duration, paid-subscription interaction, target-workspace policy and owner signup-alert identity/channel/milestone remain decisions. Feedback reward eligibility isn't a Pro grant.
 - Continued S2 in `LAUNCH_API_ACCESS_MATRIX.md` and `LAUNCH_SECURITY_REVIEW.md`: sampled dashboard/song/version reads, admin feedback GET/PATCH, signed internal notifications and local plan switching; added staging negative-access order. These are code observations, not executed staging tests.
 - Documentation-only change; no account, schema, service configuration, notification send, grant or billing mutation. No migrations required. Rollback is the focused documentation revert. Relevant checks and publication recorded with the resulting PR. Next: complete S2 staging fixture/destination verification and the route-by-method access checks.
+
+
+## 2026-11-01 - Record beta-grant and notification decisions
+
+- Updated `PRODUCT_BACKLOG.md` B06 and B20 and their `LAUNCH_CHECKLIST.md` rows/checkpoint. Beta testers start Free and contact Coris; Coris manually grants six months of Pro. Existing paid subscriptions are excluded. New-account alerts go to corisleachman@googlemail.com for all signup tiers. Version-upload alerts go to every workspace member; the latest all-members wording includes the uploader and supersedes the earlier exclusion criterion.
+- Kept workspace targeting explicit and expiry/over-limit/paid-upgrade reconciliation as implementation details requiring design and tests. No automatic grant, payment, notification send or service configuration change. Features remain open and untested.
+- Documentation-only verification: unique item/checklist rows, local links and whitespace checked. No application code changed, so no runtime behaviour or timing result is claimed. Existing L5 security stage remains in progress. No migration required; rollback is this focused documentation revert.
