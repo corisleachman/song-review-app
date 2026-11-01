@@ -26,7 +26,7 @@ Done means the named scope has recorded evidence, not that every future improvem
 | --- | --- | --- | --- | --- |
 | S1 | Establish current security baseline | Done | Read-only production inventory: RLS on all 24 public tables; advisor has zero ERROR findings, five WARN findings and eight INFO findings. [Review record](LAUNCH_SECURITY_REVIEW.md) | Agent |
 | S2 | Cross-workspace API and direct-database access | In progress | Canonical identity, thread path and eight dashboard/song/admin/internal route samples inspected; 42 local handler tests pass; B21 candidate passes 34 rolled-back staging SQL checks. Permanent install and hosted authenticated API checks await review. [Inventory of all 68 API route files](LAUNCH_API_ACCESS_MATRIX.md) created; exercise owner/member/outsider/public boundaries on staging. RLS enabled alone isn't a pass | Agent |
-| S3 | Database function and policy review | In progress | Five search-path fixes and B21 migration prepared; 34 transaction-only checks pass. [Review package](B21_SECURITY_REPAIR_REVIEW.md). No permanent policy change; views/Storage review remains | Agent |
+| S3 | Database function and policy review | In progress | Five search-path fixes and B21 migration prepared; 34 transaction-only checks pass. [Review package](https://github.com/corisleachman/song-review-app/pull/67). No permanent policy change; views/Storage review remains | Agent |
 | S4 | Abuse protection coverage | In progress | Email login limiter, Turnstile and feedback throttle exist. Invite/comment/bootstrap coverage still needs explicit decisions and tests | Agent |
 | S5 | Input validation and safe errors | Not started | Audit mutation inputs, size/type limits, numeric bounds and error responses. Upload validation already has regression coverage | Agent |
 | S6 | Secret handling and log safety | Not started | Recheck variable classification/scopes without exposing values; inventory logging and confirm redaction. Earlier Config-vs-Secret concern is unverified, not a proven leak | Agent |
@@ -34,7 +34,7 @@ Done means the named scope has recorded evidence, not that every future improvem
 
 Performance is the user's main MVP concern. B17-B19 are queued as the leading L6 workstream; capture does not interrupt the current L5 task. B06 six-month Free-to-Pro beta grants have confirmed product rules; implementation and expiry/billing boundary tests remain open.
 
-Next action: [review the B21/S3 package](B21_SECURITY_REPAIR_REVIEW.md) and approve staging-only installation. Candidate verification is transaction-only; continue hosted API/Data API checks after install. B22 is already Production complete. Don't broaden permissions or change production account boundaries as part of this review.
+Next action: [review the B21/S3 package](https://github.com/corisleachman/song-review-app/pull/67) and approve staging-only installation. Candidate verification is transaction-only; continue hosted API/Data API checks after install. B22 is already Production complete. Don't broaden permissions or change production account boundaries as part of this review.
 
 ## L6 acceptance checklist
 
