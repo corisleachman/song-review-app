@@ -1,3 +1,4 @@
+import { artworkDeliveryUrl } from '@/lib/artworkAccess';
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { resolvePlaylistAccess } from '@/lib/playlistAccess';
@@ -54,7 +55,7 @@ export async function GET(_req: NextRequest, props: { params: Promise<{ id: stri
     const plan = normalizeAccountPlan(account?.plan);
 
     return NextResponse.json({
-      playlist: { id: access.playlist.id, title: access.playlist.title, is_public: access.playlist.is_public, image_url: access.playlist.image_url },
+      playlist: { id: access.playlist.id, title: access.playlist.title, is_public: access.playlist.is_public, image_url: artworkDeliveryUrl('playlist', access.playlist.id, access.playlist.image_url) },
       songs, available, plan,
     });
   } catch (err) {

@@ -1,3 +1,4 @@
+import { artworkDeliveryUrl } from '@/lib/artworkAccess';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { isSongStatus } from '@/lib/songWorkflow';
@@ -91,7 +92,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ songId: s
     const { account_id: _accountId, ...song } = data;
 
     return NextResponse.json(
-      { song },
+      { song: { ...song, image_url: artworkDeliveryUrl('song', song.id, song.image_url) } },
       {
         status: 200,
         headers: {

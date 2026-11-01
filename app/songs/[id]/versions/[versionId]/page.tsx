@@ -1,5 +1,7 @@
 'use client';
 
+import { resumeNativeAudio } from '@/lib/resumeNativeAudio';
+
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
@@ -337,7 +339,7 @@ function validateAudioFile(file: File) {
   if (validation.reason === 'invalid_size') return 'That audio file is empty.';
 
   if (validation.reason === 'too_large') {
-    return 'That file is too large for the current upload flow. Try a file under 200 MB.';
+    return 'Choose an audio file no larger than 50 MB.';
   }
 
   return null;
@@ -1071,6 +1073,7 @@ function VersionPageInner() {
     if (!audio) {
       audio = new Audio();
       audio.preload = 'metadata';
+      audio.crossOrigin = 'anonymous';
       nativeAudioRef.current = audio;
     }
 
@@ -1110,11 +1113,11 @@ function VersionPageInner() {
       audio.load();
     }
 
-    await audio.play();
+    await resumeNativeAudio(audio, { isCurrent: () => loadId === waveLoadIdRef.current });
   }, [attachNativeAudioEvents, clearWaveTimers]);
 
   const reportPlaybackFailure = useCallback((error: unknown, loadId: number) => {
-    if (loadId !== waveLoadIdRef.current) return;
+    if (loadId !== waveLoadIdRef.current || (error instanceof Error && error.name === 'AbortError')) return;
     playRequestedRef.current = false;
     setIsPlaying(false);
     setWaveErr(error instanceof Error ? error.message : 'Playback could not start. Press Play to try again.');
@@ -1129,7 +1132,8 @@ function VersionPageInner() {
       setIsPlaying(audio.paused);
       if (audio.paused) {
         setWaveErr(null);
-        void audio.play().catch(error => reportPlaybackFailure(error, loadId));
+        void resumeNativeAudio(audio, { isCurrent: () => loadId === waveLoadIdRef.current })
+          .catch(error => reportPlaybackFailure(error, loadId));
       } else {
         audio.pause();
       }
@@ -1170,7 +1174,8 @@ function VersionPageInner() {
     if (nativeAudioFallbackRef.current && audio) {
       audio.currentTime = 0;
       setCurrentTime(0);
-      void audio.play().catch(error => reportPlaybackFailure(error, loadId));
+      void resumeNativeAudio(audio, { isCurrent: () => loadId === waveLoadIdRef.current })
+          .catch(error => reportPlaybackFailure(error, loadId));
     } else if (ws) {
       ws.setTime(0);
       setCurrentTime(0);
@@ -3730,7 +3735,7 @@ function VersionPageInner() {
               rows={3}
               disabled={uploadingVersion}
             />
-            <p id="upload-version-dialog-help" className={styles.uploadHelp}>Uploads under 200 MB work best in the current flow.</p>
+            <p id="upload-version-dialog-help" className={styles.uploadHelp}>Maximum file size: 50 MB.</p>
             {uploadingVersion && (
               <div>
                 <div className={styles.progressWrap}>

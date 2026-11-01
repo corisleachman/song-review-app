@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
 
 // Silent PCM audio exercises real browser playback without hosted media or accounts.
-function silentWav() {
-  const samples = 16000 * 4;
+function silentWav(seconds = 4) {
+  const samples = 16000 * seconds;
   const wav = Buffer.alloc(44 + samples * 2);
   wav.write('RIFF'); wav.writeUInt32LE(wav.length - 8, 4); wav.write('WAVE', 8);
   wav.write('fmt ', 12); wav.writeUInt32LE(16, 16); wav.writeUInt16LE(1, 20);
@@ -12,7 +12,7 @@ function silentWav() {
   return wav;
 }
 
-async function preparePlayer(page, fallback) {
+async function preparePlayer(page, fallback, renewal = false) {
   const errors = [];
   const unexpectedRequests = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -26,12 +26,16 @@ async function preparePlayer(page, fallback) {
     const play = HTMLMediaElement.prototype.play;
     HTMLMediaElement.prototype.play = function () {
       if (!window.playerTestMedia.includes(this)) window.playerTestMedia.push(this);
+      if (window.failNextNativeResume) {
+        window.failNextNativeResume = false;
+        return Promise.reject(new DOMException('Fixture expired-source failure', 'NotSupportedError'));
+      }
       return play.call(this);
     };
   });
   const versions = ['version-one', 'version-two'].map((id, index) => ({
     id, version_number: index + 1, label: null, file_path: 'fixture.wav',
-    file_name: 'fixture.wav', audioUrl: '/fixture.wav', created_by: 'Player tester',
+    file_name: 'fixture.wav', audioUrl: renewal ? `/api/media/audio/${id}` : '/fixture.wav', created_by: 'Player tester',
   }));
   const payloads = {
     '/api/auth/bootstrap': { identity: {
@@ -49,16 +53,27 @@ async function preparePlayer(page, fallback) {
     payloads[`/api/versions/${version.id}/threads`] = { threads: [] };
   }
   let waveformFailures = 0;
+  const renewedSources = new Set();
   await page.route('**/*', async route => {
     const request = route.request();
     const url = new URL(request.url());
     if (url.hostname !== '127.0.0.1') return route.abort();
-    if (url.pathname === '/fixture.wav') {
+    if (url.pathname === '/fixture.wav' || (renewal && url.pathname.startsWith('/api/media/audio/'))) {
+      if (url.searchParams.has('renew')) renewedSources.add(url.search);
       if (fallback && request.resourceType() === 'fetch') {
         waveformFailures++;
         return route.abort('failed');
       }
-      return route.fulfill({ status: 200, contentType: 'audio/wav', body: silentWav() });
+      const body = silentWav(renewal ? 12 : 4);
+      const range = /^bytes=(\d+)-(\d*)$/.exec(request.headers().range || '');
+      const headers = { 'accept-ranges': 'bytes', 'cache-control': 'no-store' };
+      if (range) {
+        const start = Number(range[1]);
+        const end = Math.min(range[2] ? Number(range[2]) : body.length - 1, body.length - 1);
+        if (start > end) return route.fulfill({ status: 416, headers: { ...headers, 'content-range': `bytes */${body.length}` } });
+        return route.fulfill({ status: 206, contentType: 'audio/wav', headers: { ...headers, 'content-range': `bytes ${start}-${end}/${body.length}` }, body: body.subarray(start, end + 1) });
+      }
+      return route.fulfill({ status: 200, contentType: 'audio/wav', headers, body });
     }
     if (url.pathname.startsWith('/api/')) {
       if (!(url.pathname in payloads)) unexpectedRequests.push(url.pathname);
@@ -68,7 +83,7 @@ async function preparePlayer(page, fallback) {
   });
   await page.goto('/songs/song-one/versions/version-one');
   await expect(page.getByRole('heading', { name: 'Player fixture', exact: true })).toBeVisible();
-  return { errors, unexpectedRequests, waveformFailures: () => waveformFailures };
+  return { errors, unexpectedRequests, waveformFailures: () => waveformFailures, renewalSources: () => renewedSources.size };
 }
 
 async function mediaState(page) {
@@ -76,6 +91,8 @@ async function mediaState(page) {
     const audio = window.playerTestMedia.at(-1);
     return audio ? {
       time: audio.currentTime, paused: audio.paused, loop: audio.loop,
+      duration: audio.duration, readyState: audio.readyState,
+      seekableEnd: audio.seekable.length ? audio.seekable.end(audio.seekable.length - 1) : 0,
       activePlayers: window.playerTestMedia.filter(media => !media.paused).length,
     } : null;
   });
@@ -154,3 +171,32 @@ for (const fallback of [false, true]) {
     expect(fixture.unexpectedRequests).toEqual([]);
   });
 }
+
+
+test('native media resume reauthorises once without losing position or loop state', async ({ page }) => {
+  const fixture = await preparePlayer(page, true, true);
+  await page.getByRole('button', { name: 'Loop Song', exact: true }).click();
+  await page.getByRole('button', { name: 'Play from Start', exact: true }).click();
+  await expect.poll(async () => (await mediaState(page))?.paused).toBe(false);
+  await expect.poll(async () => {
+    const state = await mediaState(page);
+    return state && state.readyState >= 2 && state.duration > 3 && state.seekableEnd > 3;
+  }).toBe(true);
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  await seekAudio(page, 2);
+  const before = await mediaState(page);
+  expect(before.time).toBeCloseTo(2, 1);
+  // Simulate the browser refusing an old native source. The replacement request
+  // serves real PCM bytes, so metadata/seek/play recovery runs in the browser.
+  await page.evaluate(() => { window.failNextNativeResume = true; });
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect.poll(async () => (await mediaState(page))?.paused).toBe(false);
+  const state = await mediaState(page);
+  expect(state.time, JSON.stringify({ before, after: state, renewed: fixture.renewalSources() })).toBeGreaterThanOrEqual(1.8);
+  expect(state.time).toBeLessThan(3.5);
+  expect(state.loop).toBe(true);
+  expect(state.activePlayers).toBe(1);
+  expect(fixture.renewalSources()).toBe(1);
+  expect(fixture.errors).toEqual([]);
+  expect(fixture.unexpectedRequests).toEqual([]);
+});

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { withVersionDisplayName } from '@/lib/versionDisplay';
+import { audioDeliveryUrl } from '@/lib/mediaDelivery';
 
 export const dynamic = 'force-dynamic';
 
@@ -111,13 +112,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ versionId
       const hasAudioObject = await storageObjectExists(normalizedFilePath);
 
       if (hasAudioObject) {
-        // Public URL — no expiry risk. Safe because song-files bucket is public
-        // and each version has a unique file path, eliminating cache collision.
-        const { data: publicAudio } = supabaseServer.storage
-          .from('song-files')
-          .getPublicUrl(normalizedFilePath);
-
-        audioUrl = publicAudio?.publicUrl ?? null;
+        audioUrl = audioDeliveryUrl(version.id);
       } else {
         audioMissing = true;
       }

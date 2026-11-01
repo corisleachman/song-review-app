@@ -1,3 +1,4 @@
+import { artworkDeliveryUrl } from '@/lib/artworkAccess';
 import { NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
 import { supabaseServer } from '@/lib/supabaseServer';
@@ -80,7 +81,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
       .eq('id', access.playlist.id);
     if (updateError) throw updateError;
 
-    return NextResponse.json({ imageUrl: urlData.publicUrl }, { status: 200 });
+    return NextResponse.json({ imageUrl: artworkDeliveryUrl('playlist', access.playlist.id, urlData.publicUrl) }, { status: 200 });
   } catch (err) {
     console.error('[playlists/:id/image] error:', err);
     return NextResponse.json({ error: 'Could not upload cover.' }, { status: 500 });

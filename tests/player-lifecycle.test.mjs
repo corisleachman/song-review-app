@@ -6,6 +6,10 @@ import vm from 'node:vm';
 
 const require = createRequire(import.meta.url);
 const ts = require('typescript');
+const nativeModule = {};
+new Function('exports', ts.transpileModule(readFileSync(new URL('../lib/resumeNativeAudio.ts', import.meta.url), 'utf8'), {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+}).outputText)(nativeModule);
 const source = readFileSync(new URL('../app/songs/[id]/versions/[versionId]/page.tsx', import.meta.url), 'utf8');
 const ast = ts.createSourceFile('page.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
 const nodes = [];
@@ -70,7 +74,7 @@ function harness() {
   const refs = {};
   for (const name of source.matchAll(/\b(\w+Ref)\b/g)) refs[name[1]] = { current: null };
   const ctx = {
-    ...refs, console, Error,
+    ...refs, console, Error, resumeNativeAudio: nativeModule.resumeNativeAudio,
     navigator: { userAgent: 'Desktop Chrome' },
     audioUrl: 'https://example.invalid/fixture.mp3', versionId: 'version-one', loading: false,
     waveReloadNonce: 0, isReady: false, isPlaying: false, waveErr: null, isRetryingWave: false,
@@ -112,6 +116,7 @@ function harness() {
       },
       pause() { this.paused = true; this.emit('pause'); },
       load() { this.loadCalls++; },
+      getAttribute(name) { return name === 'src' ? this.src : null; },
       removeAttribute(name) { if (name === 'src') this.src = ''; },
     };
   }

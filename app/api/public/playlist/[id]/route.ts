@@ -1,6 +1,8 @@
+import { artworkDeliveryUrl } from '@/lib/artworkAccess';
 import { NextRequest, NextResponse } from 'next/server';
 import { RequestTiming } from '@/lib/requestTiming';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { audioDeliveryUrl } from '@/lib/mediaDelivery';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,6 +10,7 @@ const VERSION_PAGE_SIZE = 500;
 const VERSION_SONG_BATCH_SIZE = 100;
 
 interface PlayableVersionRecord {
+  id: string;
   song_id: string;
   version_number: number | null;
   file_path: string | null;
@@ -17,17 +20,6 @@ interface VersionPageResult {
   versions: PlayableVersionRecord[];
   error: unknown | null;
   requestCount: number;
-}
-
-function normalizeStoragePath(value: string | null | undefined) {
-  const trimmed = value?.trim() ?? '';
-  const prefix = 'song-files/';
-  return trimmed.startsWith(prefix) ? trimmed.slice(prefix.length) : trimmed;
-}
-function audioUrlFor(filePath: string | null | undefined): string | null {
-  if (!filePath) return null;
-  const { data } = supabaseServer.storage.from('song-files').getPublicUrl(normalizeStoragePath(filePath));
-  return data?.publicUrl ?? null;
 }
 
 function isMissingUploadFinalizedColumn(error: unknown) {
@@ -55,7 +47,7 @@ async function listPlayableVersionPages(
     for (let pageStart = 0; ; pageStart += VERSION_PAGE_SIZE) {
       let query = supabaseServer
         .from('song_versions')
-        .select('song_id, version_number, file_path')
+        .select('id, song_id, version_number, file_path')
         .in('song_id', songIdBatch)
         .order('song_id', { ascending: true })
         .order('version_number', { ascending: false })
@@ -84,7 +76,7 @@ async function listPlayableVersionPages(
 
 async function getLatestPlayableVersions(songIds: string[]) {
   if (songIds.length === 0) {
-    return { latestBySong: new Map<string, string | null>(), requestCount: 0 };
+    return { latestBySong: new Map<string, PlayableVersionRecord>(), requestCount: 0 };
   }
 
   let result = await listPlayableVersionPages(songIds, true);
@@ -97,10 +89,10 @@ async function getLatestPlayableVersions(songIds: string[]) {
 
   if (result.error) throw result.error;
 
-  const latestBySong = new Map<string, string | null>();
+  const latestBySong = new Map<string, PlayableVersionRecord>();
   for (const version of result.versions) {
     if (!latestBySong.has(version.song_id)) {
-      latestBySong.set(version.song_id, version.file_path ?? null);
+      latestBySong.set(version.song_id, version);
     }
   }
 
@@ -201,8 +193,9 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
         return {
           id: r.song_id,
           title: meta.title,
-          image_url: meta.image_url,
-          audioUrl: audioUrlFor(latestBySong.get(r.song_id) ?? null),
+          image_url: artworkDeliveryUrl('song', r.song_id, meta.image_url, { playlistId: playlist.id }),
+          audioUrl: latestBySong.get(r.song_id)?.file_path
+            ? audioDeliveryUrl(latestBySong.get(r.song_id)!.id, { playlistId: playlist.id }) : null,
         };
       })
       .filter((track): track is NonNullable<typeof track> => Boolean(track?.audioUrl));

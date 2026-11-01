@@ -11,7 +11,7 @@ const require = createRequire(import.meta.url);
 
 // Execute the real handler, replacing only framework/I/O boundaries. This
 // checks runtime decisions; it is not a Supabase, cookie or hosted HTTP test.
-function routeHarness(route, { identity = null, user = null, tables = {} } = {}) {
+function routeHarness(route, { identity = null, user = null, tables = {}, storage = null, mutationResult = null } = {}) {
   const reads = [];
   const writes = [];
   let notifications = 0;
@@ -30,6 +30,8 @@ function routeHarness(route, { identity = null, user = null, tables = {} } = {})
           predicates.push(row => row[key] !== value); return query;
         },
         order() { return query; },
+        range() { return query; },
+        returns() { return query; },
         limit() { return query; },
         maybeSingle() { single = true; return query; },
         single() { single = true; return query; },
@@ -38,12 +40,12 @@ function routeHarness(route, { identity = null, user = null, tables = {} } = {})
         delete() { mutation = true; writes.push({ table, delete: true }); return query; },
         then(resolve, reject) {
           const rows = (tables[table] ?? []).filter(row => predicates.every(check => check(row)));
-          return Promise.resolve({ data: mutation ? null : single ? rows[0] ?? null : rows, error: null }).then(resolve, reject);
+          return Promise.resolve({ data: mutation ? (typeof mutationResult === 'function' ? mutationResult() : mutationResult) : single ? rows[0] ?? null : rows, error: null }).then(resolve, reject);
         },
       };
       return query;
     },
-    storage: { from() { throw new Error('Unexpected access to audio/storage'); } },
+    storage: storage ?? { from() { throw new Error('Unexpected access to audio/storage'); } },
   };
   const stubs = {
     'next/server': { NextResponse: { json: (body, init) => Response.json(body, init) } },
@@ -60,7 +62,7 @@ function routeHarness(route, { identity = null, user = null, tables = {} } = {})
     const exports = {};
     cache.set(filename, exports);
     const compiled = ts.transpileModule(readFileSync(filename, 'utf8'), {
-      compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+      compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
     }).outputText;
     const localRequire = specifier => {
       if (Object.hasOwn(stubs, specifier)) return stubs[specifier];
@@ -238,3 +240,327 @@ for (const [route, methods] of [
     });
   }
 }
+
+
+const mediaRoute = 'app/api/media/audio/[versionId]/route.ts';
+const finalizedVersion = { id: 'version-a', song_id: 'song-a', version_number: 2, file_path: 'song-files/songs/song-a/uploads/audio.mp3', upload_finalized_at: '2026-11-01' };
+function mediaHarness({ identity = session('member'), publicSong = false, version = finalizedVersion, playlistPublic = true, entry = true, signingError = false, latest = version } = {}) {
+  const signs = [];
+  const h = routeHarness(mediaRoute, {
+    identity,
+    tables: {
+      songs: [{ ...song, is_public: publicSong }],
+      song_versions: latest.id === version.id ? [version] : [latest, version],
+      playlists: [{ id: 'playlist-a', account_id: 'workspace-a', is_public: playlistPublic }],
+      playlist_songs: entry ? [{ playlist_id: 'playlist-a', song_id: 'song-a' }] : [],
+    },
+    storage: { from(bucket) { return { async createSignedUrl(path, seconds) {
+      signs.push({ bucket, path, seconds });
+      return signingError ? { data: null, error: new Error('SECRET-PROVIDER-URL') }
+        : { data: { signedUrl: 'https://storage.invalid/signed?token=SECRET-TOKEN' }, error: null };
+    } }; } },
+  });
+  return { ...h, signs };
+}
+function mediaRequest(query = '') {
+  const request = new Request(`https://staging.invalid/api/media/audio/version-a${query}`);
+  request.nextUrl = new URL(request.url);
+  return request;
+}
+for (const role of ['owner', 'member']) {
+  test(`media: ${role} gets uncached ten-minute access without proxying audio`, async () => {
+    const h = mediaHarness({ identity: session(role) });
+    const response = await h.handler.GET(mediaRequest(), params({ versionId: 'version-a' }));
+    assert.equal(response.status, 307);
+    assert.match(response.headers.get('cache-control'), /private.*no-store/);
+    assert.equal(response.headers.get('referrer-policy'), 'no-referrer');
+    assert.equal(response.headers.get('location'), 'https://storage.invalid/signed?token=SECRET-TOKEN');
+    assert.equal(await response.text(), '');
+    assert.deepEqual(h.signs, [{ bucket: 'song-files', path: 'songs/song-a/uploads/audio.mp3', seconds: 600 }]);
+  });
+}
+for (const [name, options, query, status] of [
+  ['signed out', { identity: null }, '', 401],
+  ['outsider', { identity: { identity: { workspaceId: 'other' } } }, '', 404],
+  ['private public-song context', { identity: null }, '?song=song-a', 404],
+  ['mismatched public-song context', { identity: null, publicSong: true }, '?song=other', 404],
+  ['revoked playlist', { identity: null, playlistPublic: false }, '?playlist=playlist-a', 404],
+  ['removed playlist entry', { identity: null, entry: false }, '?playlist=playlist-a', 404],
+  ['ambiguous context', { publicSong: true }, '?song=song-a&playlist=playlist-a', 404],
+  ['empty public context', {}, '?song=', 404],
+  ['pending upload', { version: { ...finalizedVersion, upload_finalized_at: null } }, '', 404],
+  ['public history', { identity: null, publicSong: true, latest: { ...finalizedVersion, id: 'newer' } }, '?song=song-a', 404],
+]) {
+  test(`media: denies ${name} before signing`, async () => {
+    const h = mediaHarness(options);
+    const response = await h.handler.GET(mediaRequest(query), params({ versionId: 'version-a' }));
+    assert.equal(response.status, status);
+    assert.equal(response.headers.get('location'), null);
+    assert.equal(h.signs.length, 0);
+    assert.doesNotMatch(await response.text(), /audio.mp3|SECRET/);
+  });
+}
+for (const query of ['?song=song-a', '?playlist=playlist-a']) {
+  test(`media: permits intended anonymous public context ${query}`, async () => {
+    const h = mediaHarness({ identity: null, publicSong: true });
+    const response = await h.handler.HEAD(mediaRequest(query), params({ versionId: 'version-a' }));
+    assert.equal(response.status, 307);
+    assert.equal(h.signs.length, 1);
+  });
+}
+test('media: public playlist can intentionally share a private song in its own workspace', async () => {
+  const h = mediaHarness({ identity: null });
+  const response = await h.handler.GET(mediaRequest('?playlist=playlist-a'), params({ versionId: 'version-a' }));
+  assert.equal(response.status, 307);
+});
+for (const file_path of ['../audio.mp3', 'folder/../audio.mp3', 'https://other.invalid/file', '/file', 'folder\\file', 'file?token=x', 'file#fragment', '', 'songs/other-song/uploads/file.mp3', 'songs/song-a/%2e%2e/file.mp3']) {
+  test(`media: refuses malformed storage reference ${JSON.stringify(file_path)}`, async () => {
+    const h = mediaHarness({ version: { ...finalizedVersion, file_path } });
+    const response = await h.handler.GET(mediaRequest(), params({ versionId: 'version-a' }));
+    assert.equal(response.status, 404);
+    assert.equal(h.signs.length, 0);
+  });
+}
+test('media: signing failure has safe uncached error', async () => {
+  const h = mediaHarness({ signingError: true });
+  const response = await h.handler.GET(mediaRequest(), params({ versionId: 'version-a' }));
+  assert.equal(response.status, 503);
+  assert.match(response.headers.get('cache-control'), /no-store/);
+  assert.doesNotMatch(await response.text(), /SECRET/);
+});
+test('media: each request renews access without changing the player source', async () => {
+  const h = mediaHarness();
+  for (let i = 0; i < 2; i++) assert.equal((await h.handler.GET(mediaRequest(), params({ versionId: 'version-a' }))).status, 307);
+  assert.equal(h.signs.length, 2);
+});
+
+
+test('version API returns stable media access URL after workspace and object checks', async () => {
+  const h = routeHarness('app/api/versions/[versionId]/route.ts', {
+    identity: session('member'), tables: { songs: [song], song_versions: [finalizedVersion] },
+    storage: { from() { return { list: async () => ({ data: [{ name: 'audio.mp3' }], error: null }) }; } },
+  });
+  const response = await h.handler.GET(getRequest(), params({ versionId: 'version-a' }));
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).version.audioUrl, '/api/media/audio/version-a');
+});
+test('public song API returns song-scoped media URL, never a permanent Storage URL', async () => {
+  const h = routeHarness('app/api/public/song/[songId]/route.ts', {
+    tables: { songs: [{ ...song, is_public: true }], song_versions: [finalizedVersion], accounts: [] },
+  });
+  const response = await h.handler.GET(getRequest(), params({ songId: 'song-a' }));
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).version.audioUrl, '/api/media/audio/version-a?song=song-a');
+});
+test('public playlist API returns playlist-scoped stable media URLs', async () => {
+  const h = routeHarness('app/api/public/playlist/[id]/route.ts', {
+    tables: {
+      songs: [song], song_versions: [finalizedVersion], accounts: [],
+      playlists: [{ id: 'playlist-a', account_id: 'workspace-a', is_public: true }],
+      playlist_songs: [{ playlist_id: 'playlist-a', song_id: 'song-a', position: 0 }],
+    },
+  });
+  const response = await h.handler.GET(getRequest(), params({ id: 'playlist-a' }));
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).tracks[0].audioUrl, '/api/media/audio/version-a?playlist=playlist-a');
+});
+
+test('artwork HTTP capability and renewal boundaries', async t => {
+  const key = 'artwork-http-signing-key-at-least-32-characters';
+  const oldKey = process.env.INTERNAL_API_SECRET;
+  const oldProject = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  process.env.INTERNAL_API_SECRET = key;
+  process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://storage.invalid';
+  t.after(() => {
+    if (oldKey === undefined) delete process.env.INTERNAL_API_SECRET; else process.env.INTERNAL_API_SECRET = oldKey;
+    if (oldProject === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_URL; else process.env.NEXT_PUBLIC_SUPABASE_URL = oldProject;
+  });
+  const access = routeHarness('lib/artworkAccess.ts').handler;
+  const record = { ...song, is_public: true, image_url: 'https://storage.invalid/storage/v1/object/public/song-images/song-a-123.jpg' };
+  const claims = { kind: 'song', id: 'song-a', path: 'song-a-123.jpg' };
+  const now = () => Math.floor(Date.now() / 1000);
+  function h({ identity = null, tables = { songs: [record] }, contentType = 'image/jpeg', bytes = 12, error = null } = {}) {
+    const downloads = [];
+    return { ...routeHarness('app/api/media/artwork/route.ts', {
+      identity, tables,
+      storage: { from(bucket) { return { async download(path) {
+        downloads.push({ bucket, path });
+        return { data: error ? null : new Blob([new Uint8Array(bytes)], { type: contentType }), error };
+      } }; } },
+    }), downloads };
+  }
+  function request(token) { return mediaRequest(`?access=${encodeURIComponent(token)}`); }
+  await t.test('valid issued token serves privately cached raster without identity/database round trips', async () => {
+    const token = access.signArtworkAccess(claims, key, now());
+    const harness = h();
+    const response = await harness.handler.GET(request(token));
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('content-type'), 'image/jpeg');
+    assert.match(response.headers.get('cache-control'), /^private, max-age=\d+, must-revalidate$/);
+    assert.match(response.headers.get('content-security-policy'), /sandbox/);
+    assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
+    assert.equal(harness.reads.length, 0);
+    assert.deepEqual(harness.downloads, [{ bucket: 'song-images', path: 'song-a-123.jpg' }]);
+  });
+  await t.test('tampered token cannot trigger a Storage read', async () => {
+    const harness = h();
+    const response = await harness.handler.GET(request('invalid.token'));
+    assert.equal(response.status, 404);
+    assert.equal(harness.reads.length, 0);
+    assert.equal(harness.downloads.length, 0);
+  });
+  for (const [label, identity] of [['signed-out', null], ['other-workspace', { identity: { workspaceId: 'other' } }]]) {
+    await t.test(`expired private capability cannot renew for ${label}`, async () => {
+      const harness = h({ identity });
+      const response = await harness.handler.GET(request(access.signArtworkAccess(claims, key, now() - 700)));
+      assert.equal(response.status, 404);
+      assert.equal(harness.downloads.length, 0);
+    });
+  }
+  await t.test('expired private capability rechecks current workspace and resolves current artwork', async () => {
+    const harness = h({ identity: session('member') });
+    const response = await harness.handler.GET(request(access.signArtworkAccess(claims, key, now() - 700)));
+    assert.equal(response.status, 307);
+    assert.match(response.headers.get('cache-control'), /no-store/);
+    const location = new URL(response.headers.get('location'), 'https://staging.invalid');
+    assert.equal(access.readArtworkAccess(location.searchParams.get('access'), key).path, claims.path);
+    assert.equal(harness.downloads.length, 0);
+  });
+  for (const is_public of [true, false]) {
+    await t.test(`expired public-song image renewal respects current sharing ${is_public}`, async () => {
+      const harness = h({ tables: { songs: [{ ...record, is_public }] } });
+      const response = await harness.handler.GET(request(access.signArtworkAccess({ ...claims, publicSong: true }, key, now() - 700)));
+      assert.equal(response.status, is_public ? 307 : 404);
+      assert.equal(harness.downloads.length, 0);
+    });
+  }
+  for (const [label, account, entry, published, expected] of [
+    ['allowed', 'workspace-a', true, true, 307],
+    ['foreign song', 'other', true, true, 404],
+    ['removed entry', 'workspace-a', false, true, 404],
+    ['revoked playlist', 'workspace-a', true, false, 404],
+  ]) {
+    await t.test(`expired public-playlist image: ${label}`, async () => {
+      const harness = h({ tables: {
+        songs: [record], playlists: [{ id: 'list-a', account_id: account, is_public: published }],
+        playlist_songs: entry ? [{ playlist_id: 'list-a', song_id: 'song-a' }] : [],
+      } });
+      const response = await harness.handler.GET(request(access.signArtworkAccess({ ...claims, playlistId: 'list-a' }, key, now() - 700)));
+      assert.equal(response.status, expected);
+      assert.equal(harness.downloads.length, 0);
+    });
+  }
+  for (const [label, type, bytes, expected] of [['SVG', 'image/svg+xml', 10, 404], ['HTML', 'text/html', 10, 404], ['oversized', 'image/jpeg', 5 * 1024 * 1024 + 1, 404], ['PNG', 'image/png', 10, 200]]) {
+    await t.test(`image response ${label}`, async () => {
+      const harness = h({ contentType: type, bytes });
+      const response = await harness.handler.GET(request(access.signArtworkAccess(claims, key)));
+      assert.equal(response.status, expected);
+    });
+  }
+  await t.test('upstream errors disclose neither path nor provider URL', async () => {
+    const harness = h({ error: new Error('SECRET-STORAGE-URL') });
+    const response = await harness.handler.GET(request(access.signArtworkAccess(claims, key)));
+    assert.equal(response.status, 404);
+    assert.doesNotMatch(await response.text(), /SECRET|song-a/);
+  });
+  for (const member of [true, false]) {
+    await t.test(`expired workspace image requires current membership ${member}`, async () => {
+      const harness = h({ identity: session('member'), tables: {
+        accounts: [{ id: 'workspace-a', image_url: 'https://storage.invalid/storage/v1/object/public/song-images/workspace-images/workspace-a-123.png' }],
+        account_members: member ? [{ account_id: 'workspace-a', user_id: 'user-member' }] : [],
+      } });
+      const token = access.signArtworkAccess({ kind: 'workspace', id: 'workspace-a', path: 'workspace-images/workspace-a-123.png' }, key, now() - 700);
+      const response = await harness.handler.GET(request(token));
+      assert.equal(response.status, member ? 307 : 404);
+      assert.equal(harness.downloads.length, 0);
+    });
+  }
+  for (const is_public of [true, false]) {
+    await t.test(`expired playlist custom cover respects current sharing ${is_public}`, async () => {
+      const harness = h({ tables: { playlists: [{ id: 'list-a', account_id: 'workspace-a', is_public, image_url: 'https://storage.invalid/storage/v1/object/public/song-images/playlist-list-a-123.jpg' }] } });
+      const token = access.signArtworkAccess({ kind: 'playlist', id: 'list-a', path: 'playlist-list-a-123.jpg', publicPlaylist: true }, key, now() - 700);
+      assert.equal((await harness.handler.GET(request(token))).status, is_public ? 307 : 404);
+      assert.equal(harness.downloads.length, 0);
+    });
+  }
+  await t.test('renewal resolves replacement artwork instead of retaining removed canonical path', async () => {
+    const harness = h({ identity: session('member'), tables: { songs: [{ ...record, image_url: record.image_url.replace('123.jpg', '456.jpg') }] } });
+    const response = await harness.handler.GET(request(access.signArtworkAccess(claims, key, now() - 700)));
+    const renewed = new URL(response.headers.get('location'), 'https://staging.invalid');
+    assert.equal(access.readArtworkAccess(renewed.searchParams.get('access'), key).path, 'song-a-456.jpg');
+  });
+  await t.test('public song API projects an image token with only public-song scope', async () => {
+    const harness = routeHarness('app/api/public/song/[songId]/route.ts', { tables: { songs: [record], song_versions: [finalizedVersion], accounts: [] } });
+    const response = await harness.handler.GET(getRequest(), params({ songId: 'song-a' }));
+    const image = new URL((await response.json()).song.image_url, 'https://staging.invalid');
+    const token = access.readArtworkAccess(image.searchParams.get('access'), key);
+    assert.equal(token.publicSong, true); assert.equal(token.playlistId, undefined);
+    assert.equal(harness.writes.length, 0);
+  });
+  await t.test('public playlist metadata cannot mint artwork access for another workspace', async () => {
+    const harness = routeHarness('app/listen/playlist/[id]/layout.tsx', { tables: {
+      playlists: [{ id: 'list-a', account_id: 'workspace-a', is_public: true, image_url: null }],
+      playlist_songs: [{ playlist_id: 'list-a', song_id: 'song-b', position: 0 }],
+      songs: [{ ...foreignSong, image_url: 'https://storage.invalid/storage/v1/object/public/song-images/song-b-123.jpg' }],
+    } });
+    const metadata = await harness.handler.generateMetadata(params({ id: 'list-a' }));
+    assert.equal(metadata.openGraph.images, undefined);
+  });
+
+  function uploadRequest(file) {
+    const body = new FormData(); body.set('file', file);
+    return new Request('https://staging.invalid/api/workspace/settings', { method: 'POST', body });
+  }
+  for (const [role, identity, status] of [['signed-out', null, 401], ['member', session('member'), 403]]) {
+    await t.test(`workspace image upload stays owner-only: ${role}`, async () => {
+      const harness = routeHarness('app/api/workspace/settings/route.ts', { identity });
+      const response = await harness.handler.POST(uploadRequest(new File(['x'], 'image.png', { type: 'image/png' })));
+      assert.equal(response.status, status); assert.equal(harness.writes.length, 0);
+    });
+  }
+  await t.test('workspace active formats are rejected before upload rather than returning an unusable image URL', async () => {
+    const harness = routeHarness('app/api/workspace/settings/route.ts', { identity: session('owner') });
+    const response = await harness.handler.POST(uploadRequest(new File(['<svg/>'], 'cover.svg', { type: 'image/svg+xml' })));
+    assert.equal(response.status, 400); assert.equal(harness.writes.length, 0);
+    assert.match((await response.json()).error, /JPEG, PNG, WebP or GIF/);
+  });
+  await t.test('workspace upload normalises the extension, stores the canonical reference and returns delivered artwork', async () => {
+    let uploaded;
+    const harness = routeHarness('app/api/workspace/settings/route.ts', {
+      identity: session('owner'),
+      mutationResult: () => ({ id: 'workspace-a', name: 'Fixture', image_url: `https://storage.invalid/storage/v1/object/public/song-images/${uploaded.path}` }),
+      storage: { from() { return {
+        async upload(path, bytes, options) { uploaded = { path, bytes, options }; return { error: null }; },
+        getPublicUrl(path) { return { data: { publicUrl: `https://storage.invalid/storage/v1/object/public/song-images/${path}` } }; },
+      }; } },
+    });
+    const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a2ioAAAAASUVORK5CYII=', 'base64');
+    const response = await harness.handler.POST(uploadRequest(new File([png], 'misleading.svg', { type: 'image/png' })));
+    assert.equal(response.status, 200);
+    assert.match(uploaded.path, /^workspace-images\/workspace-a-\d+\.png$/);
+    assert.equal(uploaded.options.contentType, 'image/png');
+    const image = new URL((await response.json()).workspace.imageUrl, 'https://staging.invalid');
+    assert.equal(access.readArtworkAccess(image.searchParams.get('access'), key).path, uploaded.path);
+    assert.match(harness.writes[0].value.image_url, /^https:\/\/storage.invalid\/storage\/v1\/object\/public\/song-images\//);
+  });
+
+});
+
+
+test('already finalized legacy audio above the new upload limit is preserved without Storage mutation', async () => {
+  const harness = routeHarness('app/api/versions/[versionId]/finalize/route.ts', {
+    identity: session('owner'), tables: { songs: [song], song_versions: [{ ...finalizedVersion, file_size_bytes: 100 * 1024 * 1024 }] },
+  });
+  const response = await harness.handler.POST(jsonRequest({}), params({ versionId: 'version-a' }));
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).alreadyFinalized, true);
+  assert.equal(harness.writes.length, 0);
+});
+
+test('version allocation rejects over-50 MB metadata before any database or Storage work', async () => {
+  const harness = routeHarness('app/api/versions/create/route.ts', { identity: session('owner') });
+  const response = await harness.handler.POST(jsonRequest({ songId: 'song-a', fileName: 'mix.wav', fileSize: 50 * 1024 * 1024 + 1, fileType: 'audio/wav' }));
+  assert.equal(response.status, 400);
+  assert.match((await response.json()).error, /50 MB/);
+  assert.equal(harness.reads.length, 0); assert.equal(harness.writes.length, 0);
+});

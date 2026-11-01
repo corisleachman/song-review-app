@@ -1,3 +1,4 @@
+import { artworkDeliveryUrl, absoluteArtworkUrl } from '@/lib/artworkAccess';
 import type { Metadata } from 'next';
 import { supabaseServer } from '@/lib/supabaseServer';
 
@@ -42,10 +43,11 @@ export async function generateMetadata(props: { params: Promise<{ songId: string
 
   const pageUrl = `https://song-room.live/listen/${songId}`;
 
-  const images = song.image_url
+  const imageUrl = absoluteArtworkUrl(artworkDeliveryUrl('song', song.id, song.image_url, { publicSong: true }));
+  const images = imageUrl
     ? [
         {
-          url: song.image_url,
+          url: imageUrl,
           width: 1200,
           height: 1200,
           alt: title,
@@ -65,10 +67,10 @@ export async function generateMetadata(props: { params: Promise<{ songId: string
       images,
     },
     twitter: {
-      card: song.image_url ? 'summary_large_image' : 'summary',
+      card: imageUrl ? 'summary_large_image' : 'summary',
       title,
       description,
-      images: song.image_url ? [song.image_url] : [],
+      images: imageUrl ? [imageUrl] : [],
     },
     // Prevent search engines from indexing individual shared songs
     robots: {
