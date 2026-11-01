@@ -9476,3 +9476,12 @@ Fix the PageSpeed Insights results for song-room.live: mobile LCP 7.2 s (score 7
 - Updated `AGENTS.md` to require the checklist link in completion updates and intake of every new backlog item. No public unauthenticated planning/security route added.
 - Current release source: `8f02fb7a` (PR #63 merged 31 October). All 109 repository tests passed on that source. Documentation links and changes checked separately. No measured performance result was independently repeated in this task.
 - Rollout: repository documentation only. No migration, app change or service rollout required; revert the focused documentation commit to roll back. Next: complete S2 API method/access matrix and staging isolation test plan.
+
+
+## 2026-11-01 - Capture MVP performance and owner-admin requirements; continue S2
+
+- Changed `PRODUCT_BACKLOG.md` and `LAUNCH_CHECKLIST.md`: added B17 dashboard initial loading, B18 blank dashboard on return, B19 song navigation speed and B20 new-version notification verification. Extended existing B06 creator-admin work with signup directory/alerts and promotional Pro grants, preserving redemption codes as later scope. Recorded reported behaviour, observed code, intended outcomes, acceptance, dependencies and unresolved decisions. No feature marked complete or implemented.
+- Performance is the leading L6 workstream after the current security slice. No fixed timing target chosen before baseline measurement. Code shows a five-minute scoped dashboard cache and focus/visibility refresh, but the reported blank state is not dynamically reproduced or diagnosed.
+- Confirmed existing plans are workspace-scoped. Grant duration, paid-subscription interaction, target-workspace policy and owner signup-alert identity/channel/milestone remain decisions. Feedback reward eligibility isn't a Pro grant.
+- Continued S2 in `LAUNCH_API_ACCESS_MATRIX.md` and `LAUNCH_SECURITY_REVIEW.md`: sampled dashboard/song/version reads, admin feedback GET/PATCH, signed internal notifications and local plan switching; added staging negative-access order. These are code observations, not executed staging tests.
+- Documentation-only change; no account, schema, service configuration, notification send, grant or billing mutation. No migrations required. Rollback is the focused documentation revert. Relevant checks and publication recorded with the resulting PR. Next: complete S2 staging fixture/destination verification and the route-by-method access checks.

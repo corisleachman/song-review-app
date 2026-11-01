@@ -14,7 +14,7 @@ Public beta is live. Five foundation stages are done. Security closeout is in pr
 | L3. Public email login and recovery | Done | Signup, confirmation, password login, recovery/reset alongside Google | Controlled production journey passed 25 October; [auth completion record](EMAIL_PASSWORD_STAGING_ROLLOUT.md#current-status-1-november-2026) |
 | L4. Homepage readiness | Done | Clear login, repaired links, responsive presentation, local assets and initial-load improvements | PRs [53](https://github.com/corisleachman/song-review-app/pull/53), [61](https://github.com/corisleachman/song-review-app/pull/61), [62](https://github.com/corisleachman/song-review-app/pull/62); performance follow-up [63](https://github.com/corisleachman/song-review-app/pull/63) merged 31 October; final measurements belong to L6 |
 | L5. Security closeout | In progress | Access boundaries, database warnings, abuse protection, validation, secrets and monitoring | Initial live inventory complete; remaining checks below must be resolved or explicitly accepted |
-| L6. Final launch QA | Not started | One consolidated current-release journey, browser/device, accessibility, links, payment sandbox and performance pass | Recorded pass/fail matrix; no unresolved launch-blocking defects |
+| L6. Performance and final launch QA | Not started | Dashboard loading/return and song-navigation performance work, then consolidated journey, browser/device, accessibility, links and payment sandbox checks | Recorded pass/fail matrix; no unresolved launch-blocking defects |
 | L7. Discoverability closeout | Not started | Verify shipped SEO baseline, canonical host, alt text, FAQ scope and pending article | Production metadata/link checks and content decisions recorded; sitemap, robots and trust page already shipped |
 | L8. Wider-launch decision | Not started | Review evidence, remaining risks, rollback and support readiness | L5-L7 complete; user records go/no-go for wider promotion |
 
@@ -25,12 +25,14 @@ Done means the named scope has recorded evidence, not that every future improvem
 | ID | Check | Status | Evidence / next action | Owner |
 | --- | --- | --- | --- | --- |
 | S1 | Establish current security baseline | Done | Read-only production inventory: RLS on all 24 public tables; advisor has zero ERROR findings, five WARN findings and eight INFO findings. [Review record](LAUNCH_SECURITY_REVIEW.md) | Agent |
-| S2 | Cross-workspace API and direct-database access | In progress | Canonical identity and sampled thread access path inspected. [Inventory of all 68 API route files](LAUNCH_API_ACCESS_MATRIX.md) created; exercise owner/member/outsider/public boundaries on staging. RLS enabled alone isn't a pass | Agent |
+| S2 | Cross-workspace API and direct-database access | In progress | Canonical identity, thread path and eight dashboard/song/admin/internal route samples inspected; staging negative tests remain pending. [Inventory of all 68 API route files](LAUNCH_API_ACCESS_MATRIX.md) created; exercise owner/member/outsider/public boundaries on staging. RLS enabled alone isn't a pass | Agent |
 | S3 | Database function and policy review | Not started | Review five mutable-search-path warnings, overlapping policies and grants; verify views, Storage policies and privileged RPCs. No production policy change yet | Agent |
 | S4 | Abuse protection coverage | In progress | Email login limiter, Turnstile and feedback throttle exist. Invite/comment/bootstrap coverage still needs explicit decisions and tests | Agent |
 | S5 | Input validation and safe errors | Not started | Audit mutation inputs, size/type limits, numeric bounds and error responses. Upload validation already has regression coverage | Agent |
 | S6 | Secret handling and log safety | Not started | Recheck variable classification/scopes without exposing values; inventory logging and confirm redaction. Earlier Config-vs-Secret concern is unverified, not a proven leak | Agent |
 | S7 | Monitoring, dependency and CI closeout | Not started | Production dependency audit: four low, zero moderate/high/critical advisories. Confirm alerts/retention; review open PRs and missing audit workflow | Agent |
+
+Performance is the user's main MVP concern. B17-B19 are queued as the leading L6 workstream; capture does not interrupt the current L5 task. B06 owner grants require product decisions and stay open.
 
 Next action: finish S2's route matrix and staging negative-access test plan before choosing a fix. Don't broaden permissions or change production account boundaries as part of this review.
 
@@ -49,7 +51,7 @@ Next action: finish S2's route matrix and staging negative-access test plan befo
 
 Run local checks before staging journeys, then safe production smoke checks. Stop the affected rollout on failure and record environment, URL, step, expected/actual result, safe error/log excerpt and screenshot where useful. Never attach credentials or full auth links.
 
-## Backlog beyond the launch stages
+## Backlog and MVP requirements
 
 Every new request gets a row here with a stable ID, status and stage assignment (or Later). Detail can stay in [PRODUCT_BACKLOG.md](PRODUCT_BACKLOG.md). Adding a request doesn't silently make it a launch blocker.
 
@@ -60,7 +62,7 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B03 | Embed individual publicly shared songs | Not started; plan/access decision required | Later, P2 sharing; playlist embeds already done |
 | B04 | Contextual upgrade prompts and durable funnel events | Foundation partly exists; event work pending | Review beta minimum during L6; automation later |
 | B05 | Lifecycle and behavioural email | Deferred | Later; consent, events, deduplication and frequency controls first |
-| B06 | Admin account-plan overrides and redemption-code assignment | Not started | Later; feedback triage already done |
+| B06 | [Owner signup directory/alerts and promotional Pro grants](PRODUCT_BACKLOG.md#b06-application-owner-admin-signups-and-promotional-pro-access) | Extended existing item; capture complete, feature untested; decisions pending | MVP queue; S2 owner-only checks overlap; no activation yet |
 | B07 | AIFF/AIF playback and waveform support | Deferred; new uploads blocked | Later, P3; preserve existing stored files |
 | B08 | Microsoft login | Deferred by user | Later; revisit with traction/income |
 | B09 | Physical 11-inch iPad Safari/Chrome coverage | Not yet recorded | L6 additional coverage; existing tablet release accepted |
@@ -71,6 +73,10 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B14 | Marketing image alt-text audit | Pending | L7 |
 | B15 | Canonical host consistency | Pending verification | L7 |
 | B16 | Remaining empty states, typography, workspace-switcher contrast and accessibility polish | Needs current-state triage; old plan isn't evidence of an open defect | L6; split confirmed defects into new rows |
+| B17 | [Dashboard loading speed](PRODUCT_BACKLOG.md#b17-dashboard-measure-and-reduce-time-to-useful-songs-and-artwork) | User report; baseline and target pending | L6 leading performance workstream after current security slice |
+| B18 | [Dashboard blank on return](PRODUCT_BACKLOG.md#b18-dashboard-retain-valid-songs-and-artwork-when-returning) | Reported defect; trigger unverified | L6 reliability; S2 cache isolation overlaps |
+| B19 | [Dashboard-to-song navigation speed](PRODUCT_BACKLOG.md#b19-dashboard-to-song-measure-and-reduce-navigation-delay) | User report; baseline pending | L6 performance; canonical access must remain intact |
+| B20 | [New-version collaboration notifications](PRODUCT_BACKLOG.md#b20-verify-notifications-for-new-version-uploads) | Verification requested; no failure confirmed | L6 dependability audit; no new channel assumed |
 
 Exploratory ideas in ROADMAP.md (typing indicators, pinned comments, comparison view, waveform regions, exports, Slack, native mobile app, multitrack and video) remain unscheduled ideas. They aren't approved launch work. Delete/edit/auth/invite ideas in that old file must be checked against existing features before creating tasks.
 
@@ -86,6 +92,7 @@ Exploratory ideas in ROADMAP.md (typing indicators, pinned comments, comparison 
 
 | Date | Completed action | Current stage | Remaining launch stages |
 | --- | --- | --- | --- |
+| 1 November 2026 | MVP performance/notification requirements captured as B17-B20; existing admin B06 extended; security code review continued | L5 Security closeout | L5, L6, L7, L8 |
 | 1 November 2026 | Records reconciled; current checklist established; live database security inventory completed | L5 Security closeout | L5, L6, L7, L8 |
 
 ## Source precedence
