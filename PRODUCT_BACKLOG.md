@@ -102,6 +102,17 @@ Capture and organise only. These requirements don't authorise implementation or 
 - Dependencies/decisions: no provider/configuration change required. Removing the legacy endpoint entirely remains outside this narrow fix.
 
 
+### B23. Private song media remains accessible through permanent public Storage URLs
+- Logged: 2026-11-01. Priority: P1 privacy finding, L5/S2-S3. Status: confirmed private-audio reproduction on staging; matching public bucket configuration confirmed on Production. Repair not implemented or tested.
+- Reported/observed: security closeout found both audio/artwork buckets public. Anonymous HEAD for one finalized private staging song audio object returned 200. No file body downloaded or Production private URL requested. No evidence of third-party access or bucket enumeration.
+- Root cause: application access checks gate URL issuance, but public Storage retrieval bypasses them. Share toggling changes database flags only. Continued known-URL access after revocation is supported by code/config inspection, not a tested live toggle. Private artwork retrieval is not individually tested.
+- Outcome: private media requires authorisation; public sharing works only within its intended scope and agreed revocation window, without breaking playback or slowing the app unnecessarily.
+- Acceptance: deny anonymous/outsider private file access, including legacy URLs; allow intended owner/member/public-share media; verify share/playlist revocation and expiry contract; preserve artwork, uploads, finalization, seeking, waveform, background playback and account isolation; record comparable performance and safe error handling. No private URL/token/content in diagnostics.
+- Dependencies: compatible server delivery, legacy image-path resolution, playback renewal, both buckets and CDN/cache verification. Don't flip a hosted bucket before serving support passes staging. No file deletion/move or unrelated schema redesign.
+- Decision needed: short signed-URL expiry window versus immediate rejection of subsequent requests on revocation; lifetime remains unset. See `STORAGE_ACCESS_REVIEW.md` for concrete rollout surface and safeguards. This is a finding within existing L5 security scope, not an unrelated feature.
+
+
+
 ### Marketing homepage: staged hero fades make first load feel slow
 - Priority: P2 beta presentation; keep separate from the active authentication rollout.
 - Logged: 2026-10-21
@@ -285,6 +296,7 @@ Capture and organise only. These requirements don't authorise implementation or 
 - Expected: the status dropdown should be available in card view, matching list-view behaviour.
 
 ---
+
 
 ## Features
 

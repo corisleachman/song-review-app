@@ -9537,3 +9537,10 @@ Fix the PageSpeed Insights results for song-room.live: mobile LCP 7.2 s (score 7
 - Sixteen read-only role checks and six installed metadata checks pass; installed fingerprints match staging. Private schema is excluded from Data API. Security Advisor: zero errors/warnings, eight existing INFO notices. Counts unchanged at seven users/profiles/workspaces and ten memberships.
 - Eight public HTTP probes and scoped existing-session dashboard, song/version, upload-title and collaborator checks pass. Production has one available workspace; multi-workspace switching was covered on staging. No email, upload, account, billing or customer membership mutation. Bounded live error/fatal scan empty.
 - PR #67 exact reviewed head 5e6f171a merged as a66c24fa after four green checks. Updated LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, B21_SECURITY_REPAIR_REVIEW.md, LAUNCH_SECURITY_REVIEW.md and LAUNCH_API_ACCESS_MATRIX.md. B21 complete; broader L5/S2-S3 remains open. Reverse-order SQL rollback restores the known defect/warnings; app rollback alone does not undo the database repair.
+
+
+## 2026-11-01 - Storage privacy finding and view inventory
+
+- Added STORAGE_ACCESS_REVIEW.md and supabase/tests/storage_access_inventory.sql. Read-only staging/Production inventory found zero public views, two public media buckets and zero Storage object policies. Anonymous HEAD against an existing private staging audio object returned 200; no body downloaded and no private URL published. No private Production object requested.
+- Traced version/public song/public playlist URL issuance, artwork projections and visibility mutation. Permanent public URLs bypass subsequent application checks. Recorded B23 with confirmed versus inferred behaviour, acceptance, performance/playback dependencies and a revocation-contract decision. No repair or hosted change is claimed.
+- Updated LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md and LAUNCH_API_ACCESS_MATRIX.md. L5/S2-S3 remain open. Metadata SQL executed on both environments; documentation diff checked. No app code change or additional test suite required for this audit-only update.
