@@ -71,3 +71,24 @@ test('native renewal: seeks within a shortened replacement duration', async () =
   const audio = new AudioFixture(); audio.duration = 20;
   await resumeNativeAudio(audio, options); assert.equal(audio.currentTime, 20);
 });
+
+test('native renewal: playback waits until an asynchronous seek completes', async () => {
+  const audio = new AudioFixture();
+  let position = 42;
+  Object.defineProperty(audio, 'currentTime', {
+    get: () => position,
+    set: value => { position = value; audio.seeking = true; },
+  });
+  audio.load = () => {
+    audio.loads++; position = 0; audio.error = null;
+    queueMicrotask(() => audio.dispatchEvent(new Event('loadedmetadata')));
+  };
+  const pending = resumeNativeAudio(audio, options);
+  for (let i = 0; i < 5; i++) await Promise.resolve();
+  assert.equal(audio.seeking, true);
+  assert.equal(audio.plays, 1, 'must not restart while the saved position is still seeking');
+  audio.seeking = false;
+  audio.dispatchEvent(new Event('seeked'));
+  await pending;
+  assert.equal(audio.plays, 2); assert.equal(audio.currentTime, 42);
+});

@@ -28,15 +28,23 @@ export async function resumeNativeAudio(
         clearTimeout(timer);
         audio.removeEventListener('loadedmetadata', ready);
         audio.removeEventListener('error', failed);
+        audio.removeEventListener('seeked', restored);
       };
       const failed = () => { clean(); reject(new Error('Audio could not be renewed. Press Play to try again.')); };
-      const ready = () => {
+      const restored = () => {
         clean();
         if (!current()) { reject(aborted()); return; }
+        resolve();
+      };
+      const ready = () => {
+        if (!current()) { clean(); reject(aborted()); return; }
         try {
+          // Seeking is asynchronous in real media elements. Don't restart play
+          // until the saved position has actually been restored.
+          audio.addEventListener('seeked', restored);
           audio.currentTime = Number.isFinite(audio.duration) ? Math.min(position, audio.duration) : position;
-          resolve();
-        } catch { reject(new Error('Audio position could not be restored.')); }
+          if (!audio.seeking) restored();
+        } catch { clean(); reject(new Error('Audio position could not be restored.')); }
       };
       const timer = setTimeout(failed, options.timeoutMs ?? 12000);
       audio.addEventListener('loadedmetadata', ready);

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
-import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { artworkDeliveryUrl, artworkSigningKey, readArtworkAccess, type ArtworkAccess } from '@/lib/artworkAccess';
 
 export const dynamic = 'force-dynamic';
@@ -28,6 +27,7 @@ async function renew(access: ArtworkAccess) {
     if (entryError) throw entryError;
     if (!entry) return null;
   } else {
+    const { resolveCanonicalIdentity } = await import('@/lib/canonicalIdentity');
     const resolved = await resolveCanonicalIdentity();
     if (!resolved) return null;
     if (access.kind === 'workspace') {

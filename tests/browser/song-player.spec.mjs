@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
 
 // Silent PCM audio exercises real browser playback without hosted media or accounts.
-function silentWav() {
-  const samples = 16000 * 4;
+function silentWav(seconds = 4) {
+  const samples = 16000 * seconds;
   const wav = Buffer.alloc(44 + samples * 2);
   wav.write('RIFF'); wav.writeUInt32LE(wav.length - 8, 4); wav.write('WAVE', 8);
   wav.write('fmt ', 12); wav.writeUInt32LE(16, 16); wav.writeUInt16LE(1, 20);
@@ -64,7 +64,7 @@ async function preparePlayer(page, fallback, renewal = false) {
         waveformFailures++;
         return route.abort('failed');
       }
-      return route.fulfill({ status: 200, contentType: 'audio/wav', body: silentWav() });
+      return route.fulfill({ status: 200, contentType: 'audio/wav', body: silentWav(renewal ? 12 : 4) });
     }
     if (url.pathname.startsWith('/api/')) {
       if (!(url.pathname in payloads)) unexpectedRequests.push(url.pathname);
@@ -169,13 +169,15 @@ test('native media resume reauthorises once without losing position or loop stat
   await expect.poll(async () => (await mediaState(page))?.paused).toBe(false);
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
   await seekAudio(page, 2);
+  const before = await mediaState(page);
+  expect(before.time).toBeCloseTo(2, 1);
   // Simulate the browser refusing an old native source. The replacement request
   // serves real PCM bytes, so metadata/seek/play recovery runs in the browser.
   await page.evaluate(() => { window.failNextNativeResume = true; });
   await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect.poll(async () => (await mediaState(page))?.paused).toBe(false);
   const state = await mediaState(page);
-  expect(state.time).toBeGreaterThanOrEqual(1.8);
+  expect(state.time, JSON.stringify({ before, after: state, renewed: fixture.renewalSources() })).toBeGreaterThanOrEqual(1.8);
   expect(state.time).toBeLessThan(3.5);
   expect(state.loop).toBe(true);
   expect(state.activePlayers).toBe(1);
