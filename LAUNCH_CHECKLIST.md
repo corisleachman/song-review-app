@@ -25,8 +25,8 @@ Done means the named scope has recorded evidence, not that every future improvem
 | ID | Check | Status | Evidence / next action | Owner |
 | --- | --- | --- | --- | --- |
 | S1 | Establish current security baseline | Done | Read-only production inventory: RLS on all 24 public tables; advisor has zero ERROR findings, five WARN findings and eight INFO findings. [Review record](LAUNCH_SECURITY_REVIEW.md) | Agent |
-| S2 | Cross-workspace API and direct-database access | In progress | Canonical identity, thread path and eight dashboard/song/admin/internal route samples inspected; 12 local handler tests pass; staging authenticated-role SQL test fails with membership-policy recursion (B21). Hosted API negatives remain pending. [Inventory of all 68 API route files](LAUNCH_API_ACCESS_MATRIX.md) created; exercise owner/member/outsider/public boundaries on staging. RLS enabled alone isn't a pass | Agent |
-| S3 | Database function and policy review | Not started | Review five mutable-search-path warnings, overlapping policies and grants; verify views, Storage policies and privileged RPCs. No production policy change yet | Agent |
+| S2 | Cross-workspace API and direct-database access | In progress | Canonical identity, thread path and eight dashboard/song/admin/internal route samples inspected; 42 local handler tests pass; B21 candidate passes 34 rolled-back staging SQL checks. Permanent install and hosted authenticated API checks await review. [Inventory of all 68 API route files](LAUNCH_API_ACCESS_MATRIX.md) created; exercise owner/member/outsider/public boundaries on staging. RLS enabled alone isn't a pass | Agent |
+| S3 | Database function and policy review | In progress | Five search-path fixes and B21 migration prepared; 34 transaction-only checks pass. [Review package](B21_SECURITY_REPAIR_REVIEW.md). No permanent policy change; views/Storage review remains | Agent |
 | S4 | Abuse protection coverage | In progress | Email login limiter, Turnstile and feedback throttle exist. Invite/comment/bootstrap coverage still needs explicit decisions and tests | Agent |
 | S5 | Input validation and safe errors | Not started | Audit mutation inputs, size/type limits, numeric bounds and error responses. Upload validation already has regression coverage | Agent |
 | S6 | Secret handling and log safety | Not started | Recheck variable classification/scopes without exposing values; inventory logging and confirm redaction. Earlier Config-vs-Secret concern is unverified, not a proven leak | Agent |
@@ -34,7 +34,7 @@ Done means the named scope has recorded evidence, not that every future improvem
 
 Performance is the user's main MVP concern. B17-B19 are queued as the leading L6 workstream; capture does not interrupt the current L5 task. B06 six-month Free-to-Pro beta grants have confirmed product rules; implementation and expiry/billing boundary tests remain open.
 
-Next action: review a narrow B21 membership-policy repair and verify it on staging; continue the remaining route-by-method and Data API checks. B22 has an independent minimal application fix. Don't broaden permissions or change production account boundaries as part of this review.
+Next action: [review the B21/S3 package](B21_SECURITY_REPAIR_REVIEW.md) and approve staging-only installation. Candidate verification is transaction-only; continue hosted API/Data API checks after install. B22 is already Production complete. Don't broaden permissions or change production account boundaries as part of this review.
 
 ## L6 acceptance checklist
 
@@ -77,7 +77,7 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B18 | [Dashboard blank on return](PRODUCT_BACKLOG.md#b18-dashboard-retain-valid-songs-and-artwork-when-returning) | Reported defect; trigger unverified | L6 reliability; S2 cache isolation overlaps |
 | B19 | [Dashboard-to-song navigation speed](PRODUCT_BACKLOG.md#b19-dashboard-to-song-measure-and-reduce-navigation-delay) | User report; baseline pending | L6 performance; canonical access must remain intact |
 | B20 | [New-version collaboration notifications](PRODUCT_BACKLOG.md#b20-verify-notifications-for-new-version-uploads) | All-workspace-member delivery confirmed; capability/delivery untested | L6 dependability audit; no new channel assumed |
-| B21 | [Membership RLS recursion](PRODUCT_BACKLOG.md#b21-membership-rls-recursively-evaluates-itself) | Confirmed staging failure; matching Production policy structure; repair pending | L5/S2-S3, P1 |
+| B21 | [Membership RLS recursion](PRODUCT_BACKLOG.md#b21-membership-rls-recursively-evaluates-itself) | Repair prepared and rollback-tested; awaiting review before permanent staging install | L5/S2-S3, P1 |
 | B22 | [Unconfigured legacy password false success](PRODUCT_BACKLOG.md#b22-legacy-password-verifier-reports-success-when-unconfigured) | Production complete via PR #66; 121 tests and eight live smoke checks pass | L5/S2, P2 |
 
 Exploratory ideas in ROADMAP.md (typing indicators, pinned comments, comparison view, waveform regions, exports, Slack, native mobile app, multitrack and video) remain unscheduled ideas. They aren't approved launch work. Delete/edit/auth/invite ideas in that old file must be checked against existing features before creating tasks.
@@ -94,6 +94,7 @@ Exploratory ideas in ROADMAP.md (typing indicators, pinned comments, comparison 
 
 | Date | Completed action | Current stage | Remaining launch stages |
 | --- | --- | --- | --- |
+| 1 November 2026 | B21/S3 repair package prepared; 34 staging transaction checks, rollback verification and 151 local tests pass. Awaiting security-boundary review; no permanent DB change | L5 Security closeout | L5, L6, L7, L8 |
 | 1 November 2026 | B22 deployed and verified live; 121 tests, four PR checks and eight production smoke checks passed. B21 remains open | L5 Security closeout | L5, L6, L7, L8 |
 | 1 November 2026 | Executed staging role probes; found B21 membership recursion; added 12 handler tests and B22 fail-closed patch | L5 Security closeout | L5, L6, L7, L8 |
 | 1 November 2026 | Confirmed B06 six-month Free-first manual grants, owner signup alerts for every tier, and B20 all-member version alerts; no feature activated | L5 Security closeout | L5, L6, L7, L8 |

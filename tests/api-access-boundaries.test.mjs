@@ -64,7 +64,10 @@ function routeHarness(route, { identity = null, user = null, tables = {} } = {})
     }).outputText;
     const localRequire = specifier => {
       if (Object.hasOwn(stubs, specifier)) return stubs[specifier];
-      if (specifier.startsWith('@/')) return load(path.join(root, `${specifier.slice(2)}.ts`));
+      if (specifier.startsWith('@/')) {
+        const relative = specifier.slice(2);
+        return load(path.join(root, path.extname(relative) ? relative : `${relative}.ts`));
+      }
       return require(specifier);
     };
     const evaluate = new Function('require', 'exports', compiled);
@@ -77,7 +80,11 @@ function routeHarness(route, { identity = null, user = null, tables = {} } = {})
 const session = role => ({ identity: { workspaceId: 'workspace-a', userId: `user-${role}`, membershipRole: role }, bootstrap: { workspace: { plan: 'free' } } });
 const song = { id: 'song-a', account_id: 'workspace-a', title: 'Allowed', image_url: null };
 const foreignSong = { id: 'song-b', account_id: 'workspace-b', title: 'PRIVATE-TITLE', image_url: 'PRIVATE-ARTWORK' };
-const getRequest = () => new Request('https://staging.invalid/api/test');
+const getRequest = () => {
+  const request = new Request('https://staging.invalid/api/test');
+  request.nextUrl = new URL(request.url);
+  return request;
+};
 const jsonRequest = (body, method = 'POST') => new Request('https://staging.invalid/api/test', { method, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
 const params = values => ({ params: Promise.resolve(values) });
 
@@ -187,3 +194,47 @@ test('legacy password verification fails closed when unconfigured or missing inp
     if (previous === undefined) delete process.env.SHARED_PASSWORD; else process.env.SHARED_PASSWORD = previous;
   }
 });
+
+for (const [route, methods] of [
+  ['actions/route.ts', ['GET']],
+  ['actions/create/route.ts', ['POST']],
+  ['actions/[actionId]/route.ts', ['PATCH']],
+  ['actions/by-song/[songId]/route.ts', ['GET']],
+  ['tasks/create/route.ts', ['POST']],
+  ['tasks/[taskId]/route.ts', ['PATCH', 'DELETE']],
+  ['tasks/reorder/route.ts', ['PATCH']],
+  ['threads/create/route.ts', ['POST']],
+  ['threads/reply/route.ts', ['POST']],
+  ['songs/create/route.ts', ['POST']],
+  ['songs/[songId]/route.ts', ['PATCH', 'DELETE']],
+  ['songs/[songId]/tasks/route.ts', ['GET']],
+  ['songs/[songId]/versions/route.ts', ['GET']],
+  ['songs/[songId]/visibility/route.ts', ['PATCH']],
+  ['songs/[songId]/public-comments/route.ts', ['GET']],
+  ['songs/[songId]/public-comments/[commentId]/route.ts', ['DELETE']],
+  ['versions/[versionId]/route.ts', ['PATCH']],
+  ['versions/[versionId]/threads/route.ts', ['GET']],
+  ['versions/[versionId]/finalize/route.ts', ['POST', 'DELETE']],
+  ['playlists/route.ts', ['GET', 'POST']],
+  ['playlists/[id]/route.ts', ['GET', 'PATCH', 'DELETE']],
+  ['playlists/[id]/songs/route.ts', ['POST', 'PATCH']],
+  ['playlists/[id]/songs/[songId]/route.ts', ['DELETE']],
+]) {
+  for (const method of methods) {
+    test(`${method} /api/${route.replace('/route.ts', '')}: signed-out requests cannot touch database`, async () => {
+      const h = routeHarness(`app/api/${route}`);
+      const request = method === 'GET' ? getRequest() : jsonRequest({
+        songId: 'song-a', versionId: 'version-a', commentId: 'comment-a', threadId: 'thread-a',
+        description: 'test', commentText: 'test', timestamp: 1, orderedIds: ['task-a'],
+        title: 'test', status: 'pending', isPublic: true,
+      }, method);
+      const response = await h.handler[method](request, params({
+        songId: 'song-a', versionId: 'version-a', actionId: 'action-a', taskId: 'task-a',
+        id: 'playlist-a', commentId: 'comment-a',
+      }));
+      assert.equal(response.status, 401);
+      assert.deepEqual(h.reads, []);
+      assert.deepEqual(h.writes, []);
+    });
+  }
+}

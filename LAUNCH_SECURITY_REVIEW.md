@@ -83,3 +83,12 @@ PR #66 merged with exact tested head `a9d598c9` as `6e770973a7e65aee0444d4ef0acc
 Production `dpl_iwxMHCuc3D5dxh7q6fGmkPHSauc3` is READY and the live www alias resolves to that exact merge revision. Eight safe HTTP checks passed: homepage/Login/config, signed-out bootstrap/dashboard/admin feedback, empty legacy verifier and unsigned internal notification. Public Email config stays true/false. The deployment-scoped last-ten-minute error/fatal scan returned no matching logs. No password, valid signature, account creation, notification send or payment was submitted.
 
 B22 is Production complete. S2 and B21 remain open. No database migration or service configuration change was needed. Rollback target: previous deployment `dpl_DSGYU6ifueQ6QhDPhCNGWC6X6euM` at `d8621df2`, or focused revert of the application guard; this restores the documented false-success response. No rollback was performed.
+
+
+## B21/S3 candidate ready for security review, 1 November 2026
+
+[Review and rollout package](B21_SECURITY_REPAIR_REVIEW.md) contains two ordered migrations, reverse-order rollback scripts, first-apply drift checks and a reproducible rollback-only SQL probe. Candidate preserves workspace-member SELECT visibility and existing owner/admin insert/delete and owner-only update rules, using two private SECURITY DEFINER boolean lookups bound to auth.uid(). Five existing public functions get fixed empty search paths without body/grant/owner changes.
+
+The first SELECT-only candidate passed reads but failed an insert; final repair covers all six membership predicates. Final access suite passed 27 checks, duplicate membership application passed, and the combined search-path/access suite passed 34 checks from checked-in composer output. Reverse rollback restored exact policy expressions/roles and function settings. Post-test read-back found no private schema or fixture accounts. No transaction was committed and neither hosted environment was repaired permanently.
+
+Current local suite: 151 passing tests, including 42 real-handler mocked-I/O cases; focused lint and TypeScript pass. Staging/Production policy/body fingerprints match, and staging first-apply preflight passes. These don't replace installed-definition, exposed-schema, hosted API/browser and Production verification. S2/S3 remain In progress; permanent staging installation now requires review of the new privileged lookup boundary.
