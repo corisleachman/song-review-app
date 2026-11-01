@@ -65,13 +65,15 @@ Read-only path inventory: all 21 staging and 48 Production version paths use son
 
 [Supabase CDN guidance](https://supabase.com/docs/guides/storage/cdn/smart-cdn) says cached signed responses may outlive tokens. Audio no-cache/expiry behaviour and old public-URL invalidation therefore require live verification. Artwork needs compatible serving/cache treatment; its one-hour metadata is not silently accepted as a short revocation window. No file was reuploaded or metadata edited.
 
-### Staging configuration limitation
+### Staging configuration resolved through deployment verification
 
-The connector returned 403 when listing the verified primary project's environment metadata. CLI fallback pulls for the known historical staging branches supplied empty Supabase values, so no usable local staging connection was established. No hosted variable was edited, no permission widened and no Production settings substituted. Temporary pull output was removed. Confirm the existing protected staging branch/configuration before deploying. An automatic Preview isn't proof of staging isolation.
+The environment metadata connector returned 403 and CLI pulls supplied empty Supabase values. Those results did not establish that the deployed configuration was missing. Without changing permissions or settings, inspection of the actual Preview bundle found the staging reference only. The public song response matched the expected staging version and the media redirect targeted staging Storage, confirming server behaviour too. This removes the testing blocker. The reason for the connector's narrower env-list denial is still unknown; reading deployment metadata works.
+
+Verified candidate: `6823574dda04b4b078a24a2d0f44b6f09ab36804`, deployment `dpl_4GgsV7x4LsiPmZyY9rcMD19KsiWb`, [protected staging Preview](https://song-review-app-v2-2roge9bap-corisleachmans-projects.vercel.app). All four PR checks pass. This is Preview only; Production application and buckets are unchanged.
 
 ### Exact next test gate
 
-All rows are Not run. Confirm staging source/project first. No bucket switch is authorised by this preparation checkpoint: complete compatible serving paths and the rollout plan first.
+This is the original full gate. Selected completed checks are recorded below; remaining rows are not implicitly passed. Confirm staging source/project for every new deployment. No bucket switch is authorised by this preparation checkpoint: complete compatible serving paths and the rollout plan first.
 
 | Owner / environment | Exact action | Expected result |
 | --- | --- | --- |
@@ -93,3 +95,14 @@ All rows are Not run. Confirm staging source/project first. No bucket switch is 
 | Agent / later staging cutover | Finish artwork/cache support, then test planned private switch | Old direct URLs refused; all intended media still works |
 
 Stop on unexpected access, expired-source failure, wrong-song playback, missing Range support or significant measured delay. Return environment, page URL, browser/device, step, status/error and safe screenshot/log excerpt. Never return a signed URL/token. Browser-cached or buffered bytes cannot be retracted.
+
+## Scoped hosted verification, 1 November 2026
+
+- Previous candidate `eb262bee`: public song GET 200 with expected staging version/stable URL; scoped audio GET 307 to staging Storage; signed-out private request 401; wrong public song context 404. Signed Storage HEAD 200 with private/no-cache and bytes support; one-byte GET Range 206. Only that synthetic one-byte transport probe was retained as metadata; no media body file was saved.
+- Browser baseline/candidate comparison found public waveform requests omitted cookies on the same-origin media route. Native fallback played but left an error; baseline waveform played normally. Changed `app/listen/[songId]/page.tsx` and `lib/usePlaylistPlayer.ts` fetch credentials to same-origin. Cookies are not forwarded to cross-origin Storage.
+- Corrected source `6823574d` passes all four PR checks and 181 local tests/TypeScript. Focused player lint has zero errors and eleven existing warnings. Public song/media/private-signed-out HTTP checks pass again on its exact Preview.
+- Corrected public song waveform playback advances with duration and no error. DOM inspection confirms its loaded media is a blob source with no media error, rather than an expiring remote media source. This supports smooth already-loaded playback but is not a physical-device or native-fallback expiry pass.
+- Existing public two-track playlist plays and automatically advances to the second track. Explicit first-track selection restores the correct first track; Previous correctly restarts the current track when past three seconds. No playlist edit was made.
+- Existing Google identity signs in on staging. The member workspace loads empty; switching to the existing owner workspace loads its four songs. A private media request from the wrong active workspace displays Not found. Owner private-song playback advances to completion; keyboard Home seeks to zero, and Play from Start restarts it on the corrected build. This isn't a separate-user full hosted role matrix.
+- An issued staging URL was primed with HEAD and Range while valid, then refused after expiry (HEAD and Range GET 400); a fresh URL for the same object returns 200. The expired probe was well beyond its deadline, not a measurement at exactly 600 seconds, so no tight ten-minute CDN cutoff is claimed. The old pre-fix native-fallback resume didn't visibly advance; renewal in native fallback remains unverified and must pass before rollout.
+- Staging counts remain eight users/profiles, seven workspaces and eleven memberships. No new account, upload, email, comment, share toggle, plan or object/bucket mutation. Checked Preview error/fatal scans have no matching logs. Physical phone/background, native expiry recovery, measured performance, real share revocation and artwork/cutover remain open. B23 is not fixed in Production.

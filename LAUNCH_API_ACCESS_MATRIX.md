@@ -141,3 +141,8 @@ Read-only metadata: no public-schema views/materialized views in staging or Prod
 ## Local audio candidate, 1 November 2026
 
 New /api/media/audio/[versionId] GET/HEAD is local only, checking canonical identity or explicit public song/playlist scope before signing a bounded song-owned path for 600 seconds. Public contexts require current sharing, same-workspace playlist membership and latest finalized version. Thirty added handler tests pass: 72 boundary cases, 181 total tests. The older route inventory counted 68 files before this addition. Hosted Range/expiry/background gates and artwork remain open; neither bucket changed. See STORAGE_ACCESS_REVIEW.md.
+
+
+## Scoped media Preview checks, 1 November 2026
+
+PR #68 source 6823574d is Ready on confirmed staging, with four green checks. Public song 200, authorised public media 307 to staging Storage, signed-out private 401 and wrong public context 404 are checked. Browser wrong-active-workspace private request displays Not found; owner private playback/seek/restart pass. Public waveform and two-track playlist play/advance after changing their media fetch credentials to same-origin. Valid HEAD/Range and expired-versus-fresh Storage token probes are recorded in STORAGE_ACCESS_REVIEW.md. This is not all-role/all-route coverage or a private-bucket fix. No Production media change.
