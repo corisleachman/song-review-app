@@ -87,12 +87,12 @@ Capture and organise only. These requirements don't authorise implementation or 
 ## Bugs
 
 ### B21. Membership RLS recursively evaluates itself
-- Logged: 2026-11-01. Priority: P1 security/correctness closeout, L5/S2-S3. Status: repair candidate prepared and tested in rollback-only staging transactions; awaiting explicit review before permanent installation. See `B21_SECURITY_REPAIR_REVIEW.md`.
+- Logged: 2026-11-01. Priority: P1 security/correctness closeout, L5/S2-S3. Status: approved staging installation and scoped verification complete. 34 installed-definition SQL checks, six invitation checks and authenticated browser checks pass; staging advisor has zero security errors/warnings. Production remains unchanged and requires its separate gate. See `B21_SECURITY_REPAIR_REVIEW.md`.
 - Observed: an existing staging owner's authenticated database read fails with SQLSTATE 42P17, infinite recursion in account_members. Production has the same SELECT policy structure; live authenticated-role behaviour wasn't probed. No cross-workspace disclosure demonstrated.
 - Root cause: membership SELECT queries its own RLS-protected table; related role helpers are SECURITY INVOKER reads of that table. Server service-role reads can mask the failure.
 - Intended outcome: legitimate member reads work while outsider reads and unauthorised writes remain denied.
 - Acceptance: reproduce with read-only staging role probes; inspect all dependent policies/helpers, table/column grants and client call sites; verify own/member/outsider/anon reads and authorised/denied writes; retain canonical server paths; no broad grants, disabled RLS or added always-true policies. Verify equivalent environment schema and production rollout separately.
-- Dependencies/review: candidate preserves existing workspace-member visibility and owner/admin write rules. It adds two private privileged helpers, which need explicit security-boundary review before permanent staging installation. Two ordered migrations, rollback scripts and 34 passing transaction-only checks are in `B21_SECURITY_REPAIR_REVIEW.md`. No hosted repair is claimed complete.
+- Dependencies/review: candidate preserves existing workspace-member visibility and owner/admin write rules. It adds two private privileged helpers, which need explicit security-boundary review before permanent staging installation. Two ordered migrations, rollback scripts and 34 passing transaction-only checks are in `B21_SECURITY_REPAIR_REVIEW.md`. Staging repair is installed; no Production repair is claimed complete.
 
 ### B22. Legacy password verifier reports success when unconfigured
 - Logged: 2026-11-01. Priority: P2 fail-closed hardening, L5/S2. Status: Production complete. PR #66 merged as `6e770973`; deployment `dpl_iwxMHCuc3D5dxh7q6fGmkPHSauc3` is READY on the live domain. Empty input returns 401/success false without a session cookie; 121 tests and eight production smoke checks pass.

@@ -9519,3 +9519,13 @@ Fix the PageSpeed Insights results for song-room.live: mobile LCP 7.2 s (score 7
 - Expanded `tests/api-access-boundaries.test.mjs` by 30 signed-out handler-method cases. Fixed harness-only NextRequest/ES-module resolution gaps; no app behaviour changed. 151 tests pass, including 42 handler cases; focused lint and TypeScript pass.
 - Updated `LAUNCH_CHECKLIST.md`, `PRODUCT_BACKLOG.md`, `LAUNCH_SECURITY_REVIEW.md`, `LAUNCH_API_ACCESS_MATRIX.md`: B21 and S3 review-ready but not installed or complete. S2 remains In progress.
 - Next review gate: approve permanent staging installation of the two database migrations, then installed-definition/advisor/hosted app checks. Production requires its later gate. Rollback order and stop conditions are recorded in the review package; no app release can roll back database policy changes.
+
+
+## 2026-11-01 - Approved B21/S3 staging installation verified
+
+- Applied reviewed migrations to staging `ivifkrtupqizyqqsxdty` only. Hosted ledger assigned `20261101153149_fix_membership_rls_recursion` and `20261101153157_pin_function_search_paths`; renamed the matching migration/rollback files and current references from candidate IDs 20261101112636/20261101113332. Approved SQL bytes are unchanged. Production wasn't migrated.
+- Updated `scripts/compose-membership-rls-probe.mjs` with `--installed` to test existing definitions without candidate DDL. Installed read-back and 34 checks pass; six additional rollback-only invitation RPC checks pass. No fixture workspaces remain. Counts stay eight users/profiles, seven workspaces and eleven memberships.
+- Staging Advisor: zero errors/warnings, eight existing server-table INFO notices. Private schema Data API rejection verified by HTTP 406/PGRST106. No exposed-schema setting was changed.
+- Existing Google session passed Vercel protection and staging login. Preview `dpl_943DCJDAdkNqLkwgq3FxLMJTJFz9` at `c4652810` points to staging. Workspace switching, four-song library, ordinary song/version read, direct upload-title lookup and collaborator list pass in browser. No file, comment, real invite email or payment submitted. Fresh invitation-mail/browser journey wasn't replayed; backend acceptance/idempotency was tested transactionally.
+- Updated `B21_SECURITY_REPAIR_REVIEW.md`, `LAUNCH_CHECKLIST.md`, `PRODUCT_BACKLOG.md`, `LAUNCH_SECURITY_REVIEW.md`, `LAUNCH_API_ACCESS_MATRIX.md`. Production's read-only baseline preflight remains unchanged. B21/S3 staging gate passed, broader security work stays In progress; separate Production review is next.
+- Rollback scripts remain reverse-order path reset then membership restore. They restore known recursion/warnings, so prefer fix-forward. No rollback occurred. No app deployment can undo the database migration.

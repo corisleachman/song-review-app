@@ -6,9 +6,15 @@ const target = process.argv[2];
 if (target !== 'ivifkrtupqizyqqsxdty') {
   throw new Error('Pass the exact staging project ref: ivifkrtupqizyqqsxdty');
 }
-const migration = [
-  '20261101112636_fix_membership_rls_recursion.sql',
-  '20261101113332_pin_function_search_paths.sql',
+const mode = process.argv[3] ?? '--candidate';
+if (mode !== '--candidate' && mode !== '--installed') {
+  throw new Error('Use --candidate or --installed');
+}
+const migration = mode === '--installed'
+  ? '-- Check installed definitions without reapplying candidate DDL.'
+  : [
+  '20261101153149_fix_membership_rls_recursion.sql',
+  '20261101153157_pin_function_search_paths.sql',
 ].map(name => readFileSync(new URL(`supabase/migrations/${name}`, root), 'utf8')).join('\n');
 const template = readFileSync(new URL('supabase/tests/membership_rls_probe.sql', root), 'utf8');
 const marker = '-- MIGRATION_UNDER_TEST';

@@ -121,3 +121,8 @@ On PR #66 merge revision `6e770973`, unauthenticated bootstrap/dashboard GETs re
 API runtime coverage is now 42 passing mocked-I/O tests, adding 30 signed-out method checks across action, task, thread, song, version/upload and playlist handlers. The harness models NextRequest.nextUrl and resolves existing .mjs helpers; initial harness failures were corrected without changing application access behaviour. Full suite: 151 passed.
 
 B21/S3 SQL candidates passed 34 actual staging role/function checks inside transactions that rolled back, plus idempotency and reverse rollback checks. No installed migration or full hosted API/browser pass is claimed. [Review gate](B21_SECURITY_REPAIR_REVIEW.md) is the next step.
+
+
+## Installed staging repair checks, 1 November 2026
+
+Following explicit staging approval, both reviewed migrations are installed. The installed-mode probe passed 34 role/function checks without reapplying DDL; six further rolled-back invitation acceptance/idempotency checks passed. Authenticated browser checks passed for switching between existing member/owner workspaces, dashboard songs, song/version reads, the direct upload-title read and collaborator listing. No new invitation email/browser acceptance was replayed. This scoped gate doesn't replace all route-by-method owner/member/outsider API tests. Production remains on its original policies.

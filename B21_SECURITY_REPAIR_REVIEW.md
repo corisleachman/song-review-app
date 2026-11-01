@@ -1,12 +1,12 @@
 # Membership policy repair: review and rollout
 
-1 November 2026. [Current launch checklist](LAUNCH_CHECKLIST.md). B21 and S3 are review-ready, not installed. No Production database change has occurred.
+1 November 2026. [Current launch checklist](LAUNCH_CHECKLIST.md). The user approved staging installation. Both migrations are installed and verified on staging; Production is unchanged. The Production gate remains separate.
 
-## What needs review
+## Reviewed design
 
 The current membership policies read account_members while evaluating account_members access, producing infinite recursion. The replacement uses two private, fixed-search-path SECURITY DEFINER functions. Each returns only whether auth.uid() belongs to the requested workspace, optionally with one of the existing workspace roles. Neither accepts a user ID, returns membership rows, changes data or uses editable profile metadata for authorisation.
 
-This introduces a privileged lookup boundary, so it needs explicit review before being installed permanently. The current tests used uncommitted staging transactions followed by ROLLBACK. Other sessions could not see the candidate definitions; brief policy locks were bounded with a three-second lock timeout.
+This introduces a privileged lookup boundary. The user approved staging installation after reviewing this package. The initial tests used uncommitted staging transactions followed by ROLLBACK. Other sessions could not see the candidate definitions; brief policy locks were bounded with a three-second lock timeout.
 
 | Behaviour | Before | Candidate |
 | --- | --- | --- |
@@ -24,8 +24,8 @@ The legacy workspace admin database role is preserved, not newly assigned to any
 
 Apply in order after approval:
 
-1. [Membership recursion migration](supabase/migrations/20261101112636_fix_membership_rls_recursion.sql)
-2. [Five function search-path fixes](supabase/migrations/20261101113332_pin_function_search_paths.sql)
+1. [Membership recursion migration](supabase/migrations/20261101153149_fix_membership_rls_recursion.sql)
+2. [Five function search-path fixes](supabase/migrations/20261101153157_pin_function_search_paths.sql)
 
 Supporting files: [first-apply preflight](supabase/tests/membership_rls_preflight.sql), [rollback-only test template](supabase/tests/membership_rls_probe.sql), [SQL composer](scripts/compose-membership-rls-probe.mjs), [API handler tests](tests/api-access-boundaries.test.mjs).
 
@@ -44,12 +44,16 @@ Supporting files: [first-apply preflight](supabase/tests/membership_rls_prefligh
 
 No permanent advisor improvement is claimed. The original policy failure and five warnings remain until a reviewed migration is installed and checked again.
 
-## Approved-next-step proposal: staging only
+## Approved staging sequence (completed)
 
-After explicit review approval, Agent should:
+The approved sequence was executed. The ledger versions below were assigned by Supabase; the reviewed SQL bytes are unchanged. Historical candidate file versions 20261101112636/20261101113332 were renamed to match the hosted ledger 20261101153149/20261101153157.
+
+The reproducible installed check is `node scripts/compose-membership-rls-probe.mjs ivifkrtupqizyqqsxdty --installed`. It omits candidate DDL and always rolls back fixture writes. Default `--candidate` mode remains for pre-install testing.
+
+Sequence and acceptance criteria:
 
 1. Supabase staging `ivifkrtupqizyqqsxdty`: rerun the preflight file. Expect every boolean true. Stop on drift; return project ref, failed boolean and safe definition difference.
-2. Apply migration 20261101112636, then 20261101113332 to staging using migration tooling. No application deployment is needed first. Do not change grants beyond these reviewed files or alter Data API exposed schemas.
+2. Apply migration 20261101153149, then 20261101153157 to staging using migration tooling. No application deployment is needed first. Do not change grants beyond these reviewed files or alter Data API exposed schemas.
 3. Run access/privilege checks against the installed definitions with rollback-only fixture transactions. Do not mistakenly claim the composer installed anything: it always rolls back. The existing composer reapplies candidates transactionally, so additionally read back the installed definitions/grants before the fixture test.
 4. Check staging Security Advisor, expected removal of the five search-path warnings, private helper fixed paths/owners and denied anonymous execution. Confirm the new namespace is absent from Data API exposed schemas. Expected existing server-only RLS INFO notices can remain.
 5. Verify staging authenticated upload-page title, workspace switch, collaborator list/invite acceptance and ordinary song/version reads. These require real sessions; use existing controlled test accounts. Stop on recursion, unexpected access, invitation/membership changes or session failures and return URL, role, step, redacted error and screenshot where useful.
@@ -59,10 +63,19 @@ After explicit review approval, Agent should:
 
 Production remains unchanged. Before any later Production approval, rerun first-apply fingerprints, review staging results, confirm recovery/Google and role scopes, and record the current app/database rollback boundary. Install the same migrations in the same order; repeat safe role/privilege checks and the authenticated app checks. Do not create or delete real users as a smoke test.
 
-Rollback scripts are [search paths](supabase/rollback/20261101113332_pin_function_search_paths.sql), then [membership](supabase/rollback/20261101112636_fix_membership_rls_recursion.sql). They were verified inside a rolled-back staging transaction. Rollback restores the known recursion and five warnings, so prefer fix-forward unless a regression makes rollback necessary. It doesn't restore permissive policies, drop tables or delete member data. The private schema drop uses RESTRICT, never CASCADE; stop if later objects depend on it.
+Rollback scripts are [search paths](supabase/rollback/20261101153157_pin_function_search_paths.sql), then [membership](supabase/rollback/20261101153149_fix_membership_rls_recursion.sql). They were verified inside a rolled-back staging transaction. Rollback restores the known recursion and five warnings, so prefer fix-forward unless a regression makes rollback necessary. It doesn't restore permissive policies, drop tables or delete member data. The private schema drop uses RESTRICT, never CASCADE; stop if later objects depend on it.
 
 An app deployment rollback cannot undo database policies. Don't run hosted configuration push, rotate secrets, disable RLS or broaden access to work around an error.
 
-## Reviewer decision
+## Staging verification results, 1 November 2026
 
-Approve installation on staging only, or identify concerns in the migration diff. The current review does not ask for Production activation, billing/admin-panel changes or new notification sends.
+- Applied both migrations via Supabase migration tooling to staging only. Ledger versions: `20261101153149` and `20261101153157`. Installed read-back confirms six non-recursive membership predicates, two bounded private helpers, correct owner/path/grants and five pinned public function paths.
+- All 34 checks passed against installed definitions without reapplying the migrations in the test transaction. Six additional invitation-service checks passed: first acceptance, idempotent retry, wrong-email rejection, one membership, no outsider membership and correct accepted-user attribution. Fixture writes rolled back; no invitation email was sent.
+- Staging Security Advisor: zero ERROR and zero WARN findings; eight existing server-only-table INFO notices remain. The private schema is excluded from the Data API, confirmed by its HTTP 406/PGRST106 `Invalid schema: song_room_private` response.
+- Existing Google session passed Vercel protection and signed into the confirmed staging Preview at source `c4652810`. Its client bundle contains the staging project reference and no Production reference. Workspace switch from existing member workspace to owner workspace loaded all four existing songs; song/version view, direct authenticated upload-title lookup and two-person collaborator list passed in browser.
+- No audio upload, playback, edit, real invitation/email or billing action occurred. The invitation backend was tested, not a fresh email-link/browser invite journey. All eight Auth users/profiles, seven workspaces and eleven memberships remain; zero test workspaces remain. The checked Preview's ten-minute error/fatal scan is empty.
+- Production's five original preflight checks still pass, confirming that its membership/private-schema/public-function baseline is unchanged.
+
+## Next reviewer decision: Production only
+
+Staging database and scoped browser verification pass. Review the recorded limits, then approve the same two migrations on Production or identify concerns. No Production migration, PR merge or new notification activation has happened under the staging-only approval. S2/S3 include further access/Storage work and aren't overall complete.
