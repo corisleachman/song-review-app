@@ -1,5 +1,8 @@
 # Future Features & Extension Guide
 
+> Current progress: [Launch checklist](LAUNCH_CHECKLIST.md). Updated 1 November 2026. This document retains historical detail; the checklist controls current stage status and priorities.
+
+
 This document outlines possible enhancements and how to implement them.
 
 ## Feature Ideas (Priority Order)

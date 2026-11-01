@@ -9465,3 +9465,14 @@ Fix the PageSpeed Insights results for song-room.live: mobile LCP 7.2 s (score 7
 - The first view is now the same six images on every visit, and rotation randomises after 5 s.
 - The original JPEG/TTF files stay in the repo because `manifest.json` records them, but the homepage no longer requests them.
 - A PageSpeed Insights re-test is still pending. It needs Production, because Preview sits behind Vercel Authentication.
+
+
+## 2026-11-01 - Consolidated launch checklist and security baseline
+
+- Created `LAUNCH_CHECKLIST.md` as the current stage/status and backlog index, with dated checkpoints, evidence, ownership and verification gates. Five foundation stages are Done; L5 security closeout is In progress, followed by L6 launch QA, L7 discoverability and L8 wider-launch decision.
+- Reconciled stale Google-only, billing-deferred and RLS-not-started claims against later records. Updated `PRODUCT_BACKLOG.md`, `public-mvp-roadmap.md`, `ROADMAP.md` and `EMAIL_PASSWORD_STAGING_ROLLOUT.md` with current-status precedence. Preserved historical evidence.
+- Added `LAUNCH_SECURITY_REVIEW.md`: read-only Production metadata confirms all 24 public ordinary tables have RLS. Security Advisor returned zero ERROR, five mutable-search-path WARN and eight server-table INFO findings. Function/policy sampling and canonical API identity review performed; a full route/direct-Data-API isolation pass remains open. No security setting, schema, grants, account data or service configuration changed.
+- Added `LAUNCH_API_ACCESS_MATRIX.md` with all 68 route files, exported methods and pending negative-access verification. Production dependency audit reports four low and zero moderate/high/critical advisories.
+- Updated `AGENTS.md` to require the checklist link in completion updates and intake of every new backlog item. No public unauthenticated planning/security route added.
+- Current release source: `8f02fb7a` (PR #63 merged 31 October). All 109 repository tests passed on that source. Documentation links and changes checked separately. No measured performance result was independently repeated in this task.
+- Rollout: repository documentation only. No migration, app change or service rollout required; revert the focused documentation commit to roll back. Next: complete S2 API method/access matrix and staging isolation test plan.

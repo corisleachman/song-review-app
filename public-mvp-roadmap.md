@@ -1,5 +1,8 @@
 # Song App Public MVP Roadmap
 
+> Current progress: [Launch checklist](LAUNCH_CHECKLIST.md). Updated 1 November 2026. This document retains historical detail; the checklist controls current stage status and priorities.
+
+
 ## Purpose
 
 This document is the single source of truth for the transition from the original private two-person MVP into a public-facing MVP that supports real users, account ownership, and paid growth later.
