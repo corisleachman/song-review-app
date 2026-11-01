@@ -17,6 +17,73 @@ Core public Email signup/login/recovery is Production complete (25 October); sig
 
 Current checklist IDs and all later items: [Launch checklist](LAUNCH_CHECKLIST.md).
 
+## MVP performance and dependability intake, 1 November 2026
+
+Capture and organise only. These requirements don't authorise implementation or a change to the current L5 security task. Performance is the user's main concern for inviting more people; B17-B19 are the leading performance workstream after the current security slice, tracked in L6. No fixed timing promise is set before measurement. All five requirements below remain untested and open.
+
+### B17. Dashboard: measure and reduce time to useful songs and artwork
+
+- Status: User-reported performance problem, not instrumented or independently reproduced. Investigation queued; no fix complete.
+- Reported behaviour: Opening the dashboard takes roughly 5-6 seconds before artwork and all songs appear. This is a user estimate, not a measured baseline.
+- Intended outcome: Show useful song content quickly and load artwork promptly without blocking the rest of the dashboard.
+- Implementation inspected: `app/dashboard/page.tsx` initializes through `/api/dashboard`, reuses its payload in `loadAll`, and already has opt-in performance tracing; `app/api/dashboard/route.ts` has request timing. A separate summary route exists. These facts don't establish which path is slow or justify introducing another fetching path.
+- Investigate: Trace auth/bootstrap, song data, related-version/action queries, response size, client processing/render and artwork discovery/download/decode independently. Check sequential or repeated requests, oversized artwork, unnecessary processing and cache effectiveness as hypotheses only. Record whether artwork unnecessarily waits for data or vice versa.
+- Acceptance criteria:
+  - Establish a reproducible baseline on a representative multi-song account before editing code; document account size (without private content), environment, device/browser, network/CPU conditions and cache state.
+  - Measure first visits and repeat visits; separate time to useful song content, data-request duration and artwork readiness. Use repeated comparable runs and show variability, not one favourable sample.
+  - Identify the main delays with evidence, explain the scoped changes and demonstrate before/after improvement under comparable conditions.
+  - Avoid repeated fetching/processing without a reason; preserve the canonical server-backed path, correct loading/empty/error states and account/workspace isolation.
+  - Propose a realistic performance target after baseline measurement. No fixed target has been supplied or silently chosen.
+- Dependencies: Safe access to a representative account; trace capture; B18 lifecycle checks; S2 cache/access isolation. Reuse existing timing tools where useful.
+- Decisions still needed: Target after measurement; representative test account/device/network to record. No product decision blocks initial diagnosis.
+
+### B18. Dashboard: retain valid songs and artwork when returning
+
+- Status: User-reported blank-content defect, not yet reproduced with a known trigger or absence interval. Investigation queued; no fix complete.
+- Reported behaviour: After time away, the page shell remains but the song/artwork area is blank, then reloads. The user doesn't know how long away causes it.
+- Intended outcome: Keep valid populated content visible while checking for updates; stale data must never cross users or workspaces.
+- Implementation inspected: `app/dashboard/page.tsx` registers both focus and visibility listeners, with a one-second reload coalescing guard. Its viewer/workspace-scoped localStorage cache has a five-minute freshness limit. On a cache miss/expiry, `loadAll` sets loading true, and the song region switches to loading UI. This is a concrete reproduction lead, not proof that it explains the user's incident. Sign-out removes the active scoped song cache; switching, expired sessions and in-flight responses still need testing.
+- Investigate: Distinguish a background tab return from an in-app dashboard remount. Inspect cache expiry/invalidation, focus refetches, session refresh, component remounts, request races and artwork URL validity; don't assume one is responsible.
+- Acceptance criteria:
+  - Test background-tab return and in-app navigation separately after 1, 5, 15 and 30 minutes; record the actual trigger. Include cache-expiry boundaries and a request failure.
+  - Previously loaded songs/artwork remain visible during valid background refresh; actual additions, edits and deletions still appear correctly.
+  - Expired sessions and inaccessible/expired artwork show appropriate recovery states; valid content isn't hidden just for a freshness check.
+  - Logout, sign-in as another user and workspace switching cannot expose prior private content, including late responses. Preserve loading, empty and error states for genuine initial/unauthorised loads.
+- Dependencies: B17 shared performance harness, session/cache boundary review under S2, controlled song updates and separate test identities. Don't weaken authentication or stretch signed-URL validity as a speculative fix.
+- Decisions still needed: Freshness/revalidation policy after reproduction; don't choose a larger TTL merely to conceal the symptom. No additional user decision is needed to begin diagnosis.
+
+### B19. Dashboard to song: measure and reduce navigation delay
+
+- Status: User-reported slow transition, not yet instrumented or independently reproduced. No fix complete.
+- Reported behaviour: Clicking from the dashboard into a song feels slower than it should; no measured duration supplied.
+- Intended outcome: Reach a useful, correct song page promptly, with clear feedback while remaining details load.
+- Implementation inspected: `openSongContext` already navigates directly to a known latest-version route when available, falling back to `/songs/[id]`; that entry page looks up the song and latest finalized version in parallel before redirecting. The version page fetches canonical song/version information. Don't assume every click takes the redirect path or that the redirect is the bottleneck.
+- Investigate: Measure click-to-feedback, route/data requests, identity/bootstrap, rendering, version selection and audio/waveform readiness separately. Evaluate safe reuse of dashboard metadata and progressive loading without replacing server authorisation or adding duplicate data paths.
+- Acceptance criteria:
+  - Capture baseline and after-change timings using comparable songs, devices, networks and cache states, including cold/warm navigation.
+  - Define and measure when the page becomes useful; show clear transition/loading feedback while remaining content arrives.
+  - Preserve song details, finalized/latest-version selection, playback, seeking and version boundaries.
+  - Fast song-to-song changes and late responses never display the previous song's details or audio as the current song.
+  - Propose the timing target from measurements, rather than making up a threshold.
+- Dependencies: B17 measurement setup, S2 canonical access review, representative songs/versions and existing playback regression coverage.
+- Decisions still needed: Useful-page milestone and target after measurement; whether metadata reuse is justified by evidence. No redesign is requested.
+
+### B20. Verify notifications for new version uploads
+
+- Status: Capability/delivery unverified, not a confirmed notification failure. Audit first; implement only if a gap is demonstrated.
+- Reported need: When someone uploads a new version, the other workspace participants should be notified. The user isn't sure whether this already happens.
+- Intended outcome: Confirm the real current upload-to-recipient behaviour, then close only demonstrated gaps.
+- Implementation inspected: `lib/threadNotifications.ts` handles thread/comment email and existing `all_members` / `owner_only` recipient policy. No explicit new-version notification dispatch was found in the inspected `versions/create` and `versions/[versionId]/finalize` routes. Thread notifications alone aren't proof of upload notifications; inspect indirect jobs/hooks and delivered-message evidence before deciding a feature is missing.
+- Acceptance criteria:
+  - Trace a controlled successfully finalized new version from uploader through any event/job/provider to the intended other workspace members; verify delivery evidence and a link to the correct song/version.
+  - Exclude the uploader and unrelated workspaces; confirm intended handling of existing notification settings and recipient eligibility.
+  - No misleading notification for failed/cancelled uploads, and retries/repeated finalization don't generate duplicate messages.
+  - Record recipient selection, whether a send was attempted, delivery/failure outcome and safe diagnostics without exposing tokens or private song content in logs.
+  - If already working, record the tested evidence; don't replace it or mark complete based only on a code path.
+- Dependencies: Existing workspace membership/notification policy, upload finalization, provider configuration and a controlled multi-member test with authorised test email delivery. No real email send is part of this capture task.
+- Decisions still needed: If current settings limit recipients, should new-version alerts honour that policy or deliberately notify all other participants? Confirm channel if the existing email pattern doesn't meet the need; don't add push/in-app channels by assumption.
+
+
 ## Bugs
 
 ### Marketing homepage: staged hero fades make first load feel slow
@@ -282,13 +349,30 @@ Current checklist IDs and all later items: [Launch checklist](LAUNCH_CHECKLIST.m
 - Logged: 2026-08-07
 - A faster, easier uploader that supports multiple files at once (multi-upload). Larger rework of the current upload flow.
 
-### Admin console (creator-only)
-- Logged: 2026-08-07
-- A creator/admin area covering:
-  - view all incoming beta feedback (triage)
-  - manual override of user account levels (plan up/downgrade)
-  - assign / issue redemption codes to individuals
-- Note: the **beta feedback triage view** (currently being specced) is phase 1 of this console. The account-level override and code-assignment pieces are the later expansions.
+### B06. Application-owner admin: signups and promotional Pro access
+
+- Logged: 2026-08-07; extended 2026-11-01. This extends the existing creator-console requirement rather than creating a second admin project.
+- Status: Feedback triage exists. User directory, owner signup alerts and promotional Pro grants are not verified or implemented by this task. Not complete.
+- Reported need: The application owner wants a private, simple view of who signs up, an initial notification for each new signup, and a button to reward selected beta testers with Pro and notify them.
+- Intended outcome: A small owner-only directory with search, signup date, identifying details and current effective access/plan; a clear Grant Pro access action with visible confirmation and safe failure handling.
+- Implementation inspected: `/admin/feedback`, `app/api/admin/feedback` and its PATCH route use authenticated user lookup plus `isAdminEmail`; `ADMIN_EMAILS` defaults to deny-all but can list multiple administrators. Feedback approval currently records reward eligibility/review metadata, not a Pro entitlement. This isn't proof that a grant flow already exists. `/api/workspace/plan` is a development-only owner test switch that refuses production; don't repurpose it as the promotional grant API.
+- Existing product model: Plan is workspace-scoped (`accounts.plan`, canonical bootstrap workspace and workspace-bound Stripe subscription/customer mapping), not a personal user entitlement. The directory must distinguish user identity, membership and effective workspace plan. Selecting a user with several memberships must not silently grant the active admin workspace or every workspace they belong to.
+- Acceptance criteria:
+  - Only the explicitly authorised application owner can read the directory, receive owner-only signup data or grant Pro. Enforce the boundary on every server read/mutation; test signed-out and ordinary workspace-owner/member denial. Existing ADMIN_EMAILS behaviour must be reconciled with the requested owner-only scope.
+  - Show enough information to identify/search users, signup date and current effective access/plan; pagination/search should avoid an unnecessarily heavy all-users load. Keep the interface simple.
+  - Notify the owner once per genuine new signup at the agreed signup milestone; existing login, bootstrap retries and invite acceptance must not create duplicate signup alerts.
+  - Require an unambiguous target workspace and apply the agreed promotional entitlement so all intended Pro features/limits and account/settings displays agree.
+  - Show successful completion and visible actionable errors. Record grantor, recipient, target workspace, time, grant scope/duration and outcome in an audit trail.
+  - Repeated clicks/retries create neither duplicate grants nor duplicate recipient notifications. Partial notification failure must leave entitlement state clear and permit a safe retry without granting twice.
+  - The recipient receives one upgrade notification with clear wording reflecting actual grant duration and any expiry. Delivery outcome is inspectable. Final outward-facing copy uses write-like-coris.
+  - No charge, checkout or new paid subscription is created by a promotional grant. Existing paid subscriptions, renewal/cancellation and Stripe webhook reconciliation remain correct; a webhook must not accidentally erase or extend a grant.
+- Dependencies: Owner identity/authorisation decision, existing admin gate, workspace entitlement source of truth, subscription reconciliation, idempotent grant/notification records, delivery configuration and S2 negative-access tests. Any later schema or billing-boundary change needs a scoped reviewed implementation; none is performed now.
+- Decisions required before implementation:
+  1. Current plans attach to workspaces. Confirm which owned workspace a selected beta tester receives Pro on, and how to handle a member who doesn't own a workspace; don't introduce personal Pro implicitly.
+  2. Are grants permanent or time-limited? If limited, specify duration/start/expiry behaviour while preserving stored data.
+  3. How should a grant interact with an existing paid Pro/Studio subscription: refuse, defer or another explicit policy? No automatic cancellation/refund/charge change is authorised.
+  4. Which application-owner identity is authorised, and where should signup alerts go? Define new signup as Auth creation, confirmed registration or completed workspace onboarding, and agree notification channel. Reuse established delivery where appropriate; don't silently pick the milestone.
+- Existing redemption-code assignment remains a separate later part of the original console idea. It isn't required for this simple button flow. No broader administration system is requested.
 
 ---
 
