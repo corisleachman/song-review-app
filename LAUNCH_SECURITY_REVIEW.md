@@ -49,3 +49,28 @@ No security rollout or rollback is needed for this read-only checkpoint. Any lat
 Sampled dashboard and summary reads, song/version reads, admin feedback GET/PATCH, the internal thread-notification endpoint and the development plan switch. The [API matrix](LAUNCH_API_ACCESS_MATRIX.md#code-review-continuation-1-november-2026) records observed boundaries and a staged negative-access sequence. This advances code review only; no staging fixtures, valid credentials, email or account-plan mutations were used. S2 remains In progress.
 
 The new B18 dashboard-return requirement directly overlaps cache isolation and late-response handling. B06 promotional grants overlap owner-only server authorisation and subscription boundaries. No existing admin permission is broadened here, and a normal workspace owner must not be treated as the application owner. B17/B19 performance work must retain canonical server access checks. The new-version notification audit is distinct from the existing signed internal thread-notification route.
+
+
+## Executed verification, 1 November 2026
+
+### B21: confirmed staging RLS recursion
+
+A read-only transaction used staging project `ivifkrtupqizyqqsxdty`, an existing account owner, SET LOCAL ROLE authenticated and transaction-local JWT claims. The owner read failed with SQLSTATE `42P17`, `infinite recursion detected in policy for relation "account_members"`. The transaction did not return song content or mutate data.
+
+Root cause: account_members_select_member queries account_members from its own SELECT predicate. Additional membership INSERT/DELETE policies query the same table, while has_account_role/is_account_member are SECURITY INVOKER helpers which also read it. RLS on that read re-enters membership policy evaluation. Production metadata shows the same membership SELECT structure, but no authenticated-role Production probe has run.
+
+This is a confirmed staging correctness failure, not demonstrated cross-workspace exposure and not evidence that all service-role API reads fail. The song-upload page still contains browser-client song-title reads, so direct access cannot simply be assumed unused. Safe repair needs a separate reviewed policy design, preserving member visibility and write roles without broad grants. Do not disable RLS or add an always-true policy.
+
+No database repair is applied. Required next evidence: define desired self/member visibility, inspect all policy/helper dependencies and exposed grants, prepare a narrow migration and rollback that doesn't reintroduce broad access, then verify owner/member/outsider/anon read and write cases on staging before Production. A SECURITY DEFINER helper is not an automatic fix; any such helper needs a private schema, fixed search path, tightly bounded auth.uid lookup and reviewed execute privileges.
+
+### B22: legacy verifier fails open when unconfigured
+
+The real legacy handler returned 200/success for an empty JSON object when SHARED_PASSWORD was absent, because undefined equalled undefined. The regression test reproduced this before the fix. The handler now requires non-empty string input and a non-empty configured value before comparison. Configured valid input retains its existing response; this route creates no Supabase session. Production middleware doesn't trust legacy cookies, so this finding isn't claimed as a demonstrated session bypass. No hosted secret was read or changed.
+
+### Positive checks and limits
+
+- Twelve actual-handler tests pass using mocked I/O; the full suite is 121 passed. TypeScript and focused ESLint pass. These don't replace hosted owner/member/outsider tests.
+- Anonymous staging database reads return one public song and zero private songs; three public-song versions are readable and all are finalized. Intended public history/column visibility and revoked-share tests remain open.
+- All 68 API files now have an intended boundary classification in the matrix. These classifications aren't a route-by-method security pass.
+
+S2 remains In progress. No hosted migration, grant or policy change has occurred. The legacy-verifier application patch can roll back through its focused commit/previous deployment; doing so restores the documented false-success behaviour.

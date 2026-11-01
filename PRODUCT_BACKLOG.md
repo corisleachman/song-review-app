@@ -86,6 +86,22 @@ Capture and organise only. These requirements don't authorise implementation or 
 
 ## Bugs
 
+### B21. Membership RLS recursively evaluates itself
+- Logged: 2026-11-01. Priority: P1 security/correctness closeout, L5/S2-S3. Status: confirmed in staging; repair not implemented or deployed.
+- Observed: an existing staging owner's authenticated database read fails with SQLSTATE 42P17, infinite recursion in account_members. Production has the same SELECT policy structure; live authenticated-role behaviour wasn't probed. No cross-workspace disclosure demonstrated.
+- Root cause: membership SELECT queries its own RLS-protected table; related role helpers are SECURITY INVOKER reads of that table. Server service-role reads can mask the failure.
+- Intended outcome: legitimate member reads work while outsider reads and unauthorised writes remain denied.
+- Acceptance: reproduce with read-only staging role probes; inspect all dependent policies/helpers, table/column grants and client call sites; verify own/member/outsider/anon reads and authorised/denied writes; retain canonical server paths; no broad grants, disabled RLS or added always-true policies. Verify equivalent environment schema and production rollout separately.
+- Dependencies/decisions: review whether clients need own-row or workspace-member visibility; any privileged helper design, migration/rollback and hosted policy change need a focused security review before application. See LAUNCH_SECURITY_REVIEW.md.
+
+### B22. Legacy password verifier reports success when unconfigured
+- Logged: 2026-11-01. Priority: P2 fail-closed hardening, L5/S2. Status: regression reproduced and local fix/tests pass; hosted release pending.
+- Observed/root cause: empty JSON input and absent SHARED_PASSWORD compare undefined === undefined, returning success. This endpoint doesn't create a Supabase session; no session-access bypass demonstrated.
+- Intended outcome: absent/empty configuration or missing/non-string/incorrect input always fails; valid configured legacy input retains its response.
+- Acceptance: test absent/empty configuration, empty/missing/null/non-string input and valid/invalid configured input; verify no session cookie is set; run relevant checks and hosted missing-input smoke.
+- Dependencies/decisions: no provider/configuration change required. Removing the legacy endpoint entirely remains outside this narrow fix.
+
+
 ### Marketing homepage: staged hero fades make first load feel slow
 - Priority: P2 beta presentation; keep separate from the active authentication rollout.
 - Logged: 2026-10-21

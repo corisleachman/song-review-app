@@ -2,80 +2,80 @@
 
 1 November 2026, release source `8f02fb7a`. Part of [S2 security closeout](LAUNCH_CHECKLIST.md#current-stage-l5-security-closeout).
 
-This generated inventory lists all 68 API route files. Helper references are text matches to guide inspection, not proof of authentication or authorisation. Public, auth-entry, webhook and internal routes need their own boundary classification. No negative-access test is marked passed by this inventory.
+This inventory classifies all 68 API route files by intended boundary; forwarded settings GET/POST methods are included. Helper references are text matches to guide inspection, not proof of authentication or authorisation. Public, auth-entry, webhook and internal routes need their own boundary classification. No negative-access test is marked passed by this inventory.
 
 For each method, record the final route class, identity check, resource/workspace predicate, role requirement, input validation and owner/member/outsider/public staging result before S2 can finish. See [review procedure](LAUNCH_SECURITY_REVIEW.md#next-slice-api-boundary-matrix).
 
-| Route | Exported methods | Boundary reference to inspect | Negative-access verification |
+| Route | Class | Exported methods | Boundary reference to inspect | Negative-access verification |
 | --- | --- | --- | --- |
-| `/api/actions/[actionId]` | PATCH | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/actions/by-song/[songId]` | GET | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/actions/create` | POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/actions` | GET | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/admin/feedback/[id]` | PATCH | `getCurrentAuthenticatedUser`, `isAdmin` | Code sampled; staging negative tests pending |
-| `/api/admin/feedback` | GET | `getCurrentAuthenticatedUser`, `isAdmin` | Code sampled; staging negative tests pending |
-| `/api/auth/bootstrap` | GET | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/auth/email/config` | GET | Inspect route / delegated helper | Not yet exercised |
-| `/api/auth/email/login` | POST | Inspect route / delegated helper | Not yet exercised |
-| `/api/auth/email/manage/request` | POST | Inspect route / delegated helper | Not yet exercised |
-| `/api/auth/email/manage/update` | POST | Inspect route / delegated helper | Not yet exercised |
-| `/api/auth/email/recover` | POST | Inspect route / delegated helper | Not yet exercised |
-| `/api/auth/email/resend` | POST | Inspect route / delegated helper | Not yet exercised |
-| `/api/auth/email/reset` | POST | Inspect route / delegated helper | Not yet exercised |
-| `/api/auth/email/signup` | POST | Inspect route / delegated helper | Not yet exercised |
-| `/api/auth/verify-password` | POST | Inspect route / delegated helper | Not yet exercised |
-| `/api/billing/activate` | POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/billing/checkout` | POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/billing/portal` | POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/csp-report` | POST | Inspect route / delegated helper | Not yet exercised |
-| `/api/dashboard` | GET | `resolveCanonicalIdentity` | Code sampled; staging negative tests pending |
-| `/api/dashboard/summary` | GET | `resolveCanonicalIdentity` | Code sampled; staging negative tests pending |
-| `/api/email/notify-thread` | POST | `verifyInternalRequest` | Code sampled; staging negative tests pending |
-| `/api/feedback` | POST | `getCurrentAuthenticatedUser` | Not yet exercised |
-| `/api/invites/[token]/accept` | POST | `getCurrentAuthenticatedUser` | Not yet exercised |
-| `/api/invites/[token]` | GET | Inspect route / delegated helper | Not yet exercised |
-| `/api/plan-events` | POST | Inspect route / delegated helper | Not yet exercised |
-| `/api/playlists/[id]/image` | POST, DELETE | `resolvePlaylistAccess` | Not yet exercised |
-| `/api/playlists/[id]` | GET, PATCH, DELETE | `resolvePlaylistAccess` | Not yet exercised |
-| `/api/playlists/[id]/songs/[songId]` | DELETE | `resolvePlaylistAccess` | Not yet exercised |
-| `/api/playlists/[id]/songs` | POST, PATCH | `resolvePlaylistAccess` | Not yet exercised |
-| `/api/playlists` | GET, POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/profile/settings` | GET, POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/profile/visualizer` | GET, POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/public/playlist/[id]` | GET | Inspect route / delegated helper | Not yet exercised |
-| `/api/public/song/[songId]/comments` | GET, POST | Inspect route / delegated helper | Not yet exercised |
-| `/api/public/song/[songId]` | GET | Inspect route / delegated helper | Not yet exercised |
-| `/api/referrals/code` | GET | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/referrals/summary` | GET | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/settings` | Inspect exports | Inspect route / delegated helper | Not yet exercised |
-| `/api/settings/summary` | GET | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/songs/[songId]/public-comments/[commentId]` | DELETE | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/songs/[songId]/public-comments` | GET | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/songs/[songId]` | GET, PATCH, DELETE | `resolveCanonicalIdentity` | Code sampled; staging negative tests pending |
-| `/api/songs/[songId]/tasks` | GET | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/songs/[songId]/versions` | GET | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/songs/[songId]/visibility` | PATCH | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/songs/create` | POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/songs/upload-image` | POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/stripe/webhook` | POST | `stripe.webhooks.constructEvent` | Not yet exercised |
-| `/api/tasks/[taskId]` | PATCH, DELETE | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/tasks/create` | POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/tasks/reorder` | PATCH | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/threads/create` | POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/threads/reply` | POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/versions/[versionId]/finalize` | POST, DELETE | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/versions/[versionId]` | GET, PATCH | `resolveCanonicalIdentity` | Code sampled; staging negative tests pending |
-| `/api/versions/[versionId]/threads` | GET | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/versions/create` | POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/workspace/invites/[inviteId]` | PATCH | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/workspace/invites` | GET, POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/workspace/members/[userId]` | DELETE | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/workspace/members` | GET | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/workspace/plan` | PATCH | `resolveCanonicalIdentity` | Code sampled; staging negative tests pending |
-| `/api/workspace/settings` | PATCH, POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/workspaces/create` | POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/workspaces` | GET | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/workspaces/switch` | POST | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/actions/[actionId]` | Session + resource/workspace scope | PATCH | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/actions/by-song/[songId]` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/actions/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/actions` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/admin/feedback/[id]` | Application admin | PATCH | `getCurrentAuthenticatedUser`, `isAdmin` | Local handler tests pass; hosted negatives pending |
+| `/api/admin/feedback` | Application admin | GET | `getCurrentAuthenticatedUser`, `isAdmin` | Local handler tests pass; hosted negatives pending |
+| `/api/auth/bootstrap` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/auth/email/config` | Public auth/config; feature gates | GET | Inspect route / delegated helper | Not yet exercised |
+| `/api/auth/email/login` | Public auth/config; feature gates | POST | Inspect route / delegated helper | Not yet exercised |
+| `/api/auth/email/manage/request` | Gated signed-in password management | POST | Inspect route / delegated helper | Not yet exercised |
+| `/api/auth/email/manage/update` | Gated signed-in password management | POST | Inspect route / delegated helper | Not yet exercised |
+| `/api/auth/email/recover` | Public auth/config; feature gates | POST | Inspect route / delegated helper | Not yet exercised |
+| `/api/auth/email/resend` | Public auth/config; feature gates | POST | Inspect route / delegated helper | Not yet exercised |
+| `/api/auth/email/reset` | Public auth/config; feature gates | POST | Inspect route / delegated helper | Not yet exercised |
+| `/api/auth/email/signup` | Public auth/config; feature gates | POST | Inspect route / delegated helper | Not yet exercised |
+| `/api/auth/verify-password` | Legacy shared-password verifier | POST | Inspect route / delegated helper | Local handler tests pass; hosted negatives pending |
+| `/api/billing/activate` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/billing/checkout` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/billing/portal` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/csp-report` | Public submission / optional identity | POST | Inspect route / delegated helper | Not yet exercised |
+| `/api/dashboard` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Code sampled; staging negative tests pending |
+| `/api/dashboard/summary` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Local handler tests pass; hosted negatives pending |
+| `/api/email/notify-thread` | Signed internal request | POST | `verifyInternalRequest` | Local handler tests pass; hosted negatives pending |
+| `/api/feedback` | Public submission / optional identity | POST | `getCurrentAuthenticatedUser` | Not yet exercised |
+| `/api/invites/[token]/accept` | Session + resource/workspace scope | POST | `getCurrentAuthenticatedUser` | Not yet exercised |
+| `/api/invites/[token]` | Public token lookup | GET | Inspect route / delegated helper | Not yet exercised |
+| `/api/plan-events` | Public submission / optional identity | POST | Inspect route / delegated helper | Not yet exercised |
+| `/api/playlists/[id]/image` | Session + resource/workspace scope | POST, DELETE | `resolvePlaylistAccess` | Not yet exercised |
+| `/api/playlists/[id]` | Session + resource/workspace scope | GET, PATCH, DELETE | `resolvePlaylistAccess` | Not yet exercised |
+| `/api/playlists/[id]/songs/[songId]` | Session + resource/workspace scope | DELETE | `resolvePlaylistAccess` | Not yet exercised |
+| `/api/playlists/[id]/songs` | Session + resource/workspace scope | POST, PATCH | `resolvePlaylistAccess` | Not yet exercised |
+| `/api/playlists` | Session + resource/workspace scope | GET, POST | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/profile/settings` | Session + resource/workspace scope | GET, POST | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/profile/visualizer` | Session + resource/workspace scope | GET, POST | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/public/playlist/[id]` | Public-share projection | GET | Inspect route / delegated helper | Not yet exercised |
+| `/api/public/song/[songId]/comments` | Public-share projection | GET, POST | Inspect route / delegated helper | Not yet exercised |
+| `/api/public/song/[songId]` | Public-share projection | GET | Inspect route / delegated helper | Not yet exercised |
+| `/api/referrals/code` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/referrals/summary` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/settings` | Session + resource/workspace scope | GET, POST (forwarded to profile/settings) | Inspect route / delegated helper | Not yet exercised |
+| `/api/settings/summary` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/songs/[songId]/public-comments/[commentId]` | Session + resource/workspace scope | DELETE | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/songs/[songId]/public-comments` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/songs/[songId]` | Session + resource/workspace scope | GET, PATCH, DELETE | `resolveCanonicalIdentity` | Local handler tests pass; hosted negatives pending |
+| `/api/songs/[songId]/tasks` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/songs/[songId]/versions` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/songs/[songId]/visibility` | Session + resource/workspace scope | PATCH | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/songs/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/songs/upload-image` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/stripe/webhook` | Signed Stripe webhook | POST | `stripe.webhooks.constructEvent` | Not yet exercised |
+| `/api/tasks/[taskId]` | Session + resource/workspace scope | PATCH, DELETE | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/tasks/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/tasks/reorder` | Session + resource/workspace scope | PATCH | `resolveCanonicalIdentity` | Local handler tests pass; hosted negatives pending |
+| `/api/threads/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/threads/reply` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/versions/[versionId]/finalize` | Session + resource/workspace scope | POST, DELETE | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/versions/[versionId]` | Session + resource/workspace scope | GET, PATCH | `resolveCanonicalIdentity` | Local handler tests pass; hosted negatives pending |
+| `/api/versions/[versionId]/threads` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/versions/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/workspace/invites/[inviteId]` | Session + resource/workspace scope | PATCH | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/workspace/invites` | Session + resource/workspace scope | GET, POST | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/workspace/members/[userId]` | Session + resource/workspace scope | DELETE | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/workspace/members` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/workspace/plan` | Session + resource/workspace scope | PATCH | `resolveCanonicalIdentity` | Code sampled; staging negative tests pending |
+| `/api/workspace/settings` | Session + resource/workspace scope | PATCH, POST | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/workspaces/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/workspaces` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/workspaces/switch` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Not yet exercised |
 
 ## Code-review continuation, 1 November 2026
 
@@ -83,14 +83,14 @@ These are sampled paths, not completed dynamic access verification. Every method
 
 | Path | Observed boundary |
 | --- | --- |
-| `/api/dashboard` | GET: canonical identity; songs filtered by active workspace |
-| `/api/dashboard/summary` | GET: canonical identity; songs filtered by active workspace |
-| `/api/songs/[songId]` | GET sampled: canonical identity and song workspace comparison; mutations need separate review |
-| `/api/versions/[versionId]` | GET sampled: version/song workspace resolution and comparison; mutations need separate review |
-| `/api/admin/feedback` | GET: authenticated email checked with deny-default ADMIN_EMAILS gate |
-| `/api/admin/feedback/[id]` | PATCH: same admin gate; changes reward eligibility, not entitlement |
-| `/api/email/notify-thread` | POST: bounded payload and internal HMAC verification before dispatch |
-| `/api/workspace/plan` | PATCH: production refusal; local canonical owner test path only |
+| `/api/dashboard` | Session + resource/workspace scope | GET: canonical identity; songs filtered by active workspace |
+| `/api/dashboard/summary` | Session + resource/workspace scope | Local handler tests pass; hosted negatives pending |
+| `/api/songs/[songId]` | Session + resource/workspace scope | Local handler tests pass; hosted negatives pending |
+| `/api/versions/[versionId]` | Session + resource/workspace scope | Local handler tests pass; hosted negatives pending |
+| `/api/admin/feedback` | Application admin | Local handler tests pass; hosted negatives pending |
+| `/api/admin/feedback/[id]` | Application admin | Local handler tests pass; hosted negatives pending |
+| `/api/email/notify-thread` | Signed internal request | Local handler tests pass; hosted negatives pending |
+| `/api/workspace/plan` | Session + resource/workspace scope | PATCH: production refusal; local canonical owner test path only |
 
 ### Staging test order
 
@@ -102,3 +102,11 @@ These are sampled paths, not completed dynamic access verification. Every method
 6. Carry B18 cache-isolation coverage into the performance harness: logout/user change/workspace switch while a request is in flight must never populate the new view with the previous account's songs.
 
 Stop if fixtures, test destination or expected permissions aren't established. Record expected/actual HTTP status and redacted projection, not tokens or private content. No staged request is claimed to have run in this checkpoint.
+
+## Verification checkpoint: handler execution and staging SQL roles
+
+- `tests/api-access-boundaries.test.mjs` executes actual compiled handlers with mocked identity/database/framework boundaries. Twelve tests cover owner/member allow and outsider deny song/version reads, signed-out denial, dashboard summary scoping, admin denial with an authorised-user positive control, mixed-workspace task reorder with an allowed-write control, unsigned internal notification rejection, and unconfigured legacy password rejection. These are local handler tests, not hosted sessions, browser cookies or live database tests.
+- A read-only staging transaction with SET LOCAL ROLE authenticated and transaction-local JWT claims for an existing owner failed with SQLSTATE 42P17: infinite recursion in the account_members policy. No returned rows or mutations. The transaction is rolled back/aborted; no role or claim is persisted.
+- A separate read-only staging anon-role transaction returned one public song, zero private songs and three versions, all three finalized by a separate privileged aggregate. This is row-count evidence only, not a full column/projection or revocation test.
+- Production policy metadata has the same self-referential membership SELECT structure. No authenticated-role Production execution, policy change or user-data mutation was performed.
+- The recursion blocks a successful member/outsider database matrix. S2 is incomplete; B21 tracks the repair and required tests.
