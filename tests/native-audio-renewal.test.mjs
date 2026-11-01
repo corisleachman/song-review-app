@@ -10,12 +10,18 @@ new Function('require', 'exports', ts.transpileModule(readFileSync(new URL('../l
 const { resumeNativeAudio } = exports;
 class AudioFixture extends EventTarget {
   constructor({ failures = 1, code = 4, name = 'NotSupportedError', source = '/api/media/audio/version-a?song=song-a' } = {}) {
-    super(); this.failures = failures; this.error = { code }; this.name = name; this.src = source;
+    super(); this.failures = failures; this.error = null; this.failureCode = code; this.name = name; this.src = source;
     this.currentTime = 42; this.duration = 120; this.loop = true; this.volume = 0.3; this.playbackRate = 1.5;
     this.loads = 0; this.plays = 0;
   }
   getAttribute(name) { return name === 'src' ? this.src : null; }
-  async play() { this.plays++; if (this.plays <= this.failures) throw new DOMException('Media request failed.', this.name); }
+  async play() {
+    this.plays++;
+    if (this.plays <= this.failures) {
+      if (this.name !== 'NotAllowedError' && this.name !== 'AbortError') this.error = { code: this.failureCode };
+      throw new DOMException('Media request failed.', this.name);
+    }
+  }
   load() { this.loads++; this.currentTime = 0; this.error = null; queueMicrotask(() => this.dispatchEvent(new Event('loadedmetadata'))); }
 }
 const options = { isCurrent: () => true, origin: 'https://app.invalid', timeoutMs: 50 };
@@ -91,4 +97,10 @@ test('native renewal: playback waits until an asynchronous seek completes', asyn
   audio.dispatchEvent(new Event('seeked'));
   await pending;
   assert.equal(audio.plays, 2); assert.equal(audio.currentTime, 42);
+});
+
+test('native renewal: an existing network error is renewed even if play would otherwise resolve', async () => {
+  const audio = new AudioFixture({ failures: 0 }); audio.error = { code: 2 };
+  await resumeNativeAudio(audio, options);
+  assert.equal(audio.loads, 1); assert.equal(audio.plays, 1); assert.equal(audio.currentTime, 42);
 });

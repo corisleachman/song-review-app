@@ -10,6 +10,9 @@ export async function resumeNativeAudio(
   const position = Number.isFinite(audio.currentTime) ? audio.currentTime : 0;
   const original = audio.getAttribute('src') ?? '';
   try {
+    if (audio.error?.code === 2 || audio.error?.code === 4) {
+      throw new DOMException('Media source is unavailable.', 'NotSupportedError');
+    }
     await audio.play();
     return;
   } catch (error) {

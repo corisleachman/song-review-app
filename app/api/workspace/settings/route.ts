@@ -44,14 +44,13 @@ function getErrorMessage(error: unknown) {
 }
 
 function getFileExtension(file: File) {
-  const fromName = file.name.includes('.') ? file.name.split('.').pop()?.toLowerCase() : '';
-  if (fromName) return fromName;
-
-  if (file.type === 'image/png') return 'png';
-  if (file.type === 'image/webp') return 'webp';
-  if (file.type === 'image/gif') return 'gif';
-
-  return 'jpg';
+  const extensions: Partial<Record<string, string>> = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp',
+    'image/gif': 'gif',
+  };
+  return extensions[file.type.toLowerCase()];
 }
 
 export async function PATCH(request: NextRequest) {
@@ -121,9 +120,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!file.type.startsWith('image/')) {
+    const extension = getFileExtension(file);
+    if (!extension) {
       return NextResponse.json(
-        { error: 'Workspace image must be an image file.' },
+        { error: 'Workspace images must be JPEG, PNG, WebP or GIF.' },
         { status: 400 }
       );
     }
@@ -135,7 +135,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const extension = getFileExtension(file);
     const filePath = `workspace-images/${resolved.identity.workspaceId}-${Date.now()}.${extension}`;
     const fileBuffer = await file.arrayBuffer();
 

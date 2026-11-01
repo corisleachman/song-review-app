@@ -1897,3 +1897,16 @@ test('RLS cleanup removes blanket policies and its rollback cannot restore them'
   assert.doesNotMatch(rollback, /CREATE\s+POLICY/iu);
   assert.match(rollback, /restoring blanket RLS policies is unsafe/iu);
 });
+
+
+test('new audio uploads accept the inclusive 50 MB limit and reject anything larger', async () => {
+  const policy = await import(pathToFileURL(path.join(repoRoot, 'lib/audioUploadPolicy.mjs')).href);
+  const limit = 50 * 1024 * 1024;
+  assert.equal(policy.MAX_AUDIO_SIZE_BYTES, limit);
+  for (const fileSize of [limit - 1, limit]) {
+    assert.equal(policy.validateAudioUploadMetadata({ fileName: 'mix.wav', fileSize, contentType: 'audio/wav' }).ok, true);
+  }
+  for (const fileSize of [limit + 1, 200 * 1024 * 1024]) {
+    assert.equal(policy.validateAudioUploadMetadata({ fileName: 'mix.wav', fileSize, contentType: 'audio/wav' }).reason, 'too_large');
+  }
+});

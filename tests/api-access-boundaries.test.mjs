@@ -11,7 +11,7 @@ const require = createRequire(import.meta.url);
 
 // Execute the real handler, replacing only framework/I/O boundaries. This
 // checks runtime decisions; it is not a Supabase, cookie or hosted HTTP test.
-function routeHarness(route, { identity = null, user = null, tables = {}, storage = null } = {}) {
+function routeHarness(route, { identity = null, user = null, tables = {}, storage = null, mutationResult = null } = {}) {
   const reads = [];
   const writes = [];
   let notifications = 0;
@@ -40,7 +40,7 @@ function routeHarness(route, { identity = null, user = null, tables = {}, storag
         delete() { mutation = true; writes.push({ table, delete: true }); return query; },
         then(resolve, reject) {
           const rows = (tables[table] ?? []).filter(row => predicates.every(check => check(row)));
-          return Promise.resolve({ data: mutation ? null : single ? rows[0] ?? null : rows, error: null }).then(resolve, reject);
+          return Promise.resolve({ data: mutation ? (typeof mutationResult === 'function' ? mutationResult() : mutationResult) : single ? rows[0] ?? null : rows, error: null }).then(resolve, reject);
         },
       };
       return query;
@@ -507,4 +507,60 @@ test('artwork HTTP capability and renewal boundaries', async t => {
     assert.equal(metadata.openGraph.images, undefined);
   });
 
+  function uploadRequest(file) {
+    const body = new FormData(); body.set('file', file);
+    return new Request('https://staging.invalid/api/workspace/settings', { method: 'POST', body });
+  }
+  for (const [role, identity, status] of [['signed-out', null, 401], ['member', session('member'), 403]]) {
+    await t.test(`workspace image upload stays owner-only: ${role}`, async () => {
+      const harness = routeHarness('app/api/workspace/settings/route.ts', { identity });
+      const response = await harness.handler.POST(uploadRequest(new File(['x'], 'image.png', { type: 'image/png' })));
+      assert.equal(response.status, status); assert.equal(harness.writes.length, 0);
+    });
+  }
+  await t.test('workspace active formats are rejected before upload rather than returning an unusable image URL', async () => {
+    const harness = routeHarness('app/api/workspace/settings/route.ts', { identity: session('owner') });
+    const response = await harness.handler.POST(uploadRequest(new File(['<svg/>'], 'cover.svg', { type: 'image/svg+xml' })));
+    assert.equal(response.status, 400); assert.equal(harness.writes.length, 0);
+    assert.match((await response.json()).error, /JPEG, PNG, WebP or GIF/);
+  });
+  await t.test('workspace upload normalises the extension, stores the canonical reference and returns delivered artwork', async () => {
+    let uploaded;
+    const harness = routeHarness('app/api/workspace/settings/route.ts', {
+      identity: session('owner'),
+      mutationResult: () => ({ id: 'workspace-a', name: 'Fixture', image_url: `https://storage.invalid/storage/v1/object/public/song-images/${uploaded.path}` }),
+      storage: { from() { return {
+        async upload(path, bytes, options) { uploaded = { path, bytes, options }; return { error: null }; },
+        getPublicUrl(path) { return { data: { publicUrl: `https://storage.invalid/storage/v1/object/public/song-images/${path}` } }; },
+      }; } },
+    });
+    const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a2ioAAAAASUVORK5CYII=', 'base64');
+    const response = await harness.handler.POST(uploadRequest(new File([png], 'misleading.svg', { type: 'image/png' })));
+    assert.equal(response.status, 200);
+    assert.match(uploaded.path, /^workspace-images\/workspace-a-\d+\.png$/);
+    assert.equal(uploaded.options.contentType, 'image/png');
+    const image = new URL((await response.json()).workspace.imageUrl, 'https://staging.invalid');
+    assert.equal(access.readArtworkAccess(image.searchParams.get('access'), key).path, uploaded.path);
+    assert.match(harness.writes[0].value.image_url, /^https:\/\/storage.invalid\/storage\/v1\/object\/public\/song-images\//);
+  });
+
+});
+
+
+test('already finalized legacy audio above the new upload limit is preserved without Storage mutation', async () => {
+  const harness = routeHarness('app/api/versions/[versionId]/finalize/route.ts', {
+    identity: session('owner'), tables: { songs: [song], song_versions: [{ ...finalizedVersion, file_size_bytes: 100 * 1024 * 1024 }] },
+  });
+  const response = await harness.handler.POST(jsonRequest({}), params({ versionId: 'version-a' }));
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).alreadyFinalized, true);
+  assert.equal(harness.writes.length, 0);
+});
+
+test('version allocation rejects over-50 MB metadata before any database or Storage work', async () => {
+  const harness = routeHarness('app/api/versions/create/route.ts', { identity: session('owner') });
+  const response = await harness.handler.POST(jsonRequest({ songId: 'song-a', fileName: 'mix.wav', fileSize: 50 * 1024 * 1024 + 1, fileType: 'audio/wav' }));
+  assert.equal(response.status, 400);
+  assert.match((await response.json()).error, /50 MB/);
+  assert.equal(harness.reads.length, 0); assert.equal(harness.writes.length, 0);
 });

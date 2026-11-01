@@ -41,7 +41,7 @@ function validateAudioFile(file: File) {
   if (validation.ok) return null;
   if (validation.reason === 'aiff_unavailable') return AIFF_UPLOAD_UNAVAILABLE_MESSAGE;
   if (validation.reason === 'invalid_size') return 'That audio file is empty.';
-  if (validation.reason === 'too_large') return 'Choose an audio file no larger than 200MB.';
+  if (validation.reason === 'too_large') return 'Choose an audio file no larger than 50 MB.';
   return 'Choose an MP3, WAV, M4A, AAC, FLAC, or OGG audio file.';
 }
 

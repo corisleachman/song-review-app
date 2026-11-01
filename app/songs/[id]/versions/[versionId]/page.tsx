@@ -339,7 +339,7 @@ function validateAudioFile(file: File) {
   if (validation.reason === 'invalid_size') return 'That audio file is empty.';
 
   if (validation.reason === 'too_large') {
-    return 'That file is too large for the current upload flow. Try a file under 200 MB.';
+    return 'Choose an audio file no larger than 50 MB.';
   }
 
   return null;
@@ -3735,7 +3735,7 @@ function VersionPageInner() {
               rows={3}
               disabled={uploadingVersion}
             />
-            <p id="upload-version-dialog-help" className={styles.uploadHelp}>Uploads under 200 MB work best in the current flow.</p>
+            <p id="upload-version-dialog-help" className={styles.uploadHelp}>Maximum file size: 50 MB.</p>
             {uploadingVersion && (
               <div>
                 <div className={styles.progressWrap}>
