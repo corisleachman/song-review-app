@@ -2,7 +2,9 @@
 
 1 November 2026. [Current checklist](LAUNCH_CHECKLIST.md). B23, L5/S2-S3.
 
-## Confirmed evidence
+Current status: both staging buckets are private, audio ceiling 50 MB. Production media remains unchanged. Earlier public-bucket and preparation-only statements below are historical. Read the latest checkpoint at the end for current evidence and gates.
+
+## Historical discovery evidence
 
 Read-only staging and Production metadata show both `song-files` and `song-images` are public. Both environments have zero policies on `storage.objects` and zero public-schema views/materialized views. The latter closes the current public-view inventory, not all database/access review.
 
@@ -106,3 +108,39 @@ Stop on unexpected access, expired-source failure, wrong-song playback, missing 
 - Existing Google identity signs in on staging. The member workspace loads empty; switching to the existing owner workspace loads its four songs. A private media request from the wrong active workspace displays Not found. Owner private-song playback advances to completion; keyboard Home seeks to zero, and Play from Start restarts it on the corrected build. This isn't a separate-user full hosted role matrix.
 - An issued staging URL was primed with HEAD and Range while valid, then refused after expiry (HEAD and Range GET 400); a fresh URL for the same object returns 200. The expired probe was well beyond its deadline, not a measurement at exactly 600 seconds, so no tight ten-minute CDN cutoff is claimed. The old pre-fix native-fallback resume didn't visibly advance; renewal in native fallback remains unverified and must pass before rollout.
 - Staging counts remain eight users/profiles, seven workspaces and eleven memberships. No new account, upload, email, comment, share toggle, plan or object/bucket mutation. Checked Preview error/fatal scans have no matching logs. Physical phone/background, native expiry recovery, measured performance, real share revocation and artwork/cutover remain open. B23 is not fixed in Production.
+
+## Current staging checkpoint, 1 November 2026
+
+Candidate e19c858210fad574d9a55489c0feb92bb80c3129 in draft PR #68 is Ready at https://song-review-app-v2-68v0n1nrf-corisleachmans-projects.vercel.app . Four PR checks pass; 244 Node tests and TypeScript pass; browser CI run 41354515947 records 28 passed and 10 skipped. Synthetic Chromium tests do not replace physical Safari/phone checks.
+
+Staging song-images and song-files were changed through the authenticated Storage dashboard to private. Audio bucket ceiling is 52428800 bytes following the user's 50 MB decision; global 50 MB, spend cap, MIME list and image settings remain unchanged. No files uploaded, deleted or moved. Production was inspected read-only: buckets still public, audio bucket 200 MB, global 50 MB. Production has not received these app changes.
+
+Audio uses authorised app URLs, private/no-store redirects and 600-second Storage signatures. Artwork uses HMAC capabilities bound to resource, path and Supabase project audience, valid roughly 9-10 minutes. Valid image delivery avoids per-image membership queries; expired authentic capabilities require current authorisation and current canonical reference before renewal. Raster bytes only, bounded size, private browser caching for remaining lifetime, no shared CDN caching. Existing server secrets are reused without new variables, client credentials or broader Storage permissions. Canonical database references are unchanged. Workspace image upload now explicitly accepts JPEG/PNG/WebP/GIF and derives extension from MIME.
+
+Native recovery retries an errored same-origin media source once, preserves playback position/settings and waits for seek completion. Healthy playback is untouched. Autoplay denial and intentional pause are not retry signals. Full physical lock-screen behaviour remains unverified.
+
+Scoped live evidence: old primed direct image/audio URLs return 400 for HEAD and body/Range probes after staging cutover. App artwork returns 200; audio app redirect targets staging and signed upstream Range returns 206. Public song waveform and two-track playlist playback/advance passed. Public playlist images all loaded after private cutover. Owner private playback/seek/restart and wrong-active-workspace denial passed on compatible candidates. Latest e19 signed-out dashboard/private audio are 401, invalid image 404, public song/image 200; image Cache-Control is private with bounded remaining TTL. Expired authentic public artwork renewed with 307 then 200 on an earlier compatible candidate. These are scoped checks, not a complete hosted distinct-user role matrix or global CDN purge guarantee.
+
+Single 57519-byte image transport comparison, agent region and no browser cache: first app request about 1.54s; three repeat app requests 0.489/0.439/0.514s, legacy direct 0.426/0.155/0.141s. Preview protection/server hop differs. This is delivery-cost evidence, not a dashboard baseline or B17 improvement. Measure comparable useful-dashboard and first-audio times before release.
+
+### Remaining acceptance actions
+
+Use this exact Preview, not old staging deployments that still issue permanent public URLs. For any failure stop rollout; return page URL, device/browser, step, expected/actual result, error text and screenshot. Do not include signed URLs or tokens.
+
+| Owner / environment | Action | Expected successful result |
+| --- | --- | --- |
+| User / staging desktop | Open dashboard, songs, playlists and Settings | Existing artwork and intended private content load |
+| User / staging phone | Play song, lock phone, pause longer than ten minutes, resume and seek | Correct position; smooth playback; working lock-screen controls |
+| User / staging phone | Restart, repeat, change version, switch songs and playlist tracks | Correct source and no overlapping audio |
+| User / staging phone | Leave public playlist idle beyond ten minutes, then select next track | Fresh authorised delivery and correct song |
+| User / staging | Upload a disposable supported audio file below 50 MB as a new song and new version | Finalization succeeds; artwork/waveform/playback correct |
+| User / staging | Attempt a supported audio file above 50 MB | Clear size error; no usable partial version or duplicate allocation |
+| Agent / staging | Verify actual successful upload near inclusive 50 MB boundary | Storage and app limits agree; quota accounting correct |
+| User / staging | Change designated song, playlist and workspace artwork using supported raster files | New image appears and persists after reload |
+| Agent / staging | Exercise actual upload/finalize/removal on an explicitly disposable fixture | Private bucket write/cleanup paths work without changing permissions |
+| Agent / staging | Controlled public-share revoke and playlist-entry removal | No fresh authorisation; existing capability ends within accepted cache/expiry contract |
+| Agent / staging | Full owner/member/outsider role matrix and account switching | Intended access only; no cross-account cached content |
+| Agent / staging | Comparable dashboard/image/first-audio measurements | Added delivery cost acceptable and recorded separately from B17 baseline |
+| Agent / Production, after staging acceptance | Deploy compatible app first, then private buckets and 50 MB bucket ceiling | Live app/auth/public media and legacy URL denial verified; stop on failure |
+
+No database migration is required for this candidate. Production rollout order is compatible application first, then bucket configuration. Preserve the prior deployment/commit for code rollback, but rolling back to old permanent-URL code while buckets remain private breaks media. Prefer fix-forward. Reopening buckets restores the confirmed known-URL privacy defect and requires explicit security review; never silently do that as a rollback. No file move/delete or mass reference rewrite is planned.
