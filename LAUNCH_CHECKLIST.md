@@ -26,7 +26,7 @@ Done means the named scope has recorded evidence, not that every future improvem
 | --- | --- | --- | --- | --- |
 | S1 | Establish current security baseline | Done | Read-only production inventory: RLS on all 24 public tables; advisor has zero ERROR findings, five WARN findings and eight INFO findings. [Review record](LAUNCH_SECURITY_REVIEW.md) | Agent |
 | S2 | Cross-workspace API and direct-database access | In progress | Canonical identity, thread path and eight dashboard/song/admin/internal route samples inspected; 42 local handler tests pass; B21 is installed on staging: 34 installed-definition SQL checks, six invitation checks and scoped browser checks pass. Production repair verified; broader API coverage remains. [Inventory of all 68 API route files](LAUNCH_API_ACCESS_MATRIX.md) created; exercise owner/member/outsider/public boundaries on staging. RLS enabled alone isn't a pass | Agent |
-| S3 | Database function and policy review | In progress | Five search-path fixes and B21 migration installed on staging; zero staging security errors/warnings; 40 SQL checks and browser checks pass. [Review package](https://github.com/corisleachman/song-review-app/pull/67). Production repair verified; no public views in either environment. B23 confirms private staging audio is anonymously retrievable from public Storage; repair/revocation decision open | Agent |
+| S3 | Database function and policy review | In progress | Five search-path fixes and B21 migration installed on staging; zero staging security errors/warnings; 40 SQL checks and browser checks pass. [Review package](https://github.com/corisleachman/song-review-app/pull/67). Production repair verified; no public views in either environment. B23 confirms private staging audio is anonymously retrievable from public Storage; short expiry accepted; audio candidate local only (181 tests/build); artwork and hosted gates open | Agent |
 | S4 | Abuse protection coverage | In progress | Email login limiter, Turnstile and feedback throttle exist. Invite/comment/bootstrap coverage still needs explicit decisions and tests | Agent |
 | S5 | Input validation and safe errors | Not started | Audit mutation inputs, size/type limits, numeric bounds and error responses. Upload validation already has regression coverage | Agent |
 | S6 | Secret handling and log safety | Not started | Recheck variable classification/scopes without exposing values; inventory logging and confirm redaction. Earlier Config-vs-Secret concern is unverified, not a proven leak | Agent |
@@ -34,7 +34,7 @@ Done means the named scope has recorded evidence, not that every future improvem
 
 Performance is the user's main MVP concern. B17-B19 are queued as the leading L6 workstream; capture does not interrupt the current L5 task. B06 six-month Free-to-Pro beta grants have confirmed product rules; implementation and expiry/billing boundary tests remain open.
 
-Next action: resolve B23 media revocation requirements and prepare compatible authorised media delivery before any private-bucket cutover. Continue remaining S2 access checks alongside it. B21 and the five function search-path fixes are Production complete; the broader security stage remains open.
+Next action: confirm existing protected staging configuration, verify the [PR #68 audio candidate](https://github.com/corisleachman/song-review-app/pull/68) there, and finish artwork/cache support before any private-bucket cutover. Continue remaining S2 access checks alongside it. B21 and the five function search-path fixes are Production complete; the broader security stage remains open.
 
 ## L6 acceptance checklist
 
@@ -78,7 +78,7 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B19 | [Dashboard-to-song navigation speed](PRODUCT_BACKLOG.md#b19-dashboard-to-song-measure-and-reduce-navigation-delay) | User report; baseline pending | L6 performance; canonical access must remain intact |
 | B20 | [New-version collaboration notifications](PRODUCT_BACKLOG.md#b20-verify-notifications-for-new-version-uploads) | All-workspace-member delivery confirmed; capability/delivery untested | L6 dependability audit; no new channel assumed |
 | B21 | [Membership RLS recursion](PRODUCT_BACKLOG.md#b21-membership-rls-recursively-evaluates-itself) | Production complete; staging and live checks pass | L5/S2-S3, P1 |
-| B23 | [Private media public Storage access](PRODUCT_BACKLOG.md#b23-private-song-media-remains-accessible-through-permanent-public-storage-urls) | Confirmed staging audio HEAD 200 without auth; same Production public-bucket configuration; repair/revocation decision pending | L5/S2-S3, P1 privacy |
+| B23 | [Private media public Storage access](PRODUCT_BACKLOG.md#b23-private-song-media-remains-accessible-through-permanent-public-storage-urls) | Confirmed staging audio HEAD 200 without auth; same Production public-bucket configuration; short expiry accepted; audio candidate local only (181 tests/build); artwork/hosted gates pending | L5/S2-S3, P1 privacy |
 | B22 | [Unconfigured legacy password false success](PRODUCT_BACKLOG.md#b22-legacy-password-verifier-reports-success-when-unconfigured) | Production complete via PR #66; 121 tests and eight live smoke checks pass | L5/S2, P2 |
 
 Exploratory ideas in ROADMAP.md (typing indicators, pinned comments, comparison view, waveform regions, exports, Slack, native mobile app, multitrack and video) remain unscheduled ideas. They aren't approved launch work. Delete/edit/auth/invite ideas in that old file must be checked against existing features before creating tasks.
@@ -95,6 +95,7 @@ Exploratory ideas in ROADMAP.md (typing indicators, pinned comments, comparison 
 
 | Date | Completed action | Current stage | Remaining launch stages |
 | --- | --- | --- | --- |
+| 1 November 2026 | Short expiry accepted; audio candidate passes 181 tests, TypeScript/lint/build locally. Staging configuration confirmation, artwork and hosted expiry/playback gates remain; no hosted change | L5 Security closeout | L5, L6, L7, L8 |
 | 1 November 2026 | Storage review: zero public views in both environments; B23 private staging audio access confirmed by anonymous HEAD 200. Both buckets public in both environments; no hosted changes made | L5 Security closeout | L5, L6, L7, L8 |
 | 1 November 2026 | Approved Production B21/S3 repairs installed; 16 read-only role checks, six metadata checks, private-schema exclusion and eight HTTP probes pass; authenticated song/version, upload title and collaborators verified. PR #67 merged | L5 Security closeout | L5, L6, L7, L8 |
 | 1 November 2026 | Approved staging migrations installed; 34 installed-definition and six invitation SQL checks pass; scoped authenticated browser checks pass; staging advisor has zero errors/warnings. Production unchanged | L5 Security closeout | L5, L6, L7, L8 |

@@ -9544,3 +9544,14 @@ Fix the PageSpeed Insights results for song-room.live: mobile LCP 7.2 s (score 7
 - Added STORAGE_ACCESS_REVIEW.md and supabase/tests/storage_access_inventory.sql. Read-only staging/Production inventory found zero public views, two public media buckets and zero Storage object policies. Anonymous HEAD against an existing private staging audio object returned 200; no body downloaded and no private URL published. No private Production object requested.
 - Traced version/public song/public playlist URL issuance, artwork projections and visibility mutation. Permanent public URLs bypass subsequent application checks. Recorded B23 with confirmed versus inferred behaviour, acceptance, performance/playback dependencies and a revocation-contract decision. No repair or hosted change is claimed.
 - Updated LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md and LAUNCH_API_ACCESS_MATRIX.md. L5/S2-S3 remain open. Metadata SQL executed on both environments; documentation diff checked. No app code change or additional test suite required for this audit-only update.
+
+
+## 2026-11-01 - Short-expiry decision and local audio candidate
+
+- User accepted short expiry and prioritised smooth playback. Added lib/mediaDelivery.ts and app/api/media/audio/[versionId]/route.ts. Stable player URLs reauthorise requests before an uncached redirect to a 600-second Storage URL; no timer changes active sources or audio bytes proxy through Functions.
+- Updated app/api/versions/[versionId]/route.ts, app/api/public/song/[songId]/route.ts and app/api/public/playlist/[id]/route.ts to return scoped app URLs. Public playlist same-workspace sharing and member version history retained; pending/public-history/cross-song paths denied before signing.
+- Expanded tests/api-access-boundaries.test.mjs by 30 actual-handler cases. All 181 tests, TypeScript, focused lint and production build pass. Build used non-secret placeholders; generated blog injection changes restored/excluded.
+- Read-only inventory: 21/21 staging and 48/48 Production version paths are song-scoped. Audio metadata no-cache in both environments; images max-age=3600. CDN may serve signed responses beyond token expiry, so actual expiry/cache and phone playback remain unverified. No bucket, object, user, billing or hosted environment change.
+- Updated STORAGE_ACCESS_REVIEW.md, PRODUCT_BACKLOG.md, LAUNCH_CHECKLIST.md and LAUNCH_API_ACCESS_MATRIX.md with decision, scoped status, exact hosted/manual gate and limits. Vercel metadata read returned 403; CLI fallback supplied empty Supabase values. No usable staging configuration substituted or permissions widened; temporary pull file removed. B23/L5 remain open.
+
+- Publication: audio candidate pushed as eb262bee to draft PR #68. Current launch records published separately without merging application code. No Production media release or bucket cutover.

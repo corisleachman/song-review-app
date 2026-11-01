@@ -136,3 +136,8 @@ B21 and the five function search-path fixes are installed and verified on Produc
 ## Storage and view closeout checkpoint, 1 November 2026
 
 Read-only metadata: no public-schema views/materialized views in staging or Production. Both environments have public song-files/song-images buckets and zero storage.objects policies. Anonymous HEAD for one finalized private staging song audio object returned 200, without downloading content. B23 tracks the confirmed privacy finding; no private Production file request or live share-toggle experiment occurred. Code inspection shows permanent public URLs remain independent of database sharing flags. No hosted access setting changed. See [evidence, repair surface and revocation decision](STORAGE_ACCESS_REVIEW.md). S2/S3 remain open.
+
+
+## Local audio candidate, 1 November 2026
+
+New /api/media/audio/[versionId] GET/HEAD is local only, checking canonical identity or explicit public song/playlist scope before signing a bounded song-owned path for 600 seconds. Public contexts require current sharing, same-workspace playlist membership and latest finalized version. Thirty added handler tests pass: 72 boundary cases, 181 total tests. The older route inventory counted 68 files before this addition. Hosted Range/expiry/background gates and artwork remain open; neither bucket changed. See STORAGE_ACCESS_REVIEW.md.

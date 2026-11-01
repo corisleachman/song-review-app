@@ -33,9 +33,11 @@ No bucket setting, policy, file, membership, plan or environment variable was ch
 
 The mixed `song-images` bucket includes workspace and playlist artwork, so it cannot be flipped without handling those paths too. Signed upload URLs and server-side deletion/finalization must continue working. No new client-wide Storage grants should be needed simply to fix delivery.
 
-## Decision needed
+## Revocation decision
 
-Choose the required revocation boundary before implementation: a short, documented expiry window for already-issued signed URLs, or immediate rejection of subsequent requests after sharing is disabled. Immediate revocation needs an authorising delivery path; short-lived signed URLs need refresh/retry and an explicitly accepted expiry window. Neither option can retract bytes already downloaded or buffered. Preserve smooth mobile/background playback and measure added request cost before release.
+On 1 November the user accepted short expiry and prioritised smooth playback. The audio candidate uses 600-second tokens, subject to actual cache/expiry verification. This is not a verified ten-minute cutoff.
+
+Historical choice before that decision: a short, documented expiry window for already-issued signed URLs, or immediate rejection of subsequent requests after sharing is disabled. Immediate revocation needs an authorising delivery path; short-lived signed URLs need refresh/retry and an explicitly accepted expiry window. Neither option can retract bytes already downloaded or buffered. Preserve smooth mobile/background playback and measure added request cost before release.
 
 ## Proposed rollout and acceptance
 
@@ -50,3 +52,44 @@ Rollback must cover application and bucket configuration together. Making bucket
 ## Reproduction
 
 Run [read-only metadata inventory](supabase/tests/storage_access_inventory.sql) separately on each confirmed environment. Expected current finding: both buckets public, zero Storage object policies, zero public views. For the private-file test, select a finalized private staging song's existing object privately, send HEAD without authentication, and record status only. Never commit its path or an actual signed URL. No write or customer content download is needed.
+
+## Audio preparation checkpoint, 1 November 2026
+
+Candidate pushed in draft [PR #68](https://github.com/corisleachman/song-review-app/pull/68), head `eb262bee`; no bucket or Production app change. `lib/mediaDelivery.ts` builds stable player URLs and validates storage references. The new audio GET/HEAD route checks canonical workspace identity or the explicitly requested public song/playlist context before returning an uncached 307 to a 600-second Storage URL. Public contexts permit only the latest finalized version; members retain private version-history access. Paths must belong to the authorised song. Public playlists retain their existing ability to share private songs from the same workspace.
+
+Version, public song and public playlist APIs now return stable app URLs. No timer changes the active media source and no audio bytes proxy through application Functions. Browser handling of expired final redirects, seeking and resume must still be tested; local tests do not prove seamless renewal.
+
+Thirty additional actual-handler tests pass: 72 boundary cases, 181 full-suite tests. TypeScript, focused lint and production build pass with non-secret build placeholders. Denials are checked before signing; tests cover public scope, pending/history, cross-song/malformed paths, signing errors, repeat requests and all three API projections.
+
+Read-only path inventory: all 21 staging and 48 Production version paths use songs/<their-song-id>/... . Cache metadata: staging has 21 audio objects with no-cache and six images with max-age=3600; Production has 68 audio objects with no-cache and 39 images with max-age=3600. Object counts differ from version counts; don't assume every object is referenced.
+
+[Supabase CDN guidance](https://supabase.com/docs/guides/storage/cdn/smart-cdn) says cached signed responses may outlive tokens. Audio no-cache/expiry behaviour and old public-URL invalidation therefore require live verification. Artwork needs compatible serving/cache treatment; its one-hour metadata is not silently accepted as a short revocation window. No file was reuploaded or metadata edited.
+
+### Staging configuration limitation
+
+The connector returned 403 when listing the verified primary project's environment metadata. CLI fallback pulls for the known historical staging branches supplied empty Supabase values, so no usable local staging connection was established. No hosted variable was edited, no permission widened and no Production settings substituted. Temporary pull output was removed. Confirm the existing protected staging branch/configuration before deploying. An automatic Preview isn't proof of staging isolation.
+
+### Exact next test gate
+
+All rows are Not run. Confirm staging source/project first. No bucket switch is authorised by this preparation checkpoint: complete compatible serving paths and the rollout plan first.
+
+| Owner / environment | Exact action | Expected result |
+| --- | --- | --- |
+| Agent / protected staging | Inspect source commit and client Supabase reference | Exact candidate and staging only; stop on mismatch |
+| Agent / protected staging | Request media signed out without public context | 401 without Location/private details |
+| Agent / protected staging | Request a private version as owner and member | 307; private/no-store; don't save signed Location |
+| Agent / protected staging | Request it from an unrelated workspace | 404; no token |
+| Agent / protected staging | Request pending upload, malformed ID and another song's path | Safe denial before signing |
+| Agent / protected staging | Open public song and public playlist | Latest finalized versions play; older public history denied |
+| Agent / protected staging | Revoke designated disposable share/remove playlist entry | Subsequent app delivery request refused; no fresh token |
+| Agent / protected staging | Exercise GET, HEAD and one Range request | Valid media response and seeking headers |
+| Agent / protected staging | Inspect signed-response cache headers; retry beyond ten minutes | Record actual expiry/cache status without token, no assumed cutoff |
+| Agent / protected staging | Pause beyond ten minutes, resume and seek | Position retained; no expiry failure or overlapping audio |
+| Agent / protected staging | Leave playlist idle beyond ten minutes, select another track | Fresh authorised delivery, correct track |
+| Agent / protected staging | Retry media failure and change song/version | Correct current source; no retry loop |
+| Agent / protected staging | Compare useful-page and first-audio timings to baseline | Quantified delivery cost under comparable conditions |
+| User / phone, protected staging | Play, lock screen, pause/resume and seek after ten minutes | Smooth playback, correct time and lock-screen controls |
+| User / phone, protected staging | Restart, repeat and switch playlist tracks | No duplicate audio, unexpected reset or wrong song |
+| Agent / later staging cutover | Finish artwork/cache support, then test planned private switch | Old direct URLs refused; all intended media still works |
+
+Stop on unexpected access, expired-source failure, wrong-song playback, missing Range support or significant measured delay. Return environment, page URL, browser/device, step, status/error and safe screenshot/log excerpt. Never return a signed URL/token. Browser-cached or buffered bytes cannot be retracted.
