@@ -8,6 +8,15 @@ export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'private, no-store, max-age=0', 'Referrer-Policy': 'no-referrer' };
 const denied = () => NextResponse.json({ error: 'Not found' }, { status: 404, headers });
 
+type MediaVersion = {
+  id: string; song_id: string; file_path: string | null; upload_finalized_at: string | null;
+  song: { id: string; account_id: string | null; is_public: boolean };
+};
+type PlaylistEntry = {
+  song_id: string;
+  playlist: { id: string; account_id: string | null; is_public: boolean };
+};
+
 export async function GET(req: NextRequest, props: { params: Promise<{ versionId: string }> }) {
   const timing = new RequestTiming();
   try {
@@ -23,37 +32,37 @@ export async function GET(req: NextRequest, props: { params: Promise<{ versionId
       return NextResponse.json({ error: 'Sign in required.' }, { status: 401, headers });
     }
 
-    const { data: version, error: versionError } = await timing.measure('version', async () => await supabaseServer
-      .from('song_versions').select('id, song_id, file_path, upload_finalized_at')
-      .eq('id', versionId).maybeSingle());
+    const { data: version, error: versionError } = await timing.measure('version_song', async () => await supabaseServer
+      .from('song_versions')
+      .select('id, song_id, file_path, upload_finalized_at, song:songs!inner(id, account_id, is_public)')
+      .eq('id', versionId).returns<MediaVersion[]>().maybeSingle());
     if (versionError) throw versionError;
-    if (!version || !version.upload_finalized_at) return denied();
-    const { data: song, error: songError } = await timing.measure('song', async () => await supabaseServer
-      .from('songs').select('id, account_id, is_public').eq('id', version.song_id).maybeSingle());
-    if (songError) throw songError;
-    if (!song) return denied();
+    if (!version || !version.upload_finalized_at || !version.song) return denied();
+    const song = version.song;
 
     if (songContext !== null || playlistContext !== null) {
-      if (songContext !== null) {
-        if (songContext !== song.id || !song.is_public) return denied();
-      } else {
-        const { data: playlist, error: playlistError } = await timing.measure('playlist', async () => await supabaseServer
-          .from('playlists').select('id, account_id, is_public').eq('id', playlistContext).maybeSingle());
-        if (playlistError) throw playlistError;
+      if (songContext !== null && (songContext !== song.id || !song.is_public)) return denied();
+      // The latest-version check and playlist membership read are independent.
+      // Join each parent in the same read rather than repeating database round trips.
+      const [latestResult, entryResult] = await Promise.all([
+        timing.measure('latest', async () => await supabaseServer
+          .from('song_versions').select('id').eq('song_id', song.id)
+          .not('upload_finalized_at', 'is', null).order('version_number', { ascending: false })
+          .limit(1).maybeSingle()),
+        playlistContext !== null
+          ? timing.measure('playlist_entry', async () => await supabaseServer
+            .from('playlist_songs').select('song_id, playlist:playlists!inner(id, account_id, is_public)')
+            .eq('playlist_id', playlistContext).eq('song_id', song.id)
+            .returns<PlaylistEntry[]>().maybeSingle())
+          : Promise.resolve(null),
+      ]);
+      if (latestResult.error) throw latestResult.error;
+      if (entryResult?.error) throw entryResult.error;
+      if (latestResult.data?.id !== version.id) return denied();
+      if (playlistContext !== null) {
+        const playlist = entryResult?.data?.playlist;
         if (!playlist?.is_public || playlist.account_id !== song.account_id) return denied();
-        const { data: entry, error: entryError } = await timing.measure('entry', async () => await supabaseServer
-          .from('playlist_songs').select('song_id').eq('playlist_id', playlist.id)
-          .eq('song_id', song.id).maybeSingle());
-        if (entryError) throw entryError;
-        if (!entry) return denied();
       }
-      // Public song/playlist APIs expose the latest finalized version, not history.
-      const { data: latest, error: latestError } = await timing.measure('latest', async () => await supabaseServer
-        .from('song_versions').select('id').eq('song_id', song.id)
-        .not('upload_finalized_at', 'is', null).order('version_number', { ascending: false })
-        .limit(1).maybeSingle());
-      if (latestError) throw latestError;
-      if (latest?.id !== version.id) return denied();
     } else if (!song.account_id || song.account_id !== identity?.identity.workspaceId) {
       return denied();
     }

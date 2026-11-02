@@ -21,8 +21,9 @@ function routeHarness(route, { identity = null, user = null, tables = {}, storag
       const predicates = [];
       let single = false;
       let mutation = false;
+      let selection = '';
       const query = {
-        select() { return query; },
+        select(columns = '') { selection = columns; return query; },
         eq(key, value) { predicates.push(row => row[key] === value); return query; },
         in(key, values) { predicates.push(row => values.includes(row[key])); return query; },
         not(key, operator, value) {
@@ -39,7 +40,16 @@ function routeHarness(route, { identity = null, user = null, tables = {}, storag
         insert(value) { mutation = true; writes.push({ table, value }); return query; },
         delete() { mutation = true; writes.push({ table, delete: true }); return query; },
         then(resolve, reject) {
-          const rows = (tables[table] ?? []).filter(row => predicates.every(check => check(row)));
+          let rows = (tables[table] ?? []).filter(row => predicates.every(check => check(row)));
+          // Model the actual foreign-key joins at the database boundary.
+          if (selection.includes('song:songs!inner')) rows = rows.flatMap(row => {
+            const parent = (tables.songs ?? []).find(song => song.id === row.song_id);
+            return parent ? [{ ...row, song: parent }] : [];
+          });
+          if (selection.includes('playlist:playlists!inner')) rows = rows.flatMap(row => {
+            const parent = (tables.playlists ?? []).find(playlist => playlist.id === row.playlist_id);
+            return parent ? [{ ...row, playlist: parent }] : [];
+          });
           return Promise.resolve({ data: mutation ? (typeof mutationResult === 'function' ? mutationResult() : mutationResult) : single ? rows[0] ?? null : rows, error: null }).then(resolve, reject);
         },
       };
@@ -244,14 +254,14 @@ for (const [route, methods] of [
 
 const mediaRoute = 'app/api/media/audio/[versionId]/route.ts';
 const finalizedVersion = { id: 'version-a', song_id: 'song-a', version_number: 2, file_path: 'song-files/songs/song-a/uploads/audio.mp3', upload_finalized_at: '2026-11-01' };
-function mediaHarness({ identity = session('member'), publicSong = false, version = finalizedVersion, playlistPublic = true, entry = true, signingError = false, latest = version } = {}) {
+function mediaHarness({ identity = session('member'), publicSong = false, version = finalizedVersion, playlistPublic = true, playlistWorkspace = 'workspace-a', entry = true, signingError = false, latest = version } = {}) {
   const signs = [];
   const h = routeHarness(mediaRoute, {
     identity,
     tables: {
       songs: [{ ...song, is_public: publicSong }],
       song_versions: latest.id === version.id ? [version] : [latest, version],
-      playlists: [{ id: 'playlist-a', account_id: 'workspace-a', is_public: playlistPublic }],
+      playlists: [{ id: 'playlist-a', account_id: playlistWorkspace, is_public: playlistPublic }],
       playlist_songs: entry ? [{ playlist_id: 'playlist-a', song_id: 'song-a' }] : [],
     },
     storage: { from(bucket) { return { async createSignedUrl(path, seconds) {
@@ -277,6 +287,7 @@ for (const role of ['owner', 'member']) {
     assert.equal(response.headers.get('location'), 'https://storage.invalid/signed?token=SECRET-TOKEN');
     assert.equal(await response.text(), '');
     assert.deepEqual(h.signs, [{ bucket: 'song-files', path: 'songs/song-a/uploads/audio.mp3', seconds: 600 }]);
+    assert.deepEqual(h.reads, ['song_versions'], 'parent song is authorised in the same database read');
   });
 }
 for (const [name, options, query, status] of [
@@ -285,6 +296,7 @@ for (const [name, options, query, status] of [
   ['private public-song context', { identity: null }, '?song=song-a', 404],
   ['mismatched public-song context', { identity: null, publicSong: true }, '?song=other', 404],
   ['revoked playlist', { identity: null, playlistPublic: false }, '?playlist=playlist-a', 404],
+  ['foreign workspace playlist', { identity: null, playlistWorkspace: 'workspace-b' }, '?playlist=playlist-a', 404],
   ['removed playlist entry', { identity: null, entry: false }, '?playlist=playlist-a', 404],
   ['ambiguous context', { publicSong: true }, '?song=song-a&playlist=playlist-a', 404],
   ['empty public context', {}, '?song=', 404],
