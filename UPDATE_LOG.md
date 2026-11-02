@@ -9727,3 +9727,10 @@ Eight runtime regression cases fail before the change. 377 Node tests and TypeSc
 
 
 B29 release, 2 November: PR #75/25b96370 primary dpl_7LpTJNzBYxxj6VgfDb9tYMeesAsy Ready/live. 377 Node tests/TypeScript/focused lint (one existing warning), four PR checks and browser 30 passed/10 skipped. Twelve hosted signed-out checks pass on exact-head Preview and released Production; provider/success tests use fake I/O. No live plan/payment/settings mutations. Error/fatal release scan empty. No external action remains; app rollback can restore previous 6288e354 deployment, retaining B28 database boundary. Broader L5 remains open.
+
+
+## 2026-11-02: S7 production dependency audit gate
+
+Changed `.github/workflows/browser-accessibility.yml` to run `npm audit --omit=dev --audit-level=moderate` after the existing clean install. Goal: surface dependency regressions on pull requests and stop the existing quality job for moderate/high/critical production advisories or an unavailable audit. No schedule, dependency upgrade, provider/env change or additional service. Existing Vercel prebuild already runs Node tests.
+
+The exact audit command exits zero locally with four reported low issues and zero moderate/high/critical. These are the existing Resend/render/html-to-text/deepmerge chain; no forced breaking upgrade attempted. Hosted CI execution pending. Monitoring/retention and broader L5 remain open.
