@@ -9652,3 +9652,12 @@ Goal: make the approved comment API limits effective against direct client write
 Changed: supabase/migrations/20261102145804_restrict_private_comment_inserts.sql; matching supabase/rollback file; supabase/tests/comment_write_boundary_probe.sql; scripts/compose-comment-write-boundary-probe.mjs; LAUNCH_CHECKLIST.md; PRODUCT_BACKLOG.md; LAUNCH_SECURITY_REVIEW.md; UPDATE_LOG.md.
 
 Verified: fifteen baseline/candidate checks pass in both environments, fifteen rollback-mode checks pass on staging, 307 Node tests and focused lint pass. Synthetic content/memberships roll back; no emails/audio/provider side effects. Installation/release pending. Existing S4 extended; no duplicate backlog item. Database rollback, not app rollback, restores these grants.
+
+
+## 2026-11-02: Direct private-comment write boundary Production verification
+
+PR #71 merged as 0565f64b. Permission migration installed on staging and Production; client table/column INSERT denied and existing service-role writes preserved. Fifteen installed checks pass in each database; baseline/candidate/rollback modes also pass in both. Existing RLS and non-INSERT grants unchanged; no fixture workspaces/songs remain. Both Security Advisors have zero errors/warnings. 307 Node tests, focused lint and all four PR checks pass; browser 30 passed/10 skipped. Preview private signed-out checks and eight live no-write checks pass. No real emails/notifications/audio created; no app/env/billing/Storage change required.
+
+Updated LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, LAUNCH_API_ACCESS_MATRIX.md and UPDATE_LOG.md with release/rollback evidence and migration ledger equivalents. S4 remains open for feedback/bootstrap and wider review. Database rollback restores grants; app rollback alone doesn't. No action required from the user.
+
+Merged-source primary Production deployment dpl_3ouZssw5wcb3ruUE6ZuQ49TNQ9uQ is Ready/aliased to www.song-room.live at 0565f64b. Post-build signed-out private checks pass and bounded error/fatal scans are empty.

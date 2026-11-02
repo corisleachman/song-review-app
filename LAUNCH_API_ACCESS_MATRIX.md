@@ -154,3 +154,8 @@ PR #68 e19c8582 has compatible audio and artwork delivery. Staging buckets are p
 ## Production media checkpoint, 2 November 2026
 
 PR #68 is merged/deployed as ff15719f on the primary Production project. Both media buckets are private; audio bucket/global ceiling 50 MB; spend cap unchanged. Scoped live public/owner-private delivery, artwork, playback/seek, signed Range and legacy URL denial pass. Staging adds owner/separate-member/wrong-workspace, live share/entry revocation, timed expiry and boundary uploads. 246 Node tests and exact-head browser CI 30 passed/10 skipped. Broader route/role, abuse and monitoring review remains open; do not mark L5 complete. See [release evidence and limits](STORAGE_ACCESS_REVIEW.md#production-release-2-november-2026).
+
+
+## Direct private-comment write boundary, 2 November 2026
+
+PR #71/0565f64b removes client INSERT privileges on comments/comment_threads in staging and Production, preserving canonical service-role writes, RLS and other table privileges. Baseline fixtures proved the direct same-workspace member path outside API limits; 15 installed checks per environment now prove denial, server creation/replies and owner/member reads. Baseline/candidate/rollback modes pass in both environments. No live notifications or audio objects created, all fixtures rolled back. This closes that direct table INSERT gap; it doesn't complete all route/method/role coverage. Broader UPDATE/DELETE policies aren't newly certified by this INSERT-only repair.
