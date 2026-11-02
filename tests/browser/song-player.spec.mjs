@@ -12,7 +12,7 @@ function silentWav(seconds = 4) {
   return wav;
 }
 
-async function preparePlayer(page, fallback, renewal = false) {
+async function preparePlayer(page, fallback, renewal = false, requireGesture = false) {
   const errors = [];
   const unexpectedRequests = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -20,19 +20,36 @@ async function preparePlayer(page, fallback, renewal = false) {
     { name: 'song_review_auth', value: 'test-auth', domain: '127.0.0.1', path: '/' },
     { name: 'song_review_identity', value: 'test-identity', domain: '127.0.0.1', path: '/' },
   ]);
-  await page.addInitScript(() => {
+  await page.addInitScript(requireGesture => {
+    window.requireFirstPlayGesture = requireGesture;
+    let inGesture = false;
+    const authorised = new WeakSet();
+    document.addEventListener('click', () => {
+      inGesture = true;
+      setTimeout(() => { inGesture = false; }, 0);
+    }, true);
+    window.firstPlayGestureFailures = 0;
+    window.isPlayerGesture = () => inGesture;
+    window.authorisedPlayerMedia = authorised;
     localStorage.setItem('tsr_analytics_consent', 'rejected');
     window.playerTestMedia = [];
     const play = HTMLMediaElement.prototype.play;
     HTMLMediaElement.prototype.play = function () {
       if (!window.playerTestMedia.includes(this)) window.playerTestMedia.push(this);
+      if (window.requireFirstPlayGesture && !window.authorisedPlayerMedia.has(this)) {
+        if (!window.isPlayerGesture()) {
+          window.firstPlayGestureFailures++;
+          return Promise.reject(new DOMException('First play must run inside the tap', 'NotAllowedError'));
+        }
+        window.authorisedPlayerMedia.add(this);
+      }
       if (window.failNextNativeResume) {
         window.failNextNativeResume = false;
         return Promise.reject(new DOMException('Fixture expired-source failure', 'NotSupportedError'));
       }
       return play.call(this);
     };
-  });
+  }, requireGesture);
   const versions = ['version-one', 'version-two'].map((id, index) => ({
     id, version_number: index + 1, label: null, file_path: 'fixture.wav',
     file_name: 'fixture.wav', audioUrl: renewal ? `/api/media/audio/${id}` : '/fixture.wav', created_by: 'Player tester',
@@ -199,4 +216,14 @@ test('native media resume reauthorises once without losing position or loop stat
   expect(fixture.renewalSources()).toBe(1);
   expect(fixture.errors).toEqual([]);
   expect(fixture.unexpectedRequests).toEqual([]);
+});
+
+ test('cold first tap starts media before waveform ready under a gesture-only policy', async ({ page }) => {
+  const fixture = await preparePlayer(page, false, true, true);
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect.poll(async () => (await mediaState(page))?.time ?? 0).toBeGreaterThan(0.1);
+  expect(await page.evaluate(() => window.firstPlayGestureFailures)).toBe(0);
+  expect(await page.evaluate(() => window.playerTestMedia.at(-1).src)).toContain('/api/media/audio/version-one');
+  expect((await mediaState(page)).activePlayers).toBe(1);
+  expect(fixture.errors).toEqual([]);
 });
