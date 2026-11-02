@@ -1,6 +1,6 @@
 # Song Room launch checklist
 
-Last reconciled: 1 November 2026. This is the current progress page. Keep this URL in every completion update so we can always see what's left.
+Last reconciled: 2 November 2026. This is the current progress page. Keep this URL in every completion update so we can always see what's left.
 
 ## Where we are
 
@@ -83,6 +83,8 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 
 | B24 | [Align new audio uploads to 50 MB](PRODUCT_BACKLOG.md#b24-align-new-audio-uploads-to-50-mb) | User decision confirmed; app Preview and staging bucket aligned; real upload and Production pending | L5/S5, P2; overlaps B23 |
 
+| B25 | [Mobile first Play needs a second tap](PRODUCT_BACKLOG.md#b25-mobile-first-play-needs-a-second-tap) | Reproduced by user on Chrome on iPhone after multiple uploads; repair deployed to new Preview; 245 Node and 30 browser checks pass (10 skipped); phone retest required | L5/B23 staging acceptance, P1 playback |
+
 Exploratory ideas in ROADMAP.md (typing indicators, pinned comments, comparison view, waveform regions, exports, Slack, native mobile app, multitrack and video) remain unscheduled ideas. They aren't approved launch work. Delete/edit/auth/invite ideas in that old file must be checked against existing features before creating tasks.
 
 ## Keeping this page current
@@ -116,3 +118,9 @@ This page controls current priorities and stage status. PRODUCT_BACKLOG.md retai
 ## Private-media staging checkpoint, 1 November 2026
 
 PR #68 source e19c8582: four green checks, 244 Node tests and hosted browser suite 28 passed/10 skipped. Both staging buckets are private; audio bucket 52428800 bytes, global 50 MB unchanged. Direct legacy audio/image URL probes fail after cutover; intended app delivery remains available in scoped checks. No Production media/configuration change. L5 remains in progress; L6-L8 remain not started. B17-B19 measurements are still pending. See Storage review for remaining acceptance and rollback.
+
+## Mobile acceptance report, 2 November 2026
+
+User reports the staging tests pass except repeatable first-play permission failure after new uploads on mobile, clarified as Chrome on iPhone. Second tap plays. Preserve this as user-reported acceptance, not independent proof of each row or final Production readiness. B25 tracks the confirmed symptom; delayed playback after waveform fetch/decode is the working cause found in code. Fix and phone retest come before B23 Production rollout. L5 remains in progress.
+
+B25 candidate e5dd6435 is Ready on [new staging Preview](https://song-review-app-v2-d1qnlsvnw-corisleachmans-projects.vercel.app). CI run 41412981282 passes: 30 browser cases, 10 skipped; 245 Node tests and TypeScript pass. Hosted login/config/public song/artwork return 200; signed-out dashboard/private audio 401 and invalid artwork 404. Retest first Play in Chrome on the same iPhone before Production rollout.

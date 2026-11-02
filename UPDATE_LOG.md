@@ -9591,3 +9591,9 @@ Fix the PageSpeed Insights results for song-room.live: mobile LCP 7.2 s (score 7
 ## 1 November 2026: current private-media and 50 MB launch records
 
 Changed LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, STORAGE_ACCESS_REVIEW.md, LAUNCH_API_ACCESS_MATRIX.md, LAUNCH_SECURITY_REVIEW.md and UPDATE_LOG.md. Reconciled PR #68 e19c8582, private staging buckets, confirmed 50 MB decision/B24 and remaining manual/Production gates. Four PR checks green, 244 Node tests; browser CI 28 passed/10 skipped. Latest scoped HTTP checks: config/public song/image 200, signed-out dashboard/private audio 401, invalid image 404. Production media unchanged. No stage marked Done; phone, real upload, comparable performance and controlled share revocation remain open.
+
+## 2 November 2026: B25 Chrome-on-iPhone first-play report and candidate
+
+Changed launch checklist, product backlog and Storage review to record user-reported staging acceptance except the reproducible first-tap permission defect. Candidate e5dd6435 in PR #68 starts media inside the tap and reuses it while waveform/module loading completes. Changed app/songs/[id]/versions/[versionId]/page.tsx and lifecycle/browser tests. 245 Node tests and TypeScript pass; focused lint zero errors; eight local browser transport cases pass. Gesture-policy regression fails on original source. Hosted checks and physical phone retest pending; Production unchanged.
+
+- Hosted closeout: exact e5dd6435 primary Preview https://song-review-app-v2-d1qnlsvnw-corisleachmans-projects.vercel.app is Ready. Both Vercel builds pass; browser CI 41412981282 passes 30 cases/10 skipped. Scoped HTTP login/config/public song/artwork 200, signed-out dashboard/private audio 401 and invalid artwork 404. First-play physical Chrome/iPhone retest remains the next gate. Canonical records updated; no Production app/bucket change.

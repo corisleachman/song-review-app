@@ -458,3 +458,15 @@ PR #68 e19c8582 adds authorised short-lived audio delivery and project-bound art
 - Acceptance: App picker/help/server allocation/finalization agree; below/exact 52428800-byte metadata passes and larger files fail before allocation. Controlled actual staging upload/finalize/play passes; oversized file gives a clear error. Existing finalized legacy files remain playable. No charge/subscription/quota changes. Verify Production separately after rollout.
 - Implementation/evidence: e19c8582 central policy, allocation/finalization errors and upload views updated; boundary and finalized legacy-file preservation tests pass. Staging audio bucket is 52428800 bytes; global 50 MB unchanged. Production bucket/app remain at their old values pending rollout. Historical 200 MB migrations weren't rewritten; upload RPC execution is service-role-only in both environments.
 - Dependencies: B23 compatible delivery and private staging cutover; real-upload acceptance and later Production release. L5/S5 P2, not a newly declared launch blocker.
+
+## B25. Mobile first Play needs a second tap
+
+- Status: User-confirmed defect; repair e5dd6435 deployed to protected Preview, physical phone retest pending, not complete. Chrome on iPhone was explicitly confirmed by the user on 2 November; don't record this as a Safari-only report.
+- Reported behaviour: After uploading multiple songs on staging, entering each song and pressing Play first shows the browser permission error. Second Play succeeds. User says other staging tests pass; exact individual steps weren't independently re-run.
+- Intended outcome: A single first tap starts authorised audio, including immediately after upload, while waveform rendering can finish separately.
+- Working cause: Existing first Play waits for asynchronous waveform fetch/decode before calling play, losing the original gesture context on a restrictive browser. This matches the error but physical-device root-cause confirmation remains pending.
+- Acceptance: Fresh page/new upload plays on first tap in Chrome on the user's iPhone without the permission warning or Retry. Same media element survives delayed waveform/module readiness. No page-entry autoplay, duplicate player, stale song, broken pause/restart/repeat/seek, background or lock-screen regression. Desktop and native fallback still work.
+- Dependencies: B23 private-media candidate, actual gesture-preserving playback path, regression checks and physical phone retest. Keep Production unchanged until accepted.
+- Decisions needed: None. User's existing report establishes the browser to retest; no new product behaviour is proposed.
+
+B25 verification: candidate Preview https://song-review-app-v2-d1qnlsvnw-corisleachmans-projects.vercel.app is Ready at e5dd6435; 245 Node tests and TypeScript pass, browser CI 41412981282 has 30 passed/10 skipped. New gesture-only regression fails against original source and passes candidate. No Production change.
