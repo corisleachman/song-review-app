@@ -43,7 +43,7 @@ For each method, record the final route class, identity check, resource/workspac
 | `/api/profile/settings` | Session + resource/workspace scope | GET, POST | `resolveCanonicalIdentity` | Not yet exercised |
 | `/api/profile/visualizer` | Session + resource/workspace scope | GET, POST | `resolveCanonicalIdentity` | Not yet exercised |
 | `/api/public/playlist/[id]` | Public-share projection | GET | Inspect route / delegated helper | Not yet exercised |
-| `/api/public/song/[songId]/comments` | Public-share projection | GET, POST | Sharing/comment flags; honeypot; typed body | B26: runtime valid/throttle/no-write cases pass; hosted malformed 400, honeypot 200 and unavailable-track 403; no live comment write |
+| `/api/public/song/[songId]/comments` | Public-share projection | GET, POST | Sharing/comment flags; honeypot; typed body | B26 input checks pass. PR #70 shared 5/min/IP: hosted staging five synthetic 201, sixth 429; GET 200; fixtures removed. Production no-write input/share checks pass |
 | `/api/public/song/[songId]` | Public-share projection | GET | Inspect route / delegated helper | Not yet exercised |
 | `/api/referrals/code` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
 | `/api/referrals/summary` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
@@ -61,14 +61,14 @@ For each method, record the final route class, identity check, resource/workspac
 | `/api/tasks/[taskId]` | Session + resource/workspace scope | PATCH, DELETE | `resolveCanonicalIdentity` | Local signed-out PATCH, DELETE tests pass; hosted matrix pending |
 | `/api/tasks/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Local signed-out POST tests pass; hosted matrix pending |
 | `/api/tasks/reorder` | Session + resource/workspace scope | PATCH | `resolveCanonicalIdentity` | Local signed-out PATCH tests pass; hosted matrix pending |
-| `/api/threads/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | B26: runtime input/auth/workspace/valid-write cases pass; Preview/Production signed-out POST 401; no live notification write |
-| `/api/threads/reply` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | B26: runtime input/auth/workspace/valid-write cases pass; Preview/Production signed-out POST 401; no live notification write |
+| `/api/threads/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | B26 input/auth/workspace cases pass; PR #70 shared private 30/min limiter denial/outage gates writes/scheduling. Production signed-out 401; valid writes/notifications use fake I/O |
+| `/api/threads/reply` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | B26 input/auth/workspace cases pass; PR #70 shared private 30/min limiter denial/outage gates writes/scheduling. Production signed-out 401; valid writes/notifications use fake I/O |
 | `/api/versions/[versionId]/finalize` | Session + resource/workspace scope | POST, DELETE | `resolveCanonicalIdentity` | Local signed-out POST, DELETE tests pass; hosted matrix pending |
 | `/api/versions/[versionId]` | Session + resource/workspace scope | GET, PATCH | `resolveCanonicalIdentity` | Local signed-out PATCH tests pass; hosted matrix pending |
 | `/api/versions/[versionId]/threads` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Local signed-out GET tests pass; hosted matrix pending |
 | `/api/versions/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Not yet exercised |
 | `/api/workspace/invites/[inviteId]` | Session + resource/workspace scope | PATCH | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/workspace/invites` | Session + resource/workspace scope | GET, POST | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/workspace/invites` | Session + resource/workspace scope | GET, POST | `resolveCanonicalIdentity`; owner-only | PR #70 runtime owner/member/signed-out and create/resend budget gates pass with fake email I/O. Production POST signed-out 401; hosted valid email journey not replayed |
 | `/api/workspace/members/[userId]` | Session + resource/workspace scope | DELETE | `resolveCanonicalIdentity` | Not yet exercised |
 | `/api/workspace/members` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
 | `/api/workspace/plan` | Session + resource/workspace scope | PATCH | `resolveCanonicalIdentity` | Code sampled; staging negative tests pending |

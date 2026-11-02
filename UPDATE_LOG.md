@@ -9636,3 +9636,10 @@ Goal: preserve the agreed usage limits across server instances and block concurr
 Changed files: lib/mutationRateLimit.ts; app/api/threads/create/route.ts; app/api/threads/reply/route.ts; app/api/public/song/[songId]/comments/route.ts; app/api/workspace/invites/route.ts; tests/api-access-boundaries.test.mjs; tests/mutation-rate-limit.test.mjs; supabase/migrations/20261102143515_durable_mutation_rate_limits.sql; companion rollback and supabase/tests/mutation_rate_limits_probe.sql; LAUNCH_CHECKLIST.md; PRODUCT_BACKLOG.md; LAUNCH_SECURITY_REVIEW.md; UPDATE_LOG.md.
 
 Local checks: 307 Node tests, TypeScript and focused lint pass. Staging SQL budgets/permissions/expiry and ten concurrent requests pass, with synthetic limiter metadata removed. No real invitation/notification send. Code local, staging database installed; Preview/Production app rollout pending. Existing direct member INSERT policies, feedback concurrency and bootstrap setup remain explicit S4 gaps. Rollback app before optional limiter removal; keep private media settings. See LAUNCH_CHECKLIST.md.
+
+
+## 2026-11-02: Shared API-limit Production release checkpoint
+
+PR #70 merged as 1352dd8c; primary Production dpl_3gZwUK8rRnpYGodCdi9LQuo3nVQZ Ready/live. Installed and verified additive limiter migration in both environments before app rollout. 307 Node tests, TypeScript/focused lint, all four PR checks and browser 30 passed/10 skipped. Hosted staging five synthetic comments accepted/sixth 429; GET remains available; fixtures removed. Eight Production no-write checks pass; bounded error/fatal scans empty. No real invitation/notification sends, Production comment writes, env/provider or billing changes. Direct-database private INSERT, feedback concurrency and bootstrap setup remain S4 review items.
+
+Updated LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, LAUNCH_API_ACCESS_MATRIX.md and UPDATE_LOG.md with verified release evidence, migration ledger equivalents and rollback. Restore previous compatible 7d5a0494 app before optional limiter removal. No action required from the user.
