@@ -64,7 +64,7 @@ function routeHarness(route, { identity = null, user = null, tables = {}, storag
     '@/lib/currentUser': { getCurrentAuthenticatedUser: async () => user },
     '@/lib/supabaseServer': { supabaseServer: db },
     '@/lib/workspaceMembers': { listWorkspaceMembers: async () => [] },
-    '@/lib/threadNotifications': { sendThreadNotification: async () => { notifications++; throw new Error('Unexpected send'); } },
+    '@/lib/threadNotifications': { scheduleThreadNotification: () => { notifications++; }, sendThreadNotification: async () => { notifications++; throw new Error('Unexpected send'); } },
   };
   const cache = new Map();
   function load(filename) {
@@ -575,4 +575,88 @@ test('version allocation rejects over-50 MB metadata before any database or Stor
   assert.equal(response.status, 400);
   assert.match((await response.json()).error, /50 MB/);
   assert.equal(harness.reads.length, 0); assert.equal(harness.writes.length, 0);
+});
+
+const createCommentBody = { versionId: 'version-a', songId: 'song-a', timestamp: 12.4, commentText: 'A useful note' };
+for (const payload of [null, [], 7, 'note', { ...createCommentBody, versionId: {} }, { ...createCommentBody, songId: [] }, { ...createCommentBody, timestamp: '12' }, { ...createCommentBody, timestamp: -1 }, { ...createCommentBody, timestamp: 2147483648 }]) {
+  test(`thread create rejects malformed input before database work: ${JSON.stringify(payload)}`, async () => {
+    const h = routeHarness('app/api/threads/create/route.ts', { identity: session('member'), tables: { songs: [song], song_versions: [{ id: 'version-a', song_id: song.id }] } });
+    const response = await h.handler.POST(jsonRequest(payload));
+    assert.equal(response.status, 400); assert.deepEqual(h.reads, []); assert.deepEqual(h.writes, []); assert.equal(h.notifications, 0);
+  });
+}
+for (const [route, payload] of [
+  ['threads/create/route.ts', '{"versionId":"version-a","songId":"song-a","timestamp":1e999,"commentText":"note"}'],
+  ['threads/create/route.ts', '{'], ['threads/reply/route.ts', '{'],
+]) {
+  test(`${route} rejects unreadable or overflowing JSON input`, async () => {
+    const h = routeHarness(`app/api/${route}`, { identity: session('member'), tables: { songs: [song], song_versions: [{ id: 'version-a', song_id: song.id }] } });
+    const response = await h.handler.POST(new Request('https://staging.invalid/api/test', { method: 'POST', body: payload }));
+    assert.equal(response.status, 400); assert.deepEqual(h.writes, []); assert.equal(h.notifications, 0);
+  });
+}
+for (const payload of [null, [], 1, 'note', { threadId: {}, text: 'note' }, { threadId: 'thread-a', text: 'note', songId: {} }, { threadId: 'thread-a', text: 'note', versionId: [] }]) {
+  test(`reply rejects malformed input before reads/writes: ${JSON.stringify(payload)}`, async () => {
+    const h = routeHarness('app/api/threads/reply/route.ts', { identity: session('member') });
+    const response = await h.handler.POST(jsonRequest(payload));
+    assert.equal(response.status, 400); assert.deepEqual(h.reads, []); assert.deepEqual(h.writes, []); assert.equal(h.notifications, 0);
+  });
+}
+for (const payload of [null, [], 1, 'note', { author_name: {}, body: 'note' }, { author_name: 'Tester', body: [] }, { author_name: 'Tester', body: 'note', website: true }]) {
+  test(`public comment handles malformed fields as a client error: ${JSON.stringify(payload)}`, async () => {
+    const h = routeHarness('app/api/public/song/[songId]/comments/route.ts', { tables: { songs: [{ ...song, is_public: true, public_comments_enabled: true }] } });
+    const response = await h.handler.POST(jsonRequest(payload), params({ songId: 'song-a' }));
+    assert.equal(response.status, 400); assert.deepEqual(h.reads, []); assert.deepEqual(h.writes, []);
+  });
+}
+
+for (const timestamp of [0, 12.4, 12.8, 2147483647]) {
+  test(`valid thread creation preserves timestamp rounding and notification scheduling: ${timestamp}`, async () => {
+    const h = routeHarness('app/api/threads/create/route.ts', {
+      identity: session('member'), mutationResult: { id: 'new-id' },
+      tables: { songs: [song], song_versions: [{ id: 'version-a', song_id: song.id }], comment_threads: [{ id: 'new-id', comments: [] }] },
+    });
+    const req = jsonRequest({ ...createCommentBody, timestamp, commentText: ' A useful note ' });
+    req.nextUrl = new URL(req.url);
+    const response = await h.handler.POST(req);
+    assert.equal(response.status, 200);
+    assert.equal(h.writes[0].value[0].timestamp_seconds, Math.round(timestamp));
+    assert.equal(h.writes[1].value[0].body, 'A useful note');
+    assert.equal(h.notifications, 1);
+  });
+}
+test('valid reply still uses the canonical thread/version/song and schedules once', async () => {
+  const h = routeHarness('app/api/threads/reply/route.ts', {
+    identity: session('member'), mutationResult: { id: 'comment-new' },
+    tables: { songs: [song], song_versions: [{ id: 'version-a', song_id: song.id }], comment_threads: [{ id: 'thread-a', song_version_id: 'version-a' }] },
+  });
+  const req = jsonRequest({ threadId: 'thread-a', text: ' A reply ', songId: song.id, versionId: 'version-a' });
+  req.nextUrl = new URL(req.url);
+  assert.equal((await h.handler.POST(req)).status, 200);
+  assert.equal(h.writes[0].value[0].body, 'A reply'); assert.equal(h.notifications, 1);
+});
+for (const route of ['threads/create/route.ts', 'threads/reply/route.ts']) {
+  test(`${route}: signed-out malformed requests still return 401 before database access`, async () => {
+    const h = routeHarness(`app/api/${route}`);
+    const response = await h.handler.POST(new Request('https://staging.invalid/api/test', { method: 'POST', body: '{' }));
+    assert.equal(response.status, 401); assert.deepEqual(h.reads, []); assert.deepEqual(h.writes, []);
+  });
+}
+test('public comment honeypot remains a no-write success', async () => {
+  const h = routeHarness('app/api/public/song/[songId]/comments/route.ts');
+  const response = await h.handler.POST(jsonRequest({ website: 'bot', author_name: {} }), params({ songId: 'song-a' }));
+  assert.equal(response.status, 200); assert.deepEqual(h.reads, []); assert.deepEqual(h.writes, []);
+});
+test('valid public comments keep whitespace handling and the existing five-per-minute throttle', async () => {
+  const h = routeHarness('app/api/public/song/[songId]/comments/route.ts', {
+    tables: { songs: [{ ...song, is_public: true, public_comments_enabled: true }] },
+    mutationResult: { id: 'comment-new', author_name: 'Tester', body: 'A note' },
+  });
+  for (let i = 0; i < 6; i++) {
+    const req = jsonRequest({ author_name: ' Tester ', body: ' A note ', website: '' });
+    req.headers.set('x-forwarded-for', '198.51.100.42');
+    const response = await h.handler.POST(req, params({ songId: 'song-a' }));
+    assert.equal(response.status, i < 5 ? 201 : 429);
+  }
+  assert.equal(h.writes.length, 5); assert.equal(h.writes[0].value.body, 'A note'); assert.equal(h.writes[0].value.author_name, 'Tester');
 });
