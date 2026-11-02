@@ -20,19 +20,25 @@ function getErrorMessage(error: unknown) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { versionId, songId, timestamp, commentText } = await req.json();
-    const trimmedComment = typeof commentText === 'string' ? commentText.trim() : '';
     const resolved = await resolveCanonicalIdentity();
-
     if (!resolved) {
       return NextResponse.json({ error: 'You must be signed in to comment.' }, { status: 401 });
     }
 
-    if (!versionId || !songId || timestamp == null || !trimmedComment) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+    const payload: unknown = await req.json().catch(() => null);
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      return NextResponse.json({ error: 'Invalid comment details.' }, { status: 400 });
+    }
+    const { versionId, songId, timestamp, commentText } = payload as Record<string, unknown>;
+    const trimmedComment = typeof commentText === 'string' ? commentText.trim() : '';
+    if (typeof versionId !== 'string' || !versionId.trim()
+      || typeof songId !== 'string' || !songId.trim() || !trimmedComment || timestamp == null) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+    // timestamp_seconds is a Postgres integer; reject coercion and overflow before writes.
+    if (typeof timestamp !== 'number' || !Number.isFinite(timestamp)
+      || timestamp < 0 || Math.round(timestamp) > 2147483647) {
+      return NextResponse.json({ error: 'Choose a valid position in the track.' }, { status: 400 });
     }
 
     const { data: version, error: versionError } = await supabaseServer

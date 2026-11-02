@@ -76,15 +76,20 @@ export async function POST(req: NextRequest, props: { params: Promise<{ songId: 
   const params = await props.params;
   try {
     const { songId } = params;
-    const body = await req.json() as {
-      author_name?: string;
-      body?: string;
-      website?: string; // honeypot — real users never fill this
-    };
+    const payload: unknown = await req.json().catch(() => null);
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      return NextResponse.json({ error: 'Invalid comment details.' }, { status: 400 });
+    }
+    const body = payload as Record<string, unknown>;
 
-    // Honeypot — bots fill hidden fields. Pretend success, write nothing.
-    if (body.website && body.website.trim() !== '') {
+    // Honeypot: pretend success for a filled text field, without storing anything.
+    if (typeof body.website === 'string' && body.website.trim() !== '') {
       return NextResponse.json({ ok: true }, { status: 200 });
+    }
+    if ((body.website !== undefined && typeof body.website !== 'string')
+      || (body.author_name !== undefined && typeof body.author_name !== 'string')
+      || (body.body !== undefined && typeof body.body !== 'string')) {
+      return NextResponse.json({ error: 'Invalid comment details.' }, { status: 400 });
     }
 
     if (!(await songAllowsComments(songId))) {
@@ -99,8 +104,8 @@ export async function POST(req: NextRequest, props: { params: Promise<{ songId: 
       );
     }
 
-    const authorName = (body.author_name ?? '').trim();
-    const commentBody = (body.body ?? '').trim();
+    const authorName = typeof body.author_name === 'string' ? body.author_name.trim() : '';
+    const commentBody = typeof body.body === 'string' ? body.body.trim() : '';
 
     if (!authorName) {
       return NextResponse.json({ error: 'Please enter your name.' }, { status: 400 });

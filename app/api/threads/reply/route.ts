@@ -5,19 +5,21 @@ import { scheduleThreadNotification } from '@/lib/threadNotifications';
 
 export async function POST(req: NextRequest) {
   try {
-    const { threadId, text, songId, versionId } = await req.json();
-    const trimmedText = typeof text === 'string' ? text.trim() : '';
     const resolved = await resolveCanonicalIdentity();
-
     if (!resolved) {
       return NextResponse.json({ error: 'You must be signed in to reply.' }, { status: 401 });
     }
 
-    if (!threadId || !trimmedText) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+    const payload: unknown = await req.json().catch(() => null);
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      return NextResponse.json({ error: 'Invalid comment details.' }, { status: 400 });
+    }
+    const { threadId, text, songId, versionId } = payload as Record<string, unknown>;
+    const trimmedText = typeof text === 'string' ? text.trim() : '';
+    if (typeof threadId !== 'string' || !threadId.trim() || !trimmedText
+      || (songId !== undefined && typeof songId !== 'string')
+      || (versionId !== undefined && typeof versionId !== 'string')) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     const { data: thread, error: threadError } = await supabaseServer
