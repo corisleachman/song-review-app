@@ -9627,3 +9627,12 @@ Changed app/api/threads/create/route.ts, app/api/threads/reply/route.ts, app/api
 ## 2 November 2026: B26 Production verification and S4 proposed guardrails
 
 Updated launch checklist, backlog, security review and API matrix. PR #69 merged as 1ff2727a; primary deployment dpl_9TMhrEvBcWFypnDY7td9ARFSbt9G Ready/live. 281 Node tests/TypeScript/focused lint and four PR checks pass; browser CI 30/10 skipped. Nine Preview and nine Production no-write probes pass. No real comments/invites/notifications sent and no migration/env/provider/quota change. B26 complete in scope. S4 durable rates are proposed to the user and inactive pending input; dashboard/bootstrap/sign-in reads stay outside that proposal. Rollback can retain private media settings with prior compatible 083c1fad deployment.
+
+
+## 2026-11-02: Approved durable comment and invitation API limits
+
+Goal: preserve the agreed usage limits across server instances and block concurrent invitation resends before provider calls. Added rolling, hashed, service-role-only database counters and atomic workspace/recipient reservations. New mutationRateLimit helper gates private thread create/reply, public comment POST and workspace invitation POST; invalid invite JSON now returns 400. Reads and playback are unchanged.
+
+Changed files: lib/mutationRateLimit.ts; app/api/threads/create/route.ts; app/api/threads/reply/route.ts; app/api/public/song/[songId]/comments/route.ts; app/api/workspace/invites/route.ts; tests/api-access-boundaries.test.mjs; tests/mutation-rate-limit.test.mjs; supabase/migrations/20261102143515_durable_mutation_rate_limits.sql; companion rollback and supabase/tests/mutation_rate_limits_probe.sql; LAUNCH_CHECKLIST.md; PRODUCT_BACKLOG.md; LAUNCH_SECURITY_REVIEW.md; UPDATE_LOG.md.
+
+Local checks: 307 Node tests, TypeScript and focused lint pass. Staging SQL budgets/permissions/expiry and ten concurrent requests pass, with synthetic limiter metadata removed. No real invitation/notification send. Code local, staging database installed; Preview/Production app rollout pending. Existing direct member INSERT policies, feedback concurrency and bootstrap setup remain explicit S4 gaps. Rollback app before optional limiter removal; keep private media settings. See LAUNCH_CHECKLIST.md.

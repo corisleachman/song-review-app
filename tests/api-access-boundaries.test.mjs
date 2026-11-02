@@ -11,10 +11,11 @@ const require = createRequire(import.meta.url);
 
 // Execute the real handler, replacing only framework/I/O boundaries. This
 // checks runtime decisions; it is not a Supabase, cookie or hosted HTTP test.
-function routeHarness(route, { identity = null, user = null, tables = {}, storage = null, mutationResult = null } = {}) {
+function routeHarness(route, { identity = null, user = null, tables = {}, storage = null, mutationResult = null, limitResponse = null, overrides = {} } = {}) {
   const reads = [];
   const writes = [];
   let notifications = 0;
+  const limitCalls = [];
   const db = {
     from(table) {
       reads.push(table);
@@ -58,6 +59,10 @@ function routeHarness(route, { identity = null, user = null, tables = {}, storag
     storage: storage ?? { from() { throw new Error('Unexpected access to audio/storage'); } },
   };
   const stubs = {
+    '@/lib/mutationRateLimit': {
+      enforceMutationRateLimit: async (...args) => { limitCalls.push(args); return limitResponse; },
+      enforcePublicCommentRateLimit: async () => { limitCalls.push(['public_comment']); return limitResponse; },
+    },
     'next/server': { NextResponse: { json: (body, init) => Response.json(body, init) } },
     'next/cache': { unstable_noStore() {} },
     '@/lib/canonicalIdentity': { resolveCanonicalIdentity: async () => identity },
@@ -66,6 +71,7 @@ function routeHarness(route, { identity = null, user = null, tables = {}, storag
     '@/lib/workspaceMembers': { listWorkspaceMembers: async () => [] },
     '@/lib/threadNotifications': { scheduleThreadNotification: () => { notifications++; }, sendThreadNotification: async () => { notifications++; throw new Error('Unexpected send'); } },
   };
+  Object.assign(stubs, overrides);
   const cache = new Map();
   function load(filename) {
     if (cache.has(filename)) return cache.get(filename);
@@ -86,10 +92,10 @@ function routeHarness(route, { identity = null, user = null, tables = {}, storag
     evaluate(localRequire, exports);
     return exports;
   }
-  return { handler: load(path.join(root, route)), reads, writes, get notifications() { return notifications; } };
+  return { handler: load(path.join(root, route)), reads, writes, limitCalls, get notifications() { return notifications; } };
 }
 
-const session = role => ({ identity: { workspaceId: 'workspace-a', userId: `user-${role}`, membershipRole: role }, bootstrap: { workspace: { plan: 'free' } } });
+const session = role => ({ identity: { workspaceId: 'workspace-a', userId: `user-${role}`, membershipRole: role, displayName: 'Test Owner', workspaceName: 'Test Workspace' }, bootstrap: { workspace: { plan: 'free' } } });
 const song = { id: 'song-a', account_id: 'workspace-a', title: 'Allowed', image_url: null };
 const foreignSong = { id: 'song-b', account_id: 'workspace-b', title: 'PRIVATE-TITLE', image_url: 'PRIVATE-ARTWORK' };
 const getRequest = () => {
@@ -647,16 +653,76 @@ test('public comment honeypot remains a no-write success', async () => {
   const response = await h.handler.POST(jsonRequest({ website: 'bot', author_name: {} }), params({ songId: 'song-a' }));
   assert.equal(response.status, 200); assert.deepEqual(h.reads, []); assert.deepEqual(h.writes, []);
 });
-test('valid public comments keep whitespace handling and the existing five-per-minute throttle', async () => {
+test('valid public comments keep whitespace handling after the shared limiter allows posting', async () => {
   const h = routeHarness('app/api/public/song/[songId]/comments/route.ts', {
     tables: { songs: [{ ...song, is_public: true, public_comments_enabled: true }] },
     mutationResult: { id: 'comment-new', author_name: 'Tester', body: 'A note' },
   });
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 1; i++) {
     const req = jsonRequest({ author_name: ' Tester ', body: ' A note ', website: '' });
     req.headers.set('x-forwarded-for', '198.51.100.42');
     const response = await h.handler.POST(req, params({ songId: 'song-a' }));
-    assert.equal(response.status, i < 5 ? 201 : 429);
+    assert.equal(response.status, 201);
   }
-  assert.equal(h.writes.length, 5); assert.equal(h.writes[0].value.body, 'A note'); assert.equal(h.writes[0].value.author_name, 'Tester');
+  assert.deepEqual(h.limitCalls, [['public_comment']]);
+  assert.equal(h.writes.length, 1); assert.equal(h.writes[0].value.body, 'A note'); assert.equal(h.writes[0].value.author_name, 'Tester');
 });
+
+for (const status of [429, 503]) {
+  for (const route of ['threads/create/route.ts', 'threads/reply/route.ts', 'public/song/[songId]/comments/route.ts']) {
+    test(`${route}: limiter ${status} blocks every write and notification`, async () => {
+      const h = routeHarness(`app/api/${route}`, {
+        identity: session('member'), limitResponse: Response.json({ error: 'Wait' }, { status, headers: { 'Retry-After': '60' } }),
+        tables: { songs: [{ ...song, is_public: true, public_comments_enabled: true }], song_versions: [{ id: 'version-a', song_id: song.id }], comment_threads: [{ id: 'thread-a', song_version_id: 'version-a' }] },
+      });
+      const body = route.startsWith('public/') ? { author_name: 'Tester', body: 'Note' }
+        : route.startsWith('threads/create') ? createCommentBody : { threadId: 'thread-a', text: 'Reply' };
+      const response = await h.handler.POST(jsonRequest(body), params({ songId: song.id }));
+      assert.equal(response.status, status); assert.equal(response.headers.get('Retry-After'), '60');
+      assert.deepEqual(h.writes, []); assert.equal(h.notifications, 0);
+      assert.deepEqual(h.limitCalls, route.startsWith('public/') ? [['public_comment']] : [['workspace_comment', 'user-member']]);
+    });
+  }
+}
+
+for (const duplicate of [false, true]) {
+  for (const status of [429, 503, 200]) {
+    test(`invite ${duplicate ? 'resend' : 'creation'}: limiter ${status} gates provider and creation`, async () => {
+      let created = 0; let sent = 0;
+      const invite = { email: 'tester@example.test', invite_token: 'test-token' };
+      const h = routeHarness('app/api/workspace/invites/route.ts', {
+        identity: session('owner'), tables: { accounts: [{ id: 'workspace-a', plan: 'studio' }] },
+        limitResponse: status === 200 ? null : Response.json({ error: 'Wait' }, { status }),
+        overrides: {
+          '@/lib/accountInvites': {
+            isValidInviteEmail: () => true,
+            normalizeInviteEmail: email => ({ normalizedEmail: email.trim().toLowerCase() }),
+            isExistingWorkspaceMemberEmail: async () => false,
+            findPendingInviteByEmail: async () => duplicate ? invite : null,
+            createWorkspaceInvite: async () => { created++; return invite; },
+          },
+          resend: { Resend: class { emails = { send: async () => { sent++; return {}; } }; } },
+        },
+      });
+      const previous = process.env.RESEND_API_KEY;
+      process.env.RESEND_API_KEY = 'test-only-key';
+      try {
+        const req = jsonRequest({ email: ' Tester@Example.test ' }); req.nextUrl = new URL(req.url);
+        const response = await h.handler.POST(req);
+        assert.equal(response.status, status === 200 && !duplicate ? 201 : status);
+        assert.deepEqual(h.limitCalls, [['workspace_invite', 'workspace-a', 'tester@example.test']]);
+        assert.equal(sent, status === 200 ? 1 : 0);
+        assert.equal(created, status === 200 && !duplicate ? 1 : 0);
+      } finally {
+        if (previous === undefined) delete process.env.RESEND_API_KEY; else process.env.RESEND_API_KEY = previous;
+      }
+    });
+  }
+}
+for (const role of [null, 'member']) {
+  test(`invite ${role ?? 'signed-out'} cannot reach limiter or email provider`, async () => {
+    const h = routeHarness('app/api/workspace/invites/route.ts', { identity: role ? session(role) : null });
+    const response = await h.handler.POST(jsonRequest({ email: 'test@example.test' }));
+    assert.equal(response.status, role ? 403 : 401); assert.deepEqual(h.limitCalls, []); assert.deepEqual(h.writes, []);
+  });
+}

@@ -19,6 +19,7 @@ import {
   isMissingPlanColumnError,
   normalizeAccountPlan,
 } from '@/lib/plans';
+import { enforceMutationRateLimit } from '@/lib/mutationRateLimit';
 import { logPlanEvent } from '@/lib/planEvents';
 
 export const dynamic = 'force-dynamic';
@@ -187,7 +188,9 @@ export async function POST(req: NextRequest) {
     const ownerError = requireOwner(resolved);
     if (ownerError) return ownerError;
 
-    const { email } = await req.json();
+    const payload: unknown = await req.json().catch(() => null);
+    const email = payload && typeof payload === 'object' && !Array.isArray(payload)
+      ? (payload as Record<string, unknown>).email : undefined;
 
     if (typeof email !== 'string' || !email.trim()) {
       return NextResponse.json({ error: 'Email is required.' }, { status: 400 });
@@ -209,6 +212,11 @@ export async function POST(req: NextRequest) {
 
     const existingInvite = await findPendingInviteByEmail(resolved.identity.workspaceId, normalizedEmail);
     if (existingInvite) {
+      const limitError = await enforceMutationRateLimit(
+        'workspace_invite', resolved.identity.workspaceId, normalizedEmail,
+      );
+      if (limitError) return limitError;
+
       // Resend the invite email rather than silently skipping it
       const emailResult = await sendInviteEmail({
         to: existingInvite.email,
@@ -261,6 +269,11 @@ export async function POST(req: NextRequest) {
         );
       }
     }
+
+    const limitError = await enforceMutationRateLimit(
+      'workspace_invite', resolved.identity.workspaceId, normalizedEmail,
+    );
+    if (limitError) return limitError;
 
     const invite = await createWorkspaceInvite({
       workspaceId: resolved.identity.workspaceId,

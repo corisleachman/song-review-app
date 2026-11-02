@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { enforceMutationRateLimit } from '@/lib/mutationRateLimit';
 import { scheduleThreadNotification } from '@/lib/threadNotifications';
 
 export async function POST(req: NextRequest) {
@@ -69,6 +70,9 @@ export async function POST(req: NextRequest) {
     if (!song.account_id || song.account_id !== resolved.identity.workspaceId) {
       return NextResponse.json({ error: 'You do not have access to this thread.' }, { status: 403 });
     }
+
+    const limitError = await enforceMutationRateLimit('workspace_comment', resolved.identity.userId);
+    if (limitError) return limitError;
 
     const author = resolved.identity.authorName;
 
