@@ -539,3 +539,16 @@ B27 handoff checkpoint: exact-head primary Preview Ready, all four PR checks pas
 
 
 B27 Production release, 2 November: both user tests accepted, staging Free/one workspace/one membership/owner link verified. Production migration installed/source-verified, 14 installed SQL cases pass, zero fixture users/workspaces. PR #73/ce346868 primary live deployment dpl_F19sdasWwV17Qt6den32dWjPh1s5 Ready on www.song-room.live. 340 Node tests, TypeScript/lint, four PR checks, browser 30 passed/10 skipped and live bootstrap/dashboard/login checks pass; bounded release error/fatal scans empty. Actual fresh signup was tested on staging, not replayed on Production. No real account cleanup, plan/provider/env changes or user action needed. Restore old app before optional RPC removal.
+
+
+## B28. Anonymous raw song/version data bypasses public projections
+
+- Status: Local candidate verified; staging installation and release pending. Existing L5/S2/S3 review, not a new feature.
+- Confirmed behaviour: Both environments grant anonymous SELECT on songs and song_versions. Rolled-back synthetic fixtures demonstrate access to older versions, unfinished uploads, internal notes/filenames and ownership fields for a publicly shared song. Private songs remain hidden. This proves exposure capability, not evidence of exploitation; no real private content was read. Public comments already deny anonymous raw reads.
+- Intended outcome: Anonymous visitors use the existing canonical public APIs, which return the latest finalized version and scoped public fields. Preserve authenticated owner/member history, outsider isolation, public songs, playlist-only sharing, comments, artwork, audio and embeds.
+- Acceptance: Deny raw table/column SELECT for anonymous clients; preserve service-role projections, authenticated permissions and other grants. Baseline/candidate/rollback and installed-role probes must pass. Compare hosted public responses, pages, audio redirect/one-byte Range and artwork before/after. No retained fixtures or notifications.
+- Dependencies: Permission migration before release closeout; no app/env/provider or sharing-contract change. Both environments confirmed no PUBLIC SELECT or column overrides. Database rollback restores only the previous two anon SELECT grants and reopens the exposure; application rollback alone does not restore permissions.
+- Decisions needed: None. This enforces the already-shipped public API contract.
+- Evidence: 342 Node tests and focused lint pass; 16 baseline, 14 candidate and 16 rollback SQL cases pass in each environment. Fixtures always roll back, using existing profile IDs without creating Auth users or sending email. Public API regression tests cover latest finalized selection and omission of internal fields. Hosted baseline song/playlist/comments/pages/audio/artwork checks pass; post-install checks pending.
+
+B28 staging checkpoint, 2 November: migration installed as ledger 20261102222009 (source 20261102220823). All 14 installed SQL cases pass, zero fixtures remain. Actual anonymous REST reads now return 401/42501 for both tables; existing comments denial is unchanged. Public API payloads match baseline, public pages/embeds return 200, audio redirect 307/Range 206 and artwork 200. Advisor has zero errors/warnings. Production remains unchanged pending CI/release.

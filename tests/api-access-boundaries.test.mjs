@@ -782,3 +782,25 @@ for (const error of [{ code: '42501', message: 'PRIVATE PROVIDER DETAILS' }, { c
     assert.equal(response.status, 500); assert.doesNotMatch(await response.text(), /PRIVATE PROVIDER DETAILS|42501|P0001/);
   });
 }
+
+for (const playlist of [false, true]) {
+  test(`public ${playlist ? 'playlist' : 'song'} projection excludes history, pending uploads and internal metadata`, async () => {
+    const pending = { ...finalizedVersion, id: 'pending-version', version_number: 3, upload_finalized_at: null, notes: 'INTERNAL-PENDING' };
+    const latest = { ...finalizedVersion, id: 'current-version', notes: 'INTERNAL-NOTE', file_name: 'INTERNAL-FILENAME', created_by_user_id: 'INTERNAL-USER' };
+    const older = { ...latest, id: 'old-version', version_number: 1, notes: 'INTERNAL-HISTORY' };
+    const sharedSong = { ...song, is_public: !playlist, created_by_user_id: 'INTERNAL-OWNER', status: 'INTERNAL-STATUS' };
+    const h = routeHarness(playlist ? 'app/api/public/playlist/[id]/route.ts' : 'app/api/public/song/[songId]/route.ts', {
+      tables: { songs: [sharedSong], song_versions: [pending, latest, older], accounts: [],
+        playlists: [{ id: 'playlist-a', account_id: 'workspace-a', is_public: true }],
+        playlist_songs: [{ playlist_id: 'playlist-a', song_id: 'song-a', position: 0 }],
+      },
+    });
+    const response = await h.handler.GET(getRequest(), params(playlist ? { id: 'playlist-a' } : { songId: 'song-a' }));
+    assert.equal(response.status, 200);
+    const body = await response.json(); const serialized = JSON.stringify(body);
+    assert.match(serialized, /current-version/);
+    assert.doesNotMatch(serialized, /pending-version|old-version|INTERNAL-|song-files|uploads\/|workspace-a/);
+    if (playlist) assert.equal(body.tracks.length, 1); else assert.equal(body.version.version_number, 2);
+    assert.deepEqual(h.writes, []);
+  });
+}
