@@ -159,3 +159,8 @@ PR #68 is merged/deployed as ff15719f on the primary Production project. Both me
 ## Direct private-comment write boundary, 2 November 2026
 
 PR #71/0565f64b removes client INSERT privileges on comments/comment_threads in staging and Production, preserving canonical service-role writes, RLS and other table privileges. Baseline fixtures proved the direct same-workspace member path outside API limits; 15 installed checks per environment now prove denial, server creation/replies and owner/member reads. Baseline/candidate/rollback modes pass in both environments. No live notifications or audio objects created, all fixtures rolled back. This closes that direct table INSERT gap; it doesn't complete all route/method/role coverage. Broader UPDATE/DELETE policies aren't newly certified by this INSERT-only repair.
+
+
+## B27 bootstrap candidate, 2 November 2026
+
+Common server bootstrap helper's empty-membership creation branch uses a staged service-role-only atomic RPC in PR #73. Existing identity/active membership read path is preserved. Local real-handler concurrency and failure cases plus 14 installed staging SQL checks pass; client RPC execution is denied. Fresh browser signup/confirmation acceptance is pending; Production is unchanged. This isn't a pass for every route that calls canonical identity. Repeated profile-write performance remains B17.

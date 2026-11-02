@@ -520,3 +520,16 @@ S4 feedback atomicity repair, 2 November: old code checks a stored-row count sep
 
 
 S4 feedback release, 2 November: Production complete via PR #72/f9581734. Primary deployment dpl_EhdHroGorkNpavmv2Wo83cR8EPtD Ready/live. Same ten-request hosted staging test changed from ten saved to exactly five saved and five 429 with Retry-After; database confirmed five and cleanup confirmed zero fixtures. Existing history remains the quota ledger. Eight installed SQL cases pass in both environments; constraint/read failures don't save submissions. 326 Node tests, TypeScript/lint, four PR checks, browser 30 passed/10 skipped, eight live no-write probes pass. No real feedback retained or notifications sent. Bootstrap concurrency is the next existing S4 review; no new product decision or user action for this release.
+
+
+## B27. First-time workspace creation race and orphan risk
+
+- Status: Code complete in PR #73/4be9c48c; staging database installed/verified. Preview checks and fresh browser signup acceptance pending. Production app/configuration and stored data unchanged.
+- Observed behaviour: Real bootstrap function under controlled I/O produces six workspaces for six simultaneous empty-membership reads; a failed owner-membership insert leaves a workspace. Two added regression cases fail the original source. This is reproduced application logic, not a user report or audit of existing duplicate data.
+- Intended outcome: Concurrent first setup reuses one workspace/owner membership; failure leaves neither half. Preserve existing workspace selection and current member-first/owner-second default, referral attribution, profile/avatar handling and later legitimate multiple-workspace ownership.
+- Acceptance: Six stale callers return the same workspace, with one creator/referral path. Membership failure creates no orphan and retry succeeds. Existing member/owner and valid active-workspace selection remain unchanged. Client roles can't execute provisioning; canonical server user is used. Verify RPC and source, rollback, fresh staged signup/confirmation/first dashboard and returning-user access. Do not clean up any existing user workspaces automatically.
+- Dependencies: Service-role-only invoker RPC installed before candidate app; staging identity/function/role probes; fresh browser signup acceptance before this candidate's Production release. Existing auth methods and billing don't change.
+- Decisions needed: No new product rule. Browser acceptance is still needed; new account setup crosses the confirmation/first-workspace journey. Existing profiles' repeated upsert cost stays with B17 until measured.
+- Evidence: 340 Node tests, TypeScript/focused lint; 14 SQL cases in staging candidate/installed and Production rollback-only candidate, plus 15 staging rollback checks. Uncommitted test identities have no passwords/sessions, use no Auth API/email path, and all roll back; zero fixture identities/workspaces remain. Staging Advisor has zero errors/warnings. Live multi-session first signup hasn't been replayed; local concurrency uses fake atomic database I/O, with actual database transaction/lock/permission behaviour tested separately.
+
+This promotes the already-recorded S4 bootstrap hypothesis into a confirmed defect record and repair, rather than duplicating a separate feature or silently adding a new launch policy.
