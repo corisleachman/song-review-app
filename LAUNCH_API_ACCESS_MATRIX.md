@@ -31,7 +31,7 @@ For each method, record the final route class, identity check, resource/workspac
 | `/api/dashboard` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Code sampled; staging negative tests pending |
 | `/api/dashboard/summary` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Local handler tests pass; hosted negatives pending |
 | `/api/email/notify-thread` | Signed internal request | POST | `verifyInternalRequest` | Local handler tests pass; hosted negatives pending |
-| `/api/feedback` | Public submission / optional identity | POST | `getCurrentAuthenticatedUser` | Not yet exercised |
+| `/api/feedback` | Public submission / optional identity | POST | Canonical optional user; trusted visitor IP; DB atomic five/hour; RLS denies direct clients | PR #72: staging HTTP ten simultaneous -> five saved/five 429; SQL quota/expiry/failure/direct-role cases pass both DBs. Production no-write validation/honeypot pass. Fixtures removed; no provider emails |
 | `/api/invites/[token]/accept` | Session + resource/workspace scope | POST | `getCurrentAuthenticatedUser` | Not yet exercised |
 | `/api/invites/[token]` | Public token lookup | GET | Inspect route / delegated helper | Not yet exercised |
 | `/api/plan-events` | Public submission / optional identity | POST | Inspect route / delegated helper | Not yet exercised |

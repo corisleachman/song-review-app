@@ -9670,3 +9670,10 @@ Goal: preserve the existing five/hour feedback policy under simultaneous request
 Changed: app/api/feedback/route.ts; tests/api-access-boundaries.test.mjs; supabase/migrations/20261102162535_atomic_feedback_rate_limit.sql; matching rollback; supabase/tests/feedback_rate_limit_probe.sql; scripts/compose-feedback-rate-limit-probe.mjs; LAUNCH_CHECKLIST.md; PRODUCT_BACKLOG.md; LAUNCH_SECURITY_REVIEW.md; UPDATE_LOG.md.
 
 Verified 326 Node tests, TypeScript, focused lint and eight SQL cases in staging baseline/candidate/rollback/installed and Production candidate. Staging migration installed; new hosted race/Production pending. No real feedback retained or email/provider calls. Rollback restores old app before optionally removing trigger, otherwise quota would disappear. Existing S4 extended; no duplicate backlog.
+
+
+## 2026-11-02: Atomic feedback limit Production release
+
+PR #72 merged as f9581734; primary Production dpl_EhdHroGorkNpavmv2Wo83cR8EPtD Ready/live. Trigger installed/verified before app in both environments. Old-route hosted staging race saved ten of ten; fixed route saves five and returns five 429 with Retry-After. Database confirmed counts; all synthetic feedback removed, zero fixtures both environments. Existing history remains quota ledger; failed reads/constraints save nothing. Eight installed SQL cases per environment, 326 Node tests, TypeScript/lint, all four PR checks, browser 30 passed/10 skipped and eight live no-write probes pass. Both Advisors zero errors/warnings; bounded release logs empty. No real feedback retained, email/provider/env/billing/Storage change.
+
+Updated LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, LAUNCH_API_ACCESS_MATRIX.md and UPDATE_LOG.md with release evidence, ledger mapping and rollback order. Restore old route before optionally dropping trigger; normally keep it. Next S4 review: concurrent new-account setup. No action required from the user.
