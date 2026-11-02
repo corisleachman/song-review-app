@@ -34,7 +34,7 @@ Done means the named scope has recorded evidence, not that every future improvem
 
 Performance is the user's main MVP concern. B17-B19 are queued as the leading L6 workstream; capture does not interrupt the current L5 task. B06 six-month Free-to-Pro beta grants have confirmed product rules; implementation and expiry/billing boundary tests remain open.
 
-Next action: finish PR #73 Preview checks and fresh staging signup acceptance, then release B27 and continue remaining L5 route/monitoring checks. Keep repeated bootstrap query/write cost in B17 performance measurement. B23/B24/B25 are released; no repeat phone/upload test is requested. B17-B19 remain the leading L6 performance workstream after security closeout.
+Next action: complete fresh staging Google signup acceptance for PR #73, then release B27 and continue remaining L5 route/monitoring checks. Keep repeated bootstrap query/write cost in B17 performance measurement. B23/B24/B25 are released; no repeat phone/upload test is requested. B17-B19 remain the leading L6 performance workstream after security closeout.
 
 ## L6 acceptance checklist
 
@@ -86,7 +86,7 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B25 | [Mobile first Play needs a second tap](PRODUCT_BACKLOG.md#b25-mobile-first-play-needs-a-second-tap) | Production deployed and live desktop playback verified; physical Chrome/iPhone fix accepted on staging with identical player code | L5/B23 staging acceptance, P1 playback |
 
 | B26 | [Malformed comment requests and invalid timestamps](PRODUCT_BACKLOG.md#b26-comment-input-validation-and-timestamp-bounds) | Production complete via PR #69/1ff2727a: 281 tests and nine Preview/Production no-write probes pass; existing comment/throttle behaviour covered | L5/S5, P2 validation |
-| B27 | [First-time workspace race/orphan repair](PRODUCT_BACKLOG.md#b27-first-time-workspace-creation-race-and-orphan-risk) | Code complete in PR #73; staging database installed; browser signup acceptance pending; Production unchanged | Existing L5/S4 setup review; no new launch policy |
+| B27 | [First-time workspace race/orphan repair](PRODUCT_BACKLOG.md#b27-first-time-workspace-creation-race-and-orphan-risk) | PR #73 Ready Preview/all checks green; staging database and existing-user smoke pass; fresh Google signup acceptance pending; Production unchanged | Existing L5/S4 setup review; no new launch policy |
 
 Exploratory ideas in ROADMAP.md (typing indicators, pinned comments, comparison view, waveform regions, exports, Slack, native mobile app, multitrack and video) remain unscheduled ideas. They aren't approved launch work. Delete/edit/auth/invite ideas in that old file must be checked against existing features before creating tasks.
 
@@ -214,3 +214,10 @@ Original bootstrap runtime tests with controlled I/O reproduce six workspaces fr
 340 Node tests, TypeScript/focused lint pass. Fourteen database checks pass in staging candidate/installed and Production rollback-only candidate mode; staging rollback adds a fifteenth pass. They verify one workspace/owner, stale caller reuse, membership preference, held transaction lock, failed owner rollback/retry and client denial. Fixtures used uncommitted passwordless identities with no Auth API/email calls; zero fixture users/profiles/workspaces remain. Staging Advisor zero errors/warnings. Function is installed only on staging, source body verified; Production RPC is absent and app unchanged.
 
 Preview dpl_EA6C9QicgB4ibe4sz15t9DFGrR3y and CI are building. Fresh browser signup/confirmation and first workspace acceptance remain before merging/releasing this candidate. This entry is code complete, not Production complete; L5/S4 remain In progress. Current candidate: https://song-review-app-v2-mwmzuszfv-corisleachmans-projects.vercel.app/signup/free . Rollback app before optional RPC removal; existing workspaces are never deleted/deduplicated by this repair.
+
+
+## B27 Ready Preview and user-test handoff, 2 November 2026
+
+Primary Preview dpl_EA6C9QicgB4ibe4sz15t9DFGrR3y is Ready at exact 4be9c48c. All four PR checks pass; browser CI 41499853678: 30 passed/10 skipped. Signed-out bootstrap stays 401; bounded Preview error/fatal scans are empty. Existing Google account returned to its selected member workspace and five-song library in Chrome. Preview client bundle confirms staging ref ivifkrtupqizyqqsxdty. The signup page currently offers Google only; no email feature flag or provider setting was changed.
+
+Remaining acceptance: in a private browser window, open [staging signup](https://song-review-app-v2-mwmzuszfv-corisleachmans-projects.vercel.app/signup/free) and use a Google account that hasn't used this staging app. Complete signup and confirm one empty Free workspace. Refresh/open the dashboard in another tab; expect the same workspace without a duplicate. Return the test account email and result so Agent can verify one workspace/owner membership before Production migration/merge/deployment. If any step fails, stop and return the Preview URL, error text and screenshot. This is a fresh-account browser acceptance gap, not another deployment permission request. Production app/RPC remain unchanged and PR #73 is unmerged. B27/S4/L5 aren't Done.
