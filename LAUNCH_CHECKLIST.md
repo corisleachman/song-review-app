@@ -34,7 +34,7 @@ Done means the named scope has recorded evidence, not that every future improvem
 
 Performance is the user's main MVP concern. B17-B19 are queued as the leading L6 workstream; capture does not interrupt the current L5 task. B06 six-month Free-to-Pro beta grants have confirmed product rules; implementation and expiry/billing boundary tests remain open.
 
-Next action: continue remaining L5 route/monitoring checks. The next access review is public version/history visibility through the Data API. Keep repeated bootstrap query/write cost in B17 performance measurement. B23/B24/B25 are released; no repeat phone/upload test is requested. B17-B19 remain the leading L6 performance workstream after security closeout.
+Next action: continue remaining L5 route/monitoring checks. B28 addresses confirmed public version/history visibility through the Data API; staging and release checks are next. Keep repeated bootstrap query/write cost in B17 performance measurement. B23/B24/B25 are released; no repeat phone/upload test is requested. B17-B19 remain the leading L6 performance workstream after security closeout.
 
 ## L6 acceptance checklist
 
@@ -87,6 +87,7 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 
 | B26 | [Malformed comment requests and invalid timestamps](PRODUCT_BACKLOG.md#b26-comment-input-validation-and-timestamp-bounds) | Production complete via PR #69/1ff2727a: 281 tests and nine Preview/Production no-write probes pass; existing comment/throttle behaviour covered | L5/S5, P2 validation |
 | B27 | [First-time workspace race/orphan repair](PRODUCT_BACKLOG.md#b27-first-time-workspace-creation-race-and-orphan-risk) | Production complete via PR #73/ce346868; both user tests passed, one Free workspace/owner link verified, live checks pass | Existing L5/S4 setup review; no new launch policy |
+| B28 | [Anonymous raw song/version projection bypass](PRODUCT_BACKLOG.md#b28-anonymous-raw-songversion-data-bypasses-public-projections) | Staging installed/verified: 14 SQL checks, raw REST denied, public API/pages/media unchanged; Production pending | Existing L5/S2/S3 access review |
 
 Exploratory ideas in ROADMAP.md (typing indicators, pinned comments, comparison view, waveform regions, exports, Slack, native mobile app, multitrack and video) remain unscheduled ideas. They aren't approved launch work. Delete/edit/auth/invite ideas in that old file must be checked against existing features before creating tasks.
 

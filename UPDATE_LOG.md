@@ -9703,3 +9703,14 @@ User reports both staging signup/reload tests passed; new staging account has on
 User reports both staged signup/reload tests passed. Verified Free plan, one workspace, one membership and correct owner link. Production RPC installed/source-verified before app; 14 installed SQL checks pass, no fixture users/workspaces, Advisor zero errors/warnings. PR #73 merged as ce346868, primary Production dpl_F19sdasWwV17Qt6den32dWjPh1s5 Ready/live. 340 Node tests, TypeScript/lint, four PR checks and browser 30 passed/10 skipped. Live no-write bootstrap/dashboard 401, login 200 and same-origin bootstrap redirect checks pass; bounded error/fatal scans empty. Actual new signup accepted on staging, not replayed on Production.
 
 Updated LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, LAUNCH_API_ACCESS_MATRIX.md and UPDATE_LOG.md with release, acceptance, migration equivalents and rollback. Restore compatible 6269735c app before optional RPC removal. Existing user data isn't cleaned up/deduplicated. B27 complete; wider L5/S4 remain open. No action required from the user.
+
+
+## 2026-11-02: B28 public Data API permission boundary
+
+Goal: prevent raw anonymous song/version reads from bypassing the existing latest-finalized public projection. Confirmed with synthetic rollback-only fixtures in both environments.
+
+Changed files: permission migration and matching rollback `20261102220823_restrict_anonymous_raw_song_reads.sql`, `supabase/tests/public_data_boundary_probe.sql`, `scripts/compose-public-data-boundary-probe.mjs`, `tests/api-access-boundaries.test.mjs` and current launch/security/backlog records. No application UI or public sharing semantics changed.
+
+Verification: 342 Node tests, focused lint, both-environment baseline/candidate/rollback SQL checks. Installation/live verification pending; not Production complete.
+
+B28 staging checkpoint, 2 November: migration installed as ledger 20261102222009 (source 20261102220823). All 14 installed SQL cases pass, zero fixtures remain. Actual anonymous REST reads now return 401/42501 for both tables; existing comments denial is unchanged. Public API payloads match baseline, public pages/embeds return 200, audio redirect 307/Range 206 and artwork 200. Advisor has zero errors/warnings. Production remains unchanged pending CI/release.

@@ -243,3 +243,12 @@ Production migration installed before app. All 14 installed SQL cases pass, body
 PR #73 merged as ce34686837991accc175c5808d0a39bc1aeb8af9; primary Production dpl_F19sdasWwV17Qt6den32dWjPh1s5 Ready at that merge, assigned to www.song-room.live. 340 Node tests, TypeScript/focused lint and all four PR checks pass; browser CI 41499853678: 30 passed/10 skipped. Live no-write checks: /api/auth/bootstrap and /api/dashboard/summary signed-out 401, /login 200, bootstrap?redirect=1 sends signed-out users to same-origin login with google=error. Bounded 15-minute error/fatal scans return zero rows.
 
 B27 is Production complete in scope, not all S4/L5. Rollback prior compatible deployment dpl_9PWeKjhM3nw9g1kg5z77wwBiRWM5/6269735c first; normally leave additive RPC unused, only remove via companion down migration after app rollback. Existing data isn't deleted or deduplicated. Media/50 MB and other comment/feedback controls remain. No new billing, Auth method, env/provider/credential configuration. No external action remains for this repair.
+
+
+## B28 public Data API projection boundary, 2 November 2026
+
+Both environments' anonymous table grants and RLS allow raw reads of all versions of a publicly shared song. Synthetic rolled-back fixtures confirm old/pending versions, internal notes/filenames and ownership metadata are visible. Private songs remain hidden; no real private content was inspected. Public comments already deny raw anonymous reads.
+
+The canonical public song/playlist routes already use service-role projections with latest-finalized and field filtering. Candidate revokes only anonymous/PUBLIC SELECT on songs and song_versions, preserving authenticated/service access and existing policies. Local tests: 342 pass; both environments: baseline 16, candidate 14, rollback 16 pass. Hosted baseline verifies song/playlist/comments JSON, public pages/embeds, audio redirect with one-byte Range and artwork. Staging installation pending. Rollback file restores just the two previous anonymous grants, reopening the confirmed exposure; app rollback is insufficient. L5 remains open.
+
+B28 staging checkpoint, 2 November: migration installed as ledger 20261102222009 (source 20261102220823). All 14 installed SQL cases pass, zero fixtures remain. Actual anonymous REST reads now return 401/42501 for both tables; existing comments denial is unchanged. Public API payloads match baseline, public pages/embeds return 200, audio redirect 307/Range 206 and artwork 200. Advisor has zero errors/warnings. Production remains unchanged pending CI/release.
