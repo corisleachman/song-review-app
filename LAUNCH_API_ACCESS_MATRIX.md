@@ -150,3 +150,7 @@ PR #68 source 6823574d is Ready on confirmed staging, with four green checks. Pu
 ## Private media staged checkpoint, 1 November 2026
 
 PR #68 e19c8582 has compatible audio and artwork delivery. Staging buckets are private; audio bucket/app candidate now 50 MB, global/spend cap unchanged. Production media remains unchanged. Two added media route files bring the historical 68-file inventory to 70; this does not complete every route/method/role check. Upload allocation/finalization RPC EXECUTE is service-role-only in both environments. 244 Node tests, TypeScript, four PR checks and 28 browser tests pass (10 skipped). Remaining phone/upload/performance/revocation gates and rollback: [Storage review](STORAGE_ACCESS_REVIEW.md#current-staging-checkpoint-1-november-2026). L5 remains open.
+
+## Production media checkpoint, 2 November 2026
+
+PR #68 is merged/deployed as ff15719f on the primary Production project. Both media buckets are private; audio bucket/global ceiling 50 MB; spend cap unchanged. Scoped live public/owner-private delivery, artwork, playback/seek, signed Range and legacy URL denial pass. Staging adds owner/separate-member/wrong-workspace, live share/entry revocation, timed expiry and boundary uploads. 246 Node tests and exact-head browser CI 30 passed/10 skipped. Broader route/role, abuse and monitoring review remains open; do not mark L5 complete. See [release evidence and limits](STORAGE_ACCESS_REVIEW.md#production-release-2-november-2026).

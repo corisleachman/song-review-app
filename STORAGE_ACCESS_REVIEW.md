@@ -2,7 +2,7 @@
 
 1 November 2026. [Current checklist](LAUNCH_CHECKLIST.md). B23, L5/S2-S3.
 
-Current status: both staging buckets are private, audio ceiling 50 MB. Production media remains unchanged. Earlier public-bucket and preparation-only statements below are historical. Read the latest checkpoint at the end for current evidence and gates.
+Current status: both staging and Production media buckets are private; audio ceiling 50 MB. PR #68 is merged and deployed; see the Production release checkpoint below. Earlier public-bucket and preparation-only statements below are historical. Read the latest checkpoint at the end for current evidence and gates.
 
 ## Historical discovery evidence
 
@@ -176,3 +176,21 @@ Head 62ba8881 merges the current launch records; application code is identical t
 ## Approved fixture cleanup completed, 2 November 2026
 
 After the user closed the blocking Chrome extension panel, the approved synthetic song was deleted through the staging app. Readback confirms its version and audio object are gone. The empty approved test playlist was removed using a guarded SQL delete because the current UI has no playlist-delete control. Zero matching song/version/object/playlist/entry rows remain. Storage accounting released exactly 52428800 bytes and matches remaining finalized sizes (64762207 bytes). Other songs and the separate upload flow were preserved. All four checks pass at PR head 62ba8881. Earlier cleanup-blocked statements are historical. Production rollout is next; do not mark Production complete until deployment/configuration/live checks pass.
+
+## Production release, 2 November 2026
+
+Release order was compatible application first, then Storage configuration. PR #68 merged as ff15719f868442ae2f6690119d57981f8b93531a; Vercel primary project prj_GoSvIjynlundQRAjTe4NIrwY0Gz0 (song-review-app-v2), team team_z9MLYFXhcAfyoZfq63V6NDri, Production deployment dpl_5DUjouXJFu6ueiEuXwBgSkMHx6xW is Ready and aliased to https://www.song-room.live/ . Staging/code acceptance is 246 Node tests, TypeScript/focused lint, all four PR checks and exact-head CI 41423050784 (30 passed, 10 skipped). The release merge adds documentation to tested application source; no new app logic.
+
+Before access cutover, live authorised audio redirected to hxtsuhmqrufcdplidtov Storage, signed Range returned 206 and artwork/public song/playlist worked. Existing Production Google identity was present (seven Auth users), avoiding signup. Dashboard access used its existing signed-in owner session. Email login configuration stays enabled; password management stays disabled.
+
+Through the authenticated Production dashboard, song-images public=false was saved first and verified; delivered artwork stayed 200 while the previously primed direct public artwork URL changed from 200 to 400 for HEAD/GET. Then song-files public=false and file_size_limit=52428800 were saved and read back. Its MIME list and the artwork size/MIME settings were preserved. Global 50 MB and enabled spend cap verified in Storage settings; no billing or broader permission change. No Production file was uploaded, moved or deleted, and no schema/migration/environment-variable/dependency change occurred.
+
+Post-cutover live verification:
+- Homepage/login/config/public song/public playlist 200. Signed-out private audio 401; invalid artwork 404.
+- Intended public audio 307, Production upstream verified, signed Range 206; corresponding old public audio Range 400. App artwork 200 (146544 bytes); public playlist artwork samples all three 200 and intended track 307.
+- Owner dashboard populated with 25 songs; all 23 delivered artwork images loaded. Existing song first Play advances to 0:25, Home seeks to zero and pause works. A separately confirmed private song also advances to 0:26 without Retry. Playback left paused.
+- Readback confirms both buckets private and audio limit 52428800; seven Auth users remain. Bounded 20-minute error-level scan for the release deployment has zero rows.
+
+Limits: physical iPhone acceptance, actual exact/oversize uploads and timed expiry/revocation tests are staging evidence; no live payment, fresh Production upload, Production share mutation or exhaustive Production role matrix was performed. The origin/agent-region direct URL probes are not a distributed CDN invalidation proof. Supabase warns that earlier cached public assets may persist; previously downloaded/buffered bytes cannot be retracted. Newly issued access follows the bounded-capability contract; no immediate universal revocation is promised. Current owners/users with an old pre-release page may need to reload to receive compatible delivery URLs. These limits do not close broader L5 S2-S7 work.
+
+Rollback: the previous live code deployment at preflight was dpl_FgrUmz3bewUmGeCt1yLTGyY1rdEU (64ea7b7a, documentation-only relative to the old application). Rolling back to that app while media buckets stay private would break old public-URL clients. Prefer a compatible fix-forward release. No down migration exists or is needed. Reopening public buckets restores the confirmed privacy defect and requires explicit security review; never do it silently as a playback workaround. No mass reference rewrite or file deletion occurred.
