@@ -472,3 +472,11 @@ PR #68 e19c8582 adds authorised short-lived audio delivery and project-bound art
 B25 verification: candidate Preview https://song-review-app-v2-d1qnlsvnw-corisleachmans-projects.vercel.app is Ready at e5dd6435; 245 Node tests and TypeScript pass, browser CI 41412981282 has 30 passed/10 skipped. New gesture-only regression fails against original source and passes candidate. No Production change.
 
 B25 acceptance, 2 November: user confirmed the corrected Preview works after the older Preview URL was identified. First-play Chrome-on-iPhone gate passed by user report. Do not mark Production complete before rollout and live checks. No additional device details or per-step results were supplied.
+
+## B23/B24 live verification checkpoint, 2 November 2026
+
+B24 exact 50 MB upload is now independently verified: synthetic WAV 52428800 bytes, successful finalization, matching Storage/row size, first playback and consistent workspace storage accounting. 52428802 bytes rejected with no matching song/version/object. Staging-only; Production remains pending.
+
+B23 live owner and separate member playback pass on the synthetic private song; wrong active workspace displays Not found. Public-song disable and playlist-entry removal refuse new media authorisation. A real 600-second signed audio URL changes from Range 206 to 400 at expiry+3 seconds before deletion. No global CDN invalidation claim. Candidate 89bdf552 preserves all access checks while reducing repeated round trips: paired handler median 1067.8 to 748.0 ms, HTTP 1.273 to 1.078 s (five post-warmup samples each). This is not the dashboard baseline. 246 Node tests, TypeScript, both hosted builds and 30 browser cases pass, 10 skipped.
+
+Synthetic fixture cleanup was explicitly approved but is waiting on the open Chrome extension panel to be dismissed. No Production media/config change. Broader all-route/all-role L5 checks remain distinct from this scoped media verification.

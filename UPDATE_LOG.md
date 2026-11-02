@@ -9601,3 +9601,9 @@ Changed launch checklist, product backlog and Storage review to record user-repo
 ## 2 November 2026: B25 first-play staging acceptance
 
 Updated LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md and STORAGE_ACCESS_REVIEW.md after the user confirmed the corrected e5dd6435 Preview works in Chrome on iPhone. The preceding failed retest used the older Preview. Specific first-play acceptance is recorded; Production rollout and remaining B23 agent gates are still open. Documentation only; no app, bucket, account or billing changes.
+
+## 2 November 2026: live media acceptance and measured delivery optimisation
+
+Changed LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, STORAGE_ACCESS_REVIEW.md and UPDATE_LOG.md. Recorded exact/oversize upload, finalization/storage accounting, owner/separate-member playback, cross-workspace denial, live public-song/playlist revocation and timed signature expiry. No new account/membership/billing change. Approved synthetic cleanup remains pending on Chrome extension panel closure. Production unchanged.
+
+App changes are in commits 5464b27f and 89bdf552: app/api/media/audio/[versionId]/route.ts adds existing Server-Timing and joins/parallelises reads; tests/api-access-boundaries.test.mjs models joins and covers foreign-workspace playlist denial/query count. 246 Node tests, TypeScript/focused lint and hosted builds pass; browser CI 41422213111 passes 30/10 skipped. Paired five-sample handler median improves 29.9%, HTTP 15.3%; no dashboard performance claim. Canonical records keep L5 open.
