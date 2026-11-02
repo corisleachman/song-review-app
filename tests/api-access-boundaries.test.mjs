@@ -11,7 +11,7 @@ const require = createRequire(import.meta.url);
 
 // Execute the real handler, replacing only framework/I/O boundaries. This
 // checks runtime decisions; it is not a Supabase, cookie or hosted HTTP test.
-function routeHarness(route, { identity = null, user = null, tables = {}, storage = null, mutationResult = null, limitResponse = null, overrides = {} } = {}) {
+function routeHarness(route, { identity = null, user = null, tables = {}, storage = null, mutationResult = null, mutationError = null, limitResponse = null, overrides = {} } = {}) {
   const reads = [];
   const writes = [];
   let notifications = 0;
@@ -51,7 +51,7 @@ function routeHarness(route, { identity = null, user = null, tables = {}, storag
             const parent = (tables.playlists ?? []).find(playlist => playlist.id === row.playlist_id);
             return parent ? [{ ...row, playlist: parent }] : [];
           });
-          return Promise.resolve({ data: mutation ? (typeof mutationResult === 'function' ? mutationResult() : mutationResult) : single ? rows[0] ?? null : rows, error: null }).then(resolve, reject);
+          return Promise.resolve({ data: mutation ? (typeof mutationResult === 'function' ? mutationResult() : mutationResult) : single ? rows[0] ?? null : rows, error: mutation ? mutationError : null }).then(resolve, reject);
         },
       };
       return query;
@@ -724,5 +724,61 @@ for (const role of [null, 'member']) {
     const h = routeHarness('app/api/workspace/invites/route.ts', { identity: role ? session(role) : null });
     const response = await h.handler.POST(jsonRequest({ email: 'test@example.test' }));
     assert.equal(response.status, role ? 403 : 401); assert.deepEqual(h.limitCalls, []); assert.deepEqual(h.writes, []);
+  });
+}
+
+const feedbackBody = { type: 'bug', message: 'A reproducible feedback note', email: 'tester@example.test' };
+function feedbackRequest(body = feedbackBody, headers = {}) {
+  return new Request('https://staging.invalid/api/feedback', { method: 'POST', headers: { 'content-type': 'application/json', 'x-vercel-forwarded-for': '198.51.100.77', ...headers }, body: JSON.stringify(body) });
+}
+for (const payload of [null, [], 7, 'note', { ...feedbackBody, type: {} }, { ...feedbackBody, message: 'short' }, { ...feedbackBody, message: 'x'.repeat(2001) }, { ...feedbackBody, email: 'invalid' }]) {
+  test(`feedback rejects invalid input without saving: ${JSON.stringify(payload).slice(0, 80)}`, async () => {
+    const h = routeHarness('app/api/feedback/route.ts');
+    assert.equal((await h.handler.POST(feedbackRequest(payload))).status, 400); assert.deepEqual(h.writes, []);
+  });
+}
+test('feedback honeypot succeeds without authentication, database or visitor checks', async () => {
+  const h = routeHarness('app/api/feedback/route.ts');
+  assert.equal((await h.handler.POST(feedbackRequest({ website: 'bot' }))).status, 200); assert.deepEqual(h.reads, []);
+});
+test('anonymous feedback with missing or spoofable-only visitor address fails closed', async () => {
+  const h = routeHarness('app/api/feedback/route.ts');
+  for (const headers of [{}, { 'x-forwarded-for': '198.51.100.1' }, { 'x-real-ip': '198.51.100.1' }, { 'x-vercel-forwarded-for': 'bad' }]) {
+    const req = new Request('https://staging.invalid/api/feedback', { method: 'POST', headers, body: JSON.stringify(feedbackBody) });
+    const response = await h.handler.POST(req);
+    assert.equal(response.status, 503); assert.equal(response.headers.get('Retry-After'), '60');
+  }
+  assert.deepEqual(h.writes, []);
+});
+for (const user of [null, { id: 'canonical-user', email: 'session@example.test' }]) {
+  test(`feedback uses canonical identity and one insert with no separate count: ${user?.id ?? 'anonymous'}`, async () => {
+    const h = routeHarness('app/api/feedback/route.ts', { user });
+    const response = await h.handler.POST(feedbackRequest({ ...feedbackBody, user_id: 'forged', ip_hash: 'forged', page_url: 'p'.repeat(2100), user_agent: 'a'.repeat(1100), viewport: 'v'.repeat(30) }, { 'x-forwarded-for': '203.0.113.1' }));
+    assert.equal(response.status, 200); assert.deepEqual(await response.json(), { ok: true });
+    assert.deepEqual(h.reads, ['beta_feedback']); assert.equal(h.writes.length, 1);
+    const saved = h.writes[0].value;
+    assert.equal(saved.user_id, user?.id ?? null); assert.equal(saved.email, user?.email ?? feedbackBody.email);
+    assert.match(saved.ip_hash, /^[a-f0-9]{64}$/); assert.equal(saved.page_url.length, 2000); assert.equal(saved.user_agent.length, 1000); assert.equal(saved.viewport.length, 20);
+    assert.doesNotMatch(JSON.stringify(saved), /198\.51\.100|203\.0\.113|forged/);
+  });
+}
+test('signed-in feedback can use the user quota without a visitor address', async () => {
+  const h = routeHarness('app/api/feedback/route.ts', { user: { id: 'canonical-user', email: 'session@example.test' } });
+  const req = new Request('https://staging.invalid/api/feedback', { method: 'POST', body: JSON.stringify(feedbackBody) });
+  assert.equal((await h.handler.POST(req)).status, 200); assert.equal(h.writes[0].value.ip_hash, null);
+});
+for (const retry of [1, 42, 3600]) {
+  test(`feedback database throttle returns safe 429 with Retry-After ${retry}`, async () => {
+    const h = routeHarness('app/api/feedback/route.ts', { mutationError: { code: 'P0001', message: 'feedback_rate_limited', details: String(retry) } });
+    const response = await h.handler.POST(feedbackRequest());
+    assert.equal(response.status, 429); assert.equal(response.headers.get('Retry-After'), String(retry)); assert.equal(response.headers.get('Cache-Control'), 'no-store');
+    assert.equal((await response.json()).ok, false);
+  });
+}
+for (const error of [{ code: '42501', message: 'PRIVATE PROVIDER DETAILS' }, { code: 'P0001', message: 'feedback_rate_limited', details: 'PRIVATE PROVIDER DETAILS' }, { code: 'P0001', message: 'feedback_rate_limited', details: '3601' }]) {
+  test(`feedback database failure cannot report success or leak details: ${JSON.stringify(error)}`, async () => {
+    const h = routeHarness('app/api/feedback/route.ts', { mutationError: error });
+    const response = await h.handler.POST(feedbackRequest());
+    assert.equal(response.status, 500); assert.doesNotMatch(await response.text(), /PRIVATE PROVIDER DETAILS|42501|P0001/);
   });
 }

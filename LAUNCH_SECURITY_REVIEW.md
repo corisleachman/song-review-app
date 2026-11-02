@@ -190,3 +190,18 @@ Rollback in the affected database: supabase/rollback/20261102145804_restrict_pri
 
 
 Merged-source Production checkpoint: dpl_3ouZssw5wcb3ruUE6ZuQ49TNQ9uQ is Ready at exact merge 0565f64b on the primary project and assigned to www.song-room.live. Post-build create/reply signed-out POSTs return 401. Bounded 15-minute error/fatal scans each have zero rows. The compatible app and repaired database are live; no external action remains for this scoped repair. Remaining S4 work starts with feedback's non-atomic count/failure handling.
+
+
+## S4 feedback atomic candidate, 2 November 2026
+
+Current feedback route counts then inserts and fails open on count query errors. Controlled hosted HTTP race against existing staging Preview: ten submissions all returned 200 and were saved; synthetic rows were removed. An earlier MCP SQL parallel-submission attempt saved only five, so it wasn't used as race reproduction evidence; HTTP requests supplied the decisive baseline. This is controlled test evidence, not a claim of actual spam.
+
+Candidate: BEFORE INSERT trigger with SECURITY INVOKER, volatile function and empty search_path. Acquire ordered transaction advisory locks for user and available IP hash, then count latest five stored rows within an hour and insert in the same transaction. Signed-in submissions also lock the IP because anonymous checks include all feedback from that address, preserving existing semantics. Existing hashes/FEEDBACK_IP_SALT format and rows remain the ledger, so no quota reset or new secret/table. Fifth-newest timestamp gives Retry-After; created_at is stamped after lock acquisition. Feedback updates/triage remain unchanged. Table RLS/no-client-policies unchanged; trigger function EXECUTE is revoked from PUBLIC/anon/authenticated, service_role only. No SECURITY DEFINER or new RPC surface.
+
+API removes separate count, uses the existing trusted Vercel visitor parser and canonical signed-in identity, rejects anonymous missing-IP requests with 503, maps fixed throttle signal to 429/Retry-After, and hides raw database error details. No dashboard, playback, auth flow, email, billing or provider change. Invalid body/type/length and honeypot behaviour remain covered.
+
+Eight SQL cases pass in staging baseline/candidate/rollback, Production candidate and installed staging modes. They check anonymous/user quotas, IP changes/shared history, expiry, constraint failures, read-permission failure and direct client denial. Fixture work rolls back. 326 Node tests, TypeScript and focused lint pass. Staging Advisor zero errors/warnings, same nine INFO notices. Hosted fixed-route concurrency still pending. Install migration before updated app, then verify hosted staging before Production. During migration-first overlap, old app still enforces the database ceiling but may show a generic error on a concurrent rejected insert until the new mapping is deployed.
+
+Rollback: restore prior route first if needed, normally retain trigger; only remove trigger/function using companion rollback if it caused the regression. Removing it while the new count-free route remains active removes quota enforcement. No feedback rows are deleted by migration/rollback. Stop on failed SQL/hosted checks, unexpected trigger/permissions or app errors.
+
+Design references: https://www.postgresql.org/docs/17/explicit-locking.html#ADVISORY-LOCKS and https://www.postgresql.org/docs/17/trigger-definition.html. The trigger uses the API's default Read Committed transactions; same-identity requests share transaction locks, unrelated reads aren't throttled.
