@@ -42,9 +42,9 @@ For each method, record the final route class, identity check, resource/workspac
 | `/api/playlists` | Session + resource/workspace scope | GET, POST | `resolveCanonicalIdentity` | Local signed-out GET, POST tests pass; hosted matrix pending |
 | `/api/profile/settings` | Session + resource/workspace scope | GET, POST | `resolveCanonicalIdentity` | Not yet exercised |
 | `/api/profile/visualizer` | Session + resource/workspace scope | GET, POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/public/playlist/[id]` | Public-share projection | GET | Inspect route / delegated helper | Not yet exercised |
+| `/api/public/playlist/[id]` | Public-share projection | GET | Service projection; sharing, same-workspace membership, latest finalized versions | B28: local projection tests; synthetic DB owner/member/outsider cases; both-environment live playlist/embeds/audio/artwork pass. Raw anon table bypass now denied |
 | `/api/public/song/[songId]/comments` | Public-share projection | GET, POST | Sharing/comment flags; honeypot; typed body | B26 input checks pass. PR #70 shared 5/min/IP: hosted staging five synthetic 201, sixth 429; GET 200; fixtures removed. Production no-write input/share checks pass |
-| `/api/public/song/[songId]` | Public-share projection | GET | Inspect route / delegated helper | Not yet exercised |
+| `/api/public/song/[songId]` | Public-share projection | GET | Service projection; sharing flag, latest finalized version and explicit fields | B28: local projection tests, both-environment public JSON unchanged/pages/media pass; raw anon songs/versions now denied. Broader method/role matrix remains open |
 | `/api/referrals/code` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
 | `/api/referrals/summary` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
 | `/api/settings` | Session + resource/workspace scope | GET, POST (forwarded to profile/settings) | Inspect route / delegated helper | Not yet exercised |
@@ -167,3 +167,6 @@ Common server bootstrap helper's empty-membership creation branch uses a staged 
 
 
 B27 release checkpoint, 2 November: PR #73/ce346868 live, both user staging tests passed and Free/one workspace/one owner membership verified. Installed Production RPC checks pass; no-write bootstrap/dashboard/login probes and bounded logs pass. Initial creation gap closed in scope; broader route/method/role coverage remains open.
+
+
+B28 Production database release, 2 November: PR #74/6288e354 merged, 342 Node tests/focused lint/four PR checks and browser 30 passed/10 skipped. Reviewed migration source 20261102220823 installed as staging 20261102222009 and Production 20261102222433. Installed 14-case probes pass in both environments, alongside baseline16/candidate14/rollback16. Anonymous raw REST denied; public song/playlist/comments payloads match baseline; pages/embeds/audio Range/artwork pass; authenticated history preserved; zero retained fixture workspaces. Advisors zero errors/warnings; bounded Production error/fatal scan empty. Primary merged-source deployment dpl_Dh7UyB4o7sokRPmdcK22mfH8B1aB is Ready/live; no app logic/env/provider change. Companion SQL rollback restores only old anon SELECT and reopens exposure. Broader L5 remains open.
