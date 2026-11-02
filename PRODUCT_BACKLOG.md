@@ -444,3 +444,39 @@ Captured from a launch-readiness review (TikTok launch checklists cross-referenc
 - Working cause: browser decoding/container compatibility is likely, but the generic retry message does not prove the issue is exclusive to AIFF. Earlier Preview M4A waveform retries also remain unexplained; keep a supported-format playback check in beta QA.
 - Interim behaviour: block new `.aif` and `.aiff` selections and server allocations with WAV/MP3 export guidance. Keep previously stored files, legacy inspection, and historical versions unchanged. No transcoding or Storage migration in this slice.
 - Acceptance: before re-enabling, verify representative AIFF and AIFC variants across Chrome, Safari/iOS and Firefox, including waveform decoding, seeking, playback, background playback and version switching. Choose a separately reviewed conversion/delivery approach only if necessary.
+
+## B23 current staging checkpoint, 1 November 2026
+
+PR #68 e19c8582 adds authorised short-lived audio delivery and project-bound artwork capabilities. Both staging buckets are now private; previously primed direct URLs return 400, delivered artwork returns 200, authorised audio redirects and signed Range works. Existing canonical image references are preserved. 244 Node tests, TypeScript and four PR checks pass; browser CI 28 passed, 10 skipped. Scope is staging only. Physical phone/background expiry, actual upload/finalize, measured performance and controlled live share revocation remain gates. Production remains public and this item is not Done. Current evidence and exact acceptance actions: [Storage review](STORAGE_ACCESS_REVIEW.md#current-staging-checkpoint-1-november-2026).
+
+## B24. Align new audio uploads to 50 MB
+
+- Status: Configuration mismatch confirmed; candidate implemented and staged, not complete.
+- Reported/observed behaviour: App and audio bucket advertised/allowed 200 MB while both environments' global Storage limit was 50 MB. Saving staging bucket privacy failed with a global-limit error. A real oversized upload was not attempted; its user-facing failure is unverified.
+- Intended outcome: One inclusive 50 MB ceiling for new audio uploads, consistently enforced by app and Storage, without changing existing finalized audio or total workspace quotas.
+- Decision: User explicitly selected 50 MB on 1 November. Keep the spend cap enabled. No decision outstanding on the ceiling.
+- Acceptance: App picker/help/server allocation/finalization agree; below/exact 52428800-byte metadata passes and larger files fail before allocation. Controlled actual staging upload/finalize/play passes; oversized file gives a clear error. Existing finalized legacy files remain playable. No charge/subscription/quota changes. Verify Production separately after rollout.
+- Implementation/evidence: e19c8582 central policy, allocation/finalization errors and upload views updated; boundary and finalized legacy-file preservation tests pass. Staging audio bucket is 52428800 bytes; global 50 MB unchanged. Production bucket/app remain at their old values pending rollout. Historical 200 MB migrations weren't rewritten; upload RPC execution is service-role-only in both environments.
+- Dependencies: B23 compatible delivery and private staging cutover; real-upload acceptance and later Production release. L5/S5 P2, not a newly declared launch blocker.
+
+## B25. Mobile first Play needs a second tap
+
+- Status: User-confirmed defect; repair e5dd6435 accepted on staging after user phone retest; Production rollout pending. Chrome on iPhone was explicitly confirmed by the user on 2 November; don't record this as a Safari-only report.
+- Reported behaviour: After uploading multiple songs on staging, entering each song and pressing Play first shows the browser permission error. Second Play succeeds. User says other staging tests pass; exact individual steps weren't independently re-run.
+- Intended outcome: A single first tap starts authorised audio, including immediately after upload, while waveform rendering can finish separately.
+- Working cause: Existing first Play waits for asynchronous waveform fetch/decode before calling play, losing the original gesture context on a restrictive browser. This matches the error but physical-device root-cause confirmation remains pending.
+- Acceptance: Fresh page/new upload plays on first tap in Chrome on the user's iPhone without the permission warning or Retry. Same media element survives delayed waveform/module readiness. No page-entry autoplay, duplicate player, stale song, broken pause/restart/repeat/seek, background or lock-screen regression. Desktop and native fallback still work.
+- Dependencies: B23 private-media candidate, actual gesture-preserving playback path, regression checks and physical phone retest. Keep Production unchanged until accepted.
+- Decisions needed: None. User's existing report establishes the browser to retest; no new product behaviour is proposed.
+
+B25 verification: candidate Preview https://song-review-app-v2-d1qnlsvnw-corisleachmans-projects.vercel.app is Ready at e5dd6435; 245 Node tests and TypeScript pass, browser CI 41412981282 has 30 passed/10 skipped. New gesture-only regression fails against original source and passes candidate. No Production change.
+
+B25 acceptance, 2 November: user confirmed the corrected Preview works after the older Preview URL was identified. First-play Chrome-on-iPhone gate passed by user report. Do not mark Production complete before rollout and live checks. No additional device details or per-step results were supplied.
+
+## B23/B24 live verification checkpoint, 2 November 2026
+
+B24 exact 50 MB upload is now independently verified: synthetic WAV 52428800 bytes, successful finalization, matching Storage/row size, first playback and consistent workspace storage accounting. 52428802 bytes rejected with no matching song/version/object. Staging-only; Production remains pending.
+
+B23 live owner and separate member playback pass on the synthetic private song; wrong active workspace displays Not found. Public-song disable and playlist-entry removal refuse new media authorisation. A real 600-second signed audio URL changes from Range 206 to 400 at expiry+3 seconds before deletion. No global CDN invalidation claim. Candidate 89bdf552 preserves all access checks while reducing repeated round trips: paired handler median 1067.8 to 748.0 ms, HTTP 1.273 to 1.078 s (five post-warmup samples each). This is not the dashboard baseline. 246 Node tests, TypeScript, both hosted builds and 30 browser cases pass, 10 skipped.
+
+Synthetic fixture cleanup was explicitly approved but is waiting on the open Chrome extension panel to be dismissed. No Production media/config change. Broader all-route/all-role L5 checks remain distinct from this scoped media verification.

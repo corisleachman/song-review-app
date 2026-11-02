@@ -1,6 +1,6 @@
 # Song Room launch checklist
 
-Last reconciled: 1 November 2026. This is the current progress page. Keep this URL in every completion update so we can always see what's left.
+Last reconciled: 2 November 2026. This is the current progress page. Keep this URL in every completion update so we can always see what's left.
 
 ## Where we are
 
@@ -26,15 +26,15 @@ Done means the named scope has recorded evidence, not that every future improvem
 | --- | --- | --- | --- | --- |
 | S1 | Establish current security baseline | Done | Read-only production inventory: RLS on all 24 public tables; advisor has zero ERROR findings, five WARN findings and eight INFO findings. [Review record](LAUNCH_SECURITY_REVIEW.md) | Agent |
 | S2 | Cross-workspace API and direct-database access | In progress | Canonical identity, thread path and eight dashboard/song/admin/internal route samples inspected; 42 local handler tests pass; B21 is installed on staging: 34 installed-definition SQL checks, six invitation checks and scoped browser checks pass. Production repair verified; broader API coverage remains. [Inventory of all 68 API route files](LAUNCH_API_ACCESS_MATRIX.md) created; exercise owner/member/outsider/public boundaries on staging. RLS enabled alone isn't a pass | Agent |
-| S3 | Database function and policy review | In progress | Five search-path fixes and B21 migration installed on staging; zero staging security errors/warnings; 40 SQL checks and browser checks pass. [Review package](https://github.com/corisleachman/song-review-app/pull/67). Production repair verified; no public views in either environment. B23 confirms private staging audio is anonymously retrievable from public Storage; short expiry accepted; scoped audio Preview checks pass after waveform cookie fix; native/mobile/cache boundary and artwork/cutover gates open | Agent |
+| S3 | Database function and policy review | In progress | Five search-path fixes and B21 migration installed on staging; zero staging security errors/warnings; 40 SQL checks and browser checks pass. [Review package](https://github.com/corisleachman/song-review-app/pull/67). Production repair verified; no public views in either environment. B23 original public Storage defect reproduced; compatible audio/artwork candidate and private staging cutover verified in scope. Native phone, upload, performance, revocation and Production gates remain open | Agent |
 | S4 | Abuse protection coverage | In progress | Email login limiter, Turnstile and feedback throttle exist. Invite/comment/bootstrap coverage still needs explicit decisions and tests | Agent |
-| S5 | Input validation and safe errors | Not started | Audit mutation inputs, size/type limits, numeric bounds and error responses. Upload validation already has regression coverage | Agent |
+| S5 | Input validation and safe errors | In progress | Audit mutation inputs, size/type limits, numeric bounds and error responses. Upload validation already has regression coverage | Agent |
 | S6 | Secret handling and log safety | Not started | Recheck variable classification/scopes without exposing values; inventory logging and confirm redaction. Earlier Config-vs-Secret concern is unverified, not a proven leak | Agent |
 | S7 | Monitoring, dependency and CI closeout | Not started | Production dependency audit: four low, zero moderate/high/critical advisories. Confirm alerts/retention; review open PRs and missing audit workflow | Agent |
 
 Performance is the user's main MVP concern. B17-B19 are queued as the leading L6 workstream; capture does not interrupt the current L5 task. B06 six-month Free-to-Pro beta grants have confirmed product rules; implementation and expiry/billing boundary tests remain open.
 
-Next action: finish B23 artwork/cache delivery and native-fallback expiry recovery; complete phone/performance/revocation gates before any bucket cutover. The [PR #68 candidate](https://github.com/corisleachman/song-review-app/pull/68) is now verified against staging in part; no environment permission change is needed. Broader S2 access checks remain open.
+Next action: complete the remaining B23 staging phone, real-upload, performance and share-revocation gates before Production rollout. PR #68 at e19c8582 has compatible audio/artwork delivery and 50 MB validation; both staging buckets are private. Production media remains unchanged. See the current acceptance table in [Storage review](STORAGE_ACCESS_REVIEW.md#current-staging-checkpoint-1-november-2026). Broader S2 access checks remain open.
 
 ## L6 acceptance checklist
 
@@ -78,8 +78,12 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B19 | [Dashboard-to-song navigation speed](PRODUCT_BACKLOG.md#b19-dashboard-to-song-measure-and-reduce-navigation-delay) | User report; baseline pending | L6 performance; canonical access must remain intact |
 | B20 | [New-version collaboration notifications](PRODUCT_BACKLOG.md#b20-verify-notifications-for-new-version-uploads) | All-workspace-member delivery confirmed; capability/delivery untested | L6 dependability audit; no new channel assumed |
 | B21 | [Membership RLS recursion](PRODUCT_BACKLOG.md#b21-membership-rls-recursively-evaluates-itself) | Production complete; staging and live checks pass | L5/S2-S3, P1 |
-| B23 | [Private media public Storage access](PRODUCT_BACKLOG.md#b23-private-song-media-remains-accessible-through-permanent-public-storage-urls) | Confirmed staging audio HEAD 200 without auth; same Production public-bucket configuration; short expiry accepted; audio candidate scoped Preview checks pass; native/mobile, artwork and bucket cutover pending | L5/S2-S3, P1 privacy |
+| B23 | [Private media public Storage access](PRODUCT_BACKLOG.md#b23-private-song-media-remains-accessible-through-permanent-public-storage-urls) | Candidate 89bdf552: phone first-play accepted; exact/oversize upload, timed audio expiry, share/playlist revocation and scoped owner/member checks pass. Delivery handler median improved 30%; approved fixture cleanup blocked by Chrome extension panel. Production pending | L5/S2-S3, P1 privacy |
 | B22 | [Unconfigured legacy password false success](PRODUCT_BACKLOG.md#b22-legacy-password-verifier-reports-success-when-unconfigured) | Production complete via PR #66; 121 tests and eight live smoke checks pass | L5/S2, P2 |
+
+| B24 | [Align new audio uploads to 50 MB](PRODUCT_BACKLOG.md#b24-align-new-audio-uploads-to-50-mb) | 50 MB boundary upload/finalisation/playback and oversized rejection verified on staging; Production pending | L5/S5, P2; overlaps B23 |
+
+| B25 | [Mobile first Play needs a second tap](PRODUCT_BACKLOG.md#b25-mobile-first-play-needs-a-second-tap) | Reproduced by user on Chrome on iPhone after multiple uploads; Staging accepted: user confirms first-play fix works on Chrome on iPhone; Production rollout pending | L5/B23 staging acceptance, P1 playback |
 
 Exploratory ideas in ROADMAP.md (typing indicators, pinned comments, comparison view, waveform regions, exports, Slack, native mobile app, multitrack and video) remain unscheduled ideas. They aren't approved launch work. Delete/edit/auth/invite ideas in that old file must be checked against existing features before creating tasks.
 
@@ -110,3 +114,27 @@ Exploratory ideas in ROADMAP.md (typing indicators, pinned comments, comparison 
 ## Source precedence
 
 This page controls current priorities and stage status. PRODUCT_BACKLOG.md retains task detail; EMAIL_PASSWORD_STAGING_ROLLOUT.md and UPDATE_LOG.md retain dated release evidence. public-mvp-roadmap.md is historical phase planning. ROADMAP.md is an early ideas/implementation guide. When evidence conflicts, investigate and correct the current table instead of copying an old status forward.
+
+## Private-media staging checkpoint, 1 November 2026
+
+PR #68 source e19c8582: four green checks, 244 Node tests and hosted browser suite 28 passed/10 skipped. Both staging buckets are private; audio bucket 52428800 bytes, global 50 MB unchanged. Direct legacy audio/image URL probes fail after cutover; intended app delivery remains available in scoped checks. No Production media/configuration change. L5 remains in progress; L6-L8 remain not started. B17-B19 measurements are still pending. See Storage review for remaining acceptance and rollback.
+
+## Mobile acceptance report, 2 November 2026
+
+User reports the staging tests pass except repeatable first-play permission failure after new uploads on mobile, clarified as Chrome on iPhone. Second tap plays. Preserve this as user-reported acceptance, not independent proof of each row or final Production readiness. B25 tracks the confirmed symptom; delayed playback after waveform fetch/decode is the working cause found in code. Fix and phone retest come before B23 Production rollout. L5 remains in progress.
+
+B25 candidate e5dd6435 is Ready on [new staging Preview](https://song-review-app-v2-d1qnlsvnw-corisleachmans-projects.vercel.app). CI run 41412981282 passes: 30 browser cases, 10 skipped; 245 Node tests and TypeScript pass. Hosted login/config/public song/artwork return 200; signed-out dashboard/private audio 401 and invalid artwork 404. Retest first Play in Chrome on the same iPhone before Production rollout.
+
+## First-play acceptance, 2 November 2026
+
+After the older e19 Preview was identified and the user switched to the corrected e5dd6435 Preview, the user confirmed “That worked”. B25 first-play phone retest is accepted on staging. This closes the specific first-tap defect gate, not every remaining agent-owned B23 test or Production rollout. Earlier broad staging acceptance remains user-reported. Next: finish outstanding B23 agent verification (controlled revocation/role coverage, upload boundary/cleanup and delivery-performance checks), then roll out compatible app before Production bucket changes. No repeat phone test requested now. L5 remains in progress.
+
+## Live media verification and performance checkpoint, 2 November 2026
+
+On accepted staging player e5dd6435: synthetic 52428800-byte WAV uploaded/finalized/played on first tap; database and Storage sizes match. A 52428802-byte WAV is rejected with no matching song/version/object. Account storage counter matches finalized versions through their parent songs. Both existing owner and a separate existing member play the private fixture; changing to another active workspace refuses its media request. Signed-out private requests are 401. No accounts or memberships were created/changed.
+
+Public-song disable and playlist-entry removal refuse new authorisation; the playlist returns zero tracks after removal. An already-issued 600-second audio signature returns Range 206 while valid and 400 at expiry+3 seconds, before fixture deletion. This is one origin/region probe, not a global cache invalidation claim.
+
+Current source 89bdf552 joins version/song and playlist/entry reads and parallelises independent public checks. Same-object interleaved transport samples after two warmups each, five samples per version: handler median 1067.8 → 748.0 ms (29.9% lower); HTTP median 1.273 → 1.078 s (15.3% lower). No dashboard/phone baseline claim. 246 Node tests, TypeScript, focused lint and both Vercel builds pass; browser CI 41422213111 has 30 passed/10 skipped. [Current measured Preview](https://song-review-app-v2-gp7sfh7t3-corisleachmans-projects.vercel.app). Phone-accepted player code is unchanged. Hosted current-source public playlist/song access and signed-out/revoked/removed-entry denials pass.
+
+User approved deleting only the synthetic song and test playlist after verification. Cleanup is pending because Chrome automation is blocked by an open extension panel; close that panel to resume. Do not touch the separate existing upload flow in the in-app browser. Production app and bucket settings remain unchanged. L5 is still in progress; B17-B19 remain leading L6 work, not completed by these media measurements.

@@ -146,3 +146,7 @@ New /api/media/audio/[versionId] GET/HEAD is local only, checking canonical iden
 ## Scoped media Preview checks, 1 November 2026
 
 PR #68 source 6823574d is Ready on confirmed staging, with four green checks. Public song 200, authorised public media 307 to staging Storage, signed-out private 401 and wrong public context 404 are checked. Browser wrong-active-workspace private request displays Not found; owner private playback/seek/restart pass. Public waveform and two-track playlist play/advance after changing their media fetch credentials to same-origin. Valid HEAD/Range and expired-versus-fresh Storage token probes are recorded in STORAGE_ACCESS_REVIEW.md. This is not all-role/all-route coverage or a private-bucket fix. No Production media change.
+
+## Private media staged checkpoint, 1 November 2026
+
+PR #68 e19c8582 has compatible audio and artwork delivery. Staging buckets are private; audio bucket/app candidate now 50 MB, global/spend cap unchanged. Production media remains unchanged. Two added media route files bring the historical 68-file inventory to 70; this does not complete every route/method/role check. Upload allocation/finalization RPC EXECUTE is service-role-only in both environments. 244 Node tests, TypeScript, four PR checks and 28 browser tests pass (10 skipped). Remaining phone/upload/performance/revocation gates and rollback: [Storage review](STORAGE_ACCESS_REVIEW.md#current-staging-checkpoint-1-november-2026). L5 remains open.
