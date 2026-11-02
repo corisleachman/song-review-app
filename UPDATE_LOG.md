@@ -9597,3 +9597,7 @@ Changed LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, STORAGE_ACCESS_REVIEW.md, LAUNC
 Changed launch checklist, product backlog and Storage review to record user-reported staging acceptance except the reproducible first-tap permission defect. Candidate e5dd6435 in PR #68 starts media inside the tap and reuses it while waveform/module loading completes. Changed app/songs/[id]/versions/[versionId]/page.tsx and lifecycle/browser tests. 245 Node tests and TypeScript pass; focused lint zero errors; eight local browser transport cases pass. Gesture-policy regression fails on original source. Hosted checks and physical phone retest pending; Production unchanged.
 
 - Hosted closeout: exact e5dd6435 primary Preview https://song-review-app-v2-d1qnlsvnw-corisleachmans-projects.vercel.app is Ready. Both Vercel builds pass; browser CI 41412981282 passes 30 cases/10 skipped. Scoped HTTP login/config/public song/artwork 200, signed-out dashboard/private audio 401 and invalid artwork 404. First-play physical Chrome/iPhone retest remains the next gate. Canonical records updated; no Production app/bucket change.
+
+## 2 November 2026: B25 first-play staging acceptance
+
+Updated LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md and STORAGE_ACCESS_REVIEW.md after the user confirmed the corrected e5dd6435 Preview works in Chrome on iPhone. The preceding failed retest used the older Preview. Specific first-play acceptance is recorded; Production rollout and remaining B23 agent gates are still open. Documentation only; no app, bucket, account or billing changes.

@@ -461,7 +461,7 @@ PR #68 e19c8582 adds authorised short-lived audio delivery and project-bound art
 
 ## B25. Mobile first Play needs a second tap
 
-- Status: User-confirmed defect; repair e5dd6435 deployed to protected Preview, physical phone retest pending, not complete. Chrome on iPhone was explicitly confirmed by the user on 2 November; don't record this as a Safari-only report.
+- Status: User-confirmed defect; repair e5dd6435 accepted on staging after user phone retest; Production rollout pending. Chrome on iPhone was explicitly confirmed by the user on 2 November; don't record this as a Safari-only report.
 - Reported behaviour: After uploading multiple songs on staging, entering each song and pressing Play first shows the browser permission error. Second Play succeeds. User says other staging tests pass; exact individual steps weren't independently re-run.
 - Intended outcome: A single first tap starts authorised audio, including immediately after upload, while waveform rendering can finish separately.
 - Working cause: Existing first Play waits for asynchronous waveform fetch/decode before calling play, losing the original gesture context on a restrictive browser. This matches the error but physical-device root-cause confirmation remains pending.
@@ -470,3 +470,5 @@ PR #68 e19c8582 adds authorised short-lived audio delivery and project-bound art
 - Decisions needed: None. User's existing report establishes the browser to retest; no new product behaviour is proposed.
 
 B25 verification: candidate Preview https://song-review-app-v2-d1qnlsvnw-corisleachmans-projects.vercel.app is Ready at e5dd6435; 245 Node tests and TypeScript pass, browser CI 41412981282 has 30 passed/10 skipped. New gesture-only regression fails against original source and passes candidate. No Production change.
+
+B25 acceptance, 2 November: user confirmed the corrected Preview works after the older Preview URL was identified. First-play Chrome-on-iPhone gate passed by user report. Do not mark Production complete before rollout and live checks. No additional device details or per-step results were supplied.
