@@ -266,3 +266,6 @@ B29 release, 2 November: PR #75/25b96370 primary dpl_7LpTJNzBYxxj6VgfDb9tYMeesAs
 
 
 S6/S7 read-only checkpoint, 2 November: metadata confirms B30's three existing Config credentials; approval pending, no values decrypted or scope/provider changes. Connector metadata 403 is a connector-permission limit; authorised CLI returns metadata, so no permission broadening required. Scoped current-tree/client-import/public-chunk scans report no credential pattern or client-to-private-env path. No full Git-history scan claimed. 118 API/helper logging calls are inventoried; auth-entry code uses codes/safe fixed messages, but unstructured provider/database exception logging needs review. Production-only dependency audit remains four low, zero moderate/high/critical; no package upgrade attempted. Vercel prebuild already runs npm test, and browser CI is active; an explicit dependency-audit gate and alert/retention verification remain open.
+
+
+S7 CI candidate, 2 November: add production-only dependency audit to the existing pull-request/manual browser workflow after npm ci. Fail at moderate or above (and on registry/audit failure), retaining visibility of current four low advisories. Exact command passes locally. No schedule, automatic package updates or force-upgrade. Hosted audit step pending; provider alert and retention configuration still unverified.

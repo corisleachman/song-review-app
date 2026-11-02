@@ -30,7 +30,7 @@ Done means the named scope has recorded evidence, not that every future improvem
 | S4 | Abuse protection coverage | In progress | PRs #70-73 released: shared comment/invite quotas, direct comment INSERT repair, atomic feedback and initial-workspace setup. Remaining mutation coverage and platform/provider attribution still need closeout | Agent |
 | S5 | Input validation and safe errors | In progress | Audit mutation inputs, size/type limits, numeric bounds and error responses. Upload validation already has regression coverage | Agent |
 | S6 | Secret handling and log safety | In progress | Metadata confirms three credentials stored as Config (B30 approval pending); no values decrypted. 483 tracked-file scan and 13 public chunks show no credential-pattern matches; 43 client-root import paths do not reach private-env modules. Raw diagnostic-error logging still needs review | Agent |
-| S7 | Monitoring, dependency and CI closeout | Not started | 2 November audit reconfirms four low, zero moderate/high/critical advisories. Existing Vercel prebuild runs unit tests; explicit dependency audit CI, alerts and retention remain open | Agent |
+| S7 | Monitoring, dependency and CI closeout | In progress | 2 November audit reconfirms four low, zero moderate/high/critical advisories. Existing Vercel prebuild runs unit tests; explicit dependency audit CI candidate added and local command passes; hosted audit gate, alerts and retention remain open | Agent |
 
 Performance is the user's main MVP concern. B17-B19 are queued as the leading L6 workstream; capture does not interrupt the current L5 task. B06 six-month Free-to-Pro beta grants have confirmed product rules; implementation and expiry/billing boundary tests remain open.
 
