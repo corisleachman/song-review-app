@@ -559,10 +559,21 @@ B28 Production database release, 2 November: PR #74/6288e354 merged, 342 Node te
 
 ## B29. Raw exception messages in settings and billing responses
 
-- Status: Code complete locally; Preview/release pending. Extends existing L5/S2/S5 review.
+- Status: Production complete via PR #75/25b96370 and live verification. Extends existing L5/S2/S5 review.
 - Confirmed behaviour: Eight actual-handler test paths return a synthetic internal exception verbatim through settings GET/POST forwarding, settings summary and billing activation/checkout/portal. This demonstrates an error-disclosure path, not evidence that live credentials leaked.
 - Intended outcome: Unexpected failures return each route's existing generic fallback message; preserve server diagnostics, current 4xx validation/authorisation messages and all identity/workspace/billing rules.
 - Acceptance: Reproduced failures no longer echo the internal sentinel; signed-out requests deny before database/provider access; members cannot operate billing; foreign/unpaid checkout activation cannot write; owner customer selection ignores supplied foreign IDs. Profile/referral/settings use canonical user/workspace and owner-only invitations; hosted no-write negatives pass.
 - Dependencies: Application-only patch after Node/type/lint/CI/Preview checks. No database migration, plan/customer/subscription mutation, provider send, environment change or billing model decision. Positive provider flows use fake I/O; a real checkout/payment is not part of this error-text fix.
 - Decisions needed: None. Existing generic response text is reused.
 - Evidence: Eight regression cases fail the original handlers. Fixed suite 377 passed, TypeScript passed, focused lint zero errors (one pre-existing unused import warning in checkout). Remaining route/role/provider/logging coverage stays open in L5; these tests aren't a full hosted payment or settings journey.
+
+
+## B30. Credential Config-to-Secret classification
+
+- Status: Confirmed read-only metadata finding; approval requested in chat. No configuration change made. Existing L5/S6 work.
+- Observed behaviour: Primary Vercel project's Production SUPABASE_SERVICE_ROLE_KEY and SHARED_PASSWORD use API type encrypted (readable Config), as does RESEND_API_KEY shared across Production/Preview/Development. Other primary credential entries, including Stripe credentials and auth/rate-limit salts, use sensitive (Secret). This is storage classification, not proof of outside access or compromise.
+- Intended outcome: Restrict future readback by converting only those existing entries to Secret, preserving current values/scopes and app operation. No credential rotation, deletion, scope expansion or provider change. Public keys remain public.
+- Acceptance: Approval before configuration mutation; verify type-only edit support, exact project/key/target, unchanged scopes, installed metadata and successful compatible deployment/public and signed-in service paths. Never print/decrypt/persist credential values. Stop on any need to replace/re-enter a value or change scope; don't silently create new secrets.
+- Dependencies: Vercel type-edit support and permission. Connector environment listing returns 403; authorised CLI metadata fallback succeeds. Do not broaden connector permissions. Type change affects future readback and is distinct from routine app deployment authority.
+- Decisions needed: User approval for these narrowly scoped type changes. Existing standing release approval covers subsequent tested deployment, not unrelated configuration changes.
+- Evidence: 38 variable entries inspected via metadata only. 483 tracked files show no private-key/Stripe-live/Resend/service-role-JWT pattern hits; source import walk finds no path from 43 client roots to 14 private-env modules across 209 script modules. Thirteen live script chunks on three public surfaces also show no credential-pattern matches. These are scoped checks, not a full history or secret-exposure audit. Server diagnostic error objects still need separate review.
