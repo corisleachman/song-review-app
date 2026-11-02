@@ -1,3 +1,4 @@
+import { artworkDeliveryUrl } from '@/lib/artworkAccess';
 import { NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -119,7 +120,7 @@ export async function POST(req: NextRequest) {
     if (updateError) throw updateError;
 
     return NextResponse.json(
-      { imageUrl: urlData.publicUrl },
+      { imageUrl: artworkDeliveryUrl('song', songId, urlData.publicUrl) },
       { status: 200 }
     );
   } catch (error) {

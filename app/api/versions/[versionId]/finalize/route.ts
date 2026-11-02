@@ -150,7 +150,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ versionI
     if (actualSize <= 0 || actualSize > MAX_AUDIO_SIZE_BYTES || !normalizedFile || !storedContentType) {
       await removePendingUpload(params.versionId, filePath);
       return NextResponse.json(
-        { error: 'The uploaded object is not a supported audio file under 200MB.' },
+        { error: 'The uploaded file must be supported audio and no larger than 50 MB.' },
         { status: 400 }
       );
     }

@@ -269,7 +269,7 @@ export function usePlaylistPlayer(id: string): PlaylistPlayer {
     const ws = WaveSurfer.create({
       container: host, waveColor: 'rgba(244,237,228,0.18)', progressColor: '#C0392B',
       cursorColor: 'transparent', barWidth: 2, barGap: 1, height: 80, normalize: true,
-      interact: false, fetchParams: { credentials: 'omit' },
+      interact: false, fetchParams: { credentials: 'same-origin' },
     });
     wsRef.current = ws;
     ws.on('ready', () => { setDuration(ws.getDuration()); });

@@ -6,6 +6,10 @@ import vm from 'node:vm';
 
 const require = createRequire(import.meta.url);
 const ts = require('typescript');
+const nativeModule = {};
+new Function('exports', ts.transpileModule(readFileSync(new URL('../lib/resumeNativeAudio.ts', import.meta.url), 'utf8'), {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+}).outputText)(nativeModule);
 const source = readFileSync(new URL('../app/songs/[id]/versions/[versionId]/page.tsx', import.meta.url), 'utf8');
 const ast = ts.createSourceFile('page.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
 const nodes = [];
@@ -70,7 +74,7 @@ function harness() {
   const refs = {};
   for (const name of source.matchAll(/\b(\w+Ref)\b/g)) refs[name[1]] = { current: null };
   const ctx = {
-    ...refs, console, Error,
+    ...refs, console, Error, resumeNativeAudio: nativeModule.resumeNativeAudio,
     navigator: { userAgent: 'Desktop Chrome' },
     audioUrl: 'https://example.invalid/fixture.mp3', versionId: 'version-one', loading: false,
     waveReloadNonce: 0, isReady: false, isPlaying: false, waveErr: null, isRetryingWave: false,
@@ -112,13 +116,16 @@ function harness() {
       },
       pause() { this.paused = true; this.emit('pause'); },
       load() { this.loadCalls++; },
+      getAttribute(name) { return name === 'src' ? this.src : null; },
       removeAttribute(name) { if (name === 'src') this.src = ''; },
     };
   }
   ctx.Audio = function Audio() { const audio = media(); native.push(audio); return audio; };
-  const waveModule = { default: { create() {
+  const waveModule = { default: { create(options) {
     const listeners = new Map();
-    const audio = media();
+    const audio = options.media ?? media();
+    const adopted = native.indexOf(audio);
+    if (adopted >= 0) native.splice(adopted, 1);
     const loadGate = deferred();
     const ws = {
       audio, loadGate, loadCalls: 0, playCalls: 0, destroyed: false, playError: null,
@@ -138,7 +145,9 @@ function harness() {
       destroy() { ws.destroyed = true; },
       ready() { ws.emit('ready', 123); loadGate.resolve(); },
     };
-    instances.push(ws); return ws;
+    instances.push(ws);
+    if (audio.src) Promise.resolve().then(() => { void ws.load().catch(() => {}); });
+    return ws;
   } } };
   vm.createContext(ctx);
   vm.runInContext(js, ctx);
@@ -161,7 +170,7 @@ test('Play from Start queues a cold first play through delayed initialization', 
   const h = harness(); h.mount(); h.ctx.handlePlayFromStart(); h.fire(80);
   await h.resolveImport(); const ws = h.instances[0];
   assert.equal(ws.loadCalls, 1); ws.ready(); await flush();
-  assert.equal(ws.audio.currentTime, 0); assert.equal(ws.playCalls, 1);
+  assert.equal(ws.audio.currentTime, 0); assert.equal(ws.audio.playCalls, 1);
 });
 
 test('Play from Start seeks and plays WaveSurfer whether paused or playing', async () => {
@@ -244,14 +253,14 @@ test('first Play before debounce or during delayed import is resumed exactly onc
     assert.equal(ws.loadCalls, 1);
     assert.equal(ws.playCalls, 0);
     ws.ready(); await flush();
-    assert.equal(ws.playCalls, 1);
+    assert.equal(ws.audio.playCalls, 1);
     assert.equal(h.ctx.isReady, true);
     assert.equal(h.ctx.isDisabled(), false);
     assert.equal(h.timers.size, 0);
   }
 });
 
-test('initialized first Play waits for ready, then supports pause and resume', async () => {
+test('initialized first Play starts before ready, then supports pause and resume', async () => {
   const h = harness(); await h.initialize(); h.press(); h.press();
   const ws = h.instances[0]; assert.equal(ws.loadCalls, 1);
   ws.ready(); await flush(); assert.equal(ws.playCalls, 1);
@@ -264,7 +273,7 @@ test('load timeout permits one automatic retry, resumes loading and leaves a sta
   const h = harness(); await h.initialize(); h.press();
   h.fire(12000); assert.equal(h.ctx.isRetryingWave, true);
   // Late ready from the failed attempt must not play or cancel its retry.
-  h.instances[0].ready(); await flush(); assert.equal(h.instances[0].playCalls, 0);
+  h.instances[0].ready(); await flush(); assert.equal(h.instances[0].playCalls, 1);
   h.fire(350); h.rerender(); await flush();
   assert.equal(h.instances[0].destroyed, true);
   assert.equal(h.instances[1].loadCalls, 1);
@@ -317,7 +326,7 @@ test('old ready, media events and rejected loads cannot mutate or play a new ver
   h.unmount(); h.ctx.versionId = 'version-two'; h.mount(); h.fire(80); await flush();
   old.ready(); old.emit('play'); old.emit('pause'); old.emit('timeupdate', 77);
   old.emit('error', new Error('Failed to fetch')); await flush();
-  assert.equal(old.playCalls, 0); assert.equal(h.ctx.isPlaying, false);
+  assert.equal(old.playCalls, 1); assert.equal(old.audio.paused, true); assert.equal(h.ctx.isPlaying, false);
   assert.equal(h.ctx.currentTime, 0); assert.equal(h.ctx.waveErr, null);
   assert.equal(h.native.length, 0); assert.equal(h.instances[1].loadCalls, 0);
 });
@@ -336,7 +345,7 @@ test('load rejection and error event share one native fallback without losing Pl
   assert.equal(h.native.length, 1); assert.equal(h.native[0].playCalls, 1);
   assert.equal(h.ctx.playRequestedRef.current, true); assert.equal(h.ctx.isPlaying, true);
   assert.equal(h.ctx.isReady, true); assert.equal(h.timers.size, 0);
-  ws.ready(); await flush(); assert.equal(ws.playCalls, 0);
+  ws.ready(); await flush(); assert.equal(ws.playCalls, 1);
   h.press(); assert.equal(h.native[0].paused, true);
   h.press(); await flush(); assert.equal(h.native[0].playCalls, 2);
 });
@@ -352,8 +361,8 @@ test('stale asynchronous fallback cannot attach or play after version navigation
 });
 
 test('rejected playback is visible and a second press can retry without an unhandled promise', async () => {
-  const h = harness(); await h.initialize(); h.press(); const ws = h.instances[0];
-  ws.playError = new Error('Playback requires another gesture'); ws.ready(); await flush();
+  const h = harness(); await h.initialize(); const ws = h.instances[0];
+  ws.playError = new Error('Playback requires another gesture'); h.press(); ws.ready(); await flush();
   assert.equal(h.ctx.isPlaying, false); assert.equal(h.ctx.playRequestedRef.current, false);
   assert.equal(h.ctx.waveErr, 'Playback requires another gesture');
   ws.playError = null; h.press(); await flush(); assert.equal(h.ctx.isPlaying, true);
@@ -362,8 +371,9 @@ test('rejected playback is visible and a second press can retry without an unhan
 
 test('pausing for a comment or navigation cancels pending autoplay', async () => {
   for (const action of ['pauseForComment', 'stopPlayback']) {
-    const h = harness(); await h.initialize(); h.press(); h.ctx[action]();
-    h.instances[0].ready(); await flush(); assert.equal(h.instances[0].playCalls, 0);
+    const h = harness(); await h.initialize(); h.press(); await flush(); h.ctx[action]();
+    h.instances[0].ready(); await flush(); assert.equal(h.instances[0].playCalls, 1);
+    assert.equal(h.instances[0].audio.paused, true);
     assert.equal(h.ctx.isPlaying, false);
   }
 });
@@ -431,4 +441,15 @@ test('Space requests first Play but preserves native button, text input and mobi
   assert.equal(h.instances[0].loadCalls, 0);
   h.ctx.window.innerWidth = 1440; handler({ ...event, target: null });
   assert.equal(h.instances[0].loadCalls, 1); assert.equal(prevented, 1);
+});
+
+ test('first tap during import owns the same media when waveform attaches', async () => {
+  const h = harness(); h.mount(); h.fire(80); h.press();
+  const tapped = h.ctx.gestureAudioRef.current;
+  assert.equal(tapped.playCalls, 1); assert.equal(tapped.paused, false);
+  await h.resolveImport();
+  assert.equal(h.instances[0].audio, tapped);
+  h.instances[0].ready(); await flush();
+  assert.equal(tapped.playCalls, 1);
+  h.unmount(); assert.equal(tapped.paused, true); assert.equal(tapped.src, '');
 });

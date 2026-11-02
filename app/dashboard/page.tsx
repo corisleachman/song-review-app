@@ -123,8 +123,8 @@ interface DashboardPerformanceTrace {
 
 const DASHBOARD_CACHE_TTL_MS = 5 * 60 * 1000;
 
-// Next-track preload is held in memory, so cap it. Uploads can be WAVs up to
-// 200MB; anything over this streams from the network as before.
+// Next-track preload is held in memory, so cap it. Existing versions over
+// this memory budget continue to stream from the network.
 const MAX_PRELOAD_BYTES = 64 * 1024 * 1024;
 // Background playback watchdog: if the audio makes no progress for this long
 // while it should be playing, report it as not playing (so the lock screen

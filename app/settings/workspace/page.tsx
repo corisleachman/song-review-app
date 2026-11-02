@@ -164,7 +164,7 @@ export default function WorkspacePage() {
                 <input
                   ref={imageInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
                   className={styles.hiddenFileInput}
                   onChange={e => void handleImageSelected(e.target.files?.[0])}
                 />

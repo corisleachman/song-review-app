@@ -1,5 +1,7 @@
 'use client';
 
+import { resumeNativeAudio } from '@/lib/resumeNativeAudio';
+
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
@@ -337,7 +339,7 @@ function validateAudioFile(file: File) {
   if (validation.reason === 'invalid_size') return 'That audio file is empty.';
 
   if (validation.reason === 'too_large') {
-    return 'That file is too large for the current upload flow. Try a file under 200 MB.';
+    return 'Choose an audio file no larger than 50 MB.';
   }
 
   return null;
@@ -510,6 +512,7 @@ function VersionPageInner() {
   const waveLoadTimeoutRef = useRef<number | null>(null);
   const waveAutoRetryUsedRef = useRef(false);
   const playRequestedRef = useRef(false);
+  const gestureAudioRef = useRef<HTMLAudioElement | null>(null);
   const waveSessionKeyRef = useRef<string | null>(null);
   const startWaveformLoadRef = useRef<(() => void) | null>(null);
   const hoverCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -1071,6 +1074,7 @@ function VersionPageInner() {
     if (!audio) {
       audio = new Audio();
       audio.preload = 'metadata';
+      audio.crossOrigin = 'anonymous';
       nativeAudioRef.current = audio;
     }
 
@@ -1110,11 +1114,11 @@ function VersionPageInner() {
       audio.load();
     }
 
-    await audio.play();
+    await resumeNativeAudio(audio, { isCurrent: () => loadId === waveLoadIdRef.current });
   }, [attachNativeAudioEvents, clearWaveTimers]);
 
   const reportPlaybackFailure = useCallback((error: unknown, loadId: number) => {
-    if (loadId !== waveLoadIdRef.current) return;
+    if (loadId !== waveLoadIdRef.current || (error instanceof Error && error.name === 'AbortError')) return;
     playRequestedRef.current = false;
     setIsPlaying(false);
     setWaveErr(error instanceof Error ? error.message : 'Playback could not start. Press Play to try again.');
@@ -1129,7 +1133,8 @@ function VersionPageInner() {
       setIsPlaying(audio.paused);
       if (audio.paused) {
         setWaveErr(null);
-        void audio.play().catch(error => reportPlaybackFailure(error, loadId));
+        void resumeNativeAudio(audio, { isCurrent: () => loadId === waveLoadIdRef.current })
+          .catch(error => reportPlaybackFailure(error, loadId));
       } else {
         audio.pause();
       }
@@ -1140,6 +1145,16 @@ function VersionPageInner() {
       if (playRequestedRef.current) return;
       playRequestedRef.current = true;
       setIsPlaying(true);
+      // Start the actual media inside the tap, before waveform fetch/decode or module import.
+      // Keep this element when WaveSurfer attaches so Safari retains its user activation.
+      const audio = wavesurferRef.current?.getMediaElement() as HTMLAudioElement | undefined
+        ?? gestureAudioRef.current ?? new Audio();
+      gestureAudioRef.current = audio;
+      audio.crossOrigin = 'anonymous';
+      audio.loop = loopSongRef.current;
+      if (!audio.getAttribute('src')) audio.src = audioUrl;
+      const play = wavesurferRef.current ? wavesurferRef.current.play() : audio.play();
+      void play.catch(error => reportPlaybackFailure(error, loadId));
       if (waveErr) {
         retryWaveform('manual');
       } else {
@@ -1170,7 +1185,8 @@ function VersionPageInner() {
     if (nativeAudioFallbackRef.current && audio) {
       audio.currentTime = 0;
       setCurrentTime(0);
-      void audio.play().catch(error => reportPlaybackFailure(error, loadId));
+      void resumeNativeAudio(audio, { isCurrent: () => loadId === waveLoadIdRef.current })
+          .catch(error => reportPlaybackFailure(error, loadId));
     } else if (ws) {
       ws.setTime(0);
       setCurrentTime(0);
@@ -1645,6 +1661,7 @@ function VersionPageInner() {
     logVersionInit('wave:init-start', { loadId, hasContainer: container.isConnected, url });
 
     if (wavesurferRef.current) {
+      if (gestureAudioRef.current === wavesurferRef.current.getMediaElement()) gestureAudioRef.current = null;
       try { wavesurferRef.current.destroy(); } catch {}
       wavesurferRef.current = null;
     }
@@ -1731,7 +1748,12 @@ function VersionPageInner() {
       });
     };
 
+    const media = gestureAudioRef.current ?? new Audio();
+    gestureAudioRef.current = media;
+    if (!playRequestedRef.current && media.paused) media.removeAttribute('src');
+    const initialMediaSrc = media.src;
     const ws = WaveSurfer.create({
+      media,
       container,
       waveColor: 'rgba(244,237,228,0.18)',
       progressColor: '#C0392B',
@@ -1758,7 +1780,7 @@ function VersionPageInner() {
       setIsReady(true);
       setIsRetryingWave(false);
       logVersionInit('wave:ready', { loadId, duration: dur });
-      if (playRequestedRef.current && !nativeAudioFallbackRef.current) {
+      if (playRequestedRef.current && !nativeAudioFallbackRef.current && audio.paused) {
         void ws.play().catch(error => reportPlaybackFailure(error, loadId));
       }
 
@@ -1850,14 +1872,23 @@ function VersionPageInner() {
       waveLoadTimeoutRef.current = window.setTimeout(() => {
         handleWaveFailure('Waveform took too long to load. Try again.');
       }, 12000);
-      void ws.load(url).catch(handleWaveError);
+      void ws.load(audio.src || url).catch(handleWaveError);
     };
-    // Keep audio lazy, but honour a Play press made while initialization awaited the module.
-    if (playRequestedRef.current) startWaveformLoadRef.current();
+    // WaveSurfer automatically loads an external element that already has a source.
+    // Don't duplicate that fetch when the tap arrived during module initialization.
+    if (initialMediaSrc) {
+      audioLoadedRef.current = true;
+      waveLoadTimeoutRef.current = window.setTimeout(() => {
+        handleWaveFailure('Waveform took too long to load. Try again.');
+      }, 12000);
+    } else if (playRequestedRef.current) {
+      startWaveformLoadRef.current();
+    }
   }, [attachNativeAudioEvents, clearWaveTimers, playNativeAudioFallback, reportPlaybackFailure, retryWaveform, router]);
 
   const stopPlayback = useCallback((preservePlayRequest = false) => {
     if (!preservePlayRequest) playRequestedRef.current = false;
+    gestureAudioRef.current?.pause();
     if (wavesurferRef.current) {
       try { wavesurferRef.current.pause(); } catch {}
     }
@@ -1893,6 +1924,7 @@ function VersionPageInner() {
 
   const pauseForComment = useCallback(() => {
     playRequestedRef.current = false;
+    gestureAudioRef.current?.pause();
     if (wavesurferRef.current) {
       try { wavesurferRef.current.pause(); } catch {}
     }
@@ -1942,6 +1974,12 @@ function VersionPageInner() {
     if (!audioUrl || loading) return;
     const sessionKey = `${versionId}:${audioUrl}`;
     if (waveSessionKeyRef.current !== sessionKey) {
+      if (gestureAudioRef.current) {
+        gestureAudioRef.current.pause();
+        gestureAudioRef.current.removeAttribute('src');
+        gestureAudioRef.current.load();
+        gestureAudioRef.current = null;
+      }
       waveSessionKeyRef.current = sessionKey;
       loopSongRef.current = false;
       setIsLooping(false);
@@ -1966,6 +2004,7 @@ function VersionPageInner() {
       if (waveformRef.current) {
         void initWaveSurfer(waveformRef.current, audioUrl).catch(error => {
           if (cancelled) return;
+          gestureAudioRef.current?.pause();
           playRequestedRef.current = false;
           setIsPlaying(false);
           setIsRetryingWave(false);
@@ -1974,6 +2013,7 @@ function VersionPageInner() {
       } else if (attempts++ < 20) {
         containerTimer = setTimeout(tryInit, 50);
       } else {
+        gestureAudioRef.current?.pause();
         playRequestedRef.current = false;
         setIsPlaying(false);
         setIsRetryingWave(false);
@@ -1992,6 +2032,11 @@ function VersionPageInner() {
       startWaveformLoadRef.current = null;
       audioLoadedRef.current = false;
       stopPlayback(true);
+      if (gestureAudioRef.current) {
+        gestureAudioRef.current.removeAttribute('src');
+        gestureAudioRef.current.load();
+        gestureAudioRef.current = null;
+      }
       if (wavesurferRef.current) {
         try { wavesurferRef.current.destroy(); } catch {}
         wavesurferRef.current = null;
@@ -3730,7 +3775,7 @@ function VersionPageInner() {
               rows={3}
               disabled={uploadingVersion}
             />
-            <p id="upload-version-dialog-help" className={styles.uploadHelp}>Uploads under 200 MB work best in the current flow.</p>
+            <p id="upload-version-dialog-help" className={styles.uploadHelp}>Maximum file size: 50 MB.</p>
             {uploadingVersion && (
               <div>
                 <div className={styles.progressWrap}>

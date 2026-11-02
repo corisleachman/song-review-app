@@ -1,3 +1,4 @@
+import { artworkDeliveryUrl, absoluteArtworkUrl } from '@/lib/artworkAccess';
 import type { Metadata } from 'next';
 import { supabaseServer } from '@/lib/supabaseServer';
 
@@ -20,7 +21,7 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
   }
 
   // Share preview image: the playlist's custom cover, falling back to the first track's artwork.
-  let ogImage: string | null = playlist.image_url ?? null;
+  let ogImage = artworkDeliveryUrl('playlist', playlist.id, playlist.image_url, { publicPlaylist: true });
   if (!ogImage) {
     const { data: firstRow } = await supabaseServer
       .from('playlist_songs')
@@ -30,8 +31,8 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
       .limit(1)
       .maybeSingle();
     if (firstRow?.song_id) {
-      const { data: song } = await supabaseServer.from('songs').select('image_url').eq('id', firstRow.song_id).maybeSingle();
-      ogImage = song?.image_url ?? null;
+      const { data: song } = await supabaseServer.from('songs').select('id, image_url').eq('id', firstRow.song_id).eq('account_id', playlist.account_id).maybeSingle();
+      ogImage = song ? artworkDeliveryUrl('song', song.id, song.image_url, { playlistId: playlist.id }) : null;
     }
   }
 
@@ -39,7 +40,8 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
   const description = workspaceName
     ? `A playlist shared by ${workspaceName} on The Song Room.`
     : 'A playlist on The Song Room.';
-  const images = ogImage ? [ogImage] : undefined;
+  const imageUrl = absoluteArtworkUrl(ogImage);
+  const images = imageUrl ? [imageUrl] : undefined;
 
   return {
     title: `${title} · The Song Room`,

@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
       const error = validation.reason === 'aiff_unavailable'
         ? AIFF_UPLOAD_UNAVAILABLE_MESSAGE
         : validation.reason === 'invalid_size' || validation.reason === 'too_large'
-        ? 'Audio files must be larger than 0 bytes and no more than 200MB.'
+        ? 'Audio files must be larger than 0 bytes and no more than 50 MB.'
         : 'Choose a supported audio file whose type matches its extension.';
       return NextResponse.json(
         { error },

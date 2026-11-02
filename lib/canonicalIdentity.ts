@@ -1,3 +1,4 @@
+import { artworkDeliveryUrl } from '@/lib/artworkAccess';
 import { bootstrapAccountForUser, type BootstrapResult } from '@/lib/bootstrapAccount';
 import { getCurrentAuthenticatedUser } from '@/lib/currentUser';
 import { RequestTiming } from '@/lib/requestTiming';
@@ -62,7 +63,7 @@ export function buildCanonicalIdentity(bootstrap: BootstrapResult): CanonicalIde
     authorName: getAuthorName(bootstrap),
     workspaceId: bootstrap.workspace.id,
     workspaceName: bootstrap.workspace.name,
-    workspaceImageUrl: bootstrap.workspace.image_url,
+    workspaceImageUrl: artworkDeliveryUrl('workspace', bootstrap.workspace.id, bootstrap.workspace.image_url),
     workspaceSlug: bootstrap.workspace.slug,
     membershipRole: bootstrap.membership.role,
   };
