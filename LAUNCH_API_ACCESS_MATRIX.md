@@ -14,7 +14,7 @@ For each method, record the final route class, identity check, resource/workspac
 | `/api/actions` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Local signed-out GET tests pass; hosted matrix pending |
 | `/api/admin/feedback/[id]` | Application admin | PATCH | `getCurrentAuthenticatedUser`, `isAdmin` | Local handler tests pass; hosted negatives pending |
 | `/api/admin/feedback` | Application admin | GET | `getCurrentAuthenticatedUser`, `isAdmin` | Local handler tests pass; hosted negatives pending |
-| `/api/auth/bootstrap` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/auth/bootstrap` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity`; server-only atomic initial provisioning | B27/PR #73: existing and fresh staged Google journeys pass; 14 installed SQL checks both DBs; Production signed-out 401 and same-origin login redirect pass. Controlled first-request concurrency is local; no fresh Production user created |
 | `/api/auth/email/config` | Public auth/config; feature gates | GET | Inspect route / delegated helper | Not yet exercised |
 | `/api/auth/email/login` | Public auth/config; feature gates | POST | Inspect route / delegated helper | Not yet exercised |
 | `/api/auth/email/manage/request` | Gated signed-in password management | POST | Inspect route / delegated helper | Not yet exercised |
@@ -164,3 +164,6 @@ PR #71/0565f64b removes client INSERT privileges on comments/comment_threads in 
 ## B27 bootstrap candidate, 2 November 2026
 
 Common server bootstrap helper's empty-membership creation branch uses a staged service-role-only atomic RPC in PR #73. Existing identity/active membership read path is preserved. Local real-handler concurrency and failure cases plus 14 installed staging SQL checks pass; client RPC execution is denied. Fresh browser signup/confirmation acceptance is pending; Production is unchanged. This isn't a pass for every route that calls canonical identity. Repeated profile-write performance remains B17.
+
+
+B27 release checkpoint, 2 November: PR #73/ce346868 live, both user staging tests passed and Free/one workspace/one owner membership verified. Installed Production RPC checks pass; no-write bootstrap/dashboard/login probes and bounded logs pass. Initial creation gap closed in scope; broader route/method/role coverage remains open.

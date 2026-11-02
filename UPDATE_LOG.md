@@ -9691,3 +9691,15 @@ Changed app/candidate files: lib/bootstrapAccount.ts; tests/bootstrap-account.te
 ## 2026-11-02: B27 Preview ready; fresh-account acceptance pending
 
 Primary Preview Ready at 4be9c48c; all four PR checks, 340 Node tests, TypeScript/lint and browser 30 passed/10 skipped pass. Existing Google user reaches selected member workspace/five songs. Signed-out bootstrap 401, staging ref verified, bounded error/fatal logs empty. Google-only fresh signup in a private window remains user acceptance; no email flags/provider changes. Updated LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md and UPDATE_LOG.md with exact test link/result instructions. Production app/RPC unchanged; code PR #73 stays unmerged pending acceptance. No fixture identities/workspaces remain.
+
+
+## 2026-11-02: B27 user acceptance and Production migration
+
+User reports both staging signup/reload tests passed; new staging account has one workspace and one correct owner membership. Production RPC installed/source-verified; all 14 installed SQL checks pass, fixture users/workspaces zero and Advisor zero errors/warnings. PR #73 merged as ce346868. App rollout building; live checks pending. Updated LAUNCH_CHECKLIST.md and UPDATE_LOG.md with acceptance evidence. No private test email recorded. App rollback must precede optional RPC removal.
+
+
+## 2026-11-02: B27 Production complete after user acceptance
+
+User reports both staged signup/reload tests passed. Verified Free plan, one workspace, one membership and correct owner link. Production RPC installed/source-verified before app; 14 installed SQL checks pass, no fixture users/workspaces, Advisor zero errors/warnings. PR #73 merged as ce346868, primary Production dpl_F19sdasWwV17Qt6den32dWjPh1s5 Ready/live. 340 Node tests, TypeScript/lint, four PR checks and browser 30 passed/10 skipped. Live no-write bootstrap/dashboard 401, login 200 and same-origin bootstrap redirect checks pass; bounded error/fatal scans empty. Actual new signup accepted on staging, not replayed on Production.
+
+Updated LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, LAUNCH_API_ACCESS_MATRIX.md and UPDATE_LOG.md with release, acceptance, migration equivalents and rollback. Restore compatible 6269735c app before optional RPC removal. Existing user data isn't cleaned up/deduplicated. B27 complete; wider L5/S4 remain open. No action required from the user.
