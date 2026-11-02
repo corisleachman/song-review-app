@@ -6,11 +6,6 @@ import {
   saveThemeSettings,
 } from '@/lib/profileThemeSettings';
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) return error.message;
-  return 'Profile settings request failed.';
-}
-
 export async function GET() {
   try {
     const resolved = await resolveCanonicalIdentity();
@@ -27,7 +22,7 @@ export async function GET() {
   } catch (error) {
     console.error('Error fetching profile settings:', error);
     return NextResponse.json(
-      { error: getErrorMessage(error) },
+      { error: 'Profile settings request failed.' },
       { status: 500 }
     );
   }
@@ -57,7 +52,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('Error saving profile settings:', error);
     return NextResponse.json(
-      { error: getErrorMessage(error) },
+      { error: 'Profile settings request failed.' },
       { status: 500 }
     );
   }

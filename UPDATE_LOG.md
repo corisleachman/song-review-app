@@ -9717,3 +9717,10 @@ B28 staging checkpoint, 2 November: migration installed as ledger 20261102222009
 
 
 B28 Production database release, 2 November: PR #74/6288e354 merged, 342 Node tests/focused lint/four PR checks and browser 30 passed/10 skipped. Reviewed migration source 20261102220823 installed as staging 20261102222009 and Production 20261102222433. Installed 14-case probes pass in both environments, alongside baseline16/candidate14/rollback16. Anonymous raw REST denied; public song/playlist/comments payloads match baseline; pages/embeds/audio Range/artwork pass; authenticated history preserved; zero retained fixture workspaces. Advisors zero errors/warnings; bounded Production error/fatal scan empty. Primary merged-source deployment dpl_Dh7UyB4o7sokRPmdcK22mfH8B1aB is Ready/live; no app logic/env/provider change. Companion SQL rollback restores only old anon SELECT and reopens exposure. Broader L5 remains open.
+
+
+## 2026-11-02: B29 safe settings/billing errors and access verification
+
+Changed files: profile/settings, settings/summary and billing activate/checkout/portal route handlers; api-access-boundaries runtime test harness/tests; launch backlog/matrix/review records. Goal: keep unexpected internal exception text out of browser responses while preserving existing access and billing behaviour. Existing generic fallback strings replace exception echo only. No schema/provider/env changes.
+
+Eight runtime regression cases fail before the change. 377 Node tests and TypeScript pass; focused lint zero errors with one existing checkout unused-import warning. Access tests cover signed-out methods, non-owner billing denial, canonical scope, masked own referrals, owner-only settings invites, foreign/unpaid activation and valid owner customer selection using fake provider I/O. Hosted/Preview/release verification pending.

@@ -555,3 +555,14 @@ B28 staging checkpoint, 2 November: migration installed as ledger 20261102222009
 
 
 B28 Production database release, 2 November: PR #74/6288e354 merged, 342 Node tests/focused lint/four PR checks and browser 30 passed/10 skipped. Reviewed migration source 20261102220823 installed as staging 20261102222009 and Production 20261102222433. Installed 14-case probes pass in both environments, alongside baseline16/candidate14/rollback16. Anonymous raw REST denied; public song/playlist/comments payloads match baseline; pages/embeds/audio Range/artwork pass; authenticated history preserved; zero retained fixture workspaces. Advisors zero errors/warnings; bounded Production error/fatal scan empty. Primary merged-source deployment dpl_Dh7UyB4o7sokRPmdcK22mfH8B1aB is Ready/live; no app logic/env/provider change. Companion SQL rollback restores only old anon SELECT and reopens exposure. Broader L5 remains open.
+
+
+## B29. Raw exception messages in settings and billing responses
+
+- Status: Code complete locally; Preview/release pending. Extends existing L5/S2/S5 review.
+- Confirmed behaviour: Eight actual-handler test paths return a synthetic internal exception verbatim through settings GET/POST forwarding, settings summary and billing activation/checkout/portal. This demonstrates an error-disclosure path, not evidence that live credentials leaked.
+- Intended outcome: Unexpected failures return each route's existing generic fallback message; preserve server diagnostics, current 4xx validation/authorisation messages and all identity/workspace/billing rules.
+- Acceptance: Reproduced failures no longer echo the internal sentinel; signed-out requests deny before database/provider access; members cannot operate billing; foreign/unpaid checkout activation cannot write; owner customer selection ignores supplied foreign IDs. Profile/referral/settings use canonical user/workspace and owner-only invitations; hosted no-write negatives pass.
+- Dependencies: Application-only patch after Node/type/lint/CI/Preview checks. No database migration, plan/customer/subscription mutation, provider send, environment change or billing model decision. Positive provider flows use fake I/O; a real checkout/payment is not part of this error-text fix.
+- Decisions needed: None. Existing generic response text is reused.
+- Evidence: Eight regression cases fail the original handlers. Fixed suite 377 passed, TypeScript passed, focused lint zero errors (one pre-existing unused import warning in checkout). Remaining route/role/provider/logging coverage stays open in L5; these tests aren't a full hosted payment or settings journey.
