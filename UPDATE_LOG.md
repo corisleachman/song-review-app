@@ -9643,3 +9643,12 @@ Local checks: 307 Node tests, TypeScript and focused lint pass. Staging SQL budg
 PR #70 merged as 1352dd8c; primary Production dpl_3gZwUK8rRnpYGodCdi9LQuo3nVQZ Ready/live. Installed and verified additive limiter migration in both environments before app rollout. 307 Node tests, TypeScript/focused lint, all four PR checks and browser 30 passed/10 skipped. Hosted staging five synthetic comments accepted/sixth 429; GET remains available; fixtures removed. Eight Production no-write checks pass; bounded error/fatal scans empty. No real invitation/notification sends, Production comment writes, env/provider or billing changes. Direct-database private INSERT, feedback concurrency and bootstrap setup remain S4 review items.
 
 Updated LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, LAUNCH_API_ACCESS_MATRIX.md and UPDATE_LOG.md with verified release evidence, migration ledger equivalents and rollback. Restore previous compatible 7d5a0494 app before optional limiter removal. No action required from the user.
+
+
+## 2026-11-02: Close direct private comment INSERT bypass candidate
+
+Goal: make the approved comment API limits effective against direct client writes. Candidate revokes only client INSERT on comments/comment_threads, preserving service-role writes, existing RLS and all non-INSERT privileges. Added guarded migration, exact observed-grant rollback, rollback-only role/creation/read probe and SQL composer. No application/UI/env change.
+
+Changed: supabase/migrations/20261102145804_restrict_private_comment_inserts.sql; matching supabase/rollback file; supabase/tests/comment_write_boundary_probe.sql; scripts/compose-comment-write-boundary-probe.mjs; LAUNCH_CHECKLIST.md; PRODUCT_BACKLOG.md; LAUNCH_SECURITY_REVIEW.md; UPDATE_LOG.md.
+
+Verified: fifteen baseline/candidate checks pass in both environments, fifteen rollback-mode checks pass on staging, 307 Node tests and focused lint pass. Synthetic content/memberships roll back; no emails/audio/provider side effects. Installation/release pending. Existing S4 extended; no duplicate backlog item. Database rollback, not app rollback, restores these grants.
