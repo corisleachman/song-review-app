@@ -9611,3 +9611,7 @@ App changes are in commits 5464b27f and 89bdf552: app/api/media/audio/[versionId
 ## 2 November 2026: final media candidate checks
 
 Updated launch checklist and Storage review. Merge commit 62ba8881 reconciles documentation only; app code remains 89bdf552. Primary Preview is Ready, browser CI 41423050784 passes 30/10 skipped, and exact-head signed-out/revoked/intended-public smoke checks pass against staging. Secondary-project deployment check pending at recording. PR #68 mergeable; still draft pending approved cleanup blocked by Chrome extension panel. Production unchanged.
+
+## 2 November 2026: approved staging fixture cleanup and release preparation
+
+Updated LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, STORAGE_ACCESS_REVIEW.md and UPDATE_LOG.md. Browser access resumed after the user closed the extension panel. Only the two approved synthetic fixtures were removed: song via app (including version/audio cleanup), empty playlist via guarded staging SQL. Targeted inventory is zero for both fixtures; released 50 MB and reconciled workspace accounting. Four checks green at 62ba8881. Production remains unchanged at this preparation checkpoint; next is compatible app deployment followed by private media buckets/50 MB and live checks under standing release authority. No database migration or new variables required.
