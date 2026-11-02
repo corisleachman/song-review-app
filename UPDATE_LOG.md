@@ -9734,3 +9734,6 @@ B29 release, 2 November: PR #75/25b96370 primary dpl_7LpTJNzBYxxj6VgfDb9tYMeesAs
 Changed `.github/workflows/browser-accessibility.yml` to run `npm audit --omit=dev --audit-level=moderate` after the existing clean install. Goal: surface dependency regressions on pull requests and stop the existing quality job for moderate/high/critical production advisories or an unavailable audit. No schedule, dependency upgrade, provider/env change or additional service. Existing Vercel prebuild already runs Node tests.
 
 The exact audit command exits zero locally with four reported low issues and zero moderate/high/critical. These are the existing Resend/render/html-to-text/deepmerge chain; no forced breaking upgrade attempted. Hosted CI execution pending. Monitoring/retention and broader L5 remain open.
+
+
+S7 audit-gate release, 2 November: PR #76/9ee73d83 merged, exact audit command passes in GitHub CI 41539277781 (four low, zero moderate/high/critical); browser30/skip10 and all four PR checks pass. Primary dpl_8SrzygQCYuX6o1wcWo33hC6xSHjJ Ready/live; login/bootstrap/public-song probes pass. Only workflow/records changed; no package upgrade or scheduled work. Updated API matrix and current checklist with 63/63 hosted signed-out methods in both environments, preserving the remaining authenticated-role gap and browser restoration/B30 approval requests.

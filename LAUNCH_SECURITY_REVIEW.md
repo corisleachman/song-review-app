@@ -269,3 +269,6 @@ S6/S7 read-only checkpoint, 2 November: metadata confirms B30's three existing C
 
 
 S7 CI candidate, 2 November: add production-only dependency audit to the existing pull-request/manual browser workflow after npm ci. Fail at moderate or above (and on registry/audit failure), retaining visibility of current four low advisories. Exact command passes locally. No schedule, automatic package updates or force-upgrade. Hosted audit step pending; provider alert and retention configuration still unverified.
+
+
+L5 checkpoint, 2 November: both environments pass the full 63-method/48-session-route signed-out sweep (401, dev-plan403); this adds hosted unauthenticated coverage without claiming signed-in role verification. Current staging browser is suspended at an extension URL, and policy rejected observation. User asked to restore the normal staging dashboard; no bypass attempted. B30 classification approval remains pending. PR #76/9ee73d83 installs the explicit production-dependency audit gate; exact command and all CI checks pass with four low/zero moderate-or-higher; browser30/skip10. Primary deployment dpl_8SrzygQCYuX6o1wcWo33hC6xSHjJ Ready/live; post-build smoke passes. No schedule, package/provider or credential change. Broader signed-in roles, diagnostic logging and alert/retention coverage remain open; L5 is not Done.
