@@ -1,6 +1,6 @@
 # Product Backlog
 
-> Current progress: [Launch checklist](LAUNCH_CHECKLIST.md). Updated 1 November 2026. This document retains historical detail; the checklist controls current stage status and priorities.
+> Current progress: [Launch checklist](LAUNCH_CHECKLIST.md). Updated 2 November 2026. This document retains historical detail; the checklist controls current stage status and priorities.
 
 
 Bugs and feature ideas for beta readiness and later product work. The current priority order below identifies the near-term queue; other entries remain unscheduled. Track active stages and every new backlog request in `LAUNCH_CHECKLIST.md`; keep detailed task evidence here.
@@ -491,11 +491,15 @@ PR #68 merged/deployed as ff15719f on the primary live project. Compatible app w
 
 ## B26. Comment input validation and timestamp bounds
 
-- Status: Confirmed via actual-handler regression; local candidate, not complete.
+- Status: Production complete via PR #69/1ff2727a, within the validation scope below.
 - Reported/observed behaviour: Malformed JSON and object-valued public comment fields can cause 500 responses. Thread creation coerces nonnumeric timestamps and permits negative or overflowing values to reach database work. Twenty newly added regression checks fail on old source. This is an agent-discovered defect, not a claimed user incident.
 - Intended outcome: Invalid requests return 400 before comment reads/writes or notification scheduling. Signed-out private requests remain 401.
 - Acceptance: Reject non-object/unreadable JSON, unexpected field/ID types, nonfinite/negative timestamps and rounded values beyond the installed integer range. Preserve valid fractional rounding, zero and maximum integer timestamps, canonical workspace/thread/version checks, author identity, replies, honeypot and existing throttle. Verify valid paths with stubbed notifications and hosted no-write probes.
-- Dependencies: No schema/env/provider change. Both environments confirm timestamp_seconds is integer. Hosted deployment and safe smoke checks pending.
+- Dependencies: No schema/env/provider change. Both environments confirm timestamp_seconds is integer. Hosted Preview and Production no-write smoke checks pass.
 - Decisions needed: None for malformed-input repair. New comment length/rate quotas are outside this change.
 
 S4 follow-up remains in the existing stage rather than a duplicate feature: durable comment throttling, invite resend/cost guardrails and account-setup coverage need their own design. Pending invites resend on each POST; public comments use an in-memory five/minute/IP Map; bootstrap requires auth but repeats profile upsert. No live abuse incident or provider-limit absence is asserted.
+
+B26 release evidence, 2 November: 281 tests/TypeScript/focused lint and all four PR checks pass; browser CI 41458296211 has 30 passed/10 skipped. Primary live deployment dpl_9TMhrEvBcWFypnDY7td9ARFSbt9G serves merge 1ff2727a. Nine no-write probes passed in each environment. No actual comments, invites or notifications were created. Valid paths are verified through stubbed I/O, including scheduling exactly once. Rate policies are separate from this completed validation fix.
+
+S4 proposed policy (awaiting user input, inactive): durable public-comment five/minute per visitor IP; private comments/replies share 30/minute per authenticated user; invite messages 30/hour per workspace and a 60-second cooldown for a recipient within that workspace. Do not implement as approved until the user answers. Keep dashboard/bootstrap/sign-in reads outside these mutation budgets.

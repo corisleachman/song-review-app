@@ -43,7 +43,7 @@ For each method, record the final route class, identity check, resource/workspac
 | `/api/profile/settings` | Session + resource/workspace scope | GET, POST | `resolveCanonicalIdentity` | Not yet exercised |
 | `/api/profile/visualizer` | Session + resource/workspace scope | GET, POST | `resolveCanonicalIdentity` | Not yet exercised |
 | `/api/public/playlist/[id]` | Public-share projection | GET | Inspect route / delegated helper | Not yet exercised |
-| `/api/public/song/[songId]/comments` | Public-share projection | GET, POST | Inspect route / delegated helper | Not yet exercised |
+| `/api/public/song/[songId]/comments` | Public-share projection | GET, POST | Sharing/comment flags; honeypot; typed body | B26: runtime valid/throttle/no-write cases pass; hosted malformed 400, honeypot 200 and unavailable-track 403; no live comment write |
 | `/api/public/song/[songId]` | Public-share projection | GET | Inspect route / delegated helper | Not yet exercised |
 | `/api/referrals/code` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
 | `/api/referrals/summary` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
@@ -61,8 +61,8 @@ For each method, record the final route class, identity check, resource/workspac
 | `/api/tasks/[taskId]` | Session + resource/workspace scope | PATCH, DELETE | `resolveCanonicalIdentity` | Local signed-out PATCH, DELETE tests pass; hosted matrix pending |
 | `/api/tasks/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Local signed-out POST tests pass; hosted matrix pending |
 | `/api/tasks/reorder` | Session + resource/workspace scope | PATCH | `resolveCanonicalIdentity` | Local signed-out PATCH tests pass; hosted matrix pending |
-| `/api/threads/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Local signed-out POST tests pass; hosted matrix pending |
-| `/api/threads/reply` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Local signed-out POST tests pass; hosted matrix pending |
+| `/api/threads/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | B26: runtime input/auth/workspace/valid-write cases pass; Preview/Production signed-out POST 401; no live notification write |
+| `/api/threads/reply` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | B26: runtime input/auth/workspace/valid-write cases pass; Preview/Production signed-out POST 401; no live notification write |
 | `/api/versions/[versionId]/finalize` | Session + resource/workspace scope | POST, DELETE | `resolveCanonicalIdentity` | Local signed-out POST, DELETE tests pass; hosted matrix pending |
 | `/api/versions/[versionId]` | Session + resource/workspace scope | GET, PATCH | `resolveCanonicalIdentity` | Local signed-out PATCH tests pass; hosted matrix pending |
 | `/api/versions/[versionId]/threads` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Local signed-out GET tests pass; hosted matrix pending |
