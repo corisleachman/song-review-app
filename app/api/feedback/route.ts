@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { createHash } from 'crypto';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { readVercelVisitorIp } from '@/lib/emailLoginRateLimitCore';
 import { getCurrentAuthenticatedUser } from '@/lib/currentUser';
 
 export const dynamic = 'force-dynamic';
@@ -9,8 +10,6 @@ export const dynamic = 'force-dynamic';
 const VALID_TYPES = ['bug', 'idea', 'other'] as const;
 const MIN_LEN = 10;
 const MAX_LEN = 2000;
-const RATE_LIMIT = 5; // max submissions per identity...
-const WINDOW_MINUTES = 60; // ...within this rolling window
 
 function isEmail(v: unknown): v is string {
   return typeof v === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
@@ -18,12 +17,12 @@ function isEmail(v: unknown): v is string {
 
 export async function POST(req: Request) {
   try {
-    const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
-    if (!body) {
+    const payload: unknown = await req.json().catch(() => null);
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
       return NextResponse.json({ ok: false, error: 'Invalid request.' }, { status: 400 });
     }
 
-    const { type, message, email, page_url, user_agent, viewport, website } = body;
+    const { type, message, email, page_url, user_agent, viewport, website } = payload as Record<string, unknown>;
 
     // 1. Honeypot — bots fill the hidden 'website' field. Fake success, store nothing.
     if (typeof website === 'string' && website.trim() !== '') {
@@ -52,35 +51,22 @@ export async function POST(req: Request) {
       );
     }
 
-    // 4. Hash IP for rate-limiting (raw IP never stored)
-    const rawIp =
-      req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-      req.headers.get('x-real-ip')?.trim() ||
-      '';
+    // Preserve the existing stored hash format and history. Trust only the
+    // visitor header Vercel overwrites, never a supplied X-Forwarded-For.
+    const rawIp = readVercelVisitorIp(req.headers);
+    if (!user && !rawIp) {
+      return NextResponse.json(
+        { ok: false, error: "We couldn't check this request. Please try again shortly." },
+        { status: 503, headers: { 'Retry-After': '60', 'Cache-Control': 'no-store' } },
+      );
+    }
     const ipHash = rawIp
       ? createHash('sha256').update(rawIp + (process.env.FEEDBACK_IP_SALT ?? '')).digest('hex')
       : null;
 
-    // 5. Rate-limit: count this identity's rows in the window (by user, else by IP hash)
-    const sinceIso = new Date(Date.now() - WINDOW_MINUTES * 60_000).toISOString();
-    let q = supabaseServer
-      .from('beta_feedback')
-      .select('id', { count: 'exact', head: true })
-      .gte('created_at', sinceIso);
-    if (user) q = q.eq('user_id', user.id);
-    else if (ipHash) q = q.eq('ip_hash', ipHash);
-
-    const { count, error: countError } = await q;
-    if (countError) {
-      console.error('[feedback] rate-limit count error:', countError);
-    } else if ((count ?? 0) >= RATE_LIMIT) {
-      return NextResponse.json(
-        { ok: false, error: "You've sent a lot of feedback recently — please try again shortly." },
-        { status: 429 },
-      );
-    }
-
-    // 6. Insert. No admin email is sent — the beta_feedback table IS the triage queue.
+    // The database trigger checks the rolling quota and inserts under the same
+    // transaction lock. A failed check cannot leave a saved submission.
+    // No admin email is sent; beta_feedback is the triage queue.
     const { error: insertError } = await supabaseServer.from('beta_feedback').insert({
       type,
       message: msg,
@@ -94,13 +80,22 @@ export async function POST(req: Request) {
     });
 
     if (insertError) {
-      console.error('[feedback] insert error:', insertError);
+      if (insertError.code === 'P0001' && insertError.message === 'feedback_rate_limited') {
+        const retry = Number(insertError.details);
+        if (Number.isInteger(retry) && retry >= 1 && retry <= 3600) {
+          return NextResponse.json(
+            { ok: false, error: "You've sent a lot of feedback recently. Please try again shortly.", retryAfterSeconds: retry },
+            { status: 429, headers: { 'Retry-After': String(retry), 'Cache-Control': 'no-store' } },
+          );
+        }
+      }
+      console.error('[feedback] submission failed');
       return NextResponse.json({ ok: false, error: 'Could not save feedback.' }, { status: 500 });
     }
 
     return NextResponse.json({ ok: true });
-  } catch (err) {
-    console.error('[feedback] Error:', err);
+  } catch {
+    console.error('[feedback] submission failed');
     return NextResponse.json({ ok: false, error: 'Something went wrong.' }, { status: 500 });
   }
 }

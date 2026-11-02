@@ -9661,3 +9661,12 @@ PR #71 merged as 0565f64b. Permission migration installed on staging and Product
 Updated LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, LAUNCH_API_ACCESS_MATRIX.md and UPDATE_LOG.md with release/rollback evidence and migration ledger equivalents. S4 remains open for feedback/bootstrap and wider review. Database rollback restores grants; app rollback alone doesn't. No action required from the user.
 
 Merged-source primary Production deployment dpl_3ouZssw5wcb3ruUE6ZuQ49TNQ9uQ is Ready/aliased to www.song-room.live at 0565f64b. Post-build signed-out private checks pass and bounded error/fatal scans are empty.
+
+
+## 2026-11-02: Atomic feedback rate-limit candidate
+
+Goal: preserve the existing five/hour feedback policy under simultaneous requests and prevent saving after quota-check failure. Hosted old-route staging test saved ten of ten simultaneous submissions; all synthetic rows removed. Database trigger now locks/counts/saves in one transaction using existing feedback history, with no new counter table or secret. API uses trusted visitor IP and maps throttles to 429/Retry-After without raw error leakage.
+
+Changed: app/api/feedback/route.ts; tests/api-access-boundaries.test.mjs; supabase/migrations/20261102162535_atomic_feedback_rate_limit.sql; matching rollback; supabase/tests/feedback_rate_limit_probe.sql; scripts/compose-feedback-rate-limit-probe.mjs; LAUNCH_CHECKLIST.md; PRODUCT_BACKLOG.md; LAUNCH_SECURITY_REVIEW.md; UPDATE_LOG.md.
+
+Verified 326 Node tests, TypeScript, focused lint and eight SQL cases in staging baseline/candidate/rollback/installed and Production candidate. Staging migration installed; new hosted race/Production pending. No real feedback retained or email/provider calls. Rollback restores old app before optionally removing trigger, otherwise quota would disappear. Existing S4 extended; no duplicate backlog.
