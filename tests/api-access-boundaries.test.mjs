@@ -13,6 +13,7 @@ const require = createRequire(import.meta.url);
 // checks runtime decisions; it is not a Supabase, cookie or hosted HTTP test.
 function routeHarness(route, { identity = null, user = null, tables = {}, storage = null, mutationResult = null, mutationError = null, limitResponse = null, overrides = {} } = {}) {
   const reads = [];
+  const queries = [];
   const writes = [];
   let notifications = 0;
   const limitCalls = [];
@@ -20,12 +21,14 @@ function routeHarness(route, { identity = null, user = null, tables = {}, storag
     from(table) {
       reads.push(table);
       const predicates = [];
+      const filters = [];
+      queries.push({ table, filters });
       let single = false;
       let mutation = false;
       let selection = '';
       const query = {
         select(columns = '') { selection = columns; return query; },
-        eq(key, value) { predicates.push(row => row[key] === value); return query; },
+        eq(key, value) { filters.push([key, value]); predicates.push(row => row[key] === value); return query; },
         in(key, values) { predicates.push(row => values.includes(row[key])); return query; },
         not(key, operator, value) {
           assert.equal(operator, 'is');
@@ -92,7 +95,7 @@ function routeHarness(route, { identity = null, user = null, tables = {}, storag
     evaluate(localRequire, exports);
     return exports;
   }
-  return { handler: load(path.join(root, route)), reads, writes, limitCalls, get notifications() { return notifications; } };
+  return { handler: load(path.join(root, route)), reads, queries, writes, limitCalls, get notifications() { return notifications; } };
 }
 
 const session = role => ({ identity: { workspaceId: 'workspace-a', userId: `user-${role}`, membershipRole: role, displayName: 'Test Owner', workspaceName: 'Test Workspace' }, bootstrap: { workspace: { plan: 'free' } } });
@@ -802,5 +805,150 @@ for (const playlist of [false, true]) {
     assert.doesNotMatch(serialized, /pending-version|old-version|INTERNAL-|song-files|uploads\/|workspace-a/);
     if (playlist) assert.equal(body.tracks.length, 1); else assert.equal(body.version.version_number, 2);
     assert.deepEqual(h.writes, []);
+  });
+}
+
+const settingsBillingRoutes = [
+  ['profile/settings', 'GET', 'Profile settings request failed.'],
+  ['profile/settings', 'POST', 'Profile settings request failed.'],
+  ['settings', 'GET', 'Profile settings request failed.'],
+  ['settings', 'POST', 'Profile settings request failed.'],
+  ['settings/summary', 'GET', 'Could not load settings summary.'],
+  ['billing/checkout', 'POST', 'Could not start checkout.'],
+  ['billing/portal', 'POST', 'Could not open billing portal.'],
+  ['billing/activate', 'POST', 'Could not activate plan.'],
+];
+for (const [route, method, safeMessage] of settingsBillingRoutes) {
+  test(`${route} ${method}: unexpected identity/provider exception stays server-side`, async () => {
+    const h = routeHarness(`app/api/${route}/route.ts`, { overrides: {
+      '@/lib/canonicalIdentity': { resolveCanonicalIdentity: async () => { throw new Error('INTERNAL-PROVIDER-DETAILS'); } },
+    } });
+    const response = await h.handler[method](jsonRequest({}));
+    assert.equal(response.status, 500);
+    assert.deepEqual(await response.json(), { error: safeMessage });
+    assert.deepEqual(h.reads, []); assert.deepEqual(h.writes, []);
+  });
+}
+
+for (const [route, methods] of [
+  ['profile/settings', ['GET', 'POST']], ['settings', ['GET', 'POST']],
+  ['profile/visualizer', ['GET', 'POST']], ['settings/summary', ['GET']],
+  ['referrals/code', ['GET']], ['referrals/summary', ['GET']],
+  ['billing/checkout', ['POST']], ['billing/portal', ['POST']], ['billing/activate', ['POST']],
+]) for (const method of methods) {
+  test(`${route} ${method}: signed out cannot access database or provider`, async () => {
+    let providerCalls = 0;
+    const h = routeHarness(`app/api/${route}/route.ts`, { overrides: {
+      '@/lib/stripe': { getStripe: () => { providerCalls++; throw new Error('Unexpected provider call'); } },
+    } });
+    assert.equal((await h.handler[method](jsonRequest({}))).status, 401);
+    assert.deepEqual(h.reads, []); assert.deepEqual(h.writes, []); assert.equal(providerCalls, 0);
+  });
+}
+
+for (const route of ['checkout', 'portal', 'activate']) {
+  test(`billing ${route}: ordinary member cannot access database or Stripe`, async () => {
+    let providerCalls = 0;
+    const h = routeHarness(`app/api/billing/${route}/route.ts`, { identity: session('member'), overrides: {
+      '@/lib/stripe': { getStripe: () => { providerCalls++; throw new Error('Unexpected provider call'); } },
+    } });
+    assert.equal((await h.handler.POST(jsonRequest({ sessionId: 'foreign-checkout', accountId: 'workspace-b' }))).status, 403);
+    assert.deepEqual(h.reads, []); assert.deepEqual(h.writes, []); assert.equal(providerCalls, 0);
+  });
+}
+
+for (const role of ['owner', 'member']) {
+  test(`settings summary: ${role} uses canonical user/workspace and owner-only invites`, async () => {
+    const calls = [];
+    const h = routeHarness('app/api/settings/summary/route.ts', { identity: session(role), tables: { songs: [song, foreignSong] }, overrides: {
+      '@/lib/profileThemeSettings': { loadThemeSettings: async identity => { calls.push(['theme', identity.userId]); return { primary_color: 'own-theme' }; } },
+      '@/lib/workspaceMembers': { listWorkspaceMembers: async id => { calls.push(['members', id]); return []; } },
+      '@/lib/accountInvites': { listWorkspaceInvites: async id => { calls.push(['invites', id]); return [{ id: 'own-invite' }]; } },
+    } });
+    const response = await h.handler.GET(getRequest()); assert.equal(response.status, 200);
+    const body = await response.json(); assert.equal(body.identity.workspaceId, 'workspace-a');
+    assert.deepEqual(calls, [['theme', `user-${role}`], ['members', 'workspace-a'], ...(role === 'owner' ? [['invites', 'workspace-a']] : [])]);
+    assert.equal(body.invites.length, role === 'owner' ? 1 : 0);
+    assert.match(response.headers.get('cache-control'), /no-store/); assert.deepEqual(h.writes, []);
+    assert.deepEqual(h.queries.find(query => query.table === 'songs').filters, [['account_id', 'workspace-a']]);
+  });
+}
+
+for (const [workspace, paid, expected] of [['workspace-b', 'paid', 403], ['workspace-a', 'unpaid', 400], ['workspace-a', 'paid', 200]]) {
+  test(`billing activation: ${workspace}/${paid} validates Stripe before canonical workspace update`, async () => {
+    const calls = [];
+    const h = routeHarness('app/api/billing/activate/route.ts', { identity: session('owner'), overrides: {
+      '@/lib/stripe': { getStripe: () => ({ checkout: { sessions: { retrieve: async id => {
+        calls.push(id); return { client_reference_id: workspace, payment_status: paid, metadata: { target_plan: 'pro' }, customer: 'test-customer', subscription: 'test-subscription' };
+      } } } }), getPlanForStripePriceId: () => 'pro' },
+    } });
+    const response = await h.handler.POST(jsonRequest({ sessionId: 'test-checkout', accountId: 'workspace-b', plan: 'studio' }));
+    assert.equal(response.status, expected); assert.deepEqual(calls, ['test-checkout']);
+    if (expected !== 200) { assert.deepEqual(h.writes, []); assert.deepEqual(h.reads, []); }
+    else { assert.equal(h.writes.length, 1); assert.equal(h.writes[0].table, 'accounts'); assert.equal(h.writes[0].value.plan, 'pro'); assert.deepEqual(h.queries[0].filters, [['id', 'workspace-a']]); }
+  });
+}
+
+for (const route of ['profile/settings', 'settings']) {
+  test(`${route}: theme reads/writes ignore supplied identity and use the signed-in user`, async () => {
+    const calls = [];
+    const theme = { primary_color: '#111111', accent_color: '#222222', background_color: '#333333' };
+    const h = routeHarness(`app/api/${route}/route.ts`, { identity: session('member'), overrides: {
+      '@/lib/profileThemeSettings': {
+        isThemeSettingsInput: value => typeof value?.primary_color === 'string',
+        loadThemeSettings: async identity => { calls.push(['read', identity.userId]); return theme; },
+        saveThemeSettings: async (identity, value) => { calls.push(['write', identity.userId, value.primary_color]); return theme; },
+      },
+    } });
+    assert.equal((await h.handler.GET(getRequest())).status, 200);
+    assert.equal((await h.handler.POST(jsonRequest({ ...theme, userId: 'foreign-user', workspaceId: 'workspace-b' }))).status, 200);
+    assert.deepEqual(calls, [['read', 'user-member'], ['write', 'user-member', '#111111']]);
+  });
+}
+
+test('visualizer reads only the signed-in user preference', async () => {
+  const h = routeHarness('app/api/profile/visualizer/route.ts', { identity: session('member'), tables: {
+    profile_settings: [{ user_id: 'foreign-user', visualizer_enabled: true }, { user_id: 'user-member', visualizer_enabled: false }],
+  } });
+  const response = await h.handler.GET(getRequest());
+  assert.equal(response.status, 200); assert.deepEqual(await response.json(), { visualizer_enabled: false });
+  assert.deepEqual(h.queries[0].filters, [['user_id', 'user-member']]); assert.deepEqual(h.writes, []);
+});
+
+for (const route of ['code', 'summary']) {
+  test(`referrals ${route}: canonical user code and masked own-referral projection`, async () => {
+    const calls = [];
+    const h = routeHarness(`app/api/referrals/${route}/route.ts`, { identity: session('member'), tables: {
+      referrals: [
+        { id: 'own-referral', referred_by_user_id: 'user-member', referred_user_id: 'referred-user', status: 'pending' },
+        { id: 'FOREIGN-REFERRAL', referred_by_user_id: 'foreign-user', referred_user_id: 'PRIVATE-USER', status: 'pending' },
+      ], profiles: [{ id: 'referred-user', email: 'person@example.test', display_name: 'Person' }, { id: 'PRIVATE-USER', email: 'PRIVATE-EMAIL@example.test' }],
+    }, overrides: { '@/lib/referrals': {
+      getOrCreateReferralCode: async (...args) => { calls.push(args); return { code: 'TSR-TEST' }; }, REFERRAL_REWARD_CAP: 5,
+    } } });
+    const response = await h.handler.GET(getRequest()); assert.equal(response.status, 200);
+    const body = await response.json(); assert.deepEqual(calls, [['user-member', 'workspace-a']]);
+    assert.equal(body.code, 'TSR-TEST'); assert.doesNotMatch(JSON.stringify(body), /FOREIGN|PRIVATE|person@example/);
+    if (route === 'summary') { assert.equal(body.referrals.length, 1); assert.equal(body.referrals[0].maskedEmail, 'pe***@example.test'); }
+    assert.deepEqual(h.writes, []);
+  });
+}
+
+for (const route of ['checkout', 'portal']) {
+  test(`billing ${route}: owner uses their stored customer despite foreign account/customer payload`, async () => {
+    const calls = [];
+    const stripe = {
+      customers: { retrieve: async id => { calls.push(['customer', id]); return { id }; } },
+      checkout: { sessions: { create: async payload => { calls.push(['checkout', payload]); return { url: 'https://checkout.example.test/session' }; } } },
+      billingPortal: { sessions: { create: async payload => { calls.push(['portal', payload]); return { url: 'https://billing.example.test/session' }; } } },
+    };
+    const h = routeHarness(`app/api/billing/${route}/route.ts`, { identity: session('owner'), tables: {
+      accounts: [{ id: 'workspace-b', plan: 'free', stripe_customer_id: 'FOREIGN-CUSTOMER' }, { id: 'workspace-a', plan: 'free', stripe_customer_id: 'own-customer' }],
+    }, overrides: { '@/lib/stripe': { getStripe: () => stripe, getStripePriceId: (plan, interval) => `${plan}-${interval}` } } });
+    const response = await h.handler.POST(jsonRequest({ accountId: 'workspace-b', customer: 'FOREIGN-CUSTOMER', plan: 'pro', interval: 'year' }));
+    assert.equal(response.status, 200); assert.deepEqual(calls[0], ['customer', 'own-customer']);
+    const payload = calls[1][1]; assert.equal(payload.customer, 'own-customer');
+    if (route === 'checkout') { assert.equal(payload.client_reference_id, 'workspace-a'); assert.equal(payload.metadata.owner_user_id, 'user-owner'); assert.deepEqual(payload.line_items, [{ price: 'pro-year', quantity: 1 }]); }
+    assert.deepEqual(h.queries[0].filters, [['id', 'workspace-a']]); assert.deepEqual(h.writes, []);
   });
 }

@@ -7,11 +7,6 @@ import { getStripe } from '@/lib/stripe';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) return error.message;
-  return 'Could not open billing portal.';
-}
-
 function isMissingStripeCustomerError(error: unknown) {
   if (!error || typeof error !== 'object') return false;
 
@@ -95,6 +90,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ url: portalSession.url }, { status: 200 });
   } catch (error) {
     console.error('Billing portal error:', error);
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    return NextResponse.json({ error: 'Could not open billing portal.' }, { status: 500 });
   }
 }
