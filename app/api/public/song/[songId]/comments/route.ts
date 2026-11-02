@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { enforcePublicCommentRateLimit } from '@/lib/mutationRateLimit';
 import { supabaseServer } from '@/lib/supabaseServer';
 
 export const dynamic = 'force-dynamic';
@@ -6,30 +7,6 @@ export const dynamic = 'force-dynamic';
 const MAX_NAME_LENGTH = 50;
 const MAX_BODY_LENGTH = 500;
 const MIN_BODY_LENGTH = 1;
-
-// In-memory rate limit (per serverless instance — best-effort, not bulletproof).
-// Keyed by IP. Allows a short burst then throttles.
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 5;
-const rateBuckets = new Map<string, number[]>();
-
-function getClientIp(req: NextRequest): string {
-  const fwd = req.headers.get('x-forwarded-for');
-  if (fwd) return fwd.split(',')[0].trim();
-  return req.headers.get('x-real-ip') ?? 'unknown';
-}
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const hits = (rateBuckets.get(ip) ?? []).filter(t => now - t < RATE_LIMIT_WINDOW_MS);
-  if (hits.length >= RATE_LIMIT_MAX) {
-    rateBuckets.set(ip, hits);
-    return true;
-  }
-  hits.push(now);
-  rateBuckets.set(ip, hits);
-  return false;
-}
 
 async function songAllowsComments(songId: string): Promise<boolean> {
   const { data: song } = await supabaseServer
@@ -96,14 +73,6 @@ export async function POST(req: NextRequest, props: { params: Promise<{ songId: 
       return NextResponse.json({ error: 'Comments are not available for this track.' }, { status: 403 });
     }
 
-    const ip = getClientIp(req);
-    if (isRateLimited(ip)) {
-      return NextResponse.json(
-        { error: 'You are commenting too fast. Please wait a moment.' },
-        { status: 429 }
-      );
-    }
-
     const authorName = typeof body.author_name === 'string' ? body.author_name.trim() : '';
     const commentBody = typeof body.body === 'string' ? body.body.trim() : '';
 
@@ -119,6 +88,9 @@ export async function POST(req: NextRequest, props: { params: Promise<{ songId: 
     if (commentBody.length > MAX_BODY_LENGTH) {
       return NextResponse.json({ error: `Comment must be ${MAX_BODY_LENGTH} characters or fewer.` }, { status: 400 });
     }
+
+    const limitError = await enforcePublicCommentRateLimit(req);
+    if (limitError) return limitError;
 
     const { data: inserted, error } = await supabaseServer
       .from('public_comments')
