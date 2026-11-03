@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -120,7 +121,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ versionId
       }
     );
   } catch (error) {
-    console.error('Error fetching threads:', error);
+    console.error('Error fetching threads:', safeErrorDetails(error));
     return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
   }
 }

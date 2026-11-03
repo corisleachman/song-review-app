@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { Resend } from 'resend';
@@ -129,7 +130,7 @@ async function sendInviteEmail(params: {
       emailWarning: null as string | null,
     };
   } catch (error) {
-    console.error('[invite-email] Send failed:', error);
+    console.error('[invite-email] Send failed:', safeErrorDetails(error));
     return {
       emailSent: false,
       emailWarning: 'Invite created, but the email could not be sent. Copy the invite link manually.',
@@ -175,7 +176,7 @@ export async function GET() {
       }
     );
   } catch (error) {
-    console.error('Error loading workspace invites:', error);
+    console.error('Error loading workspace invites:', safeErrorDetails(error));
     return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
   }
 }
@@ -299,7 +300,7 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error creating workspace invite:', error);
+    console.error('Error creating workspace invite:', safeErrorDetails(error));
     return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
   }
 }

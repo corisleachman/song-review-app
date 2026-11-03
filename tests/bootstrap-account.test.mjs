@@ -4,6 +4,11 @@ import { createRequire } from 'node:module';
 import test from 'node:test';
 import ts from 'typescript';
 const require = createRequire(import.meta.url);
+const diagnostics = {};
+new Function('exports', ts.transpileModule(
+  readFileSync(new URL('../lib/safeErrorDetails.ts', import.meta.url), 'utf8'),
+  { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } },
+).outputText)(diagnostics);
 const user = { id: 'user-a', email: 'new@example.test', displayName: 'New User', avatarUrl: null };
 const membership = (account_id, role = 'owner') => ({ account_id, user_id: user.id, role, joined_at: '2026-01-01T00:00:00Z' });
 const workspace = id => ({ id, name: 'Existing workspace', plan: 'free', notification_mode: 'all_members' });
@@ -67,6 +72,7 @@ function harness({ concurrentReads = 1, memberships = [], accounts = [], activeI
     },
   };
   const stubs = {
+    '@/lib/safeErrorDetails': diagnostics,
     '@/lib/supabaseServer': { supabaseServer: db },
     '@/lib/referrals': { REFERRAL_COOKIE_NAME: 'tsr_ref', attributeReferralOnSignup: async value => { state.referrals.push(value); } },
     '@/lib/plans': { normalizeAccountPlan: plan => plan ?? 'free', isMissingPlanColumnError: () => false },

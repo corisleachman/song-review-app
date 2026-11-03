@@ -8,6 +8,14 @@ const ACCEPTED_CONTENT_TYPES = new Set([
   'application/csp-report',
   'application/reports+json',
 ]);
+const DIRECTIVES = new Set([
+  'base-uri', 'child-src', 'connect-src', 'default-src', 'font-src',
+  'form-action', 'frame-ancestors', 'frame-src', 'img-src', 'manifest-src',
+  'media-src', 'object-src', 'prefetch-src', 'require-trusted-types-for',
+  'sandbox', 'script-src', 'script-src-attr', 'script-src-elem', 'style-src',
+  'style-src-attr', 'style-src-elem', 'trusted-types', 'worker-src',
+  'block-all-mixed-content', 'upgrade-insecure-requests', 'navigate-to',
+]);
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -30,17 +38,23 @@ function sanitizedUrl(value: unknown): string | null {
   try {
     const url = new URL(text);
     if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-      return url.protocol.slice(0, 20);
+      return ['data:', 'blob:', 'javascript:', 'about:', 'chrome-extension:', 'moz-extension:'].includes(url.protocol)
+        ? url.protocol : null;
     }
 
-    return `${url.origin}${url.pathname}`.slice(0, 500);
+    // Invite/confirmation capabilities can live in paths as well as queries.
+    return url.origin.slice(0, 500);
   } catch {
-    return text.slice(0, 200);
+    return null;
   }
 }
 
 function numberOrNull(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function directive(value: unknown): string | null {
+  return typeof value === 'string' && DIRECTIVES.has(value) ? value : null;
 }
 
 function reportBody(value: unknown): UnknownRecord | null {
@@ -55,15 +69,9 @@ function normalizedReport(value: unknown) {
   if (!body) return null;
 
   return {
-    disposition: limitedText(body.disposition, 20),
-    effectiveDirective: limitedText(
-      body.effectiveDirective ?? body['effective-directive'],
-      80,
-    ),
-    violatedDirective: limitedText(
-      body.violatedDirective ?? body['violated-directive'],
-      80,
-    ),
+    disposition: body.disposition === 'enforce' || body.disposition === 'report' ? body.disposition : null,
+    effectiveDirective: directive(body.effectiveDirective ?? body['effective-directive']),
+    violatedDirective: directive(body.violatedDirective ?? body['violated-directive']),
     blockedUrl: sanitizedUrl(body.blockedURL ?? body['blocked-uri']),
     documentUrl: sanitizedUrl(body.documentURL ?? body['document-uri']),
     sourceFile: sanitizedUrl(body.sourceFile ?? body['source-file']),
@@ -107,7 +115,7 @@ export async function POST(request: Request) {
   }
 
   for (const report of reports) {
-    // Intentionally omit original-policy, script-sample, query strings, and hashes.
+    // Omit arbitrary text, policy/samples and URL credentials/paths/queries/hashes.
     // Vercel runtime logs are the temporary observation surface for this rollout.
     console.warn('[csp-report]', JSON.stringify(report));
   }

@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { isActionStatusInput, normalizeActionStatus } from '@/lib/actionWorkflow';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -112,7 +113,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ action: data }, { status: 201 });
   } catch (error) {
-    console.error('Error creating action:', error);
+    console.error('Error creating action:', safeErrorDetails(error));
     return NextResponse.json(
       { error: 'Could not create the action.' },
       { status: 500 }

@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -39,7 +40,7 @@ export async function GET() {
       }
     );
   } catch (error) {
-    console.error('Error loading workspaces:', error);
+    console.error('Error loading workspaces:', safeErrorDetails(error));
     return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
   }
 }

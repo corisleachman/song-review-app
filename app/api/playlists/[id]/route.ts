@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { artworkDeliveryUrl } from '@/lib/artworkAccess';
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
@@ -59,7 +60,7 @@ export async function GET(_req: NextRequest, props: { params: Promise<{ id: stri
       songs, available, plan,
     });
   } catch (err) {
-    console.error('[playlists/:id] get error:', err);
+    console.error('[playlists/:id] get error:', safeErrorDetails(err));
     return NextResponse.json({ error: 'Could not load playlist.' }, { status: 500 });
   }
 }
@@ -81,7 +82,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
     if (error) throw error;
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error('[playlists/:id] patch error:', err);
+    console.error('[playlists/:id] patch error:', safeErrorDetails(err));
     return NextResponse.json({ error: 'Could not update playlist.' }, { status: 500 });
   }
 }
@@ -98,7 +99,7 @@ export async function DELETE(_req: NextRequest, props: { params: Promise<{ id: s
     if (error) throw error;
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error('[playlists/:id] delete error:', err);
+    console.error('[playlists/:id] delete error:', safeErrorDetails(err));
     return NextResponse.json({ error: 'Could not delete playlist.' }, { status: 500 });
   }
 }

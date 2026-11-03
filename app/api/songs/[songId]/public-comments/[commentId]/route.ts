@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
@@ -43,7 +44,7 @@ export async function DELETE(
 
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (error) {
-    console.error('[songs/public-comments DELETE] error:', error);
+    console.error('[songs/public-comments DELETE] error:', safeErrorDetails(error));
     return NextResponse.json({ error: 'Something went wrong' }, { status: 500 });
   }
 }

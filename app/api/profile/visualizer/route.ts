@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { loadThemeSettings } from '@/lib/profileThemeSettings';
@@ -17,12 +18,12 @@ export async function GET() {
       .eq('user_id', resolved.identity.userId)
       .maybeSingle();
     if (error && error.code !== 'PGRST116') {
-      console.error('[profile/visualizer] load error:', error);
+      console.error('[profile/visualizer] load error:', safeErrorDetails(error));
       return NextResponse.json({ visualizer_enabled: true });
     }
     return NextResponse.json({ visualizer_enabled: data?.visualizer_enabled ?? true });
   } catch (err) {
-    console.error('[profile/visualizer] Error:', err);
+    console.error('[profile/visualizer] Error:', safeErrorDetails(err));
     return NextResponse.json({ visualizer_enabled: true });
   }
 }
@@ -54,12 +55,12 @@ export async function POST(req: NextRequest) {
         { onConflict: 'user_id' },
       );
     if (error) {
-      console.error('[profile/visualizer] save error:', error);
+      console.error('[profile/visualizer] save error:', safeErrorDetails(error));
       return NextResponse.json({ error: 'Could not save preference.' }, { status: 500 });
     }
     return NextResponse.json({ visualizer_enabled: body.visualizer_enabled });
   } catch (err) {
-    console.error('[profile/visualizer] Error:', err);
+    console.error('[profile/visualizer] Error:', safeErrorDetails(err));
     return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
   }
 }

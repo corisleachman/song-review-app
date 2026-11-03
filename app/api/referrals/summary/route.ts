@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { getOrCreateReferralCode, REFERRAL_REWARD_CAP } from '@/lib/referrals';
@@ -90,7 +91,7 @@ export async function GET(req: NextRequest) {
       referrals:        referralList,
     });
   } catch (err) {
-    console.error('[referrals/summary] Error:', err);
+    console.error('[referrals/summary] Error:', safeErrorDetails(err));
     return NextResponse.json({ error: 'Could not load referral summary.' }, { status: 500 });
   }
 }

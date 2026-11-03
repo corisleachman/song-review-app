@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { getCurrentAuthenticatedUser } from '@/lib/currentUser';
@@ -64,7 +65,7 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
       capReached: !grantEligible,
     });
   } catch (err) {
-    console.error('[admin/feedback/:id] Error:', err);
+    console.error('[admin/feedback/:id] Error:', safeErrorDetails(err));
     return NextResponse.json({ ok: false, error: 'Something went wrong.' }, { status: 500 });
   }
 }

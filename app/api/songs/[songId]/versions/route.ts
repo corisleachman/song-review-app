@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -72,7 +73,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ songId: s
       }
     );
   } catch (error) {
-    console.error('Error fetching song versions:', error);
+    console.error('Error fetching song versions:', safeErrorDetails(error));
     return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
   }
 }

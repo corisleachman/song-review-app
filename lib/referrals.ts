@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { supabaseServer } from '@/lib/supabaseServer';
 
 export const REFERRAL_REWARD_CAP = 5;
@@ -188,7 +189,7 @@ export async function attributeReferralOnSignup(params: {
     });
   } catch (err) {
     // Never block bootstrap
-    console.error('[referrals] Attribution error (non-fatal):', err);
+    console.error('[referrals] Attribution error (non-fatal):', safeErrorDetails(err));
   }
 }
 

@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -85,7 +86,7 @@ export async function DELETE(_request: Request, props: { params: Promise<{ userI
       }
     );
   } catch (error) {
-    console.error('Error removing workspace member:', error);
+    console.error('Error removing workspace member:', safeErrorDetails(error));
     return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
   }
 }

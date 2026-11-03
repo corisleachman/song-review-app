@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { artworkDeliveryUrl } from '@/lib/artworkAccess';
 import { NextRequest, NextResponse } from 'next/server';
 import { RequestTiming } from '@/lib/requestTiming';
@@ -211,7 +212,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
       }
     );
   } catch (err) {
-    console.error('[public/playlist] error:', err);
+    console.error('[public/playlist] error:', safeErrorDetails(err));
     return respond({ error: 'Something went wrong' }, 500);
   }
 }

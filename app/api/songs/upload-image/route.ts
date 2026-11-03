@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { artworkDeliveryUrl } from '@/lib/artworkAccess';
 import { NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
@@ -80,7 +81,7 @@ export async function POST(req: NextRequest) {
         .jpeg({ quality: IMAGE_QUALITY, mozjpeg: true })
         .toBuffer();
     } catch (sharpError) {
-      console.error('Sharp failed to process the uploaded image:', sharpError);
+      console.error('Sharp failed to process the uploaded image:', safeErrorDetails(sharpError));
       const message = sharpError instanceof Error ? sharpError.message : String(sharpError);
       // Distinguish "couldn't load the sharp native module at all" (server/deploy
       // problem on our end) from "this specific file couldn't be decoded" (the
@@ -124,7 +125,7 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error('Error uploading image:', error);
+    console.error('Error uploading image:', safeErrorDetails(error));
     return NextResponse.json(
       { error: 'That image could not be uploaded. Please try again.' },
       { status: 500 }

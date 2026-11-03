@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import type { AccountPlan } from '@/lib/plans';
@@ -68,7 +69,7 @@ async function failWebhookEvent(eventId: string, error: unknown) {
   });
 
   if (ledgerError) {
-    console.error('[stripe] Could not mark webhook event as failed:', ledgerError);
+    console.error('[stripe] Could not mark webhook event as failed:', safeErrorDetails(ledgerError));
   }
 }
 
@@ -313,7 +314,7 @@ async function handleInvoicePaid(event: { data: { object: unknown } }) {
 
       if (accountUpdateError) throw accountUpdateError;
     } catch (createErr) {
-      console.error('[referrals] Could not create Stripe customer for free-tier referrer:', createErr);
+      console.error('[referrals] Could not create Stripe customer for free-tier referrer:', safeErrorDetails(createErr));
       throw createErr;
     }
   }
@@ -345,7 +346,7 @@ async function handleInvoicePaid(event: { data: { object: unknown } }) {
     balanceTransactionId = balanceTransaction.id;
   } catch (stripeError) {
     // Credit failed — leave as converted and fail the webhook so Stripe retries.
-    console.error('[referrals] Stripe credit failed — leaving as converted:', stripeError);
+    console.error('[referrals] Stripe credit failed — leaving as converted:', safeErrorDetails(stripeError));
     throw stripeError;
   }
 
@@ -374,7 +375,7 @@ export async function POST(request: Request) {
     try {
       event = stripe.webhooks.constructEvent(body, signature, getStripeWebhookSecret());
     } catch (error) {
-      console.error('Stripe webhook signature verification failed:', error);
+      console.error('Stripe webhook signature verification failed:', safeErrorDetails(error));
       return NextResponse.json({ error: 'Invalid Stripe signature.' }, { status: 400 });
     }
 
@@ -413,7 +414,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ received: true }, { status: 200 });
   } catch (error) {
-    console.error('Stripe webhook error:', error);
+    console.error('Stripe webhook error:', safeErrorDetails(error));
     return NextResponse.json({ error: 'Webhook handling failed.' }, { status: 500 });
   }
 }

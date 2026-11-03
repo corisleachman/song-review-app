@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest) {
     if (error) throw error;
     return NextResponse.json({ task: data }, { status: 201 });
   } catch (error) {
-    console.error('Error creating task:', error);
+    console.error('Error creating task:', safeErrorDetails(error));
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }

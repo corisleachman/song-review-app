@@ -11,7 +11,7 @@ const require = createRequire(import.meta.url);
 
 // Execute the real handler, replacing only framework/I/O boundaries. This
 // checks runtime decisions; it is not a Supabase, cookie or hosted HTTP test.
-function routeHarness(route, { identity = null, user = null, tables = {}, storage = null, mutationResult = null, mutationError = null, limitResponse = null, overrides = {} } = {}) {
+function routeHarness(route, { identity = null, user = null, tables = {}, storage = null, mutationResult = null, mutationError = null, limitResponse = null, overrides = {}, logger = console } = {}) {
   const reads = [];
   const queries = [];
   const writes = [];
@@ -91,8 +91,8 @@ function routeHarness(route, { identity = null, user = null, tables = {}, storag
       }
       return require(specifier);
     };
-    const evaluate = new Function('require', 'exports', compiled);
-    evaluate(localRequire, exports);
+    const evaluate = new Function('require', 'exports', 'console', compiled);
+    evaluate(localRequire, exports, logger);
     return exports;
   }
   return { handler: load(path.join(root, route)), reads, queries, writes, limitCalls, get notifications() { return notifications; } };
@@ -952,3 +952,21 @@ for (const route of ['checkout', 'portal']) {
     assert.deepEqual(h.queries[0].filters, [['id', 'workspace-a']]); assert.deepEqual(h.writes, []);
   });
 }
+
+
+test('actual billing handler keeps exception credentials out of both client response and server log', async () => {
+  const logs = [];
+  const error = Object.assign(new Error('PRIVATE-PROVIDER-MESSAGE'), {
+    code: 'ECONNRESET', status: 503, stack: 'PRIVATE-STACK',
+    cause: { headers: { authorization: 'PRIVATE-AUTH' }, url: 'https://example.test/?token=PRIVATE-TOKEN' },
+  });
+  const h = routeHarness('app/api/billing/checkout/route.ts', {
+    logger: { error: (...args) => logs.push(args) },
+    overrides: { '@/lib/canonicalIdentity': { resolveCanonicalIdentity: async () => { throw error; } } },
+  });
+  const response = await h.handler.POST(jsonRequest({})); assert.equal(response.status, 500);
+  assert.deepEqual(await response.json(), { error: 'Could not start checkout.' });
+  assert.equal(logs.length, 1); assert.equal(logs[0][0], 'Billing checkout error:');
+  assert.deepEqual(logs[0][1], { kind: 'exception', code: 'ECONNRESET', status: 503 });
+  assert.doesNotMatch(JSON.stringify(logs), /PRIVATE-/); assert.deepEqual(h.writes, []);
+});

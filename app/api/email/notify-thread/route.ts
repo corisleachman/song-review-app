@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import {
   INTERNAL_REQUEST_SIGNATURE_HEADER,
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result.body, { status: result.status });
   } catch (error) {
-    console.error('Error sending email:', error);
+    console.error('Error sending email:', safeErrorDetails(error));
     return NextResponse.json({ sent: false, error: 'Could not send notification.' }, { status: 500 });
   }
 }

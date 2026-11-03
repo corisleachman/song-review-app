@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { artworkDeliveryUrl } from '@/lib/artworkAccess';
 import { NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
@@ -103,7 +104,7 @@ export async function GET() {
       { status: 200, headers: { 'Cache-Control': 'no-store, max-age=0' } }
     );
   } catch (error) {
-    console.error('Error loading dashboard summary:', error);
+    console.error('Error loading dashboard summary:', safeErrorDetails(error));
     return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
   }
 }

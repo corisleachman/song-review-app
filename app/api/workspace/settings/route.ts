@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { artworkDeliveryUrl } from '@/lib/artworkAccess';
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
@@ -97,7 +98,7 @@ export async function PATCH(request: NextRequest) {
       }
     );
   } catch (error) {
-    console.error('Error updating workspace settings:', error);
+    console.error('Error updating workspace settings:', safeErrorDetails(error));
     return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
   }
 }
@@ -176,7 +177,7 @@ export async function POST(request: NextRequest) {
       }
     );
   } catch (error) {
-    console.error('Error uploading workspace image:', error);
+    console.error('Error uploading workspace image:', safeErrorDetails(error));
     return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
   }
 }

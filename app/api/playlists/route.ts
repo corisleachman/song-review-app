@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
@@ -26,7 +27,7 @@ export async function GET() {
     });
     return NextResponse.json({ items });
   } catch (err) {
-    console.error('[playlists] list error:', err);
+    console.error('[playlists] list error:', safeErrorDetails(err));
     return NextResponse.json({ error: 'Could not load playlists.' }, { status: 500 });
   }
 }
@@ -49,7 +50,7 @@ export async function POST(req: NextRequest) {
     if (error) throw error;
     return NextResponse.json({ id: data.id }, { status: 201 });
   } catch (err) {
-    console.error('[playlists] create error:', err);
+    console.error('[playlists] create error:', safeErrorDetails(err));
     return NextResponse.json({ error: 'Could not create playlist.' }, { status: 500 });
   }
 }

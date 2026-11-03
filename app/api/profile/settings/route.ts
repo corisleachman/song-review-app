@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import {
@@ -20,7 +21,7 @@ export async function GET() {
     const settings = await loadThemeSettings(resolved.identity);
     return NextResponse.json(settings);
   } catch (error) {
-    console.error('Error fetching profile settings:', error);
+    console.error('Error fetching profile settings:', safeErrorDetails(error));
     return NextResponse.json(
       { error: 'Profile settings request failed.' },
       { status: 500 }
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest) {
     const settings = await saveThemeSettings(resolved.identity, payload);
     return NextResponse.json(settings);
   } catch (error) {
-    console.error('Error saving profile settings:', error);
+    console.error('Error saving profile settings:', safeErrorDetails(error));
     return NextResponse.json(
       { error: 'Profile settings request failed.' },
       { status: 500 }

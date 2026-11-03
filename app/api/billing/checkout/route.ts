@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -165,7 +166,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ url: session.url }, { status: 200 });
   } catch (error) {
-    console.error('Billing checkout error:', error);
+    console.error('Billing checkout error:', safeErrorDetails(error));
     return NextResponse.json({ error: 'Could not start checkout.' }, { status: 500 });
   }
 }
