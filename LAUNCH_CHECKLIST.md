@@ -34,7 +34,7 @@ Done means the named scope has recorded evidence, not that every future improvem
 
 Performance is the user's main MVP concern. B17-B19 are queued as the leading L6 workstream; capture does not interrupt the current L5 task. B06 six-month Free-to-Pro beta grants have confirmed product rules; implementation and expiry/billing boundary tests remain open.
 
-Next action: continue S2/S3 remaining function and membership mutation boundaries, then S5 input/size/type/numeric validation. B28-B33 are complete in their recorded scope; S6 and beta-scoped S7 exit conditions are verified/accepted. No user step is pending. B17-B19 remain the leading L6 performance workstream after L5 exit conditions.
+Next action: finish remaining S2/S3 function bodies and signed-in route boundaries, then S5 input/size/type/numeric validation. B34 is Production complete in its recorded scope. B28-B33 are complete in their recorded scope; S6 and beta-scoped S7 exit conditions are verified/accepted. No user step is pending. B17-B19 remain the leading L6 performance workstream after L5 exit conditions.
 
 ## L6 acceptance checklist
 
@@ -93,6 +93,8 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B31 | [Safe server diagnostics and CSP URL redaction](PRODUCT_BACKLOG.md#b31-raw-exception-and-csp-url-content-in-server-diagnostics) | Production complete via PR #77/6ba2c817; 387 tests, CI and hosted redaction/public/media checks pass | Existing L5/S6 logging review |
 | B32 | [Server-only core account writes](PRODUCT_BACKLOG.md#b32-direct-client-writes-bypass-core-account-and-billing-controls) | Production complete via PR #78/126825bf; actual owner save accepted, fixture removed, installed19 checks and live REST/public/media checks pass | Existing L5/S2/S3; resolve before L5 closeout |
 | B33 | [Safe unexpected-error responses](PRODUCT_BACKLOG.md#b33-safe-unexpected-error-responses) | Production complete via PR #79/98f4132f; 425 tests, four CI checks and Preview/Production access/public/media checks pass | Existing L5/S5 |
+
+| B34 | [Server-only membership writes](PRODUCT_BACKLOG.md#b34-direct-client-membership-writes-bypass-owner-controls) | Production installed/verified: installed23, bootstrap14 and invite4 checks pass in each environment; staging owner removal accepted; fixture removed; [PR #80](https://github.com/corisleachman/song-review-app/pull/80) | Existing L5/S2/S3, P1; remaining broader coverage open |
 
 Exploratory ideas in ROADMAP.md (typing indicators, pinned comments, comparison view, waveform regions, exports, Slack, native mobile app, multitrack and video) remain unscheduled ideas. They aren't approved launch work. Delete/edit/auth/invite ideas in that old file must be checked against existing features before creating tasks.
 
@@ -333,3 +335,17 @@ Thirty-two handler catch paths and one invite-provider warning reproduce raw syn
 PR #79/d6ad7f1c merged98f4132f. Primary Production dpl_F65yxwCvh5dPtLMFE6rc8Q7Lf8LG Ready at that exact commit, www.song-room.live alias verified. All 425 Node tests and TypeScript pass; focused lint zero errors/four existing warnings. Four PR checks green; browser30/skip10. Exact-head Preview dpl_ciG3gs77gCS8JGB41uENyD4BiCYG and Production each pass63 signed-out method checks plus unchanged public song/playlist/comments, listen/embed pages, artwork200 and signed audio307/range206. Production bounded unfiltered scan50 records/zero error-fatal. Synthetic provider-error acceptance is local/fake only; no actual email or deliberately secret-bearing hosted request.
 
 No migration or external setup remains. Roll back the application to compatible dpl_FUhtAgwo21ncnEmT3TafH3mjtCA9/ed5329c2 if a verified regression requires it; retain account permissions and Secret types. B33 complete, broader S2-S5 still open. No user action required.
+
+
+## B34 membership boundary candidate, 3 November 2026
+
+Rolled-back synthetic probes confirm owner/admin direct INSERT can add an owner without invitation and direct DELETE can remove the existing owner in staging and Production. This bypasses the canonical API's owner-only/self/owner-removal guards. Baseline21, candidate23 and rollback21 checks pass in each database. Zero synthetic workspaces remain and original hosted grants are unchanged. The candidate revokes only client membership INSERT/UPDATE/DELETE, preserving reads/RLS, server grants and data. Permanent installation requires security-boundary approval; no claim of staging/Production completion or hosted invitation/removal acceptance. S2/S3 and L5 stay In progress.
+
+
+## B34 approved installation, 3 November 2026
+
+User approved B34. Reviewed source cbe475aa, PR #80, four green checks. Migration source20261103154727 maps to staging ledger20261103161024 and Production20261103161305. Installed23, initial-workspace14 and canonical-invite4 SQL checks pass in both environments; synthetic transaction fixtures roll back. Existing staging owner bootstrap/settings/member-list reads pass on the existing compatible host. Disposable staging workspace owner removed its only collaborator through the app; Saved state “Member removed”, database confirms one owner remains. Original COris workspace restored visibly; guarded cleanup removed the disposable account/membership. Zero probe accounts/invites remain. No real email, payment, Storage or existing membership mutation.
+
+Seven safe live checks pass: login200, bootstrap/members/workspaces GET401, member DELETE401, create/invite POST401. Production owner write was not exercised; staged app removal and actual installed database/RPC checks provide scoped acceptance. No application source changed or new deployment is required for enforcement. Both migrations are installed; repository merge/automated build remains to record. Rollback companion restores the old grants and reopens B34; app rollback alone doesn't undo permissions. L5/S2/S3 remain open.
+
+B34 final verification: both security advisors report zero ERROR/WARN findings and nine existing server-only INFO notices. Client membership INSERT/UPDATE/DELETE denied, member reads retained and zero fixtures verified in both environments. B34 is Production complete for this database permission repair; no application deployment is needed for enforcement. PR #80 carries the migration, rollback and evidence.

@@ -9779,3 +9779,21 @@ Verified locally: 425 tests pass including original synthetic leak regressions, 
 
 
 B33 Production complete, 3 November: PR #79/d6ad7f1c merged98f4132f, primary dpl_F65yxwCvh5dPtLMFE6rc8Q7Lf8LG Ready/live www alias. 425 Node tests/TypeScript and focused lint zero errors/four existing warnings; four CI checks/browser30/skip10 pass. Preview and Production63 signed-out methods each pass; public JSON unchanged, pages/artwork/audio redirect and range checks pass. Bounded Production scan50 records/zero error-fatal. No real email, migration/configuration/dependency or billing change. Fake-provider leak regressions tested locally, not injected into hosted providers. App rollback to prior ed5329c2 retains existing account permissions and Secret types. Remaining validation/function/membership review stays open; no user action.
+
+
+## 2026-11-03: B34 membership boundary review candidate
+
+Goal: close L5/S2/S3 direct membership mutations that bypass owner-only server controls. Confirmed owner/admin role insertion and owner deletion in rolled-back synthetic fixtures in both environments.
+
+Changed files: LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, UPDATE_LOG.md, tests/api-access-boundaries.test.mjs, scripts/compose-membership-write-boundary-probe.mjs, supabase/tests/membership_write_boundary_probe.sql, supabase/migrations/20261103154727_restrict_client_membership_writes.sql and matching supabase/rollback SQL.
+
+Candidate removes only client membership mutation grants; preserves canonical server writes, reads, policies and data. SQL baseline21/candidate23/rollback21 pass in both environments; seven actual-handler cases cover owner-only removal and scope guards. No persistent database change; security-boundary approval and installed/hosted acceptance remain.
+
+Local verification: all 433 Node tests pass, focused ESLint passes and git diff whitespace checks pass. No application TypeScript logic changed; no build or new hosted browser journey claimed.
+
+
+### B34 approved installation checkpoint, 3 November 2026
+
+User approved B34. Migration source20261103154727 installed on staging ledger20261103161024, Production20261103161305. Installed23, bootstrap14 and canonical-invite4 checks pass in each environment. Added supabase/tests/membership_server_journey_probe.sql for actual invite acceptance/replay/mismatch and server removal regression checks. All synthetic transaction rows roll back. Existing signed-in staging settings/member reads pass; disposable fixture member removed through owner UI, owner retained; original workspace restored and guarded fixture cleanup confirmed. Zero fixture accounts/invites remain. No provider email, payment, Storage or real membership mutation. Seven Production login/signed-out HTTP checks pass. PR #80/cbe475aa had four green checks, 433 local tests and focused lint pass. App source unchanged; no deploy needed to enforce grants. Repository closeout pending.
+
+Production owner writes and new provider-delivered invitation journeys weren't exercised. Companion rollback restores observed client grants, reopening the gap; application rollback cannot restore grants. Broader S2/S3 and L5 remain In progress.

@@ -101,6 +101,45 @@ function routeHarness(route, { identity = null, user = null, tables = {}, storag
 const session = role => ({ identity: { workspaceId: 'workspace-a', userId: `user-${role}`, membershipRole: role, displayName: 'Test Owner', workspaceName: 'Test Workspace' }, bootstrap: { workspace: { plan: 'free' } } });
 const song = { id: 'song-a', account_id: 'workspace-a', title: 'Allowed', image_url: null };
 const foreignSong = { id: 'song-b', account_id: 'workspace-b', title: 'PRIVATE-TITLE', image_url: 'PRIVATE-ARTWORK' };
+
+test('membership removal preserves owner-only canonical workspace boundary', async t => {
+  for (const role of [null, 'admin', 'member']) {
+    await t.test(`${role ?? 'signed out'} cannot remove members`, async () => {
+      const calls = [];
+      const { handler } = routeHarness('app/api/workspace/members/[userId]/route.ts', {
+        identity: role ? session(role) : null,
+        overrides: { '@/lib/workspaceMembers': {
+          findWorkspaceMembershipByUserId: async (...args) => { calls.push(args); },
+          deleteWorkspaceMembershipByUserId: async (...args) => { calls.push(args); },
+        } },
+      });
+      const response = await handler.DELETE(new Request('https://test.invalid'), { params: Promise.resolve({ userId: 'target' }) });
+      assert.equal(response.status, role ? 403 : 401);
+      assert.deepEqual(calls, []);
+    });
+  }
+  for (const [target, membership, status] of [
+    ['user-owner', null, 400],
+    ['other-owner', { role: 'owner' }, 400],
+    ['foreign-user', null, 404],
+    ['collaborator', { role: 'member' }, 200],
+  ]) {
+    await t.test(`owner removal of ${target} returns ${status}`, async () => {
+      const reads = [], writes = [];
+      const { handler } = routeHarness('app/api/workspace/members/[userId]/route.ts', {
+        identity: session('owner'),
+        overrides: { '@/lib/workspaceMembers': {
+          findWorkspaceMembershipByUserId: async (...args) => { reads.push(args); return membership; },
+          deleteWorkspaceMembershipByUserId: async (...args) => { writes.push(args); },
+        } },
+      });
+      const response = await handler.DELETE(new Request('https://test.invalid'), { params: Promise.resolve({ userId: target }) });
+      assert.equal(response.status, status);
+      assert.deepEqual(reads, target === 'user-owner' ? [] : [['workspace-a', target]]);
+      assert.deepEqual(writes, status === 200 ? [['workspace-a', target]] : []);
+    });
+  }
+});
 const getRequest = () => {
   const request = new Request('https://staging.invalid/api/test');
   request.nextUrl = new URL(request.url);

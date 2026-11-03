@@ -312,3 +312,21 @@ B32 Production release, 3 November: user owner-name save accepted; stored fixtur
 
 
 B33 Production complete, 3 November: PR #79/d6ad7f1c merged98f4132f, primary dpl_F65yxwCvh5dPtLMFE6rc8Q7Lf8LG Ready/live www alias. 425 Node tests/TypeScript and focused lint zero errors/four existing warnings; four CI checks/browser30/skip10 pass. Preview and Production63 signed-out methods each pass; public JSON unchanged, pages/artwork/audio redirect and range checks pass. Bounded Production scan50 records/zero error-fatal. No real email, migration/configuration/dependency or billing change. Fake-provider leak regressions tested locally, not injected into hosted providers. App rollback to prior ed5329c2 retains existing account permissions and Secret types. Remaining validation/function/membership review stays open; no user action.
+
+
+## Membership mutation review: B34 candidate, 3 November 2026
+
+Read-only function inventory finds all public mutation RPCs deny anon/authenticated EXECUTE. Public lookup helpers remain invoker functions with fixed paths; private membership/role helpers use current auth.uid(), an empty search_path and bounded definer lookups. This is metadata evidence, not full body/route closeout.
+
+Membership policies are identical in both environments. Direct owner/admin membership INSERT accepts role=owner, and DELETE accepts the existing owner row. Rolled-back baseline21 reproduces both without touching real memberships. This bypasses owner-only invitation/removal, collaborator quotas and self/owner-removal guards. No browser account_members writer exists in current TS/TSX source; canonical writes use supabaseServer or service-only RPCs.
+
+Prepared migration/rollback, guarded composer and synthetic SQL probe. Candidate23 blocks client owner/admin/member/outsider INSERT/UPDATE/DELETE; preserves scoped membership reads, unrelated table grants, membership RLS and service INSERT/UPDATE/DELETE plus service-only provisioning/invite EXECUTE. Baseline21/candidate23/rollback21 pass on staging ivifkrtupqizyqqsxdty and Production hxtsuhmqrufcdplidtov. Every run ends ROLLBACK. Readback confirms zero matching fixture accounts and unchanged original grants. No Auth user, provider email, payment, Storage operation or persistent DB change.
+
+Permanent staging installation needs approval under AGENTS.md security-boundary rules. Then run installed mode and real isolated canonical journeys before Production installation. Rollback companion restores observed grants, reopening the defect; app rollback alone is insufficient. Further function bodies, hosted signed-in route roles, S4 and S5 remain open. See B34 backlog for execution order.
+
+
+### B34 approved installation checkpoint, 3 November 2026
+
+User approved B34. Migration source20261103154727 installed on staging ledger20261103161024, Production20261103161305. Installed23, bootstrap14 and canonical-invite4 checks pass in each environment. Added supabase/tests/membership_server_journey_probe.sql for actual invite acceptance/replay/mismatch and server removal regression checks. All synthetic transaction rows roll back. Existing signed-in staging settings/member reads pass; disposable fixture member removed through owner UI, owner retained; original workspace restored and guarded fixture cleanup confirmed. Zero fixture accounts/invites remain. No provider email, payment, Storage or real membership mutation. Seven Production login/signed-out HTTP checks pass. PR #80/cbe475aa had four green checks, 433 local tests and focused lint pass. App source unchanged; no deploy needed to enforce grants. Repository closeout pending.
+
+Production owner writes and new provider-delivered invitation journeys weren't exercised. Companion rollback restores observed client grants, reopening the gap; application rollback cannot restore grants. Broader S2/S3 and L5 remain In progress.
