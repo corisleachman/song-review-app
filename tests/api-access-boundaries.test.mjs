@@ -152,6 +152,67 @@ const jsonRequest = (body, method = 'POST') => {
 };
 const params = values => ({ params: Promise.resolve(values) });
 
+for (const role of ['owner', 'member']) {
+  const collaborationTables = {
+    songs: [song, foreignSong],
+    song_versions: [{ id: 'source-version', song_id: song.id }, { id: 'foreign-version', song_id: foreignSong.id }],
+    comment_threads: [{ id: 'source-thread', song_version_id: 'source-version' }, { id: 'foreign-thread', song_version_id: 'foreign-version' }],
+    comments: [{ id: 'source-comment', thread_id: 'source-thread' }, { id: 'foreign-comment', thread_id: 'foreign-thread' }],
+    actions: [{ id: 'action-a', account_id: 'workspace-a', song_id: song.id }],
+  };
+  test(`action create ${role} rejects another song's comment before writing`, async () => {
+    const h = routeHarness('app/api/actions/create/route.ts', { identity: session(role), tables: collaborationTables });
+    const response = await h.handler.POST(jsonRequest({ songId: song.id, commentId: 'foreign-comment', description: 'Fixture' }));
+    assert.equal(response.status, 400);
+    assert.deepEqual(h.writes, []);
+  });
+  test(`action create ${role} rejects an unrelated assignee`, async () => {
+    const h = routeHarness('app/api/actions/create/route.ts', { identity: session(role), tables: collaborationTables });
+    const response = await h.handler.POST(jsonRequest({ songId: song.id, commentId: 'source-comment', description: 'Fixture', assignedToUserId: 'outsider' }));
+    assert.equal(response.status, 400);
+    assert.deepEqual(h.writes, []);
+  });
+  test(`action create ${role} stamps canonical workspace and creator`, async () => {
+    const identity = session(role); identity.identity.authorName = 'Actual author';
+    const h = routeHarness('app/api/actions/create/route.ts', { identity, tables: collaborationTables, mutationResult: { id: 'new-action' } });
+    const response = await h.handler.POST(jsonRequest({ songId: song.id, commentId: 'source-comment', description: 'Fixture', account_id: 'workspace-b', created_by_user_id: 'outsider', suggested_by: 'Forged', resolved_in_version_id: 'foreign-version' }));
+    assert.equal(response.status, 201);
+    const saved = h.writes[0].value[0];
+    assert.equal(saved.account_id, 'workspace-a');
+    assert.equal(saved.created_by_user_id, `user-${role}`);
+    assert.equal(saved.suggested_by, 'Actual author');
+    assert.equal(saved.resolved_in_version_id, null);
+  });
+  for (const body of [{ resolvedInVersionId: 'foreign-version' }, { assignedToUserId: 'outsider' }]) {
+    test(`action update ${role} rejects unrelated ${Object.keys(body)[0]}`, async () => {
+      const h = routeHarness('app/api/actions/[actionId]/route.ts', { identity: session(role), tables: collaborationTables });
+      const response = await h.handler.PATCH(jsonRequest(body, 'PATCH'), params({ actionId: 'action-a' }));
+      assert.equal(response.status, 400);
+      assert.deepEqual(h.writes, []);
+    });
+  }
+  test(`playlist add ${role} refuses another workspace's song`, async () => {
+    const h = routeHarness('app/api/playlists/[id]/songs/route.ts', {
+      identity: session(role), tables: { songs: [foreignSong], playlists: [{ id: 'playlist-a', account_id: 'workspace-a', title: 'Fixture' }] },
+    });
+    const response = await h.handler.POST(jsonRequest({ songId: foreignSong.id }), params({ id: 'playlist-a' }));
+    assert.equal(response.status, 404);
+    assert.deepEqual(h.writes, []);
+  });
+  test(`task update ${role} ignores injected parent and account fields`, async () => {
+    const h = routeHarness('app/api/tasks/[taskId]/route.ts', { identity: session(role), tables: { songs: [song], song_tasks: [{ id: 'task-a', song_id: song.id }] }, mutationResult: { id: 'task-a' } });
+    const response = await h.handler.PATCH(jsonRequest({ description: 'Updated fixture', account_id: 'workspace-b', song_id: foreignSong.id, created_by_user_id: 'outsider' }, 'PATCH'), params({ taskId: 'task-a' }));
+    assert.equal(response.status, 200);
+    assert.deepEqual(h.writes, [{ table: 'song_tasks', value: { description: 'Updated fixture' } }]);
+  });
+  test(`task update ${role} rejects a foreign song's task`, async () => {
+    const h = routeHarness('app/api/tasks/[taskId]/route.ts', { identity: session(role), tables: { songs: [foreignSong], song_tasks: [{ id: 'task-b', song_id: foreignSong.id }] } });
+    const response = await h.handler.PATCH(jsonRequest({ description: 'Forbidden fixture' }, 'PATCH'), params({ taskId: 'task-b' }));
+    assert.equal(response.status, 403);
+    assert.deepEqual(h.writes, []);
+  });
+}
+
 for (const role of ['owner', 'admin', 'member']) {
   test(`upload allocation ${role} rejects a foreign song before signing or writing`, async () => {
     const h = routeHarness('app/api/versions/create/route.ts', { identity: session(role), tables: { songs: [foreignSong] } });

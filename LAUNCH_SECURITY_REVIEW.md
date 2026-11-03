@@ -368,3 +368,21 @@ User approved B36. Source migration20261103171426 installed as staging2026110319
 Actual staging owner app acceptance passed: generated 2-second WAV creates disposable song, finalizes88244 bytes, with version size=Storage object size=account counter. Song rename and version-label edit read back correctly. Playback reached2 seconds/error null and ended paused. Owner app deletion removed song/version/Storage object and restored counter0; original empty workspace visible. No real content, membership, Auth user, email or payment mutation. Eleven safe Production login/signed-out/public checks pass, including song/listen/artwork200 and one-byte audio Range206. An initial missing-title probe correctly returned400; corrected valid-shaped unauthenticated request returned401. No fresh Production positive write or physical-device acceptance claimed.
 
 B36 Production complete in this scope; no app implementation/deployment needed for grant enforcement. Matching SQL rollback restores observed grants and reopens bypass; application rollback alone can't restore permissions. Broader L5/S2/S3 remain open.
+
+
+## B37 collaboration direct-write candidate, 3 November 2026
+
+Reviewed action source/comment/assignee/resolution checks, task parent/field whitelists and playlist-song same-account route checks. Canonical writes already use supabaseServer; no browser mutation writer found. Public-comment mutation is already blocked by RLS; no grant change proposed there or for playlist headers.
+
+Synthetic owner/admin/member raw writes reproduce action foreign linkage, task-account mismatch, playlist foreign-song linkage and private comment/thread attribution spoofing. RLS scopes to one parent/account, not the full related chain. This doesn't prove foreign media exposure: public/media routes retain separate relationship checks. Candidate denies client I/U/D on the five affected tables and keeps all existing server CRUD, reads, RLS and unrelated privileges. Rollback preserves B26's already-denied client INSERT on private comments/threads.
+
+Baseline81/candidate81/rollback81 pass both DBs. Actual server I/U/D included; sixteen real-handler/fake-I/O cases cover canonical source/assignment/creator/task/playlist restrictions. All 467 local tests/focused lint pass. Read-only six relationship mismatch counts all zero in both DBs (nonnull account contexts only); no data correction done. Zero probe accounts; original DML mask/policy hash15131089686223ffc3c9abdabc1f932d match afterward. No installed permission, real row, Auth, Storage, provider email or payment change. Permanent installation awaits approval. Broader S2/S3 and S5 remain open.
+
+
+### B37 approved Production installation, 3 November 2026
+
+User approved B37. Source20261103194256 installed staging20261103211609/Production20261103212159. Installed81 pass both DBs, preserving reads, server CRUD, RLS and B26 client comment INSERT denial. Security advisors zero ERROR/WARN, nine existing INFO. Candidatecb879571/PR #83 had four green checks; existing467 local tests/focused lint pass; no app implementation change.
+
+Actual staging owner flow passes: comment/reply, source-linked action create/resolve, task create/complete, playlist create/name and two-song add/reorder/remove. Stored creator/source/resolved version/status/order read back correctly. Workspace had only the actor; deployed env snapshot has no forced notification-recipient override. No provider delivery tested. Vercel connector environment read403 recovered via authorized read-only CLI; no config/security changes. Fixtures used no audio objects; missing-audio state was expected.
+
+Guarded cleanup removed fixture playlist and two songs plus dependent version/thread/comments/action/task. All fixture counts zero, original storage0; original empty COris owner dashboard restored visibly. No real content/membership/Auth/payment/credential mutation. Production16 safe signed-out/public checks pass. No Production positive write or email journey claimed. B37 Production complete in scope; SQL rollback restores original grants and reopens context/attribution gaps while preserving earlier comment INSERT restrictions. App rollback cannot undo SQL. L5/S2/S3 remain In progress.

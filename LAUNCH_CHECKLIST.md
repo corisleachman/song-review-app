@@ -34,7 +34,7 @@ Done means the named scope has recorded evidence, not that every future improvem
 
 Performance is the user's main MVP concern. B17-B19 are queued as the leading L6 workstream; capture does not interrupt the current L5 task. B06 six-month Free-to-Pro beta grants have confirmed product rules; implementation and expiry/billing boundary tests remain open.
 
-Next action: finish remaining S2/S3 route coverage and S5 validation. B36 is Production complete in its recorded scope. B35 is Production complete in its recorded scope. B34 is Production complete in its recorded scope. B28-B33 are complete in their recorded scope; S6 and beta-scoped S7 exit conditions are verified/accepted. No user step is pending. B17-B19 remain the leading L6 performance workstream after L5 exit conditions.
+Next action: finish remaining S2/S3 coverage and S5 validation. B37 is Production complete in its recorded scope. B36 is Production complete in its recorded scope. B35 is Production complete in its recorded scope. B34 is Production complete in its recorded scope. B28-B33 are complete in their recorded scope; S6 and beta-scoped S7 exit conditions are verified/accepted. No user step is pending. B17-B19 remain the leading L6 performance workstream after L5 exit conditions.
 
 ## L6 acceptance checklist
 
@@ -99,6 +99,8 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B35 | [Accepted invite restores removed membership](PRODUCT_BACKLOG.md#b35-accepted-invitation-recreates-removed-membership) | Production complete in recorded scope: installed11, membership23 and bootstrap14 pass both environments; actual staging accept/remove/replay rejected; fixture removed; PR #81 | Existing L5/S2/S3, P1 access revocation |
 
 | B36 | [Server-only song/version writes](PRODUCT_BACKLOG.md#b36-direct-songversion-writes-bypass-upload-and-accounting-controls) | Production complete in recorded scope: installed40 pass both; actual staging upload/finalize/play/rename/version edit/delete pass; object/counter cleanup verified; PR #82 | Existing L5/S2/S3, P1 upload/accounting |
+
+| B37 | [Server-only collaboration mutations](PRODUCT_BACKLOG.md#b37-direct-collaboration-writes-bypass-parent-and-author-checks) | Production complete in recorded scope: installed81 pass both; actual staging comment/reply/action/task/playlist lifecycle passes; fixtures removed; PR #83 | Existing L5/S2/S3, P1 context/attribution |
 
 Exploratory ideas in ROADMAP.md (typing indicators, pinned comments, comparison view, waveform regions, exports, Slack, native mobile app, multitrack and video) remain unscheduled ideas. They aren't approved launch work. Delete/edit/auth/invite ideas in that old file must be checked against existing features before creating tasks.
 
@@ -383,3 +385,19 @@ User approved B36. Reviewed source6d94da6c/PR #82 had four green checks. Migrati
 Actual signed-in staging owner flow on the existing compatible host: created a disposable song from generated 2-second WAV, upload finalized with size88244, database bytes=Storage object bytes=account counter88244. Song renamed and version label changed through app; readback matches. Playback reached2/2 seconds, no media error, paused at end. Owner deleted only this fixture through app; zero song/version/object rows remain and original workspace counter returned0. Dashboard visibly restored to original empty workspace. No real song/version, membership, Auth user, email, payment or provider configuration changed.
 
 Eleven safe Production login/signed-out/public checks pass, including public song projection, listen page, artwork200 and one-byte audio Range206. Initial missing-title creation probe returned correct validation400; valid-shaped signed-out request returned401. No Production upload/edit/delete or fresh physical-device test. Installed database checks and staged signed-in acceptance provide scoped evidence. No application source or deployment required for database enforcement. B36 Production complete; PR #82 carries source/evidence. Rollback companion restores old grants/reopens bypass; app rollback alone cannot undo grants. L5/S2/S3 remain In progress.
+
+
+## B37 collaboration boundary candidate, 3 November 2026
+
+Rolled-back probes reproduce action links to foreign song/comment/version/assignee, task-account mismatch, foreign songs in own playlists, and comment/thread author spoofing through direct writes. Five affected tables: actions, song_tasks, playlist_songs, comments and comment_threads. Candidate denies client mutations while preserving reads, RLS and actual server CRUD; earlier private-comment INSERT denial remains intact, including rollback. Playlist headers/public comments remain unchanged.
+
+Baseline81/candidate81/rollback81 pass in staging/Production; all 467 local Node tests and focused lint pass. Six checked existing relationship-mismatch counts are zero in each environment. Zero fixtures; original DML mask and matching policy hash15131089686223ffc3c9abdabc1f932d verified. No permanent grant, row, Auth, Storage, email or payment change. Sixteen actual-handler fake-I/O cases cover source/assignee/resolution context, canonical creator, task fields and foreign playlist entries. Permanent installation awaits approval. L5/S2/S3 remain In progress.
+
+
+## B37 approved Production installation, 3 November 2026
+
+User approved B37. Reviewed sourcecb879571/PR #83 had four green checks. Migration source20261103194256 installed as staging20261103211609 and Production20261103212159. Installed81 database checks pass each environment; all five tables retain authenticated reads and server CRUD, deny both client roles' DML; existing policies and earlier comment INSERT denial remain. Security advisors zero ERROR/WARN and nine existing INFO notices in each environment.
+
+Actual signed-in staging owner acceptance on the existing compatible host: comment and reply saved with canonical author; action created from source comment then resolved against the fixture version; task created and completed; playlist created/named, two disposable songs added, actual order swapped and read back, both entries removed through app. A single-owner workspace plus the deployed environment snapshot's absent EMAIL_NOTIFICATIONS_FORCE_TO means no notification recipients; no provider delivery was tested. Connector environment-list403 was resolved through read-only CLI inspection; no configuration or permissions were broadened.
+
+Guarded SQL cleanup removed only the disposable playlist and two songs, cascading the fixture version/thread/two comments/action/task. Readback: zero fixture songs/versions/threads/comments/actions/tasks/playlist/entries; original storage counter0, no Storage objects created. Original COris owner dashboard visibly restored empty. No real content, membership, Auth, billing or credential mutation. Sixteen safe Production login/signed-out/public checks pass, including public song/playlist/listen200. No fresh Production signed-in writes or email-delivery acceptance. No application source/deployment needed for database enforcement. B37 Production complete; PR #83 carries migration/evidence. Rollback restores observed collaboration grants, preserving B26 private comment INSERT denial, but reopens context/attribution bypasses. App rollback alone can't restore grants. Broader L5/S2/S3 remain In progress.
