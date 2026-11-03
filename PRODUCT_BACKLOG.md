@@ -615,10 +615,13 @@ B32 Production complete, 3 November: user Saved accepted and exact database name
 
 ## B33. Safe unexpected-error responses
 
-- Status: Local candidate, 3 November; 425 tests pass. Existing L5/S5 review.
+- Status: Production complete via PR #79/98f4132f, 3 November; local, CI and hosted checks pass. Existing L5/S5 review.
 - Confirmed behaviour: Thirty-two handler catch paths echo raw exceptions and one invite-provider warning echoes provider rejection text. Synthetic private sentinel failures reproduce these paths; no real credential exposure or compromise is claimed.
 - Intended outcome: Unexpected failures return existing fixed, useful fallback messages. Keep diagnostic codes/status through B31 safeErrorDetails without returning provider internals.
 - Acceptance: Error objects, plain provider objects and thrown strings never reach client messages. Preserve existing HTTP statuses, public invite state=invalid shape, authentication/validation, success paths and data writes. Rejected email retains the created invite, emailSent=false and manual-copy guidance; no duplicate send. Tests use fake providers only. Require CI/Preview and Production smoke checks before completion.
 - Dependencies: Application-only change across 26 route files and regression tests; no migration, environment, provider, plan, auth or dependency changes. Private Stripe webhook ledger diagnostics are outside client-response scope and remain unchanged. App rollback can restore prior source; retain existing database permission repairs and Secret classifications.
 - Decisions needed: None for scoped fallback messages. Broader validation and cross-workspace review remain open; this item does not finish L5.
 - Evidence: 425 Node tests, TypeScript and focused lint pass (zero errors/four existing warnings); original synthetic response/warning regressions reproduced before repair. No hosted deliberately secret-bearing requests or real notifications.
+
+
+B33 Production complete, 3 November: PR #79/d6ad7f1c merged98f4132f, primary dpl_F65yxwCvh5dPtLMFE6rc8Q7Lf8LG Ready/live www alias. 425 Node tests/TypeScript and focused lint zero errors/four existing warnings; four CI checks/browser30/skip10 pass. Preview and Production63 signed-out methods each pass; public JSON unchanged, pages/artwork/audio redirect and range checks pass. Bounded Production scan50 records/zero error-fatal. No real email, migration/configuration/dependency or billing change. Fake-provider leak regressions tested locally, not injected into hosted providers. App rollback to prior ed5329c2 retains existing account permissions and Secret types. Remaining validation/function/membership review stays open; no user action.
