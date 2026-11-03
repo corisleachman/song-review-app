@@ -34,7 +34,7 @@ Done means the named scope has recorded evidence, not that every future improvem
 
 Performance is the user's main MVP concern. B17-B19 are queued as the leading L6 workstream; capture does not interrupt the current L5 task. B06 six-month Free-to-Pro beta grants have confirmed product rules; implementation and expiry/billing boundary tests remain open.
 
-Next action: finish remaining S2/S3 function bodies and signed-in route boundaries, then S5 validation. B35 is Production complete in its recorded scope. B34 is Production complete in its recorded scope. B28-B33 are complete in their recorded scope; S6 and beta-scoped S7 exit conditions are verified/accepted. No user step is pending. B17-B19 remain the leading L6 performance workstream after L5 exit conditions.
+Next action: finish remaining S2/S3 route coverage and S5 validation. B36 is Production complete in its recorded scope. B35 is Production complete in its recorded scope. B34 is Production complete in its recorded scope. B28-B33 are complete in their recorded scope; S6 and beta-scoped S7 exit conditions are verified/accepted. No user step is pending. B17-B19 remain the leading L6 performance workstream after L5 exit conditions.
 
 ## L6 acceptance checklist
 
@@ -97,6 +97,8 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B34 | [Server-only membership writes](PRODUCT_BACKLOG.md#b34-direct-client-membership-writes-bypass-owner-controls) | Production installed/verified: installed23, bootstrap14 and invite4 checks pass in each environment; staging owner removal accepted; fixture removed; [PR #80](https://github.com/corisleachman/song-review-app/pull/80) | Existing L5/S2/S3, P1; remaining broader coverage open |
 
 | B35 | [Accepted invite restores removed membership](PRODUCT_BACKLOG.md#b35-accepted-invitation-recreates-removed-membership) | Production complete in recorded scope: installed11, membership23 and bootstrap14 pass both environments; actual staging accept/remove/replay rejected; fixture removed; PR #81 | Existing L5/S2/S3, P1 access revocation |
+
+| B36 | [Server-only song/version writes](PRODUCT_BACKLOG.md#b36-direct-songversion-writes-bypass-upload-and-accounting-controls) | Production complete in recorded scope: installed40 pass both; actual staging upload/finalize/play/rename/version edit/delete pass; object/counter cleanup verified; PR #82 | Existing L5/S2/S3, P1 upload/accounting |
 
 Exploratory ideas in ROADMAP.md (typing indicators, pinned comments, comparison view, waveform regions, exports, Slack, native mobile app, multitrack and video) remain unscheduled ideas. They aren't approved launch work. Delete/edit/auth/invite ideas in that old file must be checked against existing features before creating tasks.
 
@@ -365,3 +367,19 @@ User approved B35. Reviewed source0828e58b/PR #81 had four green checks. Migrati
 Actual staging browser acceptance on existing compatible host: two pending copies of a disposable invite were loaded; first acceptance created one member and joined the synthetic workspace. Guarded SQL removed only that test membership. The second, stale page's Accept POST was rejected with “This invite has already been accepted.” Readback confirms only owner remains. Refresh restored original COris owner dashboard; guarded cleanup removed fixture invitation/account/owner link and verified zero fixture accounts. No email, payment, Storage, Auth creation or real membership mutation.
 
 Five safe Production HTTP checks pass; security advisors zero ERROR/WARN and nine existing INFO notices in each environment. Production positive user journeys weren't repeated; installed SQL and staging signed-in acceptance provide scoped evidence. No application code changed or deployment is required for enforcement. B35 Production complete; PR #81 contains repository source/evidence. Rollback companion restores original function and reopens removed-member rejoin; app rollback cannot undo the SQL. L5/S2/S3 remain In progress.
+
+
+## B36 upload/accounting boundary candidate, 3 November 2026
+
+Direct client song/version writes bypass canonical mutation routes: owner/admin/member can insert finalized version rows or rewrite upload fields; owner/admin direct song/version deletion leaves account stored-byte totals unchanged. Admin deletion also bypasses the owner-only API gate. Synthetic baseline40/candidate40/rollback40 pass in both databases. Canonical allocation/finalize/delete RPCs reject foreign workspace IDs, keep pending allocations uncounted, finalize bytes once and release finalized bytes on delete. Candidate preserves authenticated reads, all RLS, service grants and unrelated privileges, while denying client INSERT/UPDATE/DELETE on songs/song_versions. No current browser song/version writer found; canonical API/RPC writes already exist.
+
+Fourteen added real-handler/fake-I/O cases cover foreign allocation/finalization/cancel denial before Storage, version-metadata field whitelist and owner-only delete. All 451 Node tests and focused lint pass. Zero fixtures and original grants/policy hashes read back. No installed migration, Storage object, Auth user, email, payment or real content mutation. Await approval for permanent staging installation. L5/S2/S3 remain In progress.
+
+
+## B36 approved Production installation, 3 November 2026
+
+User approved B36. Reviewed source6d94da6c/PR #82 had four green checks. Migration source20261103171426 installed as staging20261103191138 and Production20261103191415. Installed40 database checks pass in each environment; authenticated song/version reads remain, client mutation grants denied, policies unchanged and zero rollback-probe fixtures. Both security advisors zero ERROR/WARN and nine existing INFO notices.
+
+Actual signed-in staging owner flow on the existing compatible host: created a disposable song from generated 2-second WAV, upload finalized with size88244, database bytes=Storage object bytes=account counter88244. Song renamed and version label changed through app; readback matches. Playback reached2/2 seconds, no media error, paused at end. Owner deleted only this fixture through app; zero song/version/object rows remain and original workspace counter returned0. Dashboard visibly restored to original empty workspace. No real song/version, membership, Auth user, email, payment or provider configuration changed.
+
+Eleven safe Production login/signed-out/public checks pass, including public song projection, listen page, artwork200 and one-byte audio Range206. Initial missing-title creation probe returned correct validation400; valid-shaped signed-out request returned401. No Production upload/edit/delete or fresh physical-device test. Installed database checks and staged signed-in acceptance provide scoped evidence. No application source or deployment required for database enforcement. B36 Production complete; PR #82 carries source/evidence. Rollback companion restores old grants/reopens bypass; app rollback alone cannot undo grants. L5/S2/S3 remain In progress.

@@ -9815,3 +9815,21 @@ User approved B35. Reviewed0828e58b/PR #81 passed four checks. Source migration2
 Actual staging accept/remove/stale-accept flow passed: first invitation accepted, one disposable member created; guarded SQL removed only that synthetic membership; second pending browser copy's POST returned existing already-accepted error and did not restore membership. Only owner remained. Refresh restored original COris owner dashboard. Guarded cleanup deleted the one fixture invite, owner link and account; zero matching accounts remain. No provider emails, payments, Storage, new Auth users or real membership changes. Five Production login/signed-out HTTP checks pass. Both security advisors zero ERROR/WARN with nine existing INFO notices. Production signed-in positive journey wasn't repeated.
 
 B35 Production complete in this scope. No app deployment needed for database enforcement. Rollback matching SQL restores original function and reopens the gap; app rollback alone can't undo function changes. Broader L5/S2/S3 remain open.
+
+
+## 2026-11-03: B36 song/version write boundary candidate
+
+Goal: keep song/version mutations behind existing canonical upload, owner and accounting controls. Confirmed direct client writes bypass these controls in rolled-back fixtures in both environments. Prepared a narrow song/version client-I/U/D revoke with matching rollback, preserving member reads, RLS, server and unrelated grants/data. No hosted permission or application implementation change.
+
+Changed files: LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, LAUNCH_API_ACCESS_MATRIX.md, UPDATE_LOG.md, tests/api-access-boundaries.test.mjs, scripts/compose-song-version-write-boundary-probe.mjs, supabase/tests/song_version_write_boundary_probe.sql, supabase/migrations/20261103171426_restrict_client_song_version_writes.sql and matching supabase/rollback SQL.
+
+Verification: baseline40/candidate40/rollback40 pass both DBs; real RPC workspace/accounting checks included. Fourteen new actual-handler boundary/whitelist cases; all 451 Node tests and focused lint pass. Zero fixtures and unchanged original grants/policies verified. No Storage/email/payment/Auth/real content mutations. Permanent installation requires security-boundary approval and staging canonical upload/edit/delete acceptance; rollback reopens the bypass.
+
+
+### B36 approved Production installation, 3 November 2026
+
+User approved B36. Source migration20261103171426 installed as staging20261103191138 and Production20261103191415. Installed40 pass each environment; reads, policies and server writes preserved; client mutation denied. Security advisors zero ERROR/WARN, nine existing INFO. Reviewed6d94da6c/PR #82 passed four checks; existing451 local tests/focused lint pass.
+
+Actual staging owner app acceptance passed: generated 2-second WAV creates disposable song, finalizes88244 bytes, with version size=Storage object size=account counter. Song rename and version-label edit read back correctly. Playback reached2 seconds/error null and ended paused. Owner app deletion removed song/version/Storage object and restored counter0; original empty workspace visible. No real content, membership, Auth user, email or payment mutation. Eleven safe Production login/signed-out/public checks pass, including song/listen/artwork200 and one-byte audio Range206. An initial missing-title probe correctly returned400; corrected valid-shaped unauthenticated request returned401. No fresh Production positive write or physical-device acceptance claimed.
+
+B36 Production complete in this scope; no app implementation/deployment needed for grant enforcement. Matching SQL rollback restores observed grants and reopens bypass; application rollback alone can't restore permissions. Broader L5/S2/S3 remain open.

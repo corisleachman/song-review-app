@@ -350,3 +350,21 @@ User approved B35. Reviewed0828e58b/PR #81 passed four checks. Source migration2
 Actual staging accept/remove/stale-accept flow passed: first invitation accepted, one disposable member created; guarded SQL removed only that synthetic membership; second pending browser copy's POST returned existing already-accepted error and did not restore membership. Only owner remained. Refresh restored original COris owner dashboard. Guarded cleanup deleted the one fixture invite, owner link and account; zero matching accounts remain. No provider emails, payments, Storage, new Auth users or real membership changes. Five Production login/signed-out HTTP checks pass. Both security advisors zero ERROR/WARN with nine existing INFO notices. Production signed-in positive journey wasn't repeated.
 
 B35 Production complete in this scope. No app deployment needed for database enforcement. Rollback matching SQL restores original function and reopens the gap; app rollback alone can't undo function changes. Broader L5/S2/S3 remain open.
+
+
+## B36 upload and song-deletion boundary review, 3 November 2026
+
+Reviewed allocation/finalization/deletion RPCs and canonical routes. Routes enforce active-workspace match before Storage or mutations; song DELETE is owner-only; version PATCH whitelists label/notes. Actual DB RPCs reject cross-workspace song/version IDs. Media delivery already refuses paths outside the parent song prefix; no foreign audio leak is claimed.
+
+Found direct-table bypass: synthetic role probes allow client song/version INSERT/UPDATE and owner/admin DELETE, bypassing API fields, finalization and byte accounting. Members can insert metadata as finalized and alter file size/finalized status. Direct deletions leave storage_bytes_used unchanged. Admin deletion contradicts the owner-only server route. Both environments have matching policy fingerprint ca4532c9ffc86d8818b45227bb44ce5b and observed client I/U/D grants. No active client song/version mutation writer found in source; canonical server writes exist.
+
+B36 candidate denies only client I/U/D on both tables, preserving reads, RLS, server and unrelated grants. Baseline40/candidate40/rollback40 pass both databases. Service RPC checks include foreign-workspace refusal, pending allocation, exactly-once finalization and release-on-delete. Fourteen real-handler fake-I/O cases cover workspace/owner boundaries and metadata whitelist. All 451 local tests/focused lint pass. Zero fixtures and unchanged original policy/grant readback verified. No actual Storage file, email, payment, Auth identity or real song/version mutation. Permanent permission change awaits approval; installed/hosted acceptance remains pending. Broader S2/S3 remain open.
+
+
+### B36 approved Production installation, 3 November 2026
+
+User approved B36. Source migration20261103171426 installed as staging20261103191138 and Production20261103191415. Installed40 pass each environment; reads, policies and server writes preserved; client mutation denied. Security advisors zero ERROR/WARN, nine existing INFO. Reviewed6d94da6c/PR #82 passed four checks; existing451 local tests/focused lint pass.
+
+Actual staging owner app acceptance passed: generated 2-second WAV creates disposable song, finalizes88244 bytes, with version size=Storage object size=account counter. Song rename and version-label edit read back correctly. Playback reached2 seconds/error null and ended paused. Owner app deletion removed song/version/Storage object and restored counter0; original empty workspace visible. No real content, membership, Auth user, email or payment mutation. Eleven safe Production login/signed-out/public checks pass, including song/listen/artwork200 and one-byte audio Range206. An initial missing-title probe correctly returned400; corrected valid-shaped unauthenticated request returned401. No fresh Production positive write or physical-device acceptance claimed.
+
+B36 Production complete in this scope; no app implementation/deployment needed for grant enforcement. Matching SQL rollback restores observed grants and reopens bypass; application rollback alone can't restore permissions. Broader L5/S2/S3 remain open.

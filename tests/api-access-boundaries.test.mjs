@@ -152,6 +152,44 @@ const jsonRequest = (body, method = 'POST') => {
 };
 const params = values => ({ params: Promise.resolve(values) });
 
+for (const role of ['owner', 'admin', 'member']) {
+  test(`upload allocation ${role} rejects a foreign song before signing or writing`, async () => {
+    const h = routeHarness('app/api/versions/create/route.ts', { identity: session(role), tables: { songs: [foreignSong] } });
+    const response = await h.handler.POST(jsonRequest({ songId: foreignSong.id, fileName: 'fixture.mp3', fileSize: 512, fileType: 'audio/mpeg' }));
+    assert.equal(response.status, 403);
+    assert.deepEqual(h.writes, []);
+    assert.deepEqual(h.reads, ['songs']);
+  });
+  for (const method of ['POST', 'DELETE']) {
+    test(`upload ${method} ${role} rejects foreign finalized versions before Storage access`, async () => {
+      const h = routeHarness('app/api/versions/[versionId]/finalize/route.ts', {
+        identity: session(role), tables: { songs: [foreignSong], song_versions: [{ id: 'foreign-version', song_id: foreignSong.id, file_path: 'PRIVATE-AUDIO', upload_finalized_at: '2026-11-01' }] },
+      });
+      const response = await h.handler[method](jsonRequest({}, method), params({ versionId: 'foreign-version' }));
+      assert.equal(response.status, 403);
+      assert.deepEqual(h.writes, []);
+      assert.doesNotMatch(await response.text(), /PRIVATE-AUDIO/);
+    });
+  }
+  test(`version metadata ${role} whitelists labels and notes while preserving server-owned fields`, async () => {
+    const version = { id: 'version-a', song_id: song.id, version_number: 1, file_name: 'fixture.mp3', label: 'New label', notes: 'New notes' };
+    const h = routeHarness('app/api/versions/[versionId]/route.ts', {
+      identity: session(role), tables: { songs: [song], song_versions: [version] }, mutationResult: version,
+    });
+    const response = await h.handler.PATCH(jsonRequest({ label: 'New label', notes: ' New notes ', file_path: 'INJECTED', file_size_bytes: 999, upload_finalized_at: null, song_id: foreignSong.id, account_id: 'workspace-b' }, 'PATCH'), params({ versionId: version.id }));
+    assert.equal(response.status, 200);
+    assert.deepEqual(h.writes, [{ table: 'song_versions', value: { label: 'New label', notes: 'New notes' } }]);
+  });
+}
+for (const role of ['admin', 'member']) {
+  test(`song deletion ${role} cannot bypass owner-only server path`, async () => {
+    const h = routeHarness('app/api/songs/[songId]/route.ts', { identity: session(role), tables: { songs: [song] } });
+    const response = await h.handler.DELETE(jsonRequest({}, 'DELETE'), params({ songId: song.id }));
+    assert.equal(response.status, 403);
+    assert.deepEqual(h.writes, []);
+  });
+}
+
 for (const result of ['accepted', 'already_accepted', 'already_used', 'expired']) {
   test(`invite acceptance ${result} respects canonical identity and only switches workspace on success`, async () => {
     const calls = [], workspaceReads = [], cookieWrites = [];
