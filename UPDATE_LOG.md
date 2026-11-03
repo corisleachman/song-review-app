@@ -9851,3 +9851,12 @@ User approved B37. Source20261103194256 installed staging20261103211609/Producti
 Actual staging owner flow passes: comment/reply, source-linked action create/resolve, task create/complete, playlist create/name and two-song add/reorder/remove. Stored creator/source/resolved version/status/order read back correctly. Workspace had only the actor; deployed env snapshot has no forced notification-recipient override. No provider delivery tested. Vercel connector environment read403 recovered via authorized read-only CLI; no config/security changes. Fixtures used no audio objects; missing-audio state was expected.
 
 Guarded cleanup removed fixture playlist and two songs plus dependent version/thread/comments/action/task. All fixture counts zero, original storage0; original empty COris owner dashboard restored visibly. No real content/membership/Auth/payment/credential mutation. Production16 safe signed-out/public checks pass. No Production positive write or email journey claimed. B37 Production complete in scope; SQL rollback restores original grants and reopens context/attribution gaps while preserving earlier comment INSERT restrictions. App rollback cannot undo SQL. L5/S2/S3 remain In progress.
+
+
+## 2026-11-03: remaining identity/profile review and B38 legacy billing candidate
+
+Goal: reconcile remaining account/profile/billing access and prevent client forgery of server-owned legacy billing records without changing actual plan/Stripe flows. Found legacy owner/admin writes on two empty, runtime-unused tables; candidate revokes only their client I/U/D with exact rollback. Profile/preferences, legacy theme workspace RLS and current Auth identity verification checks pass; no app implementation change.
+
+Changed files: LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, LAUNCH_API_ACCESS_MATRIX.md, UPDATE_LOG.md, tests/current-user-boundary.test.mjs, scripts/compose-remaining-account-access-probe.mjs, supabase/tests/remaining_account_access_probe.sql, supabase/migrations/20261103221242_restrict_client_legacy_billing_writes.sql and matching supabase/rollback SQL.
+
+Verification: baseline84/candidate84/rollback84 pass both DBs; four new real-helper identity cases; all471 Node tests and focused lint pass. Read-only full inventory25 RLS tables/no public views/no client-callable public definers; zero synthetic fixture rows and unchanged original grants/policies verified. No real account, Stripe, Auth API, email, Storage or payment changes. Approval required for permanent grant installation; S2/S3 stay In progress.

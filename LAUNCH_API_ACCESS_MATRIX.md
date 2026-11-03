@@ -213,3 +213,8 @@ Sixteen new actual-handler/fake-I/O owner/member cases: action creation rejects 
 
 
 B37 installed acceptance, 3 November: actual staging owner comment/reply, action create/resolve, task create/complete and playlist two-entry add/reorder/remove pass. Creator/source/version/status/order verified from stored fixture records. Cleanup all zero; original workspace restored. Installed81 role/grant/CRUD cases pass both DBs, Production16 safe signed-out/public checks pass. This covers the named flows; remaining hosted role/method coverage and S5 validation are not marked complete.
+
+
+## Remaining identity/profile/billing evidence, 3 November 2026
+
+Real getCurrentAuthenticatedUser helper/fake-SSR-I/O tests verify Auth id/email authority, deny metadata/cached-session authority and preserve verified refresh-cookie behaviour. Actual-role DB probes cover four-role own/foreign profiles/preferences, legacy-theme workspace RLS and legacy billing-record boundary. Baseline84/candidate84/rollback84 pass both DBs; B38 only changes the two unused legacy billing-table client write grants. Existing current billing/settings/referral handler scope tests remain unchanged. No fresh hosted provider/payment journey or whole S2 completion claimed.
