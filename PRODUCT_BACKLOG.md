@@ -570,10 +570,13 @@ B28 Production database release, 2 November: PR #74/6288e354 merged, 342 Node te
 
 ## B30. Credential Config-to-Secret classification
 
-- Status: Confirmed read-only metadata finding; approval requested in chat. No configuration change made. Existing L5/S6 work.
+- Status: Complete in approved classification scope, 3 November. Type-only edits, metadata read-back and rebuilt Production/Preview checks pass. Existing L5/S6 work.
 - Observed behaviour: Primary Vercel project's Production SUPABASE_SERVICE_ROLE_KEY and SHARED_PASSWORD use API type encrypted (readable Config), as does RESEND_API_KEY shared across Production/Preview/Development. Other primary credential entries, including Stripe credentials and auth/rate-limit salts, use sensitive (Secret). This is storage classification, not proof of outside access or compromise.
 - Intended outcome: Restrict future readback by converting only those existing entries to Secret, preserving current values/scopes and app operation. No credential rotation, deletion, scope expansion or provider change. Public keys remain public.
 - Acceptance: Approval before configuration mutation; verify type-only edit support, exact project/key/target, unchanged scopes, installed metadata and successful compatible deployment/public and signed-in service paths. Never print/decrypt/persist credential values. Stop on any need to replace/re-enter a value or change scope; don't silently create new secrets.
 - Dependencies: Vercel type-edit support and permission. Connector environment listing returns 403; authorised CLI metadata fallback succeeds. Do not broaden connector permissions. Type change affects future readback and is distinct from routine app deployment authority.
-- Decisions needed: User approval for these narrowly scoped type changes. Existing standing release approval covers subsequent tested deployment, not unrelated configuration changes.
+- Decisions needed: None for these three approved type changes. User approved on 3 November; credential rotation or scope changes remain outside this action.
 - Evidence: 38 variable entries inspected via metadata only. 483 tracked files show no private-key/Stripe-live/Resend/service-role-JWT pattern hits; source import walk finds no path from 43 client roots to 14 private-env modules across 209 script modules. Thirteen live script chunks on three public surfaces also show no credential-pattern matches. These are scoped checks, not a full history or secret-exposure audit. Server diagnostic error objects still need separate review.
+
+
+B30 completion, 3 November: all three entries now Secret with their original scopes; only type was submitted. No credential values decrypted, supplied, printed, rotated or persisted. Production dpl_FAvY4Fbm9Mdt28jZ6EZc9VXXLvBw/d3e505cd and Preview dpl_9ZSL6A7stxJtpEKKv7G1kjEi5AKp/d2238ac8 Ready; public projections/pages/media and twelve signed-out method probes pass in each. No real mail or valid legacy-password replay; bounded error/fatal scans empty. Retain Secret types during any app rollback. Full logging/monitoring review remains open.

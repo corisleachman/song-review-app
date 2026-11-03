@@ -9737,3 +9737,10 @@ The exact audit command exits zero locally with four reported low issues and zer
 
 
 S7 audit-gate release, 2 November: PR #76/9ee73d83 merged, exact audit command passes in GitHub CI 41539277781 (four low, zero moderate/high/critical); browser30/skip10 and all four PR checks pass. Primary dpl_8SrzygQCYuX6o1wcWo33hC6xSHjJ Ready/live; login/bootstrap/public-song probes pass. Only workflow/records changed; no package upgrade or scheduled work. Updated API matrix and current checklist with 63/63 hosted signed-out methods in both environments, preserving the remaining authenticated-role gap and browser restoration/B30 approval requests.
+
+
+## 2026-11-03: Approved credential classification and scoped staged roles
+
+Changed external configuration: type-only Config-to-Secret conversion of the three approved primary-project entries, preserving values/scopes; no code, schema, provider, credential rotation or permission expansion. Changed files: current checklist, product backlog, security review, API access matrix and this log. Goal: prevent future readback of existing credentials and resume recorded L5 role checks.
+
+Each metadata read-back passes; Production dpl_FAvY4Fbm9Mdt28jZ6EZc9VXXLvBw/d3e505cd and Preview dpl_9ZSL6A7stxJtpEKKv7G1kjEi5AKp/d2238ac8 Ready. Both environments pass public projections/pages/media and twelve signed-out method checks; bounded logs empty. No real email or positive legacy password replay. Scoped owner/member/unrelated-song Chrome checks pass on existing compatible staging; isolated fixture cleanup verified, original owner membership intact. Final browser restoration blocked by extension suspension/policy, awaiting active normal staging tab. Retain Secret classification during compatible app rollback; L5 remains open.
