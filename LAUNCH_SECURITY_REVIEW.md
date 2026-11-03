@@ -298,3 +298,14 @@ B32 staging checkpoint, 3 November: migration source20261103090300 installed as2
 
 
 B32 Production release, 3 November: user owner-name save accepted; stored fixture name/Free/null Stripe verified, fixture/member cleanup complete. Source20261103090300 installed as staging20261103091520/Production20261103094603;19 installed role cases in both DBs pass, with prior baseline16/candidate19/rollback16. Raw client account PATCH401/42501, zero-ID read200/empty. App signed-out/public/media and post-build login/bootstrap/song checks pass; Advisor zero errors/warnings, nine existing INFO. PR #78/b77a7b66 merged126825bf, primary dpl_BfL9iReAvUBWFemGQaXa9aFvT23W Ready/live;390 Node tests/lint/four exact-head checks pass. No account/plan/provider changes or outstanding user actions. SQL rollback restores old client account mutations and reopens the gap; app rollback alone doesn't undo it. Remaining S2-S5 review stays open.
+
+
+## B33. Safe unexpected-error responses
+
+- Status: Local candidate, 3 November; 425 tests pass. Existing L5/S5 review.
+- Confirmed behaviour: Thirty-two handler catch paths echo raw exceptions and one invite-provider warning echoes provider rejection text. Synthetic private sentinel failures reproduce these paths; no real credential exposure or compromise is claimed.
+- Intended outcome: Unexpected failures return existing fixed, useful fallback messages. Keep diagnostic codes/status through B31 safeErrorDetails without returning provider internals.
+- Acceptance: Error objects, plain provider objects and thrown strings never reach client messages. Preserve existing HTTP statuses, public invite state=invalid shape, authentication/validation, success paths and data writes. Rejected email retains the created invite, emailSent=false and manual-copy guidance; no duplicate send. Tests use fake providers only. Require CI/Preview and Production smoke checks before completion.
+- Dependencies: Application-only change across 26 route files and regression tests; no migration, environment, provider, plan, auth or dependency changes. Private Stripe webhook ledger diagnostics are outside client-response scope and remain unchanged. App rollback can restore prior source; retain existing database permission repairs and Secret classifications.
+- Decisions needed: None for scoped fallback messages. Broader validation and cross-workspace review remain open; this item does not finish L5.
+- Evidence: 425 Node tests, TypeScript and focused lint pass (zero errors/four existing warnings); original synthetic response/warning regressions reproduced before repair. No hosted deliberately secret-bearing requests or real notifications.

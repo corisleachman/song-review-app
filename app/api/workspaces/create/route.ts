@@ -9,11 +9,6 @@ import { listUserWorkspaces } from '@/lib/workspaces';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) return error.message;
-  return 'Could not create workspace.';
-}
-
 function getDefaultWorkspaceName(displayName: string | null | undefined, email: string | null | undefined) {
   const base = displayName?.trim() || email?.split('@')[0]?.trim() || 'My';
   return `${base}'s Workspace`;
@@ -116,6 +111,6 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (error) {
     console.error('Error creating workspace:', safeErrorDetails(error));
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    return NextResponse.json({ error: 'Could not create workspace.' }, { status: 500 });
   }
 }

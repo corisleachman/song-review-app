@@ -128,7 +128,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ actionI
   } catch (error) {
     console.error('Error updating action:', safeErrorDetails(error));
     return NextResponse.json(
-      { error: String(error) },
+      { error: "Could not update action." },
       { status: 500 }
     );
   }

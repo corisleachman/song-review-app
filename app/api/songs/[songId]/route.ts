@@ -10,21 +10,6 @@ export const revalidate = 0;
 
 const STORAGE_DELETE_BATCH_SIZE = 100;
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  if (error && typeof error === 'object') {
-    const maybeMessage = 'message' in error && typeof (error as { message?: unknown }).message === 'string'
-      ? (error as { message: string }).message
-      : null;
-    if (maybeMessage) return maybeMessage;
-  }
-
-  return 'Song request failed.';
-}
-
 function normalizeStorageObjectPath(value: string | null | undefined, bucket: string) {
   const trimmed = value?.trim() ?? '';
   if (!trimmed) return null;
@@ -103,7 +88,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ songId: s
     );
   } catch (error) {
     console.error('Error fetching song:', safeErrorDetails(error));
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    return NextResponse.json({ error: 'Song request failed.' }, { status: 500 });
   }
 }
 
@@ -157,7 +142,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ songId:
     return NextResponse.json({ song: data }, { status: 200 });
   } catch (error) {
     console.error('Error updating song:', safeErrorDetails(error));
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    return NextResponse.json({ error: 'Song request failed.' }, { status: 500 });
   }
 }
 
@@ -233,6 +218,6 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ songId
     );
   } catch (error) {
     console.error('Error deleting song:', safeErrorDetails(error));
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    return NextResponse.json({ error: 'Song request failed.' }, { status: 500 });
   }
 }

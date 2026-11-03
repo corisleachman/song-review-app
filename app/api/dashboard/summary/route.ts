@@ -10,11 +10,6 @@ import { getVersionDisplayLabel } from '@/lib/versionDisplay';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) return error.message;
-  return 'Could not load dashboard summary.';
-}
-
 export async function GET() {
   try {
     noStore();
@@ -105,6 +100,6 @@ export async function GET() {
     );
   } catch (error) {
     console.error('Error loading dashboard summary:', safeErrorDetails(error));
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    return NextResponse.json({ error: 'Could not load dashboard summary.' }, { status: 500 });
   }
 }

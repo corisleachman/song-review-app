@@ -611,3 +611,14 @@ B32 staging handoff, 3 November: ledger20261103091520 installed,19 actual-role c
 
 
 B32 Production complete, 3 November: user Saved accepted and exact database name/Free/null Stripe state verified; acceptance fixture/membership removed. Production ledger20261103094603, source20261103090300; installed19 role cases pass both DBs, baseline16/candidate19/rollback16 preserved. PR #78/126825bf primary dpl_BfL9iReAvUBWFemGQaXa9aFvT23W Ready/live,390 tests/lint/four CI checks pass. Raw client REST read200/empty and PATCH401/42501; app/public/media/post-build checks pass, Advisor zero errors/warnings. No data/plan reset or real Stripe operation. Companion SQL is the permission rollback; compatible app rollback retains grant repair unless a verified regression requires restoration. Broader S2-S5 stays open, no user step remains.
+
+
+## B33. Safe unexpected-error responses
+
+- Status: Local candidate, 3 November; 425 tests pass. Existing L5/S5 review.
+- Confirmed behaviour: Thirty-two handler catch paths echo raw exceptions and one invite-provider warning echoes provider rejection text. Synthetic private sentinel failures reproduce these paths; no real credential exposure or compromise is claimed.
+- Intended outcome: Unexpected failures return existing fixed, useful fallback messages. Keep diagnostic codes/status through B31 safeErrorDetails without returning provider internals.
+- Acceptance: Error objects, plain provider objects and thrown strings never reach client messages. Preserve existing HTTP statuses, public invite state=invalid shape, authentication/validation, success paths and data writes. Rejected email retains the created invite, emailSent=false and manual-copy guidance; no duplicate send. Tests use fake providers only. Require CI/Preview and Production smoke checks before completion.
+- Dependencies: Application-only change across 26 route files and regression tests; no migration, environment, provider, plan, auth or dependency changes. Private Stripe webhook ledger diagnostics are outside client-response scope and remain unchanged. App rollback can restore prior source; retain existing database permission repairs and Secret classifications.
+- Decisions needed: None for scoped fallback messages. Broader validation and cross-workspace review remain open; this item does not finish L5.
+- Evidence: 425 Node tests, TypeScript and focused lint pass (zero errors/four existing warnings); original synthetic response/warning regressions reproduced before repair. No hosted deliberately secret-bearing requests or real notifications.

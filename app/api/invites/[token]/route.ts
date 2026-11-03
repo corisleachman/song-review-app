@@ -6,11 +6,6 @@ import { getPublicInviteByToken } from '@/lib/accountInvites';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) return error.message;
-  return 'Could not load invite.';
-}
-
 export async function GET(_request: Request, props: { params: Promise<{ token: string }> }) {
   const params = await props.params;
   try {
@@ -46,7 +41,7 @@ export async function GET(_request: Request, props: { params: Promise<{ token: s
   } catch (error) {
     console.error('Error loading invite:', safeErrorDetails(error));
     return NextResponse.json(
-      { error: getErrorMessage(error), state: 'invalid' },
+      { error: 'Could not load invite.', state: 'invalid' },
       { status: 500 }
     );
   }

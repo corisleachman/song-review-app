@@ -39,11 +39,6 @@ function normalizeWorkspaceName(input: unknown) {
   return trimmed.slice(0, 80);
 }
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) return error.message;
-  return 'Could not update workspace settings.';
-}
-
 function getFileExtension(file: File) {
   const extensions: Partial<Record<string, string>> = {
     'image/jpeg': 'jpg',
@@ -99,7 +94,7 @@ export async function PATCH(request: NextRequest) {
     );
   } catch (error) {
     console.error('Error updating workspace settings:', safeErrorDetails(error));
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    return NextResponse.json({ error: 'Could not update workspace settings.' }, { status: 500 });
   }
 }
 
@@ -178,6 +173,6 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error('Error uploading workspace image:', safeErrorDetails(error));
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    return NextResponse.json({ error: 'Could not update workspace settings.' }, { status: 500 });
   }
 }
