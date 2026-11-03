@@ -9790,3 +9790,10 @@ Changed files: LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.m
 Candidate removes only client membership mutation grants; preserves canonical server writes, reads, policies and data. SQL baseline21/candidate23/rollback21 pass in both environments; seven actual-handler cases cover owner-only removal and scope guards. No persistent database change; security-boundary approval and installed/hosted acceptance remain.
 
 Local verification: all 433 Node tests pass, focused ESLint passes and git diff whitespace checks pass. No application TypeScript logic changed; no build or new hosted browser journey claimed.
+
+
+### B34 approved installation checkpoint, 3 November 2026
+
+User approved B34. Migration source20261103154727 installed on staging ledger20261103161024, Production20261103161305. Installed23, bootstrap14 and canonical-invite4 checks pass in each environment. Added supabase/tests/membership_server_journey_probe.sql for actual invite acceptance/replay/mismatch and server removal regression checks. All synthetic transaction rows roll back. Existing signed-in staging settings/member reads pass; disposable fixture member removed through owner UI, owner retained; original workspace restored and guarded fixture cleanup confirmed. Zero fixture accounts/invites remain. No provider email, payment, Storage or real membership mutation. Seven Production login/signed-out HTTP checks pass. PR #80/cbe475aa had four green checks, 433 local tests and focused lint pass. App source unchanged; no deploy needed to enforce grants. Repository closeout pending.
+
+Production owner writes and new provider-delivered invitation journeys weren't exercised. Companion rollback restores observed client grants, reopening the gap; application rollback cannot restore grants. Broader S2/S3 and L5 remain In progress.

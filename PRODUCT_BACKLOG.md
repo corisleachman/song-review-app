@@ -637,3 +637,10 @@ B33 Production complete, 3 November: PR #79/d6ad7f1c merged98f4132f, primary dpl
 - Status: review candidate only. Permanent staging installation requires approval for the security boundary change. No app deployment installs this SQL.
 - After approval: install on staging, rerun installed23 checks, then verify existing-user bootstrap, member-list reads, isolated owner invite acceptance/removal and workspace creation through canonical server paths. No real email/payment or real membership mutation. Stop on any failed boundary or canonical flow; return environment, step and safe error details. Only then apply reviewed migration to Production and repeat installed checks plus safe live reads.
 - Rollback: companion SQL restores the observed six anon/authenticated table grants and reopens the gap. Use only for a verified regression. Application rollback alone doesn't restore database privileges; no data rollback is required.
+
+
+### B34 approved installation checkpoint, 3 November 2026
+
+User approved B34. Migration source20261103154727 installed on staging ledger20261103161024, Production20261103161305. Installed23, bootstrap14 and canonical-invite4 checks pass in each environment. Added supabase/tests/membership_server_journey_probe.sql for actual invite acceptance/replay/mismatch and server removal regression checks. All synthetic transaction rows roll back. Existing signed-in staging settings/member reads pass; disposable fixture member removed through owner UI, owner retained; original workspace restored and guarded fixture cleanup confirmed. Zero fixture accounts/invites remain. No provider email, payment, Storage or real membership mutation. Seven Production login/signed-out HTTP checks pass. PR #80/cbe475aa had four green checks, 433 local tests and focused lint pass. App source unchanged; no deploy needed to enforce grants. Repository closeout pending.
+
+Production owner writes and new provider-delivered invitation journeys weren't exercised. Companion rollback restores observed client grants, reopening the gap; application rollback cannot restore grants. Broader S2/S3 and L5 remain In progress.
