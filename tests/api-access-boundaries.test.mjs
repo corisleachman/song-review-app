@@ -970,3 +970,19 @@ test('actual billing handler keeps exception credentials out of both client resp
   assert.deepEqual(logs[0][1], { kind: 'exception', code: 'ECONNRESET', status: 503 });
   assert.doesNotMatch(JSON.stringify(logs), /PRIVATE-/); assert.deepEqual(h.writes, []);
 });
+
+for (const role of [null, 'member', 'owner']) {
+  test(`workspace settings ${role ?? 'signed-out'}: canonical owner-only write ignores plan and Stripe fields`, async () => {
+    const saved = { id: 'workspace-a', name: 'Updated fixture name', notification_mode: 'all_members' };
+    const h = routeHarness('app/api/workspace/settings/route.ts', { identity: role ? session(role) : null, mutationResult: saved });
+    const response = await h.handler.PATCH(jsonRequest({ name: saved.name, notification_mode: saved.notification_mode,
+      workspaceId: 'workspace-b', plan: 'studio', stripe_customer_id: 'FOREIGN-CUSTOMER',
+    }, 'PATCH'));
+    assert.equal(response.status, role === 'owner' ? 200 : role ? 403 : 401);
+    if (role === 'owner') {
+      assert.deepEqual((await response.json()).workspace, saved);
+      assert.deepEqual(h.writes, [{ table: 'accounts', value: { name: saved.name, notification_mode: saved.notification_mode } }]);
+      assert.deepEqual(h.queries[0].filters, [['id', 'workspace-a']]);
+    } else { assert.deepEqual(h.reads, []); assert.deepEqual(h.writes, []); }
+  });
+}
