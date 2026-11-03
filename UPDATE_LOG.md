@@ -9842,3 +9842,12 @@ Goal: keep related collaboration mutations behind canonical parent/workspace/ide
 Changed files: LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, LAUNCH_API_ACCESS_MATRIX.md, UPDATE_LOG.md, tests/api-access-boundaries.test.mjs, scripts/compose-collaboration-write-boundary-probe.mjs, supabase/tests/collaboration_write_boundary_probe.sql, supabase/migrations/20261103194256_restrict_client_collaboration_writes.sql and matching supabase/rollback SQL.
 
 Verification: baseline81/candidate81/rollback81 each DB, actual server CRUD and scoped reads included; sixteen new real-handler boundary cases, all 467 Node tests/focused lint pass. Six existing relationship mismatch counts zero; zero fixtures and original grants/policy hashes verified. No real content/provider email/Auth/payment/Storage change. Approval and installed/staged canonical acceptance remain.
+
+
+### B37 approved Production installation, 3 November 2026
+
+User approved B37. Source20261103194256 installed staging20261103211609/Production20261103212159. Installed81 pass both DBs, preserving reads, server CRUD, RLS and B26 client comment INSERT denial. Security advisors zero ERROR/WARN, nine existing INFO. Candidatecb879571/PR #83 had four green checks; existing467 local tests/focused lint pass; no app implementation change.
+
+Actual staging owner flow passes: comment/reply, source-linked action create/resolve, task create/complete, playlist create/name and two-song add/reorder/remove. Stored creator/source/resolved version/status/order read back correctly. Workspace had only the actor; deployed env snapshot has no forced notification-recipient override. No provider delivery tested. Vercel connector environment read403 recovered via authorized read-only CLI; no config/security changes. Fixtures used no audio objects; missing-audio state was expected.
+
+Guarded cleanup removed fixture playlist and two songs plus dependent version/thread/comments/action/task. All fixture counts zero, original storage0; original empty COris owner dashboard restored visibly. No real content/membership/Auth/payment/credential mutation. Production16 safe signed-out/public checks pass. No Production positive write or email journey claimed. B37 Production complete in scope; SQL rollback restores original grants and reopens context/attribution gaps while preserving earlier comment INSERT restrictions. App rollback cannot undo SQL. L5/S2/S3 remain In progress.

@@ -210,3 +210,6 @@ B36 installed acceptance, 3 November: actual staging canonical song creation/upl
 ## Collaboration local boundary slice, 3 November 2026
 
 Sixteen new actual-handler/fake-I/O owner/member cases: action creation rejects foreign source comment/assignee and stamps canonical creator/workspace; action PATCH rejects foreign resolved version/assignee; playlist add rejects another account's song; task PATCH ignores injected parent/account/creator and rejects foreign-song task. Raw SQL direct writes bypass these checks; B37 groups actions/tasks/playlist entries/private comments/threads into one permission candidate. Baseline81/candidate81/rollback81 pass both databases, no permanent changes. Remaining hosted signed-in matrix is not marked complete.
+
+
+B37 installed acceptance, 3 November: actual staging owner comment/reply, action create/resolve, task create/complete and playlist two-entry add/reorder/remove pass. Creator/source/version/status/order verified from stored fixture records. Cleanup all zero; original workspace restored. Installed81 role/grant/CRUD cases pass both DBs, Production16 safe signed-out/public checks pass. This covers the named flows; remaining hosted role/method coverage and S5 validation are not marked complete.
