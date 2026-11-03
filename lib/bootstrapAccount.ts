@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { attributeReferralOnSignup, REFERRAL_COOKIE_NAME } from '@/lib/referrals';
 import type { AuthenticatedUser } from '@/lib/currentUser';
@@ -302,7 +303,7 @@ export async function bootstrapAccountForUser(
         cookieStore.delete(REFERRAL_COOKIE_NAME);
       }
     } catch (refErr) {
-      console.error('[bootstrap] Referral attribution error (non-fatal):', refErr);
+      console.error('[bootstrap] Referral attribution error (non-fatal):', safeErrorDetails(refErr));
     }
   }
 

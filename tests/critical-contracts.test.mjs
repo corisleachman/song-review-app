@@ -151,7 +151,7 @@ test('CSP reporting endpoint bounds input and logs only sanitized fields', () =>
     'const MAX_REPORTS_PER_REQUEST = 10',
     "'application/csp-report'",
     "'application/reports+json'",
-    "return `${url.origin}${url.pathname}`.slice(0, 500)",
+    'return url.origin.slice(0, 500)',
     "console.warn('[csp-report]', JSON.stringify(report))",
     "'Cache-Control': 'no-store'",
   ], 'CSP report safeguards');

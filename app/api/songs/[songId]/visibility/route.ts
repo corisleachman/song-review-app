@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
@@ -70,7 +71,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ songId:
       { status: 200 }
     );
   } catch (error) {
-    console.error('[songs/visibility] error:', error);
+    console.error('[songs/visibility] error:', safeErrorDetails(error));
     return NextResponse.json({ error: 'Something went wrong' }, { status: 500 });
   }
 }

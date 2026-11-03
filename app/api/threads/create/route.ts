@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
@@ -156,7 +157,7 @@ export async function POST(req: NextRequest) {
       thread: enrichedThread,
     });
   } catch (error) {
-    console.error('Error creating thread:', error);
+    console.error('Error creating thread:', safeErrorDetails(error));
     return NextResponse.json(
       { error: getErrorMessage(error) },
       { status: 500 }

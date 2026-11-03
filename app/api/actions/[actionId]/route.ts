@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { isActionStatusInput, normalizeActionStatus } from '@/lib/actionWorkflow';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -125,7 +126,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ actionI
 
     return NextResponse.json({ action: data }, { status: 200 });
   } catch (error) {
-    console.error('Error updating action:', error);
+    console.error('Error updating action:', safeErrorDetails(error));
     return NextResponse.json(
       { error: String(error) },
       { status: 500 }

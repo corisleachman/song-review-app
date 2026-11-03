@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchAudioSignaturePrefix } from '@/lib/audioSignatureRead.mjs';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -159,7 +160,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ versionI
     try {
       signatureBytes = await readStoredAudioSignature(filePath, actualSize, trace);
     } catch (error) {
-      console.warn('[versions/finalize] Could not inspect uploaded audio yet:', error);
+      console.warn('[versions/finalize] Could not inspect uploaded audio yet:', safeErrorDetails(error));
       return NextResponse.json(
         { error: 'The uploaded audio could not be inspected yet. Please retry.' },
         { status: 409 }
@@ -232,7 +233,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ versionI
 
     return NextResponse.json({ finalized: true, fileSizeBytes: actualSize });
   } catch (error) {
-    console.error('[versions/finalize] Error finalizing upload:', error);
+    console.error('[versions/finalize] Error finalizing upload:', safeErrorDetails(error));
     return NextResponse.json({ error: 'Could not finish the version upload.' }, { status: 500 });
   }
 }
@@ -283,7 +284,7 @@ export async function DELETE(_req: NextRequest, props: { params: Promise<{ versi
 
     return NextResponse.json({ cancelled: true });
   } catch (error) {
-    console.error('[versions/finalize] Error cancelling upload:', error);
+    console.error('[versions/finalize] Error cancelling upload:', safeErrorDetails(error));
     return NextResponse.json({ error: 'Could not cancel the pending upload.' }, { status: 500 });
   }
 }

@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { resolvePlaylistAccess } from '@/lib/playlistAccess';
@@ -19,7 +20,7 @@ export async function DELETE(_req: NextRequest, props: { params: Promise<{ id: s
     await supabaseServer.from('playlists').update({ updated_at: new Date().toISOString() }).eq('id', access.playlist.id);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error('[playlists/:id/songs/:songId] remove error:', err);
+    console.error('[playlists/:id/songs/:songId] remove error:', safeErrorDetails(err));
     return NextResponse.json({ error: 'Could not remove song.' }, { status: 500 });
   }
 }

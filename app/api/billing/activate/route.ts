@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -90,7 +91,7 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error('Billing activation error:', error);
+    console.error('Billing activation error:', safeErrorDetails(error));
     return NextResponse.json({ error: 'Could not activate plan.' }, { status: 500 });
   }
 }

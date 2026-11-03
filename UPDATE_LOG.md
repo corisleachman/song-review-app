@@ -9744,3 +9744,10 @@ S7 audit-gate release, 2 November: PR #76/9ee73d83 merged, exact audit command p
 Changed external configuration: type-only Config-to-Secret conversion of the three approved primary-project entries, preserving values/scopes; no code, schema, provider, credential rotation or permission expansion. Changed files: current checklist, product backlog, security review, API access matrix and this log. Goal: prevent future readback of existing credentials and resume recorded L5 role checks.
 
 Each metadata read-back passes; Production dpl_FAvY4Fbm9Mdt28jZ6EZc9VXXLvBw/d3e505cd and Preview dpl_9ZSL6A7stxJtpEKKv7G1kjEi5AKp/d2238ac8 Ready. Both environments pass public projections/pages/media and twelve signed-out method checks; bounded logs empty. No real email or positive legacy password replay. Scoped owner/member/unrelated-song Chrome checks pass on existing compatible staging; isolated fixture cleanup verified, original owner membership intact. Final browser restoration blocked by extension suspension/policy, awaiting active normal staging tab. Retain Secret classification during compatible app rollback; L5 remains open.
+
+
+## 2026-11-03: B31 safe server diagnostics and CSP redaction
+
+Changed files: lib/safeErrorDetails.ts; 59 existing server route/helper logger call sites; app/api/csp-report/route.ts; tests/server-log-safety.test.mjs, bootstrap-account.test.mjs and critical-contracts.test.mjs; current launch/security/backlog records. Goal: keep exception attachments and URL capability data out of new application diagnostics while retaining fixed context, known operational codes and HTTP status.
+
+Changes are logging-only plus CSP diagnostic normalization. No app success/error response, auth, billing, storage, schema, environment or provider logic altered. Three before-change tests fail; fixed 387 Node tests/TypeScript pass, lint zero errors/five pre-existing warnings. Helper does not invoke getters/custom serialization and fails safely. CI/Preview/release pending; historical logs untouched and S5/S7 review still open.

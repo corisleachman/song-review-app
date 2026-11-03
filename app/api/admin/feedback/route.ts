@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { getCurrentAuthenticatedUser } from '@/lib/currentUser';
@@ -30,7 +31,7 @@ export async function GET(req: Request) {
 
     const { data, error } = await query;
     if (error) {
-      console.error('[admin/feedback] list error:', error);
+      console.error('[admin/feedback] list error:', safeErrorDetails(error));
       return NextResponse.json({ ok: false, error: 'Could not load feedback.' }, { status: 500 });
     }
 
@@ -46,7 +47,7 @@ export async function GET(req: Request) {
       cap: FOUNDING_TESTER_CAP,
     });
   } catch (err) {
-    console.error('[admin/feedback] Error:', err);
+    console.error('[admin/feedback] Error:', safeErrorDetails(err));
     return NextResponse.json({ ok: false, error: 'Something went wrong.' }, { status: 500 });
   }
 }

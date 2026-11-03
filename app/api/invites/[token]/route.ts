@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { getPublicInviteByToken } from '@/lib/accountInvites';
@@ -43,7 +44,7 @@ export async function GET(_request: Request, props: { params: Promise<{ token: s
       }
     );
   } catch (error) {
-    console.error('Error loading invite:', error);
+    console.error('Error loading invite:', safeErrorDetails(error));
     return NextResponse.json(
       { error: getErrorMessage(error), state: 'invalid' },
       { status: 500 }

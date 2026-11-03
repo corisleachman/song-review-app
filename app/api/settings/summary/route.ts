@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -59,7 +60,7 @@ export async function GET() {
       }
     );
   } catch (error) {
-    console.error('Error loading settings summary:', error);
+    console.error('Error loading settings summary:', safeErrorDetails(error));
     return NextResponse.json({ error: 'Could not load settings summary.' }, { status: 500 });
   }
 }

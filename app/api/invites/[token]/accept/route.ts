@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import {
@@ -91,7 +92,7 @@ export async function POST(_request: Request, props: { params: Promise<{ token: 
     writeActiveWorkspaceCookie(response, acceptance.accountId);
     return response;
   } catch (error) {
-    console.error('Error accepting invite:', error);
+    console.error('Error accepting invite:', safeErrorDetails(error));
     return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
   }
 }

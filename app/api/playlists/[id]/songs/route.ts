@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { resolvePlaylistAccess } from '@/lib/playlistAccess';
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
     await supabaseServer.from('playlists').update({ updated_at: new Date().toISOString() }).eq('id', access.playlist.id);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error('[playlists/:id/songs] add error:', err);
+    console.error('[playlists/:id/songs] add error:', safeErrorDetails(err));
     return NextResponse.json({ error: 'Could not add song.' }, { status: 500 });
   }
 }
@@ -59,7 +60,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
     await supabaseServer.from('playlists').update({ updated_at: new Date().toISOString() }).eq('id', access.playlist.id);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error('[playlists/:id/songs] reorder error:', err);
+    console.error('[playlists/:id/songs] reorder error:', safeErrorDetails(err));
     return NextResponse.json({ error: 'Could not reorder.' }, { status: 500 });
   }
 }

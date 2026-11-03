@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { after } from 'next/server';
 import { Resend } from 'resend';
 import { supabaseServer } from '@/lib/supabaseServer';
@@ -464,7 +465,7 @@ export function scheduleThreadNotification(payload: ThreadNotificationPayload, r
         });
       }
     } catch (error) {
-      console.error('[notify-thread] Background send failed:', error);
+      console.error('[notify-thread] Background send failed:', safeErrorDetails(error));
     }
   });
 }

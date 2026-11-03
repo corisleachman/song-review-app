@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -59,7 +60,7 @@ export async function GET(req: NextRequest) {
       identity: resolved.identity,
     }, 200);
   } catch (error) {
-    console.error('Auth bootstrap error:', error);
+    console.error('Auth bootstrap error:', safeErrorDetails(error));
 
     if (req.nextUrl.searchParams.get('redirect') === '1') {
       const url = new URL('/login', req.url);

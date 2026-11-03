@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { enforcePublicCommentRateLimit } from '@/lib/mutationRateLimit';
 import { supabaseServer } from '@/lib/supabaseServer';
@@ -43,7 +44,7 @@ export async function GET(_req: NextRequest, props: { params: Promise<{ songId: 
       { status: 200, headers: { 'Cache-Control': 'no-store' } }
     );
   } catch (error) {
-    console.error('[public/comments GET] error:', error);
+    console.error('[public/comments GET] error:', safeErrorDetails(error));
     return NextResponse.json({ error: 'Something went wrong' }, { status: 500 });
   }
 }
@@ -106,7 +107,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ songId: 
 
     return NextResponse.json({ comment: inserted }, { status: 201 });
   } catch (error) {
-    console.error('[public/comments POST] error:', error);
+    console.error('[public/comments POST] error:', safeErrorDetails(error));
     return NextResponse.json({ error: 'Something went wrong' }, { status: 500 });
   }
 }

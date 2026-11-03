@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { logPlanEvent } from '@/lib/planEvents';
 
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (error) {
-    console.error('Error logging plan event:', error);
+    console.error('Error logging plan event:', safeErrorDetails(error));
     return NextResponse.json({ error: 'Could not log event.' }, { status: 500 });
   }
 }

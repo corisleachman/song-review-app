@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -68,7 +69,7 @@ export async function POST(req: NextRequest) {
     writeActiveWorkspaceCookie(response, workspaceId);
     return response;
   } catch (error) {
-    console.error('Error switching workspace:', error);
+    console.error('Error switching workspace:', safeErrorDetails(error));
     return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
   }
 }

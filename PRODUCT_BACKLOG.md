@@ -580,3 +580,14 @@ B28 Production database release, 2 November: PR #74/6288e354 merged, 342 Node te
 
 
 B30 completion, 3 November: all three entries now Secret with their original scopes; only type was submitted. No credential values decrypted, supplied, printed, rotated or persisted. Production dpl_FAvY4Fbm9Mdt28jZ6EZc9VXXLvBw/d3e505cd and Preview dpl_9ZSL6A7stxJtpEKKv7G1kjEi5AKp/d2238ac8 Ready; public projections/pages/media and twelve signed-out method probes pass in each. No real mail or valid legacy-password replay; bounded error/fatal scans empty. Retain Secret types during any app rollback. Full logging/monitoring review remains open.
+
+
+## B31. Raw exception and CSP URL content in server diagnostics
+
+- Status: Code complete locally; CI/Preview/release pending. Extends existing L5/S6 logging review, not a new product feature.
+- Confirmed behaviour: AST inventory finds 85 logger arguments across 59 server route/helper files passing raw exceptions or exception messages. Both legacy and Reporting API CSP runtime tests retain synthetic credentials in relative/malformed URLs, capability paths and arbitrary directive text. Three regression tests fail the original source. This demonstrates unsafe logging paths, not evidence of leaked real credentials or compromise.
+- Intended outcome: Keep fixed log context, allowlisted operational error codes and integer HTTP status; drop raw message/stack/cause/request/response data. CSP retains HTTP(S) origins, known protocol labels/directives and numeric diagnostics, omitting URL credentials/paths/queries/fragments and unrecognised text.
+- Acceptance: Synthetic messages, stacks, nested authorization/body/URLs and custom serialization do not reach diagnostics. Logging cannot invoke provider getters or interrupt error recovery. Known SQL/network/provider codes/status remain useful; unknown codes/text drop. Legacy and modern CSP preserve 16 KB/type/JSON validation, ten-report cap and existing success status. Full app tests/type/lint and CI/Preview checks pass before Production. No deliberate secret-bearing hosted request or real provider send.
+- Dependencies: Application-only safeErrorDetails helper reused at the 85 existing raw logger sites, CSP normalization and regression harness updates. No migration, environment/provider change, auth/billing/storage logic change or dependency added. Previously stored logs are not deleted or claimed remediated; provider retention remains S7.
+- Decisions needed: None for scoped redaction. Unknown diagnostic codes are omitted deliberately; add an explicit safe operational code when future troubleshooting justifies it.
+- Evidence: 387 Node tests pass, TypeScript passes; focused lint zero errors/five existing warnings. Positive handler logic and all client responses stay unchanged; this does not close S5's remaining raw response-error review or the full hosted role/mutation matrix.

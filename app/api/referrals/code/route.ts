@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { getOrCreateReferralCode } from '@/lib/referrals';
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ code: code.code, url: referralUrl });
   } catch (err) {
-    console.error('[referrals/code] Error:', err);
+    console.error('[referrals/code] Error:', safeErrorDetails(err));
     return NextResponse.json({ error: 'Could not load referral code.' }, { status: 500 });
   }
 }
