@@ -205,3 +205,8 @@ B36 adds real-handler/fake-I/O owner/admin/member cases: versions/create refuses
 
 
 B36 installed acceptance, 3 November: actual staging canonical song creation/upload/finalization/rename, version label update, playback and owner deletion pass under client-write revocation. Version/object/account byte88244 agree; fixture cleanup returns all zero/counter0. Installed40 DB cases pass staging/Production, including owner/admin/member/outsider boundaries and RPC accounting. Production11 safe signed-out/public checks pass. This remains scoped coverage, not every hosted role/method or full S2 completion.
+
+
+## Collaboration local boundary slice, 3 November 2026
+
+Sixteen new actual-handler/fake-I/O owner/member cases: action creation rejects foreign source comment/assignee and stamps canonical creator/workspace; action PATCH rejects foreign resolved version/assignee; playlist add rejects another account's song; task PATCH ignores injected parent/account/creator and rejects foreign-song task. Raw SQL direct writes bypass these checks; B37 groups actions/tasks/playlist entries/private comments/threads into one permission candidate. Baseline81/candidate81/rollback81 pass both databases, no permanent changes. Remaining hosted signed-in matrix is not marked complete.

@@ -9833,3 +9833,12 @@ User approved B36. Source migration20261103171426 installed as staging2026110319
 Actual staging owner app acceptance passed: generated 2-second WAV creates disposable song, finalizes88244 bytes, with version size=Storage object size=account counter. Song rename and version-label edit read back correctly. Playback reached2 seconds/error null and ended paused. Owner app deletion removed song/version/Storage object and restored counter0; original empty workspace visible. No real content, membership, Auth user, email or payment mutation. Eleven safe Production login/signed-out/public checks pass, including song/listen/artwork200 and one-byte audio Range206. An initial missing-title probe correctly returned400; corrected valid-shaped unauthenticated request returned401. No fresh Production positive write or physical-device acceptance claimed.
 
 B36 Production complete in this scope; no app implementation/deployment needed for grant enforcement. Matching SQL rollback restores observed grants and reopens bypass; application rollback alone can't restore permissions. Broader L5/S2/S3 remain open.
+
+
+## 2026-11-03: B37 collaboration context/author boundary candidate
+
+Goal: keep related collaboration mutations behind canonical parent/workspace/identity checks. Confirmed direct-write bypasses for actions, song tasks, playlist entries and private comment/thread attribution in rolled-back synthetic probes. Prepared one five-table grant restriction with exact rollback preserving previous private comment INSERT denial. No app implementation or persistent database change.
+
+Changed files: LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, LAUNCH_API_ACCESS_MATRIX.md, UPDATE_LOG.md, tests/api-access-boundaries.test.mjs, scripts/compose-collaboration-write-boundary-probe.mjs, supabase/tests/collaboration_write_boundary_probe.sql, supabase/migrations/20261103194256_restrict_client_collaboration_writes.sql and matching supabase/rollback SQL.
+
+Verification: baseline81/candidate81/rollback81 each DB, actual server CRUD and scoped reads included; sixteen new real-handler boundary cases, all 467 Node tests/focused lint pass. Six existing relationship mismatch counts zero; zero fixtures and original grants/policy hashes verified. No real content/provider email/Auth/payment/Storage change. Approval and installed/staged canonical acceptance remain.
