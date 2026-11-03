@@ -7,21 +7,6 @@ import { audioDeliveryUrl } from '@/lib/mediaDelivery';
 
 export const dynamic = 'force-dynamic';
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  if (error && typeof error === 'object') {
-    const maybeMessage = 'message' in error && typeof (error as { message?: unknown }).message === 'string'
-      ? (error as { message: string }).message
-      : null;
-    if (maybeMessage) return maybeMessage;
-  }
-
-  return 'Version request failed.';
-}
-
 async function loadVersionWithWorkspace(versionId: string) {
   const { data: version, error: versionError } = await supabaseServer
     .from('song_versions')
@@ -132,7 +117,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ versionId
     );
   } catch (error) {
     console.error('Error fetching version:', safeErrorDetails(error));
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    return NextResponse.json({ error: 'Version request failed.' }, { status: 500 });
   }
 }
 
@@ -174,6 +159,6 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ version
     return NextResponse.json({ version: withVersionDisplayName(data) });
   } catch (error) {
     console.error('Error updating version:', safeErrorDetails(error));
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    return NextResponse.json({ error: 'Version request failed.' }, { status: 500 });
   }
 }

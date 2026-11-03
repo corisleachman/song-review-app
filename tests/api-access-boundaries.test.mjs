@@ -106,7 +106,11 @@ const getRequest = () => {
   request.nextUrl = new URL(request.url);
   return request;
 };
-const jsonRequest = (body, method = 'POST') => new Request('https://staging.invalid/api/test', { method, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+const jsonRequest = (body, method = 'POST') => {
+  const request = new Request('https://staging.invalid/api/test', { method, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  request.nextUrl = new URL(request.url);
+  return request;
+};
 const params = values => ({ params: Promise.resolve(values) });
 
 for (const role of ['owner', 'member']) {
@@ -984,5 +988,86 @@ for (const role of [null, 'member', 'owner']) {
       assert.deepEqual(h.writes, [{ table: 'accounts', value: { name: saved.name, notification_mode: saved.notification_mode } }]);
       assert.deepEqual(h.queries[0].filters, [['id', 'workspace-a']]);
     } else { assert.deepEqual(h.reads, []); assert.deepEqual(h.writes, []); }
+  });
+}
+
+
+const remainingSafeResponseCases = [
+  ["actions/by-song/[songId]",["GET"],"Could not load actions."],
+  ["actions",["GET"],"Could not load actions."],
+  ["dashboard",["GET"],"Could not load dashboard data."],
+  ["dashboard/summary",["GET"],"Could not load dashboard summary."],
+  ["invites/[token]/accept",["POST"],"Could not accept invite."],
+  ["invites/[token]",["GET"],"Could not load invite."],
+  ["songs/[songId]",["GET","PATCH","DELETE"],"Song request failed."],
+  ["songs/[songId]/tasks",["GET"],"Could not load tasks."],
+  ["songs/[songId]/versions",["GET"],"Could not load versions."],
+  ["songs/create",["POST"],"Could not create song."],
+  ["threads/create",["POST"],"Failed to create thread"],
+  ["versions/[versionId]",["GET","PATCH"],"Version request failed."],
+  ["versions/[versionId]/threads",["GET"],"Could not load comments."],
+  ["workspace/invites/[inviteId]",["PATCH"],"Could not update workspace invite."],
+  ["workspace/invites",["GET","POST"],"Could not manage workspace invites."],
+  ["workspace/members/[userId]",["DELETE"],"Could not remove workspace member."],
+  ["workspace/plan",["PATCH"],"Could not update workspace plan."],
+  ["workspace/settings",["PATCH","POST"],"Could not update workspace settings."],
+  ["workspaces/create",["POST"],"Could not create workspace."],
+  ["workspaces",["GET"],"Could not load workspaces."],
+  ["workspaces/switch",["POST"],"Could not switch workspace."],
+  ["actions/[actionId]",["PATCH"],"Could not update action."],
+  ["tasks/create",["POST"],"Could not create task."],
+  ["tasks/reorder",["PATCH"],"Could not reorder tasks."],
+  ["tasks/[taskId]",["PATCH"],"Could not update task."],
+  ["tasks/[taskId]",["DELETE"],"Could not delete task."],
+  ["workspace/members",["GET"],"Could not load workspace members."],
+];
+for (const [route, methods, message] of remainingSafeResponseCases) for (const method of methods) {
+  test(`${route} ${method}: unexpected errors never reach client responses`, async () => {
+    const originalNodeEnv = process.env.NODE_ENV;
+    if (route === 'workspace/plan') process.env.NODE_ENV = 'development';
+    try {
+      const fail = async () => { throw new Error('PRIVATE-PROVIDER-RESPONSE'); };
+      const h = routeHarness(`app/api/${route}/route.ts`, { overrides: {
+        '@/lib/canonicalIdentity': { resolveCanonicalIdentity: fail },
+        '@/lib/currentUser': { getCurrentAuthenticatedUser: fail },
+        '@/lib/accountInvites': { getPublicInviteByToken: fail },
+      } });
+      const response = await h.handler[method](method === 'GET' ? getRequest() : jsonRequest({ title: 'Fixture', description: 'Fixture' }, method), params({
+        songId: 'song-a', versionId: 'version-a', inviteId: 'invite-a', userId: 'user-a', taskId: 'task-a', actionId: 'action-a', token: '00000000-0000-0000-0000-000000000000',
+      }));
+      assert.equal(response.status, 500); assert.deepEqual(await response.json(), { error: message, ...(route === 'invites/[token]' ? { state: 'invalid' } : {}) });
+      assert.deepEqual(h.reads, []); assert.deepEqual(h.writes, []); assert.equal(h.notifications, 0);
+    } finally {
+      if (originalNodeEnv === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = originalNodeEnv;
+    }
+  });
+}
+
+test('provider email rejection preserves created invite and gives a safe manual-link warning', async () => {
+  const priorKey = process.env.RESEND_API_KEY; process.env.RESEND_API_KEY = 'test-only-provider-key';
+  let sends = 0;
+  try {
+    const invite = { id: 'invite-a', email: 'fixture@example.test', normalized_email: 'fixture@example.test', role: 'member', status: 'pending', invite_token: 'safe-fixture-token', expires_at: '2030-01-01', created_at: '2026-11-03' };
+    const h = routeHarness('app/api/workspace/invites/route.ts', { identity: session('owner'), mutationResult: invite, tables: {
+      accounts: [{ id: 'workspace-a', name: 'Fixture workspace', plan: 'free' }], account_invites: [],
+    }, logger: { warn() {}, error() {} }, overrides: {
+      resend: { Resend: class { emails = { send: async () => { sends++; return { error: { message: 'PRIVATE-PROVIDER-RESPONSE' } }; } }; } },
+    } });
+    const response = await h.handler.POST(jsonRequest({ email: 'fixture@example.test' }));
+    assert.equal(response.status, 201); const body = await response.json();
+    assert.equal(sends, 1); assert.equal(body.emailSent, false);
+    assert.equal(body.emailWarning, 'Invite created, but the email could not be sent. Copy the invite link manually.');
+    assert.doesNotMatch(JSON.stringify(body), /PRIVATE-PROVIDER/); assert.equal(h.writes.length, 1);
+  } finally { if (priorKey === undefined) delete process.env.RESEND_API_KEY; else process.env.RESEND_API_KEY = priorKey; }
+});
+
+for (const value of [{ message: 'PRIVATE-DATABASE-MESSAGE', details: 'PRIVATE-DETAILS', code: 'PRIVATE-CODE' }, 'PRIVATE-THROWN-STRING']) {
+  test(`song create hides unexpected ${typeof value} failure content`, async () => {
+    const h = routeHarness('app/api/songs/create/route.ts', { overrides: {
+      '@/lib/canonicalIdentity': { resolveCanonicalIdentity: async () => { throw value; } },
+    } });
+    const response = await h.handler.POST(jsonRequest({ title: 'Fixture' }));
+    assert.equal(response.status, 500); assert.deepEqual(await response.json(), { error: 'Could not create song.' });
+    assert.deepEqual(h.reads, []); assert.deepEqual(h.writes, []);
   });
 }

@@ -9,21 +9,6 @@ import { listWorkspaceMembers } from '@/lib/workspaceMembers';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  if (error && typeof error === 'object') {
-    const maybeMessage = 'message' in error && typeof (error as { message?: unknown }).message === 'string'
-      ? (error as { message: string }).message
-      : null;
-    if (maybeMessage) return maybeMessage;
-  }
-
-  return 'Could not load actions.';
-}
-
 export async function GET(req: NextRequest) {
   try {
     noStore();
@@ -107,6 +92,6 @@ export async function GET(req: NextRequest) {
     );
   } catch (error) {
     console.error('Error fetching actions:', safeErrorDetails(error));
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    return NextResponse.json({ error: 'Could not load actions.' }, { status: 500 });
   }
 }

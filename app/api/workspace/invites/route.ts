@@ -38,11 +38,6 @@ function requireOwner(identity: Awaited<ReturnType<typeof resolveCanonicalIdenti
   return null;
 }
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) return error.message;
-  return 'Could not manage workspace invites.';
-}
-
 function escapeHtml(value: string) {
   return value
     .replace(/&/g, '&amp;')
@@ -103,7 +98,7 @@ async function sendInviteEmail(params: {
   if (!process.env.RESEND_API_KEY) {
     return {
       emailSent: false,
-      emailWarning: 'Invite created, but RESEND_API_KEY is not configured. Copy the invite link manually.',
+      emailWarning: 'Invite created, but the email could not be sent. Copy the invite link manually.',
     };
   }
 
@@ -117,11 +112,11 @@ async function sendInviteEmail(params: {
       html: getInviteEmailHtml(params),
     });
 
-
     if (result.error) {
+      console.warn('[invite-email] Provider rejected message:', safeErrorDetails(result.error));
       return {
         emailSent: false,
-        emailWarning: `Invite created, but email failed: ${result.error.message}. Copy the invite link manually.`,
+        emailWarning: 'Invite created, but the email could not be sent. Copy the invite link manually.',
       };
     }
 
@@ -177,7 +172,7 @@ export async function GET() {
     );
   } catch (error) {
     console.error('Error loading workspace invites:', safeErrorDetails(error));
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    return NextResponse.json({ error: 'Could not manage workspace invites.' }, { status: 500 });
   }
 }
 
@@ -301,6 +296,6 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     console.error('Error creating workspace invite:', safeErrorDetails(error));
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    return NextResponse.json({ error: 'Could not manage workspace invites.' }, { status: 500 });
   }
 }

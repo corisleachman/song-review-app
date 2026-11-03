@@ -25,11 +25,6 @@ function requireOwner(identity: Awaited<ReturnType<typeof resolveCanonicalIdenti
   return null;
 }
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) return error.message;
-  return 'Could not remove workspace member.';
-}
-
 export async function DELETE(_request: Request, props: { params: Promise<{ userId: string }> }) {
   const params = await props.params;
   try {
@@ -87,6 +82,6 @@ export async function DELETE(_request: Request, props: { params: Promise<{ userI
     );
   } catch (error) {
     console.error('Error removing workspace member:', safeErrorDetails(error));
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    return NextResponse.json({ error: 'Could not remove workspace member.' }, { status: 500 });
   }
 }

@@ -7,11 +7,6 @@ import { listUserWorkspaces } from '@/lib/workspaces';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) return error.message;
-  return 'Could not load workspaces.';
-}
-
 export async function GET() {
   try {
     noStore();
@@ -41,6 +36,6 @@ export async function GET() {
     );
   } catch (error) {
     console.error('Error loading workspaces:', safeErrorDetails(error));
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    return NextResponse.json({ error: 'Could not load workspaces.' }, { status: 500 });
   }
 }

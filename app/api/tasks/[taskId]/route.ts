@@ -66,7 +66,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ taskId:
     return NextResponse.json({ task: data });
   } catch (error) {
     console.error('Error updating task:', safeErrorDetails(error));
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    return NextResponse.json({ error: "Could not update task." }, { status: 500 });
   }
 }
 
@@ -98,6 +98,6 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ taskId
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('Error deleting task:', safeErrorDetails(error));
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    return NextResponse.json({ error: "Could not delete task." }, { status: 500 });
   }
 }

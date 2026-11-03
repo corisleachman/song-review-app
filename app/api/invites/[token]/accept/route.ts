@@ -16,11 +16,6 @@ function lowerEmail(value: string | null | undefined) {
   return value?.trim().toLowerCase() ?? '';
 }
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) return error.message;
-  return 'Could not accept invite.';
-}
-
 export async function POST(_request: Request, props: { params: Promise<{ token: string }> }) {
   const params = await props.params;
   try {
@@ -93,6 +88,6 @@ export async function POST(_request: Request, props: { params: Promise<{ token: 
     return response;
   } catch (error) {
     console.error('Error accepting invite:', safeErrorDetails(error));
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    return NextResponse.json({ error: 'Could not accept invite.' }, { status: 500 });
   }
 }

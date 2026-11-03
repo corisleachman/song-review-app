@@ -9767,3 +9767,12 @@ B32 staging checkpoint, 3 November: migration source20261103090300 installed as2
 
 
 B32 Production release, 3 November: user owner-name save accepted; stored fixture name/Free/null Stripe verified, fixture/member cleanup complete. Source20261103090300 installed as staging20261103091520/Production20261103094603;19 installed role cases in both DBs pass, with prior baseline16/candidate19/rollback16. Raw client account PATCH401/42501, zero-ID read200/empty. App signed-out/public/media and post-build login/bootstrap/song checks pass; Advisor zero errors/warnings, nine existing INFO. PR #78/b77a7b66 merged126825bf, primary dpl_BfL9iReAvUBWFemGQaXa9aFvT23W Ready/live;390 Node tests/lint/four exact-head checks pass. No account/plan/provider changes or outstanding user actions. SQL rollback restores old client account mutations and reopens the gap; app rollback alone doesn't undo it. Remaining S2-S5 review stays open.
+
+
+## 2026-11-03: B33 safe client failure messages
+
+Replace raw unexpected exceptions with existing fixed fallback text in 32 catch paths across 26 API route files. Invite-provider failures and missing mail configuration now retain the invite and offer the same manual-copy warning without provider/configuration internals; rejection diagnostics use the existing safe projection. No success/status/access/data-flow change.
+
+Changed files: app/api actions, dashboard, invites, songs, tasks, threads, versions, workspace and workspaces route files; tests/api-access-boundaries.test.mjs; LAUNCH_CHECKLIST.md; PRODUCT_BACKLOG.md; LAUNCH_SECURITY_REVIEW.md; UPDATE_LOG.md.
+
+Verified locally: 425 tests pass including original synthetic leak regressions, provider rejection with retained invite, non-Error thrown values and preserved public-invite response state. TypeScript passes; focused lint zero errors/four existing warnings. CI and hosted rollout pending. No migration/configuration, real send or billing operation. Cleared only this worktree's ignored generated Next cache after host disk pressure interrupted a shell command; no source or user data removed.

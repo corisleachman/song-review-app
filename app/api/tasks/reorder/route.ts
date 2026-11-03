@@ -65,6 +65,6 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('Error reordering tasks:', safeErrorDetails(error));
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    return NextResponse.json({ error: "Could not reorder tasks." }, { status: 500 });
   }
 }

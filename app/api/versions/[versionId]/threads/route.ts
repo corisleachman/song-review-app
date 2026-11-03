@@ -7,21 +7,6 @@ import { supabaseServer } from '@/lib/supabaseServer';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  if (error && typeof error === 'object') {
-    const maybeMessage = 'message' in error && typeof (error as { message?: unknown }).message === 'string'
-      ? (error as { message: string }).message
-      : null;
-    if (maybeMessage) return maybeMessage;
-  }
-
-  return 'Could not load comments.';
-}
-
 export async function GET(req: NextRequest, props: { params: Promise<{ versionId: string }> }) {
   const params = await props.params;
   try {
@@ -122,6 +107,6 @@ export async function GET(req: NextRequest, props: { params: Promise<{ versionId
     );
   } catch (error) {
     console.error('Error fetching threads:', safeErrorDetails(error));
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    return NextResponse.json({ error: 'Could not load comments.' }, { status: 500 });
   }
 }
