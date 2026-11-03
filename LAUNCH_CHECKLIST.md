@@ -91,7 +91,7 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B29 | [Safe settings/billing exception responses and access checks](PRODUCT_BACKLOG.md#b29-raw-exception-messages-in-settings-and-billing-responses) | Production complete via PR #75/25b96370; 377 tests, CI and 12 post-release signed-out checks pass | Existing L5/S2/S5 |
 | B30 | [Credential Config-to-Secret classification](PRODUCT_BACKLOG.md#b30-credential-config-to-secret-classification) | Complete in approved scope: three existing credentials now Secret; scopes preserved, rebuilds/live checks pass | Existing L5/S6 |
 | B31 | [Safe server diagnostics and CSP URL redaction](PRODUCT_BACKLOG.md#b31-raw-exception-and-csp-url-content-in-server-diagnostics) | Production complete via PR #77/6ba2c817; 387 tests, CI and hosted redaction/public/media checks pass | Existing L5/S6 logging review |
-| B32 | [Server-only core account writes](PRODUCT_BACKLOG.md#b32-direct-client-writes-bypass-core-account-and-billing-controls) | Staging installed/19 checks and REST denial pass; 390 tests/four CI checks pass; one isolated owner-save acceptance pending; Production unchanged | Existing L5/S2/S3; resolve before L5 closeout |
+| B32 | [Server-only core account writes](PRODUCT_BACKLOG.md#b32-direct-client-writes-bypass-core-account-and-billing-controls) | Production complete via PR #78/126825bf; actual owner save accepted, fixture removed, installed19 checks and live REST/public/media checks pass | Existing L5/S2/S3; resolve before L5 closeout |
 
 Exploratory ideas in ROADMAP.md (typing indicators, pinned comments, comparison view, waveform regions, exports, Slack, native mobile app, multitrack and video) remain unscheduled ideas. They aren't approved launch work. Delete/edit/auth/invite ideas in that old file must be checked against existing features before creating tasks.
 
@@ -292,7 +292,7 @@ B30 metadata reread confirms all three approved entries remain Secret with uncha
 
 User explicitly accepts current monitoring for beta: no paid upgrade or recurring monitoring. Team metadata confirms Hobby; [runtime log retention](https://vercel.com/docs/logs/runtime) is one hour, and [Vercel anomaly alerts](https://vercel.com/docs/alerts) require a higher plan with Observability Plus. Revisit these limits at L8 before wider promotion. Dependency PR #59 touches SSR/auth and test tooling; defer to a separate maintenance release. Major Next16/TypeScript7/ESLint10/Node-types26 updates are not current audit fixes. Remaining action updates affect SEO automation and belong to L7; content PRs #12/#3 are outside this security release. No unrelated PR merged or closed.
 
-S6 is Done in this recorded scope and S7 Done for the accepted current beta. L5 remains In progress for S2-S5; B32 confirms raw account plan/Stripe and lifecycle write bypass; staged repair is next, followed by remaining validation/response boundaries. L6/B17-B19 remain next after L5 exit conditions.
+S6 is Done in this recorded scope and S7 Done for the accepted current beta. L5 remains In progress for S2-S5; B32 direct account-write gap is repaired and verified in both environments, followed by remaining validation/response boundaries. L6/B17-B19 remain next after L5 exit conditions.
 
 
 ## B32 confirmed account-write boundary candidate, 3 November 2026
@@ -309,3 +309,14 @@ PR [#78](https://github.com/corisleachman/song-review-app/pull/78), reviewed sou
 One disposable Free workspace, “Agent account boundary staging acceptance”, is retained solely for the actual owner settings-save check. It has one owner membership, no songs and no Stripe customer/subscription. In [existing staging dashboard](https://song-review-app-v2-mwmzuszfv-corisleachmans-projects.vercel.app/dashboard), choose that fixture, open Settings → Workspace, rename it to “Agent account boundary staging saved” and click Save, then switch back to the original workspace. Return Saved or exact error text. Change only that fixture; no plan changes, invitations or payment. Agent will verify stored name/Free/null Stripe fields and remove the fixture afterward.
 
 Browser policy blocked the extension-suspended page before this save; no alternate mechanism or session extraction was used. All other scoped checks are complete; actual owner save is the remaining staged acceptance gate. Production accounts permissions and real account data are unchanged. Install reviewed Production migration only after acceptance and final exact-head checks; app deployment alone does not apply/undo this permission change. L5 remains In progress; S6 and beta S7 are Done, L6 not started.
+
+
+## B32 Production-complete checkpoint, 3 November 2026
+
+User reports Saved. Database confirms the exact expected fixture name, Free plan, null Stripe fields, one owner and no songs. Guarded cleanup removes that fixture and membership; zero acceptance workspaces remain. No real plan/customer/subscription is altered.
+
+Source migration20261103090300 maps to staging ledger20261103091520 and Production20261103094603. Both installed19-case probes pass, alongside baseline16/candidate19/rollback16 in each environment. Actual Production raw-client zero-ID GET returns200/empty and PATCH returns401/42501. Twelve signed-out app methods, unchanged public song/playlist/comments projections, public pages/embeds, artwork200 and audio307/Range206 pass. Security Advisor zero errors/warnings (nine existing server-only INFO notices).
+
+PR [#78](https://github.com/corisleachman/song-review-app/pull/78), exact tested head b77a7b66 (migration/tests unchanged from f619e508), merged as126825bf. Primary dpl_BfL9iReAvUBWFemGQaXa9aFvT23W is Ready/live on www.song-room.live at that exact merge. Local390 tests/lint and all four exact-head checks pass. Post-build login200/bootstrap401/public-song200 pass. Account data, policies, reads and service privileges are preserved; client accounts I/U/D is denied.
+
+B32 is Production complete in this scope. No user action remains. If a verified regression needs account permissions restored, use the companion SQL against that database; app rollback alone doesn't restore grants. Prior compatible app dpl_C6NGTs4vHatzgv2kYGd8cDZU4JLC/c17e7bf1 remains available. Retain other permissions and Secret types; don't reset/reconcile existing plans automatically. L5 remains In progress for remaining S2-S5 checks; next S5 slice removes remaining unexpected response-error echoes.
