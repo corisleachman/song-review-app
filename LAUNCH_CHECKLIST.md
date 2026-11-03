@@ -34,7 +34,7 @@ Done means the named scope has recorded evidence, not that every future improvem
 
 Performance is the user's main MVP concern. B17-B19 are queued as the leading L6 workstream; capture does not interrupt the current L5 task. B06 six-month Free-to-Pro beta grants have confirmed product rules; implementation and expiry/billing boundary tests remain open.
 
-Next action: continue S2/S3 remaining function and membership mutation boundaries, then S5 input/size/type/numeric validation. B28-B33 are complete in their recorded scope; S6 and beta-scoped S7 exit conditions are verified/accepted. No user step is pending. B17-B19 remain the leading L6 performance workstream after L5 exit conditions.
+Next action: review B34 server-only membership-write candidate before permanent staging installation, then finish remaining S2/S3 boundaries and S5 input/size/type/numeric validation. B28-B33 are complete in their recorded scope; S6 and beta-scoped S7 exit conditions are verified/accepted. No user step is pending. B17-B19 remain the leading L6 performance workstream after L5 exit conditions.
 
 ## L6 acceptance checklist
 
@@ -93,6 +93,8 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B31 | [Safe server diagnostics and CSP URL redaction](PRODUCT_BACKLOG.md#b31-raw-exception-and-csp-url-content-in-server-diagnostics) | Production complete via PR #77/6ba2c817; 387 tests, CI and hosted redaction/public/media checks pass | Existing L5/S6 logging review |
 | B32 | [Server-only core account writes](PRODUCT_BACKLOG.md#b32-direct-client-writes-bypass-core-account-and-billing-controls) | Production complete via PR #78/126825bf; actual owner save accepted, fixture removed, installed19 checks and live REST/public/media checks pass | Existing L5/S2/S3; resolve before L5 closeout |
 | B33 | [Safe unexpected-error responses](PRODUCT_BACKLOG.md#b33-safe-unexpected-error-responses) | Production complete via PR #79/98f4132f; 425 tests, four CI checks and Preview/Production access/public/media checks pass | Existing L5/S5 |
+
+| B34 | [Server-only membership writes](PRODUCT_BACKLOG.md#b34-direct-client-membership-writes-bypass-owner-controls) | Confirmed in both environments; rollback-only candidate23/baseline21/rollback21 pass; permanent installation awaits security-boundary approval | Existing L5/S2/S3, P1; no hosted grant change |
 
 Exploratory ideas in ROADMAP.md (typing indicators, pinned comments, comparison view, waveform regions, exports, Slack, native mobile app, multitrack and video) remain unscheduled ideas. They aren't approved launch work. Delete/edit/auth/invite ideas in that old file must be checked against existing features before creating tasks.
 
@@ -333,3 +335,8 @@ Thirty-two handler catch paths and one invite-provider warning reproduce raw syn
 PR #79/d6ad7f1c merged98f4132f. Primary Production dpl_F65yxwCvh5dPtLMFE6rc8Q7Lf8LG Ready at that exact commit, www.song-room.live alias verified. All 425 Node tests and TypeScript pass; focused lint zero errors/four existing warnings. Four PR checks green; browser30/skip10. Exact-head Preview dpl_ciG3gs77gCS8JGB41uENyD4BiCYG and Production each pass63 signed-out method checks plus unchanged public song/playlist/comments, listen/embed pages, artwork200 and signed audio307/range206. Production bounded unfiltered scan50 records/zero error-fatal. Synthetic provider-error acceptance is local/fake only; no actual email or deliberately secret-bearing hosted request.
 
 No migration or external setup remains. Roll back the application to compatible dpl_FUhtAgwo21ncnEmT3TafH3mjtCA9/ed5329c2 if a verified regression requires it; retain account permissions and Secret types. B33 complete, broader S2-S5 still open. No user action required.
+
+
+## B34 membership boundary candidate, 3 November 2026
+
+Rolled-back synthetic probes confirm owner/admin direct INSERT can add an owner without invitation and direct DELETE can remove the existing owner in staging and Production. This bypasses the canonical API's owner-only/self/owner-removal guards. Baseline21, candidate23 and rollback21 checks pass in each database. Zero synthetic workspaces remain and original hosted grants are unchanged. The candidate revokes only client membership INSERT/UPDATE/DELETE, preserving reads/RLS, server grants and data. Permanent installation requires security-boundary approval; no claim of staging/Production completion or hosted invitation/removal acceptance. S2/S3 and L5 stay In progress.

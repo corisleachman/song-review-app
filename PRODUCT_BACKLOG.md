@@ -625,3 +625,15 @@ B32 Production complete, 3 November: user Saved accepted and exact database name
 
 
 B33 Production complete, 3 November: PR #79/d6ad7f1c merged98f4132f, primary dpl_F65yxwCvh5dPtLMFE6rc8Q7Lf8LG Ready/live www alias. 425 Node tests/TypeScript and focused lint zero errors/four existing warnings; four CI checks/browser30/skip10 pass. Preview and Production63 signed-out methods each pass; public JSON unchanged, pages/artwork/audio redirect and range checks pass. Bounded Production scan50 records/zero error-fatal. No real email, migration/configuration/dependency or billing change. Fake-provider leak regressions tested locally, not injected into hosted providers. App rollback to prior ed5329c2 retains existing account permissions and Secret types. Remaining validation/function/membership review stays open; no user action.
+
+
+## B34. Direct client membership writes bypass owner controls
+
+- Logged: 3 November 2026. Existing L5/S2/S3 scope, P1.
+- Confirmed: rolled-back synthetic owner/admin clients can add an owner without an invitation and remove the existing owner in both environments. Regular member/outsider mutation denials still work. No real account membership was changed; existing exploitation is not asserted.
+- Root cause: broad client table grants and owner/admin RLS policies permit membership mutation directly, bypassing server-only invitation, collaborator-limit and owner-preservation checks. B21 intentionally preserved these historical write semantics while repairing recursion.
+- Candidate: `20261103154727_restrict_client_membership_writes.sql` revokes only INSERT/UPDATE/DELETE from PUBLIC, anon and authenticated. Preserve member-list reads, policies, helper/RPC definitions, service privileges and all data. All source membership writers use `supabaseServer`; no browser membership writer found.
+- Verification: baseline21/candidate23/rollback21 SQL cases pass in each environment; zero fixtures remain and original grants read back unchanged. Actual-handler removal tests cover signed-out/admin/member denial, owner-self/other-owner preservation, foreign-target rejection and scoped successful removal with fake I/O.
+- Status: review candidate only. Permanent staging installation requires approval for the security boundary change. No app deployment installs this SQL.
+- After approval: install on staging, rerun installed23 checks, then verify existing-user bootstrap, member-list reads, isolated owner invite acceptance/removal and workspace creation through canonical server paths. No real email/payment or real membership mutation. Stop on any failed boundary or canonical flow; return environment, step and safe error details. Only then apply reviewed migration to Production and repeat installed checks plus safe live reads.
+- Rollback: companion SQL restores the observed six anon/authenticated table grants and reopens the gap. Use only for a verified regression. Application rollback alone doesn't restore database privileges; no data rollback is required.
