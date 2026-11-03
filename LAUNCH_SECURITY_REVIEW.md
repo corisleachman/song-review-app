@@ -330,3 +330,14 @@ Permanent staging installation needs approval under AGENTS.md security-boundary 
 User approved B34. Migration source20261103154727 installed on staging ledger20261103161024, Production20261103161305. Installed23, bootstrap14 and canonical-invite4 checks pass in each environment. Added supabase/tests/membership_server_journey_probe.sql for actual invite acceptance/replay/mismatch and server removal regression checks. All synthetic transaction rows roll back. Existing signed-in staging settings/member reads pass; disposable fixture member removed through owner UI, owner retained; original workspace restored and guarded fixture cleanup confirmed. Zero fixture accounts/invites remain. No provider email, payment, Storage or real membership mutation. Seven Production login/signed-out HTTP checks pass. PR #80/cbe475aa had four green checks, 433 local tests and focused lint pass. App source unchanged; no deploy needed to enforce grants. Repository closeout pending.
 
 Production owner writes and new provider-delivered invitation journeys weren't exercised. Companion rollback restores observed client grants, reopening the gap; application rollback cannot restore grants. Broader S2/S3 and L5 remain In progress.
+
+
+## B35 function-body review candidate, 3 November 2026
+
+Reviewed upload-allocation/finalization, song-deletion/storage-accounting and Stripe-ledger function source plus live function inventory. Mutation RPC EXECUTE remains denied to anonymous/authenticated roles. Staging public-schema CREATE denied to anon/authenticated/service_role; no permission change proposed for fixed public search paths. These observations aren't whole-route or concurrency signoff.
+
+Found accepted-invitation rejoin defect: original accepted_by_user_id branch inserts membership after an owner has removed it. Accepted state precedes pending expiry, so expired accepted tokens also restore it. Canonical signed-in acceptance route forwards authenticated id/email to this RPC and treats already_accepted as success.
+
+Installed definition hash matches in staging/Production. Rollback-only baseline11 confirms removed membership restoration, candidate11 blocks restoration, rollback11 reproduces original behaviour in both environments. Candidate retains current-member idempotence and fresh owner-issued re-invitation; preserves RPC mode, owner, search_path and grants. Four real-handler/fake-I/O tests preserve canonical user/email and forbid workspace read/cookie writes on already_used/expired denial. All437 local Node tests/focused lint pass. Zero synthetic accounts/invites and unchanged original function hashes read back. No actual email, Storage, billing or permanent DB changes.
+
+B35 permanent installation awaits security-boundary approval. Exact rollout, verification limits and rollback are recorded in PRODUCT_BACKLOG.md. Broader S2/S3 function and signed-in route coverage remain open.

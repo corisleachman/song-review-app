@@ -34,7 +34,7 @@ Done means the named scope has recorded evidence, not that every future improvem
 
 Performance is the user's main MVP concern. B17-B19 are queued as the leading L6 workstream; capture does not interrupt the current L5 task. B06 six-month Free-to-Pro beta grants have confirmed product rules; implementation and expiry/billing boundary tests remain open.
 
-Next action: finish remaining S2/S3 function bodies and signed-in route boundaries, then S5 input/size/type/numeric validation. B34 is Production complete in its recorded scope. B28-B33 are complete in their recorded scope; S6 and beta-scoped S7 exit conditions are verified/accepted. No user step is pending. B17-B19 remain the leading L6 performance workstream after L5 exit conditions.
+Next action: review B35 accepted-invite replay candidate before permanent installation, then finish remaining S2/S3 function bodies and signed-in route boundaries and S5 validation. B34 is Production complete in its recorded scope. B28-B33 are complete in their recorded scope; S6 and beta-scoped S7 exit conditions are verified/accepted. No user step is pending. B17-B19 remain the leading L6 performance workstream after L5 exit conditions.
 
 ## L6 acceptance checklist
 
@@ -95,6 +95,8 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B33 | [Safe unexpected-error responses](PRODUCT_BACKLOG.md#b33-safe-unexpected-error-responses) | Production complete via PR #79/98f4132f; 425 tests, four CI checks and Preview/Production access/public/media checks pass | Existing L5/S5 |
 
 | B34 | [Server-only membership writes](PRODUCT_BACKLOG.md#b34-direct-client-membership-writes-bypass-owner-controls) | Production installed/verified: installed23, bootstrap14 and invite4 checks pass in each environment; staging owner removal accepted; fixture removed; [PR #80](https://github.com/corisleachman/song-review-app/pull/80) | Existing L5/S2/S3, P1; remaining broader coverage open |
+
+| B35 | [Accepted invite restores removed membership](PRODUCT_BACKLOG.md#b35-accepted-invitation-recreates-removed-membership) | Confirmed both environments; candidate/rollback11 checks pass in each; approval needed before permanent installation | Existing L5/S2/S3, P1 access revocation |
 
 Exploratory ideas in ROADMAP.md (typing indicators, pinned comments, comparison view, waveform regions, exports, Slack, native mobile app, multitrack and video) remain unscheduled ideas. They aren't approved launch work. Delete/edit/auth/invite ideas in that old file must be checked against existing features before creating tasks.
 
@@ -349,3 +351,8 @@ User approved B34. Reviewed source cbe475aa, PR #80, four green checks. Migratio
 Seven safe live checks pass: login200, bootstrap/members/workspaces GET401, member DELETE401, create/invite POST401. Production owner write was not exercised; staged app removal and actual installed database/RPC checks provide scoped acceptance. No application source changed or new deployment is required for enforcement. Both migrations are installed; repository merge/automated build remains to record. Rollback companion restores the old grants and reopens B34; app rollback alone doesn't undo permissions. L5/S2/S3 remain open.
 
 B34 final verification: both security advisors report zero ERROR/WARN findings and nine existing server-only INFO notices. Client membership INSERT/UPDATE/DELETE denied, member reads retained and zero fixtures verified in both environments. B34 is Production complete for this database permission repair; no application deployment is needed for enforcement. PR #80 carries the migration, rollback and evidence.
+
+
+## B35 accepted-invite replay candidate, 3 November 2026
+
+Installed invite RPC bodies match in both environments. Original recipient can replay an accepted link after owner removal and restore membership, including after the accepted invite expires. Baseline11 reproduces this, candidate11 blocks it and rollback11 reproduces original behaviour in both databases. Every run rolls back. Four actual-handler tests confirm canonical user/email input, success/current-member retry and already-used/expired denial without workspace reads/cookie changes. All437 local tests and focused lint pass. No app handler, installed function, grant or real data changed. Candidate migration/rollback and regression probes await security-boundary approval. Zero probe accounts/invites remain; original function hash unchanged in both environments. L5/S2/S3 remain In progress.

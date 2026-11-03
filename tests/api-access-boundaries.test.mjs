@@ -152,6 +152,38 @@ const jsonRequest = (body, method = 'POST') => {
 };
 const params = values => ({ params: Promise.resolve(values) });
 
+for (const result of ['accepted', 'already_accepted', 'already_used', 'expired']) {
+  test(`invite acceptance ${result} respects canonical identity and only switches workspace on success`, async () => {
+    const calls = [], workspaceReads = [], cookieWrites = [];
+    const success = ['accepted', 'already_accepted'].includes(result);
+    const h = routeHarness('app/api/invites/[token]/accept/route.ts', {
+      user: { id: 'actual-user', email: ' Actual@Example.Test ' },
+      overrides: {
+        '@/lib/accountInvites': {
+          isValidInviteToken: () => true,
+          acceptWorkspaceInviteAtomically: async input => {
+            calls.push(input);
+            return { result, accountId: success ? 'invited-workspace' : null, alreadyMember: result === 'already_accepted' };
+          },
+          getInviteWorkspace: async id => { workspaceReads.push(id); return { id, name: 'Invited workspace' }; },
+        },
+        '@/lib/activeWorkspace': { writeActiveWorkspaceCookie: (_response, id) => cookieWrites.push(id) },
+      },
+    });
+    const response = await h.handler.POST(jsonRequest({ userId: 'spoofed-user', userEmail: 'other@example.test' }), params({ token: 'original-token' }));
+    assert.equal(response.status, success ? 200 : 400);
+    assert.deepEqual(calls, [{ inviteToken: 'original-token', userId: 'actual-user', userEmail: 'actual@example.test' }]);
+    assert.deepEqual(workspaceReads, success ? ['invited-workspace'] : []);
+    assert.deepEqual(cookieWrites, success ? ['invited-workspace'] : []);
+    const body = await response.json();
+    if (success) assert.equal(body.accepted, true);
+    else {
+      assert.equal(body.accepted, undefined);
+      assert.equal(body.workspace, undefined);
+    }
+  });
+}
+
 for (const role of ['owner', 'member']) {
   test(`song GET: ${role} can read own workspace but not another workspace`, async () => {
     const h = routeHarness('app/api/songs/[songId]/route.ts', { identity: session(role), tables: { songs: [song, foreignSong] } });
