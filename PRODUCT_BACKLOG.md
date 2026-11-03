@@ -677,3 +677,12 @@ B35 Production complete in this scope. No app deployment needed for database enf
 - Status: review candidate only, no permanent permission change. Requires security-boundary approval before staging installation.
 - Rollout after approval: install exact reviewed migration on staging, run installed40 and verify canonical song create/metadata edit, supported upload/finalization/playback, version edit and owner deletion in one disposable staging song. Confirm stored bytes agree and remove only fixtures. Check authenticated reads and safe public/media boundaries. Stop on denied canonical operation, read regression, counter mismatch or failed SQL/CI; report environment, URL/step and safe error. Then install Production, rerun installed40 and safe non-writing live checks, merge tested source. No application deployment needed for SQL enforcement.
 - Rollback: companion SQL restores observed client mutation grants, reopening the confirmed gap; use only for a verified regression. App rollback alone cannot restore table grants. No data rollback, plan/auth/provider/env change or real content deletion is proposed.
+
+
+### B36 approved Production installation, 3 November 2026
+
+User approved B36. Source migration20261103171426 installed as staging20261103191138 and Production20261103191415. Installed40 pass each environment; reads, policies and server writes preserved; client mutation denied. Security advisors zero ERROR/WARN, nine existing INFO. Reviewed6d94da6c/PR #82 passed four checks; existing451 local tests/focused lint pass.
+
+Actual staging owner app acceptance passed: generated 2-second WAV creates disposable song, finalizes88244 bytes, with version size=Storage object size=account counter. Song rename and version-label edit read back correctly. Playback reached2 seconds/error null and ended paused. Owner app deletion removed song/version/Storage object and restored counter0; original empty workspace visible. No real content, membership, Auth user, email or payment mutation. Eleven safe Production login/signed-out/public checks pass, including song/listen/artwork200 and one-byte audio Range206. An initial missing-title probe correctly returned400; corrected valid-shaped unauthenticated request returned401. No fresh Production positive write or physical-device acceptance claimed.
+
+B36 Production complete in this scope; no app implementation/deployment needed for grant enforcement. Matching SQL rollback restores observed grants and reopens bypass; application rollback alone can't restore permissions. Broader L5/S2/S3 remain open.

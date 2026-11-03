@@ -202,3 +202,6 @@ B32 Production release, 3 November: user owner-name save accepted; stored fixtur
 ## Upload/deletion local boundary slice, 3 November 2026
 
 B36 adds real-handler/fake-I/O owner/admin/member cases: versions/create refuses foreign song before signing; version finalize POST/DELETE refuses foreign finalized versions before Storage; version PATCH permits only label/notes despite injected server-owned fields; song DELETE refuses admin/member before RPC. Actual SQL allocation/finalize/delete RPCs reject foreign workspace IDs and preserve canonical accounting in baseline/candidate/rollback probes. This does not replace the remaining hosted signed-in route matrix or complete S2. B36 direct-table permission candidate is pending approval.
+
+
+B36 installed acceptance, 3 November: actual staging canonical song creation/upload/finalization/rename, version label update, playback and owner deletion pass under client-write revocation. Version/object/account byte88244 agree; fixture cleanup returns all zero/counter0. Installed40 DB cases pass staging/Production, including owner/admin/member/outsider boundaries and RPC accounting. Production11 safe signed-out/public checks pass. This remains scoped coverage, not every hosted role/method or full S2 completion.
