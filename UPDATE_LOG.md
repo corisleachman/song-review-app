@@ -9806,3 +9806,12 @@ Goal: preserve an owner's member removal when a former member reuses an accepted
 Changed files: LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, UPDATE_LOG.md, tests/api-access-boundaries.test.mjs, scripts/compose-invite-replay-boundary-probe.mjs, supabase/tests/invite_replay_boundary_probe.sql, supabase/migrations/20261103162107_prevent_accepted_invite_membership_restore.sql and matching supabase/rollback SQL.
 
 Verification: baseline11/candidate11/rollback11 pass in both databases, always rolled back; zero fixtures and original body hash verified. All437 Node tests and focused lint pass. No application handler or permanent database change. Security-boundary approval required before staging installation and installed/hosted acceptance; rollback restores original function and reopens gap.
+
+
+### B35 approved Production installation, 3 November 2026
+
+User approved B35. Reviewed0828e58b/PR #81 passed four checks. Source migration20261103162107 installed as staging20261103170224 and Production20261103170410; both function hashes460ec500c96eded2a8d09f69bf3e77e5 match. Installed11 replay, membership23 and bootstrap14 cases pass in each environment. Existing437 local tests/focused lint pass; no application source change.
+
+Actual staging accept/remove/stale-accept flow passed: first invitation accepted, one disposable member created; guarded SQL removed only that synthetic membership; second pending browser copy's POST returned existing already-accepted error and did not restore membership. Only owner remained. Refresh restored original COris owner dashboard. Guarded cleanup deleted the one fixture invite, owner link and account; zero matching accounts remain. No provider emails, payments, Storage, new Auth users or real membership changes. Five Production login/signed-out HTTP checks pass. Both security advisors zero ERROR/WARN with nine existing INFO notices. Production signed-in positive journey wasn't repeated.
+
+B35 Production complete in this scope. No app deployment needed for database enforcement. Rollback matching SQL restores original function and reopens the gap; app rollback alone can't undo function changes. Broader L5/S2/S3 remain open.

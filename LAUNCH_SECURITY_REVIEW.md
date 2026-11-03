@@ -341,3 +341,12 @@ Found accepted-invitation rejoin defect: original accepted_by_user_id branch ins
 Installed definition hash matches in staging/Production. Rollback-only baseline11 confirms removed membership restoration, candidate11 blocks restoration, rollback11 reproduces original behaviour in both environments. Candidate retains current-member idempotence and fresh owner-issued re-invitation; preserves RPC mode, owner, search_path and grants. Four real-handler/fake-I/O tests preserve canonical user/email and forbid workspace read/cookie writes on already_used/expired denial. All437 local Node tests/focused lint pass. Zero synthetic accounts/invites and unchanged original function hashes read back. No actual email, Storage, billing or permanent DB changes.
 
 B35 permanent installation awaits security-boundary approval. Exact rollout, verification limits and rollback are recorded in PRODUCT_BACKLOG.md. Broader S2/S3 function and signed-in route coverage remain open.
+
+
+### B35 approved Production installation, 3 November 2026
+
+User approved B35. Reviewed0828e58b/PR #81 passed four checks. Source migration20261103162107 installed as staging20261103170224 and Production20261103170410; both function hashes460ec500c96eded2a8d09f69bf3e77e5 match. Installed11 replay, membership23 and bootstrap14 cases pass in each environment. Existing437 local tests/focused lint pass; no application source change.
+
+Actual staging accept/remove/stale-accept flow passed: first invitation accepted, one disposable member created; guarded SQL removed only that synthetic membership; second pending browser copy's POST returned existing already-accepted error and did not restore membership. Only owner remained. Refresh restored original COris owner dashboard. Guarded cleanup deleted the one fixture invite, owner link and account; zero matching accounts remain. No provider emails, payments, Storage, new Auth users or real membership changes. Five Production login/signed-out HTTP checks pass. Both security advisors zero ERROR/WARN with nine existing INFO notices. Production signed-in positive journey wasn't repeated.
+
+B35 Production complete in this scope. No app deployment needed for database enforcement. Rollback matching SQL restores original function and reopens the gap; app rollback alone can't undo function changes. Broader L5/S2/S3 remain open.
