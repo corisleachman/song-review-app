@@ -91,6 +91,7 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B29 | [Safe settings/billing exception responses and access checks](PRODUCT_BACKLOG.md#b29-raw-exception-messages-in-settings-and-billing-responses) | Production complete via PR #75/25b96370; 377 tests, CI and 12 post-release signed-out checks pass | Existing L5/S2/S5 |
 | B30 | [Credential Config-to-Secret classification](PRODUCT_BACKLOG.md#b30-credential-config-to-secret-classification) | Complete in approved scope: three existing credentials now Secret; scopes preserved, rebuilds/live checks pass | Existing L5/S6 |
 | B31 | [Safe server diagnostics and CSP URL redaction](PRODUCT_BACKLOG.md#b31-raw-exception-and-csp-url-content-in-server-diagnostics) | Production complete via PR #77/6ba2c817; 387 tests, CI and hosted redaction/public/media checks pass | Existing L5/S6 logging review |
+| B32 | [Server-only core account writes](PRODUCT_BACKLOG.md#b32-direct-client-writes-bypass-core-account-and-billing-controls) | Confirmed raw plan/Stripe/creator bypass; candidate19/baseline16/rollback16 both DBs and 390 Node tests pass; installation/release pending | Existing L5/S2/S3; resolve before L5 closeout |
 
 Exploratory ideas in ROADMAP.md (typing indicators, pinned comments, comparison view, waveform regions, exports, Slack, native mobile app, multitrack and video) remain unscheduled ideas. They aren't approved launch work. Delete/edit/auth/invite ideas in that old file must be checked against existing features before creating tasks.
 
@@ -291,4 +292,11 @@ B30 metadata reread confirms all three approved entries remain Secret with uncha
 
 User explicitly accepts current monitoring for beta: no paid upgrade or recurring monitoring. Team metadata confirms Hobby; [runtime log retention](https://vercel.com/docs/logs/runtime) is one hour, and [Vercel anomaly alerts](https://vercel.com/docs/alerts) require a higher plan with Observability Plus. Revisit these limits at L8 before wider promotion. Dependency PR #59 touches SSR/auth and test tooling; defer to a separate maintenance release. Major Next16/TypeScript7/ESLint10/Node-types26 updates are not current audit fixes. Remaining action updates affect SEO automation and belong to L7; content PRs #12/#3 are outside this security release. No unrelated PR merged or closed.
 
-S6 is Done in this recorded scope and S7 Done for the accepted current beta. L5 remains In progress for S2-S5; raw account plan/Stripe write grants are the next scoped test, followed by remaining validation/response boundaries. L6/B17-B19 remain next after L5 exit conditions.
+S6 is Done in this recorded scope and S7 Done for the accepted current beta. L5 remains In progress for S2-S5; B32 confirms raw account plan/Stripe and lifecycle write bypass; staged repair is next, followed by remaining validation/response boundaries. L6/B17-B19 remain next after L5 exit conditions.
+
+
+## B32 confirmed account-write boundary candidate, 3 November 2026
+
+Synthetic role probes in both databases confirm direct owner plan/Stripe rewrites, direct creator Studio account insertion and direct owner account deletion. All transactions roll back; no real customer/account/subscription is modified and no Stripe call is made. Existing row ownership policies don't protect server-managed columns. Source account mutations are all canonical server-backed; no browser account writer found.
+
+Migration source 20261103090300 revokes only anon/authenticated/PUBLIC INSERT/UPDATE/DELETE on accounts, keeps reads/RLS/other grants and service operations. Full baseline16, candidate19 and rollback16 pass in both DBs; local390 Node tests and focused lint pass. No permanent grant change yet. Next: staging installation and actual isolated owner settings save, then installed checks and reviewed release. No account/plan model change or historical plan reset. Rollback companion SQL restores the observed old six client mutation grants and reopens the gap; app rollback alone is insufficient. L5 remains In progress.

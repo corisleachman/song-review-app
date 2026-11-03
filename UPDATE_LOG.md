@@ -9754,3 +9754,10 @@ Changes are logging-only plus CSP diagnostic normalization. No app success/error
 
 
 3 November release checkpoint: B31/PR #77/6ba2c817 primary dpl_C1VQK62tyWRy8ZDiZhTjCf7uyZrx Ready/live. 387 Node tests, TypeScript/lint zero errors/five pre-existing warnings, four PR checks and browser30/skip10 pass. Exact-head Preview and Production public/media projections and twelve signed-out checks pass. Benign CSP204 controls found in actual unfiltered request logs with origins only; warning-only filters missed level-warn records. Production27 retrieved records/zero error-fatal; no real secrets/emails or historical log changes. B30 Secret scopes reread intact; original owner/empty staging dashboard visibly restored and fixtures absent. User accepts Hobby one-hour logs and release-time checks for beta, no paid/recurring setup; revisit at L8. S6 and beta S7 exit conditions met, remaining S2-S5 stay open. Rollback prior ffef2c7b app, retaining B28/B30 boundaries.
+
+
+## 2026-11-03: B32 core account write-boundary candidate
+
+Changed files: migration/rollback 20261103090300_restrict_client_account_writes.sql; supabase/tests/account_write_boundary_probe.sql; scripts/compose-account-write-boundary-probe.mjs; tests/api-access-boundaries.test.mjs; current checklist/backlog/security review. Goal: stop raw client plan/Stripe/account-lifecycle changes outside canonical server controls. No field, policy, user plan or provider/env change.
+
+Both-environment rollback-only role proofs reproduce the original issue. Baseline16/candidate19/rollback16 cases pass in each; service provisioning/settings/billing/default Free and other privileges are preserved. 390 Node tests and focused lint pass. Permanent migration, actual isolated staging owner save and release pending. App revert alone won't restore grants; companion down SQL reopens old client mutation permissions.
