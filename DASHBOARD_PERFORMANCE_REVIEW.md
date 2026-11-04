@@ -53,3 +53,17 @@ Exact email staging deployment dpl_5CH7iQjENyBzaWGutEdYsgVCoUAh/source dae4cc97 
 Same two-song workspace/song, desktop Chrome, unthrottled connection. One after run reloaded the song page; the others entered from dashboard. These are initialization/core-success logs, not click-to-paint or randomized network-controlled benchmarks. Ranges overlap substantially. Confirmed improvement is two database calls reduced to one; small-sample medians are suggestive, not an app-wide speed guarantee. B17/B19 targets and broader cold/warm/device measurement remain open.
 
 Play clicked on staging; controls entered Loading with Pause disabled. Browser then rejected follow-up observation for unsupported protocol and explicitly forbade alternate surfaces/workarounds. No workaround attempted. User asked to pause any playing audio, reopen normal HTTPS song page and report playback outcome. Audio pass is not yet verified; do not release B19 before that handoff completes.
+
+## B19 acceptance and Production release, 4 November 2026
+
+User confirmed audio passed/paused. A fresh normal HTTPS tab shows correct song, Play button and0:08/4:19 paused state. No blocked-surface workaround used. PR92 mergedb0542d48; primary Production dpl_9QJjHQh86P4Rrfi5nXE9gfW3S2vJ Ready/www exact source verified. Final four CI checks pass. Six safe live signed-out/login/config probes pass; no fresh Production positive metadata mutation or live playback test. Rollbackf189c38b app, no migration/configuration. Scoped lookup change is Production complete, not all B19 performance/device acceptance.
+
+## B17 artwork and representative-workspace follow-up
+
+Read-only staging Storage metadata for the two user-prepared images:44,817 and42,928 bytes, both JPEG. These source files are small; their size does not explain the recorded two-song delay. Browser evaluation does not expose performance-resource APIs, so image download/discovery timing remains unmeasured. Source route retains private short-lived capability validation, download and private cache headers. No resizing, caching or capability changes made. Normal Production workspace requested for representative B17 read-only timing; staging two-song results cannot establish the original5-6-second report.
+
+## B17 representative Production baseline, 4 November 2026
+
+User opened normal Production workspace for read-only timing.25 songs/15 actions/2 unique assignees. Three content-visible samples3721.9/4451.4/4316.0ms; server totals3458.9/4147.9/4031.9ms, identity1446.5-2328.1ms and assigned member lookup613.8-1171.8ms. Assembly2.5-5.5ms. Existing listWorkspaceMembers performs membership then profile queries; no direct FK connects those tables, and no new RPC/schema change is prepared.
+
+Primary Vercel defaults/live deployment iad1; Production Supabase eu-west-1. See [concrete region proposal, scope and rollback](B17_FUNCTION_REGION_REVIEW.md). Region experiment requires project configuration approval; no region changed. Data geography is confirmed for Production; staging branch region not independently available through project metadata.

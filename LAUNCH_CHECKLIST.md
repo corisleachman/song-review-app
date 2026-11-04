@@ -38,7 +38,7 @@ Performance is the user's main MVP concern. B17-B19 are queued as the leading L6
 
 ## Current stage: L6 performance and final launch QA
 
-Next action: measure B17-B19 dashboard loading, return/cache isolation and song navigation. Two-song staging baseline recorded; tab-return regression reproduced; scoped render fix awaiting staging comparison. L5 beta exit was explicitly accepted on 4 November; unperformed matrix checks remain unperformed.
+Next action: measure B17-B19 dashboard loading, return/cache isolation and song navigation. Two-song staging baseline and scoped B18/B19 releases recorded. Await normal Production workspace for representative B17 timings. L5 beta exit was explicitly accepted on 4 November; unperformed matrix checks remain unperformed.
 
 ## L6 acceptance checklist
 
@@ -77,9 +77,9 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B14 | Marketing image alt-text audit | Pending | L7 |
 | B15 | [Canonical host consistency](PRODUCT_BACKLOG.md#b15-canonical-host-consistency) | Production complete: PR89/0eb8b70c, primary www alias/source verified; six pages200 and canonical/OG metadata, nine sitemap entries and two redirects pass | Existing L7 verification/alignment |
 | B16 | Remaining empty states, typography, workspace-switcher contrast and accessibility polish | Needs current-state triage; old plan isn't evidence of an open defect | L6; split confirmed defects into new rows |
-| B17 | [Dashboard loading speed](PRODUCT_BACKLOG.md#b17-dashboard-measure-and-reduce-time-to-useful-songs-and-artwork) | Three two-song staging runs1.69-2.20s; identity dominates; target/fix pending | L6 leading performance workstream after current security slice |
+| B17 | [Dashboard loading speed](PRODUCT_BACKLOG.md#b17-dashboard-measure-and-reduce-time-to-useful-songs-and-artwork) | 25-song Production baseline3.72-4.45s; app iad1/database Ireland mismatch verified. [Primary-region test proposal](B17_FUNCTION_REGION_REVIEW.md) awaits configuration approval | L6 leading performance workstream after current security slice |
 | B18 | [Dashboard blank on return](PRODUCT_BACKLOG.md#b18-dashboard-retain-valid-songs-and-artwork-when-returning) | Scoped refresh fix Production complete via PR91/f189c38b; user cards-visible pass. Broader lifecycle/error/isolation matrix open | L6 reliability; S2 cache isolation overlaps |
-| B19 | [Dashboard-to-song navigation speed](PRODUCT_BACKLOG.md#b19-dashboard-to-song-measure-and-reduce-navigation-delay) | Joined lookup staged: one DB call replaces two; three core samples1.94-2.93s vs2.00-3.69s before, overlapping ranges. Audio handoff pending | L6 performance; canonical access must remain intact |
+| B19 | [Dashboard-to-song navigation speed](PRODUCT_BACKLOG.md#b19-dashboard-to-song-measure-and-reduce-navigation-delay) | Scoped join fix Production complete: PR92/b0542d48; audio pass/paused verified. DB calls2-to-1; broader timing target/device QA open | L6 performance; canonical access must remain intact |
 | B20 | [New-version collaboration notifications](PRODUCT_BACKLOG.md#b20-verify-notifications-for-new-version-uploads) | All-workspace-member delivery confirmed; capability/delivery untested | L6 dependability audit; no new channel assumed |
 | B21 | [Membership RLS recursion](PRODUCT_BACKLOG.md#b21-membership-rls-recursively-evaluates-itself) | Production complete; staging and live checks pass | L5/S2-S3, P1 |
 | B23 | [Private media public Storage access](PRODUCT_BACKLOG.md#b23-private-song-media-remains-accessible-through-permanent-public-storage-urls) | Production complete in verified scope via PR #68/ff15719f: buckets private; authorised public/private delivery works; legacy URLs refused. Cache/coverage limits recorded | L5/S2-S3, P1 privacy |
@@ -510,3 +510,11 @@ User reports cards stayed visible on fixed staging return. Actual refresh trace2
 B19 candidate joins version and parent workspace in the existing canonical helper, preserving access checks and stripping joined-only data from output. FK verified both DBs; staging read-only equivalent join plan0.210ms (not hosted HTTP timing). Two new before-fix query-count failures; four new handler cases/all585 tests, TypeScript/lint/whitespace pass. No installed schema/permission change; hosted comparison pending.
 
 4 November B19 staging: dae4cc97/Ready dpl_5CH7iQjENyBzaWGutEdYsgVCoUAh exact email alias verified. Hosted version payload and song metadata load; joined-only workspace property absent. Four CI checks pass. Three after timings overlap baseline; only reduced DB round-trip count is confirmed. Audio started loading when Play clicked, then URL policy blocked follow-up; no bypass. User playback/pause check pending; PR92 not released.
+
+## B19 scoped Production release, 4 November 2026
+
+User confirmed Audio passed, paused; normal HTTPS song page observed paused at0:08/4:19 with correct metadata. PR92 mergedb0542d48 (commit b0542d48b0a0d28d3e2c7eca19e1d21991370a89); primary dpl_9QJjHQh86P4Rrfi5nXE9gfW3S2vJ Ready/www exact source verified. Final four CI checks pass;585 tests, TypeScript/focused lint and staging joined payload evidence retained. Six safe live checks pass: login200, dashboard401, version GET/PATCH401, version-list401 and email config enabled/password management off. No fresh Production positive metadata/audio write or live playback test. Rollback f189c38b app; no migration/configuration. B19 broader performance targets/device/navigation matrix remains open.
+
+B17 continuation: staging artwork metadata44,817/42,928 bytes, JPEG; this rules out large source files in the small test workspace, not delivery latency. Browser read-only evaluation does not expose resource timing, so no download-duration claim. User asked to open normal Production dashboard for representative read-only timings.
+
+4 November B17 Production checkpoint: user supplied normal signed-in workspace for read-only timings;25 songs/15 actions/2 assignees. Content3.72-4.45s, server3.46-4.15s; identity and member lookups dominate assembly2.5-5.5ms. Primary functions iad1, Production DB eu-west-1. Dublin project-only experiment prepared in B17_FUNCTION_REGION_REVIEW.md; approval required because it changes deployment configuration. No setting/region/schema changed.

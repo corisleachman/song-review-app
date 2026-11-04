@@ -9941,3 +9941,11 @@ B18 PR91/f189c38b Production complete in refresh-display scope after user stagin
 ## 2026-11-04: B19 hosted comparison and audio handoff
 
 Changed DASHBOARD_PERFORMANCE_REVIEW.md/LAUNCH_CHECKLIST.md and corrected tests/api-access-boundaries.test.mjs fixture to preserve the existing nullable version account_id field. Four focused cases pass; app source unchanged since all585/TypeScript/lint pass. Exact staging source/alias, version payload200 and joined-only field exclusion verified. Three core samples1.94-2.93s overlap2.00-3.69s before; no universal speed claim. Browser security blocked follow-up after Play entered Loading; user playback/pause confirmation requested. No workaround or Production B19 release.
+
+## 2026-11-04: B19 audio acceptance and Production completion
+
+Changed LAUNCH_CHECKLIST.md, DASHBOARD_PERFORMANCE_REVIEW.md, PRODUCT_BACKLOG.md and UPDATE_LOG.md to record explicit audio pass, paused0:08/4:19 observation, PR92/b0542d48 primary Production release and six safe live checks. Final four CI checks pass; scoped join fix Production complete, broader B19 criteria open. Rollbackf189c38b, no migration/configuration. B17 staging artwork44,817/42,928 bytes; representative Production workspace requested before diagnosing original delay. No new app changes.
+
+## 2026-11-04: B17 representative baseline and region proposal
+
+Changed B17_FUNCTION_REGION_REVIEW.md, DASHBOARD_PERFORMANCE_REVIEW.md and LAUNCH_CHECKLIST.md. Measured normal25-song Production workspace read-only: three content-visible samples3.72-4.45s; server identity/member reads dominate, assembly under6ms. Verified primary Vercel iad1 vs Production DB eu-west-1. Prepared exact primary-only Dublin setting payload, staged rollout gates and iad1 rollback; no configuration/schema change applied. Project configuration approval pending under AGENTS.md. Vercel Functions skill/current official region docs used.
