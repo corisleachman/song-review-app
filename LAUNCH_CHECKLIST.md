@@ -38,7 +38,7 @@ Performance is the user's main MVP concern. B17-B19 are queued as the leading L6
 
 ## Current stage: L6 performance and final launch QA
 
-Next action: measure B17-B19 dashboard loading, return/cache isolation and song navigation. Empty staging baseline recorded; user preparing representative staging songs with artwork. L5 beta exit was explicitly accepted on 4 November; unperformed matrix checks remain unperformed.
+Next action: measure B17-B19 dashboard loading, return/cache isolation and song navigation. Two-song staging baseline recorded; tab-return regression reproduced; scoped render fix awaiting staging comparison. L5 beta exit was explicitly accepted on 4 November; unperformed matrix checks remain unperformed.
 
 ## L6 acceptance checklist
 
@@ -77,9 +77,9 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B14 | Marketing image alt-text audit | Pending | L7 |
 | B15 | [Canonical host consistency](PRODUCT_BACKLOG.md#b15-canonical-host-consistency) | Production complete: PR89/0eb8b70c, primary www alias/source verified; six pages200 and canonical/OG metadata, nine sitemap entries and two redirects pass | Existing L7 verification/alignment |
 | B16 | Remaining empty states, typography, workspace-switcher contrast and accessibility polish | Needs current-state triage; old plan isn't evidence of an open defect | L6; split confirmed defects into new rows |
-| B17 | [Dashboard loading speed](PRODUCT_BACKLOG.md#b17-dashboard-measure-and-reduce-time-to-useful-songs-and-artwork) | User report; baseline and target pending | L6 leading performance workstream after current security slice |
-| B18 | [Dashboard blank on return](PRODUCT_BACKLOG.md#b18-dashboard-retain-valid-songs-and-artwork-when-returning) | Reported defect; trigger unverified | L6 reliability; S2 cache isolation overlaps |
-| B19 | [Dashboard-to-song navigation speed](PRODUCT_BACKLOG.md#b19-dashboard-to-song-measure-and-reduce-navigation-delay) | User report; baseline pending | L6 performance; canonical access must remain intact |
+| B17 | [Dashboard loading speed](PRODUCT_BACKLOG.md#b17-dashboard-measure-and-reduce-time-to-useful-songs-and-artwork) | Three two-song staging runs1.69-2.20s; identity dominates; target/fix pending | L6 leading performance workstream after current security slice |
+| B18 | [Dashboard blank on return](PRODUCT_BACKLOG.md#b18-dashboard-retain-valid-songs-and-artwork-when-returning) | Reproduced: tab-return refresh hides2 loaded songs. Scoped render fix local; staging verification pending | L6 reliability; S2 cache isolation overlaps |
+| B19 | [Dashboard-to-song navigation speed](PRODUCT_BACKLOG.md#b19-dashboard-to-song-measure-and-reduce-navigation-delay) | First core initialization2.73s; repeated click-to-paint baseline pending | L6 performance; canonical access must remain intact |
 | B20 | [New-version collaboration notifications](PRODUCT_BACKLOG.md#b20-verify-notifications-for-new-version-uploads) | All-workspace-member delivery confirmed; capability/delivery untested | L6 dependability audit; no new channel assumed |
 | B21 | [Membership RLS recursion](PRODUCT_BACKLOG.md#b21-membership-rls-recursively-evaluates-itself) | Production complete; staging and live checks pass | L5/S2-S3, P1 |
 | B23 | [Private media public Storage access](PRODUCT_BACKLOG.md#b23-private-song-media-remains-accessible-through-permanent-public-storage-urls) | Production complete in verified scope via PR #68/ff15719f: buckets private; authorised public/private delivery works; legacy URLs refused. Cache/coverage limits recorded | L5/S2-S3, P1 privacy |
@@ -498,3 +498,7 @@ User explicitly accepted recorded S2/S5 limits for current beta. L5 is Done for 
 PR89 merged0eb8b70c; primary Production dpl_BNKywRcu3MVwnhDFuuiqKiBeVaaU Ready/www exact source verified. Six live pages200 with matching canonical/OG URLs, nine www sitemap entries and apex/blog-slash308 redirects pass. Preview eight JSON-LD blocks parse; final source four CI checks pass. No migration/configuration change. Rollback prior compatible app1d8fe5a7; no external step required.
 
 B17-B19 investigation uses optimize skill and existing opt-in timing hooks. Empty staging workspace, desktop Chrome, ordinary unthrottled connection, repeated reloads: visible empty-state1663.5/1827.2/1944.9ms; network1654.1/1817.4/1938.9ms; server total1406.6/1522.8/1693.7ms. Identity1107.7-1410.6ms dominates server time. This is not a populated song/artwork baseline or a performance improvement. Entry waits for full payload before displaying songs; focus refresh after five-minute cache expiry sets loading true. Both are reproduction leads, not established incident causes. User asked to prepare staging test songs/audio/artwork; no performance source change. Sol Medium recommended for diagnosis, Terra for a scoped fix once measured.
+
+4 November populated baseline: user prepared two songs/audio/artwork. Three staging runs reach content1.69-2.20s, identity0.93-1.28s server time. First version-page core initialization2.73s; not click-to-paint. Artwork complete when inspected, precise readiness unmeasured. See [measurement conditions and limits](DASHBOARD_PERFORMANCE_REVIEW.md). No performance fix released; actual tab-return reproduction pending. PR90 documentation merged61537fc1.
+
+4 November B18 reproduction: user returned to staging dashboard with opt-in cache bypass. New refresh trace started; DOM showed All songs2 plus loading paragraph and no artwork. Candidate keeps loaded cards mounted during refresh by gating loading placeholder on no songs. No fetch/cache/auth change; B18 broader lifecycle/error/isolation checks remain open.
