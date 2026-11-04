@@ -72,3 +72,7 @@ The slow dub1 samples triggered the planned safeguard: restore primary defaults 
 The crossover supports keeping Dublin for lower ordinary-path latency and database proximity, while explicitly retaining provider-tail investigation. Restored primary defaults dub1 and promoted the tested existing dub1 deployment8gBeW82QBbWxGmeruVr8dJNA6UwL. Final www/source/dub1/resource readback and auth smoke pass; all unrelated resource fields remain unchanged. No claim of consistent subsecond Production loading or completed B17. Previous iad1 deployment9QJjHQh86P4Rrfi5nXE9gfW3S2vJ remains the rollback.
 
 Next: user perception check on Production, then investigate provider-origin stalls with a narrow read-only trace. Proposed future desktop target, not an accepted promise: common25-song loads around2s or less, with long-tail samples tracked separately. Physical-device/full L6 acceptance remains open.
+
+## Production user feedback, 4 November 2026
+
+Coris reports Production feels much faster and more responsive. The perceived improvement is accepted; the measured slow tail remains recorded rather than waived. No device/browser or distinct playback result was supplied. Documentation-only PR93/7d1e2ae0 is live on primary dub1 (dpl_kCewMGEp61D5bN2Xm6ny8utGShBK), with unchanged application files. Next L6 step is a physical-device playback/lock-screen pass; ongoing provider-origin diagnosis stays B17.
