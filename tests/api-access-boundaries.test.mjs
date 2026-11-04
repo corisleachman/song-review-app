@@ -1420,7 +1420,7 @@ test('B41 valid playlist reorder remains scoped to the selected playlist',async(
 for (const role of ['owner', 'member']) {
  test(`B19 joined version read preserves ${role} payload without an extra song query`, async () => {
   const h = routeHarness('app/api/versions/[versionId]/route.ts', {
-   identity: session(role), tables: { songs: [song], song_versions: [{...finalizedVersion, file_path: null}] },
+   identity: session(role), tables: { songs: [song], song_versions: [{...finalizedVersion, file_path: null, account_id: null}] },
   });
   const response = await h.handler.GET(getRequest(), params({versionId:'version-a'}));
   assert.equal(response.status,200);
@@ -1428,7 +1428,7 @@ for (const role of ['owner', 'member']) {
   assert.equal(version.id,'version-a');
   assert.equal(version.audioUrl,null);
   assert.equal(Object.hasOwn(version,'workspace_song'),false);
-  assert.equal(Object.hasOwn(version,'account_id'),false);
+  assert.equal(version.account_id,null);
   assert.deepEqual(h.reads,['song_versions']);
  });
 }

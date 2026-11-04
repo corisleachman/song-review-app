@@ -9937,3 +9937,7 @@ Changed app/dashboard/page.tsx, DASHBOARD_PERFORMANCE_REVIEW.md and LAUNCH_CHECK
 Changed app/api/versions/[versionId]/route.ts and tests/api-access-boundaries.test.mjs, plus LAUNCH_CHECKLIST.md/DASHBOARD_PERFORMANCE_REVIEW.md/UPDATE_LOG.md. Remove one sequential version-parent database round trip through existing FK relation; preserve workspace/object authorization and exclude joined-only data from response. Shared GET/PATCH read helper only; no write/business-rule/schema change. Four new cases, two pre-fix failures/all585 tests pass; TypeScript/focused lint/whitespace pass. FK checked both DBs and staging read-only equivalent plan0.210ms; HTTP after-change timing pending.
 
 B18 PR91/f189c38b Production complete in refresh-display scope after user staging pass and exact www deployment/source checks. Full B18 lifecycle matrix remains open. Rollback B19 tof189c38b; B18 to61537fc1. No external configuration/migration.
+
+## 2026-11-04: B19 hosted comparison and audio handoff
+
+Changed DASHBOARD_PERFORMANCE_REVIEW.md/LAUNCH_CHECKLIST.md and corrected tests/api-access-boundaries.test.mjs fixture to preserve the existing nullable version account_id field. Four focused cases pass; app source unchanged since all585/TypeScript/lint pass. Exact staging source/alias, version payload200 and joined-only field exclusion verified. Three core samples1.94-2.93s overlap2.00-3.69s before; no universal speed claim. Browser security blocked follow-up after Play entered Loading; user playback/pause confirmation requested. No workaround or Production B19 release.
