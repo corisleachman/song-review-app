@@ -793,3 +793,14 @@ PR89/0eb8b70c is Production complete in canonical-host scope: six pages200 with 
 ### B17-B19 initial measurement, 4 November 2026
 
 Existing staging password account has zero songs. Three desktop Chrome/unthrottled reloads reach empty-state in1663.5/1827.2/1944.9ms; server identity1107.7-1410.6ms. This is an auth/empty baseline only; song/artwork and navigation remain unmeasured. Source inspection finds entry waits for canonical full response and expired focus-cache refresh sets loading true. Reproduce before fixing; preserve workspace and revoked-membership boundaries. Await representative staging songs with audio/artwork from user. No performance implementation change.
+
+### B42. First lock-screen pause shows another app's metadata
+
+- Status: User-reproduced on iPhone17 Pro Max in a Chrome tab; cause unconfirmed. L6 targeted device follow-up, not automatically a new launch blocker. No application change made.
+- Observed4 November2026: enter a song page, Play, lock phone, wake without unlocking, press lock-screen Pause. After2-3seconds the title/artwork switch to a track outside Song Room. Unlock, replay the same song and repeat: it stays on the Song Room item. First-use behaviour repeats with different songs.
+- Correction: user explicitly confirms only title/artwork change; the unrelated track does not audibly start. Preserve this distinction. Other requested play/seek/background/pause/dashboard-return steps reportedly worked.
+- Device: iPhone17 Pro Max, Chrome browser tab. iOS/browser versions not supplied; no installed-app or iPad pass inferred.
+- Working hypotheses: browser/OS media-session selection after pause, or first-play registration timing. Current version page registers custom metadata/actions only in WaveSurfer play handling. Native first-tap audio can start before asynchronous waveform attachment, and native fallback only updates playbackState. These are code-path leads, not proof of the reported display handoff.
+- Boundary: [W3C Media Session routing](https://www.w3.org/TR/mediasession/#routing) leaves active-session selection to the user agent; playbackState does not determine routing. App metadata updates cannot guarantee ownership of the phone's paused Now Playing surface.
+- Next reproduction: same phone, Safari tab, same Production song and first locked Pause sequence; record whether Song Room stays paused and whether only metadata hands off. Keep code unchanged for this comparison.
+- Acceptance: determine whether there is an app-owned control/state bug or platform UI behaviour. Any fix must preserve first-gesture playback, seeking, single-player/background behaviour and real pause. A hardware retest is required; desktop emulation cannot prove the lock-screen outcome.
