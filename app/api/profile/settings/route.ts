@@ -1,3 +1,4 @@
+import { readCollaborationInput } from '@/lib/collaborationInput';
 import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -31,7 +32,6 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const payload = await req.json();
     const resolved = await resolveCanonicalIdentity();
 
     if (!resolved) {
@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const payload = await readCollaborationInput(req);
     if (!isThemeSettingsInput(payload)) {
       return NextResponse.json(
         { error: 'Missing required colors' },

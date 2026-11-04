@@ -104,7 +104,8 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 
 | B38 | [Server-owned legacy billing records](PRODUCT_BACKLOG.md#b38-client-writes-can-forge-unused-legacy-billing-records) | Production complete, 4 Nov: installed84 pass both; settings/plan reads preserved | Existing L5/S3 P2 hardening; no demonstrated paid-access bypass or new launch blocker |
 | B39 | [Preserve playlist workspace/song linkage](PRODUCT_BACKLOG.md#b39-direct-playlist-header-writes-can-transfer-foreign-song-links) | Production complete,4 Nov: installed25 pass both; staged playlist flow/cleanup verified | Existing L5/S2-S3 security defect; approval required for permanent permission change |
-| B40 | [Action/task mutation input validation](PRODUCT_BACKLOG.md#b40-actiontask-mutations-accept-malformed-input) | Preview accepted:515 tests/four CI checks; owner/member flows and persisted reorder pass; fixtures0; Production release next | Existing L5/S5 validation, no new launch scope |
+| B40 | [Action/task mutation input validation](PRODUCT_BACKLOG.md#b40-actiontask-mutations-accept-malformed-input) | Production complete:PR87/613a1426 live; user member/reorder accepted; fixtures0; seven safe live checks pass | Existing L5/S5 validation |
+| B41 | [Remaining metadata request validation](PRODUCT_BACKLOG.md#b41-metadata-requests-accept-malformed-input-and-playlist-reorder-hides-failure) | Local fix:44 pre-fix failures across two batches;66 new/all581 tests pass; Preview pending | Existing L5/S5 P2 validation; no new launch scope |
 
 Exploratory ideas in ROADMAP.md (typing indicators, pinned comments, comparison view, waveform regions, exports, Slack, native mobile app, multitrack and video) remain unscheduled ideas. They aren't approved launch work. Delete/edit/auth/invite ideas in that old file must be checked against existing features before creating tasks.
 
@@ -470,3 +471,6 @@ Rollback for this staging code change is reassigning this same stable alias to d
 
 
 4 November B40 acceptance complete: user reports member view/reorder passed; DB verifies task B0/A1. Actual same-session fixture reads: four outsider denials, four member successes, four post-removal denials with no fixture-title leakage. Bootstrap returns participant's original Owner workspace. Guarded cleanup removes synthetic account/member/song/version/thread/comment/action/task rows, all counts0. Original workspace remains Free/storage0/null Stripe, original membership count1. Normal dashboard restored. No Auth identity deleted, email/provider/Storage/payment operation. Application-only release after final PR87 checks; rollback prior4e8a2750 retaining B39 SQL. Broader S2/S4/S5 remain open.
+
+
+4 November Production checkpoint: B40/PR87 merged613a1426; primary dpl_BCGgcjLmtjcATiUaFuKpE17wpkRJ Ready and www alias verified at exact merge. Five malformed signed-out mutation methods401, login200 and existing public playlist200; email enabled/password management off preserved. Staging owner/member/reorder/revocation evidence and zero fixtures recorded above. No fresh Production positive content write. Rollback prior4e8a2750 app, retaining B39 grants. B41 follows for remaining metadata input and truthful playlist-reorder errors; S2/S4/S5 remain In progress.

@@ -1,3 +1,4 @@
+import { readCollaborationInput } from '@/lib/collaborationInput';
 import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -37,7 +38,10 @@ export async function POST(req: NextRequest) {
     const resolved = await resolveCanonicalIdentity();
     if (!resolved) return NextResponse.json({ error: 'Sign in required.' }, { status: 401 });
 
-    const body = (await req.json().catch(() => ({}))) as { title?: unknown };
+    const body = await readCollaborationInput(req);
+    if (!body || (body.title != null && typeof body.title !== 'string')) {
+      return NextResponse.json({ error: 'Invalid playlist details.' }, { status: 400 });
+    }
     const title = typeof body?.title === 'string' && body.title.trim()
       ? body.title.trim().slice(0, 200)
       : 'Untitled playlist';

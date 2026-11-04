@@ -1337,3 +1337,78 @@ test('B40 collaboration body ceiling measures UTF-8 bytes and accepts its exact 
  const declared=new Request('https://test.invalid',{method:'POST',body:'{}',headers:{'content-length':'16385'}});
  assert.equal(await readCollaborationInput(declared),null);
 });
+
+// B41: remaining metadata mutations keep malformed input out of writes.
+const b41Routes=[
+ ['songs/create/route.ts','POST',{}],
+ ['songs/[songId]/route.ts','PATCH',{songId:song.id}],
+ ['versions/[versionId]/route.ts','PATCH',{versionId:'version-a'}],
+ ['playlists/route.ts','POST',{}],
+ ['playlists/[id]/route.ts','PATCH',{id:'playlist-a'}],
+ ['playlists/[id]/songs/route.ts','POST',{id:'playlist-a'}],
+ ['playlists/[id]/songs/route.ts','PATCH',{id:'playlist-a'}],
+ ['workspace/invites/[inviteId]/route.ts','PATCH',{inviteId:'invite-a'}],
+ ['songs/[songId]/visibility/route.ts','PATCH',{songId:song.id}],
+ ['profile/settings/route.ts','POST',{}],
+];
+const b41Tables={songs:[song],song_versions:[{id:'version-a',song_id:song.id,version_number:1}],
+ playlists:[{id:'playlist-a',account_id:'workspace-a',title:'Fixture',is_public:false}],
+ playlist_songs:[{playlist_id:'playlist-a',song_id:song.id,position:0}],
+ account_invites:[{id:'invite-a',account_id:'workspace-a',status:'pending'}]};
+for(const [route,method,routeParams] of b41Routes){
+ for(const [label,raw] of [['null','null'],['array','[]'],['malformed','{'],['oversize',JSON.stringify({title:'x'.repeat(16385),label:'x'.repeat(16385),songId:song.id,orderedSongIds:[song.id],action:'revoke',is_public:true})]]){
+  test(`B41 ${route} ${method} rejects ${label} without writes`,async()=>{
+   const h=routeHarness('app/api/'+route,{identity:session('owner'),tables:b41Tables,mutationResult:{id:'new-id'},logger:{error(){}}});
+   const response=await h.handler[method](new Request('https://test.invalid',{method,body:raw,headers:{'content-type':'application/json'}}),params(routeParams));
+   assert.equal(response.status,400);assert.deepEqual(h.writes,[]);
+  });
+ }
+ test(`B41 ${route} ${method} signed-out malformed input returns401`,async()=>{
+  const h=routeHarness('app/api/'+route,{logger:{error(){}}});
+  const response=await h.handler[method](new Request('https://test.invalid',{method,body:'{'}),params(routeParams));
+  assert.equal(response.status,401);assert.deepEqual(h.reads,[]);assert.deepEqual(h.writes,[]);
+ });
+}
+for(const [route,body,routeParams] of [
+ ['songs/create/route.ts',{title:{}},{}],
+ ['songs/[songId]/route.ts',{title:42},{songId:song.id}],
+ ['songs/[songId]/route.ts',{title:'Fixture',status:false},{songId:song.id}],
+ ['versions/[versionId]/route.ts',{label:{}},{versionId:'version-a'}],
+ ['versions/[versionId]/route.ts',{notes:42},{versionId:'version-a'}],
+ ['playlists/route.ts',{title:{}},{}],
+ ['playlists/[id]/route.ts',{title:42},{id:'playlist-a'}],
+ ['playlists/[id]/route.ts',{is_public:'true'},{id:'playlist-a'}],
+ ['playlists/[id]/route.ts',{},{id:'playlist-a'}],
+ ['playlists/[id]/songs/route.ts',{orderedSongIds:[song.id,false]},{id:'playlist-a'}],
+ ['playlists/[id]/songs/route.ts',{orderedSongIds:[song.id,song.id]},{id:'playlist-a'}],
+ ['playlists/[id]/songs/route.ts',{orderedSongIds:['foreign-song']},{id:'playlist-a'}],
+]){
+ const method=route.endsWith('create/route.ts')||route==='playlists/route.ts'?'POST':'PATCH';
+ test(`B41 ${route} rejects typed fields ${JSON.stringify(body)}`,async()=>{
+  const h=routeHarness('app/api/'+route,{identity:session('owner'),tables:b41Tables,mutationResult:{id:'new-id'},logger:{error(){}}});
+  const response=await h.handler[method](jsonRequest(body,method),params(routeParams));
+  assert.equal(response.status,400);assert.deepEqual(h.writes,[]);
+ });
+}
+test('B41 playlist reorder reports an update error instead of success',async()=>{
+ const h=routeHarness('app/api/playlists/[id]/songs/route.ts',{identity:session('owner'),tables:b41Tables,mutationError:{code:'XX000'},logger:{error(){}}});
+ const response=await h.handler.PATCH(jsonRequest({orderedSongIds:[song.id]},'PATCH'),params({id:'playlist-a'}));
+ assert.equal(response.status,500);assert.deepEqual(await response.json(),{error:'Could not reorder.'});
+});
+test('B41 empty playlist creation keeps the existing default title',async()=>{
+ const h=routeHarness('app/api/playlists/route.ts',{identity:session('member'),mutationResult:{id:'new-playlist'}});
+ assert.equal((await h.handler.POST(jsonRequest({}))).status,201);
+ assert.deepEqual(h.writes[0].value,{account_id:'workspace-a',created_by:'user-member',title:'Untitled playlist'});
+});
+test('B41 version metadata accepts explicit clears and preserves notes trimming',async()=>{
+ const h=routeHarness('app/api/versions/[versionId]/route.ts',{identity:session('member'),tables:b41Tables,mutationResult:{id:'version-a',version_number:1}});
+ assert.equal((await h.handler.PATCH(jsonRequest({label:null,notes:' Updated '},'PATCH'),params({versionId:'version-a'}))).status,200);
+ assert.deepEqual(h.writes[0].value,{label:null,notes:'Updated'});
+ assert.equal((await h.handler.PATCH(jsonRequest({label:null,notes:null},'PATCH'),params({versionId:'version-a'}))).status,200);
+ assert.deepEqual(h.writes[1].value,{label:null,notes:null});
+});
+test('B41 valid playlist reorder remains scoped to the selected playlist',async()=>{
+ const h=routeHarness('app/api/playlists/[id]/songs/route.ts',{identity:session('member'),tables:b41Tables});
+ assert.equal((await h.handler.PATCH(jsonRequest({orderedSongIds:[song.id]},'PATCH'),params({id:'playlist-a'}))).status,200);
+ assert.ok(h.queries.filter(q=>q.table==='playlist_songs').every(q=>q.filters.some(([key,value])=>key==='playlist_id'&&value==='playlist-a')));
+});

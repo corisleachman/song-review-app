@@ -1,3 +1,4 @@
+import { readCollaborationInput } from '@/lib/collaborationInput';
 import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { artworkDeliveryUrl } from '@/lib/artworkAccess';
 import { NextRequest, NextResponse } from 'next/server';
@@ -73,7 +74,12 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
       { status: access.error === 'unauthorized' ? 401 : 404 });
   }
   try {
-    const body = (await req.json().catch(() => ({}))) as { title?: unknown; is_public?: unknown };
+    const body = await readCollaborationInput(req);
+    if (!body || ('title' in body && (typeof body.title !== 'string' || !body.title.trim()))
+      || ('is_public' in body && typeof body.is_public !== 'boolean')
+      || (!('title' in body) && !('is_public' in body))) {
+      return NextResponse.json({ error: 'Invalid playlist details.' }, { status: 400 });
+    }
     const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (typeof body?.title === 'string' && body.title.trim()) update.title = body.title.trim().slice(0, 200);
     if (typeof body?.is_public === 'boolean') update.is_public = body.is_public;
