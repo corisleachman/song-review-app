@@ -1,3 +1,4 @@
+import { readCollaborationInput } from '@/lib/collaborationInput';
 import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -36,6 +37,13 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ taskId:
       return NextResponse.json({ error: 'You must be signed in to update a task.' }, { status: 401 });
     }
 
+    const body = await readCollaborationInput(req);
+    if (!body) return NextResponse.json({ error: 'Invalid task details.' }, { status: 400 });
+    if (('status' in body && body.status !== 'pending' && body.status !== 'completed')
+      || ('description' in body && (typeof body.description !== 'string' || !body.description.trim()))) {
+      return NextResponse.json({ error: 'Invalid task details.' }, { status: 400 });
+    }
+
     const { task, workspaceId } = await loadTaskWorkspace(params.taskId);
 
     if (!task) {
@@ -46,10 +54,9 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ taskId:
       return NextResponse.json({ error: 'You do not have access to this task.' }, { status: 403 });
     }
 
-    const body = await req.json();
     const allowed: Record<string, string> = {};
-    if ('status' in body) allowed.status = body.status;
-    if ('description' in body) allowed.description = body.description;
+    if (body.status === 'pending' || body.status === 'completed') allowed.status = body.status;
+    if (typeof body.description === 'string') allowed.description = body.description.trim();
 
     if (Object.keys(allowed).length === 0) {
       return NextResponse.json({ error: 'Nothing to update.' }, { status: 400 });

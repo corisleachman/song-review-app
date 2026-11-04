@@ -1241,3 +1241,99 @@ for (const value of [{ message: 'PRIVATE-DATABASE-MESSAGE', details: 'PRIVATE-DE
     assert.deepEqual(h.reads, []); assert.deepEqual(h.writes, []);
   });
 }
+
+// B40: execute real collaboration handlers with malformed untrusted payloads.
+const b40Routes = [
+  ['actions/create/route.ts', 'POST', {}],
+  ['actions/[actionId]/route.ts', 'PATCH', { actionId: 'action-a' }],
+  ['tasks/create/route.ts', 'POST', {}],
+  ['tasks/[taskId]/route.ts', 'PATCH', { taskId: 'task-a' }],
+  ['tasks/reorder/route.ts', 'PATCH', {}],
+];
+const b40Tables = {
+  songs: [song], song_tasks: [{ id: 'task-a', song_id: song.id }],
+  actions: [{ id: 'action-a', song_id: song.id, account_id: 'workspace-a' }],
+  comments: [{ id: 'comment-a', thread_id: 'thread-a' }],
+  comment_threads: [{ id: 'thread-a', song_version_id: 'version-a' }],
+  song_versions: [{ id: 'version-a', song_id: song.id }],
+};
+for (const [route, method, routeParams] of b40Routes) {
+  for (const [label, raw] of [['null', 'null'], ['array', '[]'], ['malformed', '{'], ['oversize', JSON.stringify({ description: 'x'.repeat(16385) })]]) {
+    test(`B40 ${route} rejects ${label} before data access`, async () => {
+      const h = routeHarness(`app/api/${route}`, { identity: session('member'), tables: b40Tables, logger: { error() {} } });
+      const req = new Request('https://test.invalid', { method, body: raw, headers: { 'content-type': 'application/json' } });
+      const response = await h.handler[method](req, params(routeParams));
+      assert.equal(response.status, 400);
+      assert.deepEqual(h.reads, []);
+      assert.deepEqual(h.writes, []);
+    });
+  }
+  test(`B40 ${route} rejects signed-out malformed JSON without parsing`, async () => {
+    const h = routeHarness(`app/api/${route}`, { logger: { error() {} } });
+    const response = await h.handler[method](new Request('https://test.invalid', { method, body: '{' }), params(routeParams));
+    assert.equal(response.status, 401);
+    assert.deepEqual(h.reads, []);
+  });
+}
+for (const timestampSeconds of [-1, '2', true, {}, 2147483648]) {
+  test(`B40 action rejects timestamp ${JSON.stringify(timestampSeconds)}`, async () => {
+    const h = routeHarness('app/api/actions/create/route.ts', { identity: session('member'), tables: b40Tables });
+    const response = await h.handler.POST(jsonRequest({ songId: song.id, commentId: 'comment-a', description: 'Fixture', timestampSeconds }));
+    assert.equal(response.status, 400);
+    assert.deepEqual(h.reads, []);
+    assert.deepEqual(h.writes, []);
+  });
+}
+for (const [route,method,body,routeParams] of [
+  ['actions/create/route.ts','POST',{songId:song.id,commentId:'comment-a',description:{}},{}],
+  ['actions/create/route.ts','POST',{songId:song.id,commentId:'comment-a',description:'Fixture',assignedToUserId:{}},{}],
+  ['actions/[actionId]/route.ts','PATCH',{description:42},{actionId:'action-a'}],
+  ['actions/[actionId]/route.ts','PATCH',{assignedToUserId:42},{actionId:'action-a'}],
+  ['actions/[actionId]/route.ts','PATCH',{resolvedInVersionId:{}},{actionId:'action-a'}],
+  ['tasks/create/route.ts','POST',{songId:song.id,description:42},{}],
+  ['tasks/[taskId]/route.ts','PATCH',{description:{}},{taskId:'task-a'}],
+  ['tasks/[taskId]/route.ts','PATCH',{description:'   '},{taskId:'task-a'}],
+  ['tasks/[taskId]/route.ts','PATCH',{status:'unknown'},{taskId:'task-a'}],
+  ['tasks/[taskId]/route.ts','PATCH',{status:null},{taskId:'task-a'}],
+]) {
+  test(`B40 ${route} rejects invalid ${Object.keys(body).at(-1)} ${JSON.stringify(body)}`, async () => {
+    const h = routeHarness(`app/api/${route}`, { identity: session('member'), tables:b40Tables, logger:{error(){}} });
+    const response=await h.handler[method](jsonRequest(body,method),params(routeParams));
+    assert.equal(response.status,400);
+    assert.deepEqual(h.writes,[]);
+  });
+}
+test('B40 valid action rounds numeric timestamp and derives canonical attribution',async()=>{
+ const h=routeHarness('app/api/actions/create/route.ts',{identity:session('member'),tables:b40Tables,mutationResult:{id:'new-action'}});
+ const response=await h.handler.POST(jsonRequest({songId:song.id,commentId:'comment-a',description:' Fixture ',timestampSeconds:2.6}));
+ assert.equal(response.status,201);
+ assert.equal(h.writes[0].value[0].timestamp_seconds,3);
+ assert.equal(h.writes[0].value[0].description,'Fixture');
+ assert.equal(h.writes[0].value[0].created_by_user_id,'user-member');
+});
+test('B40 task update preserves completed status and trims description',async()=>{
+ const h=routeHarness('app/api/tasks/[taskId]/route.ts',{identity:session('member'),tables:b40Tables,mutationResult:{id:'task-a'}});
+ const response=await h.handler.PATCH(jsonRequest({status:'completed',description:' Updated '},'PATCH'),params({taskId:'task-a'}));
+ assert.equal(response.status,200);
+ assert.deepEqual(h.writes[0].value,{status:'completed',description:'Updated'});
+});
+test('B40 task reorder does not report success after a database write failure',async()=>{
+ const h=routeHarness('app/api/tasks/reorder/route.ts',{identity:session('member'),tables:b40Tables,mutationError:{code:'XX000'},logger:{error(){}}});
+ const response=await h.handler.PATCH(jsonRequest({orderedIds:['task-a']},'PATCH'));
+ assert.equal(response.status,500);
+ assert.deepEqual(await response.json(),{error:'Could not reorder tasks.'});
+});
+
+test('B40 collaboration body ceiling measures UTF-8 bytes and accepts its exact boundary',async()=>{
+ const {readCollaborationInput}=routeHarness('lib/collaborationInput.ts').handler;
+ const overhead=Buffer.byteLength(JSON.stringify({description:''}));
+ const exact=JSON.stringify({description:'x'.repeat(16384-overhead)});
+ assert.equal(Buffer.byteLength(exact),16384);
+ assert.equal((await readCollaborationInput(new Request('https://test.invalid',{method:'POST',body:exact}))).description.length,16384-overhead);
+ assert.equal(await readCollaborationInput(new Request('https://test.invalid',{method:'POST',body:exact+' '})),null);
+ const multibyte=JSON.stringify({description:'🎵'.repeat(4096)});
+ assert.ok(multibyte.length<16384);
+ assert.equal(await readCollaborationInput(new Request('https://test.invalid',{method:'POST',body:multibyte})),null);
+ const declared=new Request('https://test.invalid',{method:'POST',body:'{}',headers:{'content-length':'16385'}});
+ assert.equal(await readCollaborationInput(declared),null);
+});

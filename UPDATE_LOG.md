@@ -9880,3 +9880,23 @@ Changed files: LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.m
 ## 2026-11-04: approved B39 Production rollout and S3 database review exit
 
 Changed files: LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, LAUNCH_API_ACCESS_MATRIX.md, UPDATE_LOG.md, supabase/tests/table_security_inventory.sql. Goal: enforce canonical playlist ownership/linkage and close database review with complete table coverage. User approved exact B39 migration; installed25 pass staging/Production. Actual staged playlist create/rename/share/draft/add/reorder/remove and stored fields pass, all fixtures removed. No delete UI; service SQL DELETE covered. Five Production no-write HTTP checks pass. Security advisors zero ERROR/WARN, nine intentional INFO. Read-only table29 pass each environment;19 application function review and existing behavioural probes complete S3 scope. S2/S4/S5 stay open. SQL rollback restores grants/reopens bypass; no app deployment needed for enforcement. Added official-source model/effort recommendations and automatic independent-continuation preference. No application implementation change.
+
+
+## 2026-11-04: B40 collaboration validation and remaining abuse inventory
+
+Changed files: lib/collaborationInput.ts; app/api/actions/create/route.ts; app/api/actions/[actionId]/route.ts; app/api/tasks/create/route.ts; app/api/tasks/[taskId]/route.ts; app/api/tasks/reorder/route.ts; tests/api-access-boundaries.test.mjs; LAUNCH_CHECKLIST.md; PRODUCT_BACKLOG.md; LAUNCH_SECURITY_REVIEW.md; UPDATE_LOG.md. Goal: return400 for malformed collaboration input, reject invalid typed fields/timestamps and report reorder database failure accurately.35 failures reproduced before fix;44 new/all515 tests pass; TypeScript/focused lint/whitespace clean. Application-only, hosted acceptance pending; rollback prior4e8a2750 code retaining B39 SQL. Also recorded read-only live provider CAPTCHA/rate settings and bounded S4 coverage/remaining limits. No provider settings or live data changed for this review.
+
+
+## 2026-11-04: restore email/password staging access for B40 acceptance
+
+Changed files: LAUNCH_CHECKLIST.md, EMAIL_PASSWORD_STAGING_ROLLOUT.md, PRODUCT_BACKLOG.md, UPDATE_LOG.md. Goal: reuse existing plus-address staging accounts on tested B40 code. Rebuilt the established email-staging Preview with inherited environment and source7284fae5; Ready dpl_H9gAkTGS5G6PiNoD9rftSuK156XS serves the existing CAPTCHA-allowed hostname. Verified source/alias/target, email readiness, staging project, empty login400 and visible fields. Automated Turnstile300030 prevents full login acceptance; user test required. No app code, environment variable, secret, provider setting, branch history or Production change; no credential submission/mail. Rollback alias to dpl_EtDYXsoE9t3YUpxUmpBvD1VHtowT, retaining email configuration. Whitespace check passes; runtime515 tests/four CI checks already pass on deployed source. No repeat app tests for documentation-only changes.
+
+
+## 2026-11-04: prepare isolated email-member acceptance and verify hosted outsider reads
+
+Changed files: LAUNCH_API_ACCESS_MATRIX.md, PRODUCT_BACKLOG.md, LAUNCH_CHECKLIST.md, UPDATE_LOG.md. Goal: test real password-account cross-workspace boundaries without touching existing workspaces. User login passed; canonical actor and original workspace baseline verified. Four actual outsider song/version/task/thread projections deny access with no fixture title. Guarded temporary Member link added only to disposable B40 account, no invitation/mail. Chrome extension panel blocks next browser action, so member view and drag order require user acceptance. B40 is still Preview/unmerged; fixture retained for that test. No app source, provider settings, Auth identity, real workspace, plan or billing modification. Documentation-only whitespace verification; no repeat runtime tests.
+
+
+## 2026-11-04: B40 user acceptance, hosted read revocation and fixture cleanup
+
+Changed files: LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_API_ACCESS_MATRIX.md, LAUNCH_SECURITY_REVIEW.md, UPDATE_LOG.md. User member-view/reorder acceptance passes; DB verifies B0/A1. Four member reads succeed, then four same-session reads deny after removing only fixture membership, supplementing four prior outsider denials. Original workspace/Owner role restored; all account/member/song/version/thread/comment/action/task fixture counts0 and original plan/storage/Stripe/membership baseline preserved. No real content, Auth identity, email/payment/Storage operation. App source unchanged since tested7284fae5; final documentation CI precedes routine PR87 release. Rollback prior4e8a2750 retaining B39 grants. Remaining S2/S4/S5 stay open.
