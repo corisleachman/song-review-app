@@ -229,3 +229,14 @@ B39 DB/code trace confirms raw dual-workspace client header transfer can leave f
 
 
 4 November2026 B39 installed acceptance: installed25 pass staging/Production; actual staged owner create/rename/public/draft/add/reorder/remove and stored creator/account/order verification pass, fixtures removed. No UI playlist DELETE exists; service SQL DELETE tested. Production signed-out playlist GET/PATCH/DELETE401 and existing public projection200 pass. S3 database review exit met; hosted method/role coverage remains S2.
+
+
+### 4 November 2026: selected email participant and hosted outsider checks
+
+User confirmed password login passed on the stable email-staging alias and designated an existing plus-address account for tests. Canonical profile2a9732e1-217a-40ca-a021-fbf7d64f294a and fresh staging Auth sign-in verified. Its original workspace3498b4a6-c0df-4bc6-b2db-14e8213cbcfa remains Owner/Free/storage0 with null Stripe customer/subscription; no existing workspace or plan was edited.
+
+Before fixture membership, actual signed-in browser navigation to fixture song GET, version GET, song-tasks GET and version-threads GET returned explicit access-denied JSON and no fixture title. Browser evidence establishes denied projections, not independently captured HTTP status codes. After these negatives, guarded server provisioning added only this actor's Member link to disposable account1ee43543-b6a2-4397-9679-518dd62fec30 (B40 hosted acceptance); Google actor27a37199-e2bf-45ad-a03f-2162b9f1802a remains its owner. No invite or notification was sent. Fixture membership count2, one synthetic song, two pending tasks; no audio object or storage usage.
+
+Chrome extension UI then blocked automation before member workspace selection. Actual member positive read and drag-reorder acceptance remain pending. User should open the stable alias dashboard, select B40 hosted acceptance (Member), open the B40 hosted fixture song, drag task B above task A and refresh. Expected: only the isolated fixture view and persisted B/A order; report visible error/URL if it fails, never credentials. B40 remains unmerged/Preview only. After acceptance, verify DB order, restore original workspace selection and guardedly remove the fixture workspace/rows/memberships. Do not remove the user's original workspace or Auth identity.
+
+Git transport repeatedly failed with GitHub500. Prior documentation commit was published through Git Data API as1ccd45a9164ee76848dcb408c639477c64f7ee12 after full-tree equality with local4ae4f672; non-force ref update verified. Local branch reconciled to that identical published tree. No source/runtime change.
