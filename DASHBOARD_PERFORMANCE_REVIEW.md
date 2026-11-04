@@ -1,6 +1,6 @@
 # Dashboard performance review
 
-Checkpoint: 4 November 2026. B17-B19, L6. No performance fix released.
+Checkpoint: 4 November 2026. B17-B19, L6. B18 scoped refresh fix released; B17/B19 remain open.
 
 ## Measurement conditions
 
@@ -29,3 +29,13 @@ Reproduce focus return with explicit cache bypass, then actual expiry. Compare v
 ## B18 scoped candidate, 4 November 2026
 
 One render condition in app/dashboard/page.tsx now shows the loading paragraph only while loading and there are no songs. Already loaded cards remain mounted while the same existing canonical fetch refreshes data. No TTL, fetching, identity, workspace selection, state ownership or signed-media expiry change. Initial mount still starts with no songs and waits for the canonical response. Current code already replaces songs when a successful response arrives. This candidate does not claim improvements to initial server latency, cache/auth race handling or universal B18 lifecycle acceptance. All581 existing Node tests and TypeScript pass; dashboard lint has0errors/10 existing warnings; whitespace check passes. Staging return comparison follows before release. App rollback restores parent61537fc1; no migration/external configuration required.
+
+## B18 acceptance and Production release, 4 November 2026
+
+User confirmed cards stayed visible during fixed staging tab return; actual refresh200 and retained two images observed. Initial empty loading preserved. PR91/f189c38b primary dpl_CniVe1QvDfn3kir5LsXMAvNZhHCZ Ready/www source verified; login200, dashboard401 signed-out and Production email config true/false pass.581 tests/TypeScript/four CI checks pass. Rollback61537fc1. Broader original lifecycle/error/isolation matrix remains open; no initial-load speed claim.
+
+## B19 joined lookup candidate
+
+Second unchanged song-page initialization14:10:00.155 to core success14:10:03.840 UTC,3685ms. Bootstrap1502ms, song1647ms, list2124ms, selected version3721ms. Existing version helper reads version then parent song in separate serial calls. Candidate embeds only parent account_id through installed song_versions_song_id_fkey, removes joined-only property before returning version and keeps existing workspace/object checks. Shared GET/PATCH helper changes read shape only; update logic is unchanged. Both DBs have that FK. Equivalent staging read-only SQL join execution0.210ms, not a PostgREST latency measurement.
+
+Four handler cases cover owner/member payload and one-round-trip lookup, foreign/missing-parent denial before Storage. Two query-count assertions fail before implementation; all585 tests, TypeScript/focused lint/whitespace pass afterward. Actual PostgREST relation shape, payload parity, pending/missing audio and hosted timing remain staging checks. Do not claim a speed improvement until compared. No index/schema/configuration/permission or profile synchronization change. Rollback parentf189c38b application.

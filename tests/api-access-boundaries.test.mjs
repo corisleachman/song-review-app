@@ -50,6 +50,10 @@ function routeHarness(route, { identity = null, user = null, tables = {}, storag
             const parent = (tables.songs ?? []).find(song => song.id === row.song_id);
             return parent ? [{ ...row, song: parent }] : [];
           });
+          if (selection.includes('workspace_song:songs!song_versions_song_id_fkey')) rows = rows.map(row => ({
+            ...row,
+            workspace_song: (tables.songs ?? []).find(song => song.id === row.song_id) ?? null,
+          }));
           if (selection.includes('playlist:playlists!inner')) rows = rows.flatMap(row => {
             const parent = (tables.playlists ?? []).find(playlist => playlist.id === row.playlist_id);
             return parent ? [{ ...row, playlist: parent }] : [];
@@ -1412,3 +1416,29 @@ test('B41 valid playlist reorder remains scoped to the selected playlist',async(
  assert.equal((await h.handler.PATCH(jsonRequest({orderedSongIds:[song.id]},'PATCH'),params({id:'playlist-a'}))).status,200);
  assert.ok(h.queries.filter(q=>q.table==='playlist_songs').every(q=>q.filters.some(([key,value])=>key==='playlist_id'&&value==='playlist-a')));
 });
+
+for (const role of ['owner', 'member']) {
+ test(`B19 joined version read preserves ${role} payload without an extra song query`, async () => {
+  const h = routeHarness('app/api/versions/[versionId]/route.ts', {
+   identity: session(role), tables: { songs: [song], song_versions: [{...finalizedVersion, file_path: null}] },
+  });
+  const response = await h.handler.GET(getRequest(), params({versionId:'version-a'}));
+  assert.equal(response.status,200);
+  const {version} = await response.json();
+  assert.equal(version.id,'version-a');
+  assert.equal(version.audioUrl,null);
+  assert.equal(Object.hasOwn(version,'workspace_song'),false);
+  assert.equal(Object.hasOwn(version,'account_id'),false);
+  assert.deepEqual(h.reads,['song_versions']);
+ });
+}
+for (const [label, parent, status] of [['foreign',foreignSong,403],['absent',null,403]]) {
+ test(`B19 joined version read denies ${label} parent before storage`, async () => {
+  const h = routeHarness('app/api/versions/[versionId]/route.ts', {
+   identity:session('member'), tables:{songs:parent ? [{...parent,id:'song-a'}] : [],song_versions:[finalizedVersion]},
+  });
+  const response = await h.handler.GET(getRequest(),params({versionId:'version-a'}));
+  assert.equal(response.status,status);
+  assert.doesNotMatch(await response.text(),/PRIVATE-TITLE|PRIVATE-ARTWORK/);
+ });
+}

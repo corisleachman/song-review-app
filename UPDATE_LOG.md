@@ -9931,3 +9931,9 @@ Changed DASHBOARD_PERFORMANCE_REVIEW.md and LAUNCH_CHECKLIST.md to record B17-B1
 ## 2026-11-04: B18 keep loaded song cards during refresh
 
 Changed app/dashboard/page.tsx, DASHBOARD_PERFORMANCE_REVIEW.md and LAUNCH_CHECKLIST.md. Actual staging tab return reproduced two loaded songs being hidden by the loading branch during canonical refresh. Gate the placeholder on an empty song list so existing cards/artwork stay mounted. Initial empty loading and existing refresh data flow remain. No fetch/auth/cache TTL/schema change. All581 existing Node tests and TypeScript pass, dashboard lint0errors/10 existing warnings, whitespace passes. Staging comparison pending; not Production complete.
+
+## 2026-11-04: B18 scoped Production completion and B19 joined lookup
+
+Changed app/api/versions/[versionId]/route.ts and tests/api-access-boundaries.test.mjs, plus LAUNCH_CHECKLIST.md/DASHBOARD_PERFORMANCE_REVIEW.md/UPDATE_LOG.md. Remove one sequential version-parent database round trip through existing FK relation; preserve workspace/object authorization and exclude joined-only data from response. Shared GET/PATCH read helper only; no write/business-rule/schema change. Four new cases, two pre-fix failures/all585 tests pass; TypeScript/focused lint/whitespace pass. FK checked both DBs and staging read-only equivalent plan0.210ms; HTTP after-change timing pending.
+
+B18 PR91/f189c38b Production complete in refresh-display scope after user staging pass and exact www deployment/source checks. Full B18 lifecycle matrix remains open. Rollback B19 tof189c38b; B18 to61537fc1. No external configuration/migration.
