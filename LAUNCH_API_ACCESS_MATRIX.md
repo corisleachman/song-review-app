@@ -4,7 +4,9 @@
 
 This inventory classifies all 68 API route files by intended boundary; forwarded settings GET/POST methods are included. Helper references are text matches to guide inspection, not proof of authentication or authorisation. Public, auth-entry, webhook and internal routes need their own boundary classification. No negative-access test is marked passed by this inventory.
 
-For each method, record the final route class, identity check, resource/workspace predicate, role requirement, input validation and owner/member/outsider/public staging result before S2 can finish. See [review procedure](LAUNCH_SECURITY_REVIEW.md#next-slice-api-boundary-matrix).
+Beta exception accepted 4 November 2026: S2 exits on the layered evidence and limits in [the accepted review](LAUNCH_SECURITY_REVIEW.md#remaining-l5-beta-closeout-proposal4-november2026). Pending cells below remain unperformed. Consolidated journeys carry to L6. The original exhaustive procedure is retained for further coverage.
+
+For each method, record the final route class, identity check, resource/workspace predicate, role requirement, input validation and owner/member/outsider/public staging result for exhaustive coverage. See [review procedure](LAUNCH_SECURITY_REVIEW.md#next-slice-api-boundary-matrix).
 
 | Route | Class | Exported methods | Boundary reference to inspect | Negative-access verification |
 | --- | --- | --- | --- |

@@ -501,7 +501,7 @@ User accepted playlist create/name/add/reorder/refresh; DB B0/A1 verified. All f
 
 ## Remaining L5 beta closeout proposal,4 November2026
 
-This is a proposal, not an accepted exit. S2/S5 remain In progress until Coris accepts this bounded beta coverage or further checks complete. S3 is verified in recorded database scope; S4/S6/S7 have their recorded beta scopes/acceptances.
+Accepted by Coris on 4 November 2026 for the current beta. S2/S5 and L5 exit are complete within this bounded coverage; unperformed hosted permutations remain unperformed. S3 is verified in recorded database scope; S4/S6/S7 have their recorded beta scopes/acceptances.
 
 | Evidence layer | Recorded coverage / practical limit |
 | --- | --- |
@@ -511,4 +511,4 @@ This is a proposal, not an accepted exit. S2/S5 remain In progress until Coris a
 | Production | Exact source/project/alias verification, CI, safe signed-out/public/media checks and recorded configuration readback. Fresh positive writes, payment and real notification delivery not repeated against user Production data. |
 | Remaining limits | Legacy malformed/invalid-ID calls can still use safe generic500 paths; this review doesn't claim universal400 responses or one body-size parser everywhere. Full provider/payment sandbox, device/background audio, notifications B20, performance/cache-isolation B17-B19 and consolidated journey acceptance stay in L6. S4 accepted beta quota/IP limits and S7 Hobby monitoring limits remain for L8 review. |
 
-Proposed decision: accept S2/S5 exit for the current beta on this layered evidence and stated limits, carrying the named L6 checks forward before the wider-launch decision. Do not interpret acceptance as every hosted permutation passing, new billing/auth activation, Production payment permission, a marketing go-ahead or an unqualified security guarantee. Confirmed future defects reopen their stage; retained app/SQL rollback records remain applicable.
+Accepted decision: S2/S5 exit for the current beta on this layered evidence and stated limits, carrying the named L6 checks forward before the wider-launch decision. Do not interpret acceptance as every hosted permutation passing, new billing/auth activation, Production payment permission, a marketing go-ahead or an unqualified security guarantee. Confirmed future defects reopen their stage; retained app/SQL rollback records remain applicable.
