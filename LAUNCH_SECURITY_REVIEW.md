@@ -430,3 +430,26 @@ All25 public tables have RLS; policies and effective client/service CRUD grants 
 Confirmed synthetic B39: dual-workspace member changes playlist.account_id from A to B while its playlist_songs entry still links A's private song. B-only user sees that source song ID through playlist-song RLS while direct source-song SELECT is empty. Inspected private playlist GET first resolves header ownership then service-fetches linked song metadata without account filter, so the transferred header can expose title/status across the workspace boundary. Public playlist projection and media have separate predicates; no media-access claim. Existing mismatch count0 in both environments.
 
 Candidate denies only raw client playlist I/U/D, preserving canonical server operations and reads. No current client-side mutation writer found. Baseline26/candidate25/rollback26 each pass both DBs; service CRUD/role reads/policies/other grants preserved. Zero fixture rows and unchanged original grants/policy hash67e1c849af01f1063b56ac6d8a295570 verified. All471 Node tests, composer lint and whitespace pass. No permanent installation or real-content/provider operation. S3 coverage closure waits for this approved repair and remaining evidence reconciliation; S2 hosted role/method and S4/S5 remain open. See B39 backlog for staged acceptance/rollback.
+
+
+## S3 table/policy exit and B39 installed,4 November2026
+
+B39 approved and installed staging20261104085737/Production20261104090003; installed25 pass each. Actual staged owner playlist creation derives correct creator/account, rename and public/draft saves persist, two-song add/reorder/remove persist. Cleanup removes playlist/links/two synthetic songs, storage0 and original empty UI verified. No delete control exists in playlist UI; SQL service DELETE is covered, hosted DELETE acceptance not claimed. Production login200, unauthenticated playlist GET/PATCH/DELETE401, existing public playlist projection200. No real Production content/provider mutation. Matching SQL restores old grants and reopens the bypass.
+
+All25 public tables map to these reviewed boundaries:
+
+| Tables | Effective boundary / evidence |
+| --- | --- |
+| account_invites, beta_feedback, billing_webhook_events, email_auth_flows, email_login_rate_limits, mutation_rate_limits, referral_codes, referrals, stripe_webhook_events | Nine server-only tables: RLS/no client policy; some retain table grants, which do not bypass RLS. Restricted RPCs/canonical service handlers provide intended operations. No untrusted public definer function can expose these rows. |
+| accounts, account_members | Workspace member reads; client writes denied B32/B34. Canonical owner/invite/bootstrap controls covered by installed19/23, B35 replay11 and bootstrap14 evidence. |
+| songs, song_versions | Member reads; anonymous raw reads and client writes denied B28/B36. Public projection/media routes retain explicit scope. Installed40 and real upload/finalize/accounting/delete acceptance. |
+| actions, song_tasks, comments, comment_threads, playlist_songs | Parent/workspace reads; client mutation denied B37, preserving earlier private-comment INSERT denial. Installed81 and staged collaboration acceptance. |
+| playlists | Workspace member reads; client writes now denied B39. Installed25 and actual staged playlist flow recorded above. |
+| billing_subscriptions, billing_checkout_sessions | Workspace member reads; client writes denied B38. Empty legacy tables, no active entitlement reader; installed84 and settings/plan reads. |
+| profiles, profile_settings | Own-user SELECT/INSERT/UPDATE, no client DELETE policy. B38 four-role own/foreign read/update probes; profile metadata isn't canonical Auth/admin identity. |
+| settings | Workspace membership SELECT/UPDATE and membership/own-user INSERT; no DELETE policy. Colour-only legacy settings; B38 scoped probes. Display-name-based server migration fallback remains an explicit limited legacy behaviour, not proof of arbitrary cross-workspace service reads. |
+| public_comments | Direct client SELECT/I/U/D absent; canonical shared-song projection/submission path only, B28/B26. |
+
+Post-repair checked-in table_security_inventory.sql pins25 tables' RLS/force state, full policy expressions/roles/permissiveness, table ACL and column ACL plus four schema/view/role checks. All29 pass both DBs. No public views/materialized views, untrusted schema CREATE or client superuser/BYPASSRLS role. Function19 body/grant checks previously match. Security advisors zero ERROR/WARN, nine expected no-policy INFO. Hash checks detect reviewed-state drift, not a substitute for behavioural tests.
+
+S3 Done in recorded database review scope. S2 hosted API role/method verification, S4 abuse coverage and S5 validation remain open. Future findings can reopen S3. No new provider/payment acceptance, platform-internal audit or universal concurrency guarantee is claimed.

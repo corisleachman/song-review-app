@@ -226,3 +226,6 @@ Real getCurrentAuthenticatedUser helper/fake-SSR-I/O tests verify Auth id/email 
 ### 4 November 2026: remaining playlist-header authority
 
 B39 DB/code trace confirms raw dual-workspace client header transfer can leave foreign song links; private playlist GET's linked metadata service query trusts the header/link invariant. Current mismatches0 in both DBs. Canonical create derives account/creator from current identity, PATCH accepts only title/is_public, DELETE scopes through resolvePlaylistAccess. Candidate makes raw headers server-owned; baseline26/candidate25/rollback26 pass each DB, no installed or hosted exploit claim. S2 cannot close this path until installed/hosted acceptance. Details and exact approval rollout are in PRODUCT_BACKLOG.md#b39-direct-playlist-header-writes-can-transfer-foreign-song-links.
+
+
+4 November2026 B39 installed acceptance: installed25 pass staging/Production; actual staged owner create/rename/public/draft/add/reorder/remove and stored creator/account/order verification pass, fixtures removed. No UI playlist DELETE exists; service SQL DELETE tested. Production signed-out playlist GET/PATCH/DELETE401 and existing public projection200 pass. S3 database review exit met; hosted method/role coverage remains S2.

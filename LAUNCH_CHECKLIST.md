@@ -34,7 +34,7 @@ Done means the named scope has recorded evidence, not that every future improvem
 
 Performance is the user's main MVP concern. B17-B19 are queued as the leading L6 workstream; capture does not interrupt the current L5 task. B06 six-month Free-to-Pro beta grants have confirmed product rules; implementation and expiry/billing boundary tests remain open.
 
-Next action: approve/install B39 playlist-header write boundary, then finish S3 policy/table reconciliation and S2 hosted role/method gaps. B38 is Production complete; PR #84 merged4940085c. B37 is Production complete in its recorded scope. B36 is Production complete in its recorded scope. B35 is Production complete in its recorded scope. B34 is Production complete in its recorded scope. B28-B33 are complete in their recorded scope; S6 and beta-scoped S7 exit conditions are verified/accepted. No user step is pending. B17-B19 remain the leading L6 performance workstream after L5 exit conditions.
+Next action: close S4 remaining mutation/abuse coverage, then S5 validation while assembling S2 hosted role/method acceptance. B39 database enforcement is Production complete. B38 is Production complete; PR #84 merged4940085c. B37 is Production complete in its recorded scope. B36 is Production complete in its recorded scope. B35 is Production complete in its recorded scope. B34 is Production complete in its recorded scope. B28-B33 are complete in their recorded scope; S6 and beta-scoped S7 exit conditions are verified/accepted. No user step is pending. B17-B19 remain the leading L6 performance workstream after L5 exit conditions.
 
 ## L6 acceptance checklist
 
@@ -103,7 +103,7 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B37 | [Server-only collaboration mutations](PRODUCT_BACKLOG.md#b37-direct-collaboration-writes-bypass-parent-and-author-checks) | Production complete in recorded scope: installed81 pass both; actual staging comment/reply/action/task/playlist lifecycle passes; fixtures removed; PR #83 | Existing L5/S2/S3, P1 context/attribution |
 
 | B38 | [Server-owned legacy billing records](PRODUCT_BACKLOG.md#b38-client-writes-can-forge-unused-legacy-billing-records) | Production complete, 4 Nov: installed84 pass both; settings/plan reads preserved | Existing L5/S3 P2 hardening; no demonstrated paid-access bypass or new launch blocker |
-| B39 | [Preserve playlist workspace/song linkage](PRODUCT_BACKLOG.md#b39-direct-playlist-header-writes-can-transfer-foreign-song-links) | Confirmed; baseline26/candidate25/rollback26 pass both DBs; not installed | Existing L5/S2-S3 security defect; approval required for permanent permission change |
+| B39 | [Preserve playlist workspace/song linkage](PRODUCT_BACKLOG.md#b39-direct-playlist-header-writes-can-transfer-foreign-song-links) | Production complete,4 Nov: installed25 pass both; staged playlist flow/cleanup verified | Existing L5/S2-S3 security defect; approval required for permanent permission change |
 
 Exploratory ideas in ROADMAP.md (typing indicators, pinned comments, comparison view, waveform regions, exports, Slack, native mobile app, multitrack and video) remain unscheduled ideas. They aren't approved launch work. Delete/edit/auth/invite ideas in that old file must be checked against existing features before creating tasks.
 
@@ -427,3 +427,30 @@ Read-only review closes the function-body portion of S3:17 public and two privat
 Table/policy inventory covers all25 public RLS tables with matching staging/Production policies and client/service CRUD grants. Nine no-policy tables deny clients through RLS (some retain table grants); no policy absence is treated as an access grant. Existing B21/B28/B32/B34-B38 evidence covers the repaired data surfaces. Remaining direct client writes reviewed on profiles/preferences/theme and playlist headers. B39 confirms a dual-workspace member can move a playlist header without its linked song, exposing the source song ID to a destination-only member; private playlist GET's service query can then return the source metadata. This is synthetic DB reproduction plus code trace, not a hosted exploit or media-access claim. Both environments have zero current mismatched playlist links.
 
 Candidate20261104100000 denies only playlist client I/U/D, preserving reads/RLS/server CRUD/other privileges. Baseline26/candidate25/rollback26 pass each DB. All471 Node tests, composer lint and whitespace checks pass. Zero fixture accounts/playlists/songs; original grants and policy hash67e1c849af01f1063b56ac6d8a295570 restored. No installed change. Approval required before permanent staging/Production installation; S2/S3 remain In progress.
+
+### 4 November 2026: B39 approved rollout and S3 exit
+
+User approved B39. Exact source20261104100000 installed staging ledger20261104085737 and Production20261104090003. Installed25 pass both environments. Staging owner browser create/rename/public/draft/add/reorder/remove pass, creator/account/flag/order read back correctly; guarded cleanup removed playlist/links/two synthetic songs and restored storage0/empty playlist view. No playlist-delete UI exists; actual service DELETE is covered in SQL, not claimed as a hosted browser method. Five safe Production checks pass: login200, signed-out playlist list/PATCH/DELETE401, existing public playlist projection200. No Production positive content write, email, payment or Storage operation. Original grant rollback reopens header-transfer bypass; app rollback alone cannot change grants. Source/evidence PR86 merge follows CI.
+
+S3 exit verified in scoped review:25/25 public table policies/ACLs mapped,19/19 application function bodies reviewed, private Storage and controlled delivery evidence retained. New read-only table inventory passes29 checks each DB; no public views, runtime public/private-schema CREATE or client superuser/BYPASSRLS role. Both advisors have zero ERROR/WARN and nine intentional no-policy INFO. Behavioural role evidence remains in the named B21/B28/B32/B34-B39 probes; hashes detect drift, not arbitrary security guarantees. Remaining hosted route roles are S2 and provider/payment journeys are L6, not hidden S3 completion claims.
+
+## Model choices for remaining work
+
+Reviewed4 November2026 against [official model-selection guidance](https://developers.openai.com/api/docs/guides/model-selection). Use the lightest setting that meets the named checks; avoid re-researching identical task types. These are task recommendations, not measured savings or proof the current chat model changed. Current tools cannot switch this chat's model. No extra agent is authorized solely by this table.
+
+| Remaining work | Starting model/effort | Escalation condition |
+| --- | --- | --- |
+| Checklist/evidence reconciliation, dependency PR inventory, link/alt-text inventory B10/B14/B15 | Luna Low | Ambiguous behaviour or conflicting evidence |
+| S2 cross-workspace/auth review and B06 promotional billing/owner boundaries | GPT-6.1 Sol Medium | Unresolved security architecture needs Astra review |
+| S4 mutation budgets/provider attribution | GPT-6.1 Sol Medium | Concurrency/security boundary unclear |
+| S5 bounded field/type fixes and regression tests | GPT-6.1 Terra Medium | Cross-route/data-model impact needs Sol |
+| Staging browser acceptance and repeatable L6 journey checks | GPT-6.1 Terra Low | Reproducible multi-system failure needs Sol |
+| B17-B19 dashboard performance/cache isolation | GPT-6.1 Sol Medium | Scoped implementation can move to Terra after root cause established |
+| B20 notification delivery review and isolated test harness | GPT-6.1 Sol Medium | Provider/security behaviour remains uncertain |
+| B09 physical iPad/browser/lock-screen acceptance | User executes named checks; Terra summarizes | Actual device access required |
+| B16 confirmed UI fixes/accessibility and FAQ B13 | GPT-6.1 Terra Medium | Broad redesign is a separate scope decision |
+| B11 article review and L7 supplied-copy edits | GPT-6.1 Terra Low with write-like-coris | Unsupported factual claims need research |
+| L8 evidence compilation | Luna Low; User owns go/no-go | Conflicting release evidence needs Sol |
+| Later items B01-B08/B12 outside current launch scope | Select when activated | Do not spend tokens implementing deferred work |
+
+Execution preference, clarified4 November: continue independent authorized work when an item awaits approval. Pause dependent rollout without approval; keep progressing elsewhere. Pause for user-executed acceptance when required. Never treat silence as approval.
