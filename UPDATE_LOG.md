@@ -9973,3 +9973,7 @@ Changed DASHBOARD_PERFORMANCE_REVIEW.md, B17_FUNCTION_REGION_REVIEW.md, LAUNCH_C
 ## 2026-11-04: record first mobile playback result and B42
 
 Changed PRODUCT_BACKLOG.md, LAUNCH_DEVICE_ACCEPTANCE.md and LAUNCH_CHECKLIST.md. User confirms iPhone17 Pro Max/Chrome: audio/seek/background/pause/return worked, but first locked Pause changes only lock-screen metadata to an outside track. No unintended audio starts. Log B42 as L6 device follow-up with unconfirmed cause, not a silently added blocker. Inspected first-gesture/native/WaveSurfer session handling and W3C routing; identified timing leads without a speculative app patch. Same-phone Safari comparison next. No code/schema/configuration change; documentation whitespace checked.
+
+## 2026-11-04: B42 Safari comparison and independent player control
+
+Changed PRODUCT_BACKLOG.md, LAUNCH_DEVICE_ACCEPTANCE.md and LAUNCH_CHECKLIST.md. Record same metadata-only pause handoff in Safari on iPhone17 Pro Max, followed by media-card dismissal; no audio or blank app page. Distinguish cross-browser reproduction from proof of a platform cause. Inspected official Google plain-audio Media Session example and prepared an independent same-phone control test. No app patch or claimed fix; documentation whitespace checked.

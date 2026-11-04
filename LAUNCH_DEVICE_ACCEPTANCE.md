@@ -1,6 +1,6 @@
 # L6 physical-device acceptance
 
-Prepared4 November2026. Current status: partial pass on iPhone17 Pro Max/Chrome; first lock-screen Pause metadata handoff tracked as B42. This is the first controlled playback pass, not the complete L6 journey/browser matrix.
+Prepared4 November2026. Current status: partial audio acceptance on iPhone17 Pro Max; metadata issue reproduced in Chrome and Safari; first lock-screen Pause metadata handoff tracked as B42. This is the first controlled playback pass, not the complete L6 journey/browser matrix.
 
 ## Scope and current implementation
 
@@ -30,3 +30,11 @@ Google/email signup/recovery, controlled invites/workspace isolation, upload/ver
 User reports the requested audio/seek/background/pause/return steps worked on iPhone17 Pro Max in a Chrome tab, except the first locked Pause per song changes the phone's title/artwork to an unrelated track after2-3seconds. No unrelated audio starts. Replaying the same song before the next locked Pause avoids the metadata change. Repeated across different songs. This is a partial acceptance with [B42](PRODUCT_BACKLOG.md#b42-first-lock-screen-pause-shows-another-apps-metadata) open, not a full mobile/browser pass. iOS/Chrome versions unknown; physical11-inch iPad remains untested.
 
 Next controlled comparison: use Safari on the same phone, same Production song, first Play/lock/wake/Pause. Return whether artwork/title switch while audio stays paused. No application change before comparison. Browser/OS selects the active session; distinguish this from Song Room selecting another song or playing outside media.
+
+## Safari comparison, 4 November2026
+
+On the same iPhone17 Pro Max, user reproduces title/artwork handoff after the first locked Pause in Safari too. After2-3seconds a radio-show card appears, then after dim/wake the media card is gone. No audio is playing. Date/time/torch/camera remain on the phone lock screen; this is not a Song Room page blanking report.
+
+B42 is therefore not Chrome-specific. Both browsers still use the same app code, so this comparison does not by itself establish an iOS-only cause. W3C leaves active media-session selection to the user agent; the observed sequence is consistent with a paused-session handoff, not proven to be caused by it.
+
+Next controlled test uses the [official Google Media Session audio sample](https://googlechrome.github.io/samples/media-session/audio.html), inspected source: native audio, explicit play/pause handlers and playbackState updates. User should tap its Play button, play briefly, lock/wake/Pause and wait5seconds in Safari. Record metadata ownership and audible state separately. No Song Room code or account, no new diagnostic app patch.
