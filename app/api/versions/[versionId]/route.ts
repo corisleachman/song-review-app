@@ -9,27 +9,21 @@ import { audioDeliveryUrl } from '@/lib/mediaDelivery';
 export const dynamic = 'force-dynamic';
 
 async function loadVersionWithWorkspace(versionId: string) {
-  const { data: version, error: versionError } = await supabaseServer
+  const { data, error } = await supabaseServer
     .from('song_versions')
-    .select('*')
+    .select('*, workspace_song:songs!song_versions_song_id_fkey(account_id)')
     .eq('id', versionId)
     .maybeSingle();
 
-  if (versionError) throw versionError;
+  if (error) throw error;
 
-  if (!version) {
+  if (!data) {
     return { version: null, workspaceId: null };
   }
 
-  const { data: song, error: songError } = await supabaseServer
-    .from('songs')
-    .select('id, account_id')
-    .eq('id', version.song_id)
-    .maybeSingle();
-
-  if (songError) throw songError;
-
-  return { version, workspaceId: song?.account_id ?? null };
+  // Keep the parent workspace check server-side without another round trip.
+  const { workspace_song, ...version } = data;
+  return { version, workspaceId: workspace_song?.account_id ?? null };
 }
 
 function normalizeStoragePath(value: string | null | undefined) {

@@ -1,6 +1,6 @@
 # Dashboard performance review
 
-Checkpoint: 4 November 2026. B17-B19, L6. No performance fix released.
+Checkpoint: 4 November 2026. B17-B19, L6. B18 scoped refresh fix released; B17/B19 remain open.
 
 ## Measurement conditions
 
@@ -29,3 +29,27 @@ Reproduce focus return with explicit cache bypass, then actual expiry. Compare v
 ## B18 scoped candidate, 4 November 2026
 
 One render condition in app/dashboard/page.tsx now shows the loading paragraph only while loading and there are no songs. Already loaded cards remain mounted while the same existing canonical fetch refreshes data. No TTL, fetching, identity, workspace selection, state ownership or signed-media expiry change. Initial mount still starts with no songs and waits for the canonical response. Current code already replaces songs when a successful response arrives. This candidate does not claim improvements to initial server latency, cache/auth race handling or universal B18 lifecycle acceptance. All581 existing Node tests and TypeScript pass; dashboard lint has0errors/10 existing warnings; whitespace check passes. Staging return comparison follows before release. App rollback restores parent61537fc1; no migration/external configuration required.
+
+## B18 acceptance and Production release, 4 November 2026
+
+User confirmed cards stayed visible during fixed staging tab return; actual refresh200 and retained two images observed. Initial empty loading preserved. PR91/f189c38b primary dpl_CniVe1QvDfn3kir5LsXMAvNZhHCZ Ready/www source verified; login200, dashboard401 signed-out and Production email config true/false pass.581 tests/TypeScript/four CI checks pass. Rollback61537fc1. Broader original lifecycle/error/isolation matrix remains open; no initial-load speed claim.
+
+## B19 joined lookup candidate
+
+Second unchanged song-page initialization14:10:00.155 to core success14:10:03.840 UTC,3685ms. Bootstrap1502ms, song1647ms, list2124ms, selected version3721ms. Existing version helper reads version then parent song in separate serial calls. Candidate embeds only parent account_id through installed song_versions_song_id_fkey, removes joined-only property before returning version and keeps existing workspace/object checks. Shared GET/PATCH helper changes read shape only; update logic is unchanged. Both DBs have that FK. Equivalent staging read-only SQL join execution0.210ms, not a PostgREST latency measurement.
+
+Four handler cases cover owner/member payload and one-round-trip lookup, foreign/missing-parent denial before Storage. Two query-count assertions fail before implementation; all585 tests, TypeScript/focused lint/whitespace pass afterward. Actual PostgREST relation shape, payload parity, pending/missing audio and hosted timing remain staging checks. Do not claim a speed improvement until compared. No index/schema/configuration/permission or profile synchronization change. Rollback parentf189c38b application.
+
+## B19 staging comparison, 4 November 2026
+
+Exact email staging deployment dpl_5CH7iQjENyBzaWGutEdYsgVCoUAh/source dae4cc97 and alias verified; four CI checks pass. Actual version JSON200 keeps existing nullable account_id and stable audio delivery URL/audioMissing=false; joined workspace_song field absent. Both normal song metadata and comments/tasks panels load. Test fixture now explicitly checks preservation of existing account_id=null rather than assuming that pre-existing field is absent. Four focused cases pass after that test-only correction.
+
+| Run | Before core init ms | After core init ms | Before version request ms | After version request ms |
+| --- | --- | --- | --- | --- |
+|1|2725|2927|1800|2935|
+|2|3685|2072|3721|1121|
+|3|1995|1938|2031|1814|
+
+Same two-song workspace/song, desktop Chrome, unthrottled connection. One after run reloaded the song page; the others entered from dashboard. These are initialization/core-success logs, not click-to-paint or randomized network-controlled benchmarks. Ranges overlap substantially. Confirmed improvement is two database calls reduced to one; small-sample medians are suggestive, not an app-wide speed guarantee. B17/B19 targets and broader cold/warm/device measurement remain open.
+
+Play clicked on staging; controls entered Loading with Pause disabled. Browser then rejected follow-up observation for unsupported protocol and explicitly forbade alternate surfaces/workarounds. No workaround attempted. User asked to pause any playing audio, reopen normal HTTPS song page and report playback outcome. Audio pass is not yet verified; do not release B19 before that handoff completes.
