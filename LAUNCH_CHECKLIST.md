@@ -4,7 +4,7 @@ Last reconciled: 4 November 2026. This is the current progress page. Keep this U
 
 ## Where we are
 
-Public beta is live. Five foundation stages are done. Security closeout is in progress, followed by launch QA, discoverability closeout and the wider-launch decision. Stage counts describe scope, not a percentage of engineering effort.
+Public beta is live. Five foundation stages are done. Security closeout is accepted for the current beta. Performance and launch QA are next, followed by discoverability closeout and the wider-launch decision. Stage counts describe scope, not a percentage of engineering effort.
 
 | Stage | Status | What it covers | Evidence or exit condition |
 | --- | --- | --- | --- |
@@ -13,28 +13,32 @@ Public beta is live. Five foundation stages are done. Security closeout is in pr
 | L2. Collaboration, plans and sharing | Done | Song/version feedback, uploads, playback, Free/Pro/Studio billing, public playlists and playlist embeds | Production rollout history; playback acceptance in [release log](UPDATE_LOG.md) |
 | L3. Public email login and recovery | Done | Signup, confirmation, password login, recovery/reset alongside Google | Controlled production journey passed 25 October; [auth completion record](EMAIL_PASSWORD_STAGING_ROLLOUT.md#current-status-1-november-2026) |
 | L4. Homepage readiness | Done | Clear login, repaired links, responsive presentation, local assets and initial-load improvements | PRs [53](https://github.com/corisleachman/song-review-app/pull/53), [61](https://github.com/corisleachman/song-review-app/pull/61), [62](https://github.com/corisleachman/song-review-app/pull/62); performance follow-up [63](https://github.com/corisleachman/song-review-app/pull/63) merged 31 October; final measurements belong to L6 |
-| L5. Security closeout | In progress | Access boundaries, database warnings, abuse protection, validation, secrets and monitoring | Initial live inventory complete; remaining checks below must be resolved or explicitly accepted |
+| L5. Security closeout | Done for current beta | Access boundaries, database warnings, abuse protection, validation, secrets and monitoring | User accepted S2/S5 limits on 4 November; recorded S3/S4/S6/S7 scopes retained. Named consolidated checks carry to L6 and limits to L8 |
 | L6. Performance and final launch QA | Not started | Dashboard loading/return and song-navigation performance work, then consolidated journey, browser/device, accessibility, links and payment sandbox checks | Recorded pass/fail matrix; no unresolved launch-blocking defects |
 | L7. Discoverability closeout | In progress (verification) | Independent B15 canonical/robots/sitemap check started; homepage/articles declare apex while redirects/sitemap use www. Other SEO/content exit checks remain | Production metadata/link checks and content decisions recorded; canonical alignment pending |
 | L8. Wider-launch decision | Not started | Review evidence, remaining risks, rollback and support readiness | L5-L7 complete; user records go/no-go for wider promotion |
 
 Done means the named scope has recorded evidence, not that every future improvement in that area is finished. Later findings reopen the relevant stage. L8 does not authorise a marketing campaign or messages to others.
 
-## Current stage: L5 security closeout
+<a id="current-stage-l5-security-closeout"></a>
+
+## L5 security closeout: accepted for current beta
 
 | ID | Check | Status | Evidence / next action | Owner |
 | --- | --- | --- | --- | --- |
 | S1 | Establish current security baseline | Done | Read-only production inventory: RLS on all 24 public tables; advisor has zero ERROR findings, five WARN findings and eight INFO findings. [Review record](LAUNCH_SECURITY_REVIEW.md) | Agent |
-| S2 | Cross-workspace API and direct-database access | In progress | B28/B32/B34-B37 installed and verified in scope; actual staged membership, upload, comment/action/task/playlist flows recorded. Current-user Auth verification, own-profile/preferences and workspace theme RLS probes pass; local suite471. Hosted role/method coverage still needs final reconciliation. [Route inventory](LAUNCH_API_ACCESS_MATRIX.md) | Agent |
+| S2 | Cross-workspace API and direct-database access | Done for current beta | User accepted 4 November: 581 tests, installed database-role probes and staged owner/member/revocation flows. Exhaustive hosted role/method combinations remain untested; some legacy bad requests return safe generic500. Consolidated checks remain L6. [Accepted scope](LAUNCH_SECURITY_REVIEW.md#remaining-l5-beta-closeout-proposal4-november2026) | Agent |
 | S3 | Database function and policy review | Done in recorded scope | All25 public table policies/ACLs and19 application functions reviewed; B21/B23/B28/B32/B34-B39 repaired in recorded scope. Post-B39 table29 and function19 drift checks pass both DBs; zero advisor ERROR/WARN. Hosted API roles remain S2. [Review record](LAUNCH_SECURITY_REVIEW.md) | Agent |
 | S4 | Abuse protection coverage | Done for current beta | User accepted4 Nov: approved comment/invite/feedback budgets and Auth CAPTCHA/provider controls; no new general quotas. Public telemetry has no app quota; provider end-user IP attribution unverified. Revisit at L8. [Review record](LAUNCH_SECURITY_REVIEW.md) | Agent |
-| S5 | Input validation and safe errors | In progress | B33/PR #79 is Production verified: 32 unexpected-error handlers and one invite-provider warning use safe fixed messages; 425 tests, four CI checks and hosted access/public/media checks pass. Continue mutation input, size/type and numeric bounds review. Upload validation has regression coverage | Agent |
+| S5 | Input validation and safe errors | Done for current beta | User accepted 4 November: 581 tests, installed database-role probes and staged owner/member/revocation flows. Exhaustive hosted role/method combinations remain untested; some legacy bad requests return safe generic500. Consolidated checks remain L6. [Accepted scope](LAUNCH_SECURITY_REVIEW.md#remaining-l5-beta-closeout-proposal4-november2026) | Agent |
 | S6 | Secret handling and log safety | Done in recorded scope | B30 approved and complete: three credentials converted to Secret with values/scopes preserved; Production/Preview rebuilds and scoped smoke checks pass. 483 tracked-file scan and 13 public chunks show no credential-pattern matches; 43 client-root import paths do not reach private-env modules. B31/PR #77 is Production verified: 85 raw diagnostic arguments projected safely, CSP capabilities/paths omitted; actual Preview/Production control logs verified. Historical logs and response-error review are separate | Agent |
 | S7 | Monitoring, dependency and CI closeout | Done for current beta | 2 November audit reconfirms four low, zero moderate/high/critical advisories. Existing Vercel prebuild runs unit tests; dependency audit gate merged/verified via PR #76; open PRs triaged. Hobby one-hour logs and release-time checks explicitly accepted for beta; no paid monitoring. Revisit at L8 | Agent |
 
 Performance is the user's main MVP concern. B17-B19 are queued as the leading L6 workstream; capture does not interrupt the current L5 task. B06 six-month Free-to-Pro beta grants have confirmed product rules; implementation and expiry/billing boundary tests remain open.
 
-Next action: close S4 remaining mutation/abuse coverage, then S5 validation while assembling S2 hosted role/method acceptance. B39 database enforcement is Production complete. B38 is Production complete; PR #84 merged4940085c. B37 is Production complete in its recorded scope. B36 is Production complete in its recorded scope. B35 is Production complete in its recorded scope. B34 is Production complete in its recorded scope. B28-B33 are complete in their recorded scope; S6 and beta-scoped S7 exit conditions are verified/accepted. No user step is pending. B17-B19 remain the leading L6 performance workstream after L5 exit conditions.
+## Current stage: L6 performance and final launch QA
+
+Next action: finish the independently verified B15 canonical-host release, then measure B17-B19 dashboard loading, return/cache isolation and song navigation. No user test is pending. L5 beta exit was explicitly accepted on 4 November; unperformed matrix checks remain unperformed.
 
 ## L6 acceptance checklist
 
@@ -71,7 +75,7 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B12 | Automated SEO content-engine draft PR #3 | Draft; not a launch commitment | Later |
 | B13 | FAQ | Scope/implementation pending | L7 |
 | B14 | Marketing image alt-text audit | Pending | L7 |
-| B15 | [Canonical host consistency](PRODUCT_BACKLOG.md#b15-canonical-host-consistency) | Confirmed mismatch: homepage/four articles use apex canonical, redirects/robots/sitemap use www | Existing L7 verification/alignment, no new security blocker |
+| B15 | [Canonical host consistency](PRODUCT_BACKLOG.md#b15-canonical-host-consistency) | Preview verified at06f51458: six pages200, canonical/OG/JSON-LD aligned and nine sitemap URLs checked; four CI checks pass. Production release pending | Existing L7 verification/alignment |
 | B16 | Remaining empty states, typography, workspace-switcher contrast and accessibility polish | Needs current-state triage; old plan isn't evidence of an open defect | L6; split confirmed defects into new rows |
 | B17 | [Dashboard loading speed](PRODUCT_BACKLOG.md#b17-dashboard-measure-and-reduce-time-to-useful-songs-and-artwork) | User report; baseline and target pending | L6 leading performance workstream after current security slice |
 | B18 | [Dashboard blank on return](PRODUCT_BACKLOG.md#b18-dashboard-retain-valid-songs-and-artwork-when-returning) | Reported defect; trigger unverified | L6 reliability; S2 cache isolation overlaps |
@@ -105,7 +109,7 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B38 | [Server-owned legacy billing records](PRODUCT_BACKLOG.md#b38-client-writes-can-forge-unused-legacy-billing-records) | Production complete, 4 Nov: installed84 pass both; settings/plan reads preserved | Existing L5/S3 P2 hardening; no demonstrated paid-access bypass or new launch blocker |
 | B39 | [Preserve playlist workspace/song linkage](PRODUCT_BACKLOG.md#b39-direct-playlist-header-writes-can-transfer-foreign-song-links) | Production complete,4 Nov: installed25 pass both; staged playlist flow/cleanup verified | Existing L5/S2-S3 security defect; approval required for permanent permission change |
 | B40 | [Action/task mutation input validation](PRODUCT_BACKLOG.md#b40-actiontask-mutations-accept-malformed-input) | Production complete:PR87/613a1426 live; user member/reorder accepted; fixtures0; seven safe live checks pass | Existing L5/S5 validation |
-| B41 | [Remaining metadata request validation](PRODUCT_BACKLOG.md#b41-metadata-requests-accept-malformed-input-and-playlist-reorder-hides-failure) | Preview ready at3ff0656c:581 tests/four CI checks and ten signed-out methods pass; isolated playlist acceptance pending | Existing L5/S5 P2 validation; no new launch scope |
+| B41 | [Remaining metadata request validation](PRODUCT_BACKLOG.md#b41-metadata-requests-accept-malformed-input-and-playlist-reorder-hides-failure) | Production complete:PR88/1d8fe5a7 live; user playlist accepted, fixtures0, ten live malformed methods401 and public/auth checks pass | Existing L5/S5 validation |
 
 Exploratory ideas in ROADMAP.md (typing indicators, pinned comments, comparison view, waveform regions, exports, Slack, native mobile app, multitrack and video) remain unscheduled ideas. They aren't approved launch work. Delete/edit/auth/invite ideas in that old file must be checked against existing features before creating tasks.
 
@@ -479,3 +483,12 @@ Rollback for this staging code change is reassigning this same stable alias to d
 4 November beta decision: user accepted recorded S4 limits for current beta. S4 exit met in that scope; wider-launch quota/provider-IP review remains at L8. No new controls/configuration installed by accepting the scope.
 
 4 November B41 handoff: Ready dpl_8ZWim3zUJA3wek9usGL35LEnCdJM serves tested3ff0656c at the existing email-staging alias; source/target and staging project verified. Ten signed-out malformed methods401, invalid invite lookup404 and email readiness pass. Browser URL policy rejected reload of an unsupported-protocol frame; no alternate browser workaround attempted. User test required on normal HTTPS page. Disposable B41 hosted acceptance account03c0d215-842d-4464-a4f5-65b31492cfa6 contains two seeded songs/versions, one Owner link for the designated test actor, Free/storage0, no actual audio or notifications. Original account/plan untouched; retain fixtures until playlist create/name/add/reorder acceptance and guarded cleanup. B41 stays Preview-only/unmerged.
+
+
+4 November B41 Production checkpoint: user playlist acceptance passed; stored title B41 acceptance and B0/A1 confirmed. Guarded cleanup removed isolated account/owner link/two songs/two versions/playlist/links, all six counts0. Bootstrap restored original Owner workspace; original Free/storage0/null Stripe and membership count1 preserved. PR88 merged1d8fe5a7; primary dpl_3ENwd7uEfZYkDqxHt3QcudGteQXy Ready/www alias verified. Ten changed malformed signed-out methods401, login/public projection200 and email enabled/password management off preserved. No fresh Production positive write/provider/payment/Storage-object operation. Rollback613a1426 app retaining DB restrictions.
+
+4 November B15 local checkpoint: homepage is rewritten to public/marketing.html. Corrected apex URLs only in six static HTML heads and article generator default, plus sitemap /blog path to avoid existing /blog/308. Six canonical heads, eight JSON-LD blocks and nine sitemap URLs parse/align; source comparison proves copy/dates/content unchanged. Syntax/lint/whitespace pass. No app auth/billing origins, environment variables, domains or redirects changed. Preview/Production metadata verification pending. A recorded S2/S5 beta closeout proposal is in LAUNCH_SECURITY_REVIEW.md; those rows stay open until accepted or remaining checks completed.
+
+## L5 beta exit accepted, 4 November 2026
+
+User explicitly accepted recorded S2/S5 limits for current beta. L5 is Done for that scope, not exhaustive hosted coverage. Device, payment, notification and performance checks carry to L6; quota/provider-IP and monitoring limits remain for L8. No configuration or security boundary changed by this decision. B15 Preview metadata checks pass; Production release follows final exact-head CI.

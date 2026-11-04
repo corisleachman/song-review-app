@@ -493,3 +493,22 @@ B41 local remaining metadata pass reuses bounded object input for nine route fil
 4 November S4 beta scope accepted: user explicitly chose Accept for current beta for the recorded limits. Retain approved comment/invite/feedback quotas and existing Auth CAPTCHA/provider controls; no new general quotas. Public telemetry lacks an app quota and provider end-user IP attribution remains unverified. S4 Done for current beta; re-evaluate before wider launch at L8. Acceptance doesn't assert stress/provider-delivery verification or change a service setting.
 
 4 November B41 Preview source3ff0656c/Ready dpl_8ZWim3zUJA3wek9usGL35LEnCdJM, existing email alias and staging project verified. Ten malformed signed-out methods401 and existing invalid-invite lookup404 pass;581 local tests/four source checks pass. Browser URL policy blocks unsupported-protocol current frame reload, so normal metadata UI acceptance requires user. Only isolated account/owner link/two pending metadata songs/versions seeded, no actual audio/provider action. Original workspace/plan unchanged. No B41 Production deployment or universal hosted field coverage claimed.
+
+
+## B41 Production completion,4 November2026
+
+User accepted playlist create/name/add/reorder/refresh; DB B0/A1 verified. All fixture account/member/song/version/playlist/link counts0; participant original Owner workspace, planFree/storage0/null Stripe/membership1 restored. PR88 merge1d8fe5a7 primary dpl_3ENwd7uEfZYkDqxHt3QcudGteQXy Ready/www source verified. Ten malformed signed-out methods401 and login/public projection200; email enabled/password management disabled preserved.581 tests/TypeScript/source CI and staged acceptance support release; no fresh Production positive content/provider/payment test. Rollback613a1426 app retaining installed DB restrictions.
+
+## Remaining L5 beta closeout proposal,4 November2026
+
+Accepted by Coris on 4 November 2026 for the current beta. S2/S5 and L5 exit are complete within this bounded coverage; unperformed hosted permutations remain unperformed. S3 is verified in recorded database scope; S4/S6/S7 have their recorded beta scopes/acceptances.
+
+| Evidence layer | Recorded coverage / practical limit |
+| --- | --- |
+| Database | All25 public tables/RLS/ACLs and19 application functions reviewed, private media repaired; installed role/grant/service probes and function/table drift checks pass in named B21/B23/B28/B32/B34-B39 records. No claim of platform-internal or all-race audit. |
+| Handler tests |581 local tests include executing real handlers with fake framework/database/provider I/O for canonical identity, workspace/owner boundaries, whitelists, input shape/types/bytes/timestamps and safe error paths. These are not581 hosted journeys. |
+| Controlled staging | Owner/member/invite-removal/replay, upload/finalize/accounting/delete, comments/actions/tasks/playlists and user password login/drag order verified in named records. Four resource GETs observed in outsider/member/removed states using a real session; no exhaustive hosted method-by-role permutations. All disposable test rows removed. |
+| Production | Exact source/project/alias verification, CI, safe signed-out/public/media checks and recorded configuration readback. Fresh positive writes, payment and real notification delivery not repeated against user Production data. |
+| Remaining limits | Legacy malformed/invalid-ID calls can still use safe generic500 paths; this review doesn't claim universal400 responses or one body-size parser everywhere. Full provider/payment sandbox, device/background audio, notifications B20, performance/cache-isolation B17-B19 and consolidated journey acceptance stay in L6. S4 accepted beta quota/IP limits and S7 Hobby monitoring limits remain for L8 review. |
+
+Accepted decision: S2/S5 exit for the current beta on this layered evidence and stated limits, carrying the named L6 checks forward before the wider-launch decision. Do not interpret acceptance as every hosted permutation passing, new billing/auth activation, Production payment permission, a marketing go-ahead or an unqualified security guarantee. Confirmed future defects reopen their stage; retained app/SQL rollback records remain applicable.
