@@ -1,3 +1,4 @@
+import { readCollaborationInput } from '@/lib/collaborationInput';
 import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { isActionStatusInput, normalizeActionStatus } from '@/lib/actionWorkflow';
@@ -9,7 +10,19 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ actionI
   const params = await props.params;
   try {
     const actionId = params.actionId;
-    const body = await req.json();
+    const resolved = await resolveCanonicalIdentity();
+
+    if (!resolved) {
+      return NextResponse.json({ error: 'You must be signed in to update an action.' }, { status: 401 });
+    }
+
+    const body = await readCollaborationInput(req);
+    if (!body) return NextResponse.json({ error: 'Invalid action details.' }, { status: 400 });
+    if (('description' in body && (typeof body.description !== 'string' || !body.description.trim()))
+      || ('assignedToUserId' in body && body.assignedToUserId != null && typeof body.assignedToUserId !== 'string')
+      || ('resolvedInVersionId' in body && body.resolvedInVersionId != null && typeof body.resolvedInVersionId !== 'string')) {
+      return NextResponse.json({ error: 'Invalid action details.' }, { status: 400 });
+    }
     const { status, description } = body;
     const hasAssignedToUserId = Object.prototype.hasOwnProperty.call(body, 'assignedToUserId');
     const hasResolvedInVersionId = Object.prototype.hasOwnProperty.call(body, 'resolvedInVersionId');
@@ -23,13 +36,8 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ actionI
         ? body.resolvedInVersionId.trim()
         : null)
       : undefined;
-    const resolved = await resolveCanonicalIdentity();
 
-    if (!resolved) {
-      return NextResponse.json({ error: 'You must be signed in to update an action.' }, { status: 401 });
-    }
-
-    if (status == null && !description?.trim() && !hasAssignedToUserId && !hasResolvedInVersionId) {
+    if (status == null && !(typeof description === 'string' && description.trim()) && !hasAssignedToUserId && !hasResolvedInVersionId) {
       return NextResponse.json(
         { error: 'Nothing to update' },
         { status: 400 }
@@ -106,7 +114,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ actionI
         updates.resolved_in_version_id = null;
       }
     }
-    if (description?.trim()) updates.description = description.trim();
+    if (typeof description === 'string' && description.trim()) updates.description = description.trim();
     if (hasAssignedToUserId) updates.assigned_to_user_id = assignedToUserId;
     if (hasResolvedInVersionId) {
       updates.resolved_in_version_id = resolvedInVersionId ?? null;

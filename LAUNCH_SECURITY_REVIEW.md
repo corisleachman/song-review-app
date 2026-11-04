@@ -453,3 +453,24 @@ All25 public tables map to these reviewed boundaries:
 Post-repair checked-in table_security_inventory.sql pins25 tables' RLS/force state, full policy expressions/roles/permissiveness, table ACL and column ACL plus four schema/view/role checks. All29 pass both DBs. No public views/materialized views, untrusted schema CREATE or client superuser/BYPASSRLS role. Function19 body/grant checks previously match. Security advisors zero ERROR/WARN, nine expected no-policy INFO. Hash checks detect reviewed-state drift, not a substitute for behavioural tests.
 
 S3 Done in recorded database review scope. S2 hosted API role/method verification, S4 abuse coverage and S5 validation remain open. Future findings can reopen S3. No new provider/payment acceptance, platform-internal audit or universal concurrency guarantee is claimed.
+
+
+## S4 provider attribution and mutation coverage,4 November2026
+
+Read-only Supabase dashboards in both environments show Turnstile CAPTCHA enabled and leaked-password protection enabled. Current displayed limits: signup/sign-in30 per5min/IP, verification30 per5min/IP, refresh150 per5min/IP, per-user custom SMTP interval60seconds; IP forwarding off. Email/hour field redacted by browser tooling, so its current numeric value isn't asserted (September staging record was30/hour). No secret was revealed, setting saved, email sent or quota intentionally exhausted. Dashboard evidence is configuration, not a load/captcha/provider-delivery test. Existing login app limiter remains15/5min/trusted Vercel IP and fails closed.
+
+| Mutation family | Existing effective control / remaining limit |
+| --- | --- |
+| Public/private comments, invitation creation/resend | Approved shared DB budgets5/min/IP public,30/min/user private,30/hour/workspace and60sec/recipient invitations; failure closes before write/send. B26/B34/B37 remove raw write bypass; existing SQL/hosted/fake-I/O evidence applies. |
+| Feedback | DB trigger atomic5/hour with ordered user/IP locks, honeypot and trusted visitor hash; prior hosted concurrency and installed proof. |
+| Signup/recover/resend/reset and password login | Same-origin,16KiB typed input, Turnstile/provider controls; login adds app-level per-IP budget. Resend also needs matching sealed signup intent. Provider requests use public key from server; effective end-user provider IP attribution isn't proven. Signup/recovery create temporary auth-flow rows before provider rejection, so provider CAPTCHA alone is not proof of an app flow-creation quota. No new quota/forwarding policy silently installed. |
+| Signed internal notifications and Stripe webhook | Body ceiling/HMAC and Stripe signature respectively; unsigned requests denied before external action. Source comment budget gates scheduler. No email/payment acceptance claimed. |
+| Song/version/image uploads | Canonical workspace/role checks, signed paths, byte/type/signature ceilings and plan/storage limits. No blanket new request-rate gate. |
+| Actions/tasks/playlists/profile/workspace mutations and billing | Canonical identity/resource/role/field gates; server-owned tables where recorded. No claim every authenticated operation has a request quota. B40 closes malformed action/task input, not request-rate policy. |
+| CSP reports and plan telemetry | CSP16KiB/10-report/type/safe projection ceiling; plan event enum whitelist and log-only action. No app-level durable rate budget on either public logging route. Managed platform firewall configuration couldn't previously be established; don't infer its absence or coverage. |
+
+S4 stays open for the bounded auth flow/proxy acceptance and decision on remaining telemetry/privileged mutation budgets. No blanket dashboard/bootstrap/login throttle or provider configuration change authorized by this inventory.
+
+## B40 collaboration validation,4 November2026
+
+35 actual-handler/fake-I/O regression failures on old code;43 new cases/all514 local tests now pass, TypeScript/focused lint/whitespace clean. Five action/task handlers use authenticated16KiB JSON-object input and typed fields before database work; timestamp bounds match existing comments. Task reorder checks returned database errors rather than claiming success. Canonical workspace/source/assignee/attribution rules preserved. No migration/provider/auth boundary change. Exact-head hosted valid-flow/release checks pending; partial parallel reorder writes remain an explicit limit. S5 not yet complete.
