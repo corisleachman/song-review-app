@@ -1,6 +1,6 @@
 # L6 physical-device acceptance
 
-Prepared4 November2026. Current status: user test pending; no physical-device pass claimed. This is the first controlled playback pass, not the complete L6 journey/browser matrix.
+Prepared4 November2026. Current status: partial pass on iPhone17 Pro Max/Chrome; first lock-screen Pause metadata handoff tracked as B42. This is the first controlled playback pass, not the complete L6 journey/browser matrix.
 
 ## Scope and current implementation
 
@@ -24,3 +24,9 @@ Read the report, inspect the smallest affected audio/lifecycle path if anything 
 ## Remaining L6 checks
 
 Google/email signup/recovery, controlled invites/workspace isolation, upload/version/comment/restart/repeat, isolated payment sandbox, public sharing/embed revocation and broader accessibility remain their existing named matrix items. No new launch blocker or notification channel is added here.
+
+## First physical-device result, 4 November2026
+
+User reports the requested audio/seek/background/pause/return steps worked on iPhone17 Pro Max in a Chrome tab, except the first locked Pause per song changes the phone's title/artwork to an unrelated track after2-3seconds. No unrelated audio starts. Replaying the same song before the next locked Pause avoids the metadata change. Repeated across different songs. This is a partial acceptance with [B42](PRODUCT_BACKLOG.md#b42-first-lock-screen-pause-shows-another-apps-metadata) open, not a full mobile/browser pass. iOS/Chrome versions unknown; physical11-inch iPad remains untested.
+
+Next controlled comparison: use Safari on the same phone, same Production song, first Play/lock/wake/Pause. Return whether artwork/title switch while audio stays paused. No application change before comparison. Browser/OS selects the active session; distinguish this from Song Room selecting another song or playing outside media.

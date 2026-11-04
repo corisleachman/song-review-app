@@ -9969,3 +9969,7 @@ Signed-in25-song dashboard and normal song page visually verified without edits 
 ## 2026-11-04: Production perception accepted and physical-device test prepared
 
 Changed DASHBOARD_PERFORMANCE_REVIEW.md, B17_FUNCTION_REGION_REVIEW.md, LAUNCH_CHECKLIST.md and new LAUNCH_DEVICE_ACCEPTANCE.md. User reports Production feels much faster and more responsive. Keep provider-origin tails open and distinguish qualitative feedback from a device/playback pass. Verified PR93 docs-only7d1e2ae0 live/dub1; application unchanged. Inspected existing native resume/Media Session paths and prepared a concrete four-step physical-device check; no hardware outcome claimed. No app/schema/configuration changes; documentation whitespace checked.
+
+## 2026-11-04: record first mobile playback result and B42
+
+Changed PRODUCT_BACKLOG.md, LAUNCH_DEVICE_ACCEPTANCE.md and LAUNCH_CHECKLIST.md. User confirms iPhone17 Pro Max/Chrome: audio/seek/background/pause/return worked, but first locked Pause changes only lock-screen metadata to an outside track. No unintended audio starts. Log B42 as L6 device follow-up with unconfirmed cause, not a silently added blocker. Inspected first-gesture/native/WaveSurfer session handling and W3C routing; identified timing leads without a speculative app patch. Same-phone Safari comparison next. No code/schema/configuration change; documentation whitespace checked.
