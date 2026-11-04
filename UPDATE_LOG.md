@@ -9927,3 +9927,7 @@ Changed LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md and UPDATE_LOG.md to close B15 i
 ## 2026-11-04: populated dashboard and song baseline
 
 Changed DASHBOARD_PERFORMANCE_REVIEW.md and LAUNCH_CHECKLIST.md to record B17-B19 measurement conditions, three two-song dashboard timings1.69-2.20s and first version core initialization2.73s. Identify auth/bootstrap and loading-state leads without claiming a verified cause or improvement. No application code changed. Actual tab-return check requested from user; prepared songs retained. Documentation whitespace checked; no code tests needed.
+
+## 2026-11-04: B18 keep loaded song cards during refresh
+
+Changed app/dashboard/page.tsx, DASHBOARD_PERFORMANCE_REVIEW.md and LAUNCH_CHECKLIST.md. Actual staging tab return reproduced two loaded songs being hidden by the loading branch during canonical refresh. Gate the placeholder on an empty song list so existing cards/artwork stay mounted. Initial empty loading and existing refresh data flow remain. No fetch/auth/cache TTL/schema change. All581 existing Node tests and TypeScript pass, dashboard lint0errors/10 existing warnings, whitespace passes. Staging comparison pending; not Production complete.
