@@ -104,7 +104,7 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 
 | B38 | [Server-owned legacy billing records](PRODUCT_BACKLOG.md#b38-client-writes-can-forge-unused-legacy-billing-records) | Production complete, 4 Nov: installed84 pass both; settings/plan reads preserved | Existing L5/S3 P2 hardening; no demonstrated paid-access bypass or new launch blocker |
 | B39 | [Preserve playlist workspace/song linkage](PRODUCT_BACKLOG.md#b39-direct-playlist-header-writes-can-transfer-foreign-song-links) | Production complete,4 Nov: installed25 pass both; staged playlist flow/cleanup verified | Existing L5/S2-S3 security defect; approval required for permanent permission change |
-| B40 | [Action/task mutation input validation](PRODUCT_BACKLOG.md#b40-actiontask-mutations-accept-malformed-input) | Code complete locally;35 old-code failures reproduced,44 new cases/all515 tests pass; hosted acceptance pending | Existing L5/S5 validation, no new launch scope |
+| B40 | [Action/task mutation input validation](PRODUCT_BACKLOG.md#b40-actiontask-mutations-accept-malformed-input) | Preview accepted:515 tests/four CI checks; owner/member flows and persisted reorder pass; fixtures0; Production release next | Existing L5/S5 validation, no new launch scope |
 
 Exploratory ideas in ROADMAP.md (typing indicators, pinned comments, comparison view, waveform regions, exports, Slack, native mobile app, multitrack and video) remain unscheduled ideas. They aren't approved launch work. Delete/edit/auth/invite ideas in that old file must be checked against existing features before creating tasks.
 
@@ -467,3 +467,6 @@ Rollback for this staging code change is reassigning this same stable alias to d
 
 
 4 November hosted S2 checkpoint: selected email account login accepted by user. Four actual outsider song/version/task/thread GET projections denied with no fixture title. Temporary Member role added only in B40 disposable workspace; positive member view/reorder awaits user test because Chrome extension UI blocks automation. Existing workspace/plan unchanged. Details in LAUNCH_API_ACCESS_MATRIX.md; S2 remains In progress.
+
+
+4 November B40 acceptance complete: user reports member view/reorder passed; DB verifies task B0/A1. Actual same-session fixture reads: four outsider denials, four member successes, four post-removal denials with no fixture-title leakage. Bootstrap returns participant's original Owner workspace. Guarded cleanup removes synthetic account/member/song/version/thread/comment/action/task rows, all counts0. Original workspace remains Free/storage0/null Stripe, original membership count1. Normal dashboard restored. No Auth identity deleted, email/provider/Storage/payment operation. Application-only release after final PR87 checks; rollback prior4e8a2750 retaining B39 SQL. Broader S2/S4/S5 remain open.

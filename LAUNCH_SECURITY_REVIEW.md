@@ -474,3 +474,10 @@ S4 stays open for the bounded auth flow/proxy acceptance and decision on remaini
 ## B40 collaboration validation,4 November2026
 
 35 actual-handler/fake-I/O regression failures on old code;44 new cases/all515 local tests now pass, TypeScript/focused lint/whitespace clean. Five action/task handlers use authenticated16KiB JSON-object input and typed fields before database work; timestamp bounds match existing comments. Task reorder checks returned database errors rather than claiming success. Canonical workspace/source/assignee/attribution rules preserved. No migration/provider/auth boundary change. Exact-head hosted valid-flow/release checks pending; partial parallel reorder writes remain an explicit limit. S5 not yet complete.
+
+
+### 4 November 2026: B40 acceptance and hosted read revocation complete
+
+User accepted member view and drag reorder; DB readback task B sort_order0/A1. Existing selected password identity successfully reads fixture song, version, song tasks and version threads as member. After guarded deletion of only its synthetic membership, the same browser session immediately receives explicit denial JSON for all four reads, without fixture title. Bootstrap falls back to original workspace3498b4a6-c0df-4bc6-b2db-14e8213cbcfa as Owner. These are12 hosted browser projection observations across outsider/member/removed states, not independent HTTP-status capture or all-method S2 completion.
+
+Guarded cleanup removed disposable account1ee43543-b6a2-4397-9679-518dd62fec30 and its exact synthetic song/related version/thread/comment/action/two tasks and owner membership. All eight fixture counts0; participant original membership count1, planFree/storage0/null Stripe unchanged. No Auth identity, real workspace/content, email/provider, payment or actual Storage object deleted. Browser returned to original dashboard. B40 application release proceeds after final PR87 checks; remaining S2 role/method, S4 and S5 review stays open.
