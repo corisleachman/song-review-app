@@ -70,7 +70,7 @@ Capture and organise only. These requirements don't authorise implementation or 
 
 ### B20. Verify notifications for new version uploads
 
-- Status: Capability/delivery unverified, not a confirmed notification failure. Audit first; implement only if a gap is demonstrated.
+- Status: 4 November source/trigger audit finds no version-upload email dispatch; only dashboard activity and comment/thread mail paths. Both DBs have0 noninternal song_versions triggers. External provider/job and delivered-message evidence remain unverified. No email sent or feature activated.
 - Reported need: When someone uploads a new version, the other workspace participants should be notified. The user isn't sure whether this already happens.
 - Intended outcome: Confirm the real current upload-to-recipient behaviour, then close only demonstrated gaps.
 - Implementation inspected: `lib/threadNotifications.ts` handles thread/comment email and existing `all_members` / `owner_only` recipient policy. No explicit new-version notification dispatch was found in the inspected `versions/create` and `versions/[versionId]/finalize` routes. Thread notifications alone aren't proof of upload notifications; inspect indirect jobs/hooks and delivered-message evidence before deciding a feature is missing.

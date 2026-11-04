@@ -1,6 +1,6 @@
 # B17 primary Function region proposal
 
-4 November 2026. Prepared for review; no region setting changed.
+4 November 2026. User approved staged rollout. Primary project default now dub1; protected Preview ready in dub1; positive staging/browser gates pending. Existing Production deployment remains iad1 until Preview gates pass.
 
 ## Evidence
 
@@ -22,7 +22,6 @@ Update only the primary Vercel project, never the secondary song-review-app proj
 
 ```json
 {
-  "serverlessFunctionRegion": "dub1",
   "resourceConfig": { "functionDefaultRegions": ["dub1"] }
 }
 ```
@@ -31,7 +30,7 @@ No repository-wide vercel.json, database/schema/grant change, auth-cache change,
 
 ## Approval boundary
 
-[AGENTS.md](AGENTS.md#safety-boundaries) says changing deployment configuration remains subject to its approval boundary. Standing release authority covers routine deployment with existing settings; this proposal changes a setting. Approval may cover staged rollout below, or Preview only. Do not apply while approval is pending.
+[AGENTS.md](AGENTS.md#safety-boundaries) says changing deployment configuration remains subject to its approval boundary. Standing release authority covers routine deployment with existing settings; this proposal changes a setting. Coris approved the staged rollout on4 November2026. Preview gates remain mandatory before Production redeployment.
 
 ## Staged rollout and verification
 
@@ -49,3 +48,9 @@ Stop evidence: environment, URL, step, safe status/error/log excerpt and source/
 Restore only the same project’s two region fields to iad1/[iad1], preserving other resource settings. Restore the previous immutable Production deployment dpl_9QJjHQh86P4Rrfi5nXE9gfW3S2vJ/b0542d48 (iad1) through the existing Vercel rollback/promotion flow; verify www/source/region and safe smoke checks. Restore/rebuild compatible email staging in iad1 if its experiment is abandoned. No database rollback, content deletion, secret rotation or paid upgrade.
 
 Model recommendation: Sol Medium for region diagnosis and cross-environment rollout review; Terra Low for routine repeated checks. No model switch claimed.
+
+## Applied project setting and Preview build, 4 November 2026
+
+The original proposal included both the legacy and current region aliases. Vercel rejected that request with400 before changing settings. Corrected request uses only resourceConfig.functionDefaultRegions=[dub1]; readback reports both aliases dub1 and every other resourceConfig field unchanged, including Fluid true. Fresh baseline saved before the accepted update. Existing www alias remains dpl_9QJjHQh86P4Rrfi5nXE9gfW3S2vJ/b0542d48/iad1.
+
+Protected email-staging rebuild dpl_6S8gUybaC7fP7CuptP4RHii4UHsV starts in dub1 at exact b0542d48 using inherited staging env. No secrets copied and no CAPTCHA hostname changed. Preview is Ready at that source/region. Four independent server probes pass: login200, signed-out dashboard/version401 and unavailable public playlist404. Runtime x-vercel-id confirms dub1; existing staging email config true/true preserved. Chrome extension UI blocks browser automation, so user asked to verify the two songs/artwork and play/pause. Positive staging gates and Production benefit check pending. The rollback setting payload likewise needs only resourceConfig.functionDefaultRegions=[iad1]; verify both aliases after readback. Do not submit both aliases in one PATCH.

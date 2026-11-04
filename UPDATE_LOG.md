@@ -9949,3 +9949,13 @@ Changed LAUNCH_CHECKLIST.md, DASHBOARD_PERFORMANCE_REVIEW.md, PRODUCT_BACKLOG.md
 ## 2026-11-04: B17 representative baseline and region proposal
 
 Changed B17_FUNCTION_REGION_REVIEW.md, DASHBOARD_PERFORMANCE_REVIEW.md and LAUNCH_CHECKLIST.md. Measured normal25-song Production workspace read-only: three content-visible samples3.72-4.45s; server identity/member reads dominate, assembly under6ms. Verified primary Vercel iad1 vs Production DB eu-west-1. Prepared exact primary-only Dublin setting payload, staged rollout gates and iad1 rollback; no configuration/schema change applied. Project configuration approval pending under AGENTS.md. Vercel Functions skill/current official region docs used.
+
+## 2026-11-04: approved primary region experiment and independent B20 audit
+
+Changed B17_FUNCTION_REGION_REVIEW.md, LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md to record staged-rollout approval and exact Vercel setting/readback. Duplicate legacy/current field request rejected400 with no change; current-field-only update succeeds, both aliases dub1 and other resources unchanged. Existing Production still b0542d48/iad1; protected Preview dpl_6S8gUybaC7fP7CuptP4RHii4UHsV buildingdub1. Rollback modern region field toiad1 and prior deployment. No secret/env/schema/plan changes.
+
+B20 read-only source and trigger audit finds no upload email path/0 noninternal version triggers both DBs; comment mail and dashboard activity are separate. External provider/delivery remains unverified. No messages sent or notifications activated.
+
+## 2026-11-04: Dublin Preview ready, browser acceptance pending
+
+Changed B17_FUNCTION_REGION_REVIEW.md and LAUNCH_CHECKLIST.md with Ready protected Preview/source/alias/dub1 verification and four safe server probes plus unchanged staging email config. Runtime headers confirm dub1. Browser extension UI blocks positive measurement, so specific user song/artwork/play-pause test requested. Project default is dub1 but existing Production remains b0542d48/iad1; PR93 merge/redeployment held. No claimed speed gain or Production-region completion.
