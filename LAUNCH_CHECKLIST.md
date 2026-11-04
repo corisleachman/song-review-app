@@ -1,6 +1,6 @@
 # Song Room launch checklist
 
-Last reconciled: 3 November 2026. This is the current progress page. Keep this URL in every completion update so we can always see what's left.
+Last reconciled: 4 November 2026. This is the current progress page. Keep this URL in every completion update so we can always see what's left.
 
 ## Where we are
 
@@ -26,7 +26,7 @@ Done means the named scope has recorded evidence, not that every future improvem
 | --- | --- | --- | --- | --- |
 | S1 | Establish current security baseline | Done | Read-only production inventory: RLS on all 24 public tables; advisor has zero ERROR findings, five WARN findings and eight INFO findings. [Review record](LAUNCH_SECURITY_REVIEW.md) | Agent |
 | S2 | Cross-workspace API and direct-database access | In progress | B28/B32/B34-B37 installed and verified in scope; actual staged membership, upload, comment/action/task/playlist flows recorded. Current-user Auth verification, own-profile/preferences and workspace theme RLS probes pass; local suite471. Hosted role/method coverage still needs final reconciliation. [Route inventory](LAUNCH_API_ACCESS_MATRIX.md) | Agent |
-| S3 | Database function and policy review | In progress | Current read-only inventory:25 public tables, all RLS enabled; zero public views, untrusted public-schema CREATE or client-callable public SECURITY DEFINER functions in either DB. B38 legacy billing-record writes are server-only in staging/Production; remaining privileged-function/body and coverage closeout stays open. [Review record](LAUNCH_SECURITY_REVIEW.md) | Agent |
+| S3 | Database function and policy review | In progress | Current read-only inventory:25 public tables, all RLS enabled; zero public views, untrusted public-schema CREATE or client-callable public SECURITY DEFINER functions in either DB. B38 legacy billing-record writes are server-only in staging/Production; Function-body review complete for19 application functions; final policy/table coverage reconciliation remains open. [Review record](LAUNCH_SECURITY_REVIEW.md) | Agent |
 | S4 | Abuse protection coverage | In progress | PRs #70-73 released: shared comment/invite quotas, direct comment INSERT repair, atomic feedback and initial-workspace setup. Remaining mutation coverage and platform/provider attribution still need closeout | Agent |
 | S5 | Input validation and safe errors | In progress | B33/PR #79 is Production verified: 32 unexpected-error handlers and one invite-provider warning use safe fixed messages; 425 tests, four CI checks and hosted access/public/media checks pass. Continue mutation input, size/type and numeric bounds review. Upload validation has regression coverage | Agent |
 | S6 | Secret handling and log safety | Done in recorded scope | B30 approved and complete: three credentials converted to Secret with values/scopes preserved; Production/Preview rebuilds and scoped smoke checks pass. 483 tracked-file scan and 13 public chunks show no credential-pattern matches; 43 client-root import paths do not reach private-env modules. B31/PR #77 is Production verified: 85 raw diagnostic arguments projected safely, CSP capabilities/paths omitted; actual Preview/Production control logs verified. Historical logs and response-error review are separate | Agent |
@@ -34,7 +34,7 @@ Done means the named scope has recorded evidence, not that every future improvem
 
 Performance is the user's main MVP concern. B17-B19 are queued as the leading L6 workstream; capture does not interrupt the current L5 task. B06 six-month Free-to-Pro beta grants have confirmed product rules; implementation and expiry/billing boundary tests remain open.
 
-Next action: reconcile remaining S2/S3 coverage and continue S5 validation. B37 is Production complete in its recorded scope. B36 is Production complete in its recorded scope. B35 is Production complete in its recorded scope. B34 is Production complete in its recorded scope. B28-B33 are complete in their recorded scope; S6 and beta-scoped S7 exit conditions are verified/accepted. No user step is pending. B17-B19 remain the leading L6 performance workstream after L5 exit conditions.
+Next action: finish S3 policy/table coverage reconciliation, then S2 hosted role/method gaps and S4/S5 validation. B38 is Production complete; PR #84 merged4940085c. B37 is Production complete in its recorded scope. B36 is Production complete in its recorded scope. B35 is Production complete in its recorded scope. B34 is Production complete in its recorded scope. B28-B33 are complete in their recorded scope; S6 and beta-scoped S7 exit conditions are verified/accepted. No user step is pending. B17-B19 remain the leading L6 performance workstream after L5 exit conditions.
 
 ## L6 acceptance checklist
 
@@ -415,3 +415,8 @@ B38: owner/admin raw writes can forge legacy billing_subscriptions and billing_c
 ### 4 November 2026: B38 approved and installed
 
 User approved B38. Exact migration installed staging ledger20261104070929 and Production ledger20261104071135. Installed84 pass each DB; client legacy billing writes denied, member reads/RLS and service CRUD preserved. Signed-in staging Workspace and Plan & Billing load correctly (Free, zero usage). Production login200, auth bootstrap/settings summary401 and signed-out billing checkout/portal/activate POST401. GET workspace/plan returns405 (unsupported method), not an auth assertion. Zero synthetic users/profiles/accounts or legacy billing rows remain. Security advisors: zero ERROR/WARN, nine existing server-only-table INFO per DB. No payment/provider journey, Stripe call or application implementation change. SQL enforcement is Production complete; source/evidence merge follows passing PR84 checks. S2/S3 remain open for recorded coverage closeout.
+
+
+### 4 November 2026: application function review complete
+
+Read-only review closes the function-body portion of S3:17 public and two private application functions match in both DBs;19 definition/owner/grant drift checks pass each. Service mutation RPCs reject client execution; private boolean helpers bind to auth.uid(). No installed change or new defect. See LAUNCH_SECURITY_REVIEW.md for body findings and limits. S3 remains In progress for policy/table coverage; S2/S4/S5 remain open.
