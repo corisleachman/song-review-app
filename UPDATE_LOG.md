@@ -9870,3 +9870,8 @@ Changed files: LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.m
 ## 2026-11-04: close application function-body review
 
 Changed files: supabase/tests/function_security_inventory.sql, LAUNCH_SECURITY_REVIEW.md, LAUNCH_CHECKLIST.md, UPDATE_LOG.md. Goal: replace the remaining function-body placeholder with bounded, reproducible evidence. Reviewed19 live application functions including private membership helpers and server-only privileged mutation RPCs; definitions and role grants match both DBs. Read-only drift query passes19 checks each, without invoking any function or writing data. No app/schema/config changes and no new defect confirmed. S3 policy/table coverage reconciliation and S2/S4/S5 stay open. Source/document revert is sufficient rollback.
+
+
+## 2026-11-04: B39 playlist-header workspace boundary candidate
+
+Changed files: LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, LAUNCH_API_ACCESS_MATRIX.md, UPDATE_LOG.md, scripts/compose-playlist-write-boundary-probe.mjs, supabase/tests/playlist_write_boundary_probe.sql, supabase/migrations/20261104100000_restrict_client_playlist_writes.sql and matching rollback SQL. Goal: preserve playlist/song same-workspace linkage by routing header writes through canonical server handlers. Confirmed raw client header transfer can expose a foreign song link/metadata path; no current real mismatches. Candidate only revokes playlist client I/U/D. Baseline26/candidate25/rollback26 pass each DB,471 local tests/focused lint/whitespace pass, zero fixtures and restored original grants/policies verified. No permanent change; approval required for installation. Rollback restores observed grants and reopens bypass; SQL enforcement won't require app deployment.

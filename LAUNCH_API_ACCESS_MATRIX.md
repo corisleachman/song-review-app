@@ -221,3 +221,8 @@ Real getCurrentAuthenticatedUser helper/fake-SSR-I/O tests verify Auth id/email 
 
 
 4 November 2026 installed checkpoint: user approved B38. Staging ledger20261104070929 and Production ledger20261104071135 installed; installed84 pass each. Staging signed-in Workspace/Free plan reads pass. Production login200; auth bootstrap/settings summary GET401 and billing checkout/portal/activate POST401. Unsupported workspace/plan GET405 excluded from auth evidence. Zero synthetic identities/accounts and zero legacy billing rows remain. Security advisors zero ERROR/WARN, nine existing INFO each. No provider/payment acceptance claimed; DB enforcement complete, PR84 records source/evidence.
+
+
+### 4 November 2026: remaining playlist-header authority
+
+B39 DB/code trace confirms raw dual-workspace client header transfer can leave foreign song links; private playlist GET's linked metadata service query trusts the header/link invariant. Current mismatches0 in both DBs. Canonical create derives account/creator from current identity, PATCH accepts only title/is_public, DELETE scopes through resolvePlaylistAccess. Candidate makes raw headers server-owned; baseline26/candidate25/rollback26 pass each DB, no installed or hosted exploit claim. S2 cannot close this path until installed/hosted acceptance. Details and exact approval rollout are in PRODUCT_BACKLOG.md#b39-direct-playlist-header-writes-can-transfer-foreign-song-links.
