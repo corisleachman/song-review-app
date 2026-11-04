@@ -9941,3 +9941,27 @@ B18 PR91/f189c38b Production complete in refresh-display scope after user stagin
 ## 2026-11-04: B19 hosted comparison and audio handoff
 
 Changed DASHBOARD_PERFORMANCE_REVIEW.md/LAUNCH_CHECKLIST.md and corrected tests/api-access-boundaries.test.mjs fixture to preserve the existing nullable version account_id field. Four focused cases pass; app source unchanged since all585/TypeScript/lint pass. Exact staging source/alias, version payload200 and joined-only field exclusion verified. Three core samples1.94-2.93s overlap2.00-3.69s before; no universal speed claim. Browser security blocked follow-up after Play entered Loading; user playback/pause confirmation requested. No workaround or Production B19 release.
+
+## 2026-11-04: B19 audio acceptance and Production completion
+
+Changed LAUNCH_CHECKLIST.md, DASHBOARD_PERFORMANCE_REVIEW.md, PRODUCT_BACKLOG.md and UPDATE_LOG.md to record explicit audio pass, paused0:08/4:19 observation, PR92/b0542d48 primary Production release and six safe live checks. Final four CI checks pass; scoped join fix Production complete, broader B19 criteria open. Rollbackf189c38b, no migration/configuration. B17 staging artwork44,817/42,928 bytes; representative Production workspace requested before diagnosing original delay. No new app changes.
+
+## 2026-11-04: B17 representative baseline and region proposal
+
+Changed B17_FUNCTION_REGION_REVIEW.md, DASHBOARD_PERFORMANCE_REVIEW.md and LAUNCH_CHECKLIST.md. Measured normal25-song Production workspace read-only: three content-visible samples3.72-4.45s; server identity/member reads dominate, assembly under6ms. Verified primary Vercel iad1 vs Production DB eu-west-1. Prepared exact primary-only Dublin setting payload, staged rollout gates and iad1 rollback; no configuration/schema change applied. Project configuration approval pending under AGENTS.md. Vercel Functions skill/current official region docs used.
+
+## 2026-11-04: approved primary region experiment and independent B20 audit
+
+Changed B17_FUNCTION_REGION_REVIEW.md, LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md to record staged-rollout approval and exact Vercel setting/readback. Duplicate legacy/current field request rejected400 with no change; current-field-only update succeeds, both aliases dub1 and other resources unchanged. Existing Production still b0542d48/iad1; protected Preview dpl_6S8gUybaC7fP7CuptP4RHii4UHsV buildingdub1. Rollback modern region field toiad1 and prior deployment. No secret/env/schema/plan changes.
+
+B20 read-only source and trigger audit finds no upload email path/0 noninternal version triggers both DBs; comment mail and dashboard activity are separate. External provider/delivery remains unverified. No messages sent or notifications activated.
+
+## 2026-11-04: Dublin Preview ready, browser acceptance pending
+
+Changed B17_FUNCTION_REGION_REVIEW.md and LAUNCH_CHECKLIST.md with Ready protected Preview/source/alias/dub1 verification and four safe server probes plus unchanged staging email config. Runtime headers confirm dub1. Browser extension UI blocks positive measurement, so specific user song/artwork/play-pause test requested. Project default is dub1 but existing Production remains b0542d48/iad1; PR93 merge/redeployment held. No claimed speed gain or Production-region completion.
+
+## 2026-11-04: staged Dublin pass and Production crossover
+
+Changed B17_FUNCTION_REGION_REVIEW.md, DASHBOARD_PERFORMANCE_REVIEW.md, LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md. User staging pass; three0.309-0.363s dashboard samples. Approved primary dub1 Production release at exact b0542d48; auth/public checks and one-byte public media206 pass. Initial Production samples2.19-5.56s prompted safeguard restore toiad1; control3.20-6.73s reproduces approximately2s provider profile/member origin stalls. Returned to tested dub1 deployment dpl_8gBeW82QBbWxGmeruVr8dJNA6UwL/defaults, source/www/dub1 and unchanged resource fields verified. B17 remains open; no consistent-latency or field-wide speed claim.
+
+Signed-in25-song dashboard and normal song page visually verified without edits or Production playback. No schema/permission/env/plan change. Previous iad1 dpl_9QJjHQh86P4Rrfi5nXE9gfW3S2vJ remains rollback. User perception/device acceptance and provider-origin diagnosis remain follow-ups.

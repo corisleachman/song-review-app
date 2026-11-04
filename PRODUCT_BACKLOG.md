@@ -23,7 +23,7 @@ Capture and organise only. These requirements don't authorise implementation or 
 
 ### B17. Dashboard: measure and reduce time to useful songs and artwork
 
-- Status: User-reported performance problem, not instrumented or independently reproduced. Investigation queued; no fix complete.
+- Status:25-song Production baseline and approved Dublin crossover recorded. Primary dub1 is live; staged0.31-0.36s, Production2.19-5.56s with provider-origin stalls also reproduced in iad1. B17 remains open for latency consistency and broader device/user acceptance. See DASHBOARD_PERFORMANCE_REVIEW.md.
 - Reported behaviour: Opening the dashboard takes roughly 5-6 seconds before artwork and all songs appear. This is a user estimate, not a measured baseline.
 - Intended outcome: Show useful song content quickly and load artwork promptly without blocking the rest of the dashboard.
 - Implementation inspected: `app/dashboard/page.tsx` initializes through `/api/dashboard`, reuses its payload in `loadAll`, and already has opt-in performance tracing; `app/api/dashboard/route.ts` has request timing. A separate summary route exists. These facts don't establish which path is slow or justify introducing another fetching path.
@@ -39,7 +39,7 @@ Capture and organise only. These requirements don't authorise implementation or 
 
 ### B18. Dashboard: retain valid songs and artwork when returning
 
-- Status: User-reported blank-content defect, not yet reproduced with a known trigger or absence interval. Investigation queued; no fix complete.
+- Status: Refresh-hides-loaded-cards path reproduced and scoped fix Production complete via PR91/f189c38b after user acceptance. Full lifecycle/error/isolation criteria below remain open.
 - Reported behaviour: After time away, the page shell remains but the song/artwork area is blank, then reloads. The user doesn't know how long away causes it.
 - Intended outcome: Keep valid populated content visible while checking for updates; stale data must never cross users or workspaces.
 - Implementation inspected: `app/dashboard/page.tsx` registers both focus and visibility listeners, with a one-second reload coalescing guard. Its viewer/workspace-scoped localStorage cache has a five-minute freshness limit. On a cache miss/expiry, `loadAll` sets loading true, and the song region switches to loading UI. This is a concrete reproduction lead, not proof that it explains the user's incident. Sign-out removes the active scoped song cache; switching, expired sessions and in-flight responses still need testing.
@@ -54,7 +54,7 @@ Capture and organise only. These requirements don't authorise implementation or 
 
 ### B19. Dashboard to song: measure and reduce navigation delay
 
-- Status: User-reported slow transition, not yet instrumented or independently reproduced. No fix complete.
+- Status: Three staging before/after samples recorded; scoped joined version/workspace lookup Production complete via PR92/b0542d48 after audio acceptance. Timing ranges overlap; broader target/device/navigation criteria remain open.
 - Reported behaviour: Clicking from the dashboard into a song feels slower than it should; no measured duration supplied.
 - Intended outcome: Reach a useful, correct song page promptly, with clear feedback while remaining details load.
 - Implementation inspected: `openSongContext` already navigates directly to a known latest-version route when available, falling back to `/songs/[id]`; that entry page looks up the song and latest finalized version in parallel before redirecting. The version page fetches canonical song/version information. Don't assume every click takes the redirect path or that the redirect is the bottleneck.
@@ -70,7 +70,7 @@ Capture and organise only. These requirements don't authorise implementation or 
 
 ### B20. Verify notifications for new version uploads
 
-- Status: Capability/delivery unverified, not a confirmed notification failure. Audit first; implement only if a gap is demonstrated.
+- Status: 4 November source/trigger audit finds no version-upload email dispatch; only dashboard activity and comment/thread mail paths. Both DBs have0 noninternal song_versions triggers. External provider/job and delivered-message evidence remain unverified. No email sent or feature activated.
 - Reported need: When someone uploads a new version, the other workspace participants should be notified. The user isn't sure whether this already happens.
 - Intended outcome: Confirm the real current upload-to-recipient behaviour, then close only demonstrated gaps.
 - Implementation inspected: `lib/threadNotifications.ts` handles thread/comment email and existing `all_members` / `owner_only` recipient policy. No explicit new-version notification dispatch was found in the inspected `versions/create` and `versions/[versionId]/finalize` routes. Thread notifications alone aren't proof of upload notifications; inspect indirect jobs/hooks and delivered-message evidence before deciding a feature is missing.
