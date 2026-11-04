@@ -38,7 +38,7 @@ Performance is the user's main MVP concern. B17-B19 are the active leading L6 wo
 
 ## Current stage: L6 performance and final launch QA
 
-Next action: measure B17-B19 dashboard loading, return/cache isolation and song navigation. Two-song staging baseline and scoped B18/B19 releases recorded. Await normal Production workspace for representative B17 timings. L5 beta exit was explicitly accepted on 4 November; unperformed matrix checks remain unperformed.
+Next action: measure B17-B19 dashboard loading, return/cache isolation and song navigation. Two-song staging baseline and scoped B18/B19 releases recorded. Production25-song timings and approved Dublin trial recorded; investigate provider-origin tail latency and obtain user perception check. L5 beta exit was explicitly accepted on 4 November; unperformed matrix checks remain unperformed.
 
 ## L6 acceptance checklist
 
@@ -77,7 +77,7 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B14 | Marketing image alt-text audit | Pending | L7 |
 | B15 | [Canonical host consistency](PRODUCT_BACKLOG.md#b15-canonical-host-consistency) | Production complete: PR89/0eb8b70c, primary www alias/source verified; six pages200 and canonical/OG metadata, nine sitemap entries and two redirects pass | Existing L7 verification/alignment |
 | B16 | Remaining empty states, typography, workspace-switcher contrast and accessibility polish | Needs current-state triage; old plan isn't evidence of an open defect | L6; split confirmed defects into new rows |
-| B17 | [Dashboard loading speed](PRODUCT_BACKLOG.md#b17-dashboard-measure-and-reduce-time-to-useful-songs-and-artwork) | 25-song Production baseline3.72-4.45s; app iad1/database Ireland mismatch verified. [Primary-region test](B17_FUNCTION_REGION_REVIEW.md) approved; default dub1, protected Preview Ready/server checks pass; user positive checks pending. Live Production still iad1 | L6 leading performance workstream after current security slice |
+| B17 | [Dashboard loading speed](PRODUCT_BACKLOG.md#b17-dashboard-measure-and-reduce-time-to-useful-songs-and-artwork) | 25-song Production baseline3.72-4.45s; app iad1/database Ireland mismatch verified. [Primary-region test](B17_FUNCTION_REGION_REVIEW.md) approved; primary dub1 live after passed staging/crossover; provider-origin stalls persist in both regions. B17 remains open | L6 leading performance workstream after current security slice |
 | B18 | [Dashboard blank on return](PRODUCT_BACKLOG.md#b18-dashboard-retain-valid-songs-and-artwork-when-returning) | Scoped refresh fix Production complete via PR91/f189c38b; user cards-visible pass. Broader lifecycle/error/isolation matrix open | L6 reliability; S2 cache isolation overlaps |
 | B19 | [Dashboard-to-song navigation speed](PRODUCT_BACKLOG.md#b19-dashboard-to-song-measure-and-reduce-navigation-delay) | Scoped join fix Production complete: PR92/b0542d48; audio pass/paused verified. DB calls2-to-1; broader timing target/device QA open | L6 performance; canonical access must remain intact |
 | B20 | [New-version collaboration notifications](PRODUCT_BACKLOG.md#b20-verify-notifications-for-new-version-uploads) | All-member recipient requirement confirmed; no version-email dispatch found in repo or version triggers. Delivery untested | L6 dependability audit; no new channel assumed |
@@ -524,3 +524,9 @@ B17 continuation: staging artwork metadata44,817/42,928 bytes, JPEG; this rules 
 4 November independent B20 audit: only comment/thread routes schedule thread email; version_uploaded appears as dashboard activity, not upload-email dispatch. Installed song_versions has0 noninternal triggers in both DBs. This is source/trigger evidence only, not delivered-mail/provider-job proof. Existing all-member upload-alert requirement remains open; no email sent or feature activated.
 
 4 November Dublin Preview checkpoint: dpl_6S8gUybaC7fP7CuptP4RHii4UHsV Ready at exact b0542d48, primary project, Preview target, dub1 and stable email alias verified. Runtime headers confirm dub1. Login200, dashboard/version signed-out401, unavailable public playlist404 and staging email true/true pass. Chrome extension UI blocks automation; user asked for song/artwork/play-pause check. No positive performance benefit or Production-region completion claimed. Keep PR93/Production redeploy held until Preview gates pass.
+
+## Dublin region rollout checkpoint, 4 November 2026
+
+User reports Dublin staging passed; three content samples0.309-0.363s vs earlier1.69-2.20s. Primary dub1 Production b0542d48/dpl_8gBeW82QBbWxGmeruVr8dJNA6UwL live/www verified. Same-code Production crossover: dub1 samples2.19-5.56s, restored iad1 control3.20-6.73s; approximately2s provider profile/member origin stalls occur in both. Dublin retained for ordinary-path/database proximity benefit; B17 is not Done and no field-wide speed promise. Full table/limits in B17_FUNCTION_REGION_REVIEW.md. Existing iad1 deployment remains rollback. No unrelated resource/env/schema/plan change.
+
+Safe auth/public checks and one-byte public audio206 pass; signed-in25-song dashboard and normal song artwork/comments/actions/tasks visible. No Production playback/content writes. User Production perception/device test remains next; B18/B19 broader matrices and L6 provider/payment/device checks stay open.

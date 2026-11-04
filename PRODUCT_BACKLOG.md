@@ -23,7 +23,7 @@ Capture and organise only. These requirements don't authorise implementation or 
 
 ### B17. Dashboard: measure and reduce time to useful songs and artwork
 
-- Status: Two-song staging baseline recorded; original larger-workspace delay still needs representative Production measurement. See DASHBOARD_PERFORMANCE_REVIEW.md.
+- Status:25-song Production baseline and approved Dublin crossover recorded. Primary dub1 is live; staged0.31-0.36s, Production2.19-5.56s with provider-origin stalls also reproduced in iad1. B17 remains open for latency consistency and broader device/user acceptance. See DASHBOARD_PERFORMANCE_REVIEW.md.
 - Reported behaviour: Opening the dashboard takes roughly 5-6 seconds before artwork and all songs appear. This is a user estimate, not a measured baseline.
 - Intended outcome: Show useful song content quickly and load artwork promptly without blocking the rest of the dashboard.
 - Implementation inspected: `app/dashboard/page.tsx` initializes through `/api/dashboard`, reuses its payload in `loadAll`, and already has opt-in performance tracing; `app/api/dashboard/route.ts` has request timing. A separate summary route exists. These facts don't establish which path is slow or justify introducing another fetching path.

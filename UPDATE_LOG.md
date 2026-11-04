@@ -9959,3 +9959,9 @@ B20 read-only source and trigger audit finds no upload email path/0 noninternal 
 ## 2026-11-04: Dublin Preview ready, browser acceptance pending
 
 Changed B17_FUNCTION_REGION_REVIEW.md and LAUNCH_CHECKLIST.md with Ready protected Preview/source/alias/dub1 verification and four safe server probes plus unchanged staging email config. Runtime headers confirm dub1. Browser extension UI blocks positive measurement, so specific user song/artwork/play-pause test requested. Project default is dub1 but existing Production remains b0542d48/iad1; PR93 merge/redeployment held. No claimed speed gain or Production-region completion.
+
+## 2026-11-04: staged Dublin pass and Production crossover
+
+Changed B17_FUNCTION_REGION_REVIEW.md, DASHBOARD_PERFORMANCE_REVIEW.md, LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md. User staging pass; three0.309-0.363s dashboard samples. Approved primary dub1 Production release at exact b0542d48; auth/public checks and one-byte public media206 pass. Initial Production samples2.19-5.56s prompted safeguard restore toiad1; control3.20-6.73s reproduces approximately2s provider profile/member origin stalls. Returned to tested dub1 deployment dpl_8gBeW82QBbWxGmeruVr8dJNA6UwL/defaults, source/www/dub1 and unchanged resource fields verified. B17 remains open; no consistent-latency or field-wide speed claim.
+
+Signed-in25-song dashboard and normal song page visually verified without edits or Production playback. No schema/permission/env/plan change. Previous iad1 dpl_9QJjHQh86P4Rrfi5nXE9gfW3S2vJ remains rollback. User perception/device acceptance and provider-origin diagnosis remain follow-ups.
