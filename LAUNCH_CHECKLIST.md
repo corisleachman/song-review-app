@@ -38,7 +38,7 @@ Performance is the user's main MVP concern. B17-B19 are the active leading L6 wo
 
 ## Current stage: L6 performance and final launch QA
 
-Next action: measure B17-B19 dashboard loading, return/cache isolation and song navigation. Two-song staging baseline and scoped B18/B19 releases recorded. Production25-song timings and approved Dublin trial recorded; investigate provider-origin tail latency and obtain user perception check. L5 beta exit was explicitly accepted on 4 November; unperformed matrix checks remain unperformed.
+Next action: measure B17-B19 dashboard loading, return/cache isolation and song navigation. Two-song staging baseline and scoped B18/B19 releases recorded. Production25-song timings and approved Dublin trial recorded; user reports much faster/more responsive. Provider-origin tails remain open; proceed to [physical-device playback](LAUNCH_DEVICE_ACCEPTANCE.md). L5 beta exit was explicitly accepted on 4 November; unperformed matrix checks remain unperformed.
 
 ## L6 acceptance checklist
 
@@ -46,7 +46,7 @@ Next action: measure B17-B19 dashboard loading, return/cache isolation and song 
 | --- | --- | --- |
 | Google and Email signup/login/recovery | Not started for consolidated pass | Existing users retain their identities and workspaces; stop for duplicate account, wrong-host mail or lost recovery |
 | Invites and workspace separation | Not started for consolidated pass | Only intended membership changes; another workspace's private data remains inaccessible |
-| Upload, first Play, seeking, commenting, restart, repeat and version changes | Not started for consolidated pass | Supported files work; no competing audio or wrong-version feedback; include phone background/lock screen |
+| Upload, first Play, seeking, commenting, restart, repeat and version changes | First physical-device playback check prepared; user test pending, broader consolidated pass open | Supported files work; no competing audio or wrong-version feedback; include phone background/lock screen |
 | Free/paid limits, upgrade, checkout, cancellation and webhook reconciliation | Not started for consolidated pass | Use isolated Stripe test environment; correct plan/interval and preserved data; no live payment required |
 | Forms, feedback, public sharing and embed revocation | Not started for consolidated pass | Clear validation; private material stays private; revocation removes public access |
 | Accessibility and desktop/phone/tablet coverage | Not started for consolidated pass | Keyboard/focus/dialog checks, readable layouts and no overflow; physical 11-inch iPad remains additional coverage |
@@ -77,7 +77,7 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B14 | Marketing image alt-text audit | Pending | L7 |
 | B15 | [Canonical host consistency](PRODUCT_BACKLOG.md#b15-canonical-host-consistency) | Production complete: PR89/0eb8b70c, primary www alias/source verified; six pages200 and canonical/OG metadata, nine sitemap entries and two redirects pass | Existing L7 verification/alignment |
 | B16 | Remaining empty states, typography, workspace-switcher contrast and accessibility polish | Needs current-state triage; old plan isn't evidence of an open defect | L6; split confirmed defects into new rows |
-| B17 | [Dashboard loading speed](PRODUCT_BACKLOG.md#b17-dashboard-measure-and-reduce-time-to-useful-songs-and-artwork) | 25-song Production baseline3.72-4.45s; app iad1/database Ireland mismatch verified. [Primary-region test](B17_FUNCTION_REGION_REVIEW.md) approved; primary dub1 live after passed staging/crossover; provider-origin stalls persist in both regions. B17 remains open | L6 leading performance workstream after current security slice |
+| B17 | [Dashboard loading speed](PRODUCT_BACKLOG.md#b17-dashboard-measure-and-reduce-time-to-useful-songs-and-artwork) | 25-song Production baseline3.72-4.45s; app iad1/database Ireland mismatch verified. [Primary-region test](B17_FUNCTION_REGION_REVIEW.md) approved; primary dub1 live after passed staging/crossover; user reports much faster/more responsive; provider-origin stalls persist in both regions. B17 remains open | L6 leading performance workstream after current security slice |
 | B18 | [Dashboard blank on return](PRODUCT_BACKLOG.md#b18-dashboard-retain-valid-songs-and-artwork-when-returning) | Scoped refresh fix Production complete via PR91/f189c38b; user cards-visible pass. Broader lifecycle/error/isolation matrix open | L6 reliability; S2 cache isolation overlaps |
 | B19 | [Dashboard-to-song navigation speed](PRODUCT_BACKLOG.md#b19-dashboard-to-song-measure-and-reduce-navigation-delay) | Scoped join fix Production complete: PR92/b0542d48; audio pass/paused verified. DB calls2-to-1; broader timing target/device QA open | L6 performance; canonical access must remain intact |
 | B20 | [New-version collaboration notifications](PRODUCT_BACKLOG.md#b20-verify-notifications-for-new-version-uploads) | All-member recipient requirement confirmed; no version-email dispatch found in repo or version triggers. Delivery untested | L6 dependability audit; no new channel assumed |
@@ -530,3 +530,7 @@ B17 continuation: staging artwork metadata44,817/42,928 bytes, JPEG; this rules 
 User reports Dublin staging passed; three content samples0.309-0.363s vs earlier1.69-2.20s. Primary dub1 Production b0542d48/dpl_8gBeW82QBbWxGmeruVr8dJNA6UwL live/www verified. Same-code Production crossover: dub1 samples2.19-5.56s, restored iad1 control3.20-6.73s; approximately2s provider profile/member origin stalls occur in both. Dublin retained for ordinary-path/database proximity benefit; B17 is not Done and no field-wide speed promise. Full table/limits in B17_FUNCTION_REGION_REVIEW.md. Existing iad1 deployment remains rollback. No unrelated resource/env/schema/plan change.
 
 Safe auth/public checks and one-byte public audio206 pass; signed-in25-song dashboard and normal song artwork/comments/actions/tasks visible. No Production playback/content writes. User Production perception/device test remains next; B18/B19 broader matrices and L6 provider/payment/device checks stay open.
+
+## Production feedback and next L6 test, 4 November 2026
+
+User reports Production feels much faster and more responsive. This confirms perceived improvement, not a waiver of provider-tail/device limits. PR93/7d1e2ae0 documentation-only primary deployment dpl_kCewMGEp61D5bN2Xm6ny8utGShBK Ready/live in dub1, application unchanged. Physical-device playback/seek/lock-screen checklist prepared in LAUNCH_DEVICE_ACCEPTANCE.md; no physical pass claimed yet. No new app/configuration change in this checkpoint.
