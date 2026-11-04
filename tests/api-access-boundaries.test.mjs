@@ -1323,3 +1323,17 @@ test('B40 task reorder does not report success after a database write failure',a
  assert.equal(response.status,500);
  assert.deepEqual(await response.json(),{error:'Could not reorder tasks.'});
 });
+
+test('B40 collaboration body ceiling measures UTF-8 bytes and accepts its exact boundary',async()=>{
+ const {readCollaborationInput}=routeHarness('lib/collaborationInput.ts').handler;
+ const overhead=Buffer.byteLength(JSON.stringify({description:''}));
+ const exact=JSON.stringify({description:'x'.repeat(16384-overhead)});
+ assert.equal(Buffer.byteLength(exact),16384);
+ assert.equal((await readCollaborationInput(new Request('https://test.invalid',{method:'POST',body:exact}))).description.length,16384-overhead);
+ assert.equal(await readCollaborationInput(new Request('https://test.invalid',{method:'POST',body:exact+' '})),null);
+ const multibyte=JSON.stringify({description:'🎵'.repeat(4096)});
+ assert.ok(multibyte.length<16384);
+ assert.equal(await readCollaborationInput(new Request('https://test.invalid',{method:'POST',body:multibyte})),null);
+ const declared=new Request('https://test.invalid',{method:'POST',body:'{}',headers:{'content-length':'16385'}});
+ assert.equal(await readCollaborationInput(declared),null);
+});

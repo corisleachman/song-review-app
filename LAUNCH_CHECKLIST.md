@@ -104,7 +104,7 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 
 | B38 | [Server-owned legacy billing records](PRODUCT_BACKLOG.md#b38-client-writes-can-forge-unused-legacy-billing-records) | Production complete, 4 Nov: installed84 pass both; settings/plan reads preserved | Existing L5/S3 P2 hardening; no demonstrated paid-access bypass or new launch blocker |
 | B39 | [Preserve playlist workspace/song linkage](PRODUCT_BACKLOG.md#b39-direct-playlist-header-writes-can-transfer-foreign-song-links) | Production complete,4 Nov: installed25 pass both; staged playlist flow/cleanup verified | Existing L5/S2-S3 security defect; approval required for permanent permission change |
-| B40 | [Action/task mutation input validation](PRODUCT_BACKLOG.md#b40-actiontask-mutations-accept-malformed-input) | Code complete locally;35 old-code failures reproduced,43 new cases/all514 tests pass; hosted acceptance pending | Existing L5/S5 validation, no new launch scope |
+| B40 | [Action/task mutation input validation](PRODUCT_BACKLOG.md#b40-actiontask-mutations-accept-malformed-input) | Code complete locally;35 old-code failures reproduced,44 new cases/all515 tests pass; hosted acceptance pending | Existing L5/S5 validation, no new launch scope |
 
 Exploratory ideas in ROADMAP.md (typing indicators, pinned comments, comparison view, waveform regions, exports, Slack, native mobile app, multitrack and video) remain unscheduled ideas. They aren't approved launch work. Delete/edit/auth/invite ideas in that old file must be checked against existing features before creating tasks.
 
