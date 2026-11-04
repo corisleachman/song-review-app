@@ -1,3 +1,4 @@
+import { readCollaborationInput } from '@/lib/collaborationInput';
 import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -124,11 +125,17 @@ export async function GET(req: NextRequest, props: { params: Promise<{ versionId
 export async function PATCH(req: NextRequest, props: { params: Promise<{ versionId: string }> }) {
   const params = await props.params;
   try {
-    const { label, notes } = await req.json();
     const resolved = await resolveCanonicalIdentity();
 
     if (!resolved) {
       return NextResponse.json({ error: 'You must be signed in to update a version.' }, { status: 401 });
+    }
+
+    const body = await readCollaborationInput(req);
+    if (!body) return NextResponse.json({ error: 'Invalid version details.' }, { status: 400 });
+    const { label, notes } = body;
+    if ((label != null && typeof label !== 'string') || (notes != null && typeof notes !== 'string')) {
+      return NextResponse.json({ error: 'Invalid version details.' }, { status: 400 });
     }
 
     const { version, workspaceId } = await loadVersionWithWorkspace(params.versionId);
@@ -142,11 +149,11 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ version
     }
 
     const updates: { label: string | null; notes?: string | null } = {
-      label: label ?? null,
+      label: typeof label === 'string' ? label : null,
     };
 
     if (notes !== undefined) {
-      updates.notes = notes?.trim() ? notes.trim() : null;
+      updates.notes = typeof notes === 'string' && notes.trim() ? notes.trim() : null;
     }
 
     const { data, error } = await supabaseServer

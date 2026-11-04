@@ -1,3 +1,4 @@
+import { readCollaborationInput } from '@/lib/collaborationInput';
 import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -6,16 +7,17 @@ import { DEFAULT_SONG_STATUS } from '@/lib/songWorkflow';
 
 export async function POST(req: NextRequest) {
   try {
-    const { title } = await req.json();
-
-    if (!title?.trim()) {
-      return NextResponse.json({ error: 'Title is required' }, { status: 400 });
-    }
-
     const resolved = await resolveCanonicalIdentity();
 
     if (!resolved) {
       return NextResponse.json({ error: 'You must be signed in to create a song.' }, { status: 401 });
+    }
+
+    const body = await readCollaborationInput(req);
+    if (!body) return NextResponse.json({ error: 'Invalid song details.' }, { status: 400 });
+    const { title } = body;
+    if (typeof title !== 'string' || !title.trim()) {
+      return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
 
     const { data, error } = await supabaseServer

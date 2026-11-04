@@ -1,3 +1,4 @@
+import { readCollaborationInput } from '@/lib/collaborationInput';
 import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -23,7 +24,9 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ inviteI
     if (ownerError) return ownerError;
 
     const inviteId = params.inviteId;
-    const { action } = await req.json();
+    const body = await readCollaborationInput(req);
+    if (!body) return NextResponse.json({ error: 'Invalid invite details.' }, { status: 400 });
+    const { action } = body;
 
     if (!inviteId) {
       return NextResponse.json({ error: 'Invite ID is required.' }, { status: 400 });

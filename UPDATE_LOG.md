@@ -9900,3 +9900,13 @@ Changed files: LAUNCH_API_ACCESS_MATRIX.md, PRODUCT_BACKLOG.md, LAUNCH_CHECKLIST
 ## 2026-11-04: B40 user acceptance, hosted read revocation and fixture cleanup
 
 Changed files: LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_API_ACCESS_MATRIX.md, LAUNCH_SECURITY_REVIEW.md, UPDATE_LOG.md. User member-view/reorder acceptance passes; DB verifies B0/A1. Four member reads succeed, then four same-session reads deny after removing only fixture membership, supplementing four prior outsider denials. Original workspace/Owner role restored; all account/member/song/version/thread/comment/action/task fixture counts0 and original plan/storage/Stripe/membership baseline preserved. No real content, Auth identity, email/payment/Storage operation. App source unchanged since tested7284fae5; final documentation CI precedes routine PR87 release. Rollback prior4e8a2750 retaining B39 grants. Remaining S2/S4/S5 stay open.
+
+
+## 2026-11-04: B40 Production verified; B41 metadata validation candidate
+
+Changed files: nine song/version/playlist/profile/invite route files, tests/api-access-boundaries.test.mjs, LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, UPDATE_LOG.md. B40/PR87 merge613a1426 primary dpl_BCGgcjLmtjcATiUaFuKpE17wpkRJ verified Ready/www; seven safe live checks and preserved email readiness, zero fixtures. B41 goal: reject malformed/oversize metadata and invalid reorder lists before writes, stop reporting reorder success on DB failure.44 pre-fix failures in two batches;66 new/all581 tests, TypeScript and lint0errors/one pre-existing warning, whitespace pass. Shared16KiB reader reused; valid defaults/null clears and permissions unchanged. No migration/provider/config/auth change. Preview acceptance pending; rollback app to613a1426 retaining DB grants. Partial serial reorder writes remain a recorded limit.
+
+
+## 2026-11-04: B41 Preview handoff, accepted S4 beta scope and B15 verification
+
+Changed files: LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, UPDATE_LOG.md. B41 exact3ff0656c Preview Ready on original email/CAPTCHA hostname; staging project, ten signed-out malformed methods401, invalid invite404 and readiness verified. Browser URL policy prevented current-frame reload; isolated two-song Owner fixture prepared for user playlist acceptance, no real content/provider/Storage/plan change. B41 remains unmerged/Preview only. User accepted recorded S4 limits for current beta; mark that scope Done and revisit at L8, no new quotas/settings. Independent B15 read-only check finds apex canonical URLs against www redirects/sitemap and blog trailing-slash redirect; existing L7 alignment remains pending, no SEO change made. Documentation-only whitespace check; no repeated runtime suite.

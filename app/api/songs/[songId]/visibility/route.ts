@@ -1,3 +1,4 @@
+import { readCollaborationInput } from '@/lib/collaborationInput';
 import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -15,10 +16,8 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ songId:
       return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
     }
 
-    const body = await req.json() as {
-      is_public?: boolean;
-      public_comments_enabled?: boolean;
-    };
+    const body = await readCollaborationInput(req);
+    if (!body) return NextResponse.json({ error: 'Invalid sharing details.' }, { status: 400 });
 
     const hasIsPublic = typeof body.is_public === 'boolean';
     const hasComments = typeof body.public_comments_enabled === 'boolean';
@@ -45,11 +44,11 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ songId:
     }
 
     const update: { is_public?: boolean; public_comments_enabled?: boolean } = {};
-    if (hasIsPublic) update.is_public = body.is_public;
-    if (hasComments) update.public_comments_enabled = body.public_comments_enabled;
+    if (typeof body.is_public === 'boolean') update.is_public = body.is_public;
+    if (typeof body.public_comments_enabled === 'boolean') update.public_comments_enabled = body.public_comments_enabled;
 
     // Comments require a public link — if sharing is off, force comments off too
-    const resultingIsPublic = hasIsPublic ? body.is_public! : song.is_public;
+    const resultingIsPublic = typeof body.is_public === 'boolean' ? body.is_public : song.is_public;
     if (!resultingIsPublic) {
       update.public_comments_enabled = false;
     }

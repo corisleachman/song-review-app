@@ -1,3 +1,4 @@
+import { readCollaborationInput } from '@/lib/collaborationInput';
 import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
@@ -14,7 +15,8 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
       { status: access.error === 'unauthorized' ? 401 : 404 });
   }
   try {
-    const body = (await req.json().catch(() => ({}))) as { songId?: unknown };
+    const body = await readCollaborationInput(req);
+    if (!body) return NextResponse.json({ error: 'Invalid playlist song details.' }, { status: 400 });
     const songId = typeof body?.songId === 'string' ? body.songId : null;
     if (!songId) return NextResponse.json({ error: 'songId is required.' }, { status: 400 });
 
@@ -49,15 +51,28 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
       { status: access.error === 'unauthorized' ? 401 : 404 });
   }
   try {
-    const body = (await req.json().catch(() => ({}))) as { orderedSongIds?: unknown };
-    const ids = Array.isArray(body?.orderedSongIds) ? body.orderedSongIds.filter((x): x is string => typeof x === 'string') : null;
-    if (!ids) return NextResponse.json({ error: 'orderedSongIds is required.' }, { status: 400 });
+    const body = await readCollaborationInput(req);
+    const ids = body?.orderedSongIds;
+    if (!Array.isArray(ids) || ids.some(id => typeof id !== 'string' || !id.trim())
+      || new Set(ids).size !== ids.length) {
+      return NextResponse.json({ error: 'orderedSongIds must contain unique song IDs.' }, { status: 400 });
+    }
+    const { data: entries, error: entriesError } = await supabaseServer.from('playlist_songs')
+      .select('song_id').eq('playlist_id', access.playlist.id);
+    if (entriesError) throw entriesError;
+    const existingIds = new Set((entries ?? []).map(entry => entry.song_id));
+    if (ids.some(id => !existingIds.has(id))) {
+      return NextResponse.json({ error: 'One or more songs are not in this playlist.' }, { status: 400 });
+    }
 
     for (let i = 0; i < ids.length; i++) {
-      await supabaseServer.from('playlist_songs').update({ position: i })
+      const { error } = await supabaseServer.from('playlist_songs').update({ position: i })
         .eq('playlist_id', access.playlist.id).eq('song_id', ids[i]);
+      if (error) throw error;
     }
-    await supabaseServer.from('playlists').update({ updated_at: new Date().toISOString() }).eq('id', access.playlist.id);
+    const { error: playlistError } = await supabaseServer.from('playlists')
+      .update({ updated_at: new Date().toISOString() }).eq('id', access.playlist.id);
+    if (playlistError) throw playlistError;
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('[playlists/:id/songs] reorder error:', safeErrorDetails(err));
