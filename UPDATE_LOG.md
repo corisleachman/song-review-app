@@ -9919,3 +9919,7 @@ Changed files: public/marketing.html, public/blog/index.html, four article HTML 
 ## 2026-11-04: L5 beta exit accepted and B15 Preview verified
 
 Changed LAUNCH_CHECKLIST.md, LAUNCH_SECURITY_REVIEW.md and LAUNCH_API_ACCESS_MATRIX.md to record explicit user acceptance of S2/S5 limits and L5 beta exit. Pending hosted permutations remain unperformed; consolidated device/payment/notification/performance checks carry to L6. Six B15 Preview pages200 with aligned canonical/OG/Article metadata and nine sitemap URLs verified; four CI checks pass. Production release pending. Routine reconciliation suits Luna Low; performance diagnosis is assigned Sol Medium in the model plan.
+
+## 2026-11-04: B15 live verification and L6 empty-workspace baseline
+
+Changed LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md and UPDATE_LOG.md to close B15 in verified Production scope and start B17-B19 measurement. Exact primary deployment0eb8b70c/www verified; six canonical pages, nine sitemap URLs and two redirects pass. Three empty staging dashboard runs1663.5-1944.9ms; representative song/artwork test awaits user fixtures. No performance source change or claimed improvement. Rollback B15 application to1d8fe5a7 if needed.

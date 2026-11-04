@@ -785,3 +785,11 @@ Git transport repeatedly failed with GitHub500. Prior documentation commit was p
 4 November B41 Production completion: user playlist acceptance and DB name/B0/A1 order pass; all six fixture counts0, original Owner workspace/plan/storage/Stripe/membership restored. PR88 merge1d8fe5a7 primary dpl_3ENwd7uEfZYkDqxHt3QcudGteQXy Ready/live www. Ten malformed signed-out methods401 plus login/public projection and email config pass. No fresh Production positive metadata/provider write. Previous Preview-pending statements are historical.
 
 4 November B15 implementation: source / rewrites to public/marketing.html. Updated only apex self-URLs in that head, blog index and four article heads/JSON-LD; generator default now www (explicit SITE_URL override still honoured). Blog index canonical and sitemap use /blog matching200 endpoint, not /blog/308. Local parsing verifies six canonical heads/eight JSON-LD blocks/nine sitemap URLs and exact unrelated-content preservation; Node syntax, focused lint and whitespace pass. No article generation/API call, copy/date change, environment/domain/redirect/auth/billing setting change. Exact-head hosted metadata checks pending. App-only rollback is prior1d8fe5a7; no migration/config rollback.
+
+### B15 verified release, 4 November 2026
+
+PR89/0eb8b70c is Production complete in canonical-host scope: six pages200 with www canonical/OG alignment, nine sitemap entries, apex and blog-slash redirects verified. No domain/redirect/env settings changed. Rollback app1d8fe5a7.
+
+### B17-B19 initial measurement, 4 November 2026
+
+Existing staging password account has zero songs. Three desktop Chrome/unthrottled reloads reach empty-state in1663.5/1827.2/1944.9ms; server identity1107.7-1410.6ms. This is an auth/empty baseline only; song/artwork and navigation remain unmeasured. Source inspection finds entry waits for canonical full response and expired focus-cache refresh sets loading true. Reproduce before fixing; preserve workspace and revoked-membership boundaries. Await representative staging songs with audio/artwork from user. No performance implementation change.

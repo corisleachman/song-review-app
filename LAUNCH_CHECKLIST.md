@@ -14,8 +14,8 @@ Public beta is live. Five foundation stages are done. Security closeout is accep
 | L3. Public email login and recovery | Done | Signup, confirmation, password login, recovery/reset alongside Google | Controlled production journey passed 25 October; [auth completion record](EMAIL_PASSWORD_STAGING_ROLLOUT.md#current-status-1-november-2026) |
 | L4. Homepage readiness | Done | Clear login, repaired links, responsive presentation, local assets and initial-load improvements | PRs [53](https://github.com/corisleachman/song-review-app/pull/53), [61](https://github.com/corisleachman/song-review-app/pull/61), [62](https://github.com/corisleachman/song-review-app/pull/62); performance follow-up [63](https://github.com/corisleachman/song-review-app/pull/63) merged 31 October; final measurements belong to L6 |
 | L5. Security closeout | Done for current beta | Access boundaries, database warnings, abuse protection, validation, secrets and monitoring | User accepted S2/S5 limits on 4 November; recorded S3/S4/S6/S7 scopes retained. Named consolidated checks carry to L6 and limits to L8 |
-| L6. Performance and final launch QA | Not started | Dashboard loading/return and song-navigation performance work, then consolidated journey, browser/device, accessibility, links and payment sandbox checks | Recorded pass/fail matrix; no unresolved launch-blocking defects |
-| L7. Discoverability closeout | In progress (verification) | Independent B15 canonical/robots/sitemap check started; homepage/articles declare apex while redirects/sitemap use www. Other SEO/content exit checks remain | Production metadata/link checks and content decisions recorded; canonical alignment pending |
+| L6. Performance and final launch QA | In progress (baseline) | Dashboard loading/return and song-navigation performance work, then consolidated journey, browser/device, accessibility, links and payment sandbox checks | Recorded pass/fail matrix; no unresolved launch-blocking defects |
+| L7. Discoverability closeout | In progress (verification) | B15 canonical-host alignment Production verified 4 November. Other SEO/content exit checks remain | B15 complete in verified scope; remaining metadata/link/content decisions open |
 | L8. Wider-launch decision | Not started | Review evidence, remaining risks, rollback and support readiness | L5-L7 complete; user records go/no-go for wider promotion |
 
 Done means the named scope has recorded evidence, not that every future improvement in that area is finished. Later findings reopen the relevant stage. L8 does not authorise a marketing campaign or messages to others.
@@ -38,7 +38,7 @@ Performance is the user's main MVP concern. B17-B19 are queued as the leading L6
 
 ## Current stage: L6 performance and final launch QA
 
-Next action: finish the independently verified B15 canonical-host release, then measure B17-B19 dashboard loading, return/cache isolation and song navigation. No user test is pending. L5 beta exit was explicitly accepted on 4 November; unperformed matrix checks remain unperformed.
+Next action: measure B17-B19 dashboard loading, return/cache isolation and song navigation. Empty staging baseline recorded; user preparing representative staging songs with artwork. L5 beta exit was explicitly accepted on 4 November; unperformed matrix checks remain unperformed.
 
 ## L6 acceptance checklist
 
@@ -75,7 +75,7 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B12 | Automated SEO content-engine draft PR #3 | Draft; not a launch commitment | Later |
 | B13 | FAQ | Scope/implementation pending | L7 |
 | B14 | Marketing image alt-text audit | Pending | L7 |
-| B15 | [Canonical host consistency](PRODUCT_BACKLOG.md#b15-canonical-host-consistency) | Preview verified at06f51458: six pages200, canonical/OG/JSON-LD aligned and nine sitemap URLs checked; four CI checks pass. Production release pending | Existing L7 verification/alignment |
+| B15 | [Canonical host consistency](PRODUCT_BACKLOG.md#b15-canonical-host-consistency) | Production complete: PR89/0eb8b70c, primary www alias/source verified; six pages200 and canonical/OG metadata, nine sitemap entries and two redirects pass | Existing L7 verification/alignment |
 | B16 | Remaining empty states, typography, workspace-switcher contrast and accessibility polish | Needs current-state triage; old plan isn't evidence of an open defect | L6; split confirmed defects into new rows |
 | B17 | [Dashboard loading speed](PRODUCT_BACKLOG.md#b17-dashboard-measure-and-reduce-time-to-useful-songs-and-artwork) | User report; baseline and target pending | L6 leading performance workstream after current security slice |
 | B18 | [Dashboard blank on return](PRODUCT_BACKLOG.md#b18-dashboard-retain-valid-songs-and-artwork-when-returning) | Reported defect; trigger unverified | L6 reliability; S2 cache isolation overlaps |
@@ -492,3 +492,9 @@ Rollback for this staging code change is reassigning this same stable alias to d
 ## L5 beta exit accepted, 4 November 2026
 
 User explicitly accepted recorded S2/S5 limits for current beta. L5 is Done for that scope, not exhaustive hosted coverage. Device, payment, notification and performance checks carry to L6; quota/provider-IP and monitoring limits remain for L8. No configuration or security boundary changed by this decision. B15 Preview metadata checks pass; Production release follows final exact-head CI.
+
+## B15 Production completion and L6 baseline, 4 November 2026
+
+PR89 merged0eb8b70c; primary Production dpl_BNKywRcu3MVwnhDFuuiqKiBeVaaU Ready/www exact source verified. Six live pages200 with matching canonical/OG URLs, nine www sitemap entries and apex/blog-slash308 redirects pass. Preview eight JSON-LD blocks parse; final source four CI checks pass. No migration/configuration change. Rollback prior compatible app1d8fe5a7; no external step required.
+
+B17-B19 investigation uses optimize skill and existing opt-in timing hooks. Empty staging workspace, desktop Chrome, ordinary unthrottled connection, repeated reloads: visible empty-state1663.5/1827.2/1944.9ms; network1654.1/1817.4/1938.9ms; server total1406.6/1522.8/1693.7ms. Identity1107.7-1410.6ms dominates server time. This is not a populated song/artwork baseline or a performance improvement. Entry waits for full payload before displaying songs; focus refresh after five-minute cache expiry sets loading true. Both are reproduction leads, not established incident causes. User asked to prepare staging test songs/audio/artwork; no performance source change. Sol Medium recommended for diagnosis, Terra for a scoped fix once measured.
