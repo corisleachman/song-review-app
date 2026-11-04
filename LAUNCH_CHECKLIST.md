@@ -452,6 +452,15 @@ Reviewed4 November2026 against [official model-selection guidance](https://devel
 | B16 confirmed UI fixes/accessibility and FAQ B13 | GPT-6.1 Terra Medium | Broad redesign is a separate scope decision |
 | B11 article review and L7 supplied-copy edits | GPT-6.1 Terra Low with write-like-coris | Unsupported factual claims need research |
 | L8 evidence compilation | Luna Low; User owns go/no-go | Conflicting release evidence needs Sol |
-| Later items B01-B08/B12 outside current launch scope | Select when activated | Do not spend tokens implementing deferred work |
+| Explicitly deferred B01/B03/B05/B07/B08/B12 | Select when activated | Do not spend tokens implementing deferred work |
 
 Execution preference, clarified4 November: continue independent authorized work when an item awaits approval. Pause dependent rollout without approval; keep progressing elsewhere. Pause for user-executed acceptance when required. Never treat silence as approval.
+
+
+### 4 November 2026: B40 email-account staging handoff
+
+User approved making existing plus-address password accounts usable for the remaining staging checks. Existing Turnstile widget is restricted to the original email-staging hostname, so no new branch flag/secret or hostname permission was introduced. Rebuilt original Preview deployment dpl_EtDYXsoE9t3YUpxUmpBvD1VHtowT with its inherited staging environment and exact tested B40 source7284fae597f131acc6c9db691b249f4451bacc7e, producing Ready dpl_H9gAkTGS5G6PiNoD9rftSuK156XS. Existing stable alias now serves that source: https://song-review-app-v2-git-codex-ema-c75749-corisleachmans-projects.vercel.app/login . No git branch history, provider configuration, environment variable or Production deployment changed.
+
+Verified alias deployment/source/Preview target, email config enabled=true/passwordManagementEnabled=true, public login bundle staging project ivifkrtupqizyqqsxdty, invalid empty login400 before provider use, and visible expanded Email/Password fields. Normal automated browser failed Turnstile with300030; no CAPTCHA was solved/bypassed, credentials submitted or auth email sent. Successful real-user password login remains pending. User should open the stable alias, expand email form, use an existing staging plus-address/password, complete security check, and report dashboard/workspace result or visible error without credentials/tokens. Original immutable B40 Preview remains Google-only; use stable email alias for password accounts.
+
+Rollback for this staging code change is reassigning this same stable alias to dpl_EtDYXsoE9t3YUpxUmpBvD1VHtowT; do not disable existing email login or remove secrets while password test accounts exist. B40 remains Preview-only pending manual acceptance and guarded fixture cleanup. Disposable B40 hosted acceptance workspace and two pending tasks remain from the recorded reorder handoff; membership is only the designated Google actor, so a different password identity won't see it until an explicitly scoped fixture membership is arranged.
