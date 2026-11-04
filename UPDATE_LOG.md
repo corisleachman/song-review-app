@@ -9860,3 +9860,8 @@ Goal: reconcile remaining account/profile/billing access and prevent client forg
 Changed files: LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, LAUNCH_API_ACCESS_MATRIX.md, UPDATE_LOG.md, tests/current-user-boundary.test.mjs, scripts/compose-remaining-account-access-probe.mjs, supabase/tests/remaining_account_access_probe.sql, supabase/migrations/20261103221242_restrict_client_legacy_billing_writes.sql and matching supabase/rollback SQL.
 
 Verification: baseline84/candidate84/rollback84 pass both DBs; four new real-helper identity cases; all471 Node tests and focused lint pass. Read-only full inventory25 RLS tables/no public views/no client-callable public definers; zero synthetic fixture rows and unchanged original grants/policies verified. No real account, Stripe, Auth API, email, Storage or payment changes. Approval required for permanent grant installation; S2/S3 stay In progress.
+
+
+## 2026-11-04: approved B38 installed in staging and Production
+
+Changed files: LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, LAUNCH_API_ACCESS_MATRIX.md, UPDATE_LOG.md. Recorded approved legacy billing-table permission rollout and live verification. Installed84 pass each environment; staging Workspace/Free plan reads preserved; Production signed-out billing denial checks pass. No app implementation or payment changes. Zero fixtures remain; advisor warnings/errors zero. Matching SQL rollback restores grants and reopens legacy-record forgery; application rollback alone does not undo permissions. PR84 source/evidence merge follows CI.
