@@ -9865,3 +9865,8 @@ Verification: baseline84/candidate84/rollback84 pass both DBs; four new real-hel
 ## 2026-11-04: approved B38 installed in staging and Production
 
 Changed files: LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, LAUNCH_API_ACCESS_MATRIX.md, UPDATE_LOG.md. Recorded approved legacy billing-table permission rollout and live verification. Installed84 pass each environment; staging Workspace/Free plan reads preserved; Production signed-out billing denial checks pass. No app implementation or payment changes. Zero fixtures remain; advisor warnings/errors zero. Matching SQL rollback restores grants and reopens legacy-record forgery; application rollback alone does not undo permissions. PR84 source/evidence merge follows CI.
+
+
+## 2026-11-04: close application function-body review
+
+Changed files: supabase/tests/function_security_inventory.sql, LAUNCH_SECURITY_REVIEW.md, LAUNCH_CHECKLIST.md, UPDATE_LOG.md. Goal: replace the remaining function-body placeholder with bounded, reproducible evidence. Reviewed19 live application functions including private membership helpers and server-only privileged mutation RPCs; definitions and role grants match both DBs. Read-only drift query passes19 checks each, without invoking any function or writing data. No app/schema/config changes and no new defect confirmed. S3 policy/table coverage reconciliation and S2/S4/S5 stay open. Source/document revert is sufficient rollback.
