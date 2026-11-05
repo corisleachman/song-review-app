@@ -10003,3 +10003,7 @@ Staging desktop keyboard follow-up also changed LAUNCH_DEVICE_ACCEPTANCE.md: ver
 ## L6 sharing baseline and device availability
 
 Updated LAUNCH_CHECKLIST.md to record 457 passing local contract tests, read-only Production playlist and embed probes, and the outstanding physical iPad check. Hosted revocation remains open.
+
+## L6 hosted playlist revocation
+
+Updated LAUNCH_CHECKLIST.md with staging publication and revocation results for an empty playlist. Verified the public API, listener and embed after switching to Draft.
