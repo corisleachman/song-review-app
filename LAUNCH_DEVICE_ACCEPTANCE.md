@@ -48,3 +48,7 @@ The requested Chrome/iPhone audio/seek/background/pause/return flow is reported 
 ### Follow-up observation, 5 November2026
 
 User clarifies the independent demo's unrelated artwork was visible for about one second after a later wake, then disappeared to reveal the lock-screen background. This supersedes the earlier impression that its card stayed visible indefinitely. Both Song Room and the independent reference can hand off metadata and subsequently clear it while remaining paused; timing varies. No further repeat test or playback-code change is justified now. Exact OS cause remains unconfirmed.
+
+## Staging desktop keyboard slice, 5 November2026
+
+On authenticated Chrome staging upload page, opening feedback focuses Close. Shift+Tab wraps to Send feedback and Tab wraps back to Close. Escape dismisses the dialog and restores focus to the feedback launcher. No text entered, feedback submitted or file chosen. New song navigates to Add songs, so the dormant dashboard new-song modal was not counted as tested. This is a scoped focus-management pass, not screen-reader/contrast/full keyboard/device acceptance. Physical11-inch iPad remains outstanding.

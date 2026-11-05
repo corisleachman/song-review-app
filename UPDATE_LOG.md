@@ -9993,3 +9993,9 @@ Changed LAUNCH_CHECKLIST.md. Verified the named staging workspace starts Free wi
 ## 2026-11-05: Sandbox payment activation verified; webhook gap recorded
 
 Changed LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md. User payment passed; staging database and dashboard confirm Pro, linked subscription and two preserved songs. Sandbox portal confirms paid £9 monthly invoice. Prepared cancellation review, not submitted: access remains until5 December2026 if cancelled. Preview variable-name inventory lacks STRIPE_WEBHOOK_SECRET and webhook ledger is empty; B43 keeps background reconciliation unverified rather than treating checkout-return activation as webhook proof. No app/configuration change or live transaction. Documentation diff checked.
+
+## 2026-11-05: Sandbox cancellation user pass and delivery prerequisites
+
+Changed LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md. User cancellation passed; independently reopened Sandbox portal confirms cancellation scheduled5 December2026. Read-only staging database/dashboard recheck confirms Pro linkage and two songs retained. End-of-period access is expected; automatic downgrade remains unverified. Read-only project metadata shows protected Preview and an unsigned endpoint probe returns401. Keep B43 open for isolated signing-secret and protection-compatible delivery configuration; no app or service settings changed. Documentation diff checked.
+
+Staging desktop keyboard follow-up also changed LAUNCH_DEVICE_ACCEPTANCE.md: verified feedback-dialog initial focus, backward/forward focus wrap, Escape close and launcher focus restoration. No submission or data mutation. Wider accessibility/device acceptance remains open.
