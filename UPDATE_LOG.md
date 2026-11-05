@@ -9999,3 +9999,7 @@ Changed LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md. User payment passed; staging
 Changed LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md. User cancellation passed; independently reopened Sandbox portal confirms cancellation scheduled5 December2026. Read-only staging database/dashboard recheck confirms Pro linkage and two songs retained. End-of-period access is expected; automatic downgrade remains unverified. Read-only project metadata shows protected Preview and an unsigned endpoint probe returns401. Keep B43 open for isolated signing-secret and protection-compatible delivery configuration; no app or service settings changed. Documentation diff checked.
 
 Staging desktop keyboard follow-up also changed LAUNCH_DEVICE_ACCEPTANCE.md: verified feedback-dialog initial focus, backward/forward focus wrap, Escape close and launcher focus restoration. No submission or data mutation. Wider accessibility/device acceptance remains open.
+
+## L6 sharing baseline and device availability
+
+Updated LAUNCH_CHECKLIST.md to record 457 passing local contract tests, read-only Production playlist and embed probes, and the outstanding physical iPad check. Hosted revocation remains open.
