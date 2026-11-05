@@ -38,3 +38,13 @@ On the same iPhone17 Pro Max, user reproduces title/artwork handoff after the fi
 B42 is therefore not Chrome-specific. Both browsers still use the same app code, so this comparison does not by itself establish an iOS-only cause. W3C leaves active media-session selection to the user agent; the observed sequence is consistent with a paused-session handoff, not proven to be caused by it.
 
 Next controlled test uses the [official Google Media Session audio sample](https://googlechrome.github.io/samples/media-session/audio.html), inspected source: native audio, explicit play/pause handlers and playbackState updates. User should tap its Play button, play briefly, lock/wake/Pause and wait5seconds in Safari. Record metadata ownership and audible state separately. No Song Room code or account, no new diagnostic app patch.
+
+## Independent control result, 4 November2026
+
+User reports the official Google plain-audio Media Session demo in Safari also switches to unrelated title/artwork immediately after Pause, while staying silent. After dim/wake its unrelated card remains; Song Room Safari's card cleared. This establishes the common handoff outside Song Room, not identical later retention or a specific iOS implementation cause. B42 is tracked as a platform/UI limitation; no app-owned playback defect demonstrated and no patch justified by this evidence.
+
+The requested Chrome/iPhone audio/seek/background/pause/return flow is reported functional, with the documented metadata limitation. Safari pause and independent control are recorded separately; no Safari seeking, installed-app, longer-duration or iPad pass inferred. Continue remaining L6 checks; no more user repetition of this same control is needed.
+
+### Follow-up observation, 5 November2026
+
+User clarifies the independent demo's unrelated artwork was visible for about one second after a later wake, then disappeared to reveal the lock-screen background. This supersedes the earlier impression that its card stayed visible indefinitely. Both Song Room and the independent reference can hand off metadata and subsequently clear it while remaining paused; timing varies. No further repeat test or playback-code change is justified now. Exact OS cause remains unconfirmed.

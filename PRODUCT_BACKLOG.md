@@ -796,7 +796,7 @@ Existing staging password account has zero songs. Three desktop Chrome/unthrottl
 
 ### B42. First lock-screen pause shows another app's metadata
 
-- Status: User-reproduced on iPhone17 Pro Max in both Chrome and Safari tabs; cause unconfirmed. L6 targeted device follow-up, not automatically a new launch blocker. No application change made.
+- Status: Initial metadata handoff also reproduced in the independent Google native-audio sample. Platform/UI limitation monitored; no app-specific cause established. L6 targeted device follow-up, not automatically a new launch blocker. No application change made.
 - Observed4 November2026: enter a song page, Play, lock phone, wake without unlocking, press lock-screen Pause. After2-3seconds the title/artwork switch to a track outside Song Room. Unlock, replay the same song and repeat: it stays on the Song Room item. First-use behaviour repeats with different songs.
 - Correction: user explicitly confirms only title/artwork change; the unrelated track does not audibly start. Preserve this distinction. Other requested play/seek/background/pause/dashboard-return steps reportedly worked.
 - Device: iPhone17 Pro Max, Chrome and Safari browser tabs. iOS/browser versions not supplied; no installed-app or iPad pass inferred.
@@ -805,3 +805,13 @@ Existing staging password account has zero songs. Three desktop Chrome/unthrottl
 - Safari comparison4 November2026: same2-3second title/artwork handoff, this time to a radio show. After the screen dims and is woken again, no audio is playing and the Now Playing card has disappeared; only date/time/torch/camera remain. This is the phone lock screen, not a blank Song Room dashboard. Shared app code and shared platform remain possible causes; Safari reproduction alone does not distinguish them.
 - Next control: [Google Chrome team’s plain-audio Media Session sample](https://googlechrome.github.io/samples/media-session/audio.html) in Safari on the same device. Play briefly, lock/wake/Pause/wait5seconds. Record whether its metadata also hands off or clears while audio stays paused. No Song Room/account code is involved.
 - Acceptance: determine whether there is an app-owned control/state bug or platform UI behaviour. Any fix must preserve first-gesture playback, seeking, single-player/background behaviour and real pause. A hardware retest is required; desktop emulation cannot prove the lock-screen outcome.
+
+#### B42 independent-control result, 4 November2026
+
+On the same iPhone in Safari, user tested the official Google plain-audio Media Session sample. After Pause, title/artwork quickly switched to an unrelated track, with no audio. After dim/wake, that unrelated card remained visible. Song Room Safari had instead cleared the card. Preserve both the common initial handoff and the differing later retention.
+
+This reproduces the central symptom without Song Room code/accounts. It supports platform/browser session selection as an explanation and leaves no demonstrated app-specific playback defect. It does not identify the exact iOS subsystem/bug, nor prove all lifecycle differences equivalent. Classification: independently reproduced platform-UI limitation, monitored under B42; no speculative app patch or silent audio workaround. Core audio remains paused.
+
+No further control test is required now. Keep the first-play registration timing observation as an unproven separate code lead, not a claimed fix. Reopen targeted app work for evidence of app-specific wrong playback/state, or an independently reproduced registration failure. Broader device/L6 acceptance stays open.
+
+5 November correction: after a later sleep/wake in the independent demo, unrelated artwork remained for about one second and then cleared to the lock-screen background. The earlier report of retained artwork was an intermediate observation, not permanent retention. Common handoff and eventual dismissal occur outside Song Room too; exact timing and OS cause remain unconfirmed. No further user test of this control is required.
