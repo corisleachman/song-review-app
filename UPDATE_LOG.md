@@ -9985,3 +9985,11 @@ Changed PRODUCT_BACKLOG.md, LAUNCH_DEVICE_ACCEPTANCE.md and LAUNCH_CHECKLIST.md.
 ## 2026-11-05: B42 follow-up correction and scoped L6 link pass
 
 Changed LAUNCH_DEVICE_ACCEPTANCE.md, PRODUCT_BACKLOG.md and LAUNCH_CHECKLIST.md. Preserve the user's correction: independent Google player artwork also disappears after a later wake, after about one second. No app-specific playback defect established or application code changed. Record read-only Production link checks:14 public destinations resolve, no missing static fragment targets, four protected routes redirect to login, signup intent survives redirects and robots references canonical sitemap. Dynamic/private/external links remain outside this pass. Documentation diff checked; no runtime tests required.
+
+## 2026-11-05: L6 isolated payment handoff prepared
+
+Changed LAUNCH_CHECKLIST.md. Verified the named staging workspace starts Free with no Stripe customer/subscription, then opened an unsubmitted Pro monthly Checkout. Stripe visibly shows Sandbox and £9/month, with a cs_test session and return link to the staging alias. No payment or plan change submitted; test customer/session creation is expected. Successful payment, webhook delivery/reconciliation and cancellation remain unverified. User handoff required for the interactive test; no live payment/card details requested.
+
+## 2026-11-05: Sandbox payment activation verified; webhook gap recorded
+
+Changed LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md. User payment passed; staging database and dashboard confirm Pro, linked subscription and two preserved songs. Sandbox portal confirms paid £9 monthly invoice. Prepared cancellation review, not submitted: access remains until5 December2026 if cancelled. Preview variable-name inventory lacks STRIPE_WEBHOOK_SECRET and webhook ledger is empty; B43 keeps background reconciliation unverified rather than treating checkout-return activation as webhook proof. No app/configuration change or live transaction. Documentation diff checked.
