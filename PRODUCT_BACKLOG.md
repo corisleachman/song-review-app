@@ -815,3 +815,11 @@ This reproduces the central symptom without Song Room code/accounts. It supports
 No further control test is required now. Keep the first-play registration timing observation as an unproven separate code lead, not a claimed fix. Reopen targeted app work for evidence of app-specific wrong playback/state, or an independently reproduced registration failure. Broader device/L6 acceptance stays open.
 
 5 November correction: after a later sleep/wake in the independent demo, unrelated artwork remained for about one second and then cleared to the lock-screen background. The earlier report of retained artwork was an intermediate observation, not permanent retention. Common handoff and eventual dismissal occur outside Song Room too; exact timing and OS cause remain unconfirmed. No further user test of this control is required.
+
+### B43. Staging Stripe webhook verification gap
+
+- Status: Existing L6 payment reconciliation remains unverified,5 November2026. No new launch-blocker classification or Production defect inferred.
+- Evidence: User completed Sandbox Pro monthly payment. Staging workspace changed Free to Pro with customer/subscription IDs and both songs preserved. Browser dashboard shows Pro; Sandbox portal shows paid £9 invoice and next billing5 December2026.
+- Preview environment variable names list has Stripe Test key/prices but no STRIPE_WEBHOOK_SECRET. Staging stripe_webhook_events ledger remains empty. Checkout return activation is a separate canonical server route and can explain the plan change without webhook delivery.
+- Next: verify existing provider endpoint/delivery configuration and protected Preview reachability before proposing configuration changes. Never disable Preview protection or reuse Production webhook secrets. Any setup must stay isolated to Sandbox and requires justified configuration approval.
+- Acceptance: signed Sandbox events reach the intended staging endpoint, ledger records processed state and subscription lifecycle reconciles without relying on checkout-return activation; preserve both songs. Current portal cancellation test is separate, with access retained until5 December2026.
