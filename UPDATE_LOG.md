@@ -9977,3 +9977,11 @@ Changed PRODUCT_BACKLOG.md, LAUNCH_DEVICE_ACCEPTANCE.md and LAUNCH_CHECKLIST.md.
 ## 2026-11-04: B42 Safari comparison and independent player control
 
 Changed PRODUCT_BACKLOG.md, LAUNCH_DEVICE_ACCEPTANCE.md and LAUNCH_CHECKLIST.md. Record same metadata-only pause handoff in Safari on iPhone17 Pro Max, followed by media-card dismissal; no audio or blank app page. Distinguish cross-browser reproduction from proof of a platform cause. Inspected official Google plain-audio Media Session example and prepared an independent same-phone control test. No app patch or claimed fix; documentation whitespace checked.
+
+## 2026-11-04: B42 reproduced in independent native-audio control
+
+Changed PRODUCT_BACKLOG.md, LAUNCH_DEVICE_ACCEPTANCE.md and LAUNCH_CHECKLIST.md. Official Google demo reproduces initial unrelated title/artwork handoff after Pause without audio; its card persists after wake whereas Song Room Safari cleared it. Preserve that difference. Classify as monitored platform/UI behaviour with no demonstrated app-specific playback defect; no speculative app patch. Chrome/iPhone requested audio flow remains reported functional with metadata limitation; broader L6/device contexts remain open. Documentation whitespace checked.
+
+## 2026-11-05: B42 follow-up correction and scoped L6 link pass
+
+Changed LAUNCH_DEVICE_ACCEPTANCE.md, PRODUCT_BACKLOG.md and LAUNCH_CHECKLIST.md. Preserve the user's correction: independent Google player artwork also disappears after a later wake, after about one second. No app-specific playback defect established or application code changed. Record read-only Production link checks:14 public destinations resolve, no missing static fragment targets, four protected routes redirect to login, signup intent survives redirects and robots references canonical sitemap. Dynamic/private/external links remain outside this pass. Documentation diff checked; no runtime tests required.

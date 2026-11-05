@@ -1,6 +1,6 @@
 # Song Room launch checklist
 
-Last reconciled: 4 November 2026. This is the current progress page. Keep this URL in every completion update so we can always see what's left.
+Last reconciled: 5 November 2026. This is the current progress page. Keep this URL in every completion update so we can always see what's left.
 
 ## Where we are
 
@@ -46,11 +46,11 @@ Next action: measure B17-B19 dashboard loading, return/cache isolation and song 
 | --- | --- | --- |
 | Google and Email signup/login/recovery | Not started for consolidated pass | Existing users retain their identities and workspaces; stop for duplicate account, wrong-host mail or lost recovery |
 | Invites and workspace separation | Not started for consolidated pass | Only intended membership changes; another workspace's private data remains inaccessible |
-| Upload, first Play, seeking, commenting, restart, repeat and version changes | iPhone17 Pro Max/Chrome audio steps reported pass; first Pause metadata issue B42 open. Broader consolidated pass open | Supported files work; no competing audio or wrong-version feedback; include phone background/lock screen |
+| Upload, first Play, seeking, commenting, restart, repeat and version changes | iPhone17 Pro Max/Chrome requested audio flow reported functional; B42 metadata handoff reproduced outside app. Broader consolidated pass open | Supported files work; no competing audio or wrong-version feedback; include phone background/lock screen |
 | Free/paid limits, upgrade, checkout, cancellation and webhook reconciliation | Not started for consolidated pass | Use isolated Stripe test environment; correct plan/interval and preserved data; no live payment required |
 | Forms, feedback, public sharing and embed revocation | Not started for consolidated pass | Clear validation; private material stays private; revocation removes public access |
 | Accessibility and desktop/phone/tablet coverage | Not started for consolidated pass | Keyboard/focus/dialog checks, readable layouts and no overflow; physical 11-inch iPad remains additional coverage |
-| Link crawl and SEO endpoints | Not started for consolidated pass | Intended internal links resolve; protected routes stay protected |
+| Link crawl and SEO endpoints | Scoped Production pass5 Nov:14 public URLs, static anchors and4 signed-out protected routes; broader dynamic links remain open | Intended internal links resolve; protected routes stay protected |
 | Production performance after PR #63 | Not started | Repeat named mobile/desktop measurements; distinguish lab runs from field data; inspect LCP, CLS and transferred bytes |
 
 Run local checks before staging journeys, then safe production smoke checks. Stop the affected rollout on failure and record environment, URL, step, expected/actual result, safe error/log excerpt and screenshot where useful. Never attach credentials or full auth links.
@@ -110,7 +110,7 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B39 | [Preserve playlist workspace/song linkage](PRODUCT_BACKLOG.md#b39-direct-playlist-header-writes-can-transfer-foreign-song-links) | Production complete,4 Nov: installed25 pass both; staged playlist flow/cleanup verified | Existing L5/S2-S3 security defect; approval required for permanent permission change |
 | B40 | [Action/task mutation input validation](PRODUCT_BACKLOG.md#b40-actiontask-mutations-accept-malformed-input) | Production complete:PR87/613a1426 live; user member/reorder accepted; fixtures0; seven safe live checks pass | Existing L5/S5 validation |
 | B41 | [Remaining metadata request validation](PRODUCT_BACKLOG.md#b41-metadata-requests-accept-malformed-input-and-playlist-reorder-hides-failure) | Production complete:PR88/1d8fe5a7 live; user playlist accepted, fixtures0, ten live malformed methods401 and public/auth checks pass | Existing L5/S5 validation |
-| B42 | [First lock-screen Pause metadata handoff](PRODUCT_BACKLOG.md#b42-first-lock-screen-pause-shows-another-apps-metadata) | Reproduced on iPhone17 Pro Max/Chrome and Safari; metadata switches then clears, audio stays paused. Independent standard-player control pending; no patch | L6 targeted device follow-up; no new launch-blocker classification |
+| B42 | [First lock-screen Pause metadata handoff](PRODUCT_BACKLOG.md#b42-first-lock-screen-pause-shows-another-apps-metadata) | Initial metadata handoff reproduced in Google reference player too; audio stays paused. Follow-up wake also clears reference artwork. Platform/UI limitation monitored; no app patch | L6 targeted device follow-up; no new launch-blocker classification |
 
 Exploratory ideas in ROADMAP.md (typing indicators, pinned comments, comparison view, waveform regions, exports, Slack, native mobile app, multitrack and video) remain unscheduled ideas. They aren't approved launch work. Delete/edit/auth/invite ideas in that old file must be checked against existing features before creating tasks.
 
@@ -541,3 +541,9 @@ User reports Production feels much faster and more responsive. This confirms per
 User reports other requested playback steps worked on iPhone17 Pro Max/Chrome tab. First locked Pause per song hands title/artwork to an unrelated track after2-3seconds; no unrelated audio plays. Repeat pause after replay retains the Song Room item. Preserve this correction and partial-pass scope. B42 records the device-specific UI issue; browser/OS routing versus first-play registration remains unproven. Safari same-phone comparison is next; no app/configuration change or full device-stage completion.
 
 4 November B42 Safari comparison: same first-pause metadata handoff on same iPhone, then Now Playing card clears after dim/wake. No unintended audio; blank view is the phone lock screen, not the app. Cause still unconfirmed because both browser tests use the same app code. Official Google plain-audio Media Session sample selected for the independent hardware control; user test pending. No application/configuration change or full mobile-stage completion claim.
+
+4 November B42 independent-control result: Google native-audio Media Session demo in Safari also hands title/artwork to an unrelated track after Pause without playing it. Its card persists after wake, while Song Room Safari cleared it. Strong platform involvement evidence, not proof of an exact OS cause or identical lifecycle. B42 retained as monitored platform/UI limitation; no app patch or extra repetition of this control. Read-only internal-link crawl is the next independent L6 slice.
+
+5 November B42 correction: independent demo artwork also clears after a later wake, following about one second of visibility. Earlier retained-card report was an intermediate observation. Audio remains paused; no speculative app patch or further repetition requested.
+
+5 November L6 link checkpoint: all14 inventoried public destinations return200, including expected redirects; no missing static fragment targets. Nine sitemap pages and12 unique internal link targets covered. Signed-out dashboard/settings/playlists/upload redirect to login. Free/Pro/Studio signup redirects preserve plan and annual billing intent. Robots sitemap uses the canonical WWW host. Read-only HTTP/static scope only; private dynamic links, client interactions and external destinations are not claimed passed. Payment Sandbox readiness is next.
