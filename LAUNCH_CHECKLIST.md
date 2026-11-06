@@ -44,12 +44,12 @@ Next action: measure B17-B19 dashboard loading, return/cache isolation and song 
 
 | Check | Status | Successful result / stop condition |
 | --- | --- | --- |
-| Google and Email signup/login/recovery | Not started for consolidated pass | Existing users retain their identities and workspaces; stop for duplicate account, wrong-host mail or lost recovery |
-| Invites and workspace separation | Not started for consolidated pass | Only intended membership changes; another workspace's private data remains inaccessible |
+| Google and Email signup/login/recovery | 25 Oct Production Email journey and 4 Nov staging password login carried forward. Fresh Google round trip open | Existing users retain their identities and workspaces; stop for duplicate account, wrong-host mail or lost recovery |
+| Invites and workspace separation | Prior hosted B35 accept/remove/replay and B40 outsider/member/removal checks carried forward. Wider matrix open | Only intended membership changes; another workspace's private data remains inaccessible |
 | Upload, first Play, seeking, commenting, restart, repeat and version changes | iPhone17 Pro Max/Chrome requested audio flow reported functional; B42 metadata handoff reproduced outside app. Broader consolidated pass open | Supported files work; no competing audio or wrong-version feedback; include phone background/lock screen |
 | Free/paid limits, upgrade, checkout, cancellation and webhook reconciliation |5 Nov: Sandbox Pro monthly payment and activation passed;2 songs preserved. Portal paid invoice verified. Cancellation independently confirmed for5 Dec2026; database/dashboard retain Pro and2 songs. B43 webhook configuration gap open | Use isolated Stripe test environment; correct plan/interval and preserved data; no live payment required |
 | Forms, feedback, public sharing and embed revocation | Scoped local contracts and Production read checks passed. Staging negative form checks and playlist revocation passed in recorded scope. Issued audio URLs remain usable until expiry | Clear validation; private material stays private; revocation removes public access |
-| Accessibility and desktop/phone/tablet coverage |5 Nov scoped desktop feedback-dialog keyboard pass; wider accessibility and physical iPad coverage remain open | Keyboard/focus/dialog checks, readable layouts and no overflow; physical 11-inch iPad remains additional coverage |
+| Accessibility and desktop/phone/tablet coverage |5 Nov scoped desktop feedback-dialog keyboard pass; 6 Nov local public browser suite 20 passed, 8 expected skips. Physical iPad and wider accessibility remain open | Keyboard/focus/dialog checks, readable layouts and no overflow; physical 11-inch iPad remains additional coverage |
 | Link crawl and SEO endpoints | Scoped Production pass5 Nov:14 public URLs, static anchors and4 signed-out protected routes; broader dynamic links remain open | Intended internal links resolve; protected routes stay protected |
 | Production performance after PR #63 | Not started | Repeat named mobile/desktop measurements; distinguish lab runs from field data; inspect LCP, CLS and transferred bytes |
 
@@ -71,7 +71,7 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B08 | Microsoft login | Deferred by user | Later; revisit with traction/income |
 | B09 | Physical 11-inch iPad Safari/Chrome coverage | Open. Physical iPad unavailable | L6 additional coverage; existing tablet release accepted |
 | B10 | Dependency/workflow update PRs | Awaiting review | L5/S7; eight open update PRs at reconciliation |
-| B11 | SEO article PR #12 | Awaiting review | L7 |
+| B11 | SEO article PR #12 | Technical review found noncanonical article URLs. Content decision and publication open | L7 |
 | B12 | Automated SEO content-engine draft PR #3 | Draft; not a launch commitment | Later |
 | B13 | FAQ | Scope/implementation pending | L7 |
 | B14 | Marketing image alt-text audit | Pending | L7 |
@@ -558,3 +558,5 @@ L6 hosted revocation checkpoint: published an empty staging playlist, observed H
 6 November L6 audio revocation: a staging playlist contained only a generated eight-second tone. Before revocation, the audio endpoint returned 307 and storage returned 206. After switching to Draft, fresh audio access returned 404, the issued storage URL still returned 206 and the open player reached 0:08. Reload showed the unavailable view. The configured URL lifetime is 10 minutes from issuance. Expiry itself was not timed. Fixtures remain private in staging.
 
 6 November L6 form checkpoint: hosted staging rejected malformed feedback, unknown feedback type, short message and missing signed-out email with HTTP 400. Invalid comment field type returned 400 and a comment on an unavailable track returned 403. Empty signup returned 403 without Origin and a field-specific 400 with the staging Origin. Negative API scope only. Successful submission and delivery were outside this check.
+
+6 November L6 evidence reconciliation: retained the recorded 25 October Production Email signup, confirmation, login and recovery pass and the staging password login confirmation. Retained B35 and B40 hosted workspace separation evidence. No fresh provider round trip claimed. Public accessibility browser suite passed 20 cases with 8 expected skips, including the emulated iPad layout check. L7 technical inspection of PR #12 found article canonical, Open Graph and structured-data URLs on the apex host rather than the current www canonical host.

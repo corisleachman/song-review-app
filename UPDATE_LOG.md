@@ -10015,3 +10015,7 @@ Updated LAUNCH_CHECKLIST.md with hosted staging evidence for fresh audio denial 
 ## 2026-11-06 hosted form validation
 
 Updated LAUNCH_CHECKLIST.md with staging rejection results for feedback, public comments and signup. Verified the signup origin guard separately from field validation.
+
+## 2026-11-06 launch evidence reconciliation
+
+Updated LAUNCH_CHECKLIST.md with prior hosted auth and membership evidence, current local browser results, and the article metadata mismatch found during L7 review.
