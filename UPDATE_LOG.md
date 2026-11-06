@@ -10019,3 +10019,7 @@ Updated LAUNCH_CHECKLIST.md with staging rejection results for feedback, public 
 ## 2026-11-06 launch evidence reconciliation
 
 Updated LAUNCH_CHECKLIST.md with prior hosted auth and membership evidence, current local browser results, and the article metadata mismatch found during L7 review.
+
+## Production Google acceptance and B11 metadata
+
+Updated LAUNCH_CHECKLIST.md with the user-confirmed fresh Google sign-in. Corrected the canonical, Open Graph and Article URLs in public/blog/a-practical-remote-songwriting-workflow.html on the unpublished PR #12 branch. Verified the three replacements and checked the diff.

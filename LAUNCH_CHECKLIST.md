@@ -44,7 +44,7 @@ Next action: measure B17-B19 dashboard loading, return/cache isolation and song 
 
 | Check | Status | Successful result / stop condition |
 | --- | --- | --- |
-| Google and Email signup/login/recovery | 25 Oct Production Email journey and 4 Nov staging password login carried forward. Fresh Google round trip open | Existing users retain their identities and workspaces; stop for duplicate account, wrong-host mail or lost recovery |
+| Google and Email signup/login/recovery | 25 Oct Production Email journey and 4 Nov staging password login carried forward. User confirmed fresh Production Google sign-in with existing workspace and songs | Existing users retain their identities and workspaces; stop for duplicate account, wrong-host mail or lost recovery |
 | Invites and workspace separation | Prior hosted B35 accept/remove/replay and B40 outsider/member/removal checks carried forward. Wider matrix open | Only intended membership changes; another workspace's private data remains inaccessible |
 | Upload, first Play, seeking, commenting, restart, repeat and version changes | iPhone17 Pro Max/Chrome requested audio flow reported functional; B42 metadata handoff reproduced outside app. Broader consolidated pass open | Supported files work; no competing audio or wrong-version feedback; include phone background/lock screen |
 | Free/paid limits, upgrade, checkout, cancellation and webhook reconciliation |5 Nov: Sandbox Pro monthly payment and activation passed;2 songs preserved. Portal paid invoice verified. Cancellation independently confirmed for5 Dec2026; database/dashboard retain Pro and2 songs. B43 webhook configuration gap open | Use isolated Stripe test environment; correct plan/interval and preserved data; no live payment required |
@@ -71,7 +71,7 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B08 | Microsoft login | Deferred by user | Later; revisit with traction/income |
 | B09 | Physical 11-inch iPad Safari/Chrome coverage | Open. Physical iPad unavailable | L6 additional coverage; existing tablet release accepted |
 | B10 | Dependency/workflow update PRs | Awaiting review | L5/S7; eight open update PRs at reconciliation |
-| B11 | SEO article PR #12 | Technical review found noncanonical article URLs. Content decision and publication open | L7 |
+| B11 | SEO article PR #12 | Canonical, Open Graph and Article metadata corrected in PR #12. Content review and publication open | L7 |
 | B12 | Automated SEO content-engine draft PR #3 | Draft; not a launch commitment | Later |
 | B13 | FAQ | Scope/implementation pending | L7 |
 | B14 | Marketing image alt-text audit | Pending | L7 |
