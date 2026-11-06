@@ -10007,3 +10007,7 @@ Updated LAUNCH_CHECKLIST.md to record 457 passing local contract tests, read-onl
 ## L6 hosted playlist revocation
 
 Updated LAUNCH_CHECKLIST.md with staging publication and revocation results for an empty playlist. Verified the public API, listener and embed after switching to Draft.
+
+## 2026-11-06 audio revocation verification
+
+Updated LAUNCH_CHECKLIST.md with hosted staging evidence for fresh audio denial and continued access through a previously issued storage URL. The synthetic fixture remains private.
