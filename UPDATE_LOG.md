@@ -10011,3 +10011,7 @@ Updated LAUNCH_CHECKLIST.md with staging publication and revocation results for 
 ## 2026-11-06 audio revocation verification
 
 Updated LAUNCH_CHECKLIST.md with hosted staging evidence for fresh audio denial and continued access through a previously issued storage URL. The synthetic fixture remains private.
+
+## 2026-11-06 hosted form validation
+
+Updated LAUNCH_CHECKLIST.md with staging rejection results for feedback, public comments and signup. Verified the signup origin guard separately from field validation.
