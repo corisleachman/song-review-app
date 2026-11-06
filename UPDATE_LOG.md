@@ -9686,3 +9686,7 @@ Goal: prevent duplicate default workspaces from stale first-request membership s
 Changed app/candidate files: lib/bootstrapAccount.ts; tests/bootstrap-account.test.mjs; supabase/migrations/20261102165139_atomic_initial_workspace.sql; companion rollback; supabase/tests/initial_workspace_probe.sql; scripts/compose-initial-workspace-probe.mjs. Updated LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, LAUNCH_API_ACCESS_MATRIX.md and UPDATE_LOG.md for B27 status/evidence.
 
 340 Node tests, TypeScript/focused lint pass. Staging RPC installed/source-verified, 14 SQL checks pass; same candidate tests roll back on Production. Fifteen staging rollback checks pass. Passwordless fixture identities/workspaces exist only within rolled-back transactions; zero remain; no Auth API/email/provider call. Staging Advisor zero errors/warnings. Preview/CI building and fresh browser signup acceptance pending; code complete, not Production complete. Production RPC absent and app unchanged. Restore old app before optional RPC removal. Next: finish Preview checks and fresh staging signup/confirmation/first dashboard, then release candidate after acceptance.
+
+## B11 article publication preparation
+
+Updated the remote songwriting article and app/sitemap.ts. Replaced the publishing note with links to the versioning and feedback guides and added the article to the sitemap. Both target files exist.

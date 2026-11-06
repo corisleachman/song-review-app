@@ -14,6 +14,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ];
 
   const blogPosts = [
+    'a-practical-remote-songwriting-workflow',
     'how-to-collaborate-on-a-song-remotely',
     'how-to-give-useful-feedback-on-a-song',
     'how-to-organise-song-versions-without-losing-track',
