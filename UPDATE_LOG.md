@@ -9687,6 +9687,343 @@ Changed app/candidate files: lib/bootstrapAccount.ts; tests/bootstrap-account.te
 
 340 Node tests, TypeScript/focused lint pass. Staging RPC installed/source-verified, 14 SQL checks pass; same candidate tests roll back on Production. Fifteen staging rollback checks pass. Passwordless fixture identities/workspaces exist only within rolled-back transactions; zero remain; no Auth API/email/provider call. Staging Advisor zero errors/warnings. Preview/CI building and fresh browser signup acceptance pending; code complete, not Production complete. Production RPC absent and app unchanged. Restore old app before optional RPC removal. Next: finish Preview checks and fresh staging signup/confirmation/first dashboard, then release candidate after acceptance.
 
+
+## 2026-11-02: B27 Preview ready; fresh-account acceptance pending
+
+Primary Preview Ready at 4be9c48c; all four PR checks, 340 Node tests, TypeScript/lint and browser 30 passed/10 skipped pass. Existing Google user reaches selected member workspace/five songs. Signed-out bootstrap 401, staging ref verified, bounded error/fatal logs empty. Google-only fresh signup in a private window remains user acceptance; no email flags/provider changes. Updated LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md and UPDATE_LOG.md with exact test link/result instructions. Production app/RPC unchanged; code PR #73 stays unmerged pending acceptance. No fixture identities/workspaces remain.
+
+
+## 2026-11-02: B27 user acceptance and Production migration
+
+User reports both staging signup/reload tests passed; new staging account has one workspace and one correct owner membership. Production RPC installed/source-verified; all 14 installed SQL checks pass, fixture users/workspaces zero and Advisor zero errors/warnings. PR #73 merged as ce346868. App rollout building; live checks pending. Updated LAUNCH_CHECKLIST.md and UPDATE_LOG.md with acceptance evidence. No private test email recorded. App rollback must precede optional RPC removal.
+
+
+## 2026-11-02: B27 Production complete after user acceptance
+
+User reports both staged signup/reload tests passed. Verified Free plan, one workspace, one membership and correct owner link. Production RPC installed/source-verified before app; 14 installed SQL checks pass, no fixture users/workspaces, Advisor zero errors/warnings. PR #73 merged as ce346868, primary Production dpl_F19sdasWwV17Qt6den32dWjPh1s5 Ready/live. 340 Node tests, TypeScript/lint, four PR checks and browser 30 passed/10 skipped. Live no-write bootstrap/dashboard 401, login 200 and same-origin bootstrap redirect checks pass; bounded error/fatal scans empty. Actual new signup accepted on staging, not replayed on Production.
+
+Updated LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, LAUNCH_API_ACCESS_MATRIX.md and UPDATE_LOG.md with release, acceptance, migration equivalents and rollback. Restore compatible 6269735c app before optional RPC removal. Existing user data isn't cleaned up/deduplicated. B27 complete; wider L5/S4 remain open. No action required from the user.
+
+
+## 2026-11-02: B28 public Data API permission boundary
+
+Goal: prevent raw anonymous song/version reads from bypassing the existing latest-finalized public projection. Confirmed with synthetic rollback-only fixtures in both environments.
+
+Changed files: permission migration and matching rollback `20261102220823_restrict_anonymous_raw_song_reads.sql`, `supabase/tests/public_data_boundary_probe.sql`, `scripts/compose-public-data-boundary-probe.mjs`, `tests/api-access-boundaries.test.mjs` and current launch/security/backlog records. No application UI or public sharing semantics changed.
+
+Verification: 342 Node tests, focused lint, both-environment baseline/candidate/rollback SQL checks. Installation/live verification pending; not Production complete.
+
+B28 staging checkpoint, 2 November: migration installed as ledger 20261102222009 (source 20261102220823). All 14 installed SQL cases pass, zero fixtures remain. Actual anonymous REST reads now return 401/42501 for both tables; existing comments denial is unchanged. Public API payloads match baseline, public pages/embeds return 200, audio redirect 307/Range 206 and artwork 200. Advisor has zero errors/warnings. Production remains unchanged pending CI/release.
+
+
+B28 Production database release, 2 November: PR #74/6288e354 merged, 342 Node tests/focused lint/four PR checks and browser 30 passed/10 skipped. Reviewed migration source 20261102220823 installed as staging 20261102222009 and Production 20261102222433. Installed 14-case probes pass in both environments, alongside baseline16/candidate14/rollback16. Anonymous raw REST denied; public song/playlist/comments payloads match baseline; pages/embeds/audio Range/artwork pass; authenticated history preserved; zero retained fixture workspaces. Advisors zero errors/warnings; bounded Production error/fatal scan empty. Primary merged-source deployment dpl_Dh7UyB4o7sokRPmdcK22mfH8B1aB is Ready/live; no app logic/env/provider change. Companion SQL rollback restores only old anon SELECT and reopens exposure. Broader L5 remains open.
+
+
+## 2026-11-02: B29 safe settings/billing errors and access verification
+
+Changed files: profile/settings, settings/summary and billing activate/checkout/portal route handlers; api-access-boundaries runtime test harness/tests; launch backlog/matrix/review records. Goal: keep unexpected internal exception text out of browser responses while preserving existing access and billing behaviour. Existing generic fallback strings replace exception echo only. No schema/provider/env changes.
+
+Eight runtime regression cases fail before the change. 377 Node tests and TypeScript pass; focused lint zero errors with one existing checkout unused-import warning. Access tests cover signed-out methods, non-owner billing denial, canonical scope, masked own referrals, owner-only settings invites, foreign/unpaid activation and valid owner customer selection using fake provider I/O. Hosted/Preview/release verification pending.
+
+
+B29 release, 2 November: PR #75/25b96370 primary dpl_7LpTJNzBYxxj6VgfDb9tYMeesAsy Ready/live. 377 Node tests/TypeScript/focused lint (one existing warning), four PR checks and browser 30 passed/10 skipped. Twelve hosted signed-out checks pass on exact-head Preview and released Production; provider/success tests use fake I/O. No live plan/payment/settings mutations. Error/fatal release scan empty. No external action remains; app rollback can restore previous 6288e354 deployment, retaining B28 database boundary. Broader L5 remains open.
+
+
+## 2026-11-02: S7 production dependency audit gate
+
+Changed `.github/workflows/browser-accessibility.yml` to run `npm audit --omit=dev --audit-level=moderate` after the existing clean install. Goal: surface dependency regressions on pull requests and stop the existing quality job for moderate/high/critical production advisories or an unavailable audit. No schedule, dependency upgrade, provider/env change or additional service. Existing Vercel prebuild already runs Node tests.
+
+The exact audit command exits zero locally with four reported low issues and zero moderate/high/critical. These are the existing Resend/render/html-to-text/deepmerge chain; no forced breaking upgrade attempted. Hosted CI execution pending. Monitoring/retention and broader L5 remain open.
+
+
+S7 audit-gate release, 2 November: PR #76/9ee73d83 merged, exact audit command passes in GitHub CI 41539277781 (four low, zero moderate/high/critical); browser30/skip10 and all four PR checks pass. Primary dpl_8SrzygQCYuX6o1wcWo33hC6xSHjJ Ready/live; login/bootstrap/public-song probes pass. Only workflow/records changed; no package upgrade or scheduled work. Updated API matrix and current checklist with 63/63 hosted signed-out methods in both environments, preserving the remaining authenticated-role gap and browser restoration/B30 approval requests.
+
+
+## 2026-11-03: Approved credential classification and scoped staged roles
+
+Changed external configuration: type-only Config-to-Secret conversion of the three approved primary-project entries, preserving values/scopes; no code, schema, provider, credential rotation or permission expansion. Changed files: current checklist, product backlog, security review, API access matrix and this log. Goal: prevent future readback of existing credentials and resume recorded L5 role checks.
+
+Each metadata read-back passes; Production dpl_FAvY4Fbm9Mdt28jZ6EZc9VXXLvBw/d3e505cd and Preview dpl_9ZSL6A7stxJtpEKKv7G1kjEi5AKp/d2238ac8 Ready. Both environments pass public projections/pages/media and twelve signed-out method checks; bounded logs empty. No real email or positive legacy password replay. Scoped owner/member/unrelated-song Chrome checks pass on existing compatible staging; isolated fixture cleanup verified, original owner membership intact. Final browser restoration blocked by extension suspension/policy, awaiting active normal staging tab. Retain Secret classification during compatible app rollback; L5 remains open.
+
+
+## 2026-11-03: B31 safe server diagnostics and CSP redaction
+
+Changed files: lib/safeErrorDetails.ts; 59 existing server route/helper logger call sites; app/api/csp-report/route.ts; tests/server-log-safety.test.mjs, bootstrap-account.test.mjs and critical-contracts.test.mjs; current launch/security/backlog records. Goal: keep exception attachments and URL capability data out of new application diagnostics while retaining fixed context, known operational codes and HTTP status.
+
+Changes are logging-only plus CSP diagnostic normalization. No app success/error response, auth, billing, storage, schema, environment or provider logic altered. Three before-change tests fail; fixed 387 Node tests/TypeScript pass, lint zero errors/five pre-existing warnings. Helper does not invoke getters/custom serialization and fails safely. CI/Preview/release pending; historical logs untouched and S5/S7 review still open.
+
+
+3 November release checkpoint: B31/PR #77/6ba2c817 primary dpl_C1VQK62tyWRy8ZDiZhTjCf7uyZrx Ready/live. 387 Node tests, TypeScript/lint zero errors/five pre-existing warnings, four PR checks and browser30/skip10 pass. Exact-head Preview and Production public/media projections and twelve signed-out checks pass. Benign CSP204 controls found in actual unfiltered request logs with origins only; warning-only filters missed level-warn records. Production27 retrieved records/zero error-fatal; no real secrets/emails or historical log changes. B30 Secret scopes reread intact; original owner/empty staging dashboard visibly restored and fixtures absent. User accepts Hobby one-hour logs and release-time checks for beta, no paid/recurring setup; revisit at L8. S6 and beta S7 exit conditions met, remaining S2-S5 stay open. Rollback prior ffef2c7b app, retaining B28/B30 boundaries.
+
+
+## 2026-11-03: B32 core account write-boundary candidate
+
+Changed files: migration/rollback 20261103090300_restrict_client_account_writes.sql; supabase/tests/account_write_boundary_probe.sql; scripts/compose-account-write-boundary-probe.mjs; tests/api-access-boundaries.test.mjs; current checklist/backlog/security review. Goal: stop raw client plan/Stripe/account-lifecycle changes outside canonical server controls. No field, policy, user plan or provider/env change.
+
+Both-environment rollback-only role proofs reproduce the original issue. Baseline16/candidate19/rollback16 cases pass in each; service provisioning/settings/billing/default Free and other privileges are preserved. 390 Node tests and focused lint pass. Permanent migration, actual isolated staging owner save and release pending. App revert alone won't restore grants; companion down SQL reopens old client mutation permissions.
+
+
+B32 staging checkpoint, 3 November: migration source20261103090300 installed as20261103091520;19 installed role checks pass, other grants/policies/read access preserved. Client REST zero-ID read200/empty and PATCH401/42501. Source f619e508 PR #78/four green checks, browser30/skip10, local390 tests/lint pass. One isolated Free owner fixture retained for actual name Save acceptance; no songs or Stripe fields. User has exact checklist steps; extension-suspended URL blocked browser action, no bypass/session extraction. Production permission migration and fixture cleanup pending acceptance. Existing real users/plans unchanged.
+
+
+B32 Production release, 3 November: user owner-name save accepted; stored fixture name/Free/null Stripe verified, fixture/member cleanup complete. Source20261103090300 installed as staging20261103091520/Production20261103094603;19 installed role cases in both DBs pass, with prior baseline16/candidate19/rollback16. Raw client account PATCH401/42501, zero-ID read200/empty. App signed-out/public/media and post-build login/bootstrap/song checks pass; Advisor zero errors/warnings, nine existing INFO. PR #78/b77a7b66 merged126825bf, primary dpl_BfL9iReAvUBWFemGQaXa9aFvT23W Ready/live;390 Node tests/lint/four exact-head checks pass. No account/plan/provider changes or outstanding user actions. SQL rollback restores old client account mutations and reopens the gap; app rollback alone doesn't undo it. Remaining S2-S5 review stays open.
+
+
+## 2026-11-03: B33 safe client failure messages
+
+Replace raw unexpected exceptions with existing fixed fallback text in 32 catch paths across 26 API route files. Invite-provider failures and missing mail configuration now retain the invite and offer the same manual-copy warning without provider/configuration internals; rejection diagnostics use the existing safe projection. No success/status/access/data-flow change.
+
+Changed files: app/api actions, dashboard, invites, songs, tasks, threads, versions, workspace and workspaces route files; tests/api-access-boundaries.test.mjs; LAUNCH_CHECKLIST.md; PRODUCT_BACKLOG.md; LAUNCH_SECURITY_REVIEW.md; UPDATE_LOG.md.
+
+Verified locally: 425 tests pass including original synthetic leak regressions, provider rejection with retained invite, non-Error thrown values and preserved public-invite response state. TypeScript passes; focused lint zero errors/four existing warnings. CI and hosted rollout pending. No migration/configuration, real send or billing operation. Cleared only this worktree's ignored generated Next cache after host disk pressure interrupted a shell command; no source or user data removed.
+
+
+B33 Production complete, 3 November: PR #79/d6ad7f1c merged98f4132f, primary dpl_F65yxwCvh5dPtLMFE6rc8Q7Lf8LG Ready/live www alias. 425 Node tests/TypeScript and focused lint zero errors/four existing warnings; four CI checks/browser30/skip10 pass. Preview and Production63 signed-out methods each pass; public JSON unchanged, pages/artwork/audio redirect and range checks pass. Bounded Production scan50 records/zero error-fatal. No real email, migration/configuration/dependency or billing change. Fake-provider leak regressions tested locally, not injected into hosted providers. App rollback to prior ed5329c2 retains existing account permissions and Secret types. Remaining validation/function/membership review stays open; no user action.
+
+
+## 2026-11-03: B34 membership boundary review candidate
+
+Goal: close L5/S2/S3 direct membership mutations that bypass owner-only server controls. Confirmed owner/admin role insertion and owner deletion in rolled-back synthetic fixtures in both environments.
+
+Changed files: LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, UPDATE_LOG.md, tests/api-access-boundaries.test.mjs, scripts/compose-membership-write-boundary-probe.mjs, supabase/tests/membership_write_boundary_probe.sql, supabase/migrations/20261103154727_restrict_client_membership_writes.sql and matching supabase/rollback SQL.
+
+Candidate removes only client membership mutation grants; preserves canonical server writes, reads, policies and data. SQL baseline21/candidate23/rollback21 pass in both environments; seven actual-handler cases cover owner-only removal and scope guards. No persistent database change; security-boundary approval and installed/hosted acceptance remain.
+
+Local verification: all 433 Node tests pass, focused ESLint passes and git diff whitespace checks pass. No application TypeScript logic changed; no build or new hosted browser journey claimed.
+
+
+### B34 approved installation checkpoint, 3 November 2026
+
+User approved B34. Migration source20261103154727 installed on staging ledger20261103161024, Production20261103161305. Installed23, bootstrap14 and canonical-invite4 checks pass in each environment. Added supabase/tests/membership_server_journey_probe.sql for actual invite acceptance/replay/mismatch and server removal regression checks. All synthetic transaction rows roll back. Existing signed-in staging settings/member reads pass; disposable fixture member removed through owner UI, owner retained; original workspace restored and guarded fixture cleanup confirmed. Zero fixture accounts/invites remain. No provider email, payment, Storage or real membership mutation. Seven Production login/signed-out HTTP checks pass. PR #80/cbe475aa had four green checks, 433 local tests and focused lint pass. App source unchanged; no deploy needed to enforce grants. Repository closeout pending.
+
+Production owner writes and new provider-delivered invitation journeys weren't exercised. Companion rollback restores observed client grants, reopening the gap; application rollback cannot restore grants. Broader S2/S3 and L5 remain In progress.
+
+
+## 2026-11-03: B35 accepted-invite replay repair candidate
+
+Goal: preserve an owner's member removal when a former member reuses an accepted invitation. Found the RPC's accepted-recipient retry branch explicitly reinserts missing memberships. Candidate removes this insertion and returns existing already_used for missing members, retaining current-member retry and fresh owner-issued re-invites.
+
+Changed files: LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, UPDATE_LOG.md, tests/api-access-boundaries.test.mjs, scripts/compose-invite-replay-boundary-probe.mjs, supabase/tests/invite_replay_boundary_probe.sql, supabase/migrations/20261103162107_prevent_accepted_invite_membership_restore.sql and matching supabase/rollback SQL.
+
+Verification: baseline11/candidate11/rollback11 pass in both databases, always rolled back; zero fixtures and original body hash verified. All437 Node tests and focused lint pass. No application handler or permanent database change. Security-boundary approval required before staging installation and installed/hosted acceptance; rollback restores original function and reopens gap.
+
+
+### B35 approved Production installation, 3 November 2026
+
+User approved B35. Reviewed0828e58b/PR #81 passed four checks. Source migration20261103162107 installed as staging20261103170224 and Production20261103170410; both function hashes460ec500c96eded2a8d09f69bf3e77e5 match. Installed11 replay, membership23 and bootstrap14 cases pass in each environment. Existing437 local tests/focused lint pass; no application source change.
+
+Actual staging accept/remove/stale-accept flow passed: first invitation accepted, one disposable member created; guarded SQL removed only that synthetic membership; second pending browser copy's POST returned existing already-accepted error and did not restore membership. Only owner remained. Refresh restored original COris owner dashboard. Guarded cleanup deleted the one fixture invite, owner link and account; zero matching accounts remain. No provider emails, payments, Storage, new Auth users or real membership changes. Five Production login/signed-out HTTP checks pass. Both security advisors zero ERROR/WARN with nine existing INFO notices. Production signed-in positive journey wasn't repeated.
+
+B35 Production complete in this scope. No app deployment needed for database enforcement. Rollback matching SQL restores original function and reopens the gap; app rollback alone can't undo function changes. Broader L5/S2/S3 remain open.
+
+
+## 2026-11-03: B36 song/version write boundary candidate
+
+Goal: keep song/version mutations behind existing canonical upload, owner and accounting controls. Confirmed direct client writes bypass these controls in rolled-back fixtures in both environments. Prepared a narrow song/version client-I/U/D revoke with matching rollback, preserving member reads, RLS, server and unrelated grants/data. No hosted permission or application implementation change.
+
+Changed files: LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, LAUNCH_API_ACCESS_MATRIX.md, UPDATE_LOG.md, tests/api-access-boundaries.test.mjs, scripts/compose-song-version-write-boundary-probe.mjs, supabase/tests/song_version_write_boundary_probe.sql, supabase/migrations/20261103171426_restrict_client_song_version_writes.sql and matching supabase/rollback SQL.
+
+Verification: baseline40/candidate40/rollback40 pass both DBs; real RPC workspace/accounting checks included. Fourteen new actual-handler boundary/whitelist cases; all 451 Node tests and focused lint pass. Zero fixtures and unchanged original grants/policies verified. No Storage/email/payment/Auth/real content mutations. Permanent installation requires security-boundary approval and staging canonical upload/edit/delete acceptance; rollback reopens the bypass.
+
+
+### B36 approved Production installation, 3 November 2026
+
+User approved B36. Source migration20261103171426 installed as staging20261103191138 and Production20261103191415. Installed40 pass each environment; reads, policies and server writes preserved; client mutation denied. Security advisors zero ERROR/WARN, nine existing INFO. Reviewed6d94da6c/PR #82 passed four checks; existing451 local tests/focused lint pass.
+
+Actual staging owner app acceptance passed: generated 2-second WAV creates disposable song, finalizes88244 bytes, with version size=Storage object size=account counter. Song rename and version-label edit read back correctly. Playback reached2 seconds/error null and ended paused. Owner app deletion removed song/version/Storage object and restored counter0; original empty workspace visible. No real content, membership, Auth user, email or payment mutation. Eleven safe Production login/signed-out/public checks pass, including song/listen/artwork200 and one-byte audio Range206. An initial missing-title probe correctly returned400; corrected valid-shaped unauthenticated request returned401. No fresh Production positive write or physical-device acceptance claimed.
+
+B36 Production complete in this scope; no app implementation/deployment needed for grant enforcement. Matching SQL rollback restores observed grants and reopens bypass; application rollback alone can't restore permissions. Broader L5/S2/S3 remain open.
+
+
+## 2026-11-03: B37 collaboration context/author boundary candidate
+
+Goal: keep related collaboration mutations behind canonical parent/workspace/identity checks. Confirmed direct-write bypasses for actions, song tasks, playlist entries and private comment/thread attribution in rolled-back synthetic probes. Prepared one five-table grant restriction with exact rollback preserving previous private comment INSERT denial. No app implementation or persistent database change.
+
+Changed files: LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, LAUNCH_API_ACCESS_MATRIX.md, UPDATE_LOG.md, tests/api-access-boundaries.test.mjs, scripts/compose-collaboration-write-boundary-probe.mjs, supabase/tests/collaboration_write_boundary_probe.sql, supabase/migrations/20261103194256_restrict_client_collaboration_writes.sql and matching supabase/rollback SQL.
+
+Verification: baseline81/candidate81/rollback81 each DB, actual server CRUD and scoped reads included; sixteen new real-handler boundary cases, all 467 Node tests/focused lint pass. Six existing relationship mismatch counts zero; zero fixtures and original grants/policy hashes verified. No real content/provider email/Auth/payment/Storage change. Approval and installed/staged canonical acceptance remain.
+
+
+### B37 approved Production installation, 3 November 2026
+
+User approved B37. Source20261103194256 installed staging20261103211609/Production20261103212159. Installed81 pass both DBs, preserving reads, server CRUD, RLS and B26 client comment INSERT denial. Security advisors zero ERROR/WARN, nine existing INFO. Candidatecb879571/PR #83 had four green checks; existing467 local tests/focused lint pass; no app implementation change.
+
+Actual staging owner flow passes: comment/reply, source-linked action create/resolve, task create/complete, playlist create/name and two-song add/reorder/remove. Stored creator/source/resolved version/status/order read back correctly. Workspace had only the actor; deployed env snapshot has no forced notification-recipient override. No provider delivery tested. Vercel connector environment read403 recovered via authorized read-only CLI; no config/security changes. Fixtures used no audio objects; missing-audio state was expected.
+
+Guarded cleanup removed fixture playlist and two songs plus dependent version/thread/comments/action/task. All fixture counts zero, original storage0; original empty COris owner dashboard restored visibly. No real content/membership/Auth/payment/credential mutation. Production16 safe signed-out/public checks pass. No Production positive write or email journey claimed. B37 Production complete in scope; SQL rollback restores original grants and reopens context/attribution gaps while preserving earlier comment INSERT restrictions. App rollback cannot undo SQL. L5/S2/S3 remain In progress.
+
+
+## 2026-11-03: remaining identity/profile review and B38 legacy billing candidate
+
+Goal: reconcile remaining account/profile/billing access and prevent client forgery of server-owned legacy billing records without changing actual plan/Stripe flows. Found legacy owner/admin writes on two empty, runtime-unused tables; candidate revokes only their client I/U/D with exact rollback. Profile/preferences, legacy theme workspace RLS and current Auth identity verification checks pass; no app implementation change.
+
+Changed files: LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, LAUNCH_API_ACCESS_MATRIX.md, UPDATE_LOG.md, tests/current-user-boundary.test.mjs, scripts/compose-remaining-account-access-probe.mjs, supabase/tests/remaining_account_access_probe.sql, supabase/migrations/20261103221242_restrict_client_legacy_billing_writes.sql and matching supabase/rollback SQL.
+
+Verification: baseline84/candidate84/rollback84 pass both DBs; four new real-helper identity cases; all471 Node tests and focused lint pass. Read-only full inventory25 RLS tables/no public views/no client-callable public definers; zero synthetic fixture rows and unchanged original grants/policies verified. No real account, Stripe, Auth API, email, Storage or payment changes. Approval required for permanent grant installation; S2/S3 stay In progress.
+
+
+## 2026-11-04: approved B38 installed in staging and Production
+
+Changed files: LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, LAUNCH_API_ACCESS_MATRIX.md, UPDATE_LOG.md. Recorded approved legacy billing-table permission rollout and live verification. Installed84 pass each environment; staging Workspace/Free plan reads preserved; Production signed-out billing denial checks pass. No app implementation or payment changes. Zero fixtures remain; advisor warnings/errors zero. Matching SQL rollback restores grants and reopens legacy-record forgery; application rollback alone does not undo permissions. PR84 source/evidence merge follows CI.
+
+
+## 2026-11-04: close application function-body review
+
+Changed files: supabase/tests/function_security_inventory.sql, LAUNCH_SECURITY_REVIEW.md, LAUNCH_CHECKLIST.md, UPDATE_LOG.md. Goal: replace the remaining function-body placeholder with bounded, reproducible evidence. Reviewed19 live application functions including private membership helpers and server-only privileged mutation RPCs; definitions and role grants match both DBs. Read-only drift query passes19 checks each, without invoking any function or writing data. No app/schema/config changes and no new defect confirmed. S3 policy/table coverage reconciliation and S2/S4/S5 stay open. Source/document revert is sufficient rollback.
+
+
+## 2026-11-04: B39 playlist-header workspace boundary candidate
+
+Changed files: LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, LAUNCH_API_ACCESS_MATRIX.md, UPDATE_LOG.md, scripts/compose-playlist-write-boundary-probe.mjs, supabase/tests/playlist_write_boundary_probe.sql, supabase/migrations/20261104100000_restrict_client_playlist_writes.sql and matching rollback SQL. Goal: preserve playlist/song same-workspace linkage by routing header writes through canonical server handlers. Confirmed raw client header transfer can expose a foreign song link/metadata path; no current real mismatches. Candidate only revokes playlist client I/U/D. Baseline26/candidate25/rollback26 pass each DB,471 local tests/focused lint/whitespace pass, zero fixtures and restored original grants/policies verified. No permanent change; approval required for installation. Rollback restores observed grants and reopens bypass; SQL enforcement won't require app deployment.
+
+
+## 2026-11-04: approved B39 Production rollout and S3 database review exit
+
+Changed files: LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, LAUNCH_API_ACCESS_MATRIX.md, UPDATE_LOG.md, supabase/tests/table_security_inventory.sql. Goal: enforce canonical playlist ownership/linkage and close database review with complete table coverage. User approved exact B39 migration; installed25 pass staging/Production. Actual staged playlist create/rename/share/draft/add/reorder/remove and stored fields pass, all fixtures removed. No delete UI; service SQL DELETE covered. Five Production no-write HTTP checks pass. Security advisors zero ERROR/WARN, nine intentional INFO. Read-only table29 pass each environment;19 application function review and existing behavioural probes complete S3 scope. S2/S4/S5 stay open. SQL rollback restores grants/reopens bypass; no app deployment needed for enforcement. Added official-source model/effort recommendations and automatic independent-continuation preference. No application implementation change.
+
+
+## 2026-11-04: B40 collaboration validation and remaining abuse inventory
+
+Changed files: lib/collaborationInput.ts; app/api/actions/create/route.ts; app/api/actions/[actionId]/route.ts; app/api/tasks/create/route.ts; app/api/tasks/[taskId]/route.ts; app/api/tasks/reorder/route.ts; tests/api-access-boundaries.test.mjs; LAUNCH_CHECKLIST.md; PRODUCT_BACKLOG.md; LAUNCH_SECURITY_REVIEW.md; UPDATE_LOG.md. Goal: return400 for malformed collaboration input, reject invalid typed fields/timestamps and report reorder database failure accurately.35 failures reproduced before fix;44 new/all515 tests pass; TypeScript/focused lint/whitespace clean. Application-only, hosted acceptance pending; rollback prior4e8a2750 code retaining B39 SQL. Also recorded read-only live provider CAPTCHA/rate settings and bounded S4 coverage/remaining limits. No provider settings or live data changed for this review.
+
+
+## 2026-11-04: restore email/password staging access for B40 acceptance
+
+Changed files: LAUNCH_CHECKLIST.md, EMAIL_PASSWORD_STAGING_ROLLOUT.md, PRODUCT_BACKLOG.md, UPDATE_LOG.md. Goal: reuse existing plus-address staging accounts on tested B40 code. Rebuilt the established email-staging Preview with inherited environment and source7284fae5; Ready dpl_H9gAkTGS5G6PiNoD9rftSuK156XS serves the existing CAPTCHA-allowed hostname. Verified source/alias/target, email readiness, staging project, empty login400 and visible fields. Automated Turnstile300030 prevents full login acceptance; user test required. No app code, environment variable, secret, provider setting, branch history or Production change; no credential submission/mail. Rollback alias to dpl_EtDYXsoE9t3YUpxUmpBvD1VHtowT, retaining email configuration. Whitespace check passes; runtime515 tests/four CI checks already pass on deployed source. No repeat app tests for documentation-only changes.
+
+
+## 2026-11-04: prepare isolated email-member acceptance and verify hosted outsider reads
+
+Changed files: LAUNCH_API_ACCESS_MATRIX.md, PRODUCT_BACKLOG.md, LAUNCH_CHECKLIST.md, UPDATE_LOG.md. Goal: test real password-account cross-workspace boundaries without touching existing workspaces. User login passed; canonical actor and original workspace baseline verified. Four actual outsider song/version/task/thread projections deny access with no fixture title. Guarded temporary Member link added only to disposable B40 account, no invitation/mail. Chrome extension panel blocks next browser action, so member view and drag order require user acceptance. B40 is still Preview/unmerged; fixture retained for that test. No app source, provider settings, Auth identity, real workspace, plan or billing modification. Documentation-only whitespace verification; no repeat runtime tests.
+
+
+## 2026-11-04: B40 user acceptance, hosted read revocation and fixture cleanup
+
+Changed files: LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_API_ACCESS_MATRIX.md, LAUNCH_SECURITY_REVIEW.md, UPDATE_LOG.md. User member-view/reorder acceptance passes; DB verifies B0/A1. Four member reads succeed, then four same-session reads deny after removing only fixture membership, supplementing four prior outsider denials. Original workspace/Owner role restored; all account/member/song/version/thread/comment/action/task fixture counts0 and original plan/storage/Stripe/membership baseline preserved. No real content, Auth identity, email/payment/Storage operation. App source unchanged since tested7284fae5; final documentation CI precedes routine PR87 release. Rollback prior4e8a2750 retaining B39 grants. Remaining S2/S4/S5 stay open.
+
+
+## 2026-11-04: B40 Production verified; B41 metadata validation candidate
+
+Changed files: nine song/version/playlist/profile/invite route files, tests/api-access-boundaries.test.mjs, LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, UPDATE_LOG.md. B40/PR87 merge613a1426 primary dpl_BCGgcjLmtjcATiUaFuKpE17wpkRJ verified Ready/www; seven safe live checks and preserved email readiness, zero fixtures. B41 goal: reject malformed/oversize metadata and invalid reorder lists before writes, stop reporting reorder success on DB failure.44 pre-fix failures in two batches;66 new/all581 tests, TypeScript and lint0errors/one pre-existing warning, whitespace pass. Shared16KiB reader reused; valid defaults/null clears and permissions unchanged. No migration/provider/config/auth change. Preview acceptance pending; rollback app to613a1426 retaining DB grants. Partial serial reorder writes remain a recorded limit.
+
+
+## 2026-11-04: B41 Preview handoff, accepted S4 beta scope and B15 verification
+
+Changed files: LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, UPDATE_LOG.md. B41 exact3ff0656c Preview Ready on original email/CAPTCHA hostname; staging project, ten signed-out malformed methods401, invalid invite404 and readiness verified. Browser URL policy prevented current-frame reload; isolated two-song Owner fixture prepared for user playlist acceptance, no real content/provider/Storage/plan change. B41 remains unmerged/Preview only. User accepted recorded S4 limits for current beta; mark that scope Done and revisit at L8, no new quotas/settings. Independent B15 read-only check finds apex canonical URLs against www redirects/sitemap and blog trailing-slash redirect; existing L7 alignment remains pending, no SEO change made. Documentation-only whitespace check; no repeated runtime suite.
+
+
+## 2026-11-04: B41 Production verified and B15 canonical URL alignment
+
+Changed files: public/marketing.html, public/blog/index.html, four article HTML files, scripts/generate-seo-article.mjs, app/sitemap.ts, LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md, LAUNCH_SECURITY_REVIEW.md, UPDATE_LOG.md. B41 user acceptance/DB B0-A1 verified, all fixture counts0 and original workspace preserved; PR88 merge1d8fe5a7 primary dpl_3ENwd7uEfZYkDqxHt3QcudGteQXy Ready/www, ten signed-out mutation methods401/public/auth reads pass. B15 goal: match public canonical/OG/structured URLs and generator default to www; normalize blog sitemap/canonical path to /blog. Six heads/eight JSON-LD blocks/nine sitemap URLs checked, exact content preservation, syntax/lint/whitespace pass. No content/date/provider/API-generation/domain/env/auth/billing changes; hosted metadata verification pending. Rollback prior1d8fe5a7 app, no migration. Added explicit proposed S2/S5 beta evidence limits; approval pending and stage rows remain open.
+
+## 2026-11-04: L5 beta exit accepted and B15 Preview verified
+
+Changed LAUNCH_CHECKLIST.md, LAUNCH_SECURITY_REVIEW.md and LAUNCH_API_ACCESS_MATRIX.md to record explicit user acceptance of S2/S5 limits and L5 beta exit. Pending hosted permutations remain unperformed; consolidated device/payment/notification/performance checks carry to L6. Six B15 Preview pages200 with aligned canonical/OG/Article metadata and nine sitemap URLs verified; four CI checks pass. Production release pending. Routine reconciliation suits Luna Low; performance diagnosis is assigned Sol Medium in the model plan.
+
+## 2026-11-04: B15 live verification and L6 empty-workspace baseline
+
+Changed LAUNCH_CHECKLIST.md, PRODUCT_BACKLOG.md and UPDATE_LOG.md to close B15 in verified Production scope and start B17-B19 measurement. Exact primary deployment0eb8b70c/www verified; six canonical pages, nine sitemap URLs and two redirects pass. Three empty staging dashboard runs1663.5-1944.9ms; representative song/artwork test awaits user fixtures. No performance source change or claimed improvement. Rollback B15 application to1d8fe5a7 if needed.
+
+## 2026-11-04: populated dashboard and song baseline
+
+Changed DASHBOARD_PERFORMANCE_REVIEW.md and LAUNCH_CHECKLIST.md to record B17-B19 measurement conditions, three two-song dashboard timings1.69-2.20s and first version core initialization2.73s. Identify auth/bootstrap and loading-state leads without claiming a verified cause or improvement. No application code changed. Actual tab-return check requested from user; prepared songs retained. Documentation whitespace checked; no code tests needed.
+
+## 2026-11-04: B18 keep loaded song cards during refresh
+
+Changed app/dashboard/page.tsx, DASHBOARD_PERFORMANCE_REVIEW.md and LAUNCH_CHECKLIST.md. Actual staging tab return reproduced two loaded songs being hidden by the loading branch during canonical refresh. Gate the placeholder on an empty song list so existing cards/artwork stay mounted. Initial empty loading and existing refresh data flow remain. No fetch/auth/cache TTL/schema change. All581 existing Node tests and TypeScript pass, dashboard lint0errors/10 existing warnings, whitespace passes. Staging comparison pending; not Production complete.
+
+## 2026-11-04: B18 scoped Production completion and B19 joined lookup
+
+Changed app/api/versions/[versionId]/route.ts and tests/api-access-boundaries.test.mjs, plus LAUNCH_CHECKLIST.md/DASHBOARD_PERFORMANCE_REVIEW.md/UPDATE_LOG.md. Remove one sequential version-parent database round trip through existing FK relation; preserve workspace/object authorization and exclude joined-only data from response. Shared GET/PATCH read helper only; no write/business-rule/schema change. Four new cases, two pre-fix failures/all585 tests pass; TypeScript/focused lint/whitespace pass. FK checked both DBs and staging read-only equivalent plan0.210ms; HTTP after-change timing pending.
+
+B18 PR91/f189c38b Production complete in refresh-display scope after user staging pass and exact www deployment/source checks. Full B18 lifecycle matrix remains open. Rollback B19 tof189c38b; B18 to61537fc1. No external configuration/migration.
+
+## 2026-11-04: B19 hosted comparison and audio handoff
+
+Changed DASHBOARD_PERFORMANCE_REVIEW.md/LAUNCH_CHECKLIST.md and corrected tests/api-access-boundaries.test.mjs fixture to preserve the existing nullable version account_id field. Four focused cases pass; app source unchanged since all585/TypeScript/lint pass. Exact staging source/alias, version payload200 and joined-only field exclusion verified. Three core samples1.94-2.93s overlap2.00-3.69s before; no universal speed claim. Browser security blocked follow-up after Play entered Loading; user playback/pause confirmation requested. No workaround or Production B19 release.
+
+## 2026-11-04: B19 audio acceptance and Production completion
+
+Changed LAUNCH_CHECKLIST.md, DASHBOARD_PERFORMANCE_REVIEW.md, PRODUCT_BACKLOG.md and UPDATE_LOG.md to record explicit audio pass, paused0:08/4:19 observation, PR92/b0542d48 primary Production release and six safe live checks. Final four CI checks pass; scoped join fix Production complete, broader B19 criteria open. Rollbackf189c38b, no migration/configuration. B17 staging artwork44,817/42,928 bytes; representative Production workspace requested before diagnosing original delay. No new app changes.
+
+## 2026-11-04: B17 representative baseline and region proposal
+
+Changed B17_FUNCTION_REGION_REVIEW.md, DASHBOARD_PERFORMANCE_REVIEW.md and LAUNCH_CHECKLIST.md. Measured normal25-song Production workspace read-only: three content-visible samples3.72-4.45s; server identity/member reads dominate, assembly under6ms. Verified primary Vercel iad1 vs Production DB eu-west-1. Prepared exact primary-only Dublin setting payload, staged rollout gates and iad1 rollback; no configuration/schema change applied. Project configuration approval pending under AGENTS.md. Vercel Functions skill/current official region docs used.
+
+## 2026-11-04: approved primary region experiment and independent B20 audit
+
+Changed B17_FUNCTION_REGION_REVIEW.md, LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md to record staged-rollout approval and exact Vercel setting/readback. Duplicate legacy/current field request rejected400 with no change; current-field-only update succeeds, both aliases dub1 and other resources unchanged. Existing Production still b0542d48/iad1; protected Preview dpl_6S8gUybaC7fP7CuptP4RHii4UHsV buildingdub1. Rollback modern region field toiad1 and prior deployment. No secret/env/schema/plan changes.
+
+B20 read-only source and trigger audit finds no upload email path/0 noninternal version triggers both DBs; comment mail and dashboard activity are separate. External provider/delivery remains unverified. No messages sent or notifications activated.
+
+## 2026-11-04: Dublin Preview ready, browser acceptance pending
+
+Changed B17_FUNCTION_REGION_REVIEW.md and LAUNCH_CHECKLIST.md with Ready protected Preview/source/alias/dub1 verification and four safe server probes plus unchanged staging email config. Runtime headers confirm dub1. Browser extension UI blocks positive measurement, so specific user song/artwork/play-pause test requested. Project default is dub1 but existing Production remains b0542d48/iad1; PR93 merge/redeployment held. No claimed speed gain or Production-region completion.
+
+## 2026-11-04: staged Dublin pass and Production crossover
+
+Changed B17_FUNCTION_REGION_REVIEW.md, DASHBOARD_PERFORMANCE_REVIEW.md, LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md. User staging pass; three0.309-0.363s dashboard samples. Approved primary dub1 Production release at exact b0542d48; auth/public checks and one-byte public media206 pass. Initial Production samples2.19-5.56s prompted safeguard restore toiad1; control3.20-6.73s reproduces approximately2s provider profile/member origin stalls. Returned to tested dub1 deployment dpl_8gBeW82QBbWxGmeruVr8dJNA6UwL/defaults, source/www/dub1 and unchanged resource fields verified. B17 remains open; no consistent-latency or field-wide speed claim.
+
+Signed-in25-song dashboard and normal song page visually verified without edits or Production playback. No schema/permission/env/plan change. Previous iad1 dpl_9QJjHQh86P4Rrfi5nXE9gfW3S2vJ remains rollback. User perception/device acceptance and provider-origin diagnosis remain follow-ups.
+
+## 2026-11-04: Production perception accepted and physical-device test prepared
+
+Changed DASHBOARD_PERFORMANCE_REVIEW.md, B17_FUNCTION_REGION_REVIEW.md, LAUNCH_CHECKLIST.md and new LAUNCH_DEVICE_ACCEPTANCE.md. User reports Production feels much faster and more responsive. Keep provider-origin tails open and distinguish qualitative feedback from a device/playback pass. Verified PR93 docs-only7d1e2ae0 live/dub1; application unchanged. Inspected existing native resume/Media Session paths and prepared a concrete four-step physical-device check; no hardware outcome claimed. No app/schema/configuration changes; documentation whitespace checked.
+
+## 2026-11-04: record first mobile playback result and B42
+
+Changed PRODUCT_BACKLOG.md, LAUNCH_DEVICE_ACCEPTANCE.md and LAUNCH_CHECKLIST.md. User confirms iPhone17 Pro Max/Chrome: audio/seek/background/pause/return worked, but first locked Pause changes only lock-screen metadata to an outside track. No unintended audio starts. Log B42 as L6 device follow-up with unconfirmed cause, not a silently added blocker. Inspected first-gesture/native/WaveSurfer session handling and W3C routing; identified timing leads without a speculative app patch. Same-phone Safari comparison next. No code/schema/configuration change; documentation whitespace checked.
+
+## 2026-11-04: B42 Safari comparison and independent player control
+
+Changed PRODUCT_BACKLOG.md, LAUNCH_DEVICE_ACCEPTANCE.md and LAUNCH_CHECKLIST.md. Record same metadata-only pause handoff in Safari on iPhone17 Pro Max, followed by media-card dismissal; no audio or blank app page. Distinguish cross-browser reproduction from proof of a platform cause. Inspected official Google plain-audio Media Session example and prepared an independent same-phone control test. No app patch or claimed fix; documentation whitespace checked.
+
+## 2026-11-04: B42 reproduced in independent native-audio control
+
+Changed PRODUCT_BACKLOG.md, LAUNCH_DEVICE_ACCEPTANCE.md and LAUNCH_CHECKLIST.md. Official Google demo reproduces initial unrelated title/artwork handoff after Pause without audio; its card persists after wake whereas Song Room Safari cleared it. Preserve that difference. Classify as monitored platform/UI behaviour with no demonstrated app-specific playback defect; no speculative app patch. Chrome/iPhone requested audio flow remains reported functional with metadata limitation; broader L6/device contexts remain open. Documentation whitespace checked.
+
+## 2026-11-05: B42 follow-up correction and scoped L6 link pass
+
+Changed LAUNCH_DEVICE_ACCEPTANCE.md, PRODUCT_BACKLOG.md and LAUNCH_CHECKLIST.md. Preserve the user's correction: independent Google player artwork also disappears after a later wake, after about one second. No app-specific playback defect established or application code changed. Record read-only Production link checks:14 public destinations resolve, no missing static fragment targets, four protected routes redirect to login, signup intent survives redirects and robots references canonical sitemap. Dynamic/private/external links remain outside this pass. Documentation diff checked; no runtime tests required.
+
+## 2026-11-05: L6 isolated payment handoff prepared
+
+Changed LAUNCH_CHECKLIST.md. Verified the named staging workspace starts Free with no Stripe customer/subscription, then opened an unsubmitted Pro monthly Checkout. Stripe visibly shows Sandbox and £9/month, with a cs_test session and return link to the staging alias. No payment or plan change submitted; test customer/session creation is expected. Successful payment, webhook delivery/reconciliation and cancellation remain unverified. User handoff required for the interactive test; no live payment/card details requested.
+
+## 2026-11-05: Sandbox payment activation verified; webhook gap recorded
+
+Changed LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md. User payment passed; staging database and dashboard confirm Pro, linked subscription and two preserved songs. Sandbox portal confirms paid £9 monthly invoice. Prepared cancellation review, not submitted: access remains until5 December2026 if cancelled. Preview variable-name inventory lacks STRIPE_WEBHOOK_SECRET and webhook ledger is empty; B43 keeps background reconciliation unverified rather than treating checkout-return activation as webhook proof. No app/configuration change or live transaction. Documentation diff checked.
+
+## 2026-11-05: Sandbox cancellation user pass and delivery prerequisites
+
+Changed LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md. User cancellation passed; independently reopened Sandbox portal confirms cancellation scheduled5 December2026. Read-only staging database/dashboard recheck confirms Pro linkage and two songs retained. End-of-period access is expected; automatic downgrade remains unverified. Read-only project metadata shows protected Preview and an unsigned endpoint probe returns401. Keep B43 open for isolated signing-secret and protection-compatible delivery configuration; no app or service settings changed. Documentation diff checked.
+
+Staging desktop keyboard follow-up also changed LAUNCH_DEVICE_ACCEPTANCE.md: verified feedback-dialog initial focus, backward/forward focus wrap, Escape close and launcher focus restoration. No submission or data mutation. Wider accessibility/device acceptance remains open.
+
+## L6 sharing baseline and device availability
+
+Updated LAUNCH_CHECKLIST.md to record 457 passing local contract tests, read-only Production playlist and embed probes, and the outstanding physical iPad check. Hosted revocation remains open.
+
+## L6 hosted playlist revocation
+
+Updated LAUNCH_CHECKLIST.md with staging publication and revocation results for an empty playlist. Verified the public API, listener and embed after switching to Draft.
+
+## 2026-11-06 audio revocation verification
+
+Updated LAUNCH_CHECKLIST.md with hosted staging evidence for fresh audio denial and continued access through a previously issued storage URL. The synthetic fixture remains private.
+
+## 2026-11-06 hosted form validation
+
+Updated LAUNCH_CHECKLIST.md with staging rejection results for feedback, public comments and signup. Verified the signup origin guard separately from field validation.
+
+## 2026-11-06 launch evidence reconciliation
+
+Updated LAUNCH_CHECKLIST.md with prior hosted auth and membership evidence, current local browser results, and the article metadata mismatch found during L7 review.
+
+## Production Google acceptance and B11 metadata
+
+Updated LAUNCH_CHECKLIST.md with the user-confirmed fresh Google sign-in. Corrected the canonical, Open Graph and Article URLs in public/blog/a-practical-remote-songwriting-workflow.html on the unpublished PR #12 branch. Verified the three replacements and checked the diff.
+
 ## B11 article publication preparation
 
 Updated the remote songwriting article and app/sitemap.ts. Replaced the publishing note with links to the versioning and feedback guides and added the article to the sitemap. Both target files exist.

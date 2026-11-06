@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { artworkDeliveryUrl } from '@/lib/artworkAccess';
 import { NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
@@ -83,7 +84,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
 
     return NextResponse.json({ imageUrl: artworkDeliveryUrl('playlist', access.playlist.id, urlData.publicUrl) }, { status: 200 });
   } catch (err) {
-    console.error('[playlists/:id/image] error:', err);
+    console.error('[playlists/:id/image] error:', safeErrorDetails(err));
     return NextResponse.json({ error: 'Could not upload cover.' }, { status: 500 });
   }
 }
@@ -105,7 +106,7 @@ export async function DELETE(_req: NextRequest, props: { params: Promise<{ id: s
     if (error) throw error;
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error('[playlists/:id/image] delete error:', err);
+    console.error('[playlists/:id/image] delete error:', safeErrorDetails(err));
     return NextResponse.json({ error: 'Could not remove cover.' }, { status: 500 });
   }
 }

@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
@@ -44,7 +45,7 @@ export async function GET(_req: NextRequest, props: { params: Promise<{ songId: 
       { status: 200, headers: { 'Cache-Control': 'no-store' } }
     );
   } catch (error) {
-    console.error('[songs/public-comments GET] error:', error);
+    console.error('[songs/public-comments GET] error:', safeErrorDetails(error));
     return NextResponse.json({ error: 'Something went wrong' }, { status: 500 });
   }
 }

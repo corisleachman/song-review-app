@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -22,11 +23,6 @@ function requireOwner(identity: Awaited<ReturnType<typeof resolveCanonicalIdenti
   }
 
   return null;
-}
-
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) return error.message;
-  return 'Could not remove workspace member.';
 }
 
 export async function DELETE(_request: Request, props: { params: Promise<{ userId: string }> }) {
@@ -85,7 +81,7 @@ export async function DELETE(_request: Request, props: { params: Promise<{ userI
       }
     );
   } catch (error) {
-    console.error('Error removing workspace member:', error);
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    console.error('Error removing workspace member:', safeErrorDetails(error));
+    return NextResponse.json({ error: 'Could not remove workspace member.' }, { status: 500 });
   }
 }

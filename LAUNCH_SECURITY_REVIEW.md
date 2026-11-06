@@ -229,3 +229,286 @@ Staging is installed as ledger 20261102182049, repository candidate timestamp 20
 Fixture preflight checked for any triggers on auth.users/profiles/accounts/members. Only passwordless, sessionless synthetic Auth/profile rows within rolled-back transactions were used; no Auth API, provider or email call. Zero fixture users/profiles/workspaces remain in either environment. Staging Advisor zero errors/warnings, existing nine INFO notices. Production function remains absent: candidate DDL was rolled back, no Production rollout. Preview dpl_EA6C9QicgB4ibe4sz15t9DFGrR3y is building; fresh signup/confirmation/first dashboard and existing-user smoke acceptance remain before release.
 
 Rollout after acceptance: install/verify identical RPC on Production, then merge/deploy tested app and verify live boundaries. Stop on fixture triggers, permission/schema mismatch, SQL/CI failure or browser onboarding error. Rollback prior compatible app before optional RPC removal; removing it while new first-setup code is live breaks new-account setup. Existing account/member rows aren't deleted by either direction. No new role, billing/plan, Auth method, credential/env or provider setting. S4/L5 remain open.
+
+
+B27 Ready Preview checkpoint: dpl_EA6C9QicgB4ibe4sz15t9DFGrR3y Ready on primary project at exact 4be9c48c, all four PR checks green. CI 41499853678: 30 passed/10 skipped. Public bundle confirms staging ref. Signed-out GET /api/auth/bootstrap returns 401, bounded error/fatal scans zero rows. Chrome Google re-login of the existing staging account returns the member workspace and five-song library. A transient browser-inspection timeout was resolved using accessibility state; no app defect is asserted from that tool timeout. No song/account/role change or signup feature flag was made. Preview shows Google-only signup. Fresh Google-account onboarding remains the explicit acceptance gap, to be tested in a private window before release; no email-confirmation flow is expected on this Preview. User should report test email/result; Agent then verifies workspace/member records and performs the already-authorised release if acceptance passes. PR #73 remains open; Production RPC absent and application code unchanged.
+
+
+## B27 accepted and released, 2 November 2026
+
+User reports both staged Google signup and reload/additional-tab tests passed. The sole new staging account in the test window has Free access, one created workspace, one membership and one correct owner link. Private identity isn't recorded here. Prior existing-user Chrome smoke preserved member-workspace selection/five-song library. Controlled six-caller concurrency remains real-bootstrap/fake-DB I/O evidence; actual database locks/atomicity and membership failure rollback are separately covered by installed SQL. No new multi-session Production signup or provider email was attempted.
+
+Production migration installed before app. All 14 installed SQL cases pass, body equals reviewed source, invoker/search_path/client-denial checks pass and no fixture users/workspaces remain. Production Advisor: zero errors/warnings, same nine intentional INFO findings. Repository source timestamp 20261102165139 maps to staging ledger 20261102182049 and Production 20261102203612; reconcile these equivalents before future bulk migration work.
+
+PR #73 merged as ce34686837991accc175c5808d0a39bc1aeb8af9; primary Production dpl_F19sdasWwV17Qt6den32dWjPh1s5 Ready at that merge, assigned to www.song-room.live. 340 Node tests, TypeScript/focused lint and all four PR checks pass; browser CI 41499853678: 30 passed/10 skipped. Live no-write checks: /api/auth/bootstrap and /api/dashboard/summary signed-out 401, /login 200, bootstrap?redirect=1 sends signed-out users to same-origin login with google=error. Bounded 15-minute error/fatal scans return zero rows.
+
+B27 is Production complete in scope, not all S4/L5. Rollback prior compatible deployment dpl_9PWeKjhM3nw9g1kg5z77wwBiRWM5/6269735c first; normally leave additive RPC unused, only remove via companion down migration after app rollback. Existing data isn't deleted or deduplicated. Media/50 MB and other comment/feedback controls remain. No new billing, Auth method, env/provider/credential configuration. No external action remains for this repair.
+
+
+## B28 public Data API projection boundary, 2 November 2026
+
+Both environments' anonymous table grants and RLS allow raw reads of all versions of a publicly shared song. Synthetic rolled-back fixtures confirm old/pending versions, internal notes/filenames and ownership metadata are visible. Private songs remain hidden; no real private content was inspected. Public comments already deny raw anonymous reads.
+
+The canonical public song/playlist routes already use service-role projections with latest-finalized and field filtering. Candidate revokes only anonymous/PUBLIC SELECT on songs and song_versions, preserving authenticated/service access and existing policies. Local tests: 342 pass; both environments: baseline 16, candidate 14, rollback 16 pass. Hosted baseline verifies song/playlist/comments JSON, public pages/embeds, audio redirect with one-byte Range and artwork. Staging installation pending. Rollback file restores just the two previous anonymous grants, reopening the confirmed exposure; app rollback is insufficient. L5 remains open.
+
+B28 staging checkpoint, 2 November: migration installed as ledger 20261102222009 (source 20261102220823). All 14 installed SQL cases pass, zero fixtures remain. Actual anonymous REST reads now return 401/42501 for both tables; existing comments denial is unchanged. Public API payloads match baseline, public pages/embeds return 200, audio redirect 307/Range 206 and artwork 200. Advisor has zero errors/warnings. Production remains unchanged pending CI/release.
+
+
+B28 Production database release, 2 November: PR #74/6288e354 merged, 342 Node tests/focused lint/four PR checks and browser 30 passed/10 skipped. Reviewed migration source 20261102220823 installed as staging 20261102222009 and Production 20261102222433. Installed 14-case probes pass in both environments, alongside baseline16/candidate14/rollback16. Anonymous raw REST denied; public song/playlist/comments payloads match baseline; pages/embeds/audio Range/artwork pass; authenticated history preserved; zero retained fixture workspaces. Advisors zero errors/warnings; bounded Production error/fatal scan empty. Primary merged-source deployment dpl_Dh7UyB4o7sokRPmdcK22mfH8B1aB is Ready/live; no app logic/env/provider change. Companion SQL rollback restores only old anon SELECT and reopens exposure. Broader L5 remains open.
+
+
+## B29 settings/referral/billing access and error review, 2 November 2026
+
+Sampled canonical settings/referral/Stripe entry handlers. Eight actual-handler paths reproduce verbatim internal Error.message in settings/billing 500 responses. Local candidate reuses existing generic fallback text, retaining diagnostic logs and all success/4xx/business logic. New runtime cases cover signed-out rejection before I/O, non-owner billing denial, foreign/unpaid Stripe session rejection without writes, canonical customer/account selection, user-scoped settings/referrals, masked email projection and owner-only invite listing. All provider and notification I/O is fake. 377 tests/TypeScript pass, lint zero errors/one existing warning. No actual leaked secret or hosted payment claimed; Preview and release pending. Broader route/role and server log safety remain open.
+
+
+B29 release, 2 November: PR #75/25b96370 primary dpl_7LpTJNzBYxxj6VgfDb9tYMeesAsy Ready/live. 377 Node tests/TypeScript/focused lint (one existing warning), four PR checks and browser 30 passed/10 skipped. Twelve hosted signed-out checks pass on exact-head Preview and released Production; provider/success tests use fake I/O. No live plan/payment/settings mutations. Error/fatal release scan empty. No external action remains; app rollback can restore previous 6288e354 deployment, retaining B28 database boundary. Broader L5 remains open.
+
+
+S6/S7 read-only checkpoint, 2 November: metadata confirms B30's three existing Config credentials; approval pending, no values decrypted or scope/provider changes. Connector metadata 403 is a connector-permission limit; authorised CLI returns metadata, so no permission broadening required. Scoped current-tree/client-import/public-chunk scans report no credential pattern or client-to-private-env path. No full Git-history scan claimed. 118 API/helper logging calls are inventoried; auth-entry code uses codes/safe fixed messages, but unstructured provider/database exception logging needs review. Production-only dependency audit remains four low, zero moderate/high/critical; no package upgrade attempted. Vercel prebuild already runs npm test, and browser CI is active; an explicit dependency-audit gate and alert/retention verification remain open.
+
+
+S7 CI candidate, 2 November: add production-only dependency audit to the existing pull-request/manual browser workflow after npm ci. Fail at moderate or above (and on registry/audit failure), retaining visibility of current four low advisories. Exact command passes locally. No schedule, automatic package updates or force-upgrade. Hosted audit step pending; provider alert and retention configuration still unverified.
+
+
+L5 checkpoint, 2 November: both environments pass the full 63-method/48-session-route signed-out sweep (401, dev-plan403); this adds hosted unauthenticated coverage without claiming signed-in role verification. Current staging browser is suspended at an extension URL, and policy rejected observation. User asked to restore the normal staging dashboard; no bypass attempted. B30 classification approval remains pending. PR #76/9ee73d83 installs the explicit production-dependency audit gate; exact command and all CI checks pass with four low/zero moderate-or-higher; browser30/skip10. Primary deployment dpl_8SrzygQCYuX6o1wcWo33hC6xSHjJ Ready/live; post-build smoke passes. No schedule, package/provider or credential change. Broader signed-in roles, diagnostic logging and alert/retention coverage remain open; L5 is not Done.
+
+
+3 November scoped continuation: B30 user-approved type-only changes complete with unchanged scopes and verified Production/Preview rebuild/public/media/signed-out checks. Restored staging browser passes owner settings/collaborators/Free-plan reads, member settings/billing gating and own synthetic song read; unrelated private song denied without title. Temporary staging-only workspace/song/version/member fixtures fully cleaned; original owner membership remains. No Auth user or storage object, email, payment or real-user content mutation. Version missing-audio state was expected for the synthetic no-object fixture. Final original-workspace browser view unverified because the extension suspended the tab and policy blocked its extension URL; no workaround. Scoped UI coverage doesn't complete every route/method/role write or provider journey. See current launch checkpoint for deployment IDs and limits.
+
+
+## B31 diagnostic redaction candidate, 3 November 2026
+
+Three regressions reproduce 85 raw exception/message logger arguments across 59 server files plus legacy/modern CSP retention of synthetic capability paths, malformed/relative URL secrets and arbitrary directive text. Candidate uses a pure safeErrorDetails projection: fixed kind, explicitly known code and integer HTTP status only. Never serializes messages/stacks/causes/headers/bodies or calls getters/toJSON; proxy failures fall back safely. Existing log labels and all business/client-response logic remain unchanged. CSP keeps origins, known protocol labels/directives, numeric fields and existing input/batch limits.
+
+387 Node tests/TypeScript pass, focused lint zero errors/five pre-existing warnings. Bootstrap test loader now resolves the real pure diagnostic helper; CSP source contract updated to origin-only, with actual-handler tests covering old/new reporting formats, capabilities, invalid input and report limits. No actual credentials, provider sends, migration/env or dependency changes. CI/Preview/Production pending. S5's remaining raw response-error paths and broader S7 monitoring/retention are separate open checks; no claim about historical logs or a real compromise.
+
+
+3 November release checkpoint: B31/PR #77/6ba2c817 primary dpl_C1VQK62tyWRy8ZDiZhTjCf7uyZrx Ready/live. 387 Node tests, TypeScript/lint zero errors/five pre-existing warnings, four PR checks and browser30/skip10 pass. Exact-head Preview and Production public/media projections and twelve signed-out checks pass. Benign CSP204 controls found in actual unfiltered request logs with origins only; warning-only filters missed level-warn records. Production27 retrieved records/zero error-fatal; no real secrets/emails or historical log changes. B30 Secret scopes reread intact; original owner/empty staging dashboard visibly restored and fixtures absent. User accepts Hobby one-hour logs and release-time checks for beta, no paid/recurring setup; revisit at L8. S6 and beta S7 exit conditions met, remaining S2-S5 stay open. Rollback prior ffef2c7b app, retaining B28/B30 boundaries.
+
+
+## B32 core account write boundary, 3 November 2026
+
+Both environments grant accounts I/U/D to anon/authenticated. Creator INSERT and owner UPDATE/DELETE row policies allow client-controlled plan/Stripe columns: synthetic actual-role proof succeeds for plan/Stripe rewrite, Studio insertion and account deletion, always rolled back. No real plan, subscription or external Stripe access tested. No browser account mutation path exists in current source; canonical service routes cover settings, provisioning, upload accounting and billing/webhooks.
+
+Candidate removes only those client account mutation grants, preserving existing policies/reads and service-role I/U/D. Full SQL baseline16/candidate19/rollback16 pass both DBs; service writes/default Free and owner/member/outsider/anonymous boundaries preserved. 390 Node tests pass, with owner-only field-whitelisted settings and existing fake-provider billing coverage; lint passes. Staging installation/actual owner fixture save and Production pending. No data cleanup/plan reset; restore matching SQL grants only for verified regression. This is a confirmed S2/S3 defect, not a new billing feature or exploitation claim.
+
+
+B32 staging checkpoint, 3 November: migration source20261103090300 installed as20261103091520;19 installed role checks pass, other grants/policies/read access preserved. Client REST zero-ID read200/empty and PATCH401/42501. Source f619e508 PR #78/four green checks, browser30/skip10, local390 tests/lint pass. One isolated Free owner fixture retained for actual name Save acceptance; no songs or Stripe fields. User has exact checklist steps; extension-suspended URL blocked browser action, no bypass/session extraction. Production permission migration and fixture cleanup pending acceptance. Existing real users/plans unchanged.
+
+
+B32 Production release, 3 November: user owner-name save accepted; stored fixture name/Free/null Stripe verified, fixture/member cleanup complete. Source20261103090300 installed as staging20261103091520/Production20261103094603;19 installed role cases in both DBs pass, with prior baseline16/candidate19/rollback16. Raw client account PATCH401/42501, zero-ID read200/empty. App signed-out/public/media and post-build login/bootstrap/song checks pass; Advisor zero errors/warnings, nine existing INFO. PR #78/b77a7b66 merged126825bf, primary dpl_BfL9iReAvUBWFemGQaXa9aFvT23W Ready/live;390 Node tests/lint/four exact-head checks pass. No account/plan/provider changes or outstanding user actions. SQL rollback restores old client account mutations and reopens the gap; app rollback alone doesn't undo it. Remaining S2-S5 review stays open.
+
+
+## B33. Safe unexpected-error responses
+
+- Status: Production complete via PR #79/98f4132f, 3 November; local, CI and hosted checks pass. Existing L5/S5 review.
+- Confirmed behaviour: Thirty-two handler catch paths echo raw exceptions and one invite-provider warning echoes provider rejection text. Synthetic private sentinel failures reproduce these paths; no real credential exposure or compromise is claimed.
+- Intended outcome: Unexpected failures return existing fixed, useful fallback messages. Keep diagnostic codes/status through B31 safeErrorDetails without returning provider internals.
+- Acceptance: Error objects, plain provider objects and thrown strings never reach client messages. Preserve existing HTTP statuses, public invite state=invalid shape, authentication/validation, success paths and data writes. Rejected email retains the created invite, emailSent=false and manual-copy guidance; no duplicate send. Tests use fake providers only. Require CI/Preview and Production smoke checks before completion.
+- Dependencies: Application-only change across 26 route files and regression tests; no migration, environment, provider, plan, auth or dependency changes. Private Stripe webhook ledger diagnostics are outside client-response scope and remain unchanged. App rollback can restore prior source; retain existing database permission repairs and Secret classifications.
+- Decisions needed: None for scoped fallback messages. Broader validation and cross-workspace review remain open; this item does not finish L5.
+- Evidence: 425 Node tests, TypeScript and focused lint pass (zero errors/four existing warnings); original synthetic response/warning regressions reproduced before repair. No hosted deliberately secret-bearing requests or real notifications.
+
+
+B33 Production complete, 3 November: PR #79/d6ad7f1c merged98f4132f, primary dpl_F65yxwCvh5dPtLMFE6rc8Q7Lf8LG Ready/live www alias. 425 Node tests/TypeScript and focused lint zero errors/four existing warnings; four CI checks/browser30/skip10 pass. Preview and Production63 signed-out methods each pass; public JSON unchanged, pages/artwork/audio redirect and range checks pass. Bounded Production scan50 records/zero error-fatal. No real email, migration/configuration/dependency or billing change. Fake-provider leak regressions tested locally, not injected into hosted providers. App rollback to prior ed5329c2 retains existing account permissions and Secret types. Remaining validation/function/membership review stays open; no user action.
+
+
+## Membership mutation review: B34 candidate, 3 November 2026
+
+Read-only function inventory finds all public mutation RPCs deny anon/authenticated EXECUTE. Public lookup helpers remain invoker functions with fixed paths; private membership/role helpers use current auth.uid(), an empty search_path and bounded definer lookups. This is metadata evidence, not full body/route closeout.
+
+Membership policies are identical in both environments. Direct owner/admin membership INSERT accepts role=owner, and DELETE accepts the existing owner row. Rolled-back baseline21 reproduces both without touching real memberships. This bypasses owner-only invitation/removal, collaborator quotas and self/owner-removal guards. No browser account_members writer exists in current TS/TSX source; canonical writes use supabaseServer or service-only RPCs.
+
+Prepared migration/rollback, guarded composer and synthetic SQL probe. Candidate23 blocks client owner/admin/member/outsider INSERT/UPDATE/DELETE; preserves scoped membership reads, unrelated table grants, membership RLS and service INSERT/UPDATE/DELETE plus service-only provisioning/invite EXECUTE. Baseline21/candidate23/rollback21 pass on staging ivifkrtupqizyqqsxdty and Production hxtsuhmqrufcdplidtov. Every run ends ROLLBACK. Readback confirms zero matching fixture accounts and unchanged original grants. No Auth user, provider email, payment, Storage operation or persistent DB change.
+
+Permanent staging installation needs approval under AGENTS.md security-boundary rules. Then run installed mode and real isolated canonical journeys before Production installation. Rollback companion restores observed grants, reopening the defect; app rollback alone is insufficient. Further function bodies, hosted signed-in route roles, S4 and S5 remain open. See B34 backlog for execution order.
+
+
+### B34 approved installation checkpoint, 3 November 2026
+
+User approved B34. Migration source20261103154727 installed on staging ledger20261103161024, Production20261103161305. Installed23, bootstrap14 and canonical-invite4 checks pass in each environment. Added supabase/tests/membership_server_journey_probe.sql for actual invite acceptance/replay/mismatch and server removal regression checks. All synthetic transaction rows roll back. Existing signed-in staging settings/member reads pass; disposable fixture member removed through owner UI, owner retained; original workspace restored and guarded fixture cleanup confirmed. Zero fixture accounts/invites remain. No provider email, payment, Storage or real membership mutation. Seven Production login/signed-out HTTP checks pass. PR #80/cbe475aa had four green checks, 433 local tests and focused lint pass. App source unchanged; no deploy needed to enforce grants. Repository closeout pending.
+
+Production owner writes and new provider-delivered invitation journeys weren't exercised. Companion rollback restores observed client grants, reopening the gap; application rollback cannot restore grants. Broader S2/S3 and L5 remain In progress.
+
+
+## B35 function-body review candidate, 3 November 2026
+
+Reviewed upload-allocation/finalization, song-deletion/storage-accounting and Stripe-ledger function source plus live function inventory. Mutation RPC EXECUTE remains denied to anonymous/authenticated roles. Staging public-schema CREATE denied to anon/authenticated/service_role; no permission change proposed for fixed public search paths. These observations aren't whole-route or concurrency signoff.
+
+Found accepted-invitation rejoin defect: original accepted_by_user_id branch inserts membership after an owner has removed it. Accepted state precedes pending expiry, so expired accepted tokens also restore it. Canonical signed-in acceptance route forwards authenticated id/email to this RPC and treats already_accepted as success.
+
+Installed definition hash matches in staging/Production. Rollback-only baseline11 confirms removed membership restoration, candidate11 blocks restoration, rollback11 reproduces original behaviour in both environments. Candidate retains current-member idempotence and fresh owner-issued re-invitation; preserves RPC mode, owner, search_path and grants. Four real-handler/fake-I/O tests preserve canonical user/email and forbid workspace read/cookie writes on already_used/expired denial. All437 local Node tests/focused lint pass. Zero synthetic accounts/invites and unchanged original function hashes read back. No actual email, Storage, billing or permanent DB changes.
+
+B35 permanent installation awaits security-boundary approval. Exact rollout, verification limits and rollback are recorded in PRODUCT_BACKLOG.md. Broader S2/S3 function and signed-in route coverage remain open.
+
+
+### B35 approved Production installation, 3 November 2026
+
+User approved B35. Reviewed0828e58b/PR #81 passed four checks. Source migration20261103162107 installed as staging20261103170224 and Production20261103170410; both function hashes460ec500c96eded2a8d09f69bf3e77e5 match. Installed11 replay, membership23 and bootstrap14 cases pass in each environment. Existing437 local tests/focused lint pass; no application source change.
+
+Actual staging accept/remove/stale-accept flow passed: first invitation accepted, one disposable member created; guarded SQL removed only that synthetic membership; second pending browser copy's POST returned existing already-accepted error and did not restore membership. Only owner remained. Refresh restored original COris owner dashboard. Guarded cleanup deleted the one fixture invite, owner link and account; zero matching accounts remain. No provider emails, payments, Storage, new Auth users or real membership changes. Five Production login/signed-out HTTP checks pass. Both security advisors zero ERROR/WARN with nine existing INFO notices. Production signed-in positive journey wasn't repeated.
+
+B35 Production complete in this scope. No app deployment needed for database enforcement. Rollback matching SQL restores original function and reopens the gap; app rollback alone can't undo function changes. Broader L5/S2/S3 remain open.
+
+
+## B36 upload and song-deletion boundary review, 3 November 2026
+
+Reviewed allocation/finalization/deletion RPCs and canonical routes. Routes enforce active-workspace match before Storage or mutations; song DELETE is owner-only; version PATCH whitelists label/notes. Actual DB RPCs reject cross-workspace song/version IDs. Media delivery already refuses paths outside the parent song prefix; no foreign audio leak is claimed.
+
+Found direct-table bypass: synthetic role probes allow client song/version INSERT/UPDATE and owner/admin DELETE, bypassing API fields, finalization and byte accounting. Members can insert metadata as finalized and alter file size/finalized status. Direct deletions leave storage_bytes_used unchanged. Admin deletion contradicts the owner-only server route. Both environments have matching policy fingerprint ca4532c9ffc86d8818b45227bb44ce5b and observed client I/U/D grants. No active client song/version mutation writer found in source; canonical server writes exist.
+
+B36 candidate denies only client I/U/D on both tables, preserving reads, RLS, server and unrelated grants. Baseline40/candidate40/rollback40 pass both databases. Service RPC checks include foreign-workspace refusal, pending allocation, exactly-once finalization and release-on-delete. Fourteen real-handler fake-I/O cases cover workspace/owner boundaries and metadata whitelist. All 451 local tests/focused lint pass. Zero fixtures and unchanged original policy/grant readback verified. No actual Storage file, email, payment, Auth identity or real song/version mutation. Permanent permission change awaits approval; installed/hosted acceptance remains pending. Broader S2/S3 remain open.
+
+
+### B36 approved Production installation, 3 November 2026
+
+User approved B36. Source migration20261103171426 installed as staging20261103191138 and Production20261103191415. Installed40 pass each environment; reads, policies and server writes preserved; client mutation denied. Security advisors zero ERROR/WARN, nine existing INFO. Reviewed6d94da6c/PR #82 passed four checks; existing451 local tests/focused lint pass.
+
+Actual staging owner app acceptance passed: generated 2-second WAV creates disposable song, finalizes88244 bytes, with version size=Storage object size=account counter. Song rename and version-label edit read back correctly. Playback reached2 seconds/error null and ended paused. Owner app deletion removed song/version/Storage object and restored counter0; original empty workspace visible. No real content, membership, Auth user, email or payment mutation. Eleven safe Production login/signed-out/public checks pass, including song/listen/artwork200 and one-byte audio Range206. An initial missing-title probe correctly returned400; corrected valid-shaped unauthenticated request returned401. No fresh Production positive write or physical-device acceptance claimed.
+
+B36 Production complete in this scope; no app implementation/deployment needed for grant enforcement. Matching SQL rollback restores observed grants and reopens bypass; application rollback alone can't restore permissions. Broader L5/S2/S3 remain open.
+
+
+## B37 collaboration direct-write candidate, 3 November 2026
+
+Reviewed action source/comment/assignee/resolution checks, task parent/field whitelists and playlist-song same-account route checks. Canonical writes already use supabaseServer; no browser mutation writer found. Public-comment mutation is already blocked by RLS; no grant change proposed there or for playlist headers.
+
+Synthetic owner/admin/member raw writes reproduce action foreign linkage, task-account mismatch, playlist foreign-song linkage and private comment/thread attribution spoofing. RLS scopes to one parent/account, not the full related chain. This doesn't prove foreign media exposure: public/media routes retain separate relationship checks. Candidate denies client I/U/D on the five affected tables and keeps all existing server CRUD, reads, RLS and unrelated privileges. Rollback preserves B26's already-denied client INSERT on private comments/threads.
+
+Baseline81/candidate81/rollback81 pass both DBs. Actual server I/U/D included; sixteen real-handler/fake-I/O cases cover canonical source/assignment/creator/task/playlist restrictions. All 467 local tests/focused lint pass. Read-only six relationship mismatch counts all zero in both DBs (nonnull account contexts only); no data correction done. Zero probe accounts; original DML mask/policy hash15131089686223ffc3c9abdabc1f932d match afterward. No installed permission, real row, Auth, Storage, provider email or payment change. Permanent installation awaits approval. Broader S2/S3 and S5 remain open.
+
+
+### B37 approved Production installation, 3 November 2026
+
+User approved B37. Source20261103194256 installed staging20261103211609/Production20261103212159. Installed81 pass both DBs, preserving reads, server CRUD, RLS and B26 client comment INSERT denial. Security advisors zero ERROR/WARN, nine existing INFO. Candidatecb879571/PR #83 had four green checks; existing467 local tests/focused lint pass; no app implementation change.
+
+Actual staging owner flow passes: comment/reply, source-linked action create/resolve, task create/complete, playlist create/name and two-song add/reorder/remove. Stored creator/source/resolved version/status/order read back correctly. Workspace had only the actor; deployed env snapshot has no forced notification-recipient override. No provider delivery tested. Vercel connector environment read403 recovered via authorized read-only CLI; no config/security changes. Fixtures used no audio objects; missing-audio state was expected.
+
+Guarded cleanup removed fixture playlist and two songs plus dependent version/thread/comments/action/task. All fixture counts zero, original storage0; original empty COris owner dashboard restored visibly. No real content/membership/Auth/payment/credential mutation. Production16 safe signed-out/public checks pass. No Production positive write or email journey claimed. B37 Production complete in scope; SQL rollback restores original grants and reopens context/attribution gaps while preserving earlier comment INSERT restrictions. App rollback cannot undo SQL. L5/S2/S3 remain In progress.
+
+
+## Remaining account/profile and B38 legacy billing review, 3 November 2026
+
+Live inventory both DBs:25 public tables/all RLS, zero public views/materialized views, no untrusted public CREATE and no client-callable public SECURITY DEFINER function. Legacy unrestricted settings policy is absent. Profile/preferences own-row read/update and foreign-row denial pass for owner/admin/member/outsider; workspace legacy-theme RLS and anonymous denials pass. This tests table policies, not every service fallback: legacy theme migration remains display-name based and returns only colours; it wasn't changed under B38.
+
+Canonical current-user code uses verified Auth getUser id/email. Editable user_metadata supplies display name/avatar only; app admin gates consume Auth email. Four real-helper/fake-I/O tests cover metadata claim spoofing, verification failure, no verified user and refresh-cookie write restrictions. Existing server-handler billing/settings/referral scope tests remain relevant; no new provider acceptance claimed.
+
+Confirmed owner/admin client forgery of legacy billing_subscriptions and billing_checkout_sessions facts. Both empty in staging/Production; no current runtime reference found. Primary accounts/Stripe entitlement remains unchanged in probes, so no paid-access bypass asserted. Candidate denies only client I/U/D on these two legacy tables. Baseline84/candidate84/rollback84 pass each DB; preserves RLS/reads, actual service CRUD and other grants. All471 local tests/focused lint pass. Original DML and policy hash176478a7cf0aa72c404c785fe254dda9 match; zero synthetic users/profiles/accounts/legacy billing rows remain. No real user, plan, payment, external Auth/Stripe/email/Storage operation. Installation awaits approval.
+
+S2/S3 remain open for final route/role evidence reconciliation and remaining privileged-function body closeout; public auth/provider journeys and payment acceptance retain their existing L6 boundaries. This hardening doesn't silently expand launch requirements.
+
+
+4 November 2026 installed checkpoint: user approved B38. Staging ledger20261104070929 and Production ledger20261104071135 installed; installed84 pass each. Staging signed-in Workspace/Free plan reads pass. Production login200; auth bootstrap/settings summary GET401 and billing checkout/portal/activate POST401. Unsupported workspace/plan GET405 excluded from auth evidence. Zero synthetic identities/accounts and zero legacy billing rows remain. Security advisors zero ERROR/WARN, nine existing INFO each. No provider/payment acceptance claimed; DB enforcement complete, PR84 records source/evidence.
+
+
+## Function body closeout, 4 November 2026
+
+Read-only live review at release4940085c: all17 public functions and both song_room_private functions have matching definitions, owners and effective client/service EXECUTE grants in staging and Production. Checked-in `supabase/tests/function_security_inventory.sql` pins the reviewed19 signatures, full-definition hashes, postgres ownership and effective role grants. Missing/extra/changed functions fail. The query invokes no function and writes no data; all19 checks pass in each environment. Hashes are drift evidence for this review, not a general proof of function safety.
+
+| Functions | Reviewed authority and body |
+| --- | --- |
+| create_song_version_upload, finalize_song_version_upload, delete_song_and_release_storage | Service-only definer RPCs; explicit song/account joins and row locks. Allocation is pending, finalization is idempotent and locks account usage, deletion releases finalized bytes. These RPCs trust server arguments rather than independently authenticate an end user. Routes verify canonical workspace; delete also requires owner. Finalize derives size/type/signature from Storage and plan limit from account. Existing B36 installed40 and hosted upload/delete evidence cover the state transitions. |
+| claim_stripe_webhook_event, complete_stripe_webhook_event, fail_stripe_webhook_event | Service-only definer RPCs, restricted to event ledger. Claim uses unique event ID and conditional retry for failed/stale processing; completion/failure require processing status. Failure text capped1000. Webhook verifies Stripe signature before claim. No dynamic SQL, HTTP or provider call in these bodies. This is not payment acceptance or exactly-once provider side-effect proof. |
+| song_room_private.is_workspace_member, song_room_private.has_workspace_role | Authenticated-only definer boolean lookups; no supplied user ID, auth.uid() nonnull/current-user predicate, qualified membership relation, empty path, stable. No writes/dynamic SQL. Private schema denies anon USAGE and all three runtime roles CREATE; prior B21 exposed-schema and role evidence remains applicable. |
+| accept_workspace_invite_atomically | Service-only invoker; locked token, normalized email, status/expiry checks, member role on insert. Accepted retry cannot restore removed membership (B35). |
+| ensure_initial_workspace_membership | Service-only invoker; validates profile, serializes per user, rechecks existing membership before atomic owner creation. B27 installed/bootstrap evidence remains applicable. |
+| consume_email_login_attempt, consume_mutation_attempt, enforce_beta_feedback_rate_limit | Service-only invoker functions/trigger. Validated scopes/hashes, bounded cleanup or feedback count, atomic limiter rows/ordered locks, denial preserves budget. Existing B26/B27 and feedback installed/concurrency evidence applies. |
+| is_account_member, has_account_role | Client-callable invoker lookups, auth.uid() predicate, empty path; underlying RLS applies. They cannot accept another user ID or elevate writes. |
+| generate_referral_code | Client-callable invoker, at most10 random-code collision attempts against RLS-protected referral_codes; no insert or grant. It grants no reward or entitlement. |
+| account_invites_sync_derived_fields, profile_settings_touch_updated_at, set_updated_at | Trigger-only invoker bodies set normalized email/timestamps on NEW and return NEW; no arbitrary relation access. Public EXECUTE on the timestamp functions does not turn trigger-return functions into normal callable row mutation RPCs. |
+
+Six public definer RPCs retain fixed search_path=public with qualified application relations. Both DBs deny public-schema CREATE to anon/authenticated/service_role. No empty-path conversion is required by this review; migration-only owners remain trusted. All other reviewed functions use an empty path. PostgreSQL/platform schemas, including PgBouncer's platform-owned authentication function, are outside application-function scope and weren't invoked or modified.
+
+Function-body review is complete in this recorded scope with no new defect confirmed. S3 remains In progress for final policy/table coverage reconciliation; S2 hosted method/role matrix, S4 mutation coverage and S5 validation remain open. No database, runtime, provider, credentials or membership changes were made. Rollback is a source/document revert only.
+
+
+## B39 remaining table/policy coverage, 4 November 2026
+
+All25 public tables have RLS; policies and effective client/service CRUD grants match across staging/Production. Nine server-only no-policy tables rely on RLS denial (broad grants alone do not authorize rows). Previously repaired account/member/song/version/collaboration/legacy billing paths retain their boundaries. Profiles/preferences are own-user scoped; legacy colours are workspace scoped with the previously recorded service fallback limitation. Playlist headers retain client writes.
+
+Confirmed synthetic B39: dual-workspace member changes playlist.account_id from A to B while its playlist_songs entry still links A's private song. B-only user sees that source song ID through playlist-song RLS while direct source-song SELECT is empty. Inspected private playlist GET first resolves header ownership then service-fetches linked song metadata without account filter, so the transferred header can expose title/status across the workspace boundary. Public playlist projection and media have separate predicates; no media-access claim. Existing mismatch count0 in both environments.
+
+Candidate denies only raw client playlist I/U/D, preserving canonical server operations and reads. No current client-side mutation writer found. Baseline26/candidate25/rollback26 each pass both DBs; service CRUD/role reads/policies/other grants preserved. Zero fixture rows and unchanged original grants/policy hash67e1c849af01f1063b56ac6d8a295570 verified. All471 Node tests, composer lint and whitespace pass. No permanent installation or real-content/provider operation. S3 coverage closure waits for this approved repair and remaining evidence reconciliation; S2 hosted role/method and S4/S5 remain open. See B39 backlog for staged acceptance/rollback.
+
+
+## S3 table/policy exit and B39 installed,4 November2026
+
+B39 approved and installed staging20261104085737/Production20261104090003; installed25 pass each. Actual staged owner playlist creation derives correct creator/account, rename and public/draft saves persist, two-song add/reorder/remove persist. Cleanup removes playlist/links/two synthetic songs, storage0 and original empty UI verified. No delete control exists in playlist UI; SQL service DELETE is covered, hosted DELETE acceptance not claimed. Production login200, unauthenticated playlist GET/PATCH/DELETE401, existing public playlist projection200. No real Production content/provider mutation. Matching SQL restores old grants and reopens the bypass.
+
+All25 public tables map to these reviewed boundaries:
+
+| Tables | Effective boundary / evidence |
+| --- | --- |
+| account_invites, beta_feedback, billing_webhook_events, email_auth_flows, email_login_rate_limits, mutation_rate_limits, referral_codes, referrals, stripe_webhook_events | Nine server-only tables: RLS/no client policy; some retain table grants, which do not bypass RLS. Restricted RPCs/canonical service handlers provide intended operations. No untrusted public definer function can expose these rows. |
+| accounts, account_members | Workspace member reads; client writes denied B32/B34. Canonical owner/invite/bootstrap controls covered by installed19/23, B35 replay11 and bootstrap14 evidence. |
+| songs, song_versions | Member reads; anonymous raw reads and client writes denied B28/B36. Public projection/media routes retain explicit scope. Installed40 and real upload/finalize/accounting/delete acceptance. |
+| actions, song_tasks, comments, comment_threads, playlist_songs | Parent/workspace reads; client mutation denied B37, preserving earlier private-comment INSERT denial. Installed81 and staged collaboration acceptance. |
+| playlists | Workspace member reads; client writes now denied B39. Installed25 and actual staged playlist flow recorded above. |
+| billing_subscriptions, billing_checkout_sessions | Workspace member reads; client writes denied B38. Empty legacy tables, no active entitlement reader; installed84 and settings/plan reads. |
+| profiles, profile_settings | Own-user SELECT/INSERT/UPDATE, no client DELETE policy. B38 four-role own/foreign read/update probes; profile metadata isn't canonical Auth/admin identity. |
+| settings | Workspace membership SELECT/UPDATE and membership/own-user INSERT; no DELETE policy. Colour-only legacy settings; B38 scoped probes. Display-name-based server migration fallback remains an explicit limited legacy behaviour, not proof of arbitrary cross-workspace service reads. |
+| public_comments | Direct client SELECT/I/U/D absent; canonical shared-song projection/submission path only, B28/B26. |
+
+Post-repair checked-in table_security_inventory.sql pins25 tables' RLS/force state, full policy expressions/roles/permissiveness, table ACL and column ACL plus four schema/view/role checks. All29 pass both DBs. No public views/materialized views, untrusted schema CREATE or client superuser/BYPASSRLS role. Function19 body/grant checks previously match. Security advisors zero ERROR/WARN, nine expected no-policy INFO. Hash checks detect reviewed-state drift, not a substitute for behavioural tests.
+
+S3 Done in recorded database review scope. S2 hosted API role/method verification, S4 abuse coverage and S5 validation remain open. Future findings can reopen S3. No new provider/payment acceptance, platform-internal audit or universal concurrency guarantee is claimed.
+
+
+## S4 provider attribution and mutation coverage,4 November2026
+
+Read-only Supabase dashboards in both environments show Turnstile CAPTCHA enabled and leaked-password protection enabled. Current displayed limits: signup/sign-in30 per5min/IP, verification30 per5min/IP, refresh150 per5min/IP, per-user custom SMTP interval60seconds; IP forwarding off. Email/hour field redacted by browser tooling, so its current numeric value isn't asserted (September staging record was30/hour). No secret was revealed, setting saved, email sent or quota intentionally exhausted. Dashboard evidence is configuration, not a load/captcha/provider-delivery test. Existing login app limiter remains15/5min/trusted Vercel IP and fails closed.
+
+| Mutation family | Existing effective control / remaining limit |
+| --- | --- |
+| Public/private comments, invitation creation/resend | Approved shared DB budgets5/min/IP public,30/min/user private,30/hour/workspace and60sec/recipient invitations; failure closes before write/send. B26/B34/B37 remove raw write bypass; existing SQL/hosted/fake-I/O evidence applies. |
+| Feedback | DB trigger atomic5/hour with ordered user/IP locks, honeypot and trusted visitor hash; prior hosted concurrency and installed proof. |
+| Signup/recover/resend/reset and password login | Same-origin,16KiB typed input, Turnstile/provider controls; login adds app-level per-IP budget. Resend also needs matching sealed signup intent. Provider requests use public key from server; effective end-user provider IP attribution isn't proven. Signup/recovery create temporary auth-flow rows before provider rejection, so provider CAPTCHA alone is not proof of an app flow-creation quota. No new quota/forwarding policy silently installed. |
+| Signed internal notifications and Stripe webhook | Body ceiling/HMAC and Stripe signature respectively; unsigned requests denied before external action. Source comment budget gates scheduler. No email/payment acceptance claimed. |
+| Song/version/image uploads | Canonical workspace/role checks, signed paths, byte/type/signature ceilings and plan/storage limits. No blanket new request-rate gate. |
+| Actions/tasks/playlists/profile/workspace mutations and billing | Canonical identity/resource/role/field gates; server-owned tables where recorded. No claim every authenticated operation has a request quota. B40 closes malformed action/task input, not request-rate policy. |
+| CSP reports and plan telemetry | CSP16KiB/10-report/type/safe projection ceiling; plan event enum whitelist and log-only action. No app-level durable rate budget on either public logging route. Managed platform firewall configuration couldn't previously be established; don't infer its absence or coverage. |
+
+S4 stays open for the bounded auth flow/proxy acceptance and decision on remaining telemetry/privileged mutation budgets. No blanket dashboard/bootstrap/login throttle or provider configuration change authorized by this inventory.
+
+## B40 collaboration validation,4 November2026
+
+35 actual-handler/fake-I/O regression failures on old code;44 new cases/all515 local tests now pass, TypeScript/focused lint/whitespace clean. Five action/task handlers use authenticated16KiB JSON-object input and typed fields before database work; timestamp bounds match existing comments. Task reorder checks returned database errors rather than claiming success. Canonical workspace/source/assignee/attribution rules preserved. No migration/provider/auth boundary change. Exact-head hosted valid-flow/release checks pending; partial parallel reorder writes remain an explicit limit. S5 not yet complete.
+
+
+### 4 November 2026: B40 acceptance and hosted read revocation complete
+
+User accepted member view and drag reorder; DB readback task B sort_order0/A1. Existing selected password identity successfully reads fixture song, version, song tasks and version threads as member. After guarded deletion of only its synthetic membership, the same browser session immediately receives explicit denial JSON for all four reads, without fixture title. Bootstrap falls back to original workspace3498b4a6-c0df-4bc6-b2db-14e8213cbcfa as Owner. These are12 hosted browser projection observations across outsider/member/removed states, not independent HTTP-status capture or all-method S2 completion.
+
+Guarded cleanup removed disposable account1ee43543-b6a2-4397-9679-518dd62fec30 and its exact synthetic song/related version/thread/comment/action/two tasks and owner membership. All eight fixture counts0; participant original membership count1, planFree/storage0/null Stripe unchanged. No Auth identity, real workspace/content, email/provider, payment or actual Storage object deleted. Browser returned to original dashboard. B40 application release proceeds after final PR87 checks; remaining S2 role/method, S4 and S5 review stays open.
+
+
+## B40 Production and B41 remaining metadata validation,4 November2026
+
+B40 primary dpl_BCGgcjLmtjcATiUaFuKpE17wpkRJ Ready/live at merge613a1426; www alias/source confirmed. Seven safe live checks pass: login200, five changed malformed signed-out methods401, existing public playlist projection200. Production email config enabled=true/passwordManagementEnabled=false preserved; no fresh positive write/payment/email. Staging member read/reorder and revocation acceptance complete; fixtures0. Rollback prior4e8a2750 app retaining B39 SQL.
+
+B41 local remaining metadata pass reuses bounded object input for nine route files/ten methods, typed fields and playlist ID list checks. Reorder stops and returns generic500 on reported update/header errors rather than false200; may partially update serial positions before failure.44 before-fix regression failures across two batches,66 new cases/all581 local tests pass; TypeScript/focused lint0errors, one existing unused-variable warning. Valid defaults/nullable version metadata/whitelists and auth/workspace/owner predicates preserved. No schema/config/provider/auth-boundary change. Hosted Preview/CI/normal-flow acceptance pending. Existing public invite lookup/accept already validates token format; old malformed-token roadmap note doesn't justify another repair. S2/S4/S5 stay open.
+
+
+4 November S4 beta scope accepted: user explicitly chose Accept for current beta for the recorded limits. Retain approved comment/invite/feedback quotas and existing Auth CAPTCHA/provider controls; no new general quotas. Public telemetry lacks an app quota and provider end-user IP attribution remains unverified. S4 Done for current beta; re-evaluate before wider launch at L8. Acceptance doesn't assert stress/provider-delivery verification or change a service setting.
+
+4 November B41 Preview source3ff0656c/Ready dpl_8ZWim3zUJA3wek9usGL35LEnCdJM, existing email alias and staging project verified. Ten malformed signed-out methods401 and existing invalid-invite lookup404 pass;581 local tests/four source checks pass. Browser URL policy blocks unsupported-protocol current frame reload, so normal metadata UI acceptance requires user. Only isolated account/owner link/two pending metadata songs/versions seeded, no actual audio/provider action. Original workspace/plan unchanged. No B41 Production deployment or universal hosted field coverage claimed.
+
+
+## B41 Production completion,4 November2026
+
+User accepted playlist create/name/add/reorder/refresh; DB B0/A1 verified. All fixture account/member/song/version/playlist/link counts0; participant original Owner workspace, planFree/storage0/null Stripe/membership1 restored. PR88 merge1d8fe5a7 primary dpl_3ENwd7uEfZYkDqxHt3QcudGteQXy Ready/www source verified. Ten malformed signed-out methods401 and login/public projection200; email enabled/password management disabled preserved.581 tests/TypeScript/source CI and staged acceptance support release; no fresh Production positive content/provider/payment test. Rollback613a1426 app retaining installed DB restrictions.
+
+## Remaining L5 beta closeout proposal,4 November2026
+
+Accepted by Coris on 4 November 2026 for the current beta. S2/S5 and L5 exit are complete within this bounded coverage; unperformed hosted permutations remain unperformed. S3 is verified in recorded database scope; S4/S6/S7 have their recorded beta scopes/acceptances.
+
+| Evidence layer | Recorded coverage / practical limit |
+| --- | --- |
+| Database | All25 public tables/RLS/ACLs and19 application functions reviewed, private media repaired; installed role/grant/service probes and function/table drift checks pass in named B21/B23/B28/B32/B34-B39 records. No claim of platform-internal or all-race audit. |
+| Handler tests |581 local tests include executing real handlers with fake framework/database/provider I/O for canonical identity, workspace/owner boundaries, whitelists, input shape/types/bytes/timestamps and safe error paths. These are not581 hosted journeys. |
+| Controlled staging | Owner/member/invite-removal/replay, upload/finalize/accounting/delete, comments/actions/tasks/playlists and user password login/drag order verified in named records. Four resource GETs observed in outsider/member/removed states using a real session; no exhaustive hosted method-by-role permutations. All disposable test rows removed. |
+| Production | Exact source/project/alias verification, CI, safe signed-out/public/media checks and recorded configuration readback. Fresh positive writes, payment and real notification delivery not repeated against user Production data. |
+| Remaining limits | Legacy malformed/invalid-ID calls can still use safe generic500 paths; this review doesn't claim universal400 responses or one body-size parser everywhere. Full provider/payment sandbox, device/background audio, notifications B20, performance/cache-isolation B17-B19 and consolidated journey acceptance stay in L6. S4 accepted beta quota/IP limits and S7 Hobby monitoring limits remain for L8 review. |
+
+Accepted decision: S2/S5 exit for the current beta on this layered evidence and stated limits, carrying the named L6 checks forward before the wider-launch decision. Do not interpret acceptance as every hosted permutation passing, new billing/auth activation, Production payment permission, a marketing go-ahead or an unqualified security guarantee. Confirmed future defects reopen their stage; retained app/SQL rollback records remain applicable.

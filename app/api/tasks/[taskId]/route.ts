@@ -1,3 +1,5 @@
+import { readCollaborationInput } from '@/lib/collaborationInput';
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
@@ -35,6 +37,13 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ taskId:
       return NextResponse.json({ error: 'You must be signed in to update a task.' }, { status: 401 });
     }
 
+    const body = await readCollaborationInput(req);
+    if (!body) return NextResponse.json({ error: 'Invalid task details.' }, { status: 400 });
+    if (('status' in body && body.status !== 'pending' && body.status !== 'completed')
+      || ('description' in body && (typeof body.description !== 'string' || !body.description.trim()))) {
+      return NextResponse.json({ error: 'Invalid task details.' }, { status: 400 });
+    }
+
     const { task, workspaceId } = await loadTaskWorkspace(params.taskId);
 
     if (!task) {
@@ -45,10 +54,9 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ taskId:
       return NextResponse.json({ error: 'You do not have access to this task.' }, { status: 403 });
     }
 
-    const body = await req.json();
     const allowed: Record<string, string> = {};
-    if ('status' in body) allowed.status = body.status;
-    if ('description' in body) allowed.description = body.description;
+    if (body.status === 'pending' || body.status === 'completed') allowed.status = body.status;
+    if (typeof body.description === 'string') allowed.description = body.description.trim();
 
     if (Object.keys(allowed).length === 0) {
       return NextResponse.json({ error: 'Nothing to update.' }, { status: 400 });
@@ -64,8 +72,8 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ taskId:
     if (error) throw error;
     return NextResponse.json({ task: data });
   } catch (error) {
-    console.error('Error updating task:', error);
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('Error updating task:', safeErrorDetails(error));
+    return NextResponse.json({ error: "Could not update task." }, { status: 500 });
   }
 }
 
@@ -96,7 +104,7 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ taskId
     if (error) throw error;
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error('Error deleting task:', error);
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('Error deleting task:', safeErrorDetails(error));
+    return NextResponse.json({ error: "Could not delete task." }, { status: 500 });
   }
 }

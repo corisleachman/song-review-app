@@ -1,3 +1,5 @@
+import { readCollaborationInput } from '@/lib/collaborationInput';
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { artworkDeliveryUrl } from '@/lib/artworkAccess';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -8,21 +10,6 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 const STORAGE_DELETE_BATCH_SIZE = 100;
-
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  if (error && typeof error === 'object') {
-    const maybeMessage = 'message' in error && typeof (error as { message?: unknown }).message === 'string'
-      ? (error as { message: string }).message
-      : null;
-    if (maybeMessage) return maybeMessage;
-  }
-
-  return 'Song request failed.';
-}
 
 function normalizeStorageObjectPath(value: string | null | undefined, bucket: string) {
   const trimmed = value?.trim() ?? '';
@@ -52,7 +39,7 @@ async function removeStorageObjects(bucket: string, paths: string[]) {
     const { error } = await supabaseServer.storage.from(bucket).remove(batch);
     if (error) {
       cleanupPending = true;
-      console.warn(`[songs/delete] ${bucket} cleanup will need retry:`, error.message);
+      console.warn(`[songs/delete] ${bucket} cleanup will need retry:`, safeErrorDetails(error));
     }
   }
 
@@ -101,8 +88,8 @@ export async function GET(req: NextRequest, props: { params: Promise<{ songId: s
       }
     );
   } catch (error) {
-    console.error('Error fetching song:', error);
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    console.error('Error fetching song:', safeErrorDetails(error));
+    return NextResponse.json({ error: 'Song request failed.' }, { status: 500 });
   }
 }
 
@@ -110,7 +97,6 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ songId:
   const params = await props.params;
   try {
     const { songId } = params;
-    const { title, status } = await req.json();
     const resolved = await resolveCanonicalIdentity();
 
     if (!songId) {
@@ -120,11 +106,17 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ songId:
       return NextResponse.json({ error: 'You must be signed in to update a song.' }, { status: 401 });
     }
 
-    if (!title?.trim() && !status) {
+    const body = await readCollaborationInput(req);
+    if (!body || (body.title != null && typeof body.title !== 'string')) {
+      return NextResponse.json({ error: 'Invalid song details.' }, { status: 400 });
+    }
+    const { title, status } = body;
+
+    if (!(typeof title === 'string' && title.trim()) && status == null) {
       return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
     }
 
-    if (status && !isSongStatus(status)) {
+    if (status != null && !isSongStatus(status)) {
       return NextResponse.json({ error: 'Invalid song status' }, { status: 400 });
     }
 
@@ -141,8 +133,8 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ songId:
     }
 
     const updates: Record<string, string> = {};
-    if (title?.trim()) updates.title = title.trim();
-    if (status) updates.status = status;
+    if (typeof title === 'string' && title.trim()) updates.title = title.trim();
+    if (isSongStatus(status)) updates.status = status;
 
     const { data, error } = await supabaseServer
       .from('songs')
@@ -155,8 +147,8 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ songId:
 
     return NextResponse.json({ song: data }, { status: 200 });
   } catch (error) {
-    console.error('Error updating song:', error);
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    console.error('Error updating song:', safeErrorDetails(error));
+    return NextResponse.json({ error: 'Song request failed.' }, { status: 500 });
   }
 }
 
@@ -231,7 +223,7 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ songId
       { status: 200 }
     );
   } catch (error) {
-    console.error('Error deleting song:', error);
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    console.error('Error deleting song:', safeErrorDetails(error));
+    return NextResponse.json({ error: 'Song request failed.' }, { status: 500 });
   }
 }

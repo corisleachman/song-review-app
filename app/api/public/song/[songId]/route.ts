@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { artworkDeliveryUrl } from '@/lib/artworkAccess';
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
@@ -113,7 +114,7 @@ export async function GET(_req: NextRequest, props: { params: Promise<{ songId: 
       }
     );
   } catch (error) {
-    console.error('[public/song] error:', error);
+    console.error('[public/song] error:', safeErrorDetails(error));
     return NextResponse.json({ error: 'Something went wrong' }, { status: 500 });
   }
 }

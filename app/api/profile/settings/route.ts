@@ -1,3 +1,5 @@
+import { readCollaborationInput } from '@/lib/collaborationInput';
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import {
@@ -5,11 +7,6 @@ import {
   loadThemeSettings,
   saveThemeSettings,
 } from '@/lib/profileThemeSettings';
-
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) return error.message;
-  return 'Profile settings request failed.';
-}
 
 export async function GET() {
   try {
@@ -25,9 +22,9 @@ export async function GET() {
     const settings = await loadThemeSettings(resolved.identity);
     return NextResponse.json(settings);
   } catch (error) {
-    console.error('Error fetching profile settings:', error);
+    console.error('Error fetching profile settings:', safeErrorDetails(error));
     return NextResponse.json(
-      { error: getErrorMessage(error) },
+      { error: 'Profile settings request failed.' },
       { status: 500 }
     );
   }
@@ -35,7 +32,6 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const payload = await req.json();
     const resolved = await resolveCanonicalIdentity();
 
     if (!resolved) {
@@ -45,6 +41,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const payload = await readCollaborationInput(req);
     if (!isThemeSettingsInput(payload)) {
       return NextResponse.json(
         { error: 'Missing required colors' },
@@ -55,9 +52,9 @@ export async function POST(req: NextRequest) {
     const settings = await saveThemeSettings(resolved.identity, payload);
     return NextResponse.json(settings);
   } catch (error) {
-    console.error('Error saving profile settings:', error);
+    console.error('Error saving profile settings:', safeErrorDetails(error));
     return NextResponse.json(
-      { error: getErrorMessage(error) },
+      { error: 'Profile settings request failed.' },
       { status: 500 }
     );
   }

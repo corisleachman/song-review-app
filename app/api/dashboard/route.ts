@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { artworkDeliveryUrl } from '@/lib/artworkAccess';
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
@@ -13,21 +14,6 @@ import { RequestTiming } from '@/lib/requestTiming';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  if (error && typeof error === 'object') {
-    const maybeMessage = 'message' in error && typeof (error as { message?: unknown }).message === 'string'
-      ? (error as { message: string }).message
-      : null;
-    if (maybeMessage) return maybeMessage;
-  }
-
-  return 'Could not load dashboard data.';
-}
 
 function truncateDetail(value: string | null | undefined, maxLength = 84) {
   const trimmed = value?.trim() ?? '';
@@ -439,7 +425,7 @@ export async function GET(req: NextRequest) {
       }
     );
   } catch (error) {
-    console.error('Error loading dashboard data:', error);
-    return respond({ error: getErrorMessage(error) }, 500);
+    console.error('Error loading dashboard data:', safeErrorDetails(error));
+    return respond({ error: 'Could not load dashboard data.' }, 500);
   }
 }

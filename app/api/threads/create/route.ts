@@ -1,23 +1,9 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { enforceMutationRateLimit } from '@/lib/mutationRateLimit';
 import { scheduleThreadNotification } from '@/lib/threadNotifications';
-
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  if (error && typeof error === 'object') {
-    const maybeMessage = 'message' in error && typeof (error as { message?: unknown }).message === 'string'
-      ? (error as { message: string }).message
-      : null;
-    if (maybeMessage) return maybeMessage;
-  }
-
-  return 'Failed to create thread';
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -156,9 +142,9 @@ export async function POST(req: NextRequest) {
       thread: enrichedThread,
     });
   } catch (error) {
-    console.error('Error creating thread:', error);
+    console.error('Error creating thread:', safeErrorDetails(error));
     return NextResponse.json(
-      { error: getErrorMessage(error) },
+      { error: 'Failed to create thread' },
       { status: 500 }
     );
   }

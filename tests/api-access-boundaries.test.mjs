@@ -11,8 +11,9 @@ const require = createRequire(import.meta.url);
 
 // Execute the real handler, replacing only framework/I/O boundaries. This
 // checks runtime decisions; it is not a Supabase, cookie or hosted HTTP test.
-function routeHarness(route, { identity = null, user = null, tables = {}, storage = null, mutationResult = null, mutationError = null, limitResponse = null, overrides = {} } = {}) {
+function routeHarness(route, { identity = null, user = null, tables = {}, storage = null, mutationResult = null, mutationError = null, limitResponse = null, overrides = {}, logger = console } = {}) {
   const reads = [];
+  const queries = [];
   const writes = [];
   let notifications = 0;
   const limitCalls = [];
@@ -20,12 +21,14 @@ function routeHarness(route, { identity = null, user = null, tables = {}, storag
     from(table) {
       reads.push(table);
       const predicates = [];
+      const filters = [];
+      queries.push({ table, filters });
       let single = false;
       let mutation = false;
       let selection = '';
       const query = {
         select(columns = '') { selection = columns; return query; },
-        eq(key, value) { predicates.push(row => row[key] === value); return query; },
+        eq(key, value) { filters.push([key, value]); predicates.push(row => row[key] === value); return query; },
         in(key, values) { predicates.push(row => values.includes(row[key])); return query; },
         not(key, operator, value) {
           assert.equal(operator, 'is');
@@ -47,6 +50,10 @@ function routeHarness(route, { identity = null, user = null, tables = {}, storag
             const parent = (tables.songs ?? []).find(song => song.id === row.song_id);
             return parent ? [{ ...row, song: parent }] : [];
           });
+          if (selection.includes('workspace_song:songs!song_versions_song_id_fkey')) rows = rows.map(row => ({
+            ...row,
+            workspace_song: (tables.songs ?? []).find(song => song.id === row.song_id) ?? null,
+          }));
           if (selection.includes('playlist:playlists!inner')) rows = rows.flatMap(row => {
             const parent = (tables.playlists ?? []).find(playlist => playlist.id === row.playlist_id);
             return parent ? [{ ...row, playlist: parent }] : [];
@@ -88,23 +95,197 @@ function routeHarness(route, { identity = null, user = null, tables = {}, storag
       }
       return require(specifier);
     };
-    const evaluate = new Function('require', 'exports', compiled);
-    evaluate(localRequire, exports);
+    const evaluate = new Function('require', 'exports', 'console', compiled);
+    evaluate(localRequire, exports, logger);
     return exports;
   }
-  return { handler: load(path.join(root, route)), reads, writes, limitCalls, get notifications() { return notifications; } };
+  return { handler: load(path.join(root, route)), reads, queries, writes, limitCalls, get notifications() { return notifications; } };
 }
 
 const session = role => ({ identity: { workspaceId: 'workspace-a', userId: `user-${role}`, membershipRole: role, displayName: 'Test Owner', workspaceName: 'Test Workspace' }, bootstrap: { workspace: { plan: 'free' } } });
 const song = { id: 'song-a', account_id: 'workspace-a', title: 'Allowed', image_url: null };
 const foreignSong = { id: 'song-b', account_id: 'workspace-b', title: 'PRIVATE-TITLE', image_url: 'PRIVATE-ARTWORK' };
+
+test('membership removal preserves owner-only canonical workspace boundary', async t => {
+  for (const role of [null, 'admin', 'member']) {
+    await t.test(`${role ?? 'signed out'} cannot remove members`, async () => {
+      const calls = [];
+      const { handler } = routeHarness('app/api/workspace/members/[userId]/route.ts', {
+        identity: role ? session(role) : null,
+        overrides: { '@/lib/workspaceMembers': {
+          findWorkspaceMembershipByUserId: async (...args) => { calls.push(args); },
+          deleteWorkspaceMembershipByUserId: async (...args) => { calls.push(args); },
+        } },
+      });
+      const response = await handler.DELETE(new Request('https://test.invalid'), { params: Promise.resolve({ userId: 'target' }) });
+      assert.equal(response.status, role ? 403 : 401);
+      assert.deepEqual(calls, []);
+    });
+  }
+  for (const [target, membership, status] of [
+    ['user-owner', null, 400],
+    ['other-owner', { role: 'owner' }, 400],
+    ['foreign-user', null, 404],
+    ['collaborator', { role: 'member' }, 200],
+  ]) {
+    await t.test(`owner removal of ${target} returns ${status}`, async () => {
+      const reads = [], writes = [];
+      const { handler } = routeHarness('app/api/workspace/members/[userId]/route.ts', {
+        identity: session('owner'),
+        overrides: { '@/lib/workspaceMembers': {
+          findWorkspaceMembershipByUserId: async (...args) => { reads.push(args); return membership; },
+          deleteWorkspaceMembershipByUserId: async (...args) => { writes.push(args); },
+        } },
+      });
+      const response = await handler.DELETE(new Request('https://test.invalid'), { params: Promise.resolve({ userId: target }) });
+      assert.equal(response.status, status);
+      assert.deepEqual(reads, target === 'user-owner' ? [] : [['workspace-a', target]]);
+      assert.deepEqual(writes, status === 200 ? [['workspace-a', target]] : []);
+    });
+  }
+});
 const getRequest = () => {
   const request = new Request('https://staging.invalid/api/test');
   request.nextUrl = new URL(request.url);
   return request;
 };
-const jsonRequest = (body, method = 'POST') => new Request('https://staging.invalid/api/test', { method, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+const jsonRequest = (body, method = 'POST') => {
+  const request = new Request('https://staging.invalid/api/test', { method, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  request.nextUrl = new URL(request.url);
+  return request;
+};
 const params = values => ({ params: Promise.resolve(values) });
+
+for (const role of ['owner', 'member']) {
+  const collaborationTables = {
+    songs: [song, foreignSong],
+    song_versions: [{ id: 'source-version', song_id: song.id }, { id: 'foreign-version', song_id: foreignSong.id }],
+    comment_threads: [{ id: 'source-thread', song_version_id: 'source-version' }, { id: 'foreign-thread', song_version_id: 'foreign-version' }],
+    comments: [{ id: 'source-comment', thread_id: 'source-thread' }, { id: 'foreign-comment', thread_id: 'foreign-thread' }],
+    actions: [{ id: 'action-a', account_id: 'workspace-a', song_id: song.id }],
+  };
+  test(`action create ${role} rejects another song's comment before writing`, async () => {
+    const h = routeHarness('app/api/actions/create/route.ts', { identity: session(role), tables: collaborationTables });
+    const response = await h.handler.POST(jsonRequest({ songId: song.id, commentId: 'foreign-comment', description: 'Fixture' }));
+    assert.equal(response.status, 400);
+    assert.deepEqual(h.writes, []);
+  });
+  test(`action create ${role} rejects an unrelated assignee`, async () => {
+    const h = routeHarness('app/api/actions/create/route.ts', { identity: session(role), tables: collaborationTables });
+    const response = await h.handler.POST(jsonRequest({ songId: song.id, commentId: 'source-comment', description: 'Fixture', assignedToUserId: 'outsider' }));
+    assert.equal(response.status, 400);
+    assert.deepEqual(h.writes, []);
+  });
+  test(`action create ${role} stamps canonical workspace and creator`, async () => {
+    const identity = session(role); identity.identity.authorName = 'Actual author';
+    const h = routeHarness('app/api/actions/create/route.ts', { identity, tables: collaborationTables, mutationResult: { id: 'new-action' } });
+    const response = await h.handler.POST(jsonRequest({ songId: song.id, commentId: 'source-comment', description: 'Fixture', account_id: 'workspace-b', created_by_user_id: 'outsider', suggested_by: 'Forged', resolved_in_version_id: 'foreign-version' }));
+    assert.equal(response.status, 201);
+    const saved = h.writes[0].value[0];
+    assert.equal(saved.account_id, 'workspace-a');
+    assert.equal(saved.created_by_user_id, `user-${role}`);
+    assert.equal(saved.suggested_by, 'Actual author');
+    assert.equal(saved.resolved_in_version_id, null);
+  });
+  for (const body of [{ resolvedInVersionId: 'foreign-version' }, { assignedToUserId: 'outsider' }]) {
+    test(`action update ${role} rejects unrelated ${Object.keys(body)[0]}`, async () => {
+      const h = routeHarness('app/api/actions/[actionId]/route.ts', { identity: session(role), tables: collaborationTables });
+      const response = await h.handler.PATCH(jsonRequest(body, 'PATCH'), params({ actionId: 'action-a' }));
+      assert.equal(response.status, 400);
+      assert.deepEqual(h.writes, []);
+    });
+  }
+  test(`playlist add ${role} refuses another workspace's song`, async () => {
+    const h = routeHarness('app/api/playlists/[id]/songs/route.ts', {
+      identity: session(role), tables: { songs: [foreignSong], playlists: [{ id: 'playlist-a', account_id: 'workspace-a', title: 'Fixture' }] },
+    });
+    const response = await h.handler.POST(jsonRequest({ songId: foreignSong.id }), params({ id: 'playlist-a' }));
+    assert.equal(response.status, 404);
+    assert.deepEqual(h.writes, []);
+  });
+  test(`task update ${role} ignores injected parent and account fields`, async () => {
+    const h = routeHarness('app/api/tasks/[taskId]/route.ts', { identity: session(role), tables: { songs: [song], song_tasks: [{ id: 'task-a', song_id: song.id }] }, mutationResult: { id: 'task-a' } });
+    const response = await h.handler.PATCH(jsonRequest({ description: 'Updated fixture', account_id: 'workspace-b', song_id: foreignSong.id, created_by_user_id: 'outsider' }, 'PATCH'), params({ taskId: 'task-a' }));
+    assert.equal(response.status, 200);
+    assert.deepEqual(h.writes, [{ table: 'song_tasks', value: { description: 'Updated fixture' } }]);
+  });
+  test(`task update ${role} rejects a foreign song's task`, async () => {
+    const h = routeHarness('app/api/tasks/[taskId]/route.ts', { identity: session(role), tables: { songs: [foreignSong], song_tasks: [{ id: 'task-b', song_id: foreignSong.id }] } });
+    const response = await h.handler.PATCH(jsonRequest({ description: 'Forbidden fixture' }, 'PATCH'), params({ taskId: 'task-b' }));
+    assert.equal(response.status, 403);
+    assert.deepEqual(h.writes, []);
+  });
+}
+
+for (const role of ['owner', 'admin', 'member']) {
+  test(`upload allocation ${role} rejects a foreign song before signing or writing`, async () => {
+    const h = routeHarness('app/api/versions/create/route.ts', { identity: session(role), tables: { songs: [foreignSong] } });
+    const response = await h.handler.POST(jsonRequest({ songId: foreignSong.id, fileName: 'fixture.mp3', fileSize: 512, fileType: 'audio/mpeg' }));
+    assert.equal(response.status, 403);
+    assert.deepEqual(h.writes, []);
+    assert.deepEqual(h.reads, ['songs']);
+  });
+  for (const method of ['POST', 'DELETE']) {
+    test(`upload ${method} ${role} rejects foreign finalized versions before Storage access`, async () => {
+      const h = routeHarness('app/api/versions/[versionId]/finalize/route.ts', {
+        identity: session(role), tables: { songs: [foreignSong], song_versions: [{ id: 'foreign-version', song_id: foreignSong.id, file_path: 'PRIVATE-AUDIO', upload_finalized_at: '2026-11-01' }] },
+      });
+      const response = await h.handler[method](jsonRequest({}, method), params({ versionId: 'foreign-version' }));
+      assert.equal(response.status, 403);
+      assert.deepEqual(h.writes, []);
+      assert.doesNotMatch(await response.text(), /PRIVATE-AUDIO/);
+    });
+  }
+  test(`version metadata ${role} whitelists labels and notes while preserving server-owned fields`, async () => {
+    const version = { id: 'version-a', song_id: song.id, version_number: 1, file_name: 'fixture.mp3', label: 'New label', notes: 'New notes' };
+    const h = routeHarness('app/api/versions/[versionId]/route.ts', {
+      identity: session(role), tables: { songs: [song], song_versions: [version] }, mutationResult: version,
+    });
+    const response = await h.handler.PATCH(jsonRequest({ label: 'New label', notes: ' New notes ', file_path: 'INJECTED', file_size_bytes: 999, upload_finalized_at: null, song_id: foreignSong.id, account_id: 'workspace-b' }, 'PATCH'), params({ versionId: version.id }));
+    assert.equal(response.status, 200);
+    assert.deepEqual(h.writes, [{ table: 'song_versions', value: { label: 'New label', notes: 'New notes' } }]);
+  });
+}
+for (const role of ['admin', 'member']) {
+  test(`song deletion ${role} cannot bypass owner-only server path`, async () => {
+    const h = routeHarness('app/api/songs/[songId]/route.ts', { identity: session(role), tables: { songs: [song] } });
+    const response = await h.handler.DELETE(jsonRequest({}, 'DELETE'), params({ songId: song.id }));
+    assert.equal(response.status, 403);
+    assert.deepEqual(h.writes, []);
+  });
+}
+
+for (const result of ['accepted', 'already_accepted', 'already_used', 'expired']) {
+  test(`invite acceptance ${result} respects canonical identity and only switches workspace on success`, async () => {
+    const calls = [], workspaceReads = [], cookieWrites = [];
+    const success = ['accepted', 'already_accepted'].includes(result);
+    const h = routeHarness('app/api/invites/[token]/accept/route.ts', {
+      user: { id: 'actual-user', email: ' Actual@Example.Test ' },
+      overrides: {
+        '@/lib/accountInvites': {
+          isValidInviteToken: () => true,
+          acceptWorkspaceInviteAtomically: async input => {
+            calls.push(input);
+            return { result, accountId: success ? 'invited-workspace' : null, alreadyMember: result === 'already_accepted' };
+          },
+          getInviteWorkspace: async id => { workspaceReads.push(id); return { id, name: 'Invited workspace' }; },
+        },
+        '@/lib/activeWorkspace': { writeActiveWorkspaceCookie: (_response, id) => cookieWrites.push(id) },
+      },
+    });
+    const response = await h.handler.POST(jsonRequest({ userId: 'spoofed-user', userEmail: 'other@example.test' }), params({ token: 'original-token' }));
+    assert.equal(response.status, success ? 200 : 400);
+    assert.deepEqual(calls, [{ inviteToken: 'original-token', userId: 'actual-user', userEmail: 'actual@example.test' }]);
+    assert.deepEqual(workspaceReads, success ? ['invited-workspace'] : []);
+    assert.deepEqual(cookieWrites, success ? ['invited-workspace'] : []);
+    const body = await response.json();
+    if (success) assert.equal(body.accepted, true);
+    else {
+      assert.equal(body.accepted, undefined);
+      assert.equal(body.workspace, undefined);
+    }
+  });
+}
 
 for (const role of ['owner', 'member']) {
   test(`song GET: ${role} can read own workspace but not another workspace`, async () => {
@@ -781,4 +962,483 @@ for (const error of [{ code: '42501', message: 'PRIVATE PROVIDER DETAILS' }, { c
     const response = await h.handler.POST(feedbackRequest());
     assert.equal(response.status, 500); assert.doesNotMatch(await response.text(), /PRIVATE PROVIDER DETAILS|42501|P0001/);
   });
+}
+
+for (const playlist of [false, true]) {
+  test(`public ${playlist ? 'playlist' : 'song'} projection excludes history, pending uploads and internal metadata`, async () => {
+    const pending = { ...finalizedVersion, id: 'pending-version', version_number: 3, upload_finalized_at: null, notes: 'INTERNAL-PENDING' };
+    const latest = { ...finalizedVersion, id: 'current-version', notes: 'INTERNAL-NOTE', file_name: 'INTERNAL-FILENAME', created_by_user_id: 'INTERNAL-USER' };
+    const older = { ...latest, id: 'old-version', version_number: 1, notes: 'INTERNAL-HISTORY' };
+    const sharedSong = { ...song, is_public: !playlist, created_by_user_id: 'INTERNAL-OWNER', status: 'INTERNAL-STATUS' };
+    const h = routeHarness(playlist ? 'app/api/public/playlist/[id]/route.ts' : 'app/api/public/song/[songId]/route.ts', {
+      tables: { songs: [sharedSong], song_versions: [pending, latest, older], accounts: [],
+        playlists: [{ id: 'playlist-a', account_id: 'workspace-a', is_public: true }],
+        playlist_songs: [{ playlist_id: 'playlist-a', song_id: 'song-a', position: 0 }],
+      },
+    });
+    const response = await h.handler.GET(getRequest(), params(playlist ? { id: 'playlist-a' } : { songId: 'song-a' }));
+    assert.equal(response.status, 200);
+    const body = await response.json(); const serialized = JSON.stringify(body);
+    assert.match(serialized, /current-version/);
+    assert.doesNotMatch(serialized, /pending-version|old-version|INTERNAL-|song-files|uploads\/|workspace-a/);
+    if (playlist) assert.equal(body.tracks.length, 1); else assert.equal(body.version.version_number, 2);
+    assert.deepEqual(h.writes, []);
+  });
+}
+
+const settingsBillingRoutes = [
+  ['profile/settings', 'GET', 'Profile settings request failed.'],
+  ['profile/settings', 'POST', 'Profile settings request failed.'],
+  ['settings', 'GET', 'Profile settings request failed.'],
+  ['settings', 'POST', 'Profile settings request failed.'],
+  ['settings/summary', 'GET', 'Could not load settings summary.'],
+  ['billing/checkout', 'POST', 'Could not start checkout.'],
+  ['billing/portal', 'POST', 'Could not open billing portal.'],
+  ['billing/activate', 'POST', 'Could not activate plan.'],
+];
+for (const [route, method, safeMessage] of settingsBillingRoutes) {
+  test(`${route} ${method}: unexpected identity/provider exception stays server-side`, async () => {
+    const h = routeHarness(`app/api/${route}/route.ts`, { overrides: {
+      '@/lib/canonicalIdentity': { resolveCanonicalIdentity: async () => { throw new Error('INTERNAL-PROVIDER-DETAILS'); } },
+    } });
+    const response = await h.handler[method](jsonRequest({}));
+    assert.equal(response.status, 500);
+    assert.deepEqual(await response.json(), { error: safeMessage });
+    assert.deepEqual(h.reads, []); assert.deepEqual(h.writes, []);
+  });
+}
+
+for (const [route, methods] of [
+  ['profile/settings', ['GET', 'POST']], ['settings', ['GET', 'POST']],
+  ['profile/visualizer', ['GET', 'POST']], ['settings/summary', ['GET']],
+  ['referrals/code', ['GET']], ['referrals/summary', ['GET']],
+  ['billing/checkout', ['POST']], ['billing/portal', ['POST']], ['billing/activate', ['POST']],
+]) for (const method of methods) {
+  test(`${route} ${method}: signed out cannot access database or provider`, async () => {
+    let providerCalls = 0;
+    const h = routeHarness(`app/api/${route}/route.ts`, { overrides: {
+      '@/lib/stripe': { getStripe: () => { providerCalls++; throw new Error('Unexpected provider call'); } },
+    } });
+    assert.equal((await h.handler[method](jsonRequest({}))).status, 401);
+    assert.deepEqual(h.reads, []); assert.deepEqual(h.writes, []); assert.equal(providerCalls, 0);
+  });
+}
+
+for (const route of ['checkout', 'portal', 'activate']) {
+  test(`billing ${route}: ordinary member cannot access database or Stripe`, async () => {
+    let providerCalls = 0;
+    const h = routeHarness(`app/api/billing/${route}/route.ts`, { identity: session('member'), overrides: {
+      '@/lib/stripe': { getStripe: () => { providerCalls++; throw new Error('Unexpected provider call'); } },
+    } });
+    assert.equal((await h.handler.POST(jsonRequest({ sessionId: 'foreign-checkout', accountId: 'workspace-b' }))).status, 403);
+    assert.deepEqual(h.reads, []); assert.deepEqual(h.writes, []); assert.equal(providerCalls, 0);
+  });
+}
+
+for (const role of ['owner', 'member']) {
+  test(`settings summary: ${role} uses canonical user/workspace and owner-only invites`, async () => {
+    const calls = [];
+    const h = routeHarness('app/api/settings/summary/route.ts', { identity: session(role), tables: { songs: [song, foreignSong] }, overrides: {
+      '@/lib/profileThemeSettings': { loadThemeSettings: async identity => { calls.push(['theme', identity.userId]); return { primary_color: 'own-theme' }; } },
+      '@/lib/workspaceMembers': { listWorkspaceMembers: async id => { calls.push(['members', id]); return []; } },
+      '@/lib/accountInvites': { listWorkspaceInvites: async id => { calls.push(['invites', id]); return [{ id: 'own-invite' }]; } },
+    } });
+    const response = await h.handler.GET(getRequest()); assert.equal(response.status, 200);
+    const body = await response.json(); assert.equal(body.identity.workspaceId, 'workspace-a');
+    assert.deepEqual(calls, [['theme', `user-${role}`], ['members', 'workspace-a'], ...(role === 'owner' ? [['invites', 'workspace-a']] : [])]);
+    assert.equal(body.invites.length, role === 'owner' ? 1 : 0);
+    assert.match(response.headers.get('cache-control'), /no-store/); assert.deepEqual(h.writes, []);
+    assert.deepEqual(h.queries.find(query => query.table === 'songs').filters, [['account_id', 'workspace-a']]);
+  });
+}
+
+for (const [workspace, paid, expected] of [['workspace-b', 'paid', 403], ['workspace-a', 'unpaid', 400], ['workspace-a', 'paid', 200]]) {
+  test(`billing activation: ${workspace}/${paid} validates Stripe before canonical workspace update`, async () => {
+    const calls = [];
+    const h = routeHarness('app/api/billing/activate/route.ts', { identity: session('owner'), overrides: {
+      '@/lib/stripe': { getStripe: () => ({ checkout: { sessions: { retrieve: async id => {
+        calls.push(id); return { client_reference_id: workspace, payment_status: paid, metadata: { target_plan: 'pro' }, customer: 'test-customer', subscription: 'test-subscription' };
+      } } } }), getPlanForStripePriceId: () => 'pro' },
+    } });
+    const response = await h.handler.POST(jsonRequest({ sessionId: 'test-checkout', accountId: 'workspace-b', plan: 'studio' }));
+    assert.equal(response.status, expected); assert.deepEqual(calls, ['test-checkout']);
+    if (expected !== 200) { assert.deepEqual(h.writes, []); assert.deepEqual(h.reads, []); }
+    else { assert.equal(h.writes.length, 1); assert.equal(h.writes[0].table, 'accounts'); assert.equal(h.writes[0].value.plan, 'pro'); assert.deepEqual(h.queries[0].filters, [['id', 'workspace-a']]); }
+  });
+}
+
+for (const route of ['profile/settings', 'settings']) {
+  test(`${route}: theme reads/writes ignore supplied identity and use the signed-in user`, async () => {
+    const calls = [];
+    const theme = { primary_color: '#111111', accent_color: '#222222', background_color: '#333333' };
+    const h = routeHarness(`app/api/${route}/route.ts`, { identity: session('member'), overrides: {
+      '@/lib/profileThemeSettings': {
+        isThemeSettingsInput: value => typeof value?.primary_color === 'string',
+        loadThemeSettings: async identity => { calls.push(['read', identity.userId]); return theme; },
+        saveThemeSettings: async (identity, value) => { calls.push(['write', identity.userId, value.primary_color]); return theme; },
+      },
+    } });
+    assert.equal((await h.handler.GET(getRequest())).status, 200);
+    assert.equal((await h.handler.POST(jsonRequest({ ...theme, userId: 'foreign-user', workspaceId: 'workspace-b' }))).status, 200);
+    assert.deepEqual(calls, [['read', 'user-member'], ['write', 'user-member', '#111111']]);
+  });
+}
+
+test('visualizer reads only the signed-in user preference', async () => {
+  const h = routeHarness('app/api/profile/visualizer/route.ts', { identity: session('member'), tables: {
+    profile_settings: [{ user_id: 'foreign-user', visualizer_enabled: true }, { user_id: 'user-member', visualizer_enabled: false }],
+  } });
+  const response = await h.handler.GET(getRequest());
+  assert.equal(response.status, 200); assert.deepEqual(await response.json(), { visualizer_enabled: false });
+  assert.deepEqual(h.queries[0].filters, [['user_id', 'user-member']]); assert.deepEqual(h.writes, []);
+});
+
+for (const route of ['code', 'summary']) {
+  test(`referrals ${route}: canonical user code and masked own-referral projection`, async () => {
+    const calls = [];
+    const h = routeHarness(`app/api/referrals/${route}/route.ts`, { identity: session('member'), tables: {
+      referrals: [
+        { id: 'own-referral', referred_by_user_id: 'user-member', referred_user_id: 'referred-user', status: 'pending' },
+        { id: 'FOREIGN-REFERRAL', referred_by_user_id: 'foreign-user', referred_user_id: 'PRIVATE-USER', status: 'pending' },
+      ], profiles: [{ id: 'referred-user', email: 'person@example.test', display_name: 'Person' }, { id: 'PRIVATE-USER', email: 'PRIVATE-EMAIL@example.test' }],
+    }, overrides: { '@/lib/referrals': {
+      getOrCreateReferralCode: async (...args) => { calls.push(args); return { code: 'TSR-TEST' }; }, REFERRAL_REWARD_CAP: 5,
+    } } });
+    const response = await h.handler.GET(getRequest()); assert.equal(response.status, 200);
+    const body = await response.json(); assert.deepEqual(calls, [['user-member', 'workspace-a']]);
+    assert.equal(body.code, 'TSR-TEST'); assert.doesNotMatch(JSON.stringify(body), /FOREIGN|PRIVATE|person@example/);
+    if (route === 'summary') { assert.equal(body.referrals.length, 1); assert.equal(body.referrals[0].maskedEmail, 'pe***@example.test'); }
+    assert.deepEqual(h.writes, []);
+  });
+}
+
+for (const route of ['checkout', 'portal']) {
+  test(`billing ${route}: owner uses their stored customer despite foreign account/customer payload`, async () => {
+    const calls = [];
+    const stripe = {
+      customers: { retrieve: async id => { calls.push(['customer', id]); return { id }; } },
+      checkout: { sessions: { create: async payload => { calls.push(['checkout', payload]); return { url: 'https://checkout.example.test/session' }; } } },
+      billingPortal: { sessions: { create: async payload => { calls.push(['portal', payload]); return { url: 'https://billing.example.test/session' }; } } },
+    };
+    const h = routeHarness(`app/api/billing/${route}/route.ts`, { identity: session('owner'), tables: {
+      accounts: [{ id: 'workspace-b', plan: 'free', stripe_customer_id: 'FOREIGN-CUSTOMER' }, { id: 'workspace-a', plan: 'free', stripe_customer_id: 'own-customer' }],
+    }, overrides: { '@/lib/stripe': { getStripe: () => stripe, getStripePriceId: (plan, interval) => `${plan}-${interval}` } } });
+    const response = await h.handler.POST(jsonRequest({ accountId: 'workspace-b', customer: 'FOREIGN-CUSTOMER', plan: 'pro', interval: 'year' }));
+    assert.equal(response.status, 200); assert.deepEqual(calls[0], ['customer', 'own-customer']);
+    const payload = calls[1][1]; assert.equal(payload.customer, 'own-customer');
+    if (route === 'checkout') { assert.equal(payload.client_reference_id, 'workspace-a'); assert.equal(payload.metadata.owner_user_id, 'user-owner'); assert.deepEqual(payload.line_items, [{ price: 'pro-year', quantity: 1 }]); }
+    assert.deepEqual(h.queries[0].filters, [['id', 'workspace-a']]); assert.deepEqual(h.writes, []);
+  });
+}
+
+
+test('actual billing handler keeps exception credentials out of both client response and server log', async () => {
+  const logs = [];
+  const error = Object.assign(new Error('PRIVATE-PROVIDER-MESSAGE'), {
+    code: 'ECONNRESET', status: 503, stack: 'PRIVATE-STACK',
+    cause: { headers: { authorization: 'PRIVATE-AUTH' }, url: 'https://example.test/?token=PRIVATE-TOKEN' },
+  });
+  const h = routeHarness('app/api/billing/checkout/route.ts', {
+    logger: { error: (...args) => logs.push(args) },
+    overrides: { '@/lib/canonicalIdentity': { resolveCanonicalIdentity: async () => { throw error; } } },
+  });
+  const response = await h.handler.POST(jsonRequest({})); assert.equal(response.status, 500);
+  assert.deepEqual(await response.json(), { error: 'Could not start checkout.' });
+  assert.equal(logs.length, 1); assert.equal(logs[0][0], 'Billing checkout error:');
+  assert.deepEqual(logs[0][1], { kind: 'exception', code: 'ECONNRESET', status: 503 });
+  assert.doesNotMatch(JSON.stringify(logs), /PRIVATE-/); assert.deepEqual(h.writes, []);
+});
+
+for (const role of [null, 'member', 'owner']) {
+  test(`workspace settings ${role ?? 'signed-out'}: canonical owner-only write ignores plan and Stripe fields`, async () => {
+    const saved = { id: 'workspace-a', name: 'Updated fixture name', notification_mode: 'all_members' };
+    const h = routeHarness('app/api/workspace/settings/route.ts', { identity: role ? session(role) : null, mutationResult: saved });
+    const response = await h.handler.PATCH(jsonRequest({ name: saved.name, notification_mode: saved.notification_mode,
+      workspaceId: 'workspace-b', plan: 'studio', stripe_customer_id: 'FOREIGN-CUSTOMER',
+    }, 'PATCH'));
+    assert.equal(response.status, role === 'owner' ? 200 : role ? 403 : 401);
+    if (role === 'owner') {
+      assert.deepEqual((await response.json()).workspace, saved);
+      assert.deepEqual(h.writes, [{ table: 'accounts', value: { name: saved.name, notification_mode: saved.notification_mode } }]);
+      assert.deepEqual(h.queries[0].filters, [['id', 'workspace-a']]);
+    } else { assert.deepEqual(h.reads, []); assert.deepEqual(h.writes, []); }
+  });
+}
+
+
+const remainingSafeResponseCases = [
+  ["actions/by-song/[songId]",["GET"],"Could not load actions."],
+  ["actions",["GET"],"Could not load actions."],
+  ["dashboard",["GET"],"Could not load dashboard data."],
+  ["dashboard/summary",["GET"],"Could not load dashboard summary."],
+  ["invites/[token]/accept",["POST"],"Could not accept invite."],
+  ["invites/[token]",["GET"],"Could not load invite."],
+  ["songs/[songId]",["GET","PATCH","DELETE"],"Song request failed."],
+  ["songs/[songId]/tasks",["GET"],"Could not load tasks."],
+  ["songs/[songId]/versions",["GET"],"Could not load versions."],
+  ["songs/create",["POST"],"Could not create song."],
+  ["threads/create",["POST"],"Failed to create thread"],
+  ["versions/[versionId]",["GET","PATCH"],"Version request failed."],
+  ["versions/[versionId]/threads",["GET"],"Could not load comments."],
+  ["workspace/invites/[inviteId]",["PATCH"],"Could not update workspace invite."],
+  ["workspace/invites",["GET","POST"],"Could not manage workspace invites."],
+  ["workspace/members/[userId]",["DELETE"],"Could not remove workspace member."],
+  ["workspace/plan",["PATCH"],"Could not update workspace plan."],
+  ["workspace/settings",["PATCH","POST"],"Could not update workspace settings."],
+  ["workspaces/create",["POST"],"Could not create workspace."],
+  ["workspaces",["GET"],"Could not load workspaces."],
+  ["workspaces/switch",["POST"],"Could not switch workspace."],
+  ["actions/[actionId]",["PATCH"],"Could not update action."],
+  ["tasks/create",["POST"],"Could not create task."],
+  ["tasks/reorder",["PATCH"],"Could not reorder tasks."],
+  ["tasks/[taskId]",["PATCH"],"Could not update task."],
+  ["tasks/[taskId]",["DELETE"],"Could not delete task."],
+  ["workspace/members",["GET"],"Could not load workspace members."],
+];
+for (const [route, methods, message] of remainingSafeResponseCases) for (const method of methods) {
+  test(`${route} ${method}: unexpected errors never reach client responses`, async () => {
+    const originalNodeEnv = process.env.NODE_ENV;
+    if (route === 'workspace/plan') process.env.NODE_ENV = 'development';
+    try {
+      const fail = async () => { throw new Error('PRIVATE-PROVIDER-RESPONSE'); };
+      const h = routeHarness(`app/api/${route}/route.ts`, { overrides: {
+        '@/lib/canonicalIdentity': { resolveCanonicalIdentity: fail },
+        '@/lib/currentUser': { getCurrentAuthenticatedUser: fail },
+        '@/lib/accountInvites': { getPublicInviteByToken: fail },
+      } });
+      const response = await h.handler[method](method === 'GET' ? getRequest() : jsonRequest({ title: 'Fixture', description: 'Fixture' }, method), params({
+        songId: 'song-a', versionId: 'version-a', inviteId: 'invite-a', userId: 'user-a', taskId: 'task-a', actionId: 'action-a', token: '00000000-0000-0000-0000-000000000000',
+      }));
+      assert.equal(response.status, 500); assert.deepEqual(await response.json(), { error: message, ...(route === 'invites/[token]' ? { state: 'invalid' } : {}) });
+      assert.deepEqual(h.reads, []); assert.deepEqual(h.writes, []); assert.equal(h.notifications, 0);
+    } finally {
+      if (originalNodeEnv === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = originalNodeEnv;
+    }
+  });
+}
+
+test('provider email rejection preserves created invite and gives a safe manual-link warning', async () => {
+  const priorKey = process.env.RESEND_API_KEY; process.env.RESEND_API_KEY = 'test-only-provider-key';
+  let sends = 0;
+  try {
+    const invite = { id: 'invite-a', email: 'fixture@example.test', normalized_email: 'fixture@example.test', role: 'member', status: 'pending', invite_token: 'safe-fixture-token', expires_at: '2030-01-01', created_at: '2026-11-03' };
+    const h = routeHarness('app/api/workspace/invites/route.ts', { identity: session('owner'), mutationResult: invite, tables: {
+      accounts: [{ id: 'workspace-a', name: 'Fixture workspace', plan: 'free' }], account_invites: [],
+    }, logger: { warn() {}, error() {} }, overrides: {
+      resend: { Resend: class { emails = { send: async () => { sends++; return { error: { message: 'PRIVATE-PROVIDER-RESPONSE' } }; } }; } },
+    } });
+    const response = await h.handler.POST(jsonRequest({ email: 'fixture@example.test' }));
+    assert.equal(response.status, 201); const body = await response.json();
+    assert.equal(sends, 1); assert.equal(body.emailSent, false);
+    assert.equal(body.emailWarning, 'Invite created, but the email could not be sent. Copy the invite link manually.');
+    assert.doesNotMatch(JSON.stringify(body), /PRIVATE-PROVIDER/); assert.equal(h.writes.length, 1);
+  } finally { if (priorKey === undefined) delete process.env.RESEND_API_KEY; else process.env.RESEND_API_KEY = priorKey; }
+});
+
+for (const value of [{ message: 'PRIVATE-DATABASE-MESSAGE', details: 'PRIVATE-DETAILS', code: 'PRIVATE-CODE' }, 'PRIVATE-THROWN-STRING']) {
+  test(`song create hides unexpected ${typeof value} failure content`, async () => {
+    const h = routeHarness('app/api/songs/create/route.ts', { overrides: {
+      '@/lib/canonicalIdentity': { resolveCanonicalIdentity: async () => { throw value; } },
+    } });
+    const response = await h.handler.POST(jsonRequest({ title: 'Fixture' }));
+    assert.equal(response.status, 500); assert.deepEqual(await response.json(), { error: 'Could not create song.' });
+    assert.deepEqual(h.reads, []); assert.deepEqual(h.writes, []);
+  });
+}
+
+// B40: execute real collaboration handlers with malformed untrusted payloads.
+const b40Routes = [
+  ['actions/create/route.ts', 'POST', {}],
+  ['actions/[actionId]/route.ts', 'PATCH', { actionId: 'action-a' }],
+  ['tasks/create/route.ts', 'POST', {}],
+  ['tasks/[taskId]/route.ts', 'PATCH', { taskId: 'task-a' }],
+  ['tasks/reorder/route.ts', 'PATCH', {}],
+];
+const b40Tables = {
+  songs: [song], song_tasks: [{ id: 'task-a', song_id: song.id }],
+  actions: [{ id: 'action-a', song_id: song.id, account_id: 'workspace-a' }],
+  comments: [{ id: 'comment-a', thread_id: 'thread-a' }],
+  comment_threads: [{ id: 'thread-a', song_version_id: 'version-a' }],
+  song_versions: [{ id: 'version-a', song_id: song.id }],
+};
+for (const [route, method, routeParams] of b40Routes) {
+  for (const [label, raw] of [['null', 'null'], ['array', '[]'], ['malformed', '{'], ['oversize', JSON.stringify({ description: 'x'.repeat(16385) })]]) {
+    test(`B40 ${route} rejects ${label} before data access`, async () => {
+      const h = routeHarness(`app/api/${route}`, { identity: session('member'), tables: b40Tables, logger: { error() {} } });
+      const req = new Request('https://test.invalid', { method, body: raw, headers: { 'content-type': 'application/json' } });
+      const response = await h.handler[method](req, params(routeParams));
+      assert.equal(response.status, 400);
+      assert.deepEqual(h.reads, []);
+      assert.deepEqual(h.writes, []);
+    });
+  }
+  test(`B40 ${route} rejects signed-out malformed JSON without parsing`, async () => {
+    const h = routeHarness(`app/api/${route}`, { logger: { error() {} } });
+    const response = await h.handler[method](new Request('https://test.invalid', { method, body: '{' }), params(routeParams));
+    assert.equal(response.status, 401);
+    assert.deepEqual(h.reads, []);
+  });
+}
+for (const timestampSeconds of [-1, '2', true, {}, 2147483648]) {
+  test(`B40 action rejects timestamp ${JSON.stringify(timestampSeconds)}`, async () => {
+    const h = routeHarness('app/api/actions/create/route.ts', { identity: session('member'), tables: b40Tables });
+    const response = await h.handler.POST(jsonRequest({ songId: song.id, commentId: 'comment-a', description: 'Fixture', timestampSeconds }));
+    assert.equal(response.status, 400);
+    assert.deepEqual(h.reads, []);
+    assert.deepEqual(h.writes, []);
+  });
+}
+for (const [route,method,body,routeParams] of [
+  ['actions/create/route.ts','POST',{songId:song.id,commentId:'comment-a',description:{}},{}],
+  ['actions/create/route.ts','POST',{songId:song.id,commentId:'comment-a',description:'Fixture',assignedToUserId:{}},{}],
+  ['actions/[actionId]/route.ts','PATCH',{description:42},{actionId:'action-a'}],
+  ['actions/[actionId]/route.ts','PATCH',{assignedToUserId:42},{actionId:'action-a'}],
+  ['actions/[actionId]/route.ts','PATCH',{resolvedInVersionId:{}},{actionId:'action-a'}],
+  ['tasks/create/route.ts','POST',{songId:song.id,description:42},{}],
+  ['tasks/[taskId]/route.ts','PATCH',{description:{}},{taskId:'task-a'}],
+  ['tasks/[taskId]/route.ts','PATCH',{description:'   '},{taskId:'task-a'}],
+  ['tasks/[taskId]/route.ts','PATCH',{status:'unknown'},{taskId:'task-a'}],
+  ['tasks/[taskId]/route.ts','PATCH',{status:null},{taskId:'task-a'}],
+]) {
+  test(`B40 ${route} rejects invalid ${Object.keys(body).at(-1)} ${JSON.stringify(body)}`, async () => {
+    const h = routeHarness(`app/api/${route}`, { identity: session('member'), tables:b40Tables, logger:{error(){}} });
+    const response=await h.handler[method](jsonRequest(body,method),params(routeParams));
+    assert.equal(response.status,400);
+    assert.deepEqual(h.writes,[]);
+  });
+}
+test('B40 valid action rounds numeric timestamp and derives canonical attribution',async()=>{
+ const h=routeHarness('app/api/actions/create/route.ts',{identity:session('member'),tables:b40Tables,mutationResult:{id:'new-action'}});
+ const response=await h.handler.POST(jsonRequest({songId:song.id,commentId:'comment-a',description:' Fixture ',timestampSeconds:2.6}));
+ assert.equal(response.status,201);
+ assert.equal(h.writes[0].value[0].timestamp_seconds,3);
+ assert.equal(h.writes[0].value[0].description,'Fixture');
+ assert.equal(h.writes[0].value[0].created_by_user_id,'user-member');
+});
+test('B40 task update preserves completed status and trims description',async()=>{
+ const h=routeHarness('app/api/tasks/[taskId]/route.ts',{identity:session('member'),tables:b40Tables,mutationResult:{id:'task-a'}});
+ const response=await h.handler.PATCH(jsonRequest({status:'completed',description:' Updated '},'PATCH'),params({taskId:'task-a'}));
+ assert.equal(response.status,200);
+ assert.deepEqual(h.writes[0].value,{status:'completed',description:'Updated'});
+});
+test('B40 task reorder does not report success after a database write failure',async()=>{
+ const h=routeHarness('app/api/tasks/reorder/route.ts',{identity:session('member'),tables:b40Tables,mutationError:{code:'XX000'},logger:{error(){}}});
+ const response=await h.handler.PATCH(jsonRequest({orderedIds:['task-a']},'PATCH'));
+ assert.equal(response.status,500);
+ assert.deepEqual(await response.json(),{error:'Could not reorder tasks.'});
+});
+
+test('B40 collaboration body ceiling measures UTF-8 bytes and accepts its exact boundary',async()=>{
+ const {readCollaborationInput}=routeHarness('lib/collaborationInput.ts').handler;
+ const overhead=Buffer.byteLength(JSON.stringify({description:''}));
+ const exact=JSON.stringify({description:'x'.repeat(16384-overhead)});
+ assert.equal(Buffer.byteLength(exact),16384);
+ assert.equal((await readCollaborationInput(new Request('https://test.invalid',{method:'POST',body:exact}))).description.length,16384-overhead);
+ assert.equal(await readCollaborationInput(new Request('https://test.invalid',{method:'POST',body:exact+' '})),null);
+ const multibyte=JSON.stringify({description:'🎵'.repeat(4096)});
+ assert.ok(multibyte.length<16384);
+ assert.equal(await readCollaborationInput(new Request('https://test.invalid',{method:'POST',body:multibyte})),null);
+ const declared=new Request('https://test.invalid',{method:'POST',body:'{}',headers:{'content-length':'16385'}});
+ assert.equal(await readCollaborationInput(declared),null);
+});
+
+// B41: remaining metadata mutations keep malformed input out of writes.
+const b41Routes=[
+ ['songs/create/route.ts','POST',{}],
+ ['songs/[songId]/route.ts','PATCH',{songId:song.id}],
+ ['versions/[versionId]/route.ts','PATCH',{versionId:'version-a'}],
+ ['playlists/route.ts','POST',{}],
+ ['playlists/[id]/route.ts','PATCH',{id:'playlist-a'}],
+ ['playlists/[id]/songs/route.ts','POST',{id:'playlist-a'}],
+ ['playlists/[id]/songs/route.ts','PATCH',{id:'playlist-a'}],
+ ['workspace/invites/[inviteId]/route.ts','PATCH',{inviteId:'invite-a'}],
+ ['songs/[songId]/visibility/route.ts','PATCH',{songId:song.id}],
+ ['profile/settings/route.ts','POST',{}],
+];
+const b41Tables={songs:[song],song_versions:[{id:'version-a',song_id:song.id,version_number:1}],
+ playlists:[{id:'playlist-a',account_id:'workspace-a',title:'Fixture',is_public:false}],
+ playlist_songs:[{playlist_id:'playlist-a',song_id:song.id,position:0}],
+ account_invites:[{id:'invite-a',account_id:'workspace-a',status:'pending'}]};
+for(const [route,method,routeParams] of b41Routes){
+ for(const [label,raw] of [['null','null'],['array','[]'],['malformed','{'],['oversize',JSON.stringify({title:'x'.repeat(16385),label:'x'.repeat(16385),songId:song.id,orderedSongIds:[song.id],action:'revoke',is_public:true})]]){
+  test(`B41 ${route} ${method} rejects ${label} without writes`,async()=>{
+   const h=routeHarness('app/api/'+route,{identity:session('owner'),tables:b41Tables,mutationResult:{id:'new-id'},logger:{error(){}}});
+   const response=await h.handler[method](new Request('https://test.invalid',{method,body:raw,headers:{'content-type':'application/json'}}),params(routeParams));
+   assert.equal(response.status,400);assert.deepEqual(h.writes,[]);
+  });
+ }
+ test(`B41 ${route} ${method} signed-out malformed input returns401`,async()=>{
+  const h=routeHarness('app/api/'+route,{logger:{error(){}}});
+  const response=await h.handler[method](new Request('https://test.invalid',{method,body:'{'}),params(routeParams));
+  assert.equal(response.status,401);assert.deepEqual(h.reads,[]);assert.deepEqual(h.writes,[]);
+ });
+}
+for(const [route,body,routeParams] of [
+ ['songs/create/route.ts',{title:{}},{}],
+ ['songs/[songId]/route.ts',{title:42},{songId:song.id}],
+ ['songs/[songId]/route.ts',{title:'Fixture',status:false},{songId:song.id}],
+ ['versions/[versionId]/route.ts',{label:{}},{versionId:'version-a'}],
+ ['versions/[versionId]/route.ts',{notes:42},{versionId:'version-a'}],
+ ['playlists/route.ts',{title:{}},{}],
+ ['playlists/[id]/route.ts',{title:42},{id:'playlist-a'}],
+ ['playlists/[id]/route.ts',{is_public:'true'},{id:'playlist-a'}],
+ ['playlists/[id]/route.ts',{},{id:'playlist-a'}],
+ ['playlists/[id]/songs/route.ts',{orderedSongIds:[song.id,false]},{id:'playlist-a'}],
+ ['playlists/[id]/songs/route.ts',{orderedSongIds:[song.id,song.id]},{id:'playlist-a'}],
+ ['playlists/[id]/songs/route.ts',{orderedSongIds:['foreign-song']},{id:'playlist-a'}],
+]){
+ const method=route.endsWith('create/route.ts')||route==='playlists/route.ts'?'POST':'PATCH';
+ test(`B41 ${route} rejects typed fields ${JSON.stringify(body)}`,async()=>{
+  const h=routeHarness('app/api/'+route,{identity:session('owner'),tables:b41Tables,mutationResult:{id:'new-id'},logger:{error(){}}});
+  const response=await h.handler[method](jsonRequest(body,method),params(routeParams));
+  assert.equal(response.status,400);assert.deepEqual(h.writes,[]);
+ });
+}
+test('B41 playlist reorder reports an update error instead of success',async()=>{
+ const h=routeHarness('app/api/playlists/[id]/songs/route.ts',{identity:session('owner'),tables:b41Tables,mutationError:{code:'XX000'},logger:{error(){}}});
+ const response=await h.handler.PATCH(jsonRequest({orderedSongIds:[song.id]},'PATCH'),params({id:'playlist-a'}));
+ assert.equal(response.status,500);assert.deepEqual(await response.json(),{error:'Could not reorder.'});
+});
+test('B41 empty playlist creation keeps the existing default title',async()=>{
+ const h=routeHarness('app/api/playlists/route.ts',{identity:session('member'),mutationResult:{id:'new-playlist'}});
+ assert.equal((await h.handler.POST(jsonRequest({}))).status,201);
+ assert.deepEqual(h.writes[0].value,{account_id:'workspace-a',created_by:'user-member',title:'Untitled playlist'});
+});
+test('B41 version metadata accepts explicit clears and preserves notes trimming',async()=>{
+ const h=routeHarness('app/api/versions/[versionId]/route.ts',{identity:session('member'),tables:b41Tables,mutationResult:{id:'version-a',version_number:1}});
+ assert.equal((await h.handler.PATCH(jsonRequest({label:null,notes:' Updated '},'PATCH'),params({versionId:'version-a'}))).status,200);
+ assert.deepEqual(h.writes[0].value,{label:null,notes:'Updated'});
+ assert.equal((await h.handler.PATCH(jsonRequest({label:null,notes:null},'PATCH'),params({versionId:'version-a'}))).status,200);
+ assert.deepEqual(h.writes[1].value,{label:null,notes:null});
+});
+test('B41 valid playlist reorder remains scoped to the selected playlist',async()=>{
+ const h=routeHarness('app/api/playlists/[id]/songs/route.ts',{identity:session('member'),tables:b41Tables});
+ assert.equal((await h.handler.PATCH(jsonRequest({orderedSongIds:[song.id]},'PATCH'),params({id:'playlist-a'}))).status,200);
+ assert.ok(h.queries.filter(q=>q.table==='playlist_songs').every(q=>q.filters.some(([key,value])=>key==='playlist_id'&&value==='playlist-a')));
+});
+
+for (const role of ['owner', 'member']) {
+ test(`B19 joined version read preserves ${role} payload without an extra song query`, async () => {
+  const h = routeHarness('app/api/versions/[versionId]/route.ts', {
+   identity: session(role), tables: { songs: [song], song_versions: [{...finalizedVersion, file_path: null, account_id: null}] },
+  });
+  const response = await h.handler.GET(getRequest(), params({versionId:'version-a'}));
+  assert.equal(response.status,200);
+  const {version} = await response.json();
+  assert.equal(version.id,'version-a');
+  assert.equal(version.audioUrl,null);
+  assert.equal(Object.hasOwn(version,'workspace_song'),false);
+  assert.equal(version.account_id,null);
+  assert.deepEqual(h.reads,['song_versions']);
+ });
+}
+for (const [label, parent, status] of [['foreign',foreignSong,403],['absent',null,403]]) {
+ test(`B19 joined version read denies ${label} parent before storage`, async () => {
+  const h = routeHarness('app/api/versions/[versionId]/route.ts', {
+   identity:session('member'), tables:{songs:parent ? [{...parent,id:'song-a'}] : [],song_versions:[finalizedVersion]},
+  });
+  const response = await h.handler.GET(getRequest(),params({versionId:'version-a'}));
+  assert.equal(response.status,status);
+  assert.doesNotMatch(await response.text(),/PRIVATE-TITLE|PRIVATE-ARTWORK/);
+ });
 }

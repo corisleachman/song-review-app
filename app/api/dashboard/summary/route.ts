@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { artworkDeliveryUrl } from '@/lib/artworkAccess';
 import { NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
@@ -8,11 +9,6 @@ import { getVersionDisplayLabel } from '@/lib/versionDisplay';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) return error.message;
-  return 'Could not load dashboard summary.';
-}
 
 export async function GET() {
   try {
@@ -103,7 +99,7 @@ export async function GET() {
       { status: 200, headers: { 'Cache-Control': 'no-store, max-age=0' } }
     );
   } catch (error) {
-    console.error('Error loading dashboard summary:', error);
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    console.error('Error loading dashboard summary:', safeErrorDetails(error));
+    return NextResponse.json({ error: 'Could not load dashboard summary.' }, { status: 500 });
   }
 }

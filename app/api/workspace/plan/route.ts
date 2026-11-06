@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -20,11 +21,6 @@ function requireOwner(identity: Awaited<ReturnType<typeof resolveCanonicalIdenti
   }
 
   return null;
-}
-
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) return error.message;
-  return 'Could not update workspace plan.';
 }
 
 export async function PATCH(request: NextRequest) {
@@ -73,7 +69,7 @@ export async function PATCH(request: NextRequest) {
       }
     );
   } catch (error) {
-    console.error('Error updating workspace plan:', error);
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    console.error('Error updating workspace plan:', safeErrorDetails(error));
+    return NextResponse.json({ error: 'Could not update workspace plan.' }, { status: 500 });
   }
 }

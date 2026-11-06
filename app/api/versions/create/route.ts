@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { randomUUID } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -222,7 +223,7 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error creating version:', error);
+    console.error('Error creating version:', safeErrorDetails(error));
     return NextResponse.json({ error: 'Could not prepare the version upload.' }, { status: 500 });
   }
 }

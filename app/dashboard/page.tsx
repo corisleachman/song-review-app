@@ -1949,7 +1949,8 @@ function DashboardContent() {
             ))}
           </div>
 
-          {loading ? (
+          {/* Keep loaded cards mounted during background refreshes. */}
+          {loading && !hasSongs ? (
             <p className={styles.emptyState}>Loading your songs and actions…</p>
           ) : hasSongs ? (
             hasFilteredSongs ? (

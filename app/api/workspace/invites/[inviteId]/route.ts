@@ -1,3 +1,5 @@
+import { readCollaborationInput } from '@/lib/collaborationInput';
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { findWorkspaceInviteById, revokeWorkspaceInvite } from '@/lib/accountInvites';
@@ -14,11 +16,6 @@ function requireOwner(identity: Awaited<ReturnType<typeof resolveCanonicalIdenti
   return null;
 }
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) return error.message;
-  return 'Could not update workspace invite.';
-}
-
 export async function PATCH(req: NextRequest, props: { params: Promise<{ inviteId: string }> }) {
   const params = await props.params;
   try {
@@ -27,7 +24,9 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ inviteI
     if (ownerError) return ownerError;
 
     const inviteId = params.inviteId;
-    const { action } = await req.json();
+    const body = await readCollaborationInput(req);
+    if (!body) return NextResponse.json({ error: 'Invalid invite details.' }, { status: 400 });
+    const { action } = body;
 
     if (!inviteId) {
       return NextResponse.json({ error: 'Invite ID is required.' }, { status: 400 });
@@ -51,7 +50,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ inviteI
 
     return NextResponse.json({ invite: updatedInvite }, { status: 200 });
   } catch (error) {
-    console.error('Error revoking workspace invite:', error);
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    console.error('Error revoking workspace invite:', safeErrorDetails(error));
+    return NextResponse.json({ error: 'Could not update workspace invite.' }, { status: 500 });
   }
 }

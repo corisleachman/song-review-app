@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { attributeReferralOnSignup, REFERRAL_COOKIE_NAME } from '@/lib/referrals';
 import type { AuthenticatedUser } from '@/lib/currentUser';
@@ -237,34 +238,26 @@ export async function bootstrapAccountForUser(
   let membership = existingMembership;
 
   if (!membership) {
-    const { data: account, error: accountError } = await supabaseServer
-      .from('accounts')
-      .insert([
-        {
-          created_by_user_id: user.id,
-          name: getWorkspaceName(user),
-        },
-      ])
-      .select('id')
-      .single();
+    const { data, error } = await supabaseServer.rpc('ensure_initial_workspace_membership', {
+      p_user_id: user.id,
+      p_workspace_name: getWorkspaceName(user),
+    });
+    if (error) throw error;
 
-    if (accountError) throw accountError;
-
-    const { data: createdMembership, error: createMembershipError } = await supabaseServer
-      .from('account_members')
-      .insert([
-        {
-          account_id: account.id,
-          user_id: user.id,
-          role: 'owner',
-        },
-      ])
-      .select('account_id, user_id, role, joined_at')
-      .single();
-
-    if (createMembershipError) throw createMembershipError;
-    membership = createdMembership as MembershipRecord;
-    newAccountId = account.id;
+    const row = (Array.isArray(data) && data.length === 1 ? data[0] : null) as Record<string, unknown> | null;
+    if (!row || typeof row.account_id !== 'string' || !row.account_id.trim()
+      || row.user_id !== user.id || (row.role !== 'owner' && row.role !== 'member')
+      || typeof row.joined_at !== 'string' || typeof row.was_created !== 'boolean'
+      || (row.was_created && row.role !== 'owner')) {
+      throw new Error('Could not finish workspace setup.');
+    }
+    membership = {
+      account_id: row.account_id,
+      user_id: user.id,
+      role: row.role,
+      joined_at: row.joined_at,
+    };
+    newAccountId = row.was_created ? row.account_id : null;
   }
 
   if (!membership) {
@@ -310,7 +303,7 @@ export async function bootstrapAccountForUser(
         cookieStore.delete(REFERRAL_COOKIE_NAME);
       }
     } catch (refErr) {
-      console.error('[bootstrap] Referral attribution error (non-fatal):', refErr);
+      console.error('[bootstrap] Referral attribution error (non-fatal):', safeErrorDetails(refErr));
     }
   }
 

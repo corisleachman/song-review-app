@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -8,11 +9,6 @@ import { listWorkspaceMembers } from '@/lib/workspaceMembers';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) return error.message;
-  return 'Could not load settings summary.';
-}
 
 async function countWorkspaceSongs(workspaceId: string) {
   const { count, error } = await supabaseServer
@@ -64,7 +60,7 @@ export async function GET() {
       }
     );
   } catch (error) {
-    console.error('Error loading settings summary:', error);
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    console.error('Error loading settings summary:', safeErrorDetails(error));
+    return NextResponse.json({ error: 'Could not load settings summary.' }, { status: 500 });
   }
 }

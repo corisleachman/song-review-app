@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -6,11 +7,6 @@ import { listUserWorkspaces } from '@/lib/workspaces';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) return error.message;
-  return 'Could not switch workspace.';
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -68,7 +64,7 @@ export async function POST(req: NextRequest) {
     writeActiveWorkspaceCookie(response, workspaceId);
     return response;
   } catch (error) {
-    console.error('Error switching workspace:', error);
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    console.error('Error switching workspace:', safeErrorDetails(error));
+    return NextResponse.json({ error: 'Could not switch workspace.' }, { status: 500 });
   }
 }

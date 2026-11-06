@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { normalizeActionStatus } from '@/lib/actionWorkflow';
@@ -7,21 +8,6 @@ import { listWorkspaceMembers } from '@/lib/workspaceMembers';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  if (error && typeof error === 'object') {
-    const maybeMessage = 'message' in error && typeof (error as { message?: unknown }).message === 'string'
-      ? (error as { message: string }).message
-      : null;
-    if (maybeMessage) return maybeMessage;
-  }
-
-  return 'Could not load actions.';
-}
 
 export async function GET(req: NextRequest) {
   try {
@@ -105,7 +91,7 @@ export async function GET(req: NextRequest) {
       }
     );
   } catch (error) {
-    console.error('Error fetching actions:', error);
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    console.error('Error fetching actions:', safeErrorDetails(error));
+    return NextResponse.json({ error: 'Could not load actions.' }, { status: 500 });
   }
 }

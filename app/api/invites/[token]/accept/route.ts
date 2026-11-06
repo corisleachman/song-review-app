@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import {
@@ -13,11 +14,6 @@ export const revalidate = 0;
 
 function lowerEmail(value: string | null | undefined) {
   return value?.trim().toLowerCase() ?? '';
-}
-
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) return error.message;
-  return 'Could not accept invite.';
 }
 
 export async function POST(_request: Request, props: { params: Promise<{ token: string }> }) {
@@ -91,7 +87,7 @@ export async function POST(_request: Request, props: { params: Promise<{ token: 
     writeActiveWorkspaceCookie(response, acceptance.accountId);
     return response;
   } catch (error) {
-    console.error('Error accepting invite:', error);
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    console.error('Error accepting invite:', safeErrorDetails(error));
+    return NextResponse.json({ error: 'Could not accept invite.' }, { status: 500 });
   }
 }

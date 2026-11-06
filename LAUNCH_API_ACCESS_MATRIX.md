@@ -4,17 +4,19 @@
 
 This inventory classifies all 68 API route files by intended boundary; forwarded settings GET/POST methods are included. Helper references are text matches to guide inspection, not proof of authentication or authorisation. Public, auth-entry, webhook and internal routes need their own boundary classification. No negative-access test is marked passed by this inventory.
 
-For each method, record the final route class, identity check, resource/workspace predicate, role requirement, input validation and owner/member/outsider/public staging result before S2 can finish. See [review procedure](LAUNCH_SECURITY_REVIEW.md#next-slice-api-boundary-matrix).
+Beta exception accepted 4 November 2026: S2 exits on the layered evidence and limits in [the accepted review](LAUNCH_SECURITY_REVIEW.md#remaining-l5-beta-closeout-proposal4-november2026). Pending cells below remain unperformed. Consolidated journeys carry to L6. The original exhaustive procedure is retained for further coverage.
+
+For each method, record the final route class, identity check, resource/workspace predicate, role requirement, input validation and owner/member/outsider/public staging result for exhaustive coverage. See [review procedure](LAUNCH_SECURITY_REVIEW.md#next-slice-api-boundary-matrix).
 
 | Route | Class | Exported methods | Boundary reference to inspect | Negative-access verification |
 | --- | --- | --- | --- |
-| `/api/actions/[actionId]` | Session + resource/workspace scope | PATCH | `resolveCanonicalIdentity` | Local signed-out PATCH tests pass; hosted matrix pending |
-| `/api/actions/by-song/[songId]` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Local signed-out GET tests pass; hosted matrix pending |
-| `/api/actions/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Local signed-out POST tests pass; hosted matrix pending |
-| `/api/actions` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Local signed-out GET tests pass; hosted matrix pending |
+| `/api/actions/[actionId]` | Session + resource/workspace scope | PATCH | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Local signed-out PATCH tests pass; signed-in hosted matrix pending |
+| `/api/actions/by-song/[songId]` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Local signed-out GET tests pass; signed-in hosted matrix pending |
+| `/api/actions/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Local signed-out POST tests pass; signed-in hosted matrix pending |
+| `/api/actions` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Local signed-out GET tests pass; signed-in hosted matrix pending |
 | `/api/admin/feedback/[id]` | Application admin | PATCH | `getCurrentAuthenticatedUser`, `isAdmin` | Local handler tests pass; hosted negatives pending |
 | `/api/admin/feedback` | Application admin | GET | `getCurrentAuthenticatedUser`, `isAdmin` | Local handler tests pass; hosted negatives pending |
-| `/api/auth/bootstrap` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/auth/bootstrap` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity`; server-only atomic initial provisioning | Hosted signed-out methods 401 in staging/Production (2 Nov); B27/PR #73: existing and fresh staged Google journeys pass; 14 installed SQL checks both DBs; Production signed-out 401 and same-origin login redirect pass. Controlled first-request concurrency is local; no fresh Production user created |
 | `/api/auth/email/config` | Public auth/config; feature gates | GET | Inspect route / delegated helper | Not yet exercised |
 | `/api/auth/email/login` | Public auth/config; feature gates | POST | Inspect route / delegated helper | Not yet exercised |
 | `/api/auth/email/manage/request` | Gated signed-in password management | POST | Inspect route / delegated helper | Not yet exercised |
@@ -24,58 +26,59 @@ For each method, record the final route class, identity check, resource/workspac
 | `/api/auth/email/reset` | Public auth/config; feature gates | POST | Inspect route / delegated helper | Not yet exercised |
 | `/api/auth/email/signup` | Public auth/config; feature gates | POST | Inspect route / delegated helper | Not yet exercised |
 | `/api/auth/verify-password` | Legacy shared-password verifier | POST | Inspect route / delegated helper | Local handler tests pass; hosted negatives pending |
-| `/api/billing/activate` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/billing/checkout` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/billing/portal` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/billing/activate` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); B29: hosted signed-out 401 in both environments; local canonical-user/workspace and billing-role cases pass with fake I/O. B29 safe settings/billing responses are Production verified. No hosted positive payment/write claimed |
+| `/api/billing/checkout` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); B29: hosted signed-out 401 in both environments; local canonical-user/workspace and billing-role cases pass with fake I/O. B29 safe settings/billing responses are Production verified. No hosted positive payment/write claimed |
+| `/api/billing/portal` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); B29: hosted signed-out 401 in both environments; local canonical-user/workspace and billing-role cases pass with fake I/O. B29 safe settings/billing responses are Production verified. No hosted positive payment/write claimed |
 | `/api/csp-report` | Public submission / optional identity | POST | Inspect route / delegated helper | Not yet exercised |
-| `/api/dashboard` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Code sampled; staging negative tests pending |
-| `/api/dashboard/summary` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Local handler tests pass; hosted negatives pending |
+| `/api/dashboard` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Code sampled; signed-in staging checks pending |
+| `/api/dashboard/summary` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Local handler tests pass; signed-in role matrix pending |
 | `/api/email/notify-thread` | Signed internal request | POST | `verifyInternalRequest` | Local handler tests pass; hosted negatives pending |
 | `/api/feedback` | Public submission / optional identity | POST | Canonical optional user; trusted visitor IP; DB atomic five/hour; RLS denies direct clients | PR #72: staging HTTP ten simultaneous -> five saved/five 429; SQL quota/expiry/failure/direct-role cases pass both DBs. Production no-write validation/honeypot pass. Fixtures removed; no provider emails |
-| `/api/invites/[token]/accept` | Session + resource/workspace scope | POST | `getCurrentAuthenticatedUser` | Not yet exercised |
+| `/api/invites/[token]/accept` | Session + resource/workspace scope | POST | `getCurrentAuthenticatedUser` | Hosted signed-out methods 401 in staging/Production (2 Nov); Signed-in role checks pending |
 | `/api/invites/[token]` | Public token lookup | GET | Inspect route / delegated helper | Not yet exercised |
 | `/api/plan-events` | Public submission / optional identity | POST | Inspect route / delegated helper | Not yet exercised |
-| `/api/playlists/[id]/image` | Session + resource/workspace scope | POST, DELETE | `resolvePlaylistAccess` | Not yet exercised |
-| `/api/playlists/[id]` | Session + resource/workspace scope | GET, PATCH, DELETE | `resolvePlaylistAccess` | Local signed-out GET, PATCH, DELETE tests pass; hosted matrix pending |
-| `/api/playlists/[id]/songs/[songId]` | Session + resource/workspace scope | DELETE | `resolvePlaylistAccess` | Local signed-out DELETE tests pass; hosted matrix pending |
-| `/api/playlists/[id]/songs` | Session + resource/workspace scope | POST, PATCH | `resolvePlaylistAccess` | Local signed-out POST, PATCH tests pass; hosted matrix pending |
-| `/api/playlists` | Session + resource/workspace scope | GET, POST | `resolveCanonicalIdentity` | Local signed-out GET, POST tests pass; hosted matrix pending |
-| `/api/profile/settings` | Session + resource/workspace scope | GET, POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/profile/visualizer` | Session + resource/workspace scope | GET, POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/public/playlist/[id]` | Public-share projection | GET | Inspect route / delegated helper | Not yet exercised |
+| `/api/playlists/[id]/image` | Session + resource/workspace scope | POST, DELETE | `resolvePlaylistAccess` | Hosted signed-out methods 401 in staging/Production (2 Nov); Signed-in role checks pending |
+| `/api/playlists/[id]` | Session + resource/workspace scope | GET, PATCH, DELETE | `resolvePlaylistAccess` | Hosted signed-out methods 401 in staging/Production (2 Nov); Local signed-out GET, PATCH, DELETE tests pass; signed-in hosted matrix pending |
+| `/api/playlists/[id]/songs/[songId]` | Session + resource/workspace scope | DELETE | `resolvePlaylistAccess` | Hosted signed-out methods 401 in staging/Production (2 Nov); Local signed-out DELETE tests pass; signed-in hosted matrix pending |
+| `/api/playlists/[id]/songs` | Session + resource/workspace scope | POST, PATCH | `resolvePlaylistAccess` | Hosted signed-out methods 401 in staging/Production (2 Nov); Local signed-out POST, PATCH tests pass; signed-in hosted matrix pending |
+| `/api/playlists` | Session + resource/workspace scope | GET, POST | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Local signed-out GET, POST tests pass; signed-in hosted matrix pending |
+| `/api/profile/settings` | Session + resource/workspace scope | GET, POST | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); B29: hosted signed-out 401 in both environments; local canonical-user/workspace and billing-role cases pass with fake I/O. B29 safe settings/billing responses are Production verified. No hosted positive payment/write claimed |
+| `/api/profile/visualizer` | Session + resource/workspace scope | GET, POST | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); B29: hosted signed-out 401 in both environments; local canonical-user/workspace and billing-role cases pass with fake I/O. B29 safe settings/billing responses are Production verified. No hosted positive payment/write claimed |
+| `/api/public/playlist/[id]` | Public-share projection | GET | Service projection; sharing, same-workspace membership, latest finalized versions | B28: local projection tests; synthetic DB owner/member/outsider cases; both-environment live playlist/embeds/audio/artwork pass. Raw anon table bypass now denied |
 | `/api/public/song/[songId]/comments` | Public-share projection | GET, POST | Sharing/comment flags; honeypot; typed body | B26 input checks pass. PR #70 shared 5/min/IP: hosted staging five synthetic 201, sixth 429; GET 200; fixtures removed. Production no-write input/share checks pass |
-| `/api/public/song/[songId]` | Public-share projection | GET | Inspect route / delegated helper | Not yet exercised |
-| `/api/referrals/code` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/referrals/summary` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/settings` | Session + resource/workspace scope | GET, POST (forwarded to profile/settings) | Inspect route / delegated helper | Not yet exercised |
-| `/api/settings/summary` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/songs/[songId]/public-comments/[commentId]` | Session + resource/workspace scope | DELETE | `resolveCanonicalIdentity` | Local signed-out DELETE tests pass; hosted matrix pending |
-| `/api/songs/[songId]/public-comments` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Local signed-out GET tests pass; hosted matrix pending |
-| `/api/songs/[songId]` | Session + resource/workspace scope | GET, PATCH, DELETE | `resolveCanonicalIdentity` | Local signed-out PATCH, DELETE tests pass; hosted matrix pending |
-| `/api/songs/[songId]/tasks` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Local signed-out GET tests pass; hosted matrix pending |
-| `/api/songs/[songId]/versions` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Local signed-out GET tests pass; hosted matrix pending |
-| `/api/songs/[songId]/visibility` | Session + resource/workspace scope | PATCH | `resolveCanonicalIdentity` | Local signed-out PATCH tests pass; hosted matrix pending |
-| `/api/songs/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Local signed-out POST tests pass; hosted matrix pending |
-| `/api/songs/upload-image` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/public/song/[songId]` | Public-share projection | GET | Service projection; sharing flag, latest finalized version and explicit fields | B28: local projection tests, both-environment public JSON unchanged/pages/media pass; raw anon songs/versions now denied. Broader method/role matrix remains open |
+| `/api/referrals/code` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); B29: hosted signed-out 401 in both environments; local canonical-user/workspace and billing-role cases pass with fake I/O. B29 safe settings/billing responses are Production verified. No hosted positive payment/write claimed |
+| `/api/referrals/summary` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); B29: hosted signed-out 401 in both environments; local canonical-user/workspace and billing-role cases pass with fake I/O. B29 safe settings/billing responses are Production verified. No hosted positive payment/write claimed |
+| `/api/settings` | Session + resource/workspace scope | GET, POST (forwarded to profile/settings) | Inspect route / delegated helper | Hosted signed-out methods 401 in staging/Production (2 Nov); B29: hosted signed-out 401 in both environments; local canonical-user/workspace and billing-role cases pass with fake I/O. B29 safe settings/billing responses are Production verified. No hosted positive payment/write claimed |
+| `/api/settings/summary` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); B29: hosted signed-out 401 in both environments; local canonical-user/workspace and billing-role cases pass with fake I/O. B29 safe settings/billing responses are Production verified. No hosted positive payment/write claimed |
+| `/api/songs/[songId]/public-comments/[commentId]` | Session + resource/workspace scope | DELETE | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Local signed-out DELETE tests pass; signed-in hosted matrix pending |
+| `/api/songs/[songId]/public-comments` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Local signed-out GET tests pass; signed-in hosted matrix pending |
+| `/api/songs/[songId]` | Session + resource/workspace scope | GET, PATCH, DELETE | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Local signed-out PATCH, DELETE tests pass; signed-in hosted matrix pending |
+| `/api/songs/[songId]/tasks` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Local signed-out GET tests pass; signed-in hosted matrix pending |
+| `/api/songs/[songId]/versions` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Local signed-out GET tests pass; signed-in hosted matrix pending |
+| `/api/songs/[songId]/visibility` | Session + resource/workspace scope | PATCH | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Local signed-out PATCH tests pass; signed-in hosted matrix pending |
+| `/api/songs/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Local signed-out POST tests pass; signed-in hosted matrix pending |
+| `/api/songs/upload-image` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Signed-in role checks pending |
 | `/api/stripe/webhook` | Signed Stripe webhook | POST | `stripe.webhooks.constructEvent` | Not yet exercised |
-| `/api/tasks/[taskId]` | Session + resource/workspace scope | PATCH, DELETE | `resolveCanonicalIdentity` | Local signed-out PATCH, DELETE tests pass; hosted matrix pending |
-| `/api/tasks/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Local signed-out POST tests pass; hosted matrix pending |
-| `/api/tasks/reorder` | Session + resource/workspace scope | PATCH | `resolveCanonicalIdentity` | Local signed-out PATCH tests pass; hosted matrix pending |
-| `/api/threads/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | B26 input/auth/workspace cases pass; PR #70 shared private 30/min limiter denial/outage gates writes/scheduling. Production signed-out 401; valid writes/notifications use fake I/O |
-| `/api/threads/reply` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | B26 input/auth/workspace cases pass; PR #70 shared private 30/min limiter denial/outage gates writes/scheduling. Production signed-out 401; valid writes/notifications use fake I/O |
-| `/api/versions/[versionId]/finalize` | Session + resource/workspace scope | POST, DELETE | `resolveCanonicalIdentity` | Local signed-out POST, DELETE tests pass; hosted matrix pending |
-| `/api/versions/[versionId]` | Session + resource/workspace scope | GET, PATCH | `resolveCanonicalIdentity` | Local signed-out PATCH tests pass; hosted matrix pending |
-| `/api/versions/[versionId]/threads` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Local signed-out GET tests pass; hosted matrix pending |
-| `/api/versions/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/workspace/invites/[inviteId]` | Session + resource/workspace scope | PATCH | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/workspace/invites` | Session + resource/workspace scope | GET, POST | `resolveCanonicalIdentity`; owner-only | PR #70 runtime owner/member/signed-out and create/resend budget gates pass with fake email I/O. Production POST signed-out 401; hosted valid email journey not replayed |
-| `/api/workspace/members/[userId]` | Session + resource/workspace scope | DELETE | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/workspace/members` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/workspace/plan` | Session + resource/workspace scope | PATCH | `resolveCanonicalIdentity` | Code sampled; staging negative tests pending |
-| `/api/workspace/settings` | Session + resource/workspace scope | PATCH, POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/workspaces/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/workspaces` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Not yet exercised |
-| `/api/workspaces/switch` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Not yet exercised |
+| `/api/tasks/[taskId]` | Session + resource/workspace scope | PATCH, DELETE | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Local signed-out PATCH, DELETE tests pass; signed-in hosted matrix pending |
+| `/api/tasks/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Local signed-out POST tests pass; signed-in hosted matrix pending |
+| `/api/tasks/reorder` | Session + resource/workspace scope | PATCH | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Local signed-out PATCH tests pass; signed-in hosted matrix pending |
+| `/api/threads/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); B26 input/auth/workspace cases pass; PR #70 shared private 30/min limiter denial/outage gates writes/scheduling. Production signed-out 401; valid writes/notifications use fake I/O |
+| `/api/threads/reply` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); B26 input/auth/workspace cases pass; PR #70 shared private 30/min limiter denial/outage gates writes/scheduling. Production signed-out 401; valid writes/notifications use fake I/O |
+| `/api/versions/[versionId]/finalize` | Session + resource/workspace scope | POST, DELETE | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Local signed-out POST, DELETE tests pass; signed-in hosted matrix pending |
+| `/api/versions/[versionId]` | Session + resource/workspace scope | GET, PATCH | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Local signed-out PATCH tests pass; signed-in hosted matrix pending |
+| `/api/versions/[versionId]/threads` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Local signed-out GET tests pass; signed-in hosted matrix pending |
+| `/api/versions/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Signed-in role checks pending |
+| `/api/workspace/invites/[inviteId]` | Session + resource/workspace scope | PATCH | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Signed-in role checks pending |
+| `/api/workspace/invites` | Session + resource/workspace scope | GET, POST | `resolveCanonicalIdentity`; owner-only | Hosted signed-out methods 401 in staging/Production (2 Nov); PR #70 runtime owner/member/signed-out and create/resend budget gates pass with fake email I/O. Production POST signed-out 401; hosted valid email journey not replayed |
+| `/api/workspace/members/[userId]` | Session + resource/workspace scope | DELETE | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Signed-in role checks pending |
+| `/api/workspace/members` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Signed-in role checks pending |
+| `/api/workspace/plan` | Session + resource/workspace scope | PATCH | `resolveCanonicalIdentity` | Hosted signed-out methods 403 in staging/Production (2 Nov); Code sampled; signed-in staging checks pending |
+| `/api/workspace/settings` | Session + resource/workspace scope | PATCH, POST | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Signed-in role checks pending |
+| `/api/workspaces/create` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Signed-in role checks pending |
+| `/api/workspaces` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Signed-in role checks pending |
+| `/api/workspaces/switch` | Session + resource/workspace scope | POST | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Signed-in role checks pending |
+
 
 ## Code-review continuation, 1 November 2026
 
@@ -164,3 +167,85 @@ PR #71/0565f64b removes client INSERT privileges on comments/comment_threads in 
 ## B27 bootstrap candidate, 2 November 2026
 
 Common server bootstrap helper's empty-membership creation branch uses a staged service-role-only atomic RPC in PR #73. Existing identity/active membership read path is preserved. Local real-handler concurrency and failure cases plus 14 installed staging SQL checks pass; client RPC execution is denied. Fresh browser signup/confirmation acceptance is pending; Production is unchanged. This isn't a pass for every route that calls canonical identity. Repeated profile-write performance remains B17.
+
+
+B27 release checkpoint, 2 November: PR #73/ce346868 live, both user staging tests passed and Free/one workspace/one owner membership verified. Installed Production RPC checks pass; no-write bootstrap/dashboard/login probes and bounded logs pass. Initial creation gap closed in scope; broader route/method/role coverage remains open.
+
+
+B28 Production database release, 2 November: PR #74/6288e354 merged, 342 Node tests/focused lint/four PR checks and browser 30 passed/10 skipped. Reviewed migration source 20261102220823 installed as staging 20261102222009 and Production 20261102222433. Installed 14-case probes pass in both environments, alongside baseline16/candidate14/rollback16. Anonymous raw REST denied; public song/playlist/comments payloads match baseline; pages/embeds/audio Range/artwork pass; authenticated history preserved; zero retained fixture workspaces. Advisors zero errors/warnings; bounded Production error/fatal scan empty. Primary merged-source deployment dpl_Dh7UyB4o7sokRPmdcK22mfH8B1aB is Ready/live; no app logic/env/provider change. Companion SQL rollback restores only old anon SELECT and reopens exposure. Broader L5 remains open.
+
+B29 pre-release hosted baseline: 12 signed-out method checks pass with 401 in existing staging and Production. No database/provider writes or real payments; valid/denied role scenarios are runtime tests with fake I/O.
+
+
+B29 release, 2 November: PR #75/25b96370 primary dpl_7LpTJNzBYxxj6VgfDb9tYMeesAsy Ready/live. 377 Node tests/TypeScript/focused lint (one existing warning), four PR checks and browser 30 passed/10 skipped. Twelve hosted signed-out checks pass on exact-head Preview and released Production; provider/success tests use fake I/O. No live plan/payment/settings mutations. Error/fatal release scan empty. No external action remains; app rollback can restore previous 6288e354 deployment, retaining B28 database boundary. Broader L5 remains open.
+
+
+## Expanded hosted signed-out sweep, 2 November 2026
+
+All 63 private/session-class method checks across 48 route files pass in staging Preview dpl_E4Mf9aAeYA55CjmbU2XnVhqTLyhs and Production (25b96370 code). Use no auth/cookies, application/json, `{}` for mutations and zero UUID placeholders for resource IDs. Song creation needs a harmless nonempty title to reach its existing auth gate; empty payload correctly returns validation 400 before auth. Forwarded settings POST is an HTTP POST, not the table's explanatory label. After correcting those two probe assumptions, both full sweeps pass 63/63.
+
+Expected result: 401 JSON error for session routes; development-only workspace plan returns 403 under deployed NODE_ENV=production, before identity/provider work. No signed-in write, real invitation recipient, payment or public media content is submitted. This is signed-out HTTP coverage, not owner/member/outsider hosted authorisation or a proof of all validation paths.
+
+Signed-in continuation: existing Chrome staging tab is an extension suspended-page URL. Browser policy rejected access to that protocol; no workaround attempted. User asked to restore the existing staging dashboard before more authenticated browser checks. No logout, credentials or unrelated tabs accessed.
+
+
+3 November scoped continuation: B30 user-approved type-only changes complete with unchanged scopes and verified Production/Preview rebuild/public/media/signed-out checks. Restored staging browser passes owner settings/collaborators/Free-plan reads, member settings/billing gating and own synthetic song read; unrelated private song denied without title. Temporary staging-only workspace/song/version/member fixtures fully cleaned; original owner membership remains. No Auth user or storage object, email, payment or real-user content mutation. Version missing-audio state was expected for the synthetic no-object fixture. Final original-workspace browser view unverified because the extension suspended the tab and policy blocked its extension URL; no workaround. Scoped UI coverage doesn't complete every route/method/role write or provider journey. See current launch checkpoint for deployment IDs and limits.
+
+
+3 November release checkpoint: B31/PR #77/6ba2c817 primary dpl_C1VQK62tyWRy8ZDiZhTjCf7uyZrx Ready/live. 387 Node tests, TypeScript/lint zero errors/five pre-existing warnings, four PR checks and browser30/skip10 pass. Exact-head Preview and Production public/media projections and twelve signed-out checks pass. Benign CSP204 controls found in actual unfiltered request logs with origins only; warning-only filters missed level-warn records. Production27 retrieved records/zero error-fatal; no real secrets/emails or historical log changes. B30 Secret scopes reread intact; original owner/empty staging dashboard visibly restored and fixtures absent. User accepts Hobby one-hour logs and release-time checks for beta, no paid/recurring setup; revisit at L8. S6 and beta S7 exit conditions met, remaining S2-S5 stay open. Rollback prior ffef2c7b app, retaining B28/B30 boundaries.
+
+
+B32 Production release, 3 November: user owner-name save accepted; stored fixture name/Free/null Stripe verified, fixture/member cleanup complete. Source20261103090300 installed as staging20261103091520/Production20261103094603;19 installed role cases in both DBs pass, with prior baseline16/candidate19/rollback16. Raw client account PATCH401/42501, zero-ID read200/empty. App signed-out/public/media and post-build login/bootstrap/song checks pass; Advisor zero errors/warnings, nine existing INFO. PR #78/b77a7b66 merged126825bf, primary dpl_BfL9iReAvUBWFemGQaXa9aFvT23W Ready/live;390 Node tests/lint/four exact-head checks pass. No account/plan/provider changes or outstanding user actions. SQL rollback restores old client account mutations and reopens the gap; app rollback alone doesn't undo it. Remaining S2-S5 review stays open.
+
+
+3 November status reconciliation: B31 safe diagnostics/CSP and B32 server-only account writes are Production verified in recorded scope. B32 actual owner settings name save accepted, installed role checks pass, disposable fixture removed. B33 safe response errors are Production verified via PR #79/98f4132f; 425 tests and exact-head Preview/Production63 signed-out methods each pass. These results extend earlier rows but do not imply every signed-in mutation/provider journey was exercised; broader role/function/input checks remain open. No repeat user Save is pending.
+
+
+## Upload/deletion local boundary slice, 3 November 2026
+
+B36 adds real-handler/fake-I/O owner/admin/member cases: versions/create refuses foreign song before signing; version finalize POST/DELETE refuses foreign finalized versions before Storage; version PATCH permits only label/notes despite injected server-owned fields; song DELETE refuses admin/member before RPC. Actual SQL allocation/finalize/delete RPCs reject foreign workspace IDs and preserve canonical accounting in baseline/candidate/rollback probes. This does not replace the remaining hosted signed-in route matrix or complete S2. B36 direct-table permission candidate is pending approval.
+
+
+B36 installed acceptance, 3 November: actual staging canonical song creation/upload/finalization/rename, version label update, playback and owner deletion pass under client-write revocation. Version/object/account byte88244 agree; fixture cleanup returns all zero/counter0. Installed40 DB cases pass staging/Production, including owner/admin/member/outsider boundaries and RPC accounting. Production11 safe signed-out/public checks pass. This remains scoped coverage, not every hosted role/method or full S2 completion.
+
+
+## Collaboration local boundary slice, 3 November 2026
+
+Sixteen new actual-handler/fake-I/O owner/member cases: action creation rejects foreign source comment/assignee and stamps canonical creator/workspace; action PATCH rejects foreign resolved version/assignee; playlist add rejects another account's song; task PATCH ignores injected parent/account/creator and rejects foreign-song task. Raw SQL direct writes bypass these checks; B37 groups actions/tasks/playlist entries/private comments/threads into one permission candidate. Baseline81/candidate81/rollback81 pass both databases, no permanent changes. Remaining hosted signed-in matrix is not marked complete.
+
+
+B37 installed acceptance, 3 November: actual staging owner comment/reply, action create/resolve, task create/complete and playlist two-entry add/reorder/remove pass. Creator/source/version/status/order verified from stored fixture records. Cleanup all zero; original workspace restored. Installed81 role/grant/CRUD cases pass both DBs, Production16 safe signed-out/public checks pass. This covers the named flows; remaining hosted role/method coverage and S5 validation are not marked complete.
+
+
+## Remaining identity/profile/billing evidence, 3 November 2026
+
+Real getCurrentAuthenticatedUser helper/fake-SSR-I/O tests verify Auth id/email authority, deny metadata/cached-session authority and preserve verified refresh-cookie behaviour. Actual-role DB probes cover four-role own/foreign profiles/preferences, legacy-theme workspace RLS and legacy billing-record boundary. Baseline84/candidate84/rollback84 pass both DBs; B38 only changes the two unused legacy billing-table client write grants. Existing current billing/settings/referral handler scope tests remain unchanged. No fresh hosted provider/payment journey or whole S2 completion claimed.
+
+
+4 November 2026 installed checkpoint: user approved B38. Staging ledger20261104070929 and Production ledger20261104071135 installed; installed84 pass each. Staging signed-in Workspace/Free plan reads pass. Production login200; auth bootstrap/settings summary GET401 and billing checkout/portal/activate POST401. Unsupported workspace/plan GET405 excluded from auth evidence. Zero synthetic identities/accounts and zero legacy billing rows remain. Security advisors zero ERROR/WARN, nine existing INFO each. No provider/payment acceptance claimed; DB enforcement complete, PR84 records source/evidence.
+
+
+### 4 November 2026: remaining playlist-header authority
+
+B39 DB/code trace confirms raw dual-workspace client header transfer can leave foreign song links; private playlist GET's linked metadata service query trusts the header/link invariant. Current mismatches0 in both DBs. Canonical create derives account/creator from current identity, PATCH accepts only title/is_public, DELETE scopes through resolvePlaylistAccess. Candidate makes raw headers server-owned; baseline26/candidate25/rollback26 pass each DB, no installed or hosted exploit claim. S2 cannot close this path until installed/hosted acceptance. Details and exact approval rollout are in PRODUCT_BACKLOG.md#b39-direct-playlist-header-writes-can-transfer-foreign-song-links.
+
+
+4 November2026 B39 installed acceptance: installed25 pass staging/Production; actual staged owner create/rename/public/draft/add/reorder/remove and stored creator/account/order verification pass, fixtures removed. No UI playlist DELETE exists; service SQL DELETE tested. Production signed-out playlist GET/PATCH/DELETE401 and existing public projection200 pass. S3 database review exit met; hosted method/role coverage remains S2.
+
+
+### 4 November 2026: selected email participant and hosted outsider checks
+
+User confirmed password login passed on the stable email-staging alias and designated an existing plus-address account for tests. Canonical profile2a9732e1-217a-40ca-a021-fbf7d64f294a and fresh staging Auth sign-in verified. Its original workspace3498b4a6-c0df-4bc6-b2db-14e8213cbcfa remains Owner/Free/storage0 with null Stripe customer/subscription; no existing workspace or plan was edited.
+
+Before fixture membership, actual signed-in browser navigation to fixture song GET, version GET, song-tasks GET and version-threads GET returned explicit access-denied JSON and no fixture title. Browser evidence establishes denied projections, not independently captured HTTP status codes. After these negatives, guarded server provisioning added only this actor's Member link to disposable account1ee43543-b6a2-4397-9679-518dd62fec30 (B40 hosted acceptance); Google actor27a37199-e2bf-45ad-a03f-2162b9f1802a remains its owner. No invite or notification was sent. Fixture membership count2, one synthetic song, two pending tasks; no audio object or storage usage.
+
+Chrome extension UI then blocked automation before member workspace selection. Actual member positive read and drag-reorder acceptance remain pending. User should open the stable alias dashboard, select B40 hosted acceptance (Member), open the B40 hosted fixture song, drag task B above task A and refresh. Expected: only the isolated fixture view and persisted B/A order; report visible error/URL if it fails, never credentials. B40 remains unmerged/Preview only. After acceptance, verify DB order, restore original workspace selection and guardedly remove the fixture workspace/rows/memberships. Do not remove the user's original workspace or Auth identity.
+
+Git transport repeatedly failed with GitHub500. Prior documentation commit was published through Git Data API as1ccd45a9164ee76848dcb408c639477c64f7ee12 after full-tree equality with local4ae4f672; non-force ref update verified. Local branch reconciled to that identical published tree. No source/runtime change.
+
+
+### 4 November 2026: B40 acceptance and hosted read revocation complete
+
+User accepted member view and drag reorder; DB readback task B sort_order0/A1. Existing selected password identity successfully reads fixture song, version, song tasks and version threads as member. After guarded deletion of only its synthetic membership, the same browser session immediately receives explicit denial JSON for all four reads, without fixture title. Bootstrap falls back to original workspace3498b4a6-c0df-4bc6-b2db-14e8213cbcfa as Owner. These are12 hosted browser projection observations across outsider/member/removed states, not independent HTTP-status capture or all-method S2 completion.
+
+Guarded cleanup removed disposable account1ee43543-b6a2-4397-9679-518dd62fec30 and its exact synthetic song/related version/thread/comment/action/two tasks and owner membership. All eight fixture counts0; participant original membership count1, planFree/storage0/null Stripe unchanged. No Auth identity, real workspace/content, email/provider, payment or actual Storage object deleted. Browser returned to original dashboard. B40 application release proceeds after final PR87 checks; remaining S2 role/method, S4 and S5 review stays open.

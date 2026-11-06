@@ -4,7 +4,7 @@ import path from 'node:path';
 const TOPICS_PATH = 'seo/topics.json';
 const BRAND_PATH = 'seo/brand-context.md';
 const BLOG_DIR = 'public/blog';
-const SITE_URL = process.env.SITE_URL || 'https://song-room.live';
+const SITE_URL = process.env.SITE_URL || 'https://www.song-room.live';
 const MODEL = process.env.OPENAI_MODEL || 'gpt-5-mini';
 
 function escapeHtml(value = '') {

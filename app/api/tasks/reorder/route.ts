@@ -1,16 +1,20 @@
+import { readCollaborationInput } from '@/lib/collaborationInput';
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
 
 export async function PATCH(req: NextRequest) {
   try {
-    const { orderedIds } = await req.json(); // array of task IDs in new order
     const resolved = await resolveCanonicalIdentity();
 
     if (!resolved) {
       return NextResponse.json({ error: 'You must be signed in to reorder tasks.' }, { status: 401 });
     }
 
+    const payload = await readCollaborationInput(req);
+    if (!payload) return NextResponse.json({ error: 'Invalid task order.' }, { status: 400 });
+    const { orderedIds } = payload;
     if (!Array.isArray(orderedIds)) {
       return NextResponse.json({ error: 'orderedIds must be an array' }, { status: 400 });
     }
@@ -55,15 +59,16 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'You do not have access to one or more tasks.' }, { status: 403 });
     }
 
-    await Promise.all(
+    const results = await Promise.all(
       uniqueOrderedIds.map((id: string, index: number) =>
         supabaseServer.from('song_tasks').update({ sort_order: index }).eq('id', id)
       )
     );
 
+    if (results.some(result => result.error)) throw new Error('Task order update failed.');
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error('Error reordering tasks:', error);
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('Error reordering tasks:', safeErrorDetails(error));
+    return NextResponse.json({ error: "Could not reorder tasks." }, { status: 500 });
   }
 }

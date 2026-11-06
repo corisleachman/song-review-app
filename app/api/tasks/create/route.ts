@@ -1,17 +1,21 @@
+import { readCollaborationInput } from '@/lib/collaborationInput';
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
 
 export async function POST(req: NextRequest) {
   try {
-    const { songId, description } = await req.json();
     const resolved = await resolveCanonicalIdentity();
 
     if (!resolved) {
       return NextResponse.json({ error: 'You must be signed in to create a task.' }, { status: 401 });
     }
 
-    if (!songId || !description?.trim()) {
+    const payload = await readCollaborationInput(req);
+    if (!payload) return NextResponse.json({ error: 'Invalid task details.' }, { status: 400 });
+    const { songId, description } = payload;
+    if (typeof songId !== 'string' || !songId.trim() || typeof description !== 'string' || !description.trim()) {
       return NextResponse.json({ error: 'Missing songId or description' }, { status: 400 });
     }
 
@@ -50,7 +54,7 @@ export async function POST(req: NextRequest) {
     if (error) throw error;
     return NextResponse.json({ task: data }, { status: 201 });
   } catch (error) {
-    console.error('Error creating task:', error);
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('Error creating task:', safeErrorDetails(error));
+    return NextResponse.json({ error: "Could not create task." }, { status: 500 });
   }
 }

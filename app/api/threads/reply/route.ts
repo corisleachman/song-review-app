@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
@@ -108,7 +109,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ commentId: commentData.id });
   } catch (error) {
-    console.error('Error replying to thread:', error);
+    console.error('Error replying to thread:', safeErrorDetails(error));
     return NextResponse.json(
       { error: 'Failed to post reply' },
       { status: 500 }

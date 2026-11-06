@@ -1,3 +1,4 @@
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
@@ -28,9 +29,9 @@ export async function GET() {
       }
     );
   } catch (error) {
-    console.error('Error loading workspace members:', error);
+    console.error('Error loading workspace members:', safeErrorDetails(error));
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Could not load workspace members.' },
+      { error: 'Could not load workspace members.' },
       { status: 500 }
     );
   }

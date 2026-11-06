@@ -1,3 +1,5 @@
+import { readCollaborationInput } from '@/lib/collaborationInput';
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
@@ -6,43 +8,22 @@ import { audioDeliveryUrl } from '@/lib/mediaDelivery';
 
 export const dynamic = 'force-dynamic';
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  if (error && typeof error === 'object') {
-    const maybeMessage = 'message' in error && typeof (error as { message?: unknown }).message === 'string'
-      ? (error as { message: string }).message
-      : null;
-    if (maybeMessage) return maybeMessage;
-  }
-
-  return 'Version request failed.';
-}
-
 async function loadVersionWithWorkspace(versionId: string) {
-  const { data: version, error: versionError } = await supabaseServer
+  const { data, error } = await supabaseServer
     .from('song_versions')
-    .select('*')
+    .select('*, workspace_song:songs!song_versions_song_id_fkey(account_id)')
     .eq('id', versionId)
     .maybeSingle();
 
-  if (versionError) throw versionError;
+  if (error) throw error;
 
-  if (!version) {
+  if (!data) {
     return { version: null, workspaceId: null };
   }
 
-  const { data: song, error: songError } = await supabaseServer
-    .from('songs')
-    .select('id, account_id')
-    .eq('id', version.song_id)
-    .maybeSingle();
-
-  if (songError) throw songError;
-
-  return { version, workspaceId: song?.account_id ?? null };
+  // Keep the parent workspace check server-side without another round trip.
+  const { workspace_song, ...version } = data;
+  return { version, workspaceId: workspace_song?.account_id ?? null };
 }
 
 function normalizeStoragePath(value: string | null | undefined) {
@@ -130,19 +111,25 @@ export async function GET(req: NextRequest, props: { params: Promise<{ versionId
       }
     );
   } catch (error) {
-    console.error('Error fetching version:', error);
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    console.error('Error fetching version:', safeErrorDetails(error));
+    return NextResponse.json({ error: 'Version request failed.' }, { status: 500 });
   }
 }
 
 export async function PATCH(req: NextRequest, props: { params: Promise<{ versionId: string }> }) {
   const params = await props.params;
   try {
-    const { label, notes } = await req.json();
     const resolved = await resolveCanonicalIdentity();
 
     if (!resolved) {
       return NextResponse.json({ error: 'You must be signed in to update a version.' }, { status: 401 });
+    }
+
+    const body = await readCollaborationInput(req);
+    if (!body) return NextResponse.json({ error: 'Invalid version details.' }, { status: 400 });
+    const { label, notes } = body;
+    if ((label != null && typeof label !== 'string') || (notes != null && typeof notes !== 'string')) {
+      return NextResponse.json({ error: 'Invalid version details.' }, { status: 400 });
     }
 
     const { version, workspaceId } = await loadVersionWithWorkspace(params.versionId);
@@ -156,11 +143,11 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ version
     }
 
     const updates: { label: string | null; notes?: string | null } = {
-      label: label ?? null,
+      label: typeof label === 'string' ? label : null,
     };
 
     if (notes !== undefined) {
-      updates.notes = notes?.trim() ? notes.trim() : null;
+      updates.notes = typeof notes === 'string' && notes.trim() ? notes.trim() : null;
     }
 
     const { data, error } = await supabaseServer
@@ -172,7 +159,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ version
     if (error) throw error;
     return NextResponse.json({ version: withVersionDisplayName(data) });
   } catch (error) {
-    console.error('Error updating version:', error);
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    console.error('Error updating version:', safeErrorDetails(error));
+    return NextResponse.json({ error: 'Version request failed.' }, { status: 500 });
   }
 }

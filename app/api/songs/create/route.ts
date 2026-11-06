@@ -1,35 +1,23 @@
+import { readCollaborationInput } from '@/lib/collaborationInput';
+import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { DEFAULT_SONG_STATUS } from '@/lib/songWorkflow';
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  if (error && typeof error === 'object') {
-    const maybeMessage = 'message' in error && typeof (error as { message?: unknown }).message === 'string'
-      ? (error as { message: string }).message
-      : null;
-    if (maybeMessage) return maybeMessage;
-  }
-
-  return 'Could not create song.';
-}
-
 export async function POST(req: NextRequest) {
   try {
-    const { title } = await req.json();
-
-    if (!title?.trim()) {
-      return NextResponse.json({ error: 'Title is required' }, { status: 400 });
-    }
-
     const resolved = await resolveCanonicalIdentity();
 
     if (!resolved) {
       return NextResponse.json({ error: 'You must be signed in to create a song.' }, { status: 401 });
+    }
+
+    const body = await readCollaborationInput(req);
+    if (!body) return NextResponse.json({ error: 'Invalid song details.' }, { status: 400 });
+    const { title } = body;
+    if (typeof title !== 'string' || !title.trim()) {
+      return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
 
     const { data, error } = await supabaseServer
@@ -46,7 +34,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ songId: data.id }, { status: 201 });
   } catch (error) {
-    console.error('Error creating song:', error);
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    console.error('Error creating song:', safeErrorDetails(error));
+    return NextResponse.json({ error: 'Could not create song.' }, { status: 500 });
   }
 }
