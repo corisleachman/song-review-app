@@ -10048,6 +10048,16 @@ Updated LAUNCH_CHECKLIST.md with the live FAQ and lock-screen image checks, L7 c
 
 Updated LAUNCH_CHECKLIST.md. The approved staging upload finalized v2, Resend accepted one allowlisted message, and the inbox received the link to the correct version. Restored the staging alias and removed the two temporary variables and test deployment. Also recorded B44's protected unsigned probe and the proposed isolated B43 verification route.
 
+## 2026-11-08 isolated Stripe webhook acceptance
+
+Updated LAUNCH_CHECKLIST.md with the genuine Stripe Test mode update, expiry, downgrade and duplicate replay results on B44 Preview. Removed the temporary deployment configuration and confirmed fixture cleanup. Persistent webhook delivery remains open.
+
+## B44 Stripe subscription lifecycle guard
+
+Updated app/api/stripe/webhook/route.ts, tests/api-access-boundaries.test.mjs, PRODUCT_BACKLOG.md and LAUNCH_CHECKLIST.md. A signed stale event could change the plan linked to a replacement subscription. Update and deletion events now check the linked subscription ID as part of the write. Local signed fixtures cover old and current subscriptions.
+
+Staging ledger probe verified initial claim, duplicate suppression, retry after failure and final processed state. The probe rolled back and left zero fixture rows. Protected Preview rejects unsigned requests with HTTP 400. Actual Sandbox forwarding and expiry are still open.
+
 ## B20 default-off version upload notification candidate
 
 Updated app/api/versions/[versionId]/finalize/route.ts, lib/versionUploadNotifications.ts, tests/api-access-boundaries.test.mjs and LAUNCH_CHECKLIST.md. Schedule a separate workspace-member email after the first successful finalization of a new version. Added fake-provider checks for repeat finalization, recipient scope, Preview allowlisting and the canonical version link. Documented the isolated rollout and the delivery retry limit.

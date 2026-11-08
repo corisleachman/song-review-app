@@ -100,25 +100,22 @@ async function updateAccountPlanByWorkspaceId(params: {
   if (error) throw error;
 }
 
-async function updateAccountPlanByCustomer(params: {
+async function updateAccountPlanForLinkedSubscription(params: {
   stripeCustomerId: string;
-  stripeSubscriptionId?: string | null;
+  subscriptionId: string;
   plan: AccountPlan;
+  clearSubscription?: boolean;
 }) {
-  const { plan } = params;
-  const updatePayload: {
-    plan: AccountPlan;
-    stripe_subscription_id?: string | null;
-  } = { plan };
-
-  if (params.stripeSubscriptionId !== undefined) {
-    updatePayload.stripe_subscription_id = params.stripeSubscriptionId;
-  }
+  if (!params.stripeCustomerId || !params.subscriptionId) return;
 
   const { error } = await supabaseServer
     .from('accounts')
-    .update(updatePayload)
-    .eq('stripe_customer_id', params.stripeCustomerId);
+    .update({
+      plan: params.plan,
+      ...(params.clearSubscription ? { stripe_subscription_id: null } : {}),
+    })
+    .eq('stripe_customer_id', params.stripeCustomerId)
+    .eq('stripe_subscription_id', params.subscriptionId);
 
   if (error) throw error;
 }
@@ -186,15 +183,16 @@ async function handleSubscriptionUpdated(event: { data: { object: unknown } }) {
   const isActive = subscription.status === 'active' || subscription.status === 'trialing';
   const plan = isActive ? getPlanForStripePriceId(priceId) : 'free';
 
-  await updateAccountPlanByCustomer({
+  await updateAccountPlanForLinkedSubscription({
     stripeCustomerId,
-    stripeSubscriptionId: subscription.id,
+    subscriptionId: subscription.id,
     plan,
   });
 }
 
 async function handleSubscriptionDeleted(event: { data: { object: unknown } }) {
   const subscription = event.data.object as {
+    id: string;
     customer: string | { id: string };
   };
 
@@ -203,10 +201,11 @@ async function handleSubscriptionDeleted(event: { data: { object: unknown } }) {
       ? subscription.customer
       : subscription.customer.id;
 
-  await updateAccountPlanByCustomer({
+  await updateAccountPlanForLinkedSubscription({
     stripeCustomerId,
-    stripeSubscriptionId: null,
+    subscriptionId: subscription.id,
     plan: 'free',
+    clearSubscription: true,
   });
 }
 
