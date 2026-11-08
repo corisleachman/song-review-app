@@ -10043,3 +10043,7 @@ Updated public/marketing.html with a short FAQ covering Free, accepted audio upl
 ## 2026-11-08 homepage Production verification and launch evidence
 
 Updated LAUNCH_CHECKLIST.md with the live FAQ and lock-screen image checks, L7 closeout and the open limits for the wider-launch decision.
+
+## 2026-11-08 B20 controlled delivery evidence
+
+Updated LAUNCH_CHECKLIST.md. The approved staging upload finalized v2, Resend accepted one allowlisted message, and the inbox received the link to the correct version. Restored the staging alias and removed the two temporary variables and test deployment. Also recorded B44's protected unsigned probe and the proposed isolated B43 verification route.
