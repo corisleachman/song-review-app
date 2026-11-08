@@ -10043,3 +10043,7 @@ Updated public/marketing.html with a short FAQ covering Free, accepted audio upl
 ## 2026-11-08 homepage Production verification and launch evidence
 
 Updated LAUNCH_CHECKLIST.md with the live FAQ and lock-screen image checks, L7 closeout and the open limits for the wider-launch decision.
+
+## B44 Stripe subscription lifecycle guard
+
+Updated app/api/stripe/webhook/route.ts, tests/api-access-boundaries.test.mjs, PRODUCT_BACKLOG.md and LAUNCH_CHECKLIST.md. A signed stale event could change the plan linked to a replacement subscription. Update and deletion events now check the linked subscription ID as part of the write. Local signed fixtures cover old and current subscriptions.
