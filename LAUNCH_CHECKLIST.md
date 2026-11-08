@@ -74,7 +74,7 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B11 | SEO article PR #12 | Production complete, 8 Nov. PR #12 merged and live article, metadata, links and sitemap verified | L7 |
 | B12 | Automated SEO content-engine draft PR #3 | Draft; not a launch commitment | Later |
 | B13 | FAQ | Scope/implementation pending | L7 |
-| B14 | Marketing image alt-text audit | Scoped live inventory: 19 homepage images, all have alt attributes. Review notification screenshot captions with B20 | L7 |
+| B14 | Marketing image alt-text audit | Scoped live inventory: 19 homepage images with alt attributes. Two lock-screen captions and alt descriptions corrected on release branch | L7 |
 | B15 | [Canonical host consistency](PRODUCT_BACKLOG.md#b15-canonical-host-consistency) | Production complete: PR89/0eb8b70c, primary www alias/source verified; six pages200 and canonical/OG metadata, nine sitemap entries and two redirects pass | Existing L7 verification/alignment |
 | B16 | Remaining empty states, typography, workspace-switcher contrast and accessibility polish | Needs current-state triage; old plan isn't evidence of an open defect | L6; split confirmed defects into new rows |
 | B17 | [Dashboard loading speed](PRODUCT_BACKLOG.md#b17-dashboard-measure-and-reduce-time-to-useful-songs-and-artwork) | 25-song Production baseline3.72-4.45s; app iad1/database Ireland mismatch verified. [Primary-region test](B17_FUNCTION_REGION_REVIEW.md) approved; primary dub1 live after passed staging/crossover; user reports much faster/more responsive; provider-origin stalls persist in both regions. B17 remains open | L6 leading performance workstream after current security slice |
@@ -566,3 +566,5 @@ L6 hosted revocation checkpoint: published an empty staging playlist, observed H
 8 November B14 inventory: the live homepage served 19 img elements and each had an alt attribute. Blog index, Trust and Login served none. Two homepage lock-screen screenshots use notification promises as alt text and captions. Review the copy alongside B20 before wider promotion. This is an attribute inventory, not a full descriptive-alt audit.
 
 8 November L7 B11 checkpoint: PR #12 merged as 6830bafa. Primary Production deployment dpl_D5gb4bvDoQt8QonQjxtjUAdWpqgV was Ready on www.song-room.live. Verified article, both linked guides, blog index link, canonical/Open Graph/Article URLs and canonical sitemap entry in Preview and Production. Rollback is a revert of the article merge or restoration of the previous Production deployment. L7 remains open for FAQ and screenshot copy.
+
+8 November B14 follow-up: checked both lock-screen screenshots visually. They show media playback, so the captions, accessible labels and image descriptions now describe playback. Four relevant local browser checks passed, with two viewport-specific skips. B20 remains open.

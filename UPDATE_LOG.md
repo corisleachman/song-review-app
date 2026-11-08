@@ -10031,3 +10031,7 @@ Updated the remote songwriting article and app/sitemap.ts. Replaced the publishi
 ## 2026-11-08 L7 publication and homepage evidence
 
 Updated LAUNCH_CHECKLIST.md with the Production article release verification, six homepage performance samples, and the scoped marketing image audit.
+
+## 2026-11-08 homepage lock-screen captions
+
+Updated public/marketing.html. Two screenshots of lock-screen playback had captions about notifications. The captions now describe playback and the alt text identifies what each screenshot shows.
