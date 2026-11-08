@@ -10051,3 +10051,9 @@ Updated LAUNCH_CHECKLIST.md. The approved staging upload finalized v2, Resend ac
 ## 2026-11-08 isolated Stripe webhook acceptance
 
 Updated LAUNCH_CHECKLIST.md with the genuine Stripe Test mode update, expiry, downgrade and duplicate replay results on B44 Preview. Removed the temporary deployment configuration and confirmed fixture cleanup. Persistent webhook delivery remains open.
+
+## B44 Stripe subscription lifecycle guard
+
+Updated app/api/stripe/webhook/route.ts, tests/api-access-boundaries.test.mjs, PRODUCT_BACKLOG.md and LAUNCH_CHECKLIST.md. A signed stale event could change the plan linked to a replacement subscription. Update and deletion events now check the linked subscription ID as part of the write. Local signed fixtures cover old and current subscriptions.
+
+Staging ledger probe verified initial claim, duplicate suppression, retry after failure and final processed state. The probe rolled back and left zero fixture rows. Protected Preview rejects unsigned requests with HTTP 400. Actual Sandbox forwarding and expiry are still open.

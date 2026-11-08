@@ -1442,3 +1442,59 @@ for (const [label, parent, status] of [['foreign',foreignSong,403],['absent',nul
   assert.doesNotMatch(await response.text(),/PRIVATE-TITLE|PRIVATE-ARTWORK/);
  });
 }
+
+test('signed Stripe lifecycle events only change the linked subscription', async t => {
+  const Stripe = require('stripe');
+  const stripe = new Stripe('sk_test_local_fixture');
+  const secret = 'whsec_local_fixture';
+  for (const [type, subscriptionId, expectedPlan, expectedSubscription] of [
+    ['customer.subscription.deleted', 'sub_previous', 'pro', 'sub_current'],
+    ['customer.subscription.updated', 'sub_previous', 'pro', 'sub_current'],
+    ['customer.subscription.updated', 'sub_current', 'studio', 'sub_current'],
+    ['customer.subscription.deleted', 'sub_current', 'free', null],
+  ]) {
+    await t.test(`${type} for ${subscriptionId}`, async () => {
+      const account = { stripe_customer_id: 'cus_fixture', stripe_subscription_id: 'sub_current', plan: 'pro' };
+      const db = {
+        rpc: async () => ({ data: true, error: null }),
+        from(table) {
+          assert.equal(table, 'accounts');
+          let patch;
+          const conditions = [];
+          const query = {
+            update(data) { patch = data; return query; },
+            eq(key, value) { conditions.push(() => account[key] === value); return query; },
+            then(resolve, reject) {
+              if (conditions.every(match => match())) Object.assign(account, patch);
+              return Promise.resolve({ error: null }).then(resolve, reject);
+            },
+          };
+          return query;
+        },
+      };
+      const { handler } = routeHarness('app/api/stripe/webhook/route.ts', {
+        overrides: {
+          '@/lib/supabaseServer': { supabaseServer: db },
+          '@/lib/referrals': {},
+          '@/lib/stripe': {
+            getStripe: () => stripe,
+            getStripeWebhookSecret: () => secret,
+            getPlanForStripePriceId: () => 'studio',
+          },
+        },
+      });
+      const body = JSON.stringify({
+        id: 'evt_fixture',
+        type,
+        data: { object: { id: subscriptionId, customer: 'cus_fixture', status: 'active' } },
+      });
+      const signature = stripe.webhooks.generateTestHeaderString({ payload: body, secret });
+      const response = await handler.POST(new Request('https://staging.invalid/api/stripe/webhook', {
+        method: 'POST', headers: { 'stripe-signature': signature }, body,
+      }));
+      assert.equal(response.status, 200);
+      assert.equal(account.plan, expectedPlan);
+      assert.equal(account.stripe_subscription_id, expectedSubscription);
+    });
+  }
+});
