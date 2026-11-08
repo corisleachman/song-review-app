@@ -10058,6 +10058,10 @@ Updated app/api/stripe/webhook/route.ts, tests/api-access-boundaries.test.mjs, P
 
 Staging ledger probe verified initial claim, duplicate suppression, retry after failure and final processed state. The probe rolled back and left zero fixture rows. Protected Preview rejects unsigned requests with HTTP 400. Actual Sandbox forwarding and expiry are still open.
 
+## 2026-11-08 B44 Production verification
+
+Updated LAUNCH_CHECKLIST.md with the approved rollout of the linked-subscription guard, live deployment verification, unsigned and invalid signature smoke checks, and the application rollback route.
+
 ## B20 default-off version upload notification candidate
 
 Updated app/api/versions/[versionId]/finalize/route.ts, lib/versionUploadNotifications.ts, tests/api-access-boundaries.test.mjs and LAUNCH_CHECKLIST.md. Schedule a separate workspace-member email after the first successful finalization of a new version. Added fake-provider checks for repeat finalization, recipient scope, Preview allowlisting and the canonical version link. Documented the isolated rollout and the delivery retry limit.
