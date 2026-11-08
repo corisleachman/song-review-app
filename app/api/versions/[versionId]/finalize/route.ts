@@ -17,6 +17,7 @@ import {
   normalizeAudioFileName,
 } from '@/lib/audioUploadPolicy.mjs';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { scheduleVersionUploadNotification } from '@/lib/versionUploadNotifications';
 
 export const dynamic = 'force-dynamic';
 
@@ -229,6 +230,14 @@ export async function POST(req: NextRequest, props: { params: Promise<{ versionI
         .eq('id', params.versionId);
 
       if (versionUpdateError) throw versionUpdateError;
+    }
+
+    if (finalizeResult.data === true && version.version_number > 1) {
+      scheduleVersionUploadNotification({
+        workspaceId: song.account_id,
+        songId: song.id,
+        versionId: params.versionId,
+      });
     }
 
     return NextResponse.json({ finalized: true, fileSizeBytes: actualSize });

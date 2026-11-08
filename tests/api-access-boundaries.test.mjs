@@ -11,13 +11,14 @@ const require = createRequire(import.meta.url);
 
 // Execute the real handler, replacing only framework/I/O boundaries. This
 // checks runtime decisions; it is not a Supabase, cookie or hosted HTTP test.
-function routeHarness(route, { identity = null, user = null, tables = {}, storage = null, mutationResult = null, mutationError = null, limitResponse = null, overrides = {}, logger = console } = {}) {
+function routeHarness(route, { identity = null, user = null, tables = {}, storage = null, rpc = undefined, mutationResult = null, mutationError = null, limitResponse = null, overrides = {}, logger = console } = {}) {
   const reads = [];
   const queries = [];
   const writes = [];
   let notifications = 0;
   const limitCalls = [];
   const db = {
+    rpc,
     from(table) {
       reads.push(table);
       const predicates = [];
@@ -754,6 +755,117 @@ test('already finalized legacy audio above the new upload limit is preserved wit
   assert.equal(response.status, 200);
   assert.equal((await response.json()).alreadyFinalized, true);
   assert.equal(harness.writes.length, 0);
+});
+
+test('only the request that finalizes a new version schedules email', async t => {
+  for (const [label, versionNumber, rpcResult, expectedStatus, expectedCalls] of [
+    ['new version', 2, { data: true }, 200, 1],
+    ['concurrent finalization lost', 2, { data: false }, 200, 0],
+    ['first upload', 1, { data: true }, 200, 0],
+    ['storage limit rejected', 2, { error: { message: 'STORAGE_LIMIT_REACHED' } }, 400, 0],
+  ]) {
+    await t.test(label, async () => {
+      const calls = [];
+      const handler = routeHarness('app/api/versions/[versionId]/finalize/route.ts', {
+        identity: session('owner'),
+        tables: {
+          songs: [song],
+          accounts: [{ id: 'workspace-a', plan: 'free', storage_bytes_used: 0 }],
+          song_versions: [{
+            ...finalizedVersion, version_number: versionNumber, upload_finalized_at: null,
+            file_path: 'songs/song-a/mix.wav', file_size_bytes: 24,
+          }],
+        },
+        rpc: async name => {
+          assert.equal(name, 'finalize_song_version_upload');
+          return rpcResult;
+        },
+        storage: { from: () => ({
+          info: async () => ({ data: { size: 24, contentType: 'audio/wav' } }),
+          createSignedUrl: async () => ({ data: { signedUrl: 'https://storage.invalid/audio' } }),
+          remove: async () => ({ error: null }),
+        }) },
+        overrides: {
+          '@/lib/audioSignatureRead.mjs': {
+            fetchAudioSignaturePrefix: async () => Buffer.from('RIFF0000WAVE'),
+          },
+          '@/lib/versionUploadNotifications': {
+            scheduleVersionUploadNotification: payload => calls.push(payload),
+          },
+        },
+      }).handler;
+      const response = await handler.POST(jsonRequest({}), params({ versionId: 'version-a' }));
+      assert.equal(response.status, expectedStatus);
+      assert.deepEqual(calls, expectedCalls ? [{
+        workspaceId: 'workspace-a', songId: 'song-a', versionId: 'version-a',
+      }] : []);
+    });
+  }
+});
+
+test('version emails use current membership and intersect the Preview allowlist', async t => {
+  const envKeys = ['VERSION_UPLOAD_EMAILS_ENABLED', 'EMAIL_NOTIFICATIONS_ENABLED',
+    'VERCEL_ENV', 'VERCEL_BRANCH_URL', 'VERSION_UPLOAD_EMAIL_TEST_TO', 'RESEND_API_KEY'];
+  const original = new Map(envKeys.map(key => [key, process.env[key]]));
+  t.after(() => {
+    for (const [key, value] of original) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  });
+  Object.assign(process.env, {
+    EMAIL_NOTIFICATIONS_ENABLED: 'true',
+    VERCEL_ENV: 'preview',
+    VERCEL_BRANCH_URL: 'staging.invalid',
+    VERSION_UPLOAD_EMAIL_TEST_TO: 'uploader@example.test, outsider@example.test',
+    RESEND_API_KEY: 'fake',
+  });
+  delete process.env.VERSION_UPLOAD_EMAILS_ENABLED;
+  const scheduled = [];
+  const batches = [];
+  const memberReads = [];
+  const { handler } = routeHarness('lib/versionUploadNotifications.ts', {
+    overrides: {
+      'next/server': { after: callback => scheduled.push(callback) },
+      '@/lib/workspaceMembers': {
+        listWorkspaceMembers: async workspaceId => {
+          memberReads.push(workspaceId);
+          return [
+            { email: 'uploader@example.test' }, { email: 'member@example.test' },
+            { email: 'UPLOADER@example.test' }, { email: null },
+          ];
+        },
+      },
+      resend: { Resend: class {
+        batch = { send: async (messages, options) => {
+          batches.push({ messages, options });
+          return { data: { data: messages.map(() => ({ id: 'fake' })) }, error: null };
+        } };
+      } },
+    },
+    logger: { info() {}, warn() {} },
+  });
+  const payload = { workspaceId: 'workspace-a', songId: 'song-a', versionId: 'version-a' };
+  handler.scheduleVersionUploadNotification(payload);
+  assert.equal(scheduled.length, 0);
+  process.env.VERSION_UPLOAD_EMAILS_ENABLED = 'true';
+  delete process.env.VERSION_UPLOAD_EMAIL_TEST_TO;
+  handler.scheduleVersionUploadNotification(payload);
+  assert.equal(scheduled.length, 0);
+  process.env.VERSION_UPLOAD_EMAIL_TEST_TO = 'uploader@example.test, outsider@example.test';
+  handler.scheduleVersionUploadNotification(payload);
+  assert.equal(scheduled.length, 1);
+  await scheduled.shift()();
+  assert.deepEqual(memberReads, ['workspace-a']);
+  assert.deepEqual(batches[0].messages.map(m => m.to.toLowerCase()), ['uploader@example.test']);
+  assert.match(batches[0].messages[0].text, /https:\/\/staging\.invalid\/songs\/song-a\/versions\/version-a/);
+  assert.equal(batches[0].options.idempotencyKey, 'version-upload/version-a/0');
+
+  process.env.VERCEL_ENV = 'production';
+  handler.scheduleVersionUploadNotification(payload);
+  await scheduled.shift()();
+  assert.deepEqual(batches[1].messages.map(m => m.to.toLowerCase()), ['uploader@example.test', 'member@example.test']);
+  assert.match(batches[1].messages[0].text, /https:\/\/www\.song-room\.live\/songs\/song-a\/versions\/version-a/);
 });
 
 test('version allocation rejects over-50 MB metadata before any database or Storage work', async () => {

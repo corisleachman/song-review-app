@@ -10043,3 +10043,7 @@ Updated public/marketing.html with a short FAQ covering Free, accepted audio upl
 ## 2026-11-08 homepage Production verification and launch evidence
 
 Updated LAUNCH_CHECKLIST.md with the live FAQ and lock-screen image checks, L7 closeout and the open limits for the wider-launch decision.
+
+## B20 default-off version upload notification candidate
+
+Updated app/api/versions/[versionId]/finalize/route.ts, lib/versionUploadNotifications.ts, tests/api-access-boundaries.test.mjs and LAUNCH_CHECKLIST.md. Schedule a separate workspace-member email after the first successful finalization of a new version. Added fake-provider checks for repeat finalization, recipient scope, Preview allowlisting and the canonical version link. Documented the isolated rollout and the delivery retry limit.
