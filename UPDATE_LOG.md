@@ -10039,3 +10039,7 @@ Updated public/marketing.html. Two screenshots of lock-screen playback had capti
 ## B13 homepage FAQ
 
 Updated public/marketing.html with a short FAQ covering Free, accepted audio uploads and playlist sharing. The answers follow the existing plan, upload and embed rules.
+
+## 2026-11-08 homepage Production verification and launch evidence
+
+Updated LAUNCH_CHECKLIST.md with the live FAQ and lock-screen image checks, L7 closeout and the open limits for the wider-launch decision.

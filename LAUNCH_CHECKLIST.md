@@ -15,8 +15,8 @@ Public beta is live. Five foundation stages are done. Security closeout is accep
 | L4. Homepage readiness | Done | Clear login, repaired links, responsive presentation, local assets and initial-load improvements | PRs [53](https://github.com/corisleachman/song-review-app/pull/53), [61](https://github.com/corisleachman/song-review-app/pull/61), [62](https://github.com/corisleachman/song-review-app/pull/62); performance follow-up [63](https://github.com/corisleachman/song-review-app/pull/63) merged 31 October; final measurements belong to L6 |
 | L5. Security closeout | Done for current beta | Access boundaries, database warnings, abuse protection, validation, secrets and monitoring | User accepted S2/S5 limits on 4 November; recorded S3/S4/S6/S7 scopes retained. Named consolidated checks carry to L6 and limits to L8 |
 | L6. Performance and final launch QA | In progress (baseline) | Dashboard loading/return and song-navigation performance work, then consolidated journey, browser/device, accessibility, links and payment sandbox checks | Recorded pass/fail matrix; no unresolved launch-blocking defects |
-| L7. Discoverability closeout | In progress (verification) | B15 canonical-host alignment Production verified 4 November. Other SEO/content exit checks remain | B15 complete in verified scope; remaining metadata/link/content decisions open |
-| L8. Wider-launch decision | Not started | Review evidence, remaining risks, rollback and support readiness | L5-L7 complete; user records go/no-go for wider promotion |
+| L7. Discoverability closeout | Done in recorded scope | Canonical host, article, FAQ and scoped image audit | Live canonical metadata, sitemap, article links, FAQ keyboard interaction and corrected image descriptions verified |
+| L8. Wider-launch decision | Evidence review started | Review evidence, remaining risks, rollback and support readiness | L5-L7 complete; user records go/no-go for wider promotion |
 
 Done means the named scope has recorded evidence, not that every future improvement in that area is finished. Later findings reopen the relevant stage. L8 does not authorise a marketing campaign or messages to others.
 
@@ -73,8 +73,8 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B10 | Dependency/workflow update PRs | Awaiting review | L5/S7; eight open update PRs at reconciliation |
 | B11 | SEO article PR #12 | Production complete, 8 Nov. PR #12 merged and live article, metadata, links and sitemap verified | L7 |
 | B12 | Automated SEO content-engine draft PR #3 | Draft; not a launch commitment | Later |
-| B13 | FAQ | Homepage FAQ implemented on review branch. Local keyboard and browser checks passed | L7 |
-| B14 | Marketing image alt-text audit | Scoped live inventory: 19 homepage images with alt attributes. Two lock-screen captions and alt descriptions corrected on release branch | L7 |
+| B13 | FAQ | Production complete in PR #108. Live keyboard interaction verified | L7 |
+| B14 | Marketing image alt-text audit | Scoped live inventory: 19 homepage images with alt attributes. Two lock-screen captions and alt descriptions corrected and verified in Production in PR #107 | L7 |
 | B15 | [Canonical host consistency](PRODUCT_BACKLOG.md#b15-canonical-host-consistency) | Production complete: PR89/0eb8b70c, primary www alias/source verified; six pages200 and canonical/OG metadata, nine sitemap entries and two redirects pass | Existing L7 verification/alignment |
 | B16 | Remaining empty states, typography, workspace-switcher contrast and accessibility polish | Needs current-state triage; old plan isn't evidence of an open defect | L6; split confirmed defects into new rows |
 | B17 | [Dashboard loading speed](PRODUCT_BACKLOG.md#b17-dashboard-measure-and-reduce-time-to-useful-songs-and-artwork) | 25-song Production baseline3.72-4.45s; app iad1/database Ireland mismatch verified. [Primary-region test](B17_FUNCTION_REGION_REVIEW.md) approved; primary dub1 live after passed staging/crossover; user reports much faster/more responsive; provider-origin stalls persist in both regions. B17 remains open | L6 leading performance workstream after current security slice |
@@ -568,3 +568,22 @@ L6 hosted revocation checkpoint: published an empty staging playlist, observed H
 8 November L7 B11 checkpoint: PR #12 merged as 6830bafa. Primary Production deployment dpl_D5gb4bvDoQt8QonQjxtjUAdWpqgV was Ready on www.song-room.live. Verified article, both linked guides, blog index link, canonical/Open Graph/Article URLs and canonical sitemap entry in Preview and Production. Rollback is a revert of the article merge or restoration of the previous Production deployment. L7 remains open for FAQ and screenshot copy.
 
 8 November B14 follow-up: checked both lock-screen screenshots visually. They show media playback, so the captions, accessible labels and image descriptions now describe playback. Four relevant local browser checks passed, with two viewport-specific skips. B20 remains open.
+
+
+## Wider-launch decision evidence
+
+Keep the current beta running while L6 remains open. The recorded checks cover existing-account Google and Email access, staged workspace separation, playback on the tested phone, sandbox checkout and scheduled cancellation, and revocation of new playlist audio requests.
+
+Before wider promotion, resolve or explicitly accept the remaining limits:
+
+| Item | Evidence and next decision |
+| --- | --- |
+| B20 version notifications | No new-version email dispatch found in the inspected code or database triggers. Confirm and verify delivery to the intended recipients before making a delivery promise. |
+| B43 billing reconciliation | Sandbox checkout and portal cancellation passed. Automatic expiry and downgrade remain unverified. Validate signed delivery in an isolated staging setup. |
+| B17 performance | The Dublin rollout improved the user's experience. Intermittent provider waits remain, and homepage measurements are lab samples. |
+| Device and access coverage | The physical iPad was unavailable. Scoped browser checks passed. Broader accessibility and hosted access coverage remain open. |
+| Sharing and support | New audio requests are denied after revocation. Previously issued storage URLs have a configured 10-minute lifetime. The current beta monitoring limits were accepted for beta and need a fresh decision before wider promotion. |
+
+Use the prior Ready deployment for an application rollback. For database changes, use the matching migration rollback only after reviewing which access boundary it reopens. The app feedback form is the existing reporting path. The owner retains the wider-promotion decision once the remaining limits have been reviewed.
+
+8 November L7 exit checkpoint: PR #107 and #108 merged. Verified the FAQ and two corrected lock-screen image descriptions on www.song-room.live at Ready Production deployment dpl_3jeM77q7iwEB8aYHY3SZX2o7KbNt, source ea3449cb. A narrow Chromium viewport passed the live Enter/Space FAQ interaction. Rollback is the previous Ready deployment or a revert of the affected homepage change. L8 evidence review has started. L6 remains open.
