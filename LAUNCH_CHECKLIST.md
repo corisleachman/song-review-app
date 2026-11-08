@@ -51,7 +51,7 @@ Next action: measure B17-B19 dashboard loading, return/cache isolation and song 
 | Forms, feedback, public sharing and embed revocation | Scoped local contracts and Production read checks passed. Staging negative form checks and playlist revocation passed in recorded scope. Issued audio URLs remain usable until expiry | Clear validation; private material stays private; revocation removes public access |
 | Accessibility and desktop/phone/tablet coverage |5 Nov scoped desktop feedback-dialog keyboard pass; 6 Nov local public browser suite 20 passed, 8 expected skips. Physical iPad and wider accessibility remain open | Keyboard/focus/dialog checks, readable layouts and no overflow; physical 11-inch iPad remains additional coverage |
 | Link crawl and SEO endpoints | Scoped Production pass5 Nov:14 public URLs, static anchors and4 signed-out protected routes; broader dynamic links remain open | Intended internal links resolve; protected routes stay protected |
-| Production performance after PR #63 | Not started | Repeat named mobile/desktop measurements; distinguish lab runs from field data; inspect LCP, CLS and transferred bytes |
+| Production performance after PR #63 | 8 Nov homepage lab baseline recorded. Field performance remains open | Repeat named mobile/desktop measurements; distinguish lab runs from field data; inspect LCP, CLS and transferred bytes |
 
 Run local checks before staging journeys, then safe production smoke checks. Stop the affected rollout on failure and record environment, URL, step, expected/actual result, safe error/log excerpt and screenshot where useful. Never attach credentials or full auth links.
 
@@ -71,10 +71,10 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B08 | Microsoft login | Deferred by user | Later; revisit with traction/income |
 | B09 | Physical 11-inch iPad Safari/Chrome coverage | Open. Physical iPad unavailable | L6 additional coverage; existing tablet release accepted |
 | B10 | Dependency/workflow update PRs | Awaiting review | L5/S7; eight open update PRs at reconciliation |
-| B11 | SEO article PR #12 | Canonical, Open Graph and Article metadata corrected in PR #12. Content review and publication open | L7 |
+| B11 | SEO article PR #12 | Production complete, 8 Nov. PR #12 merged and live article, metadata, links and sitemap verified | L7 |
 | B12 | Automated SEO content-engine draft PR #3 | Draft; not a launch commitment | Later |
 | B13 | FAQ | Scope/implementation pending | L7 |
-| B14 | Marketing image alt-text audit | Pending | L7 |
+| B14 | Marketing image alt-text audit | Scoped live inventory: 19 homepage images, all have alt attributes. Review notification screenshot captions with B20 | L7 |
 | B15 | [Canonical host consistency](PRODUCT_BACKLOG.md#b15-canonical-host-consistency) | Production complete: PR89/0eb8b70c, primary www alias/source verified; six pages200 and canonical/OG metadata, nine sitemap entries and two redirects pass | Existing L7 verification/alignment |
 | B16 | Remaining empty states, typography, workspace-switcher contrast and accessibility polish | Needs current-state triage; old plan isn't evidence of an open defect | L6; split confirmed defects into new rows |
 | B17 | [Dashboard loading speed](PRODUCT_BACKLOG.md#b17-dashboard-measure-and-reduce-time-to-useful-songs-and-artwork) | 25-song Production baseline3.72-4.45s; app iad1/database Ireland mismatch verified. [Primary-region test](B17_FUNCTION_REGION_REVIEW.md) approved; primary dub1 live after passed staging/crossover; user reports much faster/more responsive; provider-origin stalls persist in both regions. B17 remains open | L6 leading performance workstream after current security slice |
@@ -560,3 +560,9 @@ L6 hosted revocation checkpoint: published an empty staging playlist, observed H
 6 November L6 form checkpoint: hosted staging rejected malformed feedback, unknown feedback type, short message and missing signed-out email with HTTP 400. Invalid comment field type returned 400 and a comment on an unavailable track returned 403. Empty signup returned 403 without Origin and a field-specific 400 with the staging Origin. Negative API scope only. Successful submission and delivery were outside this check.
 
 6 November L6 evidence reconciliation: retained the recorded 25 October Production Email signup, confirmation, login and recovery pass and the staging password login confirmation. Retained B35 and B40 hosted workspace separation evidence. No fresh provider round trip claimed. Public accessibility browser suite passed 20 cases with 8 expected skips, including the emulated iPad layout check. L7 technical inspection of PR #12 found article canonical, Open Graph and structured-data URLs on the apex host rather than the current www canonical host.
+
+8 November homepage lab baseline: three fresh Chromium contexts each at desktop and iPhone 13 emulated sizes, unthrottled. Desktop LCP 1460/264/276 ms, CLS 0.003/0/0, browser-reported transfer 409873 bytes per load. Mobile LCP 428/356/332 ms, CLS 0/0/0, reported transfer 465501 bytes. These are bounded lab observations, not field data or an estimate of every cross-origin byte.
+
+8 November B14 inventory: the live homepage served 19 img elements and each had an alt attribute. Blog index, Trust and Login served none. Two homepage lock-screen screenshots use notification promises as alt text and captions. Review the copy alongside B20 before wider promotion. This is an attribute inventory, not a full descriptive-alt audit.
+
+8 November L7 B11 checkpoint: PR #12 merged as 6830bafa. Primary Production deployment dpl_D5gb4bvDoQt8QonQjxtjUAdWpqgV was Ready on www.song-room.live. Verified article, both linked guides, blog index link, canonical/Open Graph/Article URLs and canonical sitemap entry in Preview and Production. Rollback is a revert of the article merge or restoration of the previous Production deployment. L7 remains open for FAQ and screenshot copy.
