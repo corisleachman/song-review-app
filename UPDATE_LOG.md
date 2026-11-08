@@ -10047,3 +10047,7 @@ Updated LAUNCH_CHECKLIST.md with the live FAQ and lock-screen image checks, L7 c
 ## 2026-11-08 B20 controlled delivery evidence
 
 Updated LAUNCH_CHECKLIST.md. The approved staging upload finalized v2, Resend accepted one allowlisted message, and the inbox received the link to the correct version. Restored the staging alias and removed the two temporary variables and test deployment. Also recorded B44's protected unsigned probe and the proposed isolated B43 verification route.
+
+## 2026-11-08 isolated Stripe webhook acceptance
+
+Updated LAUNCH_CHECKLIST.md with the genuine Stripe Test mode update, expiry, downgrade and duplicate replay results on B44 Preview. Removed the temporary deployment configuration and confirmed fixture cleanup. Persistent webhook delivery remains open.
