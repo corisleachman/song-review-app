@@ -10035,3 +10035,7 @@ Updated LAUNCH_CHECKLIST.md with the Production article release verification, si
 ## 2026-11-08 homepage lock-screen captions
 
 Updated public/marketing.html. Two screenshots of lock-screen playback had captions about notifications. The captions now describe playback and the alt text identifies what each screenshot shows.
+
+## B13 homepage FAQ
+
+Updated public/marketing.html with a short FAQ covering Free, accepted audio uploads and playlist sharing. The answers follow the existing plan, upload and embed rules.

@@ -2127,6 +2127,23 @@ footer {
   }
 }
 
+/* Homepage FAQ */
+.home-faq {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 64px 24px;
+}
+.home-faq details {
+  border-bottom: 1px solid currentColor;
+  padding: 16px 0;
+}
+.home-faq summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.home-faq details p {
+  margin: 12px 0 0;
+}
 </style>
 <style id="beta-strip-style">
   .beta-strip{position:fixed;top:0;left:0;right:0;height:34px;z-index:200;display:flex;align-items:center;justify-content:center;gap:9px;background:var(--straw);color:var(--black);border-bottom:1px solid var(--black);font-family:var(--ui);font-size:12.5px;line-height:1;white-space:nowrap;overflow:hidden;padding:0 12px;}
@@ -2636,6 +2653,22 @@ footer {
   </div>
 
   <p class="pricing-footnote reveal">Free needs no card. Paid plans are confirmed securely through Stripe. All prices exclude VAT.</p>
+</section>
+
+<section class="home-faq" id="faq" aria-labelledby="faq-heading">
+  <h2 id="faq-heading">Frequently asked questions</h2>
+  <details>
+    <summary>Do I need a card to start?</summary>
+    <p>No. You can start on Free with 500 MB of storage and invite up to five collaborators.</p>
+  </details>
+  <details>
+    <summary>What audio files can I upload?</summary>
+    <p>You can upload WAV, MP3 and M4A files up to 50 MB each.</p>
+  </details>
+  <details>
+    <summary>Can I share a playlist with someone outside my workspace?</summary>
+    <p>Yes. Switch the playlist to Public and send them the link. You can switch it back to Draft to close the link. Pro and Studio also let you embed public playlists on a website.</p>
+  </details>
 </section>
 
 <!-- ══ FINAL CTA ══ -->
