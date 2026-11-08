@@ -10044,6 +10044,12 @@ Updated public/marketing.html with a short FAQ covering Free, accepted audio upl
 
 Updated LAUNCH_CHECKLIST.md with the live FAQ and lock-screen image checks, L7 closeout and the open limits for the wider-launch decision.
 
+## 2026-11-08 B20 controlled delivery evidence
+
+Updated LAUNCH_CHECKLIST.md. The approved staging upload finalized v2, Resend accepted one allowlisted message, and the inbox received the link to the correct version. Restored the staging alias and removed the two temporary variables and test deployment. Also recorded B44's protected unsigned probe and the proposed isolated B43 verification route.
+
 ## B44 Stripe subscription lifecycle guard
 
 Updated app/api/stripe/webhook/route.ts, tests/api-access-boundaries.test.mjs, PRODUCT_BACKLOG.md and LAUNCH_CHECKLIST.md. A signed stale event could change the plan linked to a replacement subscription. Update and deletion events now check the linked subscription ID as part of the write. Local signed fixtures cover old and current subscriptions.
+
+Staging ledger probe verified initial claim, duplicate suppression, retry after failure and final processed state. The probe rolled back and left zero fixture rows. Protected Preview rejects unsigned requests with HTTP 400. Actual Sandbox forwarding and expiry are still open.
