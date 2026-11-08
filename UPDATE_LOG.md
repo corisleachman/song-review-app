@@ -10023,3 +10023,7 @@ Updated LAUNCH_CHECKLIST.md with prior hosted auth and membership evidence, curr
 ## Production Google acceptance and B11 metadata
 
 Updated LAUNCH_CHECKLIST.md with the user-confirmed fresh Google sign-in. Corrected the canonical, Open Graph and Article URLs in public/blog/a-practical-remote-songwriting-workflow.html on the unpublished PR #12 branch. Verified the three replacements and checked the diff.
+
+## B11 article publication preparation
+
+Updated the remote songwriting article and app/sitemap.ts. Replaced the publishing note with links to the versioning and feedback guides and added the article to the sitemap. Both target files exist.
