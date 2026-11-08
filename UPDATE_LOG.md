@@ -10027,3 +10027,7 @@ Updated LAUNCH_CHECKLIST.md with the user-confirmed fresh Google sign-in. Correc
 ## B11 article publication preparation
 
 Updated the remote songwriting article and app/sitemap.ts. Replaced the publishing note with links to the versioning and feedback guides and added the article to the sitemap. Both target files exist.
+
+## 2026-11-08 L7 publication and homepage evidence
+
+Updated LAUNCH_CHECKLIST.md with the Production article release verification, six homepage performance samples, and the scoped marketing image audit.
