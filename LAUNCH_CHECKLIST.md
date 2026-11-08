@@ -80,7 +80,7 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B17 | [Dashboard loading speed](PRODUCT_BACKLOG.md#b17-dashboard-measure-and-reduce-time-to-useful-songs-and-artwork) | 25-song Production baseline3.72-4.45s; app iad1/database Ireland mismatch verified. [Primary-region test](B17_FUNCTION_REGION_REVIEW.md) approved; primary dub1 live after passed staging/crossover; user reports much faster/more responsive; provider-origin stalls persist in both regions. B17 remains open | L6 leading performance workstream after current security slice |
 | B18 | [Dashboard blank on return](PRODUCT_BACKLOG.md#b18-dashboard-retain-valid-songs-and-artwork-when-returning) | Scoped refresh fix Production complete via PR91/f189c38b; user cards-visible pass. Broader lifecycle/error/isolation matrix open | L6 reliability; S2 cache isolation overlaps |
 | B19 | [Dashboard-to-song navigation speed](PRODUCT_BACKLOG.md#b19-dashboard-to-song-measure-and-reduce-navigation-delay) | Scoped join fix Production complete: PR92/b0542d48; audio pass/paused verified. DB calls2-to-1; broader timing target/device QA open | L6 performance; canonical access must remain intact |
-| B20 | [New-version collaboration notifications](PRODUCT_BACKLOG.md#b20-verify-notifications-for-new-version-uploads) | One allowlisted staging email delivered and correct version link verified. Draft PR #110 defaults off. Production activation pending | L6 dependability audit |
+| B20 | [New-version collaboration notifications](PRODUCT_BACKLOG.md#b20-verify-notifications-for-new-version-uploads) | Staging inbox and correct version link verified. PR #110 code is live with sending disabled. Production activation pending | L6 dependability audit |
 | B21 | [Membership RLS recursion](PRODUCT_BACKLOG.md#b21-membership-rls-recursively-evaluates-itself) | Production complete; staging and live checks pass | L5/S2-S3, P1 |
 | B23 | [Private media public Storage access](PRODUCT_BACKLOG.md#b23-private-song-media-remains-accessible-through-permanent-public-storage-urls) | Production complete in verified scope via PR #68/ff15719f: buckets private; authorised public/private delivery works; legacy URLs refused. Cache/coverage limits recorded | L5/S2-S3, P1 privacy |
 | B22 | [Unconfigured legacy password false success](PRODUCT_BACKLOG.md#b22-legacy-password-verifier-reports-success-when-unconfigured) | Production complete via PR #66; 121 tests and eight live smoke checks pass | L5/S2, P2 |
@@ -579,9 +579,9 @@ Before wider promotion, resolve or explicitly accept the remaining limits:
 
 | Item | Evidence and next decision |
 | --- | --- |
-| B20 version notifications | No new-version email dispatch found in the inspected code or database triggers. Confirm and verify delivery to the intended recipients before making a delivery promise. |
+| B20 version notifications | One staging message reached its approved inbox. The code is live with sending disabled. Production activation and delivery remain open. |
 | B43 billing reconciliation | Sandbox checkout and portal cancellation passed. Signed expiry and downgrade passed through an isolated CLI relay. Persistent provider endpoint delivery remains open. |
-| B17 performance | The Dublin rollout improved the user's experience. Intermittent provider waits remain, and homepage measurements are lab samples. |
+| B17 performance | The Dublin rollout improved the user's experience. Intermittent provider waits remain. The 8 Nov multi-route timing cluster is recorded in B17_FUNCTION_REGION_REVIEW.md. Homepage measurements are lab samples. |
 | Device and access coverage | The physical iPad was unavailable. Scoped browser checks passed. Broader accessibility and hosted access coverage remain open. |
 | Sharing and support | New audio requests are denied after revocation. Previously issued storage URLs have a configured 10-minute lifetime. The current beta monitoring limits were accepted for beta and need a fresh decision before wider promotion. |
 
@@ -606,3 +606,5 @@ The upload finalization RPC locks the version row and returns true only when it 
 3. Remove the Preview-only values and redeploy after the test. Production stays disabled pending delivery evidence and explicit activation. No migration is needed. Disabling the flag or rolling back the application stops new sends.
 
 The background task records submission counts and safe failures. It has no durable retry queue, so a process interruption or provider failure can leave notifications unsent. Provider acceptance and inbox delivery are separate checks.
+
+8 November B20 release checkpoint: PR #110 passed all four checks at 82606fdb and merged as b3be1bbc. Primary Production deployment dpl_FqUzdF6yV2nVUT8EUwRYHs1tHDF7 was Ready on www.song-room.live. Homepage and login returned 200, signed-out finalization returned 401, and unsigned/invalid Stripe requests returned 400. VERSION_UPLOAD_EMAILS_ENABLED is absent from Production. The prior Ready deployment dpl_6A1JTcys2t4iY4NRkkeV2nFzT1kw is the rollback for the code release. Activation is a separate decision and requires explicit approval. No migration required.

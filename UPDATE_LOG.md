@@ -10065,3 +10065,7 @@ Updated LAUNCH_CHECKLIST.md with the approved rollout of the linked-subscription
 ## B20 default-off version upload notification candidate
 
 Updated app/api/versions/[versionId]/finalize/route.ts, lib/versionUploadNotifications.ts, tests/api-access-boundaries.test.mjs and LAUNCH_CHECKLIST.md. Schedule a separate workspace-member email after the first successful finalization of a new version. Added fake-provider checks for repeat finalization, recipient scope, Preview allowlisting and the canonical version link. Documented the isolated rollout and the delivery retry limit.
+
+## 2026-11-08 B20 dormant release and provider timing follow-up
+
+Updated LAUNCH_CHECKLIST.md with the live B20 deployment, disabled sending gate and Production smoke results. Updated B17_FUNCTION_REGION_REVIEW.md with the bounded Production provider timing aggregate.

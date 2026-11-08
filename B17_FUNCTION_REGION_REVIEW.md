@@ -76,3 +76,16 @@ Next: user perception check on Production, then investigate provider-origin stal
 ## Production user feedback, 4 November 2026
 
 Coris reports Production feels much faster and more responsive. The perceived improvement is accepted; the measured slow tail remains recorded rather than waived. No device/browser or distinct playback result was supplied. Documentation-only PR93/7d1e2ae0 is live on primary dub1 (dpl_kCewMGEp61D5bN2Xm6ny8utGShBK), with unchanged application files. Next L6 step is a physical-device playback/lock-screen pass; ongoing provider-origin diagnosis stays B17.
+
+## Provider timing follow-up, 8 November 2026
+
+Read-only Production Supabase edge-log aggregate for 20:00 to 21:26 UTC. Restricted to service-role requests for profiles, account_members, accounts, songs, song_versions and actions. The query returned two five-minute buckets with samples.
+
+| UTC bucket | Requests | Origin time at least 1.5 s | Highest origin time |
+| --- | ---: | ---: | ---: |
+| 20:55 | 132 | 4 | 1.70 s |
+| 21:20 | 76 | 59 | 13.78 s |
+
+Slow responses occurred across multiple tables, including profile POSTs, membership GETs, and reads of accounts, songs and versions. No 5xx was observed in the bounded aggregate. The shared window gives a focused interval for provider investigation. These logs aggregate all matching service-role traffic and cannot attribute every request to a dashboard visit. They also cannot separate database execution from provider gateway or pool waits.
+
+Keep B17 open. Capture the next dashboard server-timing trace with its UTC time and compare it against the corresponding provider window. If the slow requests align, review provider health and logs for that window before changing application reads.
