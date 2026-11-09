@@ -1,11 +1,52 @@
 import { after } from 'next/server';
 import { Resend } from 'resend';
-import { listWorkspaceMembers } from '@/lib/workspaceMembers';
+import { listWorkspaceMembers, type WorkspaceMember } from '@/lib/workspaceMembers';
+import { supabaseServer } from '@/lib/supabaseServer';
+import { artworkSigningKey, artworkStoragePath } from '@/lib/artworkAccess';
+import { signEmailArtworkAccess } from '@/lib/emailArtworkAccess';
+import { buildVersionUploadEmail, EMAIL_FROM } from '@/lib/emailTemplates';
+import { selectVersionUploadRecipients } from '@/lib/versionUploadRecipients';
 
 interface VersionUploadNotification {
   workspaceId: string;
   songId: string;
   versionId: string;
+}
+
+function emailArtworkUrl(songId: string, imageUrl: string | null, origin: string) {
+  try {
+    const path = artworkStoragePath('song', songId, imageUrl, process.env.NEXT_PUBLIC_SUPABASE_URL ?? '');
+    if (!path) return null;
+    const token = signEmailArtworkAccess({ songId, path }, artworkSigningKey());
+    return new URL(`/api/media/email-artwork?access=${token}`, origin).toString();
+  } catch {
+    return null;
+  }
+}
+
+async function loadEmailContext(workspaceId: string, songId: string, versionId: string) {
+  const [songResult, versionResult, accountResult] = await Promise.all([
+    supabaseServer.from('songs').select('id, title, image_url, status, account_id').eq('id', songId).maybeSingle(),
+    supabaseServer.from('song_versions')
+      .select('id, song_id, version_number, label, notes, created_by, created_by_user_id, created_at')
+      .eq('id', versionId).maybeSingle(),
+    supabaseServer.from('accounts').select('name, notification_mode').eq('id', workspaceId).maybeSingle(),
+  ]);
+  if (songResult.error) throw songResult.error;
+  if (versionResult.error) throw versionResult.error;
+  if (accountResult.error) throw accountResult.error;
+  const song = songResult.data;
+  const version = versionResult.data;
+  if (!song || !version || song.account_id !== workspaceId || version.song_id !== songId) return null;
+
+  const { data: previous, error: previousError } = await supabaseServer.from('song_versions')
+    .select('version_number, created_at')
+    .eq('song_id', songId)
+    .eq('version_number', version.version_number - 1)
+    .maybeSingle();
+  if (previousError) throw previousError;
+
+  return { song, version, account: accountResult.data, previous };
 }
 
 export function scheduleVersionUploadNotification({ workspaceId, songId, versionId }: VersionUploadNotification) {
@@ -27,27 +68,58 @@ export function scheduleVersionUploadNotification({ workspaceId, songId, version
         return;
       }
 
-      const members = await listWorkspaceMembers(workspaceId);
+      const context = await loadEmailContext(workspaceId, songId, versionId);
+      if (!context) {
+        console.warn('[version-upload-email] Version context was not found; skipping.');
+        return;
+      }
+      const { song, version, account, previous } = context;
+
+      const members: WorkspaceMember[] = await listWorkspaceMembers(workspaceId);
+      const uploaderUserId = version.created_by_user_id ?? null;
+      const uploader = members.find(member => member.userId === uploaderUserId);
+      const selected = selectVersionUploadRecipients(members, uploaderUserId, account?.notification_mode);
+
       const emails = new Map<string, string>();
-      for (const member of members) {
+      for (const member of selected) {
         const email = member.email?.trim();
         if (!email) continue;
         const key = email.toLowerCase();
         if (!preview || previewRecipients.has(key)) emails.set(key, email);
       }
-
       const recipients = Array.from(emails.values());
+      if (recipients.length === 0) {
+        console.info('[version-upload-email] No recipients after filtering; skipping.');
+        return;
+      }
+
       const origin = preview ? `https://${previewHost}` : 'https://www.song-room.live';
-      const link = new URL(`/songs/${encodeURIComponent(songId)}/versions/${encodeURIComponent(versionId)}`, origin);
+      const link = new URL(`/songs/${encodeURIComponent(songId)}/versions/${encodeURIComponent(versionId)}`, origin).toString();
+      const message = buildVersionUploadEmail({
+        origin,
+        link,
+        songTitle: song.title ?? '',
+        artworkUrl: emailArtworkUrl(song.id, song.image_url, origin),
+        versionNumber: version.version_number,
+        versionLabel: version.label,
+        notes: version.notes,
+        uploaderName: uploader?.displayName || version.created_by || '',
+        uploadedAt: new Date(version.created_at),
+        status: song.status,
+        previous: previous ? { versionNumber: previous.version_number, uploadedAt: new Date(previous.created_at) } : null,
+        workspaceName: account?.name ?? '',
+      });
+
       const resend = new Resend(apiKey);
       let accepted = 0;
       for (let offset = 0; offset < recipients.length; offset += 100) {
         const batch = recipients.slice(offset, offset + 100);
         const result = await resend.batch.send(batch.map(to => ({
-          from: 'Song Room <noreply@song-room.live>',
+          from: EMAIL_FROM,
           to,
-          subject: 'A new song version is ready',
-          text: `A new version has been uploaded to your workspace.\n\nOpen the version in Song Room: ${link}`,
+          subject: message.subject,
+          html: message.html,
+          text: message.text,
         })), { idempotencyKey: `version-upload/${versionId}/${offset}` });
 
         if (result.error) {
