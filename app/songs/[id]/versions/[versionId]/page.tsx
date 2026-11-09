@@ -549,6 +549,11 @@ function VersionPageInner() {
   const [workspaceNameForNav, setWorkspaceNameForNav] = useState('');
   const [membershipRoleForNav, setMembershipRoleForNav] = useState<'owner' | 'member' | null>(null);
   const [showMobileWorkspaceSwitcher, setShowMobileWorkspaceSwitcher] = useState(false);
+  const mobileWorkspaceButtonRef = useRef<HTMLButtonElement>(null);
+  const closeMobileWorkspaceSwitcher = useCallback(() => {
+    setShowMobileWorkspaceSwitcher(false);
+    mobileWorkspaceButtonRef.current?.focus();
+  }, []);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [song, setSong] = useState<Song | null>(null);
   const [version, setVersion] = useState<Version | null>(null);
@@ -3881,6 +3886,8 @@ function VersionPageInner() {
             <button
               className={styles.mobileNavIconBtn}
               aria-label="Switch workspace"
+              aria-expanded={showMobileWorkspaceSwitcher}
+              ref={mobileWorkspaceButtonRef}
               onClick={() => setShowMobileWorkspaceSwitcher(v => !v)}
             >
               <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -3899,6 +3906,7 @@ function VersionPageInner() {
                   membershipRole={membershipRoleForNav}
                   variant="mobile"
                   forceOpen={true}
+                  onForceClose={closeMobileWorkspaceSwitcher}
                 />
               </div>
             )}

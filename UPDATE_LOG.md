@@ -10115,3 +10115,8 @@ Updated app/trust/page.tsx, public/blog/styles.css and tests/browser/public-acce
 ## 2026-11-09 B46 Production verification
 
 Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the live deployment and the 15 passing public browser checks for the Trust page and blog.
+
+
+## 2026-11-09 B47 workspace switcher accessibility
+
+Updated components/WorkspaceSwitcher.tsx, components/WorkspaceSwitcher.module.css, the version page and browser fixtures. The switcher scrolls long lists, restores focus after Escape and uses brighter labels and visible focus rings. Recorded the reproduced failures and local verification in LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md.

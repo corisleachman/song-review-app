@@ -63,6 +63,7 @@
 }
 
 .panel {
+  --workspace-muted-text: rgba(255, 255, 255, 0.64);
   background: rgba(20, 15, 30, 0.98);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
@@ -75,6 +76,9 @@
   top: 0;
   left: 64px;
   width: 330px;
+  max-height: calc(100dvh - 150px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   border-radius: 0;
   padding: 14px;
 }
@@ -96,7 +100,7 @@
 }
 
 .panelEyebrow {
-  color: rgba(255, 255, 255, 0.44);
+  color: var(--workspace-muted-text);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.1em;
@@ -194,7 +198,7 @@
 
 .optionMeta {
   overflow: hidden;
-  color: rgba(255, 255, 255, 0.48);
+  color: var(--workspace-muted-text);
   font-size: 11px;
   font-weight: 600;
   line-height: 1.2;
@@ -203,7 +207,7 @@
 }
 
 .optionState {
-  color: rgba(255, 255, 255, 0.48);
+  color: var(--workspace-muted-text);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -291,7 +295,7 @@
 }
 
 .createLabel {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--workspace-muted-text);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -312,8 +316,15 @@
   outline: none;
 }
 
-.createInput:focus {
-  border-color: rgba(192,57,43,0.38);
+.railButton:focus-visible,
+.mobileButton:focus-visible,
+.workspaceOption:focus-visible,
+.createPrompt:focus-visible,
+.createInput:focus-visible,
+.createSecondary:focus-visible,
+.createPrimary:focus-visible {
+  outline: 2px solid #E6FF3F;
+  outline-offset: 2px;
 }
 
 .createActions {
@@ -449,6 +460,9 @@
 .mobileSheet {
   position: absolute;
   top: 56px;
+  max-height: calc(100dvh - 56px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   left: 0;
   right: 0;
   background: #0E0A0A;
