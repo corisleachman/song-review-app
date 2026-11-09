@@ -8,6 +8,30 @@ For audio player architecture fixes (mobile background audio, WaveSurfer iOS rul
 
 ---
 
+## [2026-11-09] v2 — Branded "new version uploaded" email (email standard v2)
+
+**Branch:** `clone-clean` (v2 build), PRs #130 and #137
+**Files:** `lib/emailTemplates.ts`, `lib/versionUploadNotifications.ts`, `lib/versionUploadRecipients.ts`, `lib/emailArtworkAccess.ts`, `app/api/media/email-artwork/route.ts`, `app/api/versions/[versionId]/finalize/route.ts`, `public/marketing-assets/email-artwork-fallback.png`, `tests/version-upload-email.test.mjs`
+
+### What changed
+The plain-text "A new song version is ready" email is now a branded dark Song Room email built from a shared shell (`renderEmailShell`), with a plain-text twin. It names the song, version and label, uploader, status, previous version, notes (capped at 280 characters) and workspace. It has one red `#C0392B` "Listen to Version N" button. Artwork loads through a 30-day, song-only signed link, and expired, replaced or missing artwork shows the brand tile. The uploader is no longer emailed, and owner-only notification mode is respected.
+
+### Root cause
+`lib/versionUploadNotifications.ts` sent unstyled text. Separately, `song_versions.created_by_user_id` is never set by the upload flow, so the uploader is passed from the authenticated finalize route instead.
+
+### Before
+A plain email with no branding, artwork or context, sent to everyone including the uploader. A first branded version was inverted to white by Gmail's iPhone app in dark mode.
+
+### After
+A branded dark email that stays dark in Gmail on desktop and iPhone, confirmed by Coris on both.
+
+### Notes for v2
+- Gmail iOS dark mode ignores `color-scheme` and inverts dark emails. To survive it, paint every fill as `background-color` plus `background-image:linear-gradient(c,c)`, draw borders as 1px painted cells, and wrap light text in the Gmail-only blend layers (`u + .body .gm-s` screen, `.gm-d` difference, with `<body class="body">`). Dark text on a light fill can't be protected, so use an image there.
+- The comment, reply and invite emails and the Supabase Auth templates still need restyling to this standard.
+- Standard and wireframe: https://corisleachman.github.io/song-review-app/wireframes/email-system-v2.html
+
+---
+
 ## [2026-08-05] Lock-screen next/previous track navigation not working on dashboard
 
 **Commit:** `86a1035`
