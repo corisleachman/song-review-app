@@ -11,6 +11,9 @@ interface VersionUploadNotification {
   workspaceId: string;
   songId: string;
   versionId: string;
+  // The authenticated finalizer. Versions created by the current upload flow
+  // do not record created_by_user_id, so the route passes it explicitly.
+  uploaderUserId?: string | null;
 }
 
 function emailArtworkUrl(songId: string, imageUrl: string | null, origin: string) {
@@ -49,7 +52,7 @@ async function loadEmailContext(workspaceId: string, songId: string, versionId: 
   return { song, version, account: accountResult.data, previous };
 }
 
-export function scheduleVersionUploadNotification({ workspaceId, songId, versionId }: VersionUploadNotification) {
+export function scheduleVersionUploadNotification({ workspaceId, songId, versionId, uploaderUserId: finalizerUserId }: VersionUploadNotification) {
   if (process.env.VERSION_UPLOAD_EMAILS_ENABLED !== 'true' || process.env.EMAIL_NOTIFICATIONS_ENABLED === 'false') return;
 
   const environment = process.env.VERCEL_ENV;
@@ -76,7 +79,7 @@ export function scheduleVersionUploadNotification({ workspaceId, songId, version
       const { song, version, account, previous } = context;
 
       const members: WorkspaceMember[] = await listWorkspaceMembers(workspaceId);
-      const uploaderUserId = version.created_by_user_id ?? null;
+      const uploaderUserId = finalizerUserId ?? version.created_by_user_id ?? null;
       const uploader = members.find(member => member.userId === uploaderUserId);
       const selected = selectVersionUploadRecipients(members, uploaderUserId, account?.notification_mode);
 

@@ -797,7 +797,7 @@ test('only the request that finalizes a new version schedules email', async t =>
       const response = await handler.POST(jsonRequest({}), params({ versionId: 'version-a' }));
       assert.equal(response.status, expectedStatus);
       assert.deepEqual(calls, expectedCalls ? [{
-        workspaceId: 'workspace-a', songId: 'song-a', versionId: 'version-a',
+        workspaceId: 'workspace-a', songId: 'song-a', versionId: 'version-a', uploaderUserId: 'user-owner',
       }] : []);
     });
   }
@@ -849,13 +849,13 @@ test('version emails use current membership and intersect the Preview allowlist'
       songs: [{ id: 'song-a', title: 'Rebel Lovers', image_url: null, status: 'mixing', account_id: 'workspace-a' }],
       song_versions: [
         { id: 'version-0', song_id: 'song-a', version_number: 1, created_at: '2026-11-06T10:00:00Z' },
-        { id: 'version-a', song_id: 'song-a', version_number: 2, label: 'Final mix', notes: null, created_by: 'Uploader', created_by_user_id: 'uploader', created_at: '2026-11-09T08:13:00Z' },
+        { id: 'version-a', song_id: 'song-a', version_number: 2, label: 'Final mix', notes: null, created_by: 'Uploader', created_by_user_id: null, created_at: '2026-11-09T08:13:00Z' },
       ],
       accounts: [{ id: 'workspace-a', name: 'Polite Rebels', notification_mode: 'all_members' }],
     },
     logger: { info() {}, warn() {} },
   });
-  const payload = { workspaceId: 'workspace-a', songId: 'song-a', versionId: 'version-a' };
+  const payload = { workspaceId: 'workspace-a', songId: 'song-a', versionId: 'version-a', uploaderUserId: 'uploader' };
   handler.scheduleVersionUploadNotification(payload);
   assert.equal(scheduled.length, 0);
   process.env.VERSION_UPLOAD_EMAILS_ENABLED = 'true';
