@@ -233,6 +233,8 @@ export default function TrustPage() {
           .trust-nav { padding: 0 20px; }
           .trust-main { padding: 48px 20px 72px; }
           .trust-footer { padding: 28px 20px 56px; }
+          .trust-title { font-size: clamp(32px, 10vw, 52px); }
+          .trust-section-head { flex-wrap: wrap; row-gap: 8px; }
           .trust-grid { grid-template-columns: 1fr; }
           .trust-item:nth-child(n) { border-right: none; }
           .trust-stat { border-right: none; border-bottom: 1px solid rgba(244,237,228,0.10); }

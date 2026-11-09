@@ -59,6 +59,16 @@ async function tabTo(page, target, limit = 12) {
   throw new Error(`Keyboard focus did not reach ${await target.evaluate((element) => element.outerHTML)}`);
 }
 
+test('Trust page reflows at 320px when external fonts are unavailable', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.route(/https:\/\/(?:raw\.githubusercontent\.com|corisleachman\.github\.io|fonts\.googleapis\.com|fonts\.gstatic\.com)\//, route => route.abort());
+  await page.goto('/trust', { waitUntil: 'load' });
+  await page.evaluate(() => document.fonts.ready);
+  await expect(page.locator('.trust-title')).toBeVisible();
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(1);
+});
+
 test('homepage exposes its primary account journey without blocking accessibility violations', async ({ page }) => {
   await prepareDeterministicPage(page);
   const response = await page.goto('/', { waitUntil: 'domcontentloaded' });
