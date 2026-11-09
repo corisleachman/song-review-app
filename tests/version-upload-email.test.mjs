@@ -42,7 +42,7 @@ test('version email: names the song, version, uploader and workspace', () => {
     assert.ok(email.text.includes(part), `text has ${part}`);
   }
   assert.ok(email.html.includes(base.artworkUrl.replace(/&/g, '&amp;')));
-  assert.ok(email.html.includes('background:#C0392B'), 'primary button is brand red');
+  assert.ok(email.html.includes('background-color:#C0392B;background-image:linear-gradient(#C0392B,#C0392B)'), 'primary button is brand red, painted so Gmail keeps it');
   assert.ok(!/every version/i.test(email.html), 'no link to a page that does not exist');
   assert.ok(email.text.includes(base.link));
 });
@@ -63,9 +63,9 @@ test('version email: user-supplied fields are escaped', () => {
   assert.ok(email.html.includes('O&#39;Neil &lt;Band&gt;'));
 });
 
-test('version email: optional fields disappear and missing artwork uses initials', () => {
+test('version email: optional fields disappear and missing artwork uses the Song Room tile', () => {
   const email = templates.buildVersionUploadEmail({ ...base, artworkUrl: null, versionLabel: null, notes: null, status: null, previous: null });
-  assert.ok(email.html.includes('>RL</td>'));
+  assert.ok(email.html.includes('/marketing-assets/email-artwork-fallback.png" width="132" height="132" alt="RL"'));
   assert.ok(!email.html.includes('Notes from'));
   assert.ok(!email.html.includes('Previous'));
   assert.ok(!email.html.includes('Status'));
@@ -150,4 +150,15 @@ test('version email: long song titles step down in size', () => {
   const email = templates.buildVersionUploadEmail({ ...base, songTitle: 'The Ballad Of Everything We Never Said Out Loud' });
   assert.ok(email.html.includes('class="song-s" style="font-family:'));
   assert.ok(email.html.includes('font-size:28px;line-height:.92'));
+});
+
+test('version email: survives Gmail iPhone dark mode inversion', () => {
+  const email = templates.buildVersionUploadEmail(base);
+  assert.ok(email.html.includes('<body class="body"'), 'Gmail selector hook');
+  assert.ok(email.html.includes('u + .body .gm-s{background:#000;mix-blend-mode:screen}'));
+  assert.ok(email.html.includes('u + .body .gm-d{background:#000;mix-blend-mode:difference}'));
+  assert.ok(email.html.includes('linear-gradient(#0E0A0A,#0E0A0A)'), 'canvas painted as an image');
+  assert.ok(email.html.includes('linear-gradient(#1C1515,#1C1515)'), 'card painted as an image');
+  assert.ok(!/background:#(?!000)/.test(email.html), 'no plain background colour left for Gmail to invert');
+  assert.ok(email.html.includes('<span class="gm-d" style="display:block;">REBEL LOVERS') || email.html.includes('<span class="gm-d" style="display:block;">Rebel Lovers'), 'song title is locked');
 });
