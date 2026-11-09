@@ -10120,3 +10120,7 @@ Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the live deployment and 
 ## 2026-11-09 B47 workspace switcher accessibility
 
 Updated components/WorkspaceSwitcher.tsx, components/WorkspaceSwitcher.module.css, the version page and browser fixtures. The switcher scrolls long lists, restores focus after Escape and uses brighter labels and visible focus rings. Recorded the reproduced failures and local verification in LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md.
+
+## 2026-11-09 B47 Production verification
+
+Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the verified rollout, signed-out smoke checks and rollback.

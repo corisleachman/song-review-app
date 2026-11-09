@@ -879,3 +879,5 @@ Verified in Production on 9 November. The Trust page fits at 320 CSS px with fal
 - Desktop Escape left keyboard focus on a removed control. Restore focus to the switcher button when closing from within it. The mobile song page’s parent dismisses its switcher and restores focus when Escape is pressed.
 - The dashboard switcher could render beyond the viewport when a user had many workspaces. Constrain both dashboard panels to the available height and scroll the list inside the panel.
 - Use readable muted panel labels and visible focus rings. Desktop and phone Chromium fixtures cover a 15-workspace list, Escape, focus restoration and automated contrast. Workspace API calls and membership rules stay on the existing path.
+
+Released on 9 November. Signed-in browser fixtures passed. Production deployment and signed-out access were verified.
