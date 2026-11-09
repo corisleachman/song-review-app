@@ -10082,3 +10082,7 @@ Updated app/songs/[id]/versions/[versionId]/page.tsx, tests/browser/song-player.
 ## 2026-11-09 B45 Production verification
 
 Updated LAUNCH_CHECKLIST.md with the live deployment, checks and rollback. The user can verify the original saved version and its notification without uploading another file.
+
+## 2026-11-09 B20 Production inbox confirmation
+
+Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md. The uploader confirmed the Production email arrived and opened the correct saved version. The B45 link check passed, with playback still open.
