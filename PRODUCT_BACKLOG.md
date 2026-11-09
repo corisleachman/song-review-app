@@ -17,6 +17,21 @@ Core public Email signup/login/recovery is Production complete (25 October); sig
 
 Current checklist IDs and all later items: [Launch checklist](LAUNCH_CHECKLIST.md).
 
+### B10. Dependency and workflow update review
+
+Reviewed all eight open update PRs against `clone-clean` on 9 November 2026. Production audit passed the existing moderate threshold. Four low findings remain in the Resend dependency chain for one advisory in `deepmerge`. npm proposes a Resend major upgrade, which needs separate notification regression coverage. [Advisory](https://github.com/advisories/GHSA-gcqx-w48m-w2h4)
+
+| PR | Disposition | Verification needed |
+| --- | --- | --- |
+| #32, #33, #34 | Review together as a pin-only update for the scheduled SEO workflow on GitHub's default branch, `main`. The open PRs target `clone-clean`; the article run history shows `main`. | Validate YAML and current hosted-runner compatibility. Keep the Node version used by the script at 22. Verify the next scheduled run separately. [GitHub schedule behavior](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule) |
+| #36 | TypeScript 7 candidate is conflicted and its checks failed. Keep it as a separate toolchain migration. | Replace the stale diff with a current candidate and verify the test harness, typecheck and Next build. |
+| #37 | Node 26 types pass the PR checks, but the app uses Node 22 in CI and Node 24 on Vercel. Keep the type update aligned with the supported runtimes. | Verify the declared minimum and align types during the Node support review. The installed Supabase JS client already declares Node 22 or newer. |
+| #38 | Next 16 candidate is conflicted and its checks failed. It only changes Next in the manifest, leaving the Next ESLint config on 15. | Treat as a framework migration and test middleware, auth, upload and playback. [Next 16 guide](https://nextjs.org/docs/app/guides/upgrading/version-16) |
+| #39 | ESLint 10 candidate is conflicted and its checks failed. The installed Next 15 ESLint config supports ESLint through 9. | Update the config and toolchain together and run lint and build. [ESLint 10 guide](https://eslint.org/docs/latest/use/migrate-to-10.0.0) |
+| #59 | Four PR checks passed. The group combines browser/lint tooling with Supabase SSR 0.12.7 and JS 2.118.0 in the lockfile. | Split test tooling from Supabase runtime updates. Verify cookie refresh, signed-out access and protected staging sign-in for the Supabase candidate. [Supabase SSR guide](https://supabase.com/docs/guides/auth/server-side) |
+
+[Draft PR #132](https://github.com/corisleachman/song-review-app/pull/132) contains the three pin changes on the scheduled workflow’s default branch. YAML and diff checks passed. Hosted scheduled verification remains open. GPT-6.1 Terra at low reasoning fits the pin update. Use Sol at medium reasoning for the separate Supabase session review.
+
 ## MVP performance and dependability intake, 1 November 2026
 
 Capture and organise only. These requirements don't authorise implementation or a change to the current L5 security task. Performance is the user's main concern for inviting more people; B17-B19 are the leading performance workstream after the current security slice, tracked in L6. No fixed timing promise is set before measurement. All five requirements below remain untested and open.
