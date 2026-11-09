@@ -10168,3 +10168,7 @@ Updated package.json and package-lock.json to pin Supabase SSR 0.12.7 and Supaba
 ## 2026-11-09 B10 Supabase Production verification
 
 Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the live Supabase update, Production smoke checks and rollback.
+
+## 2026-11-09 B10 scheduled workflow action update
+
+PR #132 merged the three action updates in .github/workflows/generate-seo-article.yml on main. Verified the active workflow pins and recorded the pending scheduled run in LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md.
