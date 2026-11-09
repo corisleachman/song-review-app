@@ -30,7 +30,7 @@ Reviewed all eight open update PRs against `clone-clean` on 9 November 2026. Pro
 | #39 | ESLint 10 candidate is conflicted and its checks failed. The installed Next 15 ESLint config supports ESLint through 9. | Update the config and toolchain together and run lint and build. [ESLint 10 guide](https://eslint.org/docs/latest/use/migrate-to-10.0.0) |
 | #59 | Four PR checks passed. The group combines browser/lint tooling with Supabase SSR 0.12.7 and JS 2.118.0 in the lockfile. | Split test tooling from Supabase runtime updates. Verify cookie refresh, signed-out access and protected staging sign-in for the Supabase candidate. [Supabase SSR guide](https://supabase.com/docs/guides/auth/server-side) |
 
-The first update to prepare is the scheduled workflow on its actual branch. GPT-6.1 Terra at low reasoning fits the pin update. Use Sol at medium reasoning for the separate Supabase session review.
+[Draft PR #132](https://github.com/corisleachman/song-review-app/pull/132) contains the three pin changes on the scheduled workflow’s default branch. YAML and diff checks passed. Hosted scheduled verification remains open. GPT-6.1 Terra at low reasoning fits the pin update. Use Sol at medium reasoning for the separate Supabase session review.
 
 ## MVP performance and dependability intake, 1 November 2026
 

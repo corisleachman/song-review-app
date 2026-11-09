@@ -10128,3 +10128,7 @@ Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the verified rollout, si
 ## 2026-11-09 B10 dependency and workflow review
 
 Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the eight PR dispositions, default-branch workflow evidence and production dependency audit.
+
+## 2026-11-09 B10 workflow update candidate
+
+Draft PR #132 changes three action pins in .github/workflows/generate-seo-article.yml on the default branch. YAML and diff checks passed. The current schedule and script inputs are preserved.
