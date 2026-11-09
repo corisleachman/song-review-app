@@ -863,3 +863,10 @@ Stripe checkpoint, 9 November. Read-only CLI checks matched one active non-live 
 - The destination version page treated a slow or failed identity bootstrap as an unauthenticated session. Production timing matches the eight-second client timeout. The exact browser error was unavailable.
 - Keep the return-link redirect for an explicit 401. For a timeout, network error, unexpected response or other bootstrap failure, stay on the version and offer Retry. A retry only reloads page data.
 - Verified 9 November: timeout recovery and explicit 401 passed in Chromium. Production signed-out smoke checks passed and the uploader opened and played the saved version.
+
+
+### B46. Public Trust reflow and blog label contrast
+
+- Trust headings overflow the viewport at 320 and 390 CSS px when external fonts are unavailable. Scale the mobile title and allow section counters to wrap. Verify at 320 CSS px with external font requests blocked.
+- Blog card and article CTA labels measured 4.42:1 on their background. Raise the shared muted text color above 4.5:1 and verify the blog index and article templates.
+- The automated audit also flagged the Privacy and Terms footer wordmarks. [WCAG contrast guidance](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html) exempts logotypes. The scope is public browser reflow and automated checks.
