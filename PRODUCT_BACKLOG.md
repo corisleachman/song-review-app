@@ -834,3 +834,11 @@ No further control test is required now. Keep the first-play registration timing
 - Rollout: no migration. Verify genuine Sandbox delivery and downgrade on a disposable subscription before wider billing acceptance. Review any paid account missing a subscription link separately. Revert the application change to roll back. B43 remains open for provider delivery, and same-subscription ordering is outside this repair.
 
 8 November verification: genuine Test mode scheduling and expiry events passed through the isolated CLI relay on B44 Preview. The linked fixture changed Pro to Free at expiry, replay returned duplicate, and cleanup passed. Local fixtures cover stale update and deletion against a replacement subscription. See LAUNCH_CHECKLIST.md for the exact tested build and rollback notes.
+
+
+### B45. Version page redirects to login on session check timeout
+
+- Reported 9 November 2026 after a Production version upload. Finalization and the version read succeeded, and Resend accepted the notification batch.
+- The destination version page treated a slow or failed identity bootstrap as an unauthenticated session. Production timing matches the eight-second client timeout. The exact browser error was unavailable.
+- Keep the return-link redirect for an explicit 401. For a timeout, network error, unexpected response or other bootstrap failure, stay on the version and offer Retry. A retry only reloads page data.
+- Verify timeout recovery and explicit 401 in the browser, then confirm the user can open and play the saved Production version.

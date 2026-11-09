@@ -562,6 +562,7 @@ function VersionPageInner() {
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [bootstrapError, setBootstrapError] = useState<string | null>(null);
   const [initError, setInitError] = useState<{ message: string; status: number | null } | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -1208,6 +1209,7 @@ function VersionPageInner() {
     // init sequence to log twice locally, while production runs it once per
     // actual page load/version change.
     async function resolveIdentity() {
+      setBootstrapError(null);
       try {
         logVersionInit('bootstrap:start', { songId, versionId });
         const payload = await fetchJsonWithTimeout<BootstrapPayload>(
@@ -1247,8 +1249,8 @@ function VersionPageInner() {
           return;
         }
 
-        logVersionInit('bootstrap:missing-identity', { payload });
-        router.push(`/login?redirectTo=${encodeURIComponent(`/songs/${songId}/versions/${versionId}`)}`);
+        logVersionInit('bootstrap:missing-identity');
+        setBootstrapError('Could not check your session. Please try again.');
       } catch (error) {
         console.error('Version page bootstrap error:', error);
         if (!mounted) return;
@@ -1265,7 +1267,11 @@ function VersionPageInner() {
         logVersionInit('bootstrap:failed-without-identity', {
           message: error instanceof Error ? error.message : String(error),
         });
-        router.push(`/login?redirectTo=${encodeURIComponent(`/songs/${songId}/versions/${versionId}`)}`);
+        if (error instanceof VersionPageRequestError && error.status === 401) {
+          router.push(`/login?redirectTo=${encodeURIComponent(`/songs/${songId}/versions/${versionId}`)}`);
+          return;
+        }
+        setBootstrapError('Could not check your session. Please try again.');
       }
     }
 
@@ -2750,8 +2756,8 @@ function VersionPageInner() {
     </div>
   );
 
-  if (initError) {
-    const isWorkspaceAccessDenied = initError.status === 403;
+  if (initError || bootstrapError) {
+    const isWorkspaceAccessDenied = initError?.status === 403;
 
     return (
       <div className={styles.loading}>
@@ -2764,7 +2770,7 @@ function VersionPageInner() {
           <p className={styles.initErrorText}>
             {isWorkspaceAccessDenied
               ? 'Switch to the workspace where this song was shared, then open this link again.'
-              : initError.message}
+              : initError?.message ?? bootstrapError}
           </p>
           <div className={styles.initErrorActions}>
             {!isWorkspaceAccessDenied && (

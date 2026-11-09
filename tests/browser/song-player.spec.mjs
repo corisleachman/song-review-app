@@ -12,13 +12,13 @@ function silentWav(seconds = 4) {
   return wav;
 }
 
-async function preparePlayer(page, fallback, renewal = false, requireGesture = false) {
+async function preparePlayer(page, fallback, renewal = false, requireGesture = false, bootstrapFirstResponse = 200) {
   const errors = [];
   const unexpectedRequests = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.context().addCookies([
     { name: 'song_review_auth', value: 'test-auth', domain: '127.0.0.1', path: '/' },
-    { name: 'song_review_identity', value: 'test-identity', domain: '127.0.0.1', path: '/' },
+    { name: 'song_review_identity', value: bootstrapFirstResponse === 200 ? 'test-identity' : '', domain: '127.0.0.1', path: '/' },
   ]);
   await page.addInitScript(requireGesture => {
     window.requireFirstPlayGesture = requireGesture;
@@ -69,6 +69,7 @@ async function preparePlayer(page, fallback, renewal = false, requireGesture = f
     payloads[`/api/versions/${version.id}`] = { version };
     payloads[`/api/versions/${version.id}/threads`] = { threads: [] };
   }
+  let bootstrapRequests = 0;
   let waveformFailures = 0;
   const renewedSources = new Set();
   await page.route('**/*', async route => {
@@ -92,6 +93,15 @@ async function preparePlayer(page, fallback, renewal = false, requireGesture = f
       }
       return route.fulfill({ status: 200, contentType: 'audio/wav', headers, body });
     }
+    if (url.pathname === '/api/auth/bootstrap' && ++bootstrapRequests === 1) {
+      if (bootstrapFirstResponse === 'timeout') {
+        await new Promise(resolve => setTimeout(resolve, 9000));
+        return route.fulfill({ status: 200, json: payloads[url.pathname] }).catch(() => {});
+      }
+      if (bootstrapFirstResponse === 401) {
+        return route.fulfill({ status: 401, json: { error: 'Unauthenticated' } });
+      }
+    }
     if (url.pathname.startsWith('/api/')) {
       if (!(url.pathname in payloads)) unexpectedRequests.push(url.pathname);
       return route.fulfill({ status: 200, json: payloads[url.pathname] || {} });
@@ -99,9 +109,24 @@ async function preparePlayer(page, fallback, renewal = false, requireGesture = f
     return route.continue();
   });
   await page.goto('/songs/song-one/versions/version-one');
-  await expect(page.getByRole('heading', { name: 'Player fixture', exact: true })).toBeVisible();
+  if (bootstrapFirstResponse === 200) {
+    await expect(page.getByRole('heading', { name: 'Player fixture', exact: true })).toBeVisible();
+  }
   return { errors, unexpectedRequests, waveformFailures: () => waveformFailures, renewalSources: () => renewedSources.size };
 }
+
+test('version page lets a signed-in user retry a timed-out session check', async ({ page }) => {
+  await preparePlayer(page, false, false, false, 'timeout');
+  await expect(page.getByText('Could not check your session. Please try again.')).toBeVisible({ timeout: 12000 });
+  await expect(page).toHaveURL(/\/songs\/song-one\/versions\/version-one$/);
+  await page.getByRole('button', { name: 'Retry', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Player fixture', exact: true })).toBeVisible();
+});
+
+test('version page sends an unauthenticated user to sign in with a return link', async ({ page }) => {
+  await preparePlayer(page, false, false, false, 401);
+  await expect(page).toHaveURL(/\/login\?redirectTo=%2Fsongs%2Fsong-one%2Fversions%2Fversion-one$/);
+});
 
 async function mediaState(page) {
   return page.evaluate(() => {
