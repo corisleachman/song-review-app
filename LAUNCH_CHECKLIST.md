@@ -1,6 +1,6 @@
 # Song Room launch checklist
 
-Last reconciled: 5 November 2026. This is the current progress page. Keep this URL in every completion update so we can always see what's left.
+Last reconciled: 9 November 2026. This is the current progress page. Keep this URL in every completion update so we can always see what's left.
 
 ## Where we are
 
@@ -113,7 +113,7 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B42 | [First lock-screen Pause metadata handoff](PRODUCT_BACKLOG.md#b42-first-lock-screen-pause-shows-another-apps-metadata) | Initial metadata handoff reproduced in Google reference player too; audio stays paused. Follow-up wake also clears reference artwork. Platform/UI limitation monitored; no app patch | L6 targeted device follow-up; no new launch-blocker classification |
 | B43 | [Staging Stripe webhook verification gap](PRODUCT_BACKLOG.md#b43-staging-stripe-webhook-verification-gap) | Isolated Test mode expiry and duplicate replay passed on protected Preview. Existing TrackFlow Sandbox endpoint targets the Production alias. Staging endpoint still open | Existing L6 payment reconciliation check |
 | B44 | [Older Stripe subscription events overwrite current plan](PRODUCT_BACKLOG.md#b44-older-stripe-subscription-events-overwrite-current-plan) | Production complete, 8 Nov. Linked-subscription guard passed stale-event fixtures and isolated Stripe expiry. Live smoke passed | L6 billing reconciliation |
-| B45 | [Version page redirects to login on session check timeout](PRODUCT_BACKLOG.md#b45-version-page-redirects-to-login-on-session-check-timeout) | Fix live on 9 Nov via PR #117. Timeout retry and signed-out checks passed. User opened saved version from email. Playback pending | L6 upload reliability |
+| B45 | [Version page redirects to login on session check timeout](PRODUCT_BACKLOG.md#b45-version-page-redirects-to-login-on-session-check-timeout) | Production verified on 9 Nov. Timeout retry and signed-out checks passed. User opened and played the saved version | L6 upload reliability |
 
 Exploratory ideas in ROADMAP.md (typing indicators, pinned comments, comparison view, waveform regions, exports, Slack, native mobile app, multitrack and video) remain unscheduled ideas. They aren't approved launch work. Delete/edit/auth/invite ideas in that old file must be checked against existing features before creating tasks.
 
@@ -619,3 +619,5 @@ The background task records submission counts and safe failures. It has no durab
 9 November B20/B45 acceptance: the uploader confirmed receipt of the first Production version email and opened the correct saved version from its link. Resend accepted four submissions for this upload. Inbox delivery is confirmed for the uploader. B45 signed-in navigation passed for the saved version. Playback remains unconfirmed.
 
 9 November B43 inventory: the connected TrackFlow Sandbox lists an enabled Song Room endpoint at song-review-app-v2.vercel.app/api/stripe/webhook. Vercel resolves that host and www.song-room.live to the same Ready Production deployment. This endpoint is not evidence of staging delivery. No event replay or configuration change was made. A dedicated staging destination needs separate configuration approval.
+
+9 November B45 closeout: the uploader confirmed playback of the saved Production version after opening it from the B20 email. The tested upload, email link, and playback journey is complete.

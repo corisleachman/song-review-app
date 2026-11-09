@@ -843,4 +843,4 @@ No further control test is required now. Keep the first-play registration timing
 - Reported 9 November 2026 after a Production version upload. Finalization and the version read succeeded, and Resend accepted the notification batch.
 - The destination version page treated a slow or failed identity bootstrap as an unauthenticated session. Production timing matches the eight-second client timeout. The exact browser error was unavailable.
 - Keep the return-link redirect for an explicit 401. For a timeout, network error, unexpected response or other bootstrap failure, stay on the version and offer Retry. A retry only reloads page data.
-- Verify timeout recovery and explicit 401 in the browser, then confirm the user can open and play the saved Production version.
+- Verified 9 November: timeout recovery and explicit 401 passed in Chromium. Production signed-out smoke checks passed and the uploader opened and played the saved version.
