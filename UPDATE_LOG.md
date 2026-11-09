@@ -10094,3 +10094,7 @@ Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md. Stripe and Vercel metadata s
 ## 2026-11-09 B45 Production playback confirmation
 
 Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md. The uploader confirmed the saved version played in Production, closing the B45 acceptance check.
+
+## 2026-11-09 B43 staging webhook proposal
+
+Updated PRODUCT_BACKLOG.md and LAUNCH_CHECKLIST.md with a proposed staging-only Stripe webhook deployment, verified protection boundary, acceptance checks and rollback. Deployment configuration approval is open.
