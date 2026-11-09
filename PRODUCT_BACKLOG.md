@@ -826,6 +826,8 @@ No further control test is required now. Keep the first-play registration timing
 
 5 November cancellation checkpoint: user reports Sandbox cancellation passed. Agent rechecked staging database/dashboard: Pro subscription linkage and both songs remain, consistent with end-of-period cancellation. Agent independently reopened Sandbox portal: “Cancels Dec 5” and “Your service will end on December 5, 2026.” Provider cancellation is confirmed. This does not verify automatic downgrade or webhook processing. Project has Vercel Authentication for deployments except custom domains; unauthenticated webhook probe returned401. Persistent Sandbox delivery therefore needs both its own signing secret and an approved protection-compatible delivery route, not just a new environment variable. No security protection or billing configuration changed.
 
+9 November read-only inventory: the existing Song Room destination in the connected TrackFlow Sandbox resolves to the same Production deployment as www.song-room.live. Keep it out of staging verification. A dedicated staging-only destination remains open. The isolated lifecycle test used Stripe Test mode, which is a separate environment.
+
 ### B44. Older Stripe subscription events overwrite current plan
 
 - Reproduction: an SDK-signed cancellation for an old subscription set the fixture account to Free and cleared its newer subscription link. The handler filtered only by Stripe customer ID. Subscription updates used the same customer-only path. No live incident or provider operation was observed.
