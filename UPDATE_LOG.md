@@ -10156,3 +10156,7 @@ Moved the new comment, reply and workspace invite emails onto the shared Song Ro
 ## 2026-11-09 Branded Supabase Auth email templates (email standard v2)
 
 Added buildAuthTemplate to lib/emailTemplates.ts and generated supabase/auth-email-templates/ (confirm_signup, reset_password, reauthentication, password_changed, plus subjects.tsv) with scripts/build-auth-email-templates.mjs. They keep the tested link contracts from EMAIL_PASSWORD_STAGING_ROLLOUT.md: token-hash signup and recovery links, the {{ .Token }} code and subject, and the Password changed warning with hello@song-room.live. The email shell's button is now optional for the code email. Hosted Supabase templates are not changed by this commit; they are pasted in the dashboard, into staging and Production together so they stay identical. Tests: tests/thread-invite-email.test.mjs checks the link contracts and that the committed files match the builder.
+
+## B10 isolated Supabase dependency candidate
+
+Updated package.json and package-lock.json to pin Supabase SSR 0.12.7 and Supabase JS 2.118.0. The candidate separates these packages from the browser tooling in PR #134.
