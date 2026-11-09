@@ -8,8 +8,23 @@ const C = {
   canvas: '#0E0A0A', card: '#1C1515', rule: '#2E2626', straw: '#F0E48C', red: '#C0392B',
   text: '#F4EDE4', secondary: '#D4C4B0', meta: '#8F7E70',
 };
+// Gmail recolours borders, so rules are 1px painted cells instead.
+const RULE = `height:1px;line-height:1px;font-size:0;${bg(C.rule)}`;
 const BODY = "'DM Sans',-apple-system,'Segoe UI',Helvetica,Arial,sans-serif";
 const DISPLAY = "'ThunderBlack','Arial Narrow','Helvetica Neue',Arial,sans-serif";
+
+// Gmail's iPhone app in dark mode inverts emails it thinks are dark, and it
+// ignores the color-scheme meta tag. It leaves background-image alone, so every
+// fill is painted twice (bg). Light text is wrapped in two blend layers (lock)
+// that undo the inversion in Gmail only; elsewhere they blend to no change.
+// Technique: https://www.hteumeuleu.com/2021/fixing-gmail-dark-mode-css-blend-modes/
+function bg(color: string) {
+  return `background-color:${color};background-image:linear-gradient(${color},${color});`;
+}
+
+function lock(inner: string) {
+  return `<span class="gm-s" style="display:block;"><span class="gm-d" style="display:block;">${inner}</span></span>`;
+}
 
 export function escapeHtml(value: string) {
   return value
@@ -61,35 +76,40 @@ export function renderEmailShell(shell: EmailShell) {
 <title>${escapeHtml(shell.headline)}</title>
 <style>
 @font-face{font-family:'ThunderBlack';src:url('${new URL('/marketing-assets/thunder-blacklc.woff2', shell.origin).toString()}') format('woff2');}
-body{margin:0;padding:0;background:${C.canvas};}
+body{margin:0;padding:0;${bg(C.canvas)}}
 a{text-decoration:none}
+u + .body .gm-s{background:#000;mix-blend-mode:screen}
+u + .body .gm-d{background:#000;mix-blend-mode:difference}
 @media (max-width:480px){.px{padding-left:20px!important;padding-right:20px!important}.hl{font-size:22px!important}.song-l{font-size:40px!important}.song-m{font-size:30px!important}.song-s{font-size:24px!important}.art{width:96px!important;height:96px!important}.artcell{width:96px!important;padding-right:16px!important}.btnt{width:100%!important}.btnt a{display:block!important;text-align:center!important;padding-left:12px!important;padding-right:12px!important}.mk{width:80px!important}.vpill{letter-spacing:.1em!important}}
 </style></head>
-<body style="margin:0;padding:0;background:${C.canvas};">
+<body class="body" style="margin:0;padding:0;${bg(C.canvas)}">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">${escapeHtml(shell.preheader)}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.canvas};"><tr><td align="center" style="padding:16px 8px;">
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:${C.canvas};border:1px solid ${C.rule};">
-<tr><td class="px" style="padding:24px 32px;border-bottom:1px solid ${C.rule};">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${bg(C.canvas)}"><tr><td align="center" style="padding:16px 8px;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;${bg(C.rule)}"><tr><td style="padding:1px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${bg(C.canvas)}">
+<tr><td class="px" style="padding:24px 32px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
 <td><a href="${escapeHtml(home)}"><img src="${escapeHtml(logo)}" width="46" height="44" alt="Song Room" style="display:block;border:0;"></a></td>
-<td align="right" style="font-family:${BODY};font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:${C.meta};">${escapeHtml(shell.workspaceName)}</td>
+<td align="right" style="font-family:${BODY};font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:${C.meta};">${lock(escapeHtml(shell.workspaceName))}</td>
 </tr></table></td></tr>
+<tr><td style="${RULE}">&nbsp;</td></tr>
 <tr><td class="px" style="padding:32px 32px 24px;">
-<div style="font-family:${BODY};font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:${C.straw};font-weight:700;">&#9679;&nbsp; ${escapeHtml(shell.eyebrow)}</div>
-<div class="hl" style="font-family:${BODY};font-size:24px;line-height:1.3;color:${C.text};margin-top:12px;font-weight:600;">${escapeHtml(shell.headline)}</div>
+<div style="font-family:${BODY};font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:${C.straw};font-weight:700;">${lock(`&#9679;&nbsp; ${escapeHtml(shell.eyebrow)}`)}</div>
+<div class="hl" style="font-family:${BODY};font-size:24px;line-height:1.3;color:${C.text};margin-top:12px;font-weight:600;">${lock(escapeHtml(shell.headline))}</div>
 </td></tr>
 ${shell.bodyHtml}
 <tr><td class="px" style="padding:24px 32px 8px;">
-<table role="presentation" cellpadding="0" cellspacing="0" class="btnt"><tr><td style="background:${C.red};">
-<a href="${escapeHtml(shell.cta.href)}" style="display:inline-block;padding:16px 28px;font-family:${BODY};font-weight:700;font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:${C.text};">${escapeHtml(shell.cta.label)} &rarr;</a>
+<table role="presentation" cellpadding="0" cellspacing="0" class="btnt"><tr><td style="${bg(C.red)}">
+<a href="${escapeHtml(shell.cta.href)}" style="display:inline-block;padding:16px 28px;font-family:${BODY};font-weight:700;font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:${C.text};">${lock(`${escapeHtml(shell.cta.label)} &rarr;`)}</a>
 </td></tr></table>
 </td></tr>
 <tr><td class="px" style="padding:28px 32px;">
-<div style="border-top:1px solid ${C.rule};padding-top:18px;font-family:${BODY};font-size:12px;line-height:1.7;color:${C.meta};">
-${escapeHtml(shell.footerReason)}<br>
-<a href="${escapeHtml(settings)}" style="color:${C.secondary};text-decoration:underline;">Notification settings</a> &nbsp;&middot;&nbsp; <a href="${escapeHtml(home)}" style="color:${C.secondary};text-decoration:underline;">song-room.live</a>
+<div style="${RULE}">&nbsp;</div>
+<div style="padding-top:18px;font-family:${BODY};font-size:12px;line-height:1.7;color:${C.meta};">
+${lock(`${escapeHtml(shell.footerReason)}<br>
+<a href="${escapeHtml(settings)}" style="color:${C.secondary};text-decoration:underline;">Notification settings</a> &nbsp;&middot;&nbsp; <a href="${escapeHtml(home)}" style="color:${C.secondary};text-decoration:underline;">song-room.live</a>`)}
 </div></td></tr>
-</table></td></tr></table>
+</table></td></tr></table></td></tr></table>
 </body></html>`;
 }
 
@@ -155,10 +175,11 @@ export function buildVersionUploadEmail(data: VersionUploadEmailData) {
     140,
   );
 
-  const art = data.artworkUrl
-    ? `<img src="${escapeHtml(data.artworkUrl)}" width="132" height="132" alt="${escapeHtml(songInitials(song))}" class="art" style="display:block;width:132px;height:132px;border:0;background:${C.straw};color:${C.canvas};font-family:${DISPLAY};font-size:40px;font-weight:900;text-align:center;line-height:132px;">`
-    : `<table role="presentation" width="132" height="132" cellpadding="0" cellspacing="0" class="art" style="width:132px;height:132px;background:${C.straw};"><tr><td align="center" valign="middle" style="font-family:${DISPLAY};font-weight:900;font-size:52px;line-height:1;color:${C.canvas};letter-spacing:.02em;">${escapeHtml(songInitials(song))}</td></tr></table>`;
-  const row = (key: string, value: string) => `<tr><td class="mk" style="padding:3px 0;font-family:${BODY};font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:${C.meta};width:96px;">${key}</td><td style="padding:3px 0;font-family:${BODY};font-size:14px;color:${C.text};">${escapeHtml(value)}</td></tr>`;
+  // No artwork: the Song Room tile (the same image used when an artwork link
+  // expires). An image, because Gmail would recolour dark initials on straw.
+  const artSrc = data.artworkUrl ?? new URL('/marketing-assets/email-artwork-fallback.png', data.origin).toString();
+  const art = `<img src="${escapeHtml(artSrc)}" width="132" height="132" alt="${escapeHtml(songInitials(song))}" class="art" style="display:block;width:132px;height:132px;border:0;${bg(C.straw)}color:${C.canvas};font-family:${DISPLAY};font-size:40px;font-weight:900;text-align:center;line-height:132px;">`;
+  const row = (key: string, value: string) => `<tr><td class="mk" style="padding:3px 0;font-family:${BODY};font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:${C.meta};width:96px;">${lock(key)}</td><td style="padding:3px 0;font-family:${BODY};font-size:14px;color:${C.text};">${lock(escapeHtml(value))}</td></tr>`;
   const rows = [
     row('By', uploader),
     row('Uploaded', uploadedAt),
@@ -167,19 +188,21 @@ export function buildVersionUploadEmail(data: VersionUploadEmailData) {
   ].join('');
 
   const songCard = `<tr><td class="px" style="padding:0 32px 28px;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.card};border:1px solid ${C.rule};"><tr>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${bg(C.rule)}"><tr><td style="padding:1px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${bg(C.card)}"><tr>
 <td class="artcell" width="132" valign="top" style="width:132px;padding:16px 20px 16px 16px;">${art}</td>
 <td valign="top" style="padding:16px 16px 16px 0;">
-<div class="${titleSize.className}" style="font-family:${DISPLAY};font-weight:900;font-size:${titleSize.px}px;line-height:.92;text-transform:uppercase;color:${C.text};letter-spacing:.01em;word-break:break-word;">${escapeHtml(song)}</div>
-<div style="margin:10px 0 12px;"><span class="vpill" style="display:inline-block;border:1px solid ${C.straw};color:${C.straw};font-family:${BODY};font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;padding:4px 8px;">${escapeHtml(versionName)}</span></div>
+<div class="${titleSize.className}" style="font-family:${DISPLAY};font-weight:900;font-size:${titleSize.px}px;line-height:.92;text-transform:uppercase;color:${C.text};letter-spacing:.01em;word-break:break-word;">${lock(escapeHtml(song))}</div>
+<div style="margin:10px 0 12px;"><span style="display:inline-block;${bg(C.straw)}padding:1px;"><span class="vpill" style="display:inline-block;${bg(C.card)}color:${C.straw};font-family:${BODY};font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;padding:4px 8px;">${lock(escapeHtml(versionName))}</span></span></div>
 <table role="presentation" cellpadding="0" cellspacing="0">${rows}</table>
+</td></tr></table>
 </td></tr></table>
 </td></tr>`;
 
   const notesBlock = notes ? `<tr><td class="px" style="padding:0 32px 8px;">
-<div style="font-family:${BODY};font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:${C.meta};font-weight:700;margin:0 0 10px;">Notes from ${escapeHtml(uploader)}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td width="3" style="background:${C.straw};font-size:0;">&nbsp;</td>
-<td style="padding:4px 0 4px 16px;font-family:${BODY};font-size:15px;line-height:1.6;color:${C.secondary};white-space:pre-wrap;">${escapeHtml(notes)}${notesTruncated ? `<br><a href="${escapeHtml(data.link)}" style="color:${C.text};text-decoration:underline;">Read the full notes in Song Room</a>` : ''}</td></tr></table>
+<div style="font-family:${BODY};font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:${C.meta};font-weight:700;margin:0 0 10px;">${lock(`Notes from ${escapeHtml(uploader)}`)}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td width="3" style="${bg(C.straw)}font-size:0;">&nbsp;</td>
+<td style="padding:4px 0 4px 16px;font-family:${BODY};font-size:15px;line-height:1.6;color:${C.secondary};white-space:pre-wrap;">${lock(`${escapeHtml(notes)}${notesTruncated ? `<br><a href="${escapeHtml(data.link)}" style="color:${C.text};text-decoration:underline;">Read the full notes in Song Room</a>` : ''}`)}</td></tr></table>
 </td></tr>` : '';
 
   const html = renderEmailShell({
