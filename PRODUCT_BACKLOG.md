@@ -841,6 +841,10 @@ No further control test is required now. Keep the first-play registration timing
 
 Provider references: [Stripe webhook setup](https://docs.stripe.com/webhooks), [Vercel deployment protection](https://vercel.com/docs/deployment-protection/methods-to-bypass-deployment-protection) and [Vercel shared source files](https://vercel.com/docs/monorepos/monorepo-faq).
 
+Implementation checkpoint, 9 November. The user approved the staging-only destination. [Draft PR #123](https://github.com/corisleachman/song-review-app/pull/123) builds the standalone endpoint with `node scripts/package-staging-webhook.mjs`. Deploy the generated directory to the dedicated staging-only hosting project. Bind `STAGING_SUPABASE_PROJECT_REF`, the corresponding `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`, Test mode `STRIPE_SECRET_KEY` and prices, and the new destination's `STRIPE_WEBHOOK_SECRET`. Verify each credential's environment in its provider before binding. The code rejects the known Production database, live credentials and live events. The only accessible Vercel team is Hobby. Vercel restricts it to personal non-commercial use, and the approved plan stops if a paid plan is needed. Existing Preview Secrets also cannot be read back. Direct hosted delivery is pending an eligible target and secure staging credential bindings.
+
+Hosting reference: [Vercel fair use guidelines](https://vercel.com/docs/limits/fair-use-guidelines#commercial-usage).
+
 ### B44. Older Stripe subscription events overwrite current plan
 
 - Reproduction: an SDK-signed cancellation for an old subscription set the fixture account to Free and cleared its newer subscription link. The handler filtered only by Stripe customer ID. Subscription updates used the same customer-only path. No live incident or provider operation was observed.
