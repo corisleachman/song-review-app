@@ -845,6 +845,8 @@ Implementation checkpoint, 9 November. The user approved the staging-only destin
 
 Hosting reference: [Vercel fair use guidelines](https://vercel.com/docs/limits/fair-use-guidelines#commercial-usage).
 
+Stripe checkpoint, 9 November. Read-only CLI checks matched one active non-live subscription for the staging test customer in TrackFlow Test mode, scheduled to cancel on 5 December 2026 at 00:12 UTC. The Song Room destination inventory still shows only the Production alias. Before creating a staging destination, confirm its verified HTTPS URL. Create it in the same Test mode account with the two approved subscription snapshot event types and bind its signing secret to the staging deployment. Check the disposable fixture in Workbench delivery history and in the staging ledger before leaving the destination enabled.
+
 ### B44. Older Stripe subscription events overwrite current plan
 
 - Reproduction: an SDK-signed cancellation for an old subscription set the fixture account to Free and cleared its newer subscription link. The handler filtered only by Stripe customer ID. Subscription updates used the same customer-only path. No live incident or provider operation was observed.
