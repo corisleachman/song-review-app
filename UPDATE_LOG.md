@@ -10086,3 +10086,7 @@ Updated LAUNCH_CHECKLIST.md with the live deployment, checks and rollback. The u
 ## 2026-11-09 B20 Production inbox confirmation
 
 Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md. The uploader confirmed the Production email arrived and opened the correct saved version. The B45 link check passed, with playback still open.
+
+## 2026-11-09 B43 Sandbox endpoint inventory
+
+Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md. Stripe and Vercel metadata show the connected TrackFlow Sandbox endpoint targets the Production alias. Staging delivery remains open.
