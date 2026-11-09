@@ -142,3 +142,12 @@ test('email artwork: only the song\'s own raster object can be signed', () => {
     assert.throws(() => artwork.signEmailArtworkAccess({ ...input, path }, key, now, audience));
   }
 });
+
+test('version email: long song titles step down in size', () => {
+  assert.deepEqual(templates.songTitleSize('Rebel Lovers'), { px: 48, className: 'song-l' });
+  assert.deepEqual(templates.songTitleSize('Midnight Drive Through Town'), { px: 36, className: 'song-m' });
+  assert.deepEqual(templates.songTitleSize('The Ballad Of Everything We Never Said Out Loud'), { px: 28, className: 'song-s' });
+  const email = templates.buildVersionUploadEmail({ ...base, songTitle: 'The Ballad Of Everything We Never Said Out Loud' });
+  assert.ok(email.html.includes('class="song-s" style="font-family:'));
+  assert.ok(email.html.includes('font-size:28px;line-height:.92'));
+});

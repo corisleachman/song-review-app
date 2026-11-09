@@ -63,7 +63,7 @@ export function renderEmailShell(shell: EmailShell) {
 @font-face{font-family:'ThunderBlack';src:url('${new URL('/marketing-assets/thunder-blacklc.woff2', shell.origin).toString()}') format('woff2');}
 body{margin:0;padding:0;background:${C.canvas};}
 a{text-decoration:none}
-@media (max-width:480px){.px{padding-left:20px!important;padding-right:20px!important}.hl{font-size:22px!important}.song{font-size:40px!important}.art{width:96px!important;height:96px!important}.artcell{width:96px!important;padding-right:16px!important}.btnt{width:100%!important}.btnt a{display:block!important;text-align:center!important;padding-left:12px!important;padding-right:12px!important}.mk{width:80px!important}.vpill{letter-spacing:.1em!important}}
+@media (max-width:480px){.px{padding-left:20px!important;padding-right:20px!important}.hl{font-size:22px!important}.song-l{font-size:40px!important}.song-m{font-size:30px!important}.song-s{font-size:24px!important}.art{width:96px!important;height:96px!important}.artcell{width:96px!important;padding-right:16px!important}.btnt{width:100%!important}.btnt a{display:block!important;text-align:center!important;padding-left:12px!important;padding-right:12px!important}.mk{width:80px!important}.vpill{letter-spacing:.1em!important}}
 </style></head>
 <body style="margin:0;padding:0;background:${C.canvas};">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">${escapeHtml(shell.preheader)}</div>
@@ -113,6 +113,15 @@ const STATUS_LABELS: Record<string, string> = {
 };
 const NOTES_LIMIT = 280;
 
+// Thunder is condensed, so short titles can be large; long titles step down so
+// they don't run to four or five lines beside the artwork.
+export function songTitleSize(title: string) {
+  const length = Array.from(title).length;
+  if (length <= 16) return { px: 48, className: 'song-l' };
+  if (length <= 28) return { px: 36, className: 'song-m' };
+  return { px: 28, className: 'song-s' };
+}
+
 export function formatEmailDate(date: Date) {
   return new Intl.DateTimeFormat('en-GB', {
     day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/London', timeZoneName: 'short',
@@ -138,6 +147,7 @@ export function buildVersionUploadEmail(data: VersionUploadEmailData) {
   const notes = notesFull ? truncate(notesFull, NOTES_LIMIT) : '';
   const notesTruncated = notes !== notesFull;
   const ctaLabel = `Listen to Version ${data.versionNumber}`;
+  const titleSize = songTitleSize(song);
 
   const subject = `${song}: Version ${data.versionNumber} is ready to hear`;
   const preheader = truncate(
@@ -160,7 +170,7 @@ export function buildVersionUploadEmail(data: VersionUploadEmailData) {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.card};border:1px solid ${C.rule};"><tr>
 <td class="artcell" width="132" valign="top" style="width:132px;padding:16px 20px 16px 16px;">${art}</td>
 <td valign="top" style="padding:16px 16px 16px 0;">
-<div class="song" style="font-family:${DISPLAY};font-weight:900;font-size:48px;line-height:.92;text-transform:uppercase;color:${C.text};letter-spacing:.01em;word-break:break-word;">${escapeHtml(song)}</div>
+<div class="${titleSize.className}" style="font-family:${DISPLAY};font-weight:900;font-size:${titleSize.px}px;line-height:.92;text-transform:uppercase;color:${C.text};letter-spacing:.01em;word-break:break-word;">${escapeHtml(song)}</div>
 <div style="margin:10px 0 12px;"><span class="vpill" style="display:inline-block;border:1px solid ${C.straw};color:${C.straw};font-family:${BODY};font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;padding:4px 8px;">${escapeHtml(versionName)}</span></div>
 <table role="presentation" cellpadding="0" cellspacing="0">${rows}</table>
 </td></tr></table>
