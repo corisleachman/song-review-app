@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Song Room Email System v2</title>
+<meta name="description" content="Inventory of every Song Room email, a TSR v3 visual standard for them, and the first template: New version uploaded.">
+<style>
+  @font-face{font-family:'ThunderBlack';src:url('fonts/Thunder-BlackLC.woff2') format('woff2');font-display:swap}
+  @font-face{font-family:'ThunderBold';src:url('fonts/Thunder-BoldLC.woff2') format('woff2');font-display:swap}
+  :root{
+    --black:#0E0A0A; --surface:#1C1515; --line:#2E2626; --straw:#F0E48C; --off:#F4EDE4;
+    --sand:#D4C4B0; --dune:#8F7E70; --red:#ED4D3B; --ok:#9FD39A;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#070505;color:var(--off);font-family:'DM Sans',-apple-system,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55}
+  a{color:var(--straw)}
+  .wrap{max-width:1180px;margin:0 auto;padding:40px 16px 96px}
+  header.top{border:1px solid var(--line);background:var(--black);padding:28px 28px 26px;margin-bottom:48px}
+  .kicker{font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--straw);font-weight:700}
+  h1{font-family:'ThunderBlack',Impact,sans-serif;font-weight:400;font-size:72px;line-height:.9;letter-spacing:.01em;text-transform:uppercase;margin:14px 0 14px}
+  h2{font-family:'ThunderBlack',Impact,sans-serif;font-weight:400;font-size:46px;line-height:.95;text-transform:uppercase;margin:0 0 6px}
+  h3{font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--straw);margin:30px 0 12px}
+  .lede{color:var(--sand);max-width:780px;margin:0}
+  section{margin:0 0 72px}
+  .sec-head{display:flex;gap:18px;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:22px}
+  .sec-num{font-family:'ThunderBlack',Impact,sans-serif;font-size:46px;color:var(--straw);line-height:.95}
+  .sec-sub{color:var(--dune);margin:0;font-size:14px}
+  table.inv{width:100%;border-collapse:collapse;font-size:13.5px}
+  table.inv th{text-align:left;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--dune);font-weight:700;border-bottom:1px solid var(--line);padding:10px 12px}
+  table.inv td{border-bottom:1px solid var(--line);padding:14px 12px;vertical-align:top}
+  table.inv td:first-child{font-weight:600;white-space:nowrap}
+  .scroll{overflow-x:auto;border:1px solid var(--line);background:var(--black)}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--sand)}
+  .pill{display:inline-block;font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;padding:3px 7px;border:1px solid currentColor;white-space:nowrap}
+  .p-bad{color:var(--red)} .p-mid{color:var(--straw)} .p-ok{color:var(--ok)}
+  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px}
+  .card{border:1px solid var(--line);background:var(--black);padding:20px 22px}
+  .card p{margin:0 0 10px;color:var(--sand)} .card p:last-child{margin:0}
+  .card b{color:var(--off)}
+  ul.rules{margin:0;padding-left:18px;color:var(--sand)} ul.rules li{margin:0 0 8px} ul.rules b{color:var(--off)}
+  .swatches{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+  .sw{border:1px solid var(--line)} .sw i{display:block;height:56px} .sw div{padding:8px 10px;font-size:12px} .sw span{display:block;color:var(--dune)}
+  .anat{display:grid;grid-template-columns:minmax(0,600px) 1fr;gap:28px;align-items:start}
+  .anat ol{margin:0;padding-left:20px;color:var(--sand)} .anat ol li{margin:0 0 12px} .anat ol b{color:var(--off)}
+  .anat-box{border:1px dashed #4a3f3a;background:var(--black);font-size:12px;color:var(--dune)}
+  .anat-box div{border-bottom:1px dashed #4a3f3a;padding:12px 14px;display:flex;justify-content:space-between;gap:10px}
+  .anat-box div:last-child{border-bottom:0} .anat-box em{color:var(--straw);font-style:normal;font-weight:700}
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}
+  .toolbar button{background:transparent;color:var(--off);border:1px solid var(--line);padding:9px 14px;font:600 12px/1 'DM Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+  .toolbar button[aria-pressed="true"]{background:var(--straw);color:var(--black);border-color:var(--straw)}
+  .toolbar .sep{width:1px;background:var(--line);margin:0 6px}
+  .previews{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap}
+  .device{flex:0 0 auto;max-width:100%}
+  .device .lbl{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--dune);margin:0 0 8px}
+  .inbox{border:1px solid var(--line);background:#fff;color:#202124;font-family:Arial,Helvetica,sans-serif;max-width:100%}
+  .inbox.dark{background:#1f1f1f;color:#e8eaed}
+  .inbox .ihead{padding:14px 16px 10px;border-bottom:1px solid #e3e3e3}
+  .inbox.dark .ihead{border-color:#3c3c3c}
+  .inbox .isubj{font-size:18px;margin:0 0 8px}
+  .inbox .ifrom{font-size:13px} .inbox .ifrom span{color:#5f6368} .inbox.dark .ifrom span{color:#9aa0a6}
+  .inbox .ipre{font-size:12.5px;color:#5f6368;margin-top:6px}
+  .inbox.dark .ipre{color:#9aa0a6}
+  iframe.mail{display:block;border:0;width:100%;background:transparent}
+  .d-desk{width:640px} .d-mob{width:375px}
+  .before{background:#fff;color:#222;font-family:Arial,Helvetica,sans-serif;padding:18px 20px;font-size:14px;border:1px solid var(--line);max-width:640px}
+  .before a{color:#1a56c9;word-break:break-all}
+  pre.copy{white-space:pre-wrap;background:var(--black);border:1px solid var(--line);padding:16px 18px;margin:0;font:12.5px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--sand)}
+  .note{border-left:3px solid var(--straw);padding:2px 0 2px 14px;color:var(--sand);margin:16px 0 0}
+  .note b{color:var(--off)}
+  @media (max-width:860px){ .anat{grid-template-columns:1fr} h1{font-size:54px} .d-desk{width:100%} }
+  @media (max-width:420px){ .d-mob{width:100%} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="kicker">The Song Room · Email system v2 · Wireframe · 9 Nov 2026</div>
+  <h1>Emails that look<br>like Song Room</h1>
+  <p class="lede">Three steps in one page. First, every email the public app (clone-clean, song-room.live) sends today. Second, one visual standard for all of them, built on TSR v3. Third, the first template built to that standard: <b>New version uploaded</b>, with a before and after, desktop and phone previews, and the exact data each field comes from. Nothing in the app has changed yet.</p>
+</header>
+
+<!-- =============================== 01 INVENTORY =============================== -->
+<section>
+  <div class="sec-head"><div class="sec-num">01</div><div><h2>Every email we send</h2><p class="sec-sub">Read from the clone-clean code and the last 100 messages in the Resend log.</p></div></div>
+
+  <div class="scroll">
+  <table class="inv">
+    <thead><tr><th>Email</th><th>Sent when</th><th>Where it lives</th><th>Today</th><th>Data we already have</th><th>Gaps found</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>1 · New version uploaded</td>
+        <td>A Version 2+ upload finishes (finalize step)</td>
+        <td class="mono">lib/versionUploadNotifications.ts<br>← app/api/versions/[versionId]/finalize</td>
+        <td><span class="pill p-bad">Plain text</span></td>
+        <td>Song title, artwork, status, version number + label + notes, uploader name, upload time, workspace name + image</td>
+        <td>No song name, artwork or uploader. Subject is the same for every song. Also emails the uploader themselves and ignores the workspace “owner only” notification setting.</td>
+      </tr>
+      <tr>
+        <td>2 · New comment</td>
+        <td>Someone starts a new comment thread</td>
+        <td class="mono">lib/threadNotifications.ts<br>← app/api/threads/create</td>
+        <td><span class="pill p-mid">Basic HTML</span></td>
+        <td>Commenter, song, version + label, timestamp, comment text, deep link to the thread</td>
+        <td>Content is good; styling is generic (white, rounded black button, no logo or artwork).</td>
+      </tr>
+      <tr>
+        <td>3 · Comment reply</td>
+        <td>Someone replies in a thread</td>
+        <td class="mono">lib/threadNotifications.ts<br>← app/api/threads/reply</td>
+        <td><span class="pill p-mid">Basic HTML</span></td>
+        <td>As above, plus whether it's a reply</td>
+        <td>Doesn't show what was being replied to.</td>
+      </tr>
+      <tr>
+        <td>4 · Workspace invite</td>
+        <td>An owner invites a collaborator</td>
+        <td class="mono">app/api/workspace/invites/route.ts</td>
+        <td><span class="pill p-mid">Basic HTML</span></td>
+        <td>Inviter name, workspace name, invite link, workspace image, plan</td>
+        <td>Body still says <b>“Song Review”</b>, the old product name.</td>
+      </tr>
+      <tr>
+        <td>5 · Confirm your signup</td>
+        <td>Email + password signup</td>
+        <td class="mono">Supabase Auth template<br>(dashboard, sent through Resend SMTP)</td>
+        <td><span class="pill p-bad">Supabase default</span></td>
+        <td>Confirmation link, email address</td>
+        <td>Still the stock “Follow this link to confirm your user / Confirm your mail” copy.</td>
+      </tr>
+      <tr>
+        <td>6 · Reset your password</td>
+        <td>Forgot-password request</td>
+        <td class="mono">Supabase Auth template</td>
+        <td><span class="pill p-bad">Supabase default</span></td>
+        <td>Reset link, email address</td>
+        <td>Stock copy, no expiry or “didn't ask for this?” guidance.</td>
+      </tr>
+      <tr>
+        <td>7 · Password changed</td>
+        <td>Password updated</td>
+        <td class="mono">Supabase Auth security notice</td>
+        <td><span class="pill p-mid">Custom copy, unstyled</span></td>
+        <td>Email address, support address</td>
+        <td>Copy is right; needs the shared shell.</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="note"><b>Not ours:</b> the same Resend account also sends “Signals”, health checks, Client Project Hub and budget emails for other projects; those are out of scope. The old <i>“New comment on Rebel Lovers – Version 4 at 2:26.3726…”</i> emails come from the private main-branch app. If Email-change or Magic-link sign-in is switched on later in Supabase, those two templates join this list. An August wireframe (<a href="email-redesign-preview.html">email-redesign-preview.html</a>) sketched 13 emails including lifecycle and marketing ones; this page supersedes it for the transactional set and adds the version email, which didn't exist then.</p>
+</section>
+
+<!-- =============================== 02 STANDARD =============================== -->
+<section>
+  <div class="sec-head"><div class="sec-num">02</div><div><h2>The visual standard</h2><p class="sec-sub">One shell, one set of parts. Every Song Room email is built from these.</p></div></div>
+
+  <div class="anat">
+    <div class="anat-box" aria-label="Email anatomy">
+      <div><span><em>A</em> Header: SONG ROOM logo · workspace name</span><span>always</span></div>
+      <div><span><em>B</em> Eyebrow: what happened (NEW VERSION, NEW COMMENT…)</span><span>always</span></div>
+      <div><span><em>C</em> Headline: who did what, in one sentence</span><span>always</span></div>
+      <div><span><em>D</em> Song card: artwork, title, version, status</span><span>song emails</span></div>
+      <div><span><em>E</em> Content block: notes, comment text, or explanation</span><span>if present</span></div>
+      <div><span><em>F</em> One primary button + one text link</span><span>always</span></div>
+      <div><span><em>G</em> Footer: why you got this, settings, song-room.live</span><span>always</span></div>
+    </div>
+    <ol>
+      <li><b>Dark canvas, 600px wide.</b> Charcoal #0E0A0A body, #1C1515 cards, hard 1px #2E2626 rules, zero radius. Same as the app, so the email feels like a window into it.</li>
+      <li><b>Straw is for one thing per email:</b> the action. The eyebrow and primary button use it; nothing else competes.</li>
+      <li><b>Type.</b> The song title is set in Thunder where the mail app loads web fonts (Apple Mail, iOS) and falls back to a heavy condensed system face elsewhere (Gmail, Outlook). Everything else is DM Sans → Helvetica → Arial. The logo is an image, so it's always on-brand.</li>
+      <li><b>Say what it is in the subject and the first line.</b> Song name first in the subject so a busy inbox sorts itself by song.</li>
+      <li><b>Every email ships with a plain-text twin</b> and a hidden preheader line (the grey preview text in the inbox).</li>
+      <li><b>One button, phone-sized.</b> 48px tall, full width on phones, label says the destination (“Listen to Version 5”, not “Open”).</li>
+      <li><b>Footer explains the email.</b> Which workspace, why you got it, and a link to notification settings.</li>
+    </ol>
+  </div>
+
+  <h3>Tokens</h3>
+  <div class="swatches">
+    <div class="sw"><i style="background:#0E0A0A"></i><div>Canvas<span>#0E0A0A</span></div></div>
+    <div class="sw"><i style="background:#1C1515"></i><div>Card<span>#1C1515</span></div></div>
+    <div class="sw"><i style="background:#2E2626"></i><div>Rule<span>#2E2626 · 1px</span></div></div>
+    <div class="sw"><i style="background:#F0E48C"></i><div>Straw · action<span>#F0E48C</span></div></div>
+    <div class="sw"><i style="background:#F4EDE4"></i><div>Text<span>#F4EDE4</span></div></div>
+    <div class="sw"><i style="background:#D4C4B0"></i><div>Secondary text<span>#D4C4B0</span></div></div>
+    <div class="sw"><i style="background:#8F7E70"></i><div>Meta / footer<span>#8F7E70</span></div></div>
+    <div class="sw"><i style="background:#ED4D3B"></i><div>Alert (security only)<span>#ED4D3B</span></div></div>
+  </div>
+
+  <h3>Subject and headline formula for each email</h3>
+  <div class="scroll">
+  <table class="inv">
+    <thead><tr><th>Email</th><th>Subject</th><th>Eyebrow</th><th>Button</th></tr></thead>
+    <tbody>
+      <tr><td>New version</td><td>Rebel Lovers: Version 5 is ready to hear</td><td>NEW VERSION</td><td>Listen to Version 5</td></tr>
+      <tr><td>New comment</td><td>Rebel Lovers: Alex commented at 1:24</td><td>NEW COMMENT</td><td>Reply to Alex</td></tr>
+      <tr><td>Reply</td><td>Rebel Lovers: Alex replied at 1:24</td><td>NEW REPLY</td><td>Open the thread</td></tr>
+      <tr><td>Invite</td><td>Coris invited you to Polite Rebels on Song Room</td><td>YOU'RE INVITED</td><td>Join Polite Rebels</td></tr>
+      <tr><td>Confirm signup</td><td>Confirm your email for Song Room</td><td>ONE MORE STEP</td><td>Confirm my email</td></tr>
+      <tr><td>Reset password</td><td>Reset your Song Room password</td><td>PASSWORD RESET</td><td>Choose a new password</td></tr>
+      <tr><td>Password changed</td><td>Your Song Room password was changed</td><td>SECURITY</td><td>It wasn't me: reset now</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- =============================== 03 TEMPLATE =============================== -->
+<section>
+  <div class="sec-head"><div class="sec-num">03</div><div><h2>New version uploaded</h2><p class="sec-sub">First template built to the standard. Use the toggles to check the edge cases.</p></div></div>
+
+  <h3>Before (what arrived this morning)</h3>
+  <div class="before">
+    <div style="font-size:20px;margin:0 0 10px">A new song version is ready</div>
+    <div style="color:#5f6368;font-size:13px;margin:0 0 14px"><b style="color:#222">Song Room</b> &lt;noreply@song-room.live&gt;</div>
+    A new version has been uploaded to your workspace.<br><br>
+    Open the version in Song Room: <a href="#">https://www.song-room.live/songs/1993b50e-4df6-42ae-bcf7-5a6dbd54b3b6/versions/cf639aa3-41bd-4ade-8741-604a17fa2dee</a>
+  </div>
+
+  <h3>After</h3>
+  <div class="toolbar" role="group" aria-label="Preview options">
+    <button data-k="art" aria-pressed="true">Artwork</button>
+    <button data-k="notes" aria-pressed="true">Version notes</button>
+    <button data-k="label" aria-pressed="true">Version label</button>
+    <span class="sep"></span>
+    <button data-k="fonts" aria-pressed="true">Web fonts (Apple Mail)</button>
+    <button data-k="dark" aria-pressed="false">Dark-mode inbox</button>
+  </div>
+  <div class="previews">
+    <div class="device d-desk">
+      <p class="lbl">Desktop · 600px email</p>
+      <div class="inbox" data-inbox>
+        <div class="ihead">
+          <div class="isubj" data-subj></div>
+          <div class="ifrom"><b>Song Room</b> <span>&lt;notifications@song-room.live&gt;</span></div>
+          <div class="ipre" data-pre></div>
+        </div>
+        <iframe class="mail" data-frame title="Desktop email preview" height="900"></iframe>
+      </div>
+    </div>
+    <div class="device d-mob">
+      <p class="lbl">Phone · 375px</p>
+      <div class="inbox" data-inbox>
+        <div class="ihead">
+          <div class="isubj" data-subj style="font-size:16px"></div>
+          <div class="ifrom"><b>Song Room</b></div>
+          <div class="ipre" data-pre></div>
+        </div>
+        <iframe class="mail" data-frame title="Phone email preview" height="900"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <h3>Where each field comes from</h3>
+  <div class="scroll">
+  <table class="inv">
+    <thead><tr><th>Field</th><th>Source</th><th>If it's missing</th></tr></thead>
+    <tbody>
+      <tr><td>Song title</td><td class="mono">songs.title</td><td>“Untitled song”</td></tr>
+      <tr><td>Artwork</td><td class="mono">songs.image_url → email-safe image URL (see note)</td><td>Straw tile with the song's initials</td></tr>
+      <tr><td>Version number + label</td><td class="mono">song_versions.version_number, .label</td><td>Label row hidden</td></tr>
+      <tr><td>Version notes</td><td class="mono">song_versions.notes</td><td>Notes block hidden. Long notes cut at 280 characters with “Read more in Song Room”.</td></tr>
+      <tr><td>Uploaded by</td><td class="mono">profiles.display_name via song_versions.created_by_user_id (fallback .created_by)</td><td>“A collaborator”</td></tr>
+      <tr><td>Uploaded at</td><td class="mono">song_versions.created_at</td><td>Always present</td></tr>
+      <tr><td>Status</td><td class="mono">songs.status (writing / in progress / mixing / mastering / finished)</td><td>Row hidden</td></tr>
+      <tr><td>Previous version</td><td class="mono">song_versions where version_number = n − 1</td><td>Row hidden</td></tr>
+      <tr><td>Workspace</td><td class="mono">accounts.name</td><td>Always present</td></tr>
+      <tr><td>Button link</td><td class="mono">/songs/{songId}/versions/{versionId}</td><td>Unchanged from today</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Subject line, preheader and plain-text version</h3>
+  <pre class="copy" data-plain></pre>
+
+  <p class="note"><b>Artwork needs one decision before we build.</b> Song artwork sits in private storage and the app's signed image links expire after 10 minutes, but people open emails hours later. The cleanest fix is a small email-only image route that serves a 240px thumbnail behind a long-lived signed link (for example 30 days), falling back to the initials tile once it expires. That touches the same artwork-privacy code Codex is hardening, so it should go in after Codex is done.</p>
+  <p class="note"><b>Two behaviour fixes to bundle in:</b> stop sending the version email to the person who uploaded it (comment emails already skip the author), and respect the workspace “owner only” notification setting the way comment emails do.</p>
+</section>
+
+</div>
+
+<script>
+(function(){
+  var state={art:true,notes:true,label:true,fonts:true,dark:false};
+  var D={song:'Rebel Lovers',initials:'RL',v:5,label:'Final mix',prev:'Version 4 · 3 days ago',uploader:'Coris',when:'Today, 08:13',status:'Mixing',ws:'Polite Rebels',
+    notes:'Pulled the sub back in the second chorus like Alex asked, re-did the backing vocals and printed the master at -1dB. Keen to hear thoughts on the outro fade.'};
+  var LOGO='Song%20Room%20Branding/SONGROOM-logo-white.png';
+  var ART='Song%20Room%20Branding/TSR10.jpeg';
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function vname(){return 'Version '+D.v+(state.label?' · '+D.label:'');}
+  function subject(){return D.song+': Version '+D.v+' is ready to hear';}
+  function pre(){return D.uploader+' uploaded '+vname()+' to '+D.ws+'.'+(state.notes?' “'+D.notes.slice(0,70)+'…”':'');}
+
+  function email(){
+    var base=location.href.replace(/[^\/]*$/,'');
+    var fontFace=state.fonts?"@font-face{font-family:'ThunderBlack';src:url('"+base+"fonts/Thunder-BlackLC.woff2') format('woff2');}":'';
+    var display="'ThunderBlack','Arial Narrow','Helvetica Neue',Arial,sans-serif";
+    var body="'DM Sans',-apple-system,'Segoe UI',Helvetica,Arial,sans-serif";
+    var art=state.art
+      ? '<img src="'+base+ART+'" width="132" height="132" alt="'+esc(D.song)+' artwork" class="art" style="display:block;width:132px;height:132px;object-fit:cover;border:0;">'
+      : '<table role="presentation" width="132" height="132" cellpadding="0" cellspacing="0" class="art" style="background:#F0E48C;"><tr><td align="center" valign="middle" style="font-family:'+display+';font-weight:900;font-size:56px;line-height:1;color:#0E0A0A;letter-spacing:.02em;">'+D.initials+'</td></tr></table>';
+    var row=function(k,v){return '<tr><td style="padding:3px 0;font-family:'+body+';font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8F7E70;width:96px;" class="mk">'+k+'</td><td style="padding:3px 0;font-family:'+body+';font-size:14px;color:#F4EDE4;">'+v+'</td></tr>';};
+    var notes=state.notes?
+      '<tr><td style="padding:0 32px 8px;" class="px">'+
+        '<div style="font-family:'+body+';font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#8F7E70;font-weight:700;margin:0 0 10px;">Notes from '+esc(D.uploader)+'</div>'+
+        '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td width="3" style="background:#F0E48C;font-size:0;">&nbsp;</td>'+
+        '<td style="padding:4px 0 4px 16px;font-family:'+body+';font-size:15px;line-height:1.6;color:#D4C4B0;">'+esc(D.notes)+'</td></tr></table>'+
+      '</td></tr>':'';
+    return '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><meta name="supported-color-schemes" content="dark">'+
+    '<style>'+fontFace+'body{margin:0;padding:0;background:'+(state.dark?'#1f1f1f':'#ffffff')+';}a{text-decoration:none}'+
+    '@media (max-width:480px){.px{padding-left:20px!important;padding-right:20px!important}.hl{font-size:22px!important}.song{font-size:40px!important}.art{width:96px!important;height:96px!important}.artcell{width:96px!important;padding-right:16px!important}.btnt{width:100%!important}.btnt a{display:block!important;text-align:center!important;padding-left:12px!important;padding-right:12px!important}.vpill{letter-spacing:.1em!important}.mk{width:80px!important}}'+
+    '</style></head><body>'+
+    '<div style="display:none;max-height:0;overflow:hidden;opacity:0;">'+esc(pre())+'</div>'+
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:'+(state.dark?'#1f1f1f':'#ffffff')+';"><tr><td align="center" style="padding:16px 8px;">'+
+    '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#0E0A0A;border:1px solid #2E2626;">'+
+      // A header
+      '<tr><td class="px" style="padding:24px 32px;border-bottom:1px solid #2E2626;">'+
+        '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>'+
+        '<td><img src="'+base+LOGO+'" width="46" height="44" alt="Song Room" style="display:block;border:0;"></td>'+
+        '<td align="right" style="font-family:'+body+';font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#8F7E70;">'+esc(D.ws)+'</td>'+
+        '</tr></table></td></tr>'+
+      // B + C
+      '<tr><td class="px" style="padding:32px 32px 24px;">'+
+        '<div style="font-family:'+body+';font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:#F0E48C;font-weight:700;">&#9679;&nbsp; New version</div>'+
+        '<div class="hl" style="font-family:'+body+';font-size:24px;line-height:1.3;color:#F4EDE4;margin-top:12px;font-weight:600;">'+esc(D.uploader)+' uploaded a new version of '+esc(D.song)+'.</div>'+
+      '</td></tr>'+
+      // D song card
+      '<tr><td class="px" style="padding:0 32px 28px;">'+
+        '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#1C1515;border:1px solid #2E2626;"><tr>'+
+        '<td class="artcell" width="132" valign="top" style="width:132px;padding:16px 20px 16px 16px;">'+art+'</td>'+
+        '<td valign="top" style="padding:16px 16px 16px 0;">'+
+          '<div class="song" style="font-family:'+display+';font-weight:900;font-size:48px;line-height:.92;text-transform:uppercase;color:#F4EDE4;letter-spacing:.01em;">'+esc(D.song)+'</div>'+
+          '<div style="margin:10px 0 12px;"><span class="vpill" style="display:inline-block;border:1px solid #F0E48C;color:#F0E48C;font-family:'+body+';font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;padding:4px 8px;">'+esc(vname())+'</span></div>'+
+          '<table role="presentation" cellpadding="0" cellspacing="0">'+row('By',esc(D.uploader))+row('Uploaded',D.when)+row('Status',D.status)+row('Previous',D.prev)+'</table>'+
+        '</td></tr></table>'+
+      '</td></tr>'+
+      // E notes
+      notes+
+      // F CTA
+      '<tr><td class="px" style="padding:24px 32px 8px;">'+
+        '<table role="presentation" cellpadding="0" cellspacing="0" class="btnt"><tr><td style="background:#F0E48C;">'+
+        '<a href="#" style="display:inline-block;padding:15px 28px;font-family:'+body+';font-weight:700;font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:#0E0A0A;">Listen to Version '+D.v+' &rarr;</a>'+
+        '</td></tr></table>'+
+        '<div style="font-family:'+body+';font-size:14px;color:#D4C4B0;margin-top:16px;">or <a href="#" style="color:#F4EDE4;text-decoration:underline;">see every version of '+esc(D.song)+'</a></div>'+
+      '</td></tr>'+
+      // G footer
+      '<tr><td class="px" style="padding:28px 32px 28px;">'+
+        '<div style="border-top:1px solid #2E2626;padding-top:18px;font-family:'+body+';font-size:12px;line-height:1.7;color:#8F7E70;">'+
+        'You’re getting this because you’re a member of <span style="color:#D4C4B0;">'+esc(D.ws)+'</span> on Song Room.<br>'+
+        '<a href="#" style="color:#D4C4B0;text-decoration:underline;">Notification settings</a> &nbsp;·&nbsp; <a href="#" style="color:#D4C4B0;text-decoration:underline;">song-room.live</a>'+
+        '</div></td></tr>'+
+    '</table></td></tr></table></body></html>';
+  }
+
+  function plain(){
+    return 'SUBJECT\n'+subject()+'\n\nPREHEADER\n'+pre()+'\n\nPLAIN TEXT\n'+
+      D.uploader+' uploaded a new version of '+D.song+'.\n\n'+
+      'Song: '+D.song+'\nVersion: '+vname()+'\nUploaded: '+D.when+' by '+D.uploader+'\nStatus: '+D.status+'\n'+
+      (state.notes?'\nNotes from '+D.uploader+':\n'+D.notes+'\n':'')+
+      '\nListen to Version '+D.v+': https://www.song-room.live/songs/{songId}/versions/{versionId}\n\n'+
+      '--\nYou’re getting this because you’re a member of '+D.ws+' on Song Room.\nNotification settings: https://www.song-room.live/settings';
+  }
+
+  var frames=document.querySelectorAll('[data-frame]');
+  function fit(f){try{var h=f.contentDocument.documentElement.scrollHeight;if(h)f.style.height=h+'px';}catch(e){}}
+  function render(){
+    var html=email();
+    frames.forEach(function(f){f.onload=function(){fit(f);setTimeout(function(){fit(f)},400);};f.srcdoc=html;});
+    document.querySelectorAll('[data-subj]').forEach(function(n){n.textContent=subject();});
+    document.querySelectorAll('[data-pre]').forEach(function(n){n.textContent=pre();});
+    document.querySelectorAll('[data-inbox]').forEach(function(n){n.classList.toggle('dark',state.dark);});
+    document.querySelector('[data-plain]').textContent=plain();
+  }
+  document.querySelectorAll('.toolbar button').forEach(function(b){
+    b.addEventListener('click',function(){var k=b.dataset.k;state[k]=!state[k];b.setAttribute('aria-pressed',state[k]);render();});
+  });
+  window.addEventListener('resize',function(){frames.forEach(fit);});
+  render();
+})();
+</script>
+</body>
+</html>
