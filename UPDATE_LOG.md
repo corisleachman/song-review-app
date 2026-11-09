@@ -10078,3 +10078,7 @@ Updated LAUNCH_CHECKLIST.md with the approved email switch, verified Production 
 ## 2026-11-09 B45 version page session check recovery
 
 Updated app/songs/[id]/versions/[versionId]/page.tsx, tests/browser/song-player.spec.mjs, PRODUCT_BACKLOG.md and LAUNCH_CHECKLIST.md. A version can finalize successfully while the next page times out checking identity. The version page now offers Retry for bootstrap failures and keeps the return-link login redirect for an explicit 401. The checklist records the first Production B20 submission and pending inbox verification.
+
+## 2026-11-09 B45 Production verification
+
+Updated LAUNCH_CHECKLIST.md with the live deployment, checks and rollback. The user can verify the original saved version and its notification without uploading another file.
