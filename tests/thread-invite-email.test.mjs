@@ -70,3 +70,30 @@ test('invite email: says Song Room, not the old name, and has no settings link',
   assert.ok(!email.html.includes('Notification settings'));
   assert.ok(email.text.includes('Join Polite Rebels: https://www.song-room.live/invite/tok'));
 });
+
+test('auth templates keep the tested Supabase link contracts', () => {
+  const confirm = templates.buildAuthTemplate('confirm_signup');
+  assert.ok(confirm.html.includes('href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=signup"'));
+  assert.ok(templates.buildAuthTemplate('reset_password').html.includes('href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=recovery"'));
+  const code = templates.buildAuthTemplate('reauthentication');
+  assert.equal(code.subject, '{{ .Token }} is your Song Room verification code');
+  assert.ok(code.html.includes('{{ .Token }}'));
+  assert.ok(!code.html.includes('class="btnt"'), 'code email has no button');
+  const changed = templates.buildAuthTemplate('password_changed');
+  assert.equal(changed.subject, 'Your Song Room password was changed');
+  assert.ok(changed.html.includes('{{ .Email }}'));
+  assert.ok(changed.html.includes('hello@song-room.live'));
+  for (const kind of ['confirm_signup', 'reset_password', 'reauthentication', 'password_changed']) {
+    const { html } = templates.buildAuthTemplate(kind);
+    assert.ok(!html.includes('__AUTH_') && !html.includes('song-room.invalid'), `${kind} has no unfilled slot`);
+    assert.ok(!html.includes('Notification settings'));
+    assert.ok(!/ConfirmationURL/.test(html));
+  }
+});
+
+test('committed Supabase template files match the builder', () => {
+  for (const kind of ['confirm_signup', 'reset_password', 'reauthentication', 'password_changed']) {
+    const file = readFileSync(new URL(`../supabase/auth-email-templates/${kind}.html`, import.meta.url), 'utf8');
+    assert.equal(file, `${templates.buildAuthTemplate(kind).html}\n`, `${kind}.html is stale: run node scripts/build-auth-email-templates.mjs`);
+  }
+});
