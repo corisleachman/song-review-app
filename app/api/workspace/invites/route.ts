@@ -2,6 +2,7 @@ import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { Resend } from 'resend';
+import { buildInviteEmail, EMAIL_FROM } from '@/lib/emailTemplates';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
 import {
@@ -38,55 +39,8 @@ function requireOwner(identity: Awaited<ReturnType<typeof resolveCanonicalIdenti
   return null;
 }
 
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
 function buildInviteLink(inviteToken: string, requestOrigin: string) {
   return new URL(`/invite/${encodeURIComponent(inviteToken)}`, requestOrigin).toString();
-}
-
-function getInviteEmailHtml(params: {
-  inviterName: string;
-  workspaceName: string;
-  inviteLink: string;
-}) {
-  const { inviterName, workspaceName, inviteLink } = params;
-
-  return `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111; line-height: 1.5;">
-      <p style="margin: 0 0 16px;"><strong>${escapeHtml(inviterName)}</strong> invited you to join <strong>${escapeHtml(workspaceName)}</strong> on Song Review.</p>
-      <p style="margin: 0 0 20px;">Sign in with the invited account to accept the workspace invite and start collaborating.</p>
-      <p style="margin: 0 0 20px;">
-        <a href="${inviteLink}" style="display: inline-block; padding: 10px 16px; background-color: #111; color: #fff; text-decoration: none; border-radius: 6px;">
-          Open invite
-        </a>
-      </p>
-      <p style="margin: 0 0 8px; color: #555;">If the button does not work, use this link:</p>
-      <p style="margin: 0; word-break: break-word;"><a href="${inviteLink}">${inviteLink}</a></p>
-    </div>
-  `.trim();
-}
-
-function getInviteEmailText(params: {
-  inviterName: string;
-  workspaceName: string;
-  inviteLink: string;
-}) {
-  const { inviterName, workspaceName, inviteLink } = params;
-
-  return [
-    `${inviterName} invited you to join ${workspaceName} on Song Review.`,
-    '',
-    'Sign in with the invited account to accept the workspace invite.',
-    '',
-    `Open invite: ${inviteLink}`,
-  ].join('\n');
 }
 
 async function sendInviteEmail(params: {
@@ -103,13 +57,19 @@ async function sendInviteEmail(params: {
   }
 
   try {
+    const email = buildInviteEmail({
+      origin: new URL(params.inviteLink).origin,
+      link: params.inviteLink,
+      inviterName: params.inviterName,
+      workspaceName: params.workspaceName,
+    });
     const resend = new Resend(process.env.RESEND_API_KEY);
     const result = await resend.emails.send({
-      from: 'Song Room <noreply@song-room.live>',
+      from: EMAIL_FROM,
       to: params.to,
-      subject: `${params.inviterName} invited you to join ${params.workspaceName}`,
-      text: getInviteEmailText(params),
-      html: getInviteEmailHtml(params),
+      subject: email.subject,
+      text: email.text,
+      html: email.html,
     });
 
     if (result.error) {

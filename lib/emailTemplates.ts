@@ -63,6 +63,8 @@ export interface EmailShell {
   bodyHtml: string;
   cta: { label: string; href: string };
   footerReason: string;
+  // Off for people who aren't members yet (invites).
+  showSettings?: boolean;
 }
 
 // Anatomy: A header, B eyebrow, C headline, D/E body, F one red button, G footer.
@@ -107,10 +109,58 @@ ${shell.bodyHtml}
 <div style="${RULE}">&nbsp;</div>
 <div style="padding-top:18px;font-family:${BODY};font-size:12px;line-height:1.7;color:${C.meta};">
 ${lock(`${escapeHtml(shell.footerReason)}<br>
-<a href="${escapeHtml(settings)}" style="color:${C.secondary};text-decoration:underline;">Notification settings</a> &nbsp;&middot;&nbsp; <a href="${escapeHtml(home)}" style="color:${C.secondary};text-decoration:underline;">song-room.live</a>`)}
+${shell.showSettings === false ? '' : `<a href="${escapeHtml(settings)}" style="color:${C.secondary};text-decoration:underline;">Notification settings</a> &nbsp;&middot;&nbsp; `}<a href="${escapeHtml(home)}" style="color:${C.secondary};text-decoration:underline;">song-room.live</a>`)}
 </div></td></tr>
 </table></td></tr></table></td></tr></table>
 </body></html>`;
+}
+
+interface SongCard {
+  origin: string;
+  song: string;
+  artworkUrl: string | null;
+  pill: string;
+  rows: Array<[string, string]>;
+}
+
+// D: the song card shared by every song email.
+function songCardHtml(card: SongCard) {
+  // No artwork: the Song Room tile (the same image used when an artwork link
+  // expires). An image, because Gmail would recolour dark initials on straw.
+  const artSrc = card.artworkUrl ?? new URL('/marketing-assets/email-artwork-fallback.png', card.origin).toString();
+  const art = `<img src="${escapeHtml(artSrc)}" width="132" height="132" alt="${escapeHtml(songInitials(card.song))}" class="art" style="display:block;width:132px;height:132px;border:0;${bg(C.straw)}color:${C.canvas};font-family:${DISPLAY};font-size:40px;font-weight:900;text-align:center;line-height:132px;">`;
+  const row = ([key, value]: [string, string]) => `<tr><td class="mk" style="padding:3px 0;font-family:${BODY};font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:${C.meta};width:96px;">${lock(escapeHtml(key))}</td><td style="padding:3px 0;font-family:${BODY};font-size:14px;color:${C.text};">${lock(escapeHtml(value))}</td></tr>`;
+  const titleSize = songTitleSize(card.song);
+  return `<tr><td class="px" style="padding:0 32px 28px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${bg(C.rule)}"><tr><td style="padding:1px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${bg(C.card)}"><tr>
+<td class="artcell" width="132" valign="top" style="width:132px;padding:16px 20px 16px 16px;">${art}</td>
+<td valign="top" style="padding:16px 16px 16px 0;">
+<div class="${titleSize.className}" style="font-family:${DISPLAY};font-weight:900;font-size:${titleSize.px}px;line-height:.92;text-transform:uppercase;color:${C.text};letter-spacing:.01em;word-break:break-word;">${lock(escapeHtml(card.song))}</div>
+<div style="margin:10px 0 12px;"><span style="display:inline-block;${bg(C.straw)}padding:1px;"><span class="vpill" style="display:inline-block;${bg(C.card)}color:${C.straw};font-family:${BODY};font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;padding:4px 8px;">${lock(escapeHtml(card.pill))}</span></span></div>
+<table role="presentation" cellpadding="0" cellspacing="0">${card.rows.map(row).join('')}</table>
+</td></tr></table>
+</td></tr></table>
+</td></tr>`;
+}
+
+// E: a labelled quote (notes, comments). bodyHtml must already be escaped.
+function quoteHtml(label: string, bodyHtml: string, options: { muted?: boolean; bottom?: number } = {}) {
+  const bar = options.muted ? C.rule : C.straw;
+  const color = options.muted ? C.meta : C.secondary;
+  return `<tr><td class="px" style="padding:0 32px ${options.bottom ?? 8}px;">
+<div style="font-family:${BODY};font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:${C.meta};font-weight:700;margin:0 0 10px;">${lock(escapeHtml(label))}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td width="3" style="${bg(bar)}font-size:0;">&nbsp;</td>
+<td style="padding:4px 0 4px 16px;font-family:${BODY};font-size:15px;line-height:1.6;color:${color};white-space:pre-wrap;">${lock(bodyHtml)}</td></tr></table>
+</td></tr>`;
+}
+
+function readMoreHtml(link: string, label: string) {
+  return `<br><a href="${escapeHtml(link)}" style="color:${C.text};text-decoration:underline;">${escapeHtml(label)}</a>`;
+}
+
+function paragraphHtml(bodyHtml: string) {
+  return `<tr><td class="px" style="padding:0 32px 12px;font-family:${BODY};font-size:15px;line-height:1.6;color:${C.secondary};">${lock(bodyHtml)}</td></tr>`;
 }
 
 export interface VersionUploadEmailData {
@@ -167,7 +217,6 @@ export function buildVersionUploadEmail(data: VersionUploadEmailData) {
   const notes = notesFull ? truncate(notesFull, NOTES_LIMIT) : '';
   const notesTruncated = notes !== notesFull;
   const ctaLabel = `Listen to Version ${data.versionNumber}`;
-  const titleSize = songTitleSize(song);
 
   const subject = `${song}: Version ${data.versionNumber} is ready to hear`;
   const preheader = truncate(
@@ -175,35 +224,22 @@ export function buildVersionUploadEmail(data: VersionUploadEmailData) {
     140,
   );
 
-  // No artwork: the Song Room tile (the same image used when an artwork link
-  // expires). An image, because Gmail would recolour dark initials on straw.
-  const artSrc = data.artworkUrl ?? new URL('/marketing-assets/email-artwork-fallback.png', data.origin).toString();
-  const art = `<img src="${escapeHtml(artSrc)}" width="132" height="132" alt="${escapeHtml(songInitials(song))}" class="art" style="display:block;width:132px;height:132px;border:0;${bg(C.straw)}color:${C.canvas};font-family:${DISPLAY};font-size:40px;font-weight:900;text-align:center;line-height:132px;">`;
-  const row = (key: string, value: string) => `<tr><td class="mk" style="padding:3px 0;font-family:${BODY};font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:${C.meta};width:96px;">${lock(key)}</td><td style="padding:3px 0;font-family:${BODY};font-size:14px;color:${C.text};">${lock(escapeHtml(value))}</td></tr>`;
-  const rows = [
-    row('By', uploader),
-    row('Uploaded', uploadedAt),
-    status ? row('Status', status) : '',
-    previous ? row('Previous', previous) : '',
-  ].join('');
+  const songCard = songCardHtml({
+    origin: data.origin,
+    song,
+    artworkUrl: data.artworkUrl,
+    pill: versionName,
+    rows: [
+      ['By', uploader],
+      ['Uploaded', uploadedAt],
+      ...(status ? [['Status', status] as [string, string]] : []),
+      ...(previous ? [['Previous', previous] as [string, string]] : []),
+    ],
+  });
 
-  const songCard = `<tr><td class="px" style="padding:0 32px 28px;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${bg(C.rule)}"><tr><td style="padding:1px;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${bg(C.card)}"><tr>
-<td class="artcell" width="132" valign="top" style="width:132px;padding:16px 20px 16px 16px;">${art}</td>
-<td valign="top" style="padding:16px 16px 16px 0;">
-<div class="${titleSize.className}" style="font-family:${DISPLAY};font-weight:900;font-size:${titleSize.px}px;line-height:.92;text-transform:uppercase;color:${C.text};letter-spacing:.01em;word-break:break-word;">${lock(escapeHtml(song))}</div>
-<div style="margin:10px 0 12px;"><span style="display:inline-block;${bg(C.straw)}padding:1px;"><span class="vpill" style="display:inline-block;${bg(C.card)}color:${C.straw};font-family:${BODY};font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;padding:4px 8px;">${lock(escapeHtml(versionName))}</span></span></div>
-<table role="presentation" cellpadding="0" cellspacing="0">${rows}</table>
-</td></tr></table>
-</td></tr></table>
-</td></tr>`;
-
-  const notesBlock = notes ? `<tr><td class="px" style="padding:0 32px 8px;">
-<div style="font-family:${BODY};font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:${C.meta};font-weight:700;margin:0 0 10px;">${lock(`Notes from ${escapeHtml(uploader)}`)}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td width="3" style="${bg(C.straw)}font-size:0;">&nbsp;</td>
-<td style="padding:4px 0 4px 16px;font-family:${BODY};font-size:15px;line-height:1.6;color:${C.secondary};white-space:pre-wrap;">${lock(`${escapeHtml(notes)}${notesTruncated ? `<br><a href="${escapeHtml(data.link)}" style="color:${C.text};text-decoration:underline;">Read the full notes in Song Room</a>` : ''}`)}</td></tr></table>
-</td></tr>` : '';
+  const notesBlock = notes
+    ? quoteHtml(`Notes from ${uploader}`, `${escapeHtml(notes)}${notesTruncated ? readMoreHtml(data.link, 'Read the full notes in Song Room') : ''}`)
+    : '';
 
   const html = renderEmailShell({
     origin: data.origin,
@@ -234,6 +270,152 @@ export function buildVersionUploadEmail(data: VersionUploadEmailData) {
     `You’re getting this because you’re a member of ${workspace} on Song Room.`,
     `Notification settings: ${new URL('/settings/workspace', data.origin).toString()}`,
   ].filter(line => line !== null).join('\n');
+
+  return { subject, preheader, html, text };
+}
+
+const COMMENT_LIMIT = 600;
+const PARENT_LIMIT = 200;
+
+export interface ThreadEmailData {
+  origin: string;
+  link: string;
+  songTitle: string;
+  artworkUrl: string | null;
+  versionNumber: number | null;
+  versionLabel: string | null;
+  timestampSeconds: number;
+  actorName: string;
+  commentBody: string;
+  isReply: boolean;
+  // The comment that opened the thread, shown on replies for context.
+  parent: { author: string; body: string } | null;
+  workspaceName: string;
+}
+
+export function formatPlayhead(seconds: number) {
+  const total = Math.max(0, Math.round(Number.isFinite(seconds) ? seconds : 0));
+  const hours = Math.floor(total / 3600);
+  const mins = Math.floor((total % 3600) / 60);
+  const secs = String(total % 60).padStart(2, '0');
+  return hours > 0 ? `${hours}:${String(mins).padStart(2, '0')}:${secs}` : `${mins}:${secs}`;
+}
+
+export function buildThreadEmail(data: ThreadEmailData) {
+  const song = oneLine(data.songTitle) || 'Untitled song';
+  const actor = oneLine(data.actorName) || 'Someone';
+  const workspace = oneLine(data.workspaceName) || 'your workspace';
+  const label = data.versionLabel ? oneLine(data.versionLabel) : '';
+  const versionName = data.versionNumber
+    ? `Version ${data.versionNumber}${label ? ` · ${label}` : ''}`
+    : label || 'This version';
+  const at = formatPlayhead(data.timestampSeconds);
+  const bodyFull = data.commentBody.trim() || 'No message was included.';
+  const body = truncate(bodyFull, COMMENT_LIMIT);
+  const bodyTruncated = body !== bodyFull;
+  const parentAuthor = data.parent ? oneLine(data.parent.author) || 'Someone' : '';
+  const parentBody = data.parent?.body.trim() ? truncate(oneLine(data.parent.body), PARENT_LIMIT) : '';
+  const showParent = data.isReply && Boolean(parentBody);
+
+  const subject = data.isReply
+    ? `${song}: ${actor} replied at ${at}`
+    : `${song}: ${actor} commented at ${at}`;
+  const headline = data.isReply
+    ? `${actor} replied${showParent ? ` to ${parentAuthor}` : ''} on ${song} at ${at}.`
+    : `${actor} commented on ${song} at ${at}.`;
+  const ctaLabel = data.isReply ? 'Open the thread' : `Reply to ${actor}`;
+  const preheader = truncate(`${actor}: “${oneLine(body)}”`, 140);
+
+  const card = songCardHtml({
+    origin: data.origin,
+    song,
+    artworkUrl: data.artworkUrl,
+    pill: versionName,
+    rows: [['At', at], ['By', actor]],
+  });
+  const parentBlock = showParent
+    ? quoteHtml(`${parentAuthor} wrote`, escapeHtml(parentBody), { muted: true, bottom: 20 })
+    : '';
+  const commentBlock = quoteHtml(
+    data.isReply ? `${actor} replied` : `${actor} wrote`,
+    `${escapeHtml(body)}${bodyTruncated ? readMoreHtml(data.link, 'Read the full comment in Song Room') : ''}`,
+  );
+
+  const html = renderEmailShell({
+    origin: data.origin,
+    preheader,
+    workspaceName: workspace,
+    eyebrow: data.isReply ? 'New reply' : 'New comment',
+    headline,
+    bodyHtml: card + parentBlock + commentBlock,
+    cta: { label: ctaLabel, href: data.link },
+    footerReason: `You’re getting this because you’re a member of ${workspace} on Song Room.`,
+  });
+
+  const text = [
+    headline,
+    '',
+    `Song: ${song}`,
+    `Version: ${versionName}`,
+    `At: ${at}`,
+    showParent ? '' : null,
+    showParent ? `${parentAuthor} wrote:` : null,
+    showParent ? parentBody : null,
+    '',
+    data.isReply ? `${actor} replied:` : `${actor} wrote:`,
+    `${body}${bodyTruncated ? ' (read the full comment in Song Room)' : ''}`,
+    '',
+    `${ctaLabel}: ${data.link}`,
+    '',
+    '--',
+    `You’re getting this because you’re a member of ${workspace} on Song Room.`,
+    `Notification settings: ${new URL('/settings/workspace', data.origin).toString()}`,
+  ].filter(line => line !== null).join('\n');
+
+  return { subject, preheader, html, text };
+}
+
+export interface InviteEmailData {
+  origin: string;
+  link: string;
+  inviterName: string;
+  workspaceName: string;
+}
+
+export function buildInviteEmail(data: InviteEmailData) {
+  const inviter = oneLine(data.inviterName) || 'Someone';
+  const workspace = oneLine(data.workspaceName) || 'a workspace';
+  const subject = `${inviter} invited you to ${workspace} on Song Room`;
+  const headline = `${inviter} invited you to join ${workspace} on Song Room.`;
+  const explain = 'Song Room is where you share song versions with collaborators and leave feedback at the exact moment in the track. Sign in or create an account with this email address to accept.';
+  const preheader = truncate(`Join ${workspace} to hear new versions and leave feedback.`, 140);
+  const ctaLabel = `Join ${workspace}`;
+
+  const bodyHtml = paragraphHtml(escapeHtml(explain))
+    + paragraphHtml(`<span style="color:${C.meta};font-size:13px;">If the button doesn’t work, paste this link into your browser:</span><br><a href="${escapeHtml(data.link)}" style="color:${C.text};text-decoration:underline;word-break:break-all;font-size:13px;">${escapeHtml(data.link)}</a>`);
+
+  const html = renderEmailShell({
+    origin: data.origin,
+    preheader,
+    workspaceName: workspace,
+    eyebrow: 'You’re invited',
+    headline,
+    bodyHtml,
+    cta: { label: ctaLabel, href: data.link },
+    footerReason: `You’re getting this because ${inviter} invited this email address to ${workspace}. If you weren’t expecting it, you can ignore this email.`,
+    showSettings: false,
+  });
+
+  const text = [
+    headline,
+    '',
+    explain,
+    '',
+    `${ctaLabel}: ${data.link}`,
+    '',
+    '--',
+    `You’re getting this because ${inviter} invited this email address to ${workspace}. If you weren’t expecting it, you can ignore this email.`,
+  ].join('\n');
 
   return { subject, preheader, html, text };
 }

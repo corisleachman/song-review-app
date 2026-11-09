@@ -10148,3 +10148,7 @@ Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the browser suite, Produ
 ## 2026-11-09 New-version email keeps its dark look in Gmail on iPhone
 
 Updated lib/emailTemplates.ts so Gmail's iPhone dark mode no longer flips the email to white. Fills are painted as background images, borders are 1px painted cells, and light text sits in Gmail-only blend layers that undo the inversion. Songs without artwork use the Song Room tile image instead of initials, because Gmail would recolour dark initials. Other clients render as before. Tests: tests/version-upload-email.test.mjs.
+
+## 2026-11-09 Comment, reply and invite emails restyled (email standard v2)
+
+Moved the new comment, reply and workspace invite emails onto the shared Song Room email shell in lib/emailTemplates.ts (buildThreadEmail, buildInviteEmail), with the same Gmail dark-mode protection as the new-version email. Comment and reply emails show the song card with artwork, version and playhead time, and replies quote the comment that opened the thread. The invite email says Song Room instead of the old "Song Review" name and has no notification-settings link. Shared the 30-day email artwork link builder in lib/emailArtworkUrl.ts. Wired in lib/threadNotifications.ts and app/api/workspace/invites/route.ts. Tests: tests/thread-invite-email.test.mjs.
