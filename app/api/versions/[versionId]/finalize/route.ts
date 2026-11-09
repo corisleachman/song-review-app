@@ -237,6 +237,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ versionI
         workspaceId: song.account_id,
         songId: song.id,
         versionId: params.versionId,
+        uploaderUserId: resolved.identity.userId,
       });
     }
 

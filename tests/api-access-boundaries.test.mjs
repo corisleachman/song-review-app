@@ -797,7 +797,7 @@ test('only the request that finalizes a new version schedules email', async t =>
       const response = await handler.POST(jsonRequest({}), params({ versionId: 'version-a' }));
       assert.equal(response.status, expectedStatus);
       assert.deepEqual(calls, expectedCalls ? [{
-        workspaceId: 'workspace-a', songId: 'song-a', versionId: 'version-a',
+        workspaceId: 'workspace-a', songId: 'song-a', versionId: 'version-a', uploaderUserId: 'user-owner',
       }] : []);
     });
   }
@@ -817,7 +817,7 @@ test('version emails use current membership and intersect the Preview allowlist'
     EMAIL_NOTIFICATIONS_ENABLED: 'true',
     VERCEL_ENV: 'preview',
     VERCEL_BRANCH_URL: 'staging.invalid',
-    VERSION_UPLOAD_EMAIL_TEST_TO: 'uploader@example.test, outsider@example.test',
+    VERSION_UPLOAD_EMAIL_TEST_TO: 'uploader@example.test, member@example.test, outsider@example.test',
     RESEND_API_KEY: 'fake',
   });
   delete process.env.VERSION_UPLOAD_EMAILS_ENABLED;
@@ -831,8 +831,10 @@ test('version emails use current membership and intersect the Preview allowlist'
         listWorkspaceMembers: async workspaceId => {
           memberReads.push(workspaceId);
           return [
-            { email: 'uploader@example.test' }, { email: 'member@example.test' },
-            { email: 'UPLOADER@example.test' }, { email: null },
+            { userId: 'uploader', role: 'owner', email: 'uploader@example.test', displayName: 'Uploader' },
+            { userId: 'member', role: 'member', email: 'member@example.test', displayName: 'Member' },
+            { userId: 'member-alias', role: 'member', email: 'MEMBER@example.test', displayName: 'Alias' },
+            { userId: 'no-email', role: 'member', email: null, displayName: 'Nobody' },
           ];
         },
       },
@@ -843,28 +845,40 @@ test('version emails use current membership and intersect the Preview allowlist'
         } };
       } },
     },
+    tables: {
+      songs: [{ id: 'song-a', title: 'Rebel Lovers', image_url: null, status: 'mixing', account_id: 'workspace-a' }],
+      song_versions: [
+        { id: 'version-0', song_id: 'song-a', version_number: 1, created_at: '2026-11-06T10:00:00Z' },
+        { id: 'version-a', song_id: 'song-a', version_number: 2, label: 'Final mix', notes: null, created_by: 'Uploader', created_by_user_id: null, created_at: '2026-11-09T08:13:00Z' },
+      ],
+      accounts: [{ id: 'workspace-a', name: 'Polite Rebels', notification_mode: 'all_members' }],
+    },
     logger: { info() {}, warn() {} },
   });
-  const payload = { workspaceId: 'workspace-a', songId: 'song-a', versionId: 'version-a' };
+  const payload = { workspaceId: 'workspace-a', songId: 'song-a', versionId: 'version-a', uploaderUserId: 'uploader' };
   handler.scheduleVersionUploadNotification(payload);
   assert.equal(scheduled.length, 0);
   process.env.VERSION_UPLOAD_EMAILS_ENABLED = 'true';
   delete process.env.VERSION_UPLOAD_EMAIL_TEST_TO;
   handler.scheduleVersionUploadNotification(payload);
   assert.equal(scheduled.length, 0);
-  process.env.VERSION_UPLOAD_EMAIL_TEST_TO = 'uploader@example.test, outsider@example.test';
+  process.env.VERSION_UPLOAD_EMAIL_TEST_TO = 'uploader@example.test, member@example.test, outsider@example.test';
   handler.scheduleVersionUploadNotification(payload);
   assert.equal(scheduled.length, 1);
   await scheduled.shift()();
   assert.deepEqual(memberReads, ['workspace-a']);
-  assert.deepEqual(batches[0].messages.map(m => m.to.toLowerCase()), ['uploader@example.test']);
+  // The uploader is allowlisted but never emailed about their own upload.
+  assert.deepEqual(batches[0].messages.map(m => m.to.toLowerCase()), ['member@example.test']);
+  assert.equal(batches[0].messages[0].subject, 'Rebel Lovers: Version 2 is ready to hear');
+  assert.match(batches[0].messages[0].html, /Uploader uploaded a new version of Rebel Lovers\./);
+  assert.match(batches[0].messages[0].text, /Previous: Version 1 · 6 Nov/);
   assert.match(batches[0].messages[0].text, /https:\/\/staging\.invalid\/songs\/song-a\/versions\/version-a/);
   assert.equal(batches[0].options.idempotencyKey, 'version-upload/version-a/0');
 
   process.env.VERCEL_ENV = 'production';
   handler.scheduleVersionUploadNotification(payload);
   await scheduled.shift()();
-  assert.deepEqual(batches[1].messages.map(m => m.to.toLowerCase()), ['uploader@example.test', 'member@example.test']);
+  assert.deepEqual(batches[1].messages.map(m => m.to.toLowerCase()), ['member@example.test']);
   assert.match(batches[1].messages[0].text, /https:\/\/www\.song-room\.live\/songs\/song-a\/versions\/version-a/);
 });
 
