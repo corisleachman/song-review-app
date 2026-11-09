@@ -10164,3 +10164,7 @@ Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with PR #141, the local cooki
 ## B10 Supabase dependency update and staging acceptance
 
 Updated package.json and package-lock.json to pin Supabase SSR 0.12.7 and Supabase JS 2.118.0. The user confirmed staging sign-in and dashboard reload. Restored the previous staging deployment and recorded the result in LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md.
+
+## 2026-11-09 B10 Supabase Production verification
+
+Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the live Supabase update, Production smoke checks and rollback.
