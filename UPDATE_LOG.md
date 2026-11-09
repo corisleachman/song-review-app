@@ -10160,3 +10160,7 @@ Added buildAuthTemplate to lib/emailTemplates.ts and generated supabase/auth-ema
 ## 2026-11-09 B10 Supabase candidate verification
 
 Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with PR #141, the local cookie refresh probe and protected Preview results. The runtime update is in draft pending a real staging sign-in.
+
+## B10 Supabase dependency update and staging acceptance
+
+Updated package.json and package-lock.json to pin Supabase SSR 0.12.7 and Supabase JS 2.118.0. The user confirmed staging sign-in and dashboard reload. Restored the previous staging deployment and recorded the result in LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md.
