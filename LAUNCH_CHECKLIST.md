@@ -70,7 +70,7 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B07 | AIFF/AIF playback and waveform support | Deferred; new uploads blocked | Later, P3; preserve existing stored files |
 | B08 | Microsoft login | Deferred by user | Later; revisit with traction/income |
 | B09 | Physical 11-inch iPad Safari/Chrome coverage | Open. Physical iPad unavailable | L6 additional coverage; existing tablet release accepted |
-| B10 | [Dependency/workflow update PRs](PRODUCT_BACKLOG.md#b10-dependency-and-workflow-update-review) | All eight reviewed 9 Nov. Three workflow updates need the default branch. Supabase and major toolchain updates split for verification | L5/S7 maintenance |
+| B10 | [Dependency/workflow update PRs](PRODUCT_BACKLOG.md#b10-dependency-and-workflow-update-review) | All eight reviewed 9 Nov. [Workflow pin update drafted against main](https://github.com/corisleachman/song-review-app/pull/132). Supabase and major toolchain updates split for verification | L5/S7 maintenance |
 | B11 | SEO article PR #12 | Production complete, 8 Nov. PR #12 merged and live article, metadata, links and sitemap verified | L7 |
 | B12 | Automated SEO content-engine draft PR #3 | Draft; not a launch commitment | Later |
 | B13 | FAQ | Production complete in PR #108. Live keyboard interaction verified | L7 |
