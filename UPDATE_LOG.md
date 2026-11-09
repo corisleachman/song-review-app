@@ -10136,3 +10136,7 @@ Draft PR #132 changes three action pins in .github/workflows/generate-seo-articl
 ## 2026-11-09 Branded new-version email (email standard v2)
 
 Rebuilt the new-version email in lib/versionUploadNotifications.ts with the shared TSR shell in lib/emailTemplates.ts. It names the song, version, label, uploader, status, previous version, notes and workspace, and has one red "Listen to Version N" button and a plain-text twin. Added a 30-day song-only email artwork capability (lib/emailArtworkAccess.ts, app/api/media/email-artwork/route.ts, public/marketing-assets/email-artwork-fallback.png). Expired, replaced or removed artwork gets the brand fallback tile. Recipients now exclude the uploader, passed from the authenticated finalize route because created_by_user_id is not recorded, and respect owner-only notification mode like comment emails (lib/versionUploadRecipients.ts). Tests: tests/version-upload-email.test.mjs and the updated version email boundary test. Wireframe: wireframes/email-system-v2.html on main.
+
+## 2026-11-09 B10 browser test tooling
+
+Updated package.json and package-lock.json to pin Playwright 1.64.1 and axe-core 4.14.0. The focused update separates browser and accessibility testing from the Supabase upgrade in PR #59. Updated LAUNCH_CHECKLIST.md with the split.
