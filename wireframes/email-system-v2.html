@@ -167,11 +167,11 @@
     </div>
     <ol>
       <li><b>Dark canvas, 600px wide.</b> Charcoal #0E0A0A body, #1C1515 cards, hard 1px #2E2626 rules, zero radius. Same as the app, so the email feels like a window into it.</li>
-      <li><b>Straw is for one thing per email:</b> the action. The eyebrow and primary button use it; nothing else competes.</li>
+      <li><b>Red is for the action, straw is for the highlight.</b> The one primary button in each email is brand red (#C0392B) with off-white text. Straw marks the eyebrow and the version tag. Nothing else competes for attention.</li>
       <li><b>Type.</b> The song title is set in Thunder where the mail app loads web fonts (Apple Mail, iOS) and falls back to a heavy condensed system face elsewhere (Gmail, Outlook). Everything else is DM Sans → Helvetica → Arial. The logo is an image, so it's always on-brand.</li>
       <li><b>Say what it is in the subject and the first line.</b> Song name first in the subject so a busy inbox sorts itself by song.</li>
       <li><b>Every email ships with a plain-text twin</b> and a hidden preheader line (the grey preview text in the inbox).</li>
-      <li><b>One button, phone-sized.</b> 48px tall, full width on phones, label says the destination (“Listen to Version 5”, not “Open”).</li>
+      <li><b>One button, phone-sized.</b> 48px tall, full width on phones, label says the destination (“Listen to Version 5”, not “Open”). No secondary link unless it goes to a real page.</li>
       <li><b>Footer explains the email.</b> Which workspace, why you got it, and a link to notification settings.</li>
     </ol>
   </div>
@@ -181,12 +181,12 @@
     <div class="sw"><i style="background:#0E0A0A"></i><div>Canvas<span>#0E0A0A</span></div></div>
     <div class="sw"><i style="background:#1C1515"></i><div>Card<span>#1C1515</span></div></div>
     <div class="sw"><i style="background:#2E2626"></i><div>Rule<span>#2E2626 · 1px</span></div></div>
-    <div class="sw"><i style="background:#F0E48C"></i><div>Straw · action<span>#F0E48C</span></div></div>
+    <div class="sw"><i style="background:#C0392B"></i><div>Red · button<span>#C0392B</span></div></div>
+    <div class="sw"><i style="background:#F0E48C"></i><div>Straw · highlight<span>#F0E48C</span></div></div>
     <div class="sw"><i style="background:#F4EDE4"></i><div>Text<span>#F4EDE4</span></div></div>
     <div class="sw"><i style="background:#D4C4B0"></i><div>Secondary text<span>#D4C4B0</span></div></div>
     <div class="sw"><i style="background:#8F7E70"></i><div>Meta / footer<span>#8F7E70</span></div></div>
-    <div class="sw"><i style="background:#ED4D3B"></i><div>Alert (security only)<span>#ED4D3B</span></div></div>
-  </div>
+      </div>
 
   <h3>Subject and headline formula for each email</h3>
   <div class="scroll">
@@ -338,10 +338,9 @@
       notes+
       // F CTA
       '<tr><td class="px" style="padding:24px 32px 8px;">'+
-        '<table role="presentation" cellpadding="0" cellspacing="0" class="btnt"><tr><td style="background:#F0E48C;">'+
-        '<a href="#" style="display:inline-block;padding:15px 28px;font-family:'+body+';font-weight:700;font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:#0E0A0A;">Listen to Version '+D.v+' &rarr;</a>'+
+        '<table role="presentation" cellpadding="0" cellspacing="0" class="btnt"><tr><td style="background:#C0392B;">'+
+        '<a href="#" style="display:inline-block;padding:16px 28px;font-family:'+body+';font-weight:700;font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:#F4EDE4;">Listen to Version '+D.v+' &rarr;</a>'+
         '</td></tr></table>'+
-        '<div style="font-family:'+body+';font-size:14px;color:#D4C4B0;margin-top:16px;">or <a href="#" style="color:#F4EDE4;text-decoration:underline;">see every version of '+esc(D.song)+'</a></div>'+
       '</td></tr>'+
       // G footer
       '<tr><td class="px" style="padding:28px 32px 28px;">'+
