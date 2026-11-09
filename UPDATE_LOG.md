@@ -10098,3 +10098,7 @@ Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md. The uploader confirmed the s
 ## 2026-11-09 B43 staging webhook proposal
 
 Updated PRODUCT_BACKLOG.md and LAUNCH_CHECKLIST.md with a proposed staging-only Stripe webhook deployment, verified protection boundary, acceptance checks and rollback. Deployment configuration approval is open.
+
+## 2026-11-09 B43 local endpoint verification
+
+Draft PR #123 adds staging-webhook/app/api/stripe/webhook/route.ts, scripts/package-staging-webhook.mjs and access-boundary tests. The standalone build and signed local update, expiry and replay passed against a mock database. Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the approved scope, local evidence and hosted rollout prerequisites.
