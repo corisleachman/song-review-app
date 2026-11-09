@@ -828,6 +828,19 @@ No further control test is required now. Keep the first-play registration timing
 
 9 November read-only inventory: the existing Song Room destination in the connected TrackFlow Sandbox resolves to the same Production deployment as www.song-room.live. Keep it out of staging verification. A dedicated staging-only destination remains open. The isolated lifecycle test used Stripe Test mode, which is a separate environment.
 
+
+#### B43 staging delivery proposal, 9 November 2026
+
+- Proposed setup. Deploy a separate Vercel project with one public POST route for Stripe. Reuse the subscription webhook handler and ledger. Give the project only staging Supabase credentials and the verified Stripe Test mode key, price mapping and destination signing secret. The existing app stays behind its current protection.
+- Scope the Stripe destination to snapshot events `customer.subscription.updated` and `customer.subscription.deleted`. Verify the signature against the raw request and reject live-mode events and other event types before claiming a ledger row. Keep the existing Stripe destination and its Production alias separate.
+- Verify the Stripe Test mode account against the staging configuration before connecting it. Check that the deployment has no song, dashboard or account routes. Verify unsigned and bad-signature requests return 400, that rejected events create no staging ledger rows, and that the existing staging app still requires Vercel Authentication.
+- Use a disposable linked staging workspace and Test mode clock. Verify Stripe records HTTP 200 for the update and expiry. The workspace should retain Pro until expiry, then change to Free and clear its subscription link. Resend the expiry once and verify it is processed only once. Clean up the fixture and leave the new staging destination enabled only if all checks pass.
+- This destination would process future signed updates and expiries for staging subscriptions linked in that Test mode account, including the existing scheduled cancellation if it reaches expiry. The test clock applies only to the disposable fixture.
+- Rollback. Disable the new Stripe destination first, then remove the dedicated deployment's signing secret and disable the endpoint. No migration or changes to the primary Vercel project are needed. Stop before provisioning if Vercel requires a plan change or paid add-on.
+- Approval boundary. Creating the destination and binding staging credentials to a new public deployment changes external billing and access configuration. AGENTS.md requires separate approval before provisioning. The isolated CLI test was already completed under its own approval.
+
+Provider references: [Stripe webhook setup](https://docs.stripe.com/webhooks), [Vercel deployment protection](https://vercel.com/docs/deployment-protection/methods-to-bypass-deployment-protection) and [Vercel shared source files](https://vercel.com/docs/monorepos/monorepo-faq).
+
 ### B44. Older Stripe subscription events overwrite current plan
 
 - Reproduction: an SDK-signed cancellation for an old subscription set the fixture account to Free and cleared its newer subscription link. The handler filtered only by Stripe customer ID. Subscription updates used the same customer-only path. No live incident or provider operation was observed.
