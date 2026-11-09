@@ -2,8 +2,7 @@ import { after } from 'next/server';
 import { Resend } from 'resend';
 import { listWorkspaceMembers, type WorkspaceMember } from '@/lib/workspaceMembers';
 import { supabaseServer } from '@/lib/supabaseServer';
-import { artworkSigningKey, artworkStoragePath } from '@/lib/artworkAccess';
-import { signEmailArtworkAccess } from '@/lib/emailArtworkAccess';
+import { emailArtworkUrl } from '@/lib/emailArtworkUrl';
 import { buildVersionUploadEmail, EMAIL_FROM } from '@/lib/emailTemplates';
 import { selectVersionUploadRecipients } from '@/lib/versionUploadRecipients';
 
@@ -14,17 +13,6 @@ interface VersionUploadNotification {
   // The authenticated finalizer. Versions created by the current upload flow
   // do not record created_by_user_id, so the route passes it explicitly.
   uploaderUserId?: string | null;
-}
-
-function emailArtworkUrl(songId: string, imageUrl: string | null, origin: string) {
-  try {
-    const path = artworkStoragePath('song', songId, imageUrl, process.env.NEXT_PUBLIC_SUPABASE_URL ?? '');
-    if (!path) return null;
-    const token = signEmailArtworkAccess({ songId, path }, artworkSigningKey());
-    return new URL(`/api/media/email-artwork?access=${token}`, origin).toString();
-  } catch {
-    return null;
-  }
 }
 
 async function loadEmailContext(workspaceId: string, songId: string, versionId: string) {

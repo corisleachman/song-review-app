@@ -2,6 +2,8 @@ import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { after } from 'next/server';
 import { Resend } from 'resend';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { buildThreadEmail, EMAIL_FROM } from '@/lib/emailTemplates';
+import { emailArtworkUrl } from '@/lib/emailArtworkUrl';
 
 export interface ThreadNotificationPayload {
   threadId: string;
@@ -20,125 +22,6 @@ interface WorkspaceRecipient {
 export interface ThreadNotificationResult {
   status: number;
   body: Record<string, unknown>;
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function formatTimestamp(seconds: number): string {
-  const normalizedSeconds = Math.max(0, Math.round(seconds));
-  const mins = Math.floor(normalizedSeconds / 60);
-  const secs = normalizedSeconds % 60;
-  return `${mins}:${String(secs).padStart(2, '0')}`;
-}
-
-function normalizeNotificationActor(author: string | null | undefined) {
-  const trimmed = author?.trim();
-  return trimmed || 'Someone';
-}
-
-function getSongTitle(title: string | null | undefined) {
-  const trimmed = title?.trim();
-  return trimmed || 'Untitled song';
-}
-
-function getVersionLabel(versionData: { version_number?: number | null; label?: string | null } | null) {
-  if (!versionData?.version_number) {
-    return 'this version';
-  }
-
-  const label = versionData.label?.trim();
-  return label
-    ? `Version ${versionData.version_number} (${label})`
-    : `Version ${versionData.version_number}`;
-}
-
-function getCommentBody(commentText: string | null | undefined) {
-  const trimmed = commentText?.trim();
-  return trimmed || 'No message was included.';
-}
-
-function getEmailSubject(params: {
-  actorName: string;
-  songTitle: string;
-  versionLabel: string;
-  timestampLabel: string;
-  isReply: boolean;
-}) {
-  const { actorName, songTitle, versionLabel, timestampLabel, isReply } = params;
-
-  return isReply
-    ? `${actorName} replied on ${songTitle} (${versionLabel}) at ${timestampLabel}`
-    : `${actorName} left a comment on ${songTitle} (${versionLabel}) at ${timestampLabel}`;
-}
-
-function getPlainTextEmail(params: {
-  actorName: string;
-  songTitle: string;
-  versionLabel: string;
-  timestampLabel: string;
-  commentBody: string;
-  deepLink: string;
-  isReply: boolean;
-}) {
-  const { actorName, songTitle, versionLabel, timestampLabel, commentBody, deepLink, isReply } = params;
-  const intro = isReply
-    ? `${actorName} replied in a thread on ${songTitle}.`
-    : `${actorName} left a new comment on ${songTitle}.`;
-
-  return [
-    intro,
-    '',
-    `Track: ${songTitle}`,
-    `Version: ${versionLabel}`,
-    `Time: ${timestampLabel}`,
-    '',
-    'Message:',
-    commentBody,
-    '',
-    `${isReply ? 'Open the thread' : 'Open the comment'}: ${deepLink}`,
-  ].join('\n');
-}
-
-function getHtmlEmail(params: {
-  actorName: string;
-  songTitle: string;
-  versionLabel: string;
-  timestampLabel: string;
-  commentBody: string;
-  deepLink: string;
-  isReply: boolean;
-}) {
-  const { actorName, songTitle, versionLabel, timestampLabel, commentBody, deepLink, isReply } = params;
-  const intro = isReply
-    ? `<strong>${escapeHtml(actorName)}</strong> replied in a thread on <strong>${escapeHtml(songTitle)}</strong>.`
-    : `<strong>${escapeHtml(actorName)}</strong> left a new comment on <strong>${escapeHtml(songTitle)}</strong>.`;
-  const ctaLabel = isReply ? 'Open thread' : 'Open comment';
-
-  return `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111; line-height: 1.5;">
-      <p style="margin: 0 0 16px;">${intro}</p>
-      <p style="margin: 0 0 16px;">
-        <strong>Version:</strong> ${escapeHtml(versionLabel)}<br />
-        <strong>Time:</strong> ${escapeHtml(timestampLabel)}
-      </p>
-      <blockquote style="margin: 0 0 20px; padding: 14px 16px; border-left: 3px solid #111; background: #f6f6f6;">
-        <p style="margin: 0; white-space: pre-wrap;">${escapeHtml(commentBody)}</p>
-      </blockquote>
-      <p style="margin: 0 0 20px;">
-        <a href="${escapeHtml(deepLink)}" style="display: inline-block; padding: 10px 16px; background-color: #111; color: #fff; text-decoration: none; border-radius: 6px;">
-          ${ctaLabel}
-        </a>
-      </p>
-      <p style="margin: 0; color: #555;">Open the track to read the thread and respond.</p>
-    </div>
-  `.trim();
 }
 
 function normalizeBooleanEnv(value: string | undefined) {
@@ -324,7 +207,7 @@ export async function sendThreadNotification(
 
   const { data: songData, error: songError } = await supabaseServer
     .from('songs')
-    .select('title, account_id')
+    .select('title, account_id, image_url')
     .eq('id', songId)
     .maybeSingle();
 
@@ -356,7 +239,7 @@ export async function sendThreadNotification(
     return { status: 404, body: { error: 'Comment not found.' } };
   }
 
-  const actorName = normalizeNotificationActor(commentData.author);
+  const actorName = commentData.author?.trim() || 'Someone';
   const { count: threadCommentCount, error: commentCountError } = await supabaseServer
     .from('comments')
     .select('id', { count: 'exact', head: true })
@@ -406,28 +289,44 @@ export async function sendThreadNotification(
     requestOrigin
   );
   deepLinkUrl.searchParams.set('thread', threadId);
-  const songTitle = getSongTitle(songData.title);
-  const versionLabel = getVersionLabel(versionData);
-  const timestampLabel = formatTimestamp(Number(threadData.timestamp_seconds) || 0);
-  const commentBody = getCommentBody(commentData.body);
   const isReply = (threadCommentCount ?? 0) > 1;
-  const emailParams = {
+  const [{ data: account }, { data: parentComment }] = await Promise.all([
+    supabaseServer.from('accounts').select('name').eq('id', workspaceId).maybeSingle(),
+    isReply
+      ? supabaseServer
+        .from('comments')
+        .select('id, author, body')
+        .eq('thread_id', threadId)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+  const parent = parentComment && parentComment.id !== commentId
+    ? { author: parentComment.author ?? '', body: parentComment.body ?? '' }
+    : null;
+  const email = buildThreadEmail({
+    origin: requestOrigin,
+    link: deepLinkUrl.toString(),
+    songTitle: songData.title ?? '',
+    artworkUrl: emailArtworkUrl(songId, songData.image_url ?? null, requestOrigin),
+    versionNumber: versionData.version_number ?? null,
+    versionLabel: versionData.label ?? null,
+    timestampSeconds: Number(threadData.timestamp_seconds) || 0,
     actorName,
-    songTitle,
-    versionLabel,
-    timestampLabel,
-    commentBody,
-    deepLink: deepLinkUrl.toString(),
+    commentBody: commentData.body ?? '',
     isReply,
-  };
+    parent,
+    workspaceName: account?.name ?? '',
+  });
 
   const resend = new Resend(resendApiKey);
   const result = await resend.emails.send({
-    from: 'Song Room <noreply@song-room.live>',
+    from: EMAIL_FROM,
     to: recipientEmails,
-    subject: getEmailSubject(emailParams),
-    text: getPlainTextEmail(emailParams),
-    html: getHtmlEmail(emailParams),
+    subject: email.subject,
+    text: email.text,
+    html: email.html,
   });
 
   if (result.error) {
