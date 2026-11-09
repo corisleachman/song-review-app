@@ -79,6 +79,7 @@ export default function WorkspaceSwitcher({
   onSignOut,
 }: WorkspaceSwitcherProps) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const railButtonRef = useRef<HTMLButtonElement>(null);
   const mobileSheetRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(forceOpen ?? false);
   const [loading, setLoading] = useState(false);
@@ -102,13 +103,19 @@ export default function WorkspaceSwitcher({
     if (!open) return;
 
     const handlePointerDown = (event: PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) {
+      if (!forceOpen && !rootRef.current?.contains(event.target as Node)) {
         setOpen(false);
       }
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
+      if (event.key !== 'Escape') return;
+      if (forceOpen) {
+        onForceClose?.();
+      } else if (variant === 'rail') {
+        if (rootRef.current?.contains(document.activeElement)) railButtonRef.current?.focus();
+        setOpen(false);
+      }
     };
 
     document.addEventListener('pointerdown', handlePointerDown);
@@ -118,7 +125,7 @@ export default function WorkspaceSwitcher({
       document.removeEventListener('pointerdown', handlePointerDown);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [open]);
+  }, [forceOpen, onForceClose, open, variant]);
 
   useEffect(() => {
     if (!open || loaded) return;
@@ -277,6 +284,7 @@ export default function WorkspaceSwitcher({
       <button
         type="button"
         className={styles.railButton}
+        ref={railButtonRef}
         onClick={() => setOpen(value => !value)}
         aria-expanded={open}
         aria-label={`Current workspace: ${workspaceName}${roleLabel ? `, ${roleLabel}` : ''}`}

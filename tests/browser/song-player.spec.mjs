@@ -128,6 +128,28 @@ test('version page sends an unauthenticated user to sign in with a return link',
   await expect(page).toHaveURL(/\/login\?redirectTo=%2Fsongs%2Fsong-one%2Fversions%2Fversion-one$/);
 });
 
+test('mobile version workspace switcher restores focus after Escape', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-chromium', 'This switcher is in the mobile version navigation.');
+  await preparePlayer(page, false);
+  await page.route('**/api/workspaces', route => route.fulfill({ json: {
+    currentWorkspaceId: 'fixture',
+    workspaces: [
+      { id: 'fixture', name: 'Fixture', isActive: true, role: 'owner', plan: 'free', songCount: 2 },
+      { id: 'other', name: 'Other workspace', isActive: false, role: 'member', plan: 'free', songCount: 1 },
+    ],
+  } }));
+  const trigger = page.getByRole('button', { name: 'Switch workspace', exact: true });
+  await trigger.focus();
+  await page.keyboard.press('Enter');
+  const option = page.getByRole('button', { name: /^Other workspace / });
+  await expect(option).toBeVisible();
+  await option.focus();
+  await page.keyboard.press('Escape');
+  await expect(option).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+});
+
 async function mediaState(page) {
   return page.evaluate(() => {
     const audio = window.playerTestMedia.at(-1);

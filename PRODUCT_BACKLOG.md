@@ -872,3 +872,10 @@ Stripe checkpoint, 9 November. Read-only CLI checks matched one active non-live 
 - The automated audit also flagged the Privacy and Terms footer wordmarks. [WCAG contrast guidance](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html) exempts logotypes. The scope is public browser reflow and automated checks.
 
 Verified in Production on 9 November. The Trust page fits at 320 CSS px with fallback fonts and the blog labels measure 5.06:1 on their surface. The targeted axe rerun passed.
+
+
+### B47. Workspace switcher focus, scrolling and contrast
+
+- Desktop Escape left keyboard focus on a removed control. Restore focus to the switcher button when closing from within it. The mobile song page’s parent dismisses its switcher and restores focus when Escape is pressed.
+- The dashboard switcher could render beyond the viewport when a user had many workspaces. Constrain both dashboard panels to the available height and scroll the list inside the panel.
+- Use readable muted panel labels and visible focus rings. Desktop and phone Chromium fixtures cover a 15-workspace list, Escape, focus restoration and automated contrast. Workspace API calls and membership rules stay on the existing path.
