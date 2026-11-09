@@ -18,12 +18,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out production branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: clone-clean
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
 
@@ -35,7 +35,7 @@ jobs:
         run: node scripts/generate-seo-article.mjs
 
       - name: Create review pull request against production
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           base: clone-clean
