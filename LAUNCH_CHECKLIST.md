@@ -70,7 +70,7 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B07 | AIFF/AIF playback and waveform support | Deferred; new uploads blocked | Later, P3; preserve existing stored files |
 | B08 | Microsoft login | Deferred by user | Later; revisit with traction/income |
 | B09 | Physical 11-inch iPad Safari/Chrome coverage | Open. Physical iPad unavailable | L6 additional coverage; existing tablet release accepted |
-| B10 | Dependency/workflow update PRs | Awaiting review | L5/S7; eight open update PRs at reconciliation |
+| B10 | [Dependency/workflow update PRs](PRODUCT_BACKLOG.md#b10-dependency-and-workflow-update-review) | All eight reviewed 9 Nov. Three workflow updates need the default branch. Supabase and major toolchain updates split for verification | L5/S7 maintenance |
 | B11 | SEO article PR #12 | Production complete, 8 Nov. PR #12 merged and live article, metadata, links and sitemap verified | L7 |
 | B12 | Automated SEO content-engine draft PR #3 | Draft; not a launch commitment | Later |
 | B13 | FAQ | Production complete in PR #108. Live keyboard interaction verified | L7 |
@@ -637,3 +637,5 @@ The background task records submission counts and safe failures. It has no durab
 9 November B47 checkpoint: the signed-in dashboard fixture lost desktop focus after Escape and hid the last mobile workspace beyond the viewport. The song page’s mobile switcher also needed to dismiss through its parent. The focused fix restores keyboard focus, scrolls long lists and raises muted label contrast. Browser checks use mocked workspace responses.
 
 9 November B47 rollout: PR #128 passed all four checks and merged as d17b6c3d. Primary Production deployment dpl_CMZna9RhrBBTmKJovhGvi9X3jQ63 served the change. Login returned 200, bootstrap and workspace list returned 401 while signed out, and the private song redirected to sign-in. Desktop and mobile focus, scrolling and contrast were verified with browser fixtures. The Production smoke check was signed out. Revert PR #128 or restore dpl_8Fce2DnM4dyhbc9mmez5CnXZfeMx to roll back. No migration or configuration change.
+
+9 November B10 checkpoint: reviewed all eight open dependency and workflow PRs. The production audit found zero moderate, high or critical findings and four low findings in the Resend dependency chain. The scheduled article workflow runs from main. Prioritize preparing the workflow pin update there, then test the Supabase upgrade separately. No packages or workflow pins changed in this review.
