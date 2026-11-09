@@ -77,7 +77,12 @@
       "intent": "informational",
       "audience": "Independent producers and engineers",
       "priority": 6,
-      "status": "ready"
+      "status": "published",
+      "slug": "how-producers-can-manage-feedback-and-revisions",
+      "generatedTitle": "How Producers Can Manage Feedback and Revisions",
+      "excerpt": "A clear, music-specific workflow for collecting feedback, organising versions and tracking revisions so mixes keep moving and decisions are recorded.",
+      "publishedAt": "2026-11-09",
+      "model": "gpt-5-mini"
     },
     {
       "id": "dropbox-alternatives",
