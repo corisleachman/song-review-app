@@ -1,0 +1,4 @@
+confirm_signup	Confirm your email for Song Room
+reset_password	Reset your Song Room password
+reauthentication	{{ .Token }} is your Song Room verification code
+password_changed	Your Song Room password was changed

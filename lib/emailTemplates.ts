@@ -61,7 +61,8 @@ export interface EmailShell {
   eyebrow: string;
   headline: string;
   bodyHtml: string;
-  cta: { label: string; href: string };
+  // Null for code-only emails (reauthentication).
+  cta: { label: string; href: string } | null;
   footerReason: string;
   // Off for people who aren't members yet (invites).
   showSettings?: boolean;
@@ -100,12 +101,12 @@ u + .body .gm-d{background:#000;mix-blend-mode:difference}
 <div class="hl" style="font-family:${BODY};font-size:24px;line-height:1.3;color:${C.text};margin-top:12px;font-weight:600;">${lock(escapeHtml(shell.headline))}</div>
 </td></tr>
 ${shell.bodyHtml}
-<tr><td class="px" style="padding:24px 32px 8px;">
+${shell.cta ? `<tr><td class="px" style="padding:24px 32px 8px;">
 <table role="presentation" cellpadding="0" cellspacing="0" class="btnt"><tr><td style="${bg(C.red)}">
 <a href="${escapeHtml(shell.cta.href)}" style="display:inline-block;padding:16px 28px;font-family:${BODY};font-weight:700;font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:${C.text};">${lock(`${escapeHtml(shell.cta.label)} &rarr;`)}</a>
 </td></tr></table>
 </td></tr>
-<tr><td class="px" style="padding:28px 32px;">
+` : ''}<tr><td class="px" style="padding:28px 32px;">
 <div style="${RULE}">&nbsp;</div>
 <div style="padding-top:18px;font-family:${BODY};font-size:12px;line-height:1.7;color:${C.meta};">
 ${lock(`${escapeHtml(shell.footerReason)}<br>
@@ -418,4 +419,78 @@ export function buildInviteEmail(data: InviteEmailData) {
   ].join('\n');
 
   return { subject, preheader, html, text };
+}
+
+// Supabase Auth templates. Supabase fills the Go-template placeholders
+// ({{ .RedirectTo }}, {{ .TokenHash }}, {{ .Token }}, {{ .Email }},
+// {{ .SiteURL }}) when it sends, so they are inserted unescaped. The link
+// contracts match the tested staging templates in EMAIL_PASSWORD_STAGING_ROLLOUT.md.
+export type AuthTemplateKind = 'confirm_signup' | 'reset_password' | 'reauthentication' | 'password_changed';
+
+const AUTH_ORIGIN = 'https://www.song-room.live';
+export const AUTH_LINKS = {
+  confirm_signup: '{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=signup',
+  reset_password: '{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=recovery',
+  password_changed: '{{ .SiteURL }}/forgot-password',
+} as const;
+const LINK_SLOT = 'https://song-room.invalid/__auth_link__';
+const EMAIL_SLOT = '__AUTH_EMAIL__';
+const TOKEN_SLOT = '__AUTH_TOKEN__';
+
+export function buildAuthTemplate(kind: AuthTemplateKind) {
+  const ignore = 'If you didn’t ask for this, you can ignore this email.';
+  const spec = {
+    confirm_signup: {
+      subject: 'Confirm your email for Song Room',
+      eyebrow: 'One more step',
+      headline: 'Confirm your email to finish creating your Song Room account.',
+      body: paragraphHtml(escapeHtml(`Use the button below to verify your email address. ${ignore}`)),
+      cta: 'Confirm my email',
+      footer: 'You’re getting this because this email address was used to sign up for Song Room.',
+    },
+    reset_password: {
+      subject: 'Reset your Song Room password',
+      eyebrow: 'Password reset',
+      headline: 'Choose a new password for your Song Room account.',
+      body: paragraphHtml(escapeHtml('This link works once and expires soon. If you didn’t ask to reset your password, you can ignore this email and your password stays the same.')),
+      cta: 'Choose a new password',
+      footer: 'You’re getting this because a password reset was requested for this email address on Song Room.',
+    },
+    reauthentication: {
+      subject: `${TOKEN_SLOT} is your Song Room verification code`,
+      eyebrow: 'Verification code',
+      headline: 'Use this code to confirm your password change.',
+      body: `<tr><td class="px" style="padding:0 32px 16px;"><table role="presentation" cellpadding="0" cellspacing="0" style="${bg(C.rule)}"><tr><td style="padding:1px;"><table role="presentation" cellpadding="0" cellspacing="0" style="${bg(C.card)}"><tr><td style="padding:16px 24px;font-family:'Courier New',Courier,monospace;font-size:32px;font-weight:700;letter-spacing:.2em;color:${C.straw};">${lock(TOKEN_SLOT)}</td></tr></table></td></tr></table></td></tr>`
+        + paragraphHtml(escapeHtml('The code expires shortly. If you didn’t try to change your password, ignore this email and your password stays the same.')),
+      cta: null,
+      footer: 'You’re getting this because someone tried to change the password on this Song Room account.',
+    },
+    password_changed: {
+      subject: 'Your Song Room password was changed',
+      eyebrow: 'Security',
+      headline: `The password for ${EMAIL_SLOT} was just changed.`,
+      body: paragraphHtml(`${escapeHtml('If this was you, there’s nothing else to do. If it wasn’t, reset your password now and email')} <a href="mailto:hello@song-room.live" style="color:${C.text};text-decoration:underline;">hello@song-room.live</a>.`),
+      cta: 'It wasn’t me: reset now',
+      footer: 'This is a security notice for your Song Room account.',
+    },
+  }[kind];
+
+  const html = renderEmailShell({
+    origin: AUTH_ORIGIN,
+    preheader: spec.headline,
+    workspaceName: '',
+    eyebrow: spec.eyebrow,
+    headline: spec.headline,
+    bodyHtml: spec.body,
+    cta: spec.cta ? { label: spec.cta, href: LINK_SLOT } : null,
+    footerReason: spec.footer,
+    showSettings: false,
+  });
+  const link = kind === 'reauthentication' ? '' : AUTH_LINKS[kind];
+  const fill = (value: string) => value
+    .split(escapeHtml(LINK_SLOT)).join(link)
+    .split(LINK_SLOT).join(link)
+    .split(TOKEN_SLOT).join('{{ .Token }}')
+    .split(EMAIL_SLOT).join('{{ .Email }}');
+  return { subject: fill(spec.subject), html: fill(html) };
 }
