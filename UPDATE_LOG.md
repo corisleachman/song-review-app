@@ -10141,6 +10141,10 @@ Rebuilt the new-version email in lib/versionUploadNotifications.ts with the shar
 
 Updated package.json and package-lock.json to pin Playwright 1.64.1 and axe-core 4.14.0. The focused update separates browser and accessibility testing from the Supabase upgrade in PR #59. Updated LAUNCH_CHECKLIST.md with the split.
 
+## 2026-11-09 B10 browser tooling release verification
+
+Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the browser suite, Production smoke checks and rollback for PR #134.
+
 ## 2026-11-09 New-version email keeps its dark look in Gmail on iPhone
 
 Updated lib/emailTemplates.ts so Gmail's iPhone dark mode no longer flips the email to white. Fills are painted as background images, borders are 1px painted cells, and light text sits in Gmail-only blend layers that undo the inversion. Songs without artwork use the Song Room tile image instead of initials, because Gmail would recolour dark initials. Other clients render as before. Tests: tests/version-upload-email.test.mjs.
