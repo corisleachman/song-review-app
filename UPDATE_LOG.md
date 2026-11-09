@@ -10069,3 +10069,7 @@ Updated app/api/versions/[versionId]/finalize/route.ts, lib/versionUploadNotific
 ## 2026-11-08 B20 dormant release and provider timing follow-up
 
 Updated LAUNCH_CHECKLIST.md with the live B20 deployment, disabled sending gate and Production smoke results. Updated B17_FUNCTION_REGION_REVIEW.md with the bounded Production provider timing aggregate.
+
+## 2026-11-09 B20 Production activation
+
+Updated LAUNCH_CHECKLIST.md with the approved email switch, verified Production deployment and rollback route. First real upload delivery remains pending.
