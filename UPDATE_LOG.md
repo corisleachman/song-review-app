@@ -10172,3 +10172,8 @@ Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the live Supabase update
 ## 2026-11-09 B10 scheduled workflow action update
 
 PR #132 merged the three action updates in .github/workflows/generate-seo-article.yml on main. Verified the active workflow pins and recorded the pending scheduled run in LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md.
+
+
+## 2026-11-10 B48 new song notifications
+
+Updated app/api/versions/[versionId]/finalize/route.ts, lib/versionUploadNotifications.ts and lib/emailTemplates.ts. A newly finalized first version now sends the branded new-song email to current workspace members. Updated the upload boundary and email tests, LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md.

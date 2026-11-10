@@ -232,7 +232,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ versionI
       if (versionUpdateError) throw versionUpdateError;
     }
 
-    if (finalizeResult.data === true && version.version_number > 1) {
+    if (finalizeResult.data === true && version.version_number >= 1) {
       scheduleVersionUploadNotification({
         workspaceId: song.account_id,
         songId: song.id,

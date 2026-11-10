@@ -761,7 +761,8 @@ test('only the request that finalizes a new version schedules email', async t =>
   for (const [label, versionNumber, rpcResult, expectedStatus, expectedCalls] of [
     ['new version', 2, { data: true }, 200, 1],
     ['concurrent finalization lost', 2, { data: false }, 200, 0],
-    ['first upload', 1, { data: true }, 200, 0],
+    ['first upload', 1, { data: true }, 200, 1],
+    ['concurrent first upload finalization lost', 1, { data: false }, 200, 0],
     ['storage limit rejected', 2, { error: { message: 'STORAGE_LIMIT_REACHED' } }, 400, 0],
   ]) {
     await t.test(label, async () => {
@@ -851,7 +852,7 @@ test('version emails use current membership and intersect the Preview allowlist'
         { id: 'version-0', song_id: 'song-a', version_number: 1, created_at: '2026-11-06T10:00:00Z' },
         { id: 'version-a', song_id: 'song-a', version_number: 2, label: 'Final mix', notes: null, created_by: 'Uploader', created_by_user_id: null, created_at: '2026-11-09T08:13:00Z' },
       ],
-      accounts: [{ id: 'workspace-a', name: 'Polite Rebels', notification_mode: 'all_members' }],
+      accounts: [{ id: 'workspace-a', name: 'Polite Rebels', notification_mode: 'owner_only' }],
     },
     logger: { info() {}, warn() {} },
   });
@@ -880,6 +881,17 @@ test('version emails use current membership and intersect the Preview allowlist'
   await scheduled.shift()();
   assert.deepEqual(batches[1].messages.map(m => m.to.toLowerCase()), ['member@example.test']);
   assert.match(batches[1].messages[0].text, /https:\/\/www\.song-room\.live\/songs\/song-a\/versions\/version-a/);
+
+  handler.scheduleVersionUploadNotification({ ...payload, versionId: 'version-0', uploaderUserId: 'member' });
+  await scheduled.shift()();
+  assert.deepEqual(batches[2].messages.map(m => m.to.toLowerCase()).sort(), [
+    'member@example.test', 'uploader@example.test',
+  ]);
+  assert.equal(batches[2].messages[0].subject, 'New song in Polite Rebels · Rebel Lovers');
+  assert.match(batches[2].messages[0].html, /Member has just uploaded a new song to Polite Rebels\./);
+  assert.match(batches[2].messages[0].text, /Listen to the song: https:\/\/www\.song-room\.live\/songs\/song-a\/versions\/version-0/);
+  assert.doesNotMatch(batches[2].messages[0].text, /Previous:|Version:/);
+  assert.equal(batches[2].options.idempotencyKey, 'version-upload/version-0/0');
 });
 
 test('version allocation rejects over-50 MB metadata before any database or Storage work', async () => {

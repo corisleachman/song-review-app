@@ -30,6 +30,10 @@ async function loadEmailContext(workspaceId: string, songId: string, versionId: 
   const version = versionResult.data;
   if (!song || !version || song.account_id !== workspaceId || version.song_id !== songId) return null;
 
+  if (version.version_number === 1) {
+    return { song, version, account: accountResult.data, previous: null };
+  }
+
   const { data: previous, error: previousError } = await supabaseServer.from('song_versions')
     .select('version_number, created_at')
     .eq('song_id', songId)
@@ -69,7 +73,9 @@ export function scheduleVersionUploadNotification({ workspaceId, songId, version
       const members: WorkspaceMember[] = await listWorkspaceMembers(workspaceId);
       const uploaderUserId = finalizerUserId ?? version.created_by_user_id ?? null;
       const uploader = members.find(member => member.userId === uploaderUserId);
-      const selected = selectVersionUploadRecipients(members, uploaderUserId, account?.notification_mode);
+      const selected = version.version_number === 1
+        ? members
+        : selectVersionUploadRecipients(members, uploaderUserId, account?.notification_mode);
 
       const emails = new Map<string, string>();
       for (const member of selected) {
