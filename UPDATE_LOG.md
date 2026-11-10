@@ -10181,3 +10181,7 @@ Updated app/api/versions/[versionId]/finalize/route.ts, lib/versionUploadNotific
 ## 2026-11-10 B48 Production verification
 
 Updated LAUNCH_CHECKLIST.md with the live new-song notification rollout, Production smoke checks and rollback.
+
+## 2026-11-10 B10 Node support alignment
+
+Updated package.json and package-lock.json to declare the tested Node 22 and 24 release lines and align Node types to the lower supported line. All 616 tests and typechecking passed on Node 22.18.0 and 24.14.0. Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md.
