@@ -47,6 +47,19 @@ test('version email: names the song, version, uploader and workspace', () => {
   assert.ok(email.text.includes(base.link));
 });
 
+test('first upload uses the branded song card with new-song copy', () => {
+  const email = templates.buildVersionUploadEmail({ ...base, versionNumber: 1, previous: null });
+  assert.equal(email.subject, 'New song in Polite Rebels · Rebel Lovers');
+  assert.equal(email.preheader, 'Coris has just uploaded Rebel Lovers to Polite Rebels. “Pulled the sub back.”');
+  for (const part of ['Coris has just uploaded a new song to Polite Rebels.', 'Rebel Lovers', 'Listen to the song', base.link]) {
+    assert.ok(email.html.includes(part), `html has ${part}`);
+    assert.ok(email.text.includes(part), `text has ${part}`);
+  }
+  assert.ok(email.html.includes(base.artworkUrl));
+  assert.match(email.html, /First upload/);
+  assert.ok(!/Previous|Listen to Version/.test(email.html));
+});
+
 test('version email: user-supplied fields are escaped', () => {
   const email = templates.buildVersionUploadEmail({
     ...base,

@@ -208,20 +208,27 @@ export function buildVersionUploadEmail(data: VersionUploadEmailData) {
   const uploader = oneLine(data.uploaderName) || 'A collaborator';
   const workspace = oneLine(data.workspaceName) || 'your workspace';
   const label = data.versionLabel ? oneLine(data.versionLabel) : '';
+  const firstUpload = data.versionNumber === 1;
   const versionName = `Version ${data.versionNumber}${label ? ` · ${label}` : ''}`;
+  const headline = firstUpload
+    ? `${uploader} has just uploaded a new song to ${workspace}.`
+    : `${uploader} uploaded a new version of ${song}.`;
   const status = data.status ? STATUS_LABELS[data.status] ?? null : null;
   const uploadedAt = formatEmailDate(data.uploadedAt);
-  const previous = data.previous
+  const previous = !firstUpload && data.previous
     ? `Version ${data.previous.versionNumber} · ${formatShortDate(data.previous.uploadedAt)}`
     : null;
   const notesFull = data.notes?.trim() ?? '';
   const notes = notesFull ? truncate(notesFull, NOTES_LIMIT) : '';
   const notesTruncated = notes !== notesFull;
-  const ctaLabel = `Listen to Version ${data.versionNumber}`;
+  const ctaLabel = firstUpload ? 'Listen to the song' : `Listen to Version ${data.versionNumber}`;
 
-  const subject = `${song}: Version ${data.versionNumber} is ready to hear`;
+  const subject = firstUpload ? `New song in ${workspace} · ${song}` : `${song}: Version ${data.versionNumber} is ready to hear`;
+  const preheaderIntro = firstUpload
+    ? `${uploader} has just uploaded ${song} to ${workspace}.`
+    : `${uploader} uploaded ${versionName} to ${workspace}.`;
   const preheader = truncate(
-    `${uploader} uploaded ${versionName} to ${workspace}.${notes ? ` “${oneLine(notes)}”` : ''}`,
+    `${preheaderIntro}${notes ? ` “${oneLine(notes)}”` : ''}`,
     140,
   );
 
@@ -229,7 +236,7 @@ export function buildVersionUploadEmail(data: VersionUploadEmailData) {
     origin: data.origin,
     song,
     artworkUrl: data.artworkUrl,
-    pill: versionName,
+    pill: firstUpload ? 'First upload' : versionName,
     rows: [
       ['By', uploader],
       ['Uploaded', uploadedAt],
@@ -246,18 +253,18 @@ export function buildVersionUploadEmail(data: VersionUploadEmailData) {
     origin: data.origin,
     preheader,
     workspaceName: workspace,
-    eyebrow: 'New version',
-    headline: `${uploader} uploaded a new version of ${song}.`,
+    eyebrow: firstUpload ? 'New song' : 'New version',
+    headline,
     bodyHtml: songCard + notesBlock,
     cta: { label: ctaLabel, href: data.link },
     footerReason: `You’re getting this because you’re a member of ${workspace} on Song Room.`,
   });
 
   const text = [
-    `${uploader} uploaded a new version of ${song}.`,
+    headline,
     '',
     `Song: ${song}`,
-    `Version: ${versionName}`,
+    firstUpload ? null : `Version: ${versionName}`,
     `Uploaded: ${uploadedAt} by ${uploader}`,
     status ? `Status: ${status}` : null,
     previous ? `Previous: ${previous}` : null,

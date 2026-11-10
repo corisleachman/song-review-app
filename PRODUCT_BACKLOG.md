@@ -896,3 +896,11 @@ Verified in Production on 9 November. The Trust page fits at 320 CSS px with fal
 - Use readable muted panel labels and visible focus rings. Desktop and phone Chromium fixtures cover a 15-workspace list, Escape, focus restoration and automated contrast. Workspace API calls and membership rules stay on the existing path.
 
 Released on 9 November. Signed-in browser fixtures passed. Production deployment and signed-out access were verified.
+
+
+### B48. New song upload notifications
+
+- Reported 10 November after Cycles uploaded successfully as version 1 without an email. The notification condition previously started at version 2.
+- Send the new-song email after the first successful finalization. Address each current workspace member with an email, including the uploader, even when comment notifications are set to owner only. Deduplicate addresses and preserve the Preview allowlist and global email controls.
+- Reuse the branded song email layout with first-upload copy and a link to the uploaded version. Keep later-version emails on their existing recipient policy.
+- Verify successful first uploads, failed uploads and repeated finalization with test fixtures. Production delivery will be observable on the next actual new song upload.
