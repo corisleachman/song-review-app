@@ -1636,3 +1636,72 @@ test('signed Stripe lifecycle events only change the linked subscription', async
     });
   }
 });
+
+test('dedicated staging webhook rejects events before passing them to billing', async t => {
+  const Stripe = require('stripe');
+  const stripe = new Stripe('sk_test_local_fixture');
+  const secret = 'whsec_local_fixture';
+  const stagingRef = 's'.repeat(20);
+  const config = {
+    STAGING_SUPABASE_PROJECT_REF: stagingRef,
+    NEXT_PUBLIC_SUPABASE_URL: `https://${stagingRef}.supabase.co`,
+    SUPABASE_SERVICE_ROLE_KEY: 'local_fixture',
+    STRIPE_SECRET_KEY: 'sk_test_local_fixture',
+    STRIPE_WEBHOOK_SECRET: secret,
+  };
+  const previous = Object.fromEntries(Object.keys(config).map(key => [key, process.env[key]]));
+  t.after(() => {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  });
+
+  for (const { name, overrides, type, livemode, signature, status } of [
+    { name: 'missing signature', signature: '', status: 400 },
+    { name: 'invalid signature', signature: 'invalid', status: 400 },
+    { name: 'live event', livemode: true, status: 400 },
+    { name: 'unrelated event', type: 'invoice.paid', status: 400 },
+    { name: 'live key', overrides: { STRIPE_SECRET_KEY: 'sk_live_fixture' }, status: 503 },
+    { name: 'mismatched database', overrides: { NEXT_PUBLIC_SUPABASE_URL: 'https://other.supabase.co' }, status: 503 },
+    {
+      name: 'Production database',
+      overrides: {
+        STAGING_SUPABASE_PROJECT_REF: 'hxtsuhmqrufcdplidtov',
+        NEXT_PUBLIC_SUPABASE_URL: 'https://hxtsuhmqrufcdplidtov.supabase.co',
+      },
+      status: 503,
+    },
+    { name: 'subscription update', status: 200 },
+    { name: 'subscription expiry', type: 'customer.subscription.deleted', status: 200 },
+  ]) {
+    await t.test(name, async () => {
+      Object.assign(process.env, config, overrides);
+      const calls = [];
+      const { handler } = routeHarness('staging-webhook/app/api/stripe/webhook/route.ts', {
+        overrides: {
+          stripe: { default: Stripe },
+          '@/app/api/stripe/webhook/route': {
+            POST: async request => {
+              calls.push([request.headers.get('stripe-signature'), await request.text()]);
+              return Response.json({ received: true });
+            },
+          },
+        },
+      });
+      const body = JSON.stringify({
+        id: 'evt_fixture',
+        type: type ?? 'customer.subscription.updated',
+        livemode: livemode ?? false,
+      });
+      const signed = signature ?? stripe.webhooks.generateTestHeaderString({ payload: body, secret });
+      const response = await handler.POST(new Request('https://staging.invalid/api/stripe/webhook', {
+        method: 'POST',
+        headers: signed ? { 'stripe-signature': signed } : {},
+        body,
+      }));
+      assert.equal(response.status, status);
+      assert.deepEqual(calls, status === 200 ? [[signed, body]] : []);
+    });
+  }
+});
