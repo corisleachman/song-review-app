@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
-    "@supabase/supabase-js": "2.118.0",
+    "@supabase/supabase-js": "2.119.0",
     "date-fns": "^2.30.0",
     "next": "15.5.28",
     "react": "^18.2.0",
@@ -27,8 +27,8 @@
     "wavesurfer.js": "^7.12.11"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.3.6",
-    "@playwright/test": "1.64.1",
+    "@eslint/eslintrc": "^3.3.7",
+    "@playwright/test": "1.65.0",
     "@types/node": "22.20.5",
     "@types/react": "^18",
     "@types/react-dom": "^18",
