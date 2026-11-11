@@ -656,3 +656,11 @@ The background task records submission counts and safe failures. It has no durab
 10 November B48 rollout: PR #146 passed all four checks and merged as b20480b1. Primary Production deployment dpl_9dT8buMwbhHd1AbUAQNtwBcGudky served the update. Login loaded, private routes required sign-in and signed-out finalization returned 401. Local fixture tests verified the first-upload trigger, workspace recipients and duplicate prevention. Rendered email checks passed at 320 and 600 px. Actual inbox delivery remains open until the next real first upload. Revert PR #146 or restore dpl_5h3PsnzYrUdKSEvXfpqfXNHKyAMy to roll back.
 
 10 November B10 Node support rollout: PR #148 passed all four hosted checks and merged as fe8f7256. The package declares Node 22.18+ or 24.x and pins Node 22 type definitions. A strict engine install passed on Node 22.18.0, and all 616 tests and TypeScript passed on 22.18.0 and 24.14.0. Production deployment dpl_3bzFBEUiuHh3u6ieVrFAzuB4td2s served the update on Node 24.x. Login returned 200, signed-out bootstrap 401 and a private song redirected to sign-in. Rollback is a revert of PR #148 or the previous deployment dpl_75bUEpAMxCDBPzrPRNqyHyEJT77C.
+
+### 11 November 2026 L8 readiness checkpoint
+
+Production homepage, login, robots.txt and sitemap.xml returned 200. Signed-out dashboard redirected to login with the dashboard return path. L7 remains done in recorded scope. L8 evidence review is in progress and the wider-launch decision remains pending.
+
+L6 exit still needs disposition. B17 signed-in dashboard traces showed songs in 2.47s and 4.14s, with account bootstrap the largest measured server segment. B43 isolated expiry and replay passed, but persistent staging delivery is still open. TrackFlow Test mode Workbench showed 21 failed deliveries to the Production alias, and the sampled update returned HTTP 400 Invalid Stripe signature. Physical iPad coverage is unavailable. Record explicit acceptance for any remaining coverage gaps before using them to close L6.
+
+The release owner should confirm who handles launch support and which previous Ready deployment is the rollback target at the time of the go/no-go review. Carry forward the recorded beta limits on provider IP attribution, quotas and monitoring. Revisit the decision after the L6 evidence is reconciled.
