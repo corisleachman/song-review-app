@@ -10189,3 +10189,5 @@ Updated package.json and package-lock.json to declare the tested Node 22 and 24 
 ## 2026-11-10 B10 Node support rollout verification
 
 Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the hosted checks, live Node 24 deployment and rollback for PR #148.
+
+- 11 November 2026 — Updated LAUNCH_CHECKLIST.md with B43 evidence from Stripe Test mode Workbench. The destination on the Production alias showed 21 failed deliveries. The sampled subscription update returned HTTP 400 Invalid Stripe signature. No destination settings were changed.
