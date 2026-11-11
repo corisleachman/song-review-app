@@ -904,3 +904,7 @@ Released on 9 November. Signed-in browser fixtures passed. Production deployment
 - Send the new-song email after the first successful finalization. Address each current workspace member with an email, including the uploader, even when comment notifications are set to owner only. Deduplicate addresses and preserve the Preview allowlist and global email controls.
 - Reuse the branded song email layout with first-upload copy and a link to the uploaded version. Keep later-version emails on their existing recipient policy.
 - Verify successful first uploads, failed uploads and repeated finalization with test fixtures. Production delivery will be observable on the next actual new song upload.
+
+### B49. First Play and waveform recovery
+
+Cycles v1 showed browser playback denial and waveform timeout on 11 November. Keep playable audio attached if waveform decoding fails. Recover browser playback denial from a fresh tap. Verify a cold song-page load, tap-to-audio timing, seek and pause on the affected browser. B17 remains the dashboard latency workstream.
