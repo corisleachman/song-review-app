@@ -10195,3 +10195,13 @@ Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the hosted checks, live 
 - 12 November 2026 — Recorded B49 Production playback acceptance in LAUNCH_CHECKLIST.md. The user reported a pass on iPhone Pro Max in Chrome and Safari. The original reporter’s device was unavailable. B17 dashboard latency remains open.
 
 - 12 November 2026 — Updated dashboard identity resolution and account bootstrap to skip the dashboard profile write when the stored identity already matches. Updated LAUNCH_CHECKLIST.md with the B17 verification status.
+
+- 12 November 2026 — Added B17 Production rollout and signed-in timing evidence to LAUNCH_CHECKLIST.md. The dashboard profile optimization is live. Intermittent delays remain measurable.
+
+- 12 November 2026 — Added Supabase origin timing correlation for the slow B17 Production dashboard trace to LAUNCH_CHECKLIST.md.
+
+- Added the B17 PostgreSQL execution statistics and their attribution limits to LAUNCH_CHECKLIST.md.
+
+- Recorded the B17 provider contention check and its limits in LAUNCH_CHECKLIST.md.
+
+- Added the B17 provider investigation handoff and observability limits to LAUNCH_CHECKLIST.md.
