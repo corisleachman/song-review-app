@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
 
     const resolved = await timing.measure(
       'identity',
-      () => resolveCanonicalIdentity(timing)
+      () => resolveCanonicalIdentity(timing, { preferExistingProfile: true })
     );
 
     if (!resolved) {

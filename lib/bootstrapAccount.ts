@@ -158,6 +158,7 @@ export async function bootstrapAccountForUser(
   user: AuthenticatedUser,
   timing?: RequestTiming,
   sealedReferralCode?: string | null,
+  preferExistingProfile = false,
 ): Promise<BootstrapResult> {
   const profilePayload: Record<string, unknown> = {
     id: user.id,
@@ -170,17 +171,27 @@ export async function bootstrapAccountForUser(
     profilePayload.avatar_url = user.avatarUrl;
   }
 
-  const profilePromise = timing
-    ? timing.measure('profile', async () => await supabaseServer
+  const loadProfile = async () => {
+    if (preferExistingProfile) {
+      const existing = await supabaseServer
         .from('profiles')
-        .upsert(profilePayload, { onConflict: 'id' })
-        .select('id, email, display_name, created_at, updated_at')
-        .single())
-    : supabaseServer
-        .from('profiles')
-        .upsert(profilePayload, { onConflict: 'id' })
-        .select('id, email, display_name, created_at, updated_at')
-        .single();
+        .select('id, email, display_name, created_at, updated_at, avatar_url')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (!existing.error && existing.data && existing.data.email === user.email
+        && existing.data.display_name === user.displayName
+        && (!user.avatarUrl || existing.data.avatar_url === user.avatarUrl)) {
+        return existing;
+      }
+    }
+
+    return supabaseServer
+      .from('profiles')
+      .upsert(profilePayload, { onConflict: 'id' })
+      .select('id, email, display_name, created_at, updated_at')
+      .single();
+  };
+  const profilePromise = timing ? timing.measure('profile', loadProfile) : loadProfile();
 
   const activeWorkspaceId = timing
     ? await timing.measure('workspace-cookie', readActiveWorkspaceCookie)
