@@ -10203,3 +10203,5 @@ Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the hosted checks, live 
 - Added the B17 PostgreSQL execution statistics and their attribution limits to LAUNCH_CHECKLIST.md.
 
 - Recorded the B17 provider contention check and its limits in LAUNCH_CHECKLIST.md.
+
+- Added the B17 provider investigation handoff and observability limits to LAUNCH_CHECKLIST.md.
