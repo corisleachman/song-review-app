@@ -10191,3 +10191,5 @@ Updated package.json and package-lock.json to declare the tested Node 22 and 24 
 Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the hosted checks, live Node 24 deployment and rollback for PR #148.
 
 - 11 November 2026 — Updated the song-version player and player lifecycle tests to keep playable audio attached through waveform failures and recover browser-denied playback on a fresh tap. Recorded B49 in LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md.
+
+- 12 November 2026 — Recorded B49 Production playback acceptance in LAUNCH_CHECKLIST.md. The user reported a pass on iPhone Pro Max in Chrome and Safari. The original reporter’s device was unavailable. B17 dashboard latency remains open.
