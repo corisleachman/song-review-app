@@ -1,0 +1,45 @@
+import Stripe from 'stripe';
+import assert from 'node:assert/strict';
+let handle!: (request: Request) => Promise<Response>;
+Object.defineProperty(Deno, 'serve', { value: (handler: typeof handle) => { handle = handler; } });
+const ref = 'abcdefghijklmnopqrst';
+Deno.env.set('STAGING_SUPABASE_PROJECT_REF', ref);
+Deno.env.set('SUPABASE_URL', `https://${ref}.supabase.co`);
+Deno.env.set('SUPABASE_SERVICE_ROLE_KEY', 'mock-service-role');
+Deno.env.set('STRIPE_SECRET_KEY', 'sk_test_fixture');
+Deno.env.set('STRIPE_WEBHOOK_SECRET', 'whsec_fixture');
+Deno.env.set('STRIPE_PRICE_PRO_MONTHLY', 'price_fixture');
+const calls: string[] = [];
+const updates: unknown[] = [];
+let claimed = false;
+globalThis.fetch = async (input, init) => {
+  const path = new URL(String(input)).pathname;
+  calls.push(path);
+  if (path.endsWith('/claim_stripe_webhook_event')) return Response.json(!claimed);
+  if (path.endsWith('/complete_stripe_webhook_event')) { claimed = true; return Response.json(null); }
+  if (path.endsWith('/accounts') && init?.method === 'PATCH') {
+    updates.push(JSON.parse(String(init.body)));
+    return new Response(null, { status: 204 });
+  }
+  throw new Error(`Unexpected request ${path}`);
+};
+await import('./index.ts');
+const url = 'https://example.test/functions/v1/stripe-staging-webhook';
+const send = async (type: string, livemode = false, invalid = false) => {
+  const body = JSON.stringify({ id: 'evt_fixture', type, livemode, data: { object: {
+    id: 'sub_fixture', customer: 'cus_fixture', status: 'active', items: { data: [{ price: { id: 'price_fixture' } }] },
+  } } });
+  const signature = await Stripe.webhooks.generateTestHeaderStringAsync({ payload: body, secret: invalid ? 'whsec_wrong' : 'whsec_fixture' });
+  return handle(new Request(url, { method: 'POST', headers: { 'stripe-signature': signature }, body }));
+};
+assert.equal((await handle(new Request(url, { method: 'POST' }))).status, 400);
+assert.equal((await send('customer.subscription.updated', true)).status, 400);
+assert.equal((await send('invoice.paid')).status, 400);
+assert.equal((await send('customer.subscription.updated', false, true)).status, 400);
+assert.equal(calls.length, 0);
+assert.equal((await send('customer.subscription.updated')).status, 200);
+claimed = false;
+assert.equal((await send('customer.subscription.deleted')).status, 200);
+assert.deepEqual(await (await send('customer.subscription.deleted')).json(), { received: true, duplicate: true });
+assert.deepEqual(updates, [{ plan: 'pro' }, { plan: 'free', stripe_subscription_id: null }]);
+console.log('Signature, scope, update, expiry and duplicate checks passed');
