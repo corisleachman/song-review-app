@@ -10205,3 +10205,5 @@ Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the hosted checks, live 
 - Recorded the B17 provider contention check and its limits in LAUNCH_CHECKLIST.md.
 
 - Added the B17 provider investigation handoff and observability limits to LAUNCH_CHECKLIST.md.
+
+- 12 November 2026. Recorded Production playback acceptance on iPhone Pro Max in Chrome and Safari. The original reporter’s device was unavailable.
