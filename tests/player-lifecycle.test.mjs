@@ -226,7 +226,7 @@ test('Play from Start reports rejected playback and ignores stale failures', asy
   const h = harness(); await h.initialize(); h.press();
   const ws = h.instances[0]; ws.ready(); await flush(); h.press();
   ws.playError = new Error('Playback blocked'); h.ctx.handlePlayFromStart(); await flush();
-  assert.equal(h.ctx.waveErr, 'Playback blocked'); assert.equal(h.ctx.isPlaying, false);
+  assert.equal(h.ctx.waveErr, 'Playback could not start. Tap Play to try again.'); assert.equal(h.ctx.isPlaying, false);
   h.ctx.handlePlayFromStart(); h.unmount(); h.ctx.versionId = 'version-two';
   h.mount(); h.fire(80); await flush();
   assert.equal(h.ctx.waveErr, null); assert.equal(h.ctx.isPlaying, false);
@@ -364,7 +364,7 @@ test('rejected playback is visible and a second press can retry without an unhan
   const h = harness(); await h.initialize(); const ws = h.instances[0];
   ws.playError = new Error('Playback requires another gesture'); h.press(); ws.ready(); await flush();
   assert.equal(h.ctx.isPlaying, false); assert.equal(h.ctx.playRequestedRef.current, false);
-  assert.equal(h.ctx.waveErr, 'Playback requires another gesture');
+  assert.equal(h.ctx.waveErr, 'Playback could not start. Tap Play to try again.');
   ws.playError = null; h.press(); await flush(); assert.equal(h.ctx.isPlaying, true);
   assert.equal(h.ctx.waveErr, null); assert.equal(ws.loadCalls, 1);
 });
@@ -417,7 +417,7 @@ test('native playback rejection is visible and the next gesture recovers', async
   h.instances[0].emit('error', new Error('Failed to fetch')); await flush();
   const audio = h.native[0]; h.press(); audio.playError = new Error('Native play interrupted');
   h.press(); await flush(); assert.equal(h.ctx.isPlaying, false);
-  assert.equal(h.ctx.waveErr, 'Native play interrupted');
+  assert.equal(h.ctx.waveErr, 'Playback could not start. Tap Play to try again.');
   audio.playError = null; h.press(); await flush(); assert.equal(h.ctx.isPlaying, true);
   assert.equal(h.ctx.waveErr, null);
 });
@@ -452,4 +452,20 @@ test('Space requests first Play but preserves native button, text input and mobi
   h.instances[0].ready(); await flush();
   assert.equal(tapped.playCalls, 1);
   h.unmount(); assert.equal(tapped.paused, true); assert.equal(tapped.src, '');
+});
+
+test('waveform timeout preserves a playable audio stream', async () => {
+  const h = harness();
+  await h.initialize();
+  h.press();
+  const ws = h.instances[0];
+  ws.audio.HAVE_CURRENT_DATA = 2;
+  ws.audio.readyState = 2;
+  h.fire(12000);
+  assert.equal(h.ctx.isPlaying, true);
+  assert.equal(h.ctx.waveErr, null);
+  assert.equal(ws.audio.paused, false);
+  assert.equal(h.timers.size, 0);
+  h.press();
+  assert.equal(ws.audio.paused, true);
 });

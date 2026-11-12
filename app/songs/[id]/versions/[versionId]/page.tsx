@@ -1127,7 +1127,9 @@ function VersionPageInner() {
     if (loadId !== waveLoadIdRef.current || (error instanceof Error && error.name === 'AbortError')) return;
     playRequestedRef.current = false;
     setIsPlaying(false);
-    setWaveErr(error instanceof Error ? error.message : 'Playback could not start. Press Play to try again.');
+    setWaveErr(error instanceof Error && error.name === 'NotAllowedError'
+      ? 'Playback was blocked by the browser. Tap Play to try again.'
+      : 'Playback could not start. Tap Play to try again.');
   }, []);
 
   const handlePlaybackToggle = useCallback(() => {
@@ -1161,9 +1163,10 @@ function VersionPageInner() {
       if (!audio.getAttribute('src')) audio.src = audioUrl;
       const play = wavesurferRef.current ? wavesurferRef.current.play() : audio.play();
       void play.catch(error => reportPlaybackFailure(error, loadId));
-      if (waveErr) {
+      if (waveErr && !waveErr.startsWith('Playback ')) {
         retryWaveform('manual');
       } else {
+        setWaveErr(null);
         startWaveformLoadRef.current?.();
       }
       return;
@@ -1726,6 +1729,14 @@ function VersionPageInner() {
       startWaveformLoadRef.current = null;
       logVersionInit('wave:init-failed', { loadId, message });
 
+      // WaveSurfer decodes separately from the media element. Keep a playable
+      // stream attached if that separate request or decode fails.
+      if (!audio.error && audio.readyState >= audio.HAVE_CURRENT_DATA) {
+        setIsRetryingWave(false);
+        setIsReady(true);
+        return;
+      }
+
       if (playRequestedRef.current && !waveAutoRetryUsedRef.current) {
         waveAutoRetryUsedRef.current = true;
         setWaveErr('Waveform load interrupted. Retrying…');
@@ -1748,13 +1759,17 @@ function VersionPageInner() {
     const handleWaveError = (error: Error) => {
       const message = error?.message || String(error);
       if (loadId !== waveLoadIdRef.current || failureHandled || fallbackStarted || message.toLowerCase().includes('aborted')) return;
-      if (!playRequestedRef.current) {
+      if (!playRequestedRef.current || (!audio.error && audio.readyState >= audio.HAVE_CURRENT_DATA)) {
         handleWaveFailure(message);
         return;
       }
       fallbackStarted = true;
       clearWaveTimers();
       void playNativeAudioFallback(url, message, loadId).catch(fallbackError => {
+        if (fallbackError instanceof Error && fallbackError.name === 'NotAllowedError') {
+          reportPlaybackFailure(fallbackError, loadId);
+          return;
+        }
         handleWaveFailure(fallbackError instanceof Error ? fallbackError.message : 'Failed to load audio. Please try again.');
       });
     };
@@ -3060,7 +3075,7 @@ function VersionPageInner() {
                       <button
                         type="button"
                         className={styles.waveRetryBtn}
-                        onClick={() => retryWaveform('manual')}
+                        onClick={waveErr.startsWith('Playback ') ? handlePlaybackToggle : () => retryWaveform('manual')}
                       >
                         Retry
                       </button>
