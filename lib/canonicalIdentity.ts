@@ -69,16 +69,17 @@ export function buildCanonicalIdentity(bootstrap: BootstrapResult): CanonicalIde
   };
 }
 
-export async function resolveCanonicalIdentity(timing?: RequestTiming) {
+export async function resolveCanonicalIdentity(timing?: RequestTiming, options?: { preferExistingProfile?: boolean }) {
   const user = timing
     ? await timing.measure('auth-user', getCurrentAuthenticatedUser)
     : await getCurrentAuthenticatedUser();
 
   if (!user) return null;
 
+  const bootstrapAccount = () => bootstrapAccountForUser(user, timing, undefined, options?.preferExistingProfile);
   const bootstrap = timing
-    ? await timing.measure('account-bootstrap', () => bootstrapAccountForUser(user, timing))
-    : await bootstrapAccountForUser(user);
+    ? await timing.measure('account-bootstrap', bootstrapAccount)
+    : await bootstrapAccount();
 
   return {
     bootstrap,
