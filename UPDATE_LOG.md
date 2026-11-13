@@ -10209,3 +10209,5 @@ Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the hosted checks, live 
 - 12 November 2026. Recorded Production playback acceptance on iPhone Pro Max in Chrome and Safari. The original reporter’s device was unavailable.
 
 - Added the Supabase staging webhook adapter, packaging script and local smoke fixture for B43. Recorded the verification and rollout status in LAUNCH_CHECKLIST.md.
+
+- 13 November 2026. Recorded the B43 hosted staging expiry and replay checks in LAUNCH_CHECKLIST.md.
