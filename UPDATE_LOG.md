@@ -10211,3 +10211,5 @@ Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the hosted checks, live 
 - Added the Supabase staging webhook adapter, packaging script and local smoke fixture for B43. Recorded the verification and rollout status in LAUNCH_CHECKLIST.md.
 
 - 13 November 2026. Recorded the B43 hosted staging expiry and replay checks in LAUNCH_CHECKLIST.md.
+
+- 13 November 2026. Reconciled the L6 acceptance and wider-launch tables in LAUNCH_CHECKLIST.md with hosted B43 billing evidence.
