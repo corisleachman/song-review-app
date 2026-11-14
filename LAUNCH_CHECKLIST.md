@@ -675,3 +675,5 @@ B43 Supabase candidate. Generate the isolated Edge Function with `node scripts/p
 13 November 2026 B43 staging checkpoint. Stripe Test mode expired the disposable trial when its clock advanced. The hosted Supabase webhook changed the linked workspace from Pro to Free and cleared its subscription ID. Stripe accepted a targeted replay and the workspace stayed Free with one processing attempt in the ledger. Removed the disposable workspace. Production rollout remains separate.
 
 14 November L6 keyboard checkpoint. Hosted staging Chrome exposed incorrect focus after cancelling a timestamped comment. The fix restores the opening control and supports Escape. Desktop browser regression passed locally. Hosted verification pending.
+
+14 November 2026 L6 comment focus verification. Signed-in Chrome on the PR #157 Preview confirmed Escape restores focus to the inline Add comment button and Cancel restores focus to the panel Add button. Merge 928c14e0 is on Ready Production deployment dpl_2BzhGXkt8sepp1jvAnuCnd9uW8iS. Production login returned HTTP 200. Signed-in Production interaction has not been checked.

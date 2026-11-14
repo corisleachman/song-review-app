@@ -10217,3 +10217,5 @@ Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the hosted checks, live 
 - 14 November 2026. Recorded hosted staging song upload, playback and comment verification in LAUNCH_CHECKLIST.md.
 
 - 14 November 2026. Updated the version page and VersionCommentsPanel to restore focus to the comment opener on Cancel or Escape. Added desktop coverage in song-player.spec.mjs.
+
+- 14 November 2026. Recorded Preview keyboard verification and confirmed the Production deployment for the comment focus fix in LAUNCH_CHECKLIST.md.
