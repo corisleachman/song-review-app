@@ -10239,3 +10239,5 @@ Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the hosted checks, live 
 - Recorded hosted player accessibility semantics in LAUNCH_CHECKLIST.md.
 
 - Reconciled B35 and B40 hosted scope in LAUNCH_API_ACCESS_MATRIX.md and LAUNCH_CHECKLIST.md.
+
+- Recorded staged billing visibility and remaining launch decisions in LAUNCH_CHECKLIST.md and LAUNCH_API_ACCESS_MATRIX.md.
