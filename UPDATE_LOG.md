@@ -10213,3 +10213,5 @@ Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the hosted checks, live 
 - 13 November 2026. Recorded the B43 hosted staging expiry and replay checks in LAUNCH_CHECKLIST.md.
 
 - 13 November 2026. Reconciled the L6 acceptance and wider-launch tables in LAUNCH_CHECKLIST.md with hosted B43 billing evidence.
+
+- 14 November 2026. Recorded hosted staging song upload, playback and comment verification in LAUNCH_CHECKLIST.md.
