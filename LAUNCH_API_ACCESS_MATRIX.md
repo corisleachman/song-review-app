@@ -6,6 +6,8 @@ This inventory classifies all 68 API route files by intended boundary; forwarded
 
 Beta exception accepted 4 November 2026: S2 exits on the layered evidence and limits in [the accepted review](LAUNCH_SECURITY_REVIEW.md#remaining-l5-beta-closeout-proposal4-november2026). Pending cells below remain unperformed. Consolidated journeys carry to L6. The original exhaustive procedure is retained for further coverage.
 
+Hosted staging evidence carried into L6. B35 verified invite acceptance, membership removal and rejection of replay. B40 verified four private reads in one session before joining, as a member and after removal. The reads were denied, allowed and denied respectively. The participant's original Owner workspace was restored. See [the launch checklist](LAUNCH_CHECKLIST.md#b35-accepted-invite-replay-candidate-3-november-2026) for the recorded scope. Untested signed-in combinations across actions, playlists and billing remain open.
+
 For each method, record the final route class, identity check, resource/workspace predicate, role requirement, input validation and owner/member/outsider/public staging result for exhaustive coverage. See [review procedure](LAUNCH_SECURITY_REVIEW.md#next-slice-api-boundary-matrix).
 
 | Route | Class | Exported methods | Boundary reference to inspect | Negative-access verification |
@@ -34,7 +36,7 @@ For each method, record the final route class, identity check, resource/workspac
 | `/api/dashboard/summary` | Session + resource/workspace scope | GET | `resolveCanonicalIdentity` | Hosted signed-out methods 401 in staging/Production (2 Nov); Local handler tests pass; signed-in role matrix pending |
 | `/api/email/notify-thread` | Signed internal request | POST | `verifyInternalRequest` | Local handler tests pass; hosted negatives pending |
 | `/api/feedback` | Public submission / optional identity | POST | Canonical optional user; trusted visitor IP; DB atomic five/hour; RLS denies direct clients | PR #72: staging HTTP ten simultaneous -> five saved/five 429; SQL quota/expiry/failure/direct-role cases pass both DBs. Production no-write validation/honeypot pass. Fixtures removed; no provider emails |
-| `/api/invites/[token]/accept` | Session + resource/workspace scope | POST | `getCurrentAuthenticatedUser` | Hosted signed-out methods 401 in staging/Production (2 Nov); Signed-in role checks pending |
+| `/api/invites/[token]/accept` | Session + resource/workspace scope | POST | `getCurrentAuthenticatedUser` | Hosted signed-out methods 401 in staging/Production (2 Nov); B35 hosted staging acceptance and post-removal replay rejection passed. Other signed-in roles remain open |
 | `/api/invites/[token]` | Public token lookup | GET | Inspect route / delegated helper | Not yet exercised |
 | `/api/plan-events` | Public submission / optional identity | POST | Inspect route / delegated helper | Not yet exercised |
 | `/api/playlists/[id]/image` | Session + resource/workspace scope | POST, DELETE | `resolvePlaylistAccess` | Hosted signed-out methods 401 in staging/Production (2 Nov); Signed-in role checks pending |
