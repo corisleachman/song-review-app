@@ -2234,7 +2234,9 @@ function VersionPageInner() {
     showStatusToast('Action resolved in this version');
   };
 
-  const startCommentAtCurrentTime = () => {
+  const commentTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const startCommentAtCurrentTime = (event: React.MouseEvent<HTMLButtonElement>) => {
+    commentTriggerRef.current = event.currentTarget;
     if (commentDraftDirtyRef.current && !confirmDiscardCommentDraft()) return;
     const timestamp = duration > 0 ? clamp(currentTime, 0, duration) : Math.max(0, currentTime);
     const nearbyThread = threads.find(thread => Math.abs(thread.timestamp_seconds - timestamp) < 2) ?? null;
@@ -2262,6 +2264,11 @@ function VersionPageInner() {
   };
 
   const cancelNewComment = () => {
+    const trigger = commentTriggerRef.current;
+    if (commentsOverlayMode && trigger && !commentsSurfaceRef.current?.contains(trigger)) {
+      closeCommentsSurface();
+    }
+    requestAnimationFrame(() => trigger?.focus());
     setPendingTimestamp(null);
     pendingTimestampRef.current = null;
     setNearbyThreadId(null);
