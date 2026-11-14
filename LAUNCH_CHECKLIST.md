@@ -691,3 +691,5 @@ L6 live link checkpoint. All 16 distinct same-origin HTML links from the 10 site
 L6 Production signup and private route check. Free, Pro annual and Studio annual signup pages returned 200. Four Chromium tests passed across desktop and mobile for homepage plan selection and paid signup copy. Signed-out dashboard, settings and playlists returned to login with their original path. Upload also required login and used dashboard as the return destination. No checkout was started.
 
 14 November L6 player accessibility. In staging Chrome, End moved the loaded seek slider to the end of the eight-second test tone and exposed 0:08 of 0:08. Enter opened the timestamped composer and focused the Comment field. Production Chrome exposed both sign-in options by name and the player loop pressed state. VoiceOver speech remains unverified.
+
+L6 workspace access evidence reconciled in LAUNCH_API_ACCESS_MATRIX.md. B35 invite replay and B40 staged membership lifecycle passed in the recorded scope. Broader signed-in route and role coverage remains open.
