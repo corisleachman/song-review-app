@@ -10235,3 +10235,5 @@ Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the hosted checks, live 
 - Recorded the 14 November B17 origin and PostgREST evidence in LAUNCH_CHECKLIST.md.
 
 - Recorded the live signup and private route checks in LAUNCH_CHECKLIST.md.
+
+- Recorded hosted player accessibility semantics in LAUNCH_CHECKLIST.md.
