@@ -10233,3 +10233,5 @@ Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the hosted checks, live 
 - Updated LAUNCH_CHECKLIST.md with the remaining L6 performance and device/access decisions for wider promotion.
 
 - Recorded the 14 November B17 origin and PostgREST evidence in LAUNCH_CHECKLIST.md.
+
+- Recorded the live signup and private route checks in LAUNCH_CHECKLIST.md.
