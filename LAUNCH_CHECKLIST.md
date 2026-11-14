@@ -702,3 +702,5 @@ L6 workspace access evidence reconciled in LAUNCH_API_ACCESS_MATRIX.md. B35 invi
 - Keep the current beta running. Review the existing monitoring limits, previous Ready deployment rollback and configured ten-minute lifetime of already-issued playlist audio URLs before wider promotion. The owner records the decision. L6 remains open.
 
 14 November L6 access checkpoint. On the release source, 450 local API, artwork and auth checks passed. In hosted staging, the owner opened the existing draft playlist and saw its test track. Regular-member and post-removal draft playlist checks remain open.
+
+L6 hosted draft playlist checkpoint. The owner opened the draft and saw the test track. With Vercel deployment access and no app session, the page returned 307 and the private API returned 401. Source review confirms the private API scopes access to the resolved active workspace. Hosted signed-in member and post-removal behaviour remain unverified.
