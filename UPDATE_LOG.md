@@ -10247,3 +10247,5 @@ Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the hosted checks, live 
 - Recorded the hosted signed-out draft playlist checks in LAUNCH_CHECKLIST.md.
 
 - Recorded the staging draft member access and revocation check in LAUNCH_CHECKLIST.md and LAUNCH_API_ACCESS_MATRIX.md.
+
+- 14 November 2026: Updated `LAUNCH_CHECKLIST.md` with Supabase follow-up ticket SU-552619 for B17 dashboard latency. Provider diagnosis is pending.
