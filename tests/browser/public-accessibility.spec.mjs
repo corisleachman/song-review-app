@@ -237,6 +237,7 @@ test('plan confirmation blocks checkout for workspace members', async ({ page },
 
 test('login keeps the beta account journey Google-only and keyboard reachable', async ({ page }) => {
   await prepareDeterministicPage(page);
+  await page.route('**/api/auth/email/config', route => route.fulfill({ json: { enabled: false } }));
   const response = await page.goto('/login', { waitUntil: 'domcontentloaded' });
 
   expect(response?.ok()).toBe(true);
@@ -247,6 +248,21 @@ test('login keeps the beta account journey Google-only and keyboard reachable', 
   const googleButton = page.getByRole('button', { name: 'Continue with Google' });
   await tabTo(page, googleButton);
   await expect(googleButton).toBeFocused();
+  await expectNoBlockingAxeViolations(page);
+});
+
+test('email-enabled login offers both options by keyboard', async ({ page }) => {
+  await prepareDeterministicPage(page);
+  await page.route('**/api/auth/email/config', route => route.fulfill({ json: { enabled: true } }));
+  await page.goto('/login', { waitUntil: 'domcontentloaded' });
+
+  const googleButton = page.getByRole('button', { name: 'Log in or sign up with Google', exact: true });
+  const emailButton = page.getByRole('button', { name: 'Log in and sign up with email', exact: true });
+  await expect(googleButton).toBeVisible();
+  await tabTo(page, googleButton);
+  await expect(googleButton).toBeFocused();
+  await tabTo(page, emailButton);
+  await expect(emailButton).toBeFocused();
   await expectNoBlockingAxeViolations(page);
 });
 
