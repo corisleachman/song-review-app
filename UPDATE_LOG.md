@@ -10241,3 +10241,5 @@ Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the hosted checks, live 
 - Reconciled B35 and B40 hosted scope in LAUNCH_API_ACCESS_MATRIX.md and LAUNCH_CHECKLIST.md.
 
 - Recorded staged billing visibility and remaining launch decisions in LAUNCH_CHECKLIST.md and LAUNCH_API_ACCESS_MATRIX.md.
+
+- Recorded the L6 owner draft playlist check and local access suite result in LAUNCH_CHECKLIST.md.

@@ -700,3 +700,5 @@ L6 workspace access evidence reconciled in LAUNCH_API_ACCESS_MATRIX.md. B35 invi
 - Chrome verified the player seek announcement text and comment focus. Direct VoiceOver speech and physical iPad coverage remain open.
 - Supabase accepted a follow-up referencing SU-550614. A provider diagnosis remains pending. The observed 9–12 second membership reads justify keeping wider promotion on hold pending mitigation or explicit acceptance.
 - Keep the current beta running. Review the existing monitoring limits, previous Ready deployment rollback and configured ten-minute lifetime of already-issued playlist audio URLs before wider promotion. The owner records the decision. L6 remains open.
+
+14 November L6 access checkpoint. On the release source, 450 local API, artwork and auth checks passed. In hosted staging, the owner opened the existing draft playlist and saw its test track. Regular-member and post-removal draft playlist checks remain open.
