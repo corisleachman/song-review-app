@@ -10229,3 +10229,5 @@ Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the hosted checks, live 
 - 14 November 2026. Updated tests/browser/public-accessibility.spec.mjs to exercise both login configurations and recorded hosted verification in LAUNCH_CHECKLIST.md.
 
 - Recorded the live sitemap link and fragment crawl in LAUNCH_CHECKLIST.md.
+
+- Updated LAUNCH_CHECKLIST.md with the remaining L6 performance and device/access decisions for wider promotion.
