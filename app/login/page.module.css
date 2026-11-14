@@ -91,7 +91,6 @@
   flex-direction: column;
   justify-content: center;
   padding: 0 48px 56px;
-  animation: fadeUp 0.55s 0.06s cubic-bezier(0.23, 1, 0.32, 1) both;
   overflow: hidden;
   min-width: 0;
 }
@@ -155,8 +154,8 @@
   transition: background 140ms, border-color 140ms;
 }
 .btnEmailChoice:hover:not(:disabled) {
-  background: #e04a3c;
-  border-color: #e04a3c;
+  background: #b82e24;
+  border-color: #b82e24;
 }
 .btnEmailChoice:disabled { opacity: 0.6; cursor: not-allowed; }
 
@@ -390,11 +389,6 @@
   font-size: 11px;
   color: rgba(244,240,232,0.2);
   letter-spacing: 0.05em;
-}
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0); }
 }
 
 @media (max-width: 768px) {
