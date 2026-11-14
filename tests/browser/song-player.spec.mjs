@@ -274,3 +274,23 @@ test('native media resume reauthorises once without losing position or loop stat
   expect((await mediaState(page)).activePlayers).toBe(1);
   expect(fixture.errors).toEqual([]);
 });
+
+test('closing a new comment restores focus to its opener', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-chromium', 'Both desktop comment entry points are visible');
+  await preparePlayer(page, false);
+  const comment = page.getByRole('textbox', { name: 'Comment', exact: true });
+  const inline = page.getByRole('button', { name: /^\+ Add comment at/ });
+  const panel = page.getByRole('button', { name: /^\+ Add at/ });
+
+  await inline.press('Enter');
+  await expect(comment).toBeFocused();
+  await comment.press('Escape');
+  await expect(comment).toHaveCount(0);
+  await expect(inline).toBeFocused();
+
+  await panel.press('Enter');
+  await expect(comment).toBeFocused();
+  await page.getByRole('button', { name: 'Cancel', exact: true }).press('Enter');
+  await expect(comment).toHaveCount(0);
+  await expect(panel).toBeFocused();
+});

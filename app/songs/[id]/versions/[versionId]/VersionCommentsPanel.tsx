@@ -47,7 +47,7 @@ interface VersionCommentsPanelProps {
   threadLinkCopied: boolean;
   timestampCopied: boolean;
   onClose: () => void;
-  onStartComment: () => void;
+  onStartComment: React.MouseEventHandler<HTMLButtonElement>;
   onUseCurrentTime: () => void;
   onChangeNewComment: (value: string) => void;
   onSubmitThread: () => void;
@@ -117,7 +117,6 @@ export default function VersionCommentsPanel({
 }: VersionCommentsPanelProps) {
   const newCommentRef = useRef<HTMLTextAreaElement>(null);
   const replyInputRef = useRef<HTMLInputElement>(null);
-  const addCommentButtonRef = useRef<HTMLButtonElement>(null);
   const selectedThread = threads.find(thread => thread.id === selectedThreadId) ?? null;
   const nearbyThread = threads.find(thread => thread.id === nearbyThreadId) ?? null;
   const showNewCommentComposer = pendingTimestamp !== null && nearbyThreadId === null;
@@ -131,11 +130,6 @@ export default function VersionCommentsPanel({
   const replyToNearbyThread = () => {
     onReplyNearby();
     window.requestAnimationFrame(() => replyInputRef.current?.focus());
-  };
-
-  const cancelNewComment = () => {
-    onCancelNewComment();
-    window.requestAnimationFrame(() => addCommentButtonRef.current?.focus());
   };
 
   return (
@@ -156,7 +150,6 @@ export default function VersionCommentsPanel({
         </div>
         <div className={styles.commentsHeaderActions}>
           <button
-            ref={addCommentButtonRef}
             type="button"
             className={styles.addCommentBtn}
             onClick={onStartComment}
@@ -186,13 +179,20 @@ export default function VersionCommentsPanel({
           <div className={styles.nearbyThreadActions}>
             <button type="button" className={styles.postBtn} onClick={replyToNearbyThread}>Reply in thread</button>
             <button type="button" className={styles.cancelBtn} onClick={onStartSeparateComment}>Start separate comment</button>
-            <button type="button" className={styles.textBtn} onClick={cancelNewComment}>Cancel</button>
+            <button type="button" className={styles.textBtn} onClick={onCancelNewComment}>Cancel</button>
           </div>
         </div>
       )}
 
       {showNewCommentComposer && (
-        <section className={styles.newCommentComposer} aria-label={`New comment at ${formatTimestamp(pendingTimestamp)}`}>
+        <section className={styles.newCommentComposer} aria-label={`New comment at ${formatTimestamp(pendingTimestamp)}`}
+          onKeyDown={event => {
+            if (event.key !== 'Escape' || posting) return;
+            event.preventDefault();
+            event.stopPropagation();
+            onCancelNewComment();
+          }}
+        >
           <div className={styles.composerHeading}>
             <div>
               <span className={styles.composerLabel}>NEW TIMESTAMPED COMMENT</span>
@@ -225,7 +225,7 @@ export default function VersionCommentsPanel({
           {commentError && <p id="new-comment-error" className={styles.commentError} role="alert">{commentError}</p>}
           <div className={styles.composerActions}>
             <span className={styles.composerHint}>Enter posts · Shift+Enter adds a new line</span>
-            <button type="button" className={styles.cancelBtn} onClick={cancelNewComment} disabled={posting}>Cancel</button>
+            <button type="button" className={styles.cancelBtn} onClick={onCancelNewComment} disabled={posting}>Cancel</button>
             <button type="button" className={styles.postBtn} onClick={onSubmitThread} disabled={!newComment.trim() || posting}>
               {posting ? 'Posting…' : 'Post comment'}
             </button>
