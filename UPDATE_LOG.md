@@ -10245,3 +10245,5 @@ Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the hosted checks, live 
 - Recorded the L6 owner draft playlist check and local access suite result in LAUNCH_CHECKLIST.md.
 
 - Recorded the hosted signed-out draft playlist checks in LAUNCH_CHECKLIST.md.
+
+- Recorded the staging draft member access and revocation check in LAUNCH_CHECKLIST.md and LAUNCH_API_ACCESS_MATRIX.md.
