@@ -2223,13 +2223,14 @@
 
 /* ── Share modal ─────────────────────────────────────────────── */
 .shareModalOverlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
   background: rgba(10,8,8,0.72);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 200;
+  z-index: 10001;
+  padding: 16px;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
 }
@@ -2239,6 +2240,8 @@
   width: 440px;
   max-width: calc(100vw - 32px);
   position: relative;
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
 }
 .shareModalHeader {
   padding: 20px 24px 16px;

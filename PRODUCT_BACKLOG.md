@@ -908,3 +908,8 @@ Released on 9 November. Signed-in browser fixtures passed. Production deployment
 ### B49. First Play and waveform recovery
 
 Cycles v1 showed browser playback denial and waveform timeout on 11 November. Keep playable audio attached if waveform decoding fails. Recover browser playback denial from a fresh tap. Verify a cold song-page load, tap-to-audio timing, seek and pause on the affected browser. B17 remains the dashboard latency workstream.
+
+
+## B50. Mobile public song Share button
+
+The mobile song version page omits Share from its bottom navigation. Expose the existing Share Song dialog there so users can create and copy a public listen link under the existing sharing rules. Verify the dialog on a phone viewport and public streaming and revocation with a disposable song.
