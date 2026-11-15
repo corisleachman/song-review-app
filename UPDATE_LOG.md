@@ -10257,3 +10257,5 @@ Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the hosted checks, live 
 - 15 November 2026: Recorded the user’s Production mobile share pass for B50 in `LAUNCH_CHECKLIST.md` and `PRODUCT_BACKLOG.md`.
 
 - 15 November 2026: Added the read-only B06 signup directory in `app/admin/signups/page.tsx` and exposed verified email status in `lib/currentUser.ts`.
+
+- Added server-side signup search and preserved the query across directory pages in `app/admin/signups/page.tsx` for B06.
