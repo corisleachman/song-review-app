@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { getCurrentAuthenticatedUser } from '@/lib/currentUser';
 import { supabaseServer } from '@/lib/supabaseServer';
 import styles from '../feedback/feedback.module.css';
+import directory from './signups.module.css';
 
 export const dynamic = 'force-dynamic';
 
@@ -74,27 +75,40 @@ export default async function AdminSignupsPage({
         <p className={styles.error} role="alert">Could not load signups. Refresh to try again.</p>
       ) : (
         <>
-          {users.length === 0 && <p>No signups on this page.</p>}
-          <ul>
-            {users.map(user => {
-              const ownedWorkspaces = workspaces.data?.filter(workspace => workspace.created_by_user_id === user.id) ?? [];
-              return (
-                <li key={user.id}>
-                  <strong>{user.email ?? user.id}</strong>
-                  {' · '}
-                  <time dateTime={user.created_at}>{user.created_at.slice(0, 10)}</time>
-                  {ownedWorkspaces.length ? (
-                    <ul>
-                      {ownedWorkspaces.map(workspace => (
-                        <li key={workspace.id}>{workspace.name} · {workspace.plan}</li>
-                      ))}
-                    </ul>
-                  ) : <p>No created workspace</p>}
-                </li>
-              );
-            })}
-          </ul>
-          <nav aria-label="Signup pages" className={styles.filters}>
+          {users.length === 0 ? <p>No signups on this page.</p> : (
+            <table className={directory.table} aria-label="Signups">
+              <thead>
+                <tr>
+                  <th scope="col">Email</th>
+                  <th scope="col">Signup date</th>
+                  <th scope="col">Workspaces and plans</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map(user => {
+                  const ownedWorkspaces = workspaces.data?.filter(workspace => workspace.created_by_user_id === user.id) ?? [];
+                  return (
+                    <tr key={user.id}>
+                      <th scope="row">{user.email ?? user.id}</th>
+                      <td><time dateTime={user.created_at}>{user.created_at.slice(0, 10)}</time></td>
+                      <td>
+                        {ownedWorkspaces.length ? (
+                          <ul className={directory.workspaces} role="list">
+                            {ownedWorkspaces.map(workspace => (
+                              <li key={workspace.id}>
+                                {workspace.name} <span className={directory.plan}>{workspace.plan}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : <span className={directory.empty}>No created workspace</span>}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+          <nav aria-label="Signup pages" className={`${styles.filters} ${directory.pagination}`}>
             {page > 1 && <Link href={pageLink(page - 1)}>Previous</Link>}
             <span>Page {page}</span>
             {users.length === PAGE_SIZE && <Link href={pageLink(page + 1)}>Next</Link>}

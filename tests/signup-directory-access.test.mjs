@@ -28,6 +28,7 @@ for (const [label, identity] of [
         },
       },
       '../feedback/feedback.module.css': {},
+      './signups.module.css': {},
     };
     new Function('require', 'exports', source)(name => {
       assert.ok(Object.hasOwn(dependencies, name), `Unexpected dependency: ${name}`);
