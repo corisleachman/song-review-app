@@ -10259,3 +10259,5 @@ Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the hosted checks, live 
 - 15 November 2026: Added the read-only B06 signup directory in `app/admin/signups/page.tsx` and exposed verified email status in `lib/currentUser.ts`.
 
 - Added server-side signup search and preserved the query across directory pages in `app/admin/signups/page.tsx` for B06.
+
+- Updated `tests/current-user-boundary.test.mjs` to verify email confirmation comes from the Auth user record for B06.
