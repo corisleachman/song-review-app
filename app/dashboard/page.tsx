@@ -9,7 +9,7 @@ import { SongStatus, SONG_STATUS_VALUES, getSongStatusLabel } from '@/lib/songWo
 import { getIdentity, clearAuth, clearIdentity } from '@/lib/auth';
 import { useDialogFocus } from '@/lib/useDialogFocus';
 import { createClient } from '@/lib/supabase';
-import { clearDashboardScopes, readDashboardScope, writeDashboardScope } from '@/lib/dashboardScopeCache';
+import { clearDashboardScopes, liveArtworkUrl, readDashboardScope, writeDashboardScope } from '@/lib/dashboardScopeCache';
 import AppShell from '@/components/AppShell';
 import UpgradeModal from '@/components/UpgradeModal';
 import UpgradeSuccessModal from '@/components/UpgradeSuccessModal';
@@ -216,6 +216,16 @@ function getWorkspaceScope(viewerKey: string, workspaceId: string | null) {
 
 function getSongSeenStorageKey(viewerKey: string, workspaceId: string | null) {
   return `song-review-song-seen:${getWorkspaceScope(viewerKey, workspaceId)}`;
+}
+
+// Cached cards keep their song data but drop signed artwork links that have
+// expired, so a returning visit never fires one session check per card.
+function withLiveArtwork(songs: Song[]): Song[] {
+  const now = Date.now();
+  return songs.map(song => {
+    const imageUrl = liveArtworkUrl(song.image_url, now);
+    return imageUrl === (song.image_url ?? null) ? song : { ...song, image_url: imageUrl };
+  });
 }
 
 function getSongCacheKey(viewerKey: string, workspaceId: string | null) {
@@ -444,9 +454,9 @@ function DashboardContent() {
       setAvatarUrl(scope.identity.avatarUrl ?? null);
       setWorkspacePlan(scope.plan);
       setWorkspaceName(scope.identity.workspaceName);
-      setWorkspaceImageUrl(scope.identity.workspaceImageUrl ?? null);
+      setWorkspaceImageUrl(liveArtworkUrl(scope.identity.workspaceImageUrl));
       setMembershipRole(scope.identity.membershipRole);
-      setSongs(prev => carryResolvedAudioUrls(cachedPayload.songs, [...prev, ...queueRef.current]));
+      setSongs(prev => carryResolvedAudioUrls(withLiveArtwork(cachedPayload.songs), [...prev, ...queueRef.current]));
       setLoading(false);
       logDashboardVisible(performanceTrace, 'cache');
     }
@@ -669,7 +679,7 @@ function DashboardContent() {
           && Number.isFinite(cachedPayload.cachedAt)
           && Date.now() - cachedPayload.cachedAt < DASHBOARD_CACHE_TTL_MS;
         if (isFresh && Array.isArray(cachedPayload.songs) && cachedPayload.songs.length > 0) {
-          setSongs(prev => carryResolvedAudioUrls(cachedPayload.songs, [...prev, ...queueRef.current]));
+          setSongs(prev => carryResolvedAudioUrls(withLiveArtwork(cachedPayload.songs), [...prev, ...queueRef.current]));
           setLoading(false); // show cached songs immediately
           logDashboardVisible(performanceTrace, 'cache');
           // Fetch fresh in background — no loading spinner

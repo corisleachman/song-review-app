@@ -90,3 +90,30 @@ export function clearDashboardScopes() {
     // Storage unavailable: nothing cached to clear.
   }
 }
+
+// Signed artwork links (/api/media/artwork?access=...) expire after ten
+// minutes. Fetching an expired one makes the server re-check the viewer's
+// session and workspace before redirecting, so painting a page of cached cards
+// with expired links sends one full session check per card at once. After a
+// long idle tab that burst stalled the session check and the dashboard
+// refresh themselves. Returns null for an expired (or unreadable) signed link
+// so the card shows its placeholder until the fresh response brings new links.
+// The expiry is only a hint; the server still checks every link.
+const ARTWORK_ROUTE_PREFIX = '/api/media/artwork?access=';
+const ARTWORK_EXPIRY_MARGIN_SECONDS = 60;
+
+export function liveArtworkUrl(url: string | null | undefined, nowMs = Date.now()): string | null {
+  if (!url) return null;
+  if (!url.startsWith(ARTWORK_ROUTE_PREFIX)) return url;
+  try {
+    const token = decodeURIComponent(url.slice(ARTWORK_ROUTE_PREFIX.length));
+    const payload = token.split('.')[0] ?? '';
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+    const { expiresAt } = JSON.parse(atob(padded)) as { expiresAt?: unknown };
+    if (typeof expiresAt !== 'number' || !Number.isFinite(expiresAt)) return null;
+    return expiresAt - ARTWORK_EXPIRY_MARGIN_SECONDS > nowMs / 1000 ? url : null;
+  } catch {
+    return null;
+  }
+}
