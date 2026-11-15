@@ -69,3 +69,21 @@ test('artwork: a staging token cannot be replayed against another project even w
   const token = signArtworkAccess(input, key, now);
   assert.equal(exports.readArtworkAccess(token, key, now, false, 'https://other-project.invalid'), null);
 });
+
+const cacheExports = {};
+new Function('require', 'exports', ts.transpileModule(readFileSync(new URL('../lib/dashboardScopeCache.ts', import.meta.url), 'utf8'), {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+}).outputText)(createRequire(import.meta.url), cacheExports);
+const { liveArtworkUrl } = cacheExports;
+
+test('artwork: cached dashboard paint drops expired signed links instead of renewing them all at once', () => {
+  const url = `/api/media/artwork?access=${signArtworkAccess(input, key, now)}`;
+  const { expiresAt } = readArtworkAccess(url.split('=')[1], key, now);
+  assert.equal(liveArtworkUrl(url, now * 1000), url);
+  assert.equal(liveArtworkUrl(url, (expiresAt - 61) * 1000), url);
+  assert.equal(liveArtworkUrl(url, (expiresAt - 60) * 1000), null);
+  assert.equal(liveArtworkUrl(url, (expiresAt + 3600) * 1000), null);
+  assert.equal(liveArtworkUrl('/api/media/artwork?access=not-a-token', now * 1000), null);
+  assert.equal(liveArtworkUrl(null, now * 1000), null);
+  assert.equal(liveArtworkUrl('/legacy-art.jpg', now * 1000), '/legacy-art.jpg');
+});
