@@ -10255,3 +10255,5 @@ Updated LAUNCH_CHECKLIST.md and PRODUCT_BACKLOG.md with the hosted checks, live 
 - 15 November 2026: Reused the song version Share button in mobile navigation. Updated the version page and its stylesheet, `PRODUCT_BACKLOG.md`, and `LAUNCH_CHECKLIST.md` for B50.
 
 - 15 November 2026: Recorded the user’s Production mobile share pass for B50 in `LAUNCH_CHECKLIST.md` and `PRODUCT_BACKLOG.md`.
+
+- 15 November 2026: Added Vercel Speed Insights to the app (PR #179). Goal: collect real-user page-load timings for the dashboard and song pages before any B17/B19 speed fix. Change: measurement only, no app behaviour change. Files: `package.json`, `package-lock.json` (`@vercel/speed-insights` 2.0.0, exact pin), `app/layout.tsx` (`<SpeedInsights />`). Notes: Speed Insights enabled in the Vercel dashboard for song-review-app-v2. Production deployment dpl_CmALgPTgSpgVow7Qz1y9QKD1HgiY (91fe3bd) is Ready and its rendered layout includes the component. Duplicate Vercel Agent PR #180 was closed unmerged. The static marketing page is not covered.
