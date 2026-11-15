@@ -913,3 +913,5 @@ Cycles v1 showed browser playback denial and waveform timeout on 11 November. Ke
 ## B50. Mobile public song Share button
 
 The mobile song version page omits Share from its bottom navigation. Expose the existing Share Song dialog there so users can create and copy a public listen link under the existing sharing rules. Verify the dialog on a phone viewport and public streaming and revocation with a disposable song.
+
+15 November 2026: User confirmed the Production mobile share flow passed after PR #176.
