@@ -1,10 +1,10 @@
 import { readCollaborationInput } from '@/lib/collaborationInput';
 import { safeErrorDetails } from '@/lib/safeErrorDetails';
-import { artworkDeliveryUrl } from '@/lib/artworkAccess';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { isSongStatus } from '@/lib/songWorkflow';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { readSongForWorkspace } from '@/lib/versionPageReads';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -60,33 +60,14 @@ export async function GET(req: NextRequest, props: { params: Promise<{ songId: s
       return NextResponse.json({ error: 'You must be signed in to view this song.' }, { status: 401 });
     }
 
-    const { data, error } = await supabaseServer
-      .from('songs')
-      .select('id, title, image_url, status, account_id, is_public, public_comments_enabled')
-      .eq('id', songId)
-      .maybeSingle();
+    const result = await readSongForWorkspace(songId, resolved.identity.workspaceId);
 
-    if (error) throw error;
-
-    if (!data) {
-      return NextResponse.json({ error: 'Song not found' }, { status: 404 });
-    }
-
-    if (!data.account_id || data.account_id !== resolved.identity.workspaceId) {
-      return NextResponse.json({ error: 'You do not have access to this song.' }, { status: 403 });
-    }
-
-    const { account_id: _accountId, ...song } = data;
-
-    return NextResponse.json(
-      { song: { ...song, image_url: artworkDeliveryUrl('song', song.id, song.image_url) } },
-      {
-        status: 200,
-        headers: {
-          'Cache-Control': 'no-store, max-age=0',
-        },
-      }
-    );
+    return NextResponse.json(result.body, {
+      status: result.status,
+      headers: {
+        'Cache-Control': 'no-store, max-age=0',
+      },
+    });
   } catch (error) {
     console.error('Error fetching song:', safeErrorDetails(error));
     return NextResponse.json({ error: 'Song request failed.' }, { status: 500 });

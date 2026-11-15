@@ -315,6 +315,7 @@ for (const [file, values] of [
   ['app/api/songs/[songId]/route.ts', { songId: song.id }],
   ['app/api/versions/[versionId]/route.ts', { versionId: 'version-a' }],
   ['app/api/dashboard/summary/route.ts', {}],
+  ['app/api/songs/[songId]/versions/[versionId]/route.ts', { songId: song.id, versionId: 'version-a' }],
 ]) {
   test(`${file}: signed-out GET is rejected before database access`, async () => {
     const h = routeHarness(file);
@@ -1636,3 +1637,32 @@ test('signed Stripe lifecycle events only change the linked subscription', async
     });
   }
 });
+
+for (const role of ['owner', 'member']) {
+  test(`version page GET: ${role} reads own workspace in one request but never another workspace`, async () => {
+    const tables = () => ({
+      songs: [song, foreignSong],
+      song_versions: [
+        { id: 'version-a', song_id: song.id, version_number: 1, file_path: null, upload_finalized_at: '2026-11-15T00:00:00Z' },
+        { id: 'version-b', song_id: foreignSong.id, version_number: 1, file_path: 'PRIVATE-AUDIO', upload_finalized_at: '2026-11-15T00:00:00Z' },
+      ],
+    });
+    const route = 'app/api/songs/[songId]/versions/[versionId]/route.ts';
+
+    const allowed = await routeHarness(route, { identity: session(role), tables: tables() })
+      .handler.GET(getRequest(), params({ songId: song.id, versionId: 'version-a' }));
+    assert.equal(allowed.status, 200);
+    const body = await allowed.json();
+    assert.equal(body.song.title, song.title);
+    assert.equal(body.version.id, 'version-a');
+    assert.ok(Array.isArray(body.versions));
+
+    for (const [songId, versionId] of [[foreignSong.id, 'version-a'], [song.id, 'version-b'], [foreignSong.id, 'version-b']]) {
+      const h = routeHarness(route, { identity: session(role), tables: tables() });
+      const denied = await h.handler.GET(getRequest(), params({ songId, versionId }));
+      assert.equal(denied.status, 403, `${songId}/${versionId}`);
+      assert.doesNotMatch(await denied.text(), /PRIVATE/);
+      assert.equal(h.writes.length, 0);
+    }
+  });
+}
