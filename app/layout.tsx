@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import '../styles/globals.css';
 import BetaFeedback from '../components/BetaFeedback';
 
@@ -43,6 +44,7 @@ export default function RootLayout({
       <body>
         {children}
         <BetaFeedback />
+        <SpeedInsights />
       </body>
       <Script src="/cookie-consent.js" strategy="beforeInteractive" />
     </html>
