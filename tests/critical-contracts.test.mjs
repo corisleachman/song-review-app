@@ -1910,3 +1910,28 @@ test('new audio uploads accept the inclusive 50 MB limit and reject anything lar
     assert.equal(policy.validateAudioUploadMetadata({ fileName: 'mix.wav', fileSize, contentType: 'audio/wav' }).reason, 'too_large');
   }
 });
+
+test('dashboard return paints the same user and workspace cache while the canonical request runs', () => {
+  const dashboard = read('app/dashboard/page.tsx');
+  const scopeCache = read('lib/dashboardScopeCache.ts');
+  const switcher = read('components/WorkspaceSwitcher.tsx');
+
+  assertOrdered(dashboard, [
+    "const responsePromise = fetch('/api/dashboard'",
+    'await restoreCachedDashboard(performanceTrace)',
+    'const response = await responsePromise;',
+    'writeDashboardScope(payload);',
+  ], 'dashboard starts the canonical request before painting cached songs');
+  assertIncludesAll(dashboard, [
+    'const userId = data.session?.user?.id;',
+    'readDashboardScope<AccountPlan>(userId)',
+    'getSongCacheKey(userId, scope.workspaceId)',
+    'if (!performanceTrace?.bypassCache)',
+  ], 'cached paint is scoped to the signed-in user and their last workspace');
+  assertIncludesAll(scopeCache, [
+    'parsed.identity?.userId !== userId',
+    'parsed.identity.workspaceId !== parsed.workspaceId',
+  ], 'scope entries are rejected unless they match the session user');
+  assertOrdered(dashboard, ['clearDashboardScopes();', 'clearAuth();'], 'dashboard sign-out clears the cached scope');
+  assertOrdered(switcher, ['clearDashboardScopes();', 'window.location.reload();'], 'workspace switch clears the cached scope first');
+});
