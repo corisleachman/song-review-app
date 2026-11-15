@@ -66,7 +66,7 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B03 | Embed individual publicly shared songs | Not started; plan/access decision required | Later, P2 sharing; playlist embeds already done |
 | B04 | Contextual upgrade prompts and durable funnel events | Foundation partly exists; event work pending | Review beta minimum during L6; automation later |
 | B05 | Lifecycle and behavioural email | Deferred | Later; consent, events, deduplication and frequency controls first |
-| B06 | [Owner signup directory/alerts and promotional Pro grants](PRODUCT_BACKLOG.md#b06-application-owner-admin-signups-and-promotional-pro-access) | Rules confirmed: Free-first beta testers, six months, manual owner grant; alerts to Coris for new accounts on any tier; not implemented/tested | MVP queue; S2 owner-only checks overlap; no activation yet |
+| B06 | [Owner signup directory/alerts and promotional Pro grants](PRODUCT_BACKLOG.md#b06-application-owner-admin-signups-and-promotional-pro-access) | Draft paginated owner-only directory. Search, signup alerts, six-month Pro grants and hosted verification remain open | MVP queue; S2 owner-only checks overlap; no activation yet |
 | B07 | AIFF/AIF playback and waveform support | Deferred; new uploads blocked | Later, P3; preserve existing stored files |
 | B08 | Microsoft login | Deferred by user | Later; revisit with traction/income |
 | B09 | Physical 11-inch iPad Safari/Chrome coverage | Open. Physical iPad unavailable | L6 additional coverage; existing tablet release accepted |

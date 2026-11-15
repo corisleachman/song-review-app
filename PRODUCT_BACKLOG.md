@@ -395,7 +395,7 @@ Capture and organise only. These requirements don't authorise implementation or 
 ### B06. Application-owner admin: signups and promotional Pro access
 
 - Logged: 2026-08-07; extended 2026-11-01. This extends the existing creator-console requirement rather than creating a second admin project.
-- Status: Feedback triage exists. User directory, owner signup alerts and promotional Pro grants are not verified or implemented by this task. Not complete.
+- Status: Feedback triage exists. A draft owner-only directory introduces paginated signup and created-workspace reads. Search, signup alerts, promotional grants and hosted access checks remain open.
 - Reported need: The application owner wants a private, simple view of who signs up, an initial notification for each new signup, and a button to reward selected beta testers with Pro and notify them.
 - Intended outcome: A small owner-only directory with search, signup date, identifying details and current effective access/plan; a clear Grant Pro access action with visible confirmation and safe failure handling.
 - Implementation inspected: `/admin/feedback`, `app/api/admin/feedback` and its PATCH route use authenticated user lookup plus `isAdminEmail`; `ADMIN_EMAILS` defaults to deny-all but can list multiple administrators. Feedback approval currently records reward eligibility/review metadata, not a Pro entitlement. This isn't proof that a grant flow already exists. `/api/workspace/plan` is a development-only owner test switch that refuses production; don't repurpose it as the promotional grant API.
