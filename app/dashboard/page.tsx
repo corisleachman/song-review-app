@@ -9,6 +9,7 @@ import { SongStatus, SONG_STATUS_VALUES, getSongStatusLabel } from '@/lib/songWo
 import { getIdentity, clearAuth, clearIdentity } from '@/lib/auth';
 import { useDialogFocus } from '@/lib/useDialogFocus';
 import { createClient } from '@/lib/supabase';
+import { clearDashboardScopes, readDashboardScope, writeDashboardScope } from '@/lib/dashboardScopeCache';
 import AppShell from '@/components/AppShell';
 import UpgradeModal from '@/components/UpgradeModal';
 import UpgradeSuccessModal from '@/components/UpgradeSuccessModal';
@@ -121,7 +122,9 @@ interface DashboardPerformanceTrace {
   bypassCache: boolean;
 }
 
-const DASHBOARD_CACHE_TTL_MS = 5 * 60 * 1000;
+// Cached songs are shown instantly and always refreshed in the background,
+// so this only limits how old a list may be when it is first painted.
+const DASHBOARD_CACHE_TTL_MS = 30 * 60 * 1000;
 
 // Next-track preload is held in memory, so cap it. Existing versions over
 // this memory budget continue to stream from the network.
@@ -408,6 +411,7 @@ function DashboardContent() {
         window.localStorage.removeItem(getSongCacheKey(viewerKey, workspaceId));
         window.localStorage.removeItem(getSongSeenStorageKey(viewerKey, workspaceId));
       }
+      clearDashboardScopes();
       clearAuth();
       clearIdentity();
       window.location.assign('/');
@@ -417,17 +421,55 @@ function DashboardContent() {
   useEffect(() => {
     let mounted = true;
 
+    async function restoreCachedDashboard(performanceTrace: DashboardPerformanceTrace | null) {
+      if (typeof window === 'undefined') return;
+      const { data } = await supabase.auth.getSession();
+      const userId = data.session?.user?.id;
+      if (!userId || !mounted) return;
+
+      const scope = readDashboardScope<AccountPlan>(userId);
+      if (!scope) return;
+
+      const cachedSongs = window.localStorage.getItem(getSongCacheKey(userId, scope.workspaceId));
+      if (!cachedSongs) return;
+
+      const cachedPayload = JSON.parse(cachedSongs) as CachedDashboardSongs;
+      const isFresh = cachedPayload?.version === 1
+        && Number.isFinite(cachedPayload.cachedAt)
+        && Date.now() - cachedPayload.cachedAt < DASHBOARD_CACHE_TTL_MS;
+      if (!isFresh || !Array.isArray(cachedPayload.songs) || cachedPayload.songs.length === 0) return;
+      if (!mounted) return;
+
+      setIdentity(scope.identity.authorName || scope.identity.displayName || 'U');
+      setAvatarUrl(scope.identity.avatarUrl ?? null);
+      setWorkspacePlan(scope.plan);
+      setWorkspaceName(scope.identity.workspaceName);
+      setWorkspaceImageUrl(scope.identity.workspaceImageUrl ?? null);
+      setMembershipRole(scope.identity.membershipRole);
+      setSongs(prev => carryResolvedAudioUrls(cachedPayload.songs, [...prev, ...queueRef.current]));
+      setLoading(false);
+      logDashboardVisible(performanceTrace, 'cache');
+    }
+
     async function initializeDashboard() {
       const performanceTrace = createDashboardPerformanceTrace();
 
       try {
         logDashboardPerformance(performanceTrace, 'dashboard-request-start');
-        const response = await fetch('/api/dashboard', {
+        const responsePromise = fetch('/api/dashboard', {
           cache: 'no-store',
           headers: performanceTrace
             ? { 'x-song-room-performance-trace': performanceTrace.id }
             : undefined,
         });
+
+        // While the canonical request is in flight, paint the songs this user
+        // last saw in this workspace. The response below always replaces them.
+        if (!performanceTrace?.bypassCache) {
+          await restoreCachedDashboard(performanceTrace).catch(() => undefined);
+        }
+
+        const response = await responsePromise;
         logDashboardPerformance(performanceTrace, 'dashboard-request-finish', {
           status: response.status,
           serverTiming: response.headers.get('server-timing'),
@@ -437,6 +479,7 @@ function DashboardContent() {
         if (response.ok && payload && Array.isArray(payload.songs)) {
           if (!mounted) return;
 
+          writeDashboardScope(payload);
           setIdentity(payload.identity.authorName || payload.identity.displayName || 'U');
           setAvatarUrl(payload.identity.avatarUrl ?? null);
           setViewerKey(payload.identity.userId);

@@ -68,6 +68,9 @@ async function preparePlayer(page, fallback, renewal = false, requireGesture = f
   for (const version of versions) {
     payloads[`/api/versions/${version.id}`] = { version };
     payloads[`/api/versions/${version.id}/threads`] = { threads: [] };
+    payloads[`/api/songs/song-one/versions/${version.id}`] = {
+      song: payloads['/api/songs/song-one'].song, version, versions,
+    };
   }
   let bootstrapRequests = 0;
   let waveformFailures = 0;

@@ -4,6 +4,7 @@ import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { useDialogFocus } from '@/lib/useDialogFocus';
 import AccountMenu from './AccountMenu';
 import styles from './WorkspaceSwitcher.module.css';
+import { clearDashboardScopes } from '@/lib/dashboardScopeCache';
 
 type WorkspaceRole = 'owner' | 'member';
 type WorkspacePlan = 'free' | 'paid';
@@ -184,6 +185,7 @@ export default function WorkspaceSwitcher({
         );
       }
 
+      clearDashboardScopes();
       window.location.reload();
     } catch (switchError) {
       setError(getErrorMessage(switchError));

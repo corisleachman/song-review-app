@@ -2,8 +2,7 @@ import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
-import { supabaseServer } from '@/lib/supabaseServer';
-import { withVersionDisplayName } from '@/lib/versionDisplay';
+import { listFinalizedVersionsForWorkspace } from '@/lib/versionPageReads';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -23,40 +22,14 @@ export async function GET(req: NextRequest, props: { params: Promise<{ songId: s
       return NextResponse.json({ error: 'You must be signed in to view versions.' }, { status: 401 });
     }
 
-    const { data: song, error: songError } = await supabaseServer
-      .from('songs')
-      .select('id, account_id')
-      .eq('id', songId)
-      .maybeSingle();
+    const result = await listFinalizedVersionsForWorkspace(songId, resolved.identity.workspaceId);
 
-    if (songError) throw songError;
-
-    if (!song) {
-      return NextResponse.json({ error: 'Song not found.' }, { status: 404 });
-    }
-
-    if (!song.account_id || song.account_id !== resolved.identity.workspaceId) {
-      return NextResponse.json({ error: 'You do not have access to this song.' }, { status: 403 });
-    }
-
-    const { data, error } = await supabaseServer
-      .from('song_versions')
-      .select('id, song_id, version_number, label, notes, file_path, file_name, created_by, created_at')
-      .eq('song_id', songId)
-      .not('upload_finalized_at', 'is', null)
-      .order('version_number', { ascending: false });
-
-    if (error) throw error;
-
-    return NextResponse.json(
-      { versions: (data || []).map(withVersionDisplayName) },
-      {
-        status: 200,
-        headers: {
-          'Cache-Control': 'no-store, max-age=0',
-        },
-      }
-    );
+    return NextResponse.json(result.body, {
+      status: result.status,
+      headers: {
+        'Cache-Control': 'no-store, max-age=0',
+      },
+    });
   } catch (error) {
     console.error('Error fetching song versions:', safeErrorDetails(error));
     return NextResponse.json({ error: 'Could not load versions.' }, { status: 500 });

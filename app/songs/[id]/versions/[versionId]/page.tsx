@@ -1474,23 +1474,20 @@ function VersionPageInner() {
     try {
       logVersionInit('load:start', { songId, versionId });
 
-      const [songPayload, versionPayload, versionsPayload] = await Promise.all([
-        fetchJsonWithTimeout<{ song: Song }>(
-          `/api/songs/${songId}`,
-          { cache: 'no-store' },
-          'song'
-        ),
-        fetchJsonWithTimeout<{ version: Version }>(
-          `/api/versions/${versionId}`,
-          { cache: 'no-store' },
-          'version'
-        ),
-        fetchJsonWithTimeout<{ versions: Version[] }>(
-          `/api/songs/${songId}/versions`,
-          { cache: 'no-store' },
-          'versions'
-        ),
-      ]);
+      // Comments, actions and tasks only need the ids in the URL, so start
+      // them alongside the core request instead of after it.
+      const secondaryLoads = Promise.allSettled([loadThreads(), loadActions(), loadTasks()]);
+
+      // One request for the song, selected version and version list, so the
+      // server checks the session once instead of three times.
+      const corePayload = await fetchJsonWithTimeout<{ song: Song; version: Version; versions: Version[] }>(
+        `/api/songs/${songId}/versions/${versionId}`,
+        { cache: 'no-store' },
+        'core'
+      );
+      const songPayload = { song: corePayload?.song };
+      const versionPayload = { version: corePayload?.version };
+      const versionsPayload = { versions: corePayload?.versions };
 
       if (!songPayload?.song) {
         throw new Error('Could not load this song.');
@@ -1550,8 +1547,13 @@ function VersionPageInner() {
         hasAudioUrl: Boolean(versionPayload.version?.file_path),
       });
 
-      // Load threads/actions/tasks in background after page is visible
-      void Promise.all([loadThreads(), loadActions(), loadTasks()]).then(() => {
+      // Threads/actions/tasks were started with the core request above.
+      void secondaryLoads.then(results => {
+        const failed = results.find(result => result.status === 'rejected');
+        if (failed) {
+          console.error('Version page secondary load error:', failed.reason);
+          return;
+        }
         setStatusToast(null);
       });
     } catch (error) {
