@@ -35,9 +35,9 @@ function harness({ user = null, error = null, refresh = false, readOnlyCookies =
 test('canonical current user uses verified Auth ID/email despite editable metadata claims', async () => {
   const h = harness({ user: {
     id: 'verified-user', email: 'ordinary@example.test',
-    user_metadata: { id: 'forged-user', email: 'admin@example.test', role: 'admin', full_name: 'Display name', avatar_url: 'https://example.test/avatar' },
+    user_metadata: { id: 'forged-user', email: 'admin@example.test', role: 'admin', email_confirmed_at: '2026-11-15T00:00:00Z', full_name: 'Display name', avatar_url: 'https://example.test/avatar' },
   } });
-  assert.deepEqual(await h.getUser(), { id: 'verified-user', email: 'ordinary@example.test', displayName: 'Display name', avatarUrl: 'https://example.test/avatar' });
+  assert.deepEqual(await h.getUser(), { id: 'verified-user', email: 'ordinary@example.test', emailConfirmed: false, displayName: 'Display name', avatarUrl: 'https://example.test/avatar' });
   assert.equal(h.verificationCalls, 1);
 });
 
@@ -54,8 +54,10 @@ test('missing verified Auth user stays signed out', async () => {
 
 test('verified identity survives server-component cookie restriction and persists writable refreshes', async () => {
   for (const readOnlyCookies of [false, true]) {
-    const h = harness({ user: { id: 'verified-user', email: 'ordinary@example.test' }, refresh: true, readOnlyCookies });
-    assert.equal((await h.getUser()).id, 'verified-user');
+    const h = harness({ user: { id: 'verified-user', email: 'ordinary@example.test', email_confirmed_at: '2026-11-15T00:00:00Z' }, refresh: true, readOnlyCookies });
+    const identity = await h.getUser();
+    assert.equal(identity.id, 'verified-user');
+    assert.equal(identity.emailConfirmed, true);
     assert.deepEqual(h.writes, readOnlyCookies ? [] : [['test-session', 'test-only', { httpOnly: true }]]);
   }
 });

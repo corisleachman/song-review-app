@@ -4,6 +4,7 @@ import { createServerClient } from '@supabase/ssr';
 export interface AuthenticatedUser {
   id: string;
   email: string | null;
+  emailConfirmed: boolean;
   displayName: string | null;
   avatarUrl: string | null;
 }
@@ -68,6 +69,7 @@ export async function getCurrentAuthenticatedUser(): Promise<AuthenticatedUser |
   return {
     id: data.user.id,
     email: data.user.email ?? null,
+    emailConfirmed: Boolean(data.user.email_confirmed_at),
     displayName: getDisplayNameFromUser(data.user),
     avatarUrl: getAvatarUrlFromUser(data.user),
   };
