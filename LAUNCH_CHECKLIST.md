@@ -118,6 +118,7 @@ Every new request gets a row here with a stable ID, status and stage assignment 
 | B47 | [Workspace switcher focus, scrolling and contrast](PRODUCT_BACKLOG.md#b47-workspace-switcher-focus-scrolling-and-contrast) | Live in Production via PR #128. Desktop and mobile fixtures pass. Signed-out access smoke passes | Existing L6 accessibility under B16 |
 | B48 | [New song upload notifications](PRODUCT_BACKLOG.md#b48-new-song-upload-notifications) | [PR #146](https://github.com/corisleachman/song-review-app/pull/146) is live. Tests and Production smoke checks passed. Inbox delivery pending the next new song | L6 notifications |
 | B49 | [First Play and waveform recovery](PRODUCT_BACKLOG.md#b49-first-play-and-waveform-recovery) | Cycles v1 reported with playback denial and waveform timeout. PR #150 live. First Play, seek, pause and resume passed on user iPhone Pro Max in Chrome and Safari. Original device unverified | L6 playback reliability |
+| B50 | [Mobile public song Share button](PRODUCT_BACKLOG.md#b50-mobile-public-song-share-button) | Fix prepared. Hosted mobile check pending | Later |
 
 Exploratory ideas in ROADMAP.md (typing indicators, pinned comments, comparison view, waveform regions, exports, Slack, native mobile app, multitrack and video) remain unscheduled ideas. They aren't approved launch work. Delete/edit/auth/invite ideas in that old file must be checked against existing features before creating tasks.
 

@@ -5,6 +5,7 @@ import { resumeNativeAudio } from '@/lib/resumeNativeAudio';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
+import { createPortal } from 'react-dom';
 import { ActionStatus, getActionStatusLabel, getActionStatusToast, getNextActionStatus, isOpenAction } from '@/lib/actionWorkflow';
 import { AIFF_UPLOAD_UNAVAILABLE_MESSAGE, AUDIO_UPLOAD_ACCEPT, validateAudioUploadMetadata } from '@/lib/audioUploadPolicy.mjs';
 import { reportUploadDiagnostic, uploadAudioToSignedUrl } from '@/lib/signedAudioUpload.mjs';
@@ -2876,6 +2877,23 @@ function VersionPageInner() {
     });
   }
 
+  const shareButton = (
+    <button
+      type="button"
+      className={`${styles.shareBtn} ${song?.is_public ? styles.shareBtnActive : ''}`}
+      onClick={() => setShowShareModal(true)}
+      title="Share song"
+    >
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+        <circle cx="10.5" cy="2.5" r="1.5" stroke="currentColor" strokeWidth="1.2"/>
+        <circle cx="2.5" cy="6.5" r="1.5" stroke="currentColor" strokeWidth="1.2"/>
+        <circle cx="10.5" cy="10.5" r="1.5" stroke="currentColor" strokeWidth="1.2"/>
+        <path d="M4 5.8l5-2.6M4 7.2l5 2.6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+      </svg>
+      Share
+    </button>
+  );
+
   return (
     <div className={`${styles.page} ${commentsSurfaceOpen && commentsOverlayMode ? styles.pageCommentsOpen : ''}`}>
       <BetaBanner />
@@ -2915,19 +2933,7 @@ function VersionPageInner() {
           <div className={styles.heroNav}>
             <button className={styles.songsBtn} onClick={() => navigateFromReview('/dashboard')}>← Songs</button>
             <div className={styles.heroNavRight}>
-              <button
-                className={`${styles.shareBtn} ${song?.is_public ? styles.shareBtnActive : ''}`}
-                onClick={() => setShowShareModal(true)}
-                title="Share song"
-              >
-                <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                  <circle cx="10.5" cy="2.5" r="1.5" stroke="currentColor" strokeWidth="1.2"/>
-                  <circle cx="2.5" cy="6.5" r="1.5" stroke="currentColor" strokeWidth="1.2"/>
-                  <circle cx="10.5" cy="10.5" r="1.5" stroke="currentColor" strokeWidth="1.2"/>
-                  <path d="M4 5.8l5-2.6M4 7.2l5 2.6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-                </svg>
-                Share
-              </button>
+              {shareButton}
               <div className={styles.avatar} title={identity || 'User'} aria-label={identity || 'User'}>
                 {avatarUrl ? (
                   <img src={avatarUrl} alt="" />
@@ -3242,7 +3248,7 @@ function VersionPageInner() {
         </div>{/* /heroOverlay */}
 
         {/* Share modal */}
-        {showShareModal && (
+        {showShareModal && createPortal(
           <div className={styles.shareModalOverlay} onClick={closeShareDialog}>
             <div
               ref={shareDialogRef}
@@ -3409,7 +3415,8 @@ function VersionPageInner() {
                 )}
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>{/* /hero */}
 
@@ -3904,6 +3911,7 @@ function VersionPageInner() {
           ← Songs
         </button>
         <div className={styles.mobileNavRight}>
+          {shareButton}
           <div style={{ position: 'relative' }}>
             <button
               className={styles.mobileNavIconBtn}
