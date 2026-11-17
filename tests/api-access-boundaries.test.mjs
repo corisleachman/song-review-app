@@ -579,6 +579,53 @@ test('version page still loads when the storage existence check fails or stalls'
     assert.equal(body.version.audioMissing, true);
   });
 });
+test('version page payload carries identity and extras behind one session check', async t => {
+  const tables = {
+    songs: [song, foreignSong],
+    song_versions: [finalizedVersion, { id: 'version-b', song_id: foreignSong.id, version_number: 1, file_path: null, upload_finalized_at: '2026-11-01' }],
+    comment_threads: [{ id: 'thread-a', song_version_id: 'version-a', timestamp_seconds: 3, comments: [] }],
+    actions: [{ id: 'action-a', song_id: 'song-a', comment_id: null, status: 'open' }],
+    song_tasks: [{ id: 'task-a', song_id: 'song-a', sort_order: 0 }],
+    profile_settings: [{ user_id: 'user-member', visualizer_enabled: false }],
+  };
+  const storage = { from() { return { list: async () => ({ data: [{ name: 'audio.mp3' }], error: null }) }; } };
+  await t.test('one identity resolution returns the whole page', async () => {
+    let identityCalls = 0;
+    const h = routeHarness('app/api/songs/[songId]/versions/[versionId]/route.ts', {
+      tables, storage,
+      overrides: { '@/lib/canonicalIdentity': { resolveCanonicalIdentity: async () => { identityCalls++; return session('member'); } } },
+    });
+    const response = await h.handler.GET(getRequest(), params({ songId: song.id, versionId: 'version-a' }));
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(identityCalls, 1);
+    assert.equal(body.identity.workspaceId, 'workspace-a');
+    assert.deepEqual(body.extras.threads.map(thread => thread.id), ['thread-a']);
+    assert.deepEqual(body.extras.actions.map(action => action.id), ['action-a']);
+    assert.deepEqual(body.extras.tasks.map(task => task.id), ['task-a']);
+    assert.deepEqual(body.extras.members, []);
+    assert.equal(body.extras.visualizerEnabled, false);
+  });
+  await t.test('another workspace gets a 403 with no extras', async () => {
+    const h = routeHarness('app/api/songs/[songId]/versions/[versionId]/route.ts', { identity: session('member'), tables, storage });
+    const response = await h.handler.GET(getRequest(), params({ songId: foreignSong.id, versionId: 'version-b' }));
+    assert.equal(response.status, 403);
+    const text = await response.text();
+    assert.doesNotMatch(text, /PRIVATE|extras|thread-a|task-a/);
+  });
+  await t.test('a failed extra is left out instead of failing the page', async () => {
+    const h = routeHarness('app/api/songs/[songId]/versions/[versionId]/route.ts', {
+      identity: session('member'), tables, storage, logger: { ...console, warn() {} },
+      overrides: { '@/lib/workspaceMembers': { listWorkspaceMembers: async () => { throw new Error('members down'); } } },
+    });
+    const response = await h.handler.GET(getRequest(), params({ songId: song.id, versionId: 'version-a' }));
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.song.id, 'song-a');
+    assert.equal(body.extras.members, undefined);
+    assert.deepEqual(body.extras.tasks.map(task => task.id), ['task-a']);
+  });
+});
 test('public song API returns song-scoped media URL, never a permanent Storage URL', async () => {
   const h = routeHarness('app/api/public/song/[songId]/route.ts', {
     tables: { songs: [{ ...song, is_public: true }], song_versions: [finalizedVersion], accounts: [] },

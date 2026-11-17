@@ -12,8 +12,9 @@ function silentWav(seconds = 4) {
   return wav;
 }
 
-async function preparePlayer(page, fallback, renewal = false, requireGesture = false, bootstrapFirstResponse = 200) {
+async function preparePlayer(page, fallback, renewal = false, requireGesture = false, bootstrapFirstResponse = 200, combinedPayload = false) {
   const errors = [];
+  const apiRequests = [];
   const unexpectedRequests = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.context().addCookies([
@@ -70,6 +71,10 @@ async function preparePlayer(page, fallback, renewal = false, requireGesture = f
     payloads[`/api/versions/${version.id}/threads`] = { threads: [] };
     payloads[`/api/songs/song-one/versions/${version.id}`] = {
       song: payloads['/api/songs/song-one'].song, version, versions,
+      ...(combinedPayload ? {
+        identity: payloads['/api/auth/bootstrap'].identity,
+        extras: { threads: [], actions: [], tasks: [], members: [], visualizerEnabled: false },
+      } : {}),
     };
   }
   let bootstrapRequests = 0;
@@ -106,6 +111,7 @@ async function preparePlayer(page, fallback, renewal = false, requireGesture = f
       }
     }
     if (url.pathname.startsWith('/api/')) {
+      apiRequests.push(url.pathname);
       if (!(url.pathname in payloads)) unexpectedRequests.push(url.pathname);
       return route.fulfill({ status: 200, json: payloads[url.pathname] || {} });
     }
@@ -115,7 +121,7 @@ async function preparePlayer(page, fallback, renewal = false, requireGesture = f
   if (bootstrapFirstResponse === 200) {
     await expect(page.getByRole('heading', { name: 'Player fixture', exact: true })).toBeVisible();
   }
-  return { errors, unexpectedRequests, waveformFailures: () => waveformFailures, renewalSources: () => renewedSources.size };
+  return { errors, unexpectedRequests, apiRequests, waveformFailures: () => waveformFailures, renewalSources: () => renewedSources.size };
 }
 
 test('version page lets a signed-in user retry a timed-out session check', async ({ page }) => {
@@ -124,6 +130,13 @@ test('version page lets a signed-in user retry a timed-out session check', async
   await expect(page).toHaveURL(/\/songs\/song-one\/versions\/version-one$/);
   await page.getByRole('button', { name: 'Retry', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Player fixture', exact: true })).toBeVisible();
+});
+
+test('version page loads from one request when the payload carries identity and extras', async ({ page }) => {
+  const { apiRequests, errors } = await preparePlayer(page, false, false, false, 200, true);
+  await expect(page.getByText('Player tester').first()).toBeAttached();
+  expect(apiRequests).toEqual(['/api/songs/song-one/versions/version-one']);
+  expect(errors).toEqual([]);
 });
 
 test('version page sends an unauthenticated user to sign in with a return link', async ({ page }) => {
