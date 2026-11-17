@@ -545,6 +545,40 @@ test('version API returns stable media access URL after workspace and object che
   assert.equal(response.status, 200);
   assert.equal((await response.json()).version.audioUrl, '/api/media/audio/version-a');
 });
+test('version page still loads when the storage existence check fails or stalls', async t => {
+  const quiet = { ...console, warn() {} };
+  const cases = [
+    ['storage returns a 544 gateway timeout', () => ({ list: async () => ({ data: null, error: { name: 'StorageUnknownError', status: 544 } }) })],
+    ['storage call throws', () => ({ list: async () => { throw new Error('fetch failed'); } })],
+    ['storage call hangs until aborted', () => ({ list: (_folder, _options, params) => new Promise((_resolve, reject) => {
+      params.signal.addEventListener('abort', () => reject(params.signal.reason));
+    }) })],
+  ];
+  for (const [name, bucket] of cases) {
+    await t.test(name, async () => {
+      const h = routeHarness('app/api/songs/[songId]/versions/[versionId]/route.ts', {
+        identity: session('member'), tables: { songs: [song], song_versions: [finalizedVersion] },
+        storage: { from: bucket }, logger: quiet,
+      });
+      const response = await h.handler.GET(getRequest(), params({ songId: song.id, versionId: 'version-a' }));
+      assert.equal(response.status, 200);
+      const body = await response.json();
+      assert.equal(body.version.audioUrl, '/api/media/audio/version-a');
+      assert.equal(body.version.audioMissing, false);
+    });
+  }
+  await t.test('a confirmed missing file is still reported as missing', async () => {
+    const h = routeHarness('app/api/songs/[songId]/versions/[versionId]/route.ts', {
+      identity: session('member'), tables: { songs: [song], song_versions: [finalizedVersion] },
+      storage: { from() { return { list: async () => ({ data: [], error: null }) }; } },
+    });
+    const response = await h.handler.GET(getRequest(), params({ songId: song.id, versionId: 'version-a' }));
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.version.audioUrl, null);
+    assert.equal(body.version.audioMissing, true);
+  });
+});
 test('public song API returns song-scoped media URL, never a permanent Storage URL', async () => {
   const h = routeHarness('app/api/public/song/[songId]/route.ts', {
     tables: { songs: [{ ...song, is_public: true }], song_versions: [finalizedVersion], accounts: [] },
