@@ -3,6 +3,7 @@ import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { audioStoragePath, MEDIA_URL_TTL_SECONDS } from '@/lib/mediaDelivery';
 import { RequestTiming } from '@/lib/requestTiming';
+import { publicCorsHeaders } from '@/lib/publicCors.mjs';
 
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'private, no-store, max-age=0', 'Referrer-Policy': 'no-referrer' };
@@ -76,7 +77,9 @@ export async function GET(req: NextRequest, props: { params: Promise<{ versionId
       return NextResponse.json({ error: 'Audio is temporarily unavailable.' }, { status: 503, headers });
     }
     // No cached redirect, no proxying audio bytes through application Functions.
-    return timing.attach(new Response(null, { status: 307, headers: { ...headers, Location: data.signedUrl } }));
+    // Public plays may come from an allowed external site; signed-in plays never get CORS.
+    const cors = songContext !== null || playlistContext !== null ? publicCorsHeaders(req.headers.get('origin')) : {};
+    return timing.attach(new Response(null, { status: 307, headers: { ...headers, ...cors, Location: data.signedUrl } }));
   } catch {
     return NextResponse.json({ error: 'Audio is temporarily unavailable.' }, { status: 503, headers });
   }
