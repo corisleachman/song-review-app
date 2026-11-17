@@ -8,8 +8,10 @@ import { parseAllowedOrigins, publicCorsHeaders } from '../lib/publicCors.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 test('no allow list means no CORS headers at all', () => {
-  assert.deepEqual(publicCorsHeaders('https://politerebels.com', undefined), {});
+  // Pass the list explicitly: an undefined argument falls back to the real
+  // PUBLIC_EMBED_ORIGINS, which is set in Production builds.
   assert.deepEqual(publicCorsHeaders('https://politerebels.com', ''), {});
+  assert.equal(parseAllowedOrigins(undefined).size, 0);
 });
 
 test('an allowed origin is echoed back with Vary: Origin', () => {
