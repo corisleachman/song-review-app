@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { RequestTiming } from '@/lib/requestTiming';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { audioDeliveryUrl } from '@/lib/mediaDelivery';
+import { publicCorsHeaders } from '@/lib/publicCors.mjs';
 
 export const dynamic = 'force-dynamic';
 
@@ -110,7 +111,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
   ) {
     const response = timing.attach(NextResponse.json(body, {
       status,
-      headers: { 'Cache-Control': 'no-store, max-age=0' },
+      headers: { 'Cache-Control': 'no-store, max-age=0', ...publicCorsHeaders(req.headers.get('origin')) },
     }));
     timing.logPreview('/api/public/playlist/[id]', req, status, details);
     return response;
