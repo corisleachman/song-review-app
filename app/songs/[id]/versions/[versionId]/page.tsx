@@ -1552,6 +1552,8 @@ function VersionPageInner() {
       const identityApplied = Boolean(corePayload?.identity?.authorName);
       if (corePayload?.identity?.authorName) {
         applyIdentity(corePayload.identity);
+        // A retry can succeed after an earlier session check failed.
+        setBootstrapError(null);
       }
       if (Array.isArray(extras.threads)) setThreads(extras.threads);
       if (Array.isArray(extras.actions)) setActions(extras.actions);

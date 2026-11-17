@@ -625,6 +625,19 @@ test('version page payload carries identity and extras behind one session check'
     assert.equal(body.extras.members, undefined);
     assert.deepEqual(body.extras.tasks.map(task => task.id), ['task-a']);
   });
+  await t.test('a stalled extra is left out instead of holding back the page', async () => {
+    const h = routeHarness('app/api/songs/[songId]/versions/[versionId]/route.ts', {
+      identity: session('member'), tables, storage,
+      overrides: { '@/lib/workspaceMembers': { listWorkspaceMembers: () => new Promise(() => {}) } },
+    });
+    const started = Date.now();
+    const response = await h.handler.GET(getRequest(), params({ songId: song.id, versionId: 'version-a' }));
+    assert.equal(response.status, 200);
+    assert.ok(Date.now() - started < 5000);
+    const body = await response.json();
+    assert.equal(body.extras.members, undefined);
+    assert.deepEqual(body.extras.threads.map(thread => thread.id), ['thread-a']);
+  });
 });
 test('public song API returns song-scoped media URL, never a permanent Storage URL', async () => {
   const h = routeHarness('app/api/public/song/[songId]/route.ts', {

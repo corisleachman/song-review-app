@@ -31,6 +31,11 @@ export const revalidate = 0;
 // session checks; now it costs one. Each extra is optional: settledBody never
 // throws, so a failed extra is left out and the page fetches it from its own
 // route instead of failing.
+// Once the core reads are done, extras get this much longer. Anything still
+// running is left out (the page fetches it from its own route), so a stalled
+// extra can never hold back the song and player.
+const EXTRAS_GRACE_MS = 1500;
+
 async function settledBody(read: () => Promise<{ status: number; body: Record<string, unknown> }>, key: string) {
   try {
     const result = await read();
@@ -68,13 +73,15 @@ export async function GET(req: NextRequest, props: { params: Promise<{ songId: s
     }
 
     const workspaceId = resolved.identity.workspaceId;
-    const extrasPromise = Promise.all([
+    const extraValues: unknown[] = [];
+    const extraReads = [
       settledBody(() => readThreadsForWorkspace(versionId, workspaceId), 'threads'),
       settledBody(() => readActionsForWorkspace(songId, workspaceId), 'actions'),
       settledBody(() => readTasksForWorkspace(songId, workspaceId), 'tasks'),
       settledBody(async () => ({ status: 200, body: { members: await listWorkspaceMembers(workspaceId) } }), 'members'),
       settledBody(async () => ({ status: 200, body: { visualizerEnabled: await readVisualizerEnabled(resolved.identity.userId) } }), 'visualizerEnabled'),
-    ]);
+    ].map((read, index) => read.then(value => { extraValues[index] = value; }));
+    const extrasPromise = Promise.all(extraReads);
 
     const [songResult, versionResult, versionsResult] = await timing.measure('reads', () => Promise.all([
       readSongForWorkspace(songId, workspaceId),
@@ -89,7 +96,13 @@ export async function GET(req: NextRequest, props: { params: Promise<{ songId: s
       }
     }
 
-    const [threads, actions, tasks, members, visualizerEnabled] = await timing.measure('extras', () => extrasPromise);
+    let graceTimer: ReturnType<typeof setTimeout> | undefined;
+    await timing.measure('extras', () => Promise.race([
+      extrasPromise,
+      new Promise<void>(resolve => { graceTimer = setTimeout(resolve, EXTRAS_GRACE_MS); }),
+    ]));
+    clearTimeout(graceTimer);
+    const [threads, actions, tasks, members, visualizerEnabled] = extraValues;
 
     return respond({
       song: songResult.body.song,
