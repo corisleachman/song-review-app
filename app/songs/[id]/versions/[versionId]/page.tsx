@@ -96,6 +96,20 @@ interface Song {
   public_comments_enabled: boolean;
 }
 
+interface VersionPagePayload {
+  song: Song;
+  version: Version;
+  versions: Version[];
+  identity?: BootstrapPayload['identity'];
+  extras?: {
+    threads?: Thread[];
+    actions?: Action[];
+    tasks?: Task[];
+    members?: WorkspaceMember[];
+    visualizerEnabled?: boolean;
+  };
+}
+
 interface BootstrapPayload {
   identity: {
     userId: string;
@@ -535,13 +549,12 @@ function VersionPageInner() {
   const reactivePlayingRef = useRef(false);
   const [visualizerEnabled, setVisualizerEnabled] = useState(true);
 
-  useEffect(() => {
-    let active = true;
+  // Normally arrives with the version page payload; this is the fallback.
+  const loadVisualizerPreference = useCallback(() => {
     fetch('/api/profile/visualizer', { cache: 'no-store' })
       .then(res => res.json())
-      .then(data => { if (active) setVisualizerEnabled(data?.visualizer_enabled !== false); })
+      .then(data => setVisualizerEnabled(data?.visualizer_enabled !== false))
       .catch(() => {});
-    return () => { active = false; };
   }, []);
   const startReactiveDrawingRef = useRef<(() => void) | null>(null);
 
@@ -1231,11 +1244,7 @@ function VersionPageInner() {
         if (!mounted) return;
 
         if (payload?.identity?.authorName) {
-          setIdentity(payload.identity.authorName);
-          setAvatarUrl(payload.identity.avatarUrl ?? null);
-          setCurrentUserId(payload.identity.userId);
-          setWorkspaceNameForNav(payload.identity.workspaceName ?? '');
-          setMembershipRoleForNav(payload.identity.membershipRole ?? null);
+          applyIdentity(payload.identity);
           logVersionInit('bootstrap:resolved', {
             authorName: payload.identity.authorName,
             userId: payload.identity.userId,
@@ -1285,8 +1294,11 @@ function VersionPageInner() {
     }
 
     logVersionInit('page:init-start', { songId, versionId, initialLoadNonce });
-    void resolveIdentity();
-    void load();
+    // The version page payload carries the identity, so the separate session
+    // check only runs when it did not (an error, or an older response).
+    void load().then(identityApplied => {
+      if (mounted && !identityApplied) void resolveIdentity();
+    });
 
     return () => {
       mounted = false;
@@ -1467,20 +1479,17 @@ function VersionPageInner() {
     }, 700);
   }, []);
 
-  async function load() {
+  async function load(): Promise<boolean> {
     setLoading(true);
     setInitError(null);
     let loadErrorMessage: string | null = null;
     try {
       logVersionInit('load:start', { songId, versionId });
 
-      // Comments, actions and tasks only need the ids in the URL, so start
-      // them alongside the core request instead of after it.
-      const secondaryLoads = Promise.allSettled([loadThreads(), loadActions(), loadTasks()]);
-
-      // One request for the song, selected version and version list, so the
-      // server checks the session once instead of three times.
-      const corePayload = await fetchJsonWithTimeout<{ song: Song; version: Version; versions: Version[] }>(
+      // One request for the song, version, version list, identity, comments,
+      // actions, tasks, members and visualizer preference, so the server
+      // checks the session once instead of about seven times.
+      const corePayload = await fetchJsonWithTimeout<VersionPagePayload>(
         `/api/songs/${songId}/versions/${versionId}`,
         { cache: 'no-store' },
         'core'
@@ -1539,6 +1548,31 @@ function VersionPageInner() {
         showStatusToast('This version is missing an audio file path.');
       }
 
+      const extras = corePayload?.extras ?? {};
+      const identityApplied = Boolean(corePayload?.identity?.authorName);
+      if (corePayload?.identity?.authorName) {
+        applyIdentity(corePayload.identity);
+        // A retry can succeed after an earlier session check failed.
+        setBootstrapError(null);
+      }
+      if (Array.isArray(extras.threads)) setThreads(extras.threads);
+      if (Array.isArray(extras.actions)) setActions(extras.actions);
+      if (Array.isArray(extras.tasks)) setTasks(extras.tasks);
+      if (Array.isArray(extras.members)) setWorkspaceMembers(extras.members);
+      if (typeof extras.visualizerEnabled === 'boolean') {
+        setVisualizerEnabled(extras.visualizerEnabled);
+      } else {
+        loadVisualizerPreference();
+      }
+
+      // Anything the payload could not include is fetched from its own route.
+      const secondaryLoads = Promise.allSettled([
+        Array.isArray(extras.threads) ? Promise.resolve() : loadThreads(),
+        Array.isArray(extras.actions) ? Promise.resolve() : loadActions(),
+        Array.isArray(extras.tasks) ? Promise.resolve() : loadTasks(),
+        Array.isArray(extras.members) || !identityApplied ? Promise.resolve() : loadWorkspaceMembers(),
+      ]);
+
       // Clear loading as soon as core data is ready — page is now visible
       setLoading(false);
       logVersionInit('load:success', {
@@ -1556,6 +1590,7 @@ function VersionPageInner() {
         }
         setStatusToast(null);
       });
+      return identityApplied;
     } catch (error) {
       console.error('Version page load error:', error);
       const message = error instanceof Error ? error.message : 'Could not load this version.';
@@ -1569,7 +1604,16 @@ function VersionPageInner() {
         loadingCleared: true,
         hasInitError: Boolean(loadErrorMessage),
       });
+      return false;
     }
+  }
+
+  function applyIdentity(nextIdentity: BootstrapPayload['identity']) {
+    setIdentity(nextIdentity.authorName);
+    setAvatarUrl(nextIdentity.avatarUrl ?? null);
+    setCurrentUserId(nextIdentity.userId);
+    setWorkspaceNameForNav(nextIdentity.workspaceName ?? '');
+    setMembershipRoleForNav(nextIdentity.membershipRole ?? null);
   }
 
   async function loadThreads() {

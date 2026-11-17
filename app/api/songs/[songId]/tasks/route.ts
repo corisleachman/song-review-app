@@ -2,7 +2,7 @@ import { safeErrorDetails } from '@/lib/safeErrorDetails';
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import { resolveCanonicalIdentity } from '@/lib/canonicalIdentity';
-import { supabaseServer } from '@/lib/supabaseServer';
+import { readTasksForWorkspace } from '@/lib/versionPageExtras';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -22,37 +22,14 @@ export async function GET(req: NextRequest, props: { params: Promise<{ songId: s
       return NextResponse.json({ error: 'You must be signed in to view tasks.' }, { status: 401 });
     }
 
-    const { data: song, error: songError } = await supabaseServer
-      .from('songs')
-      .select('id, account_id')
-      .eq('id', songId)
-      .maybeSingle();
-
-    if (songError) throw songError;
-
-    if (!song) {
-      return NextResponse.json({ error: 'Song not found.' }, { status: 404 });
-    }
-
-    if (!song.account_id || song.account_id !== resolved.identity.workspaceId) {
-      return NextResponse.json({ error: 'You do not have access to this song.' }, { status: 403 });
-    }
-
-    const { data, error } = await supabaseServer
-      .from('song_tasks')
-      .select('*')
-      .eq('song_id', songId)
-      .order('sort_order', { ascending: true });
-
-    if (error) throw error;
-
+    const result = await readTasksForWorkspace(songId, resolved.identity.workspaceId);
     return NextResponse.json(
-      { tasks: data || [] },
+      result.body,
       {
-        status: 200,
-        headers: {
+        status: result.status,
+        headers: result.status === 200 ? {
           'Cache-Control': 'no-store, max-age=0',
-        },
+        } : undefined,
       }
     );
   } catch (error) {
