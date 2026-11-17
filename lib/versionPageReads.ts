@@ -48,20 +48,63 @@ function splitStoragePath(path: string) {
   };
 }
 
-async function storageObjectExists(path: string) {
+const STORAGE_CHECK_TIMEOUT_MS = 3000;
+
+/**
+ * Checks that the audio object exists. Returns null when storage could not
+ * answer (an error, a 544 gateway timeout or our own time limit), so a slow
+ * storage API cannot fail the whole version page. The audio route still
+ * checks the file when the player asks for it.
+ */
+async function storageObjectExists(
+  path: string,
+  timeoutMs = STORAGE_CHECK_TIMEOUT_MS,
+): Promise<boolean | null> {
   const { folder, fileName } = splitStoragePath(path);
 
   if (!folder || !fileName) {
     return false;
   }
 
-  const { data, error } = await supabaseServer.storage
-    .from('song-files')
-    .list(folder, { limit: 100, search: fileName });
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timedOut = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => {
+      const reason = new Error(`Storage check timed out after ${timeoutMs}ms`);
+      reason.name = 'TimeoutError';
+      controller.abort(reason);
+      reject(reason);
+    }, timeoutMs);
+  });
 
-  if (error) throw error;
+  try {
+    const { data, error } = await Promise.race([
+      supabaseServer.storage
+        .from('song-files')
+        .list(folder, { limit: 100, search: fileName }, { signal: controller.signal }),
+      timedOut,
+    ]);
 
-  return (data ?? []).some(item => item.name === fileName);
+    if (error) {
+      console.warn('Audio existence check failed; assuming present:', safeStorageError(error));
+      return null;
+    }
+
+    return (data ?? []).some(item => item.name === fileName);
+  } catch (error) {
+    console.warn('Audio existence check failed; assuming present:', safeStorageError(error));
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function safeStorageError(error: unknown) {
+  if (error && typeof error === 'object') {
+    const record = error as { name?: unknown; status?: unknown; statusCode?: unknown };
+    return { name: record.name ?? 'Error', status: record.status ?? record.statusCode ?? null };
+  }
+  return { name: 'Error', status: null };
 }
 
 export async function readSongForWorkspace(songId: string, workspaceId: string): Promise<ReadResult> {
@@ -109,7 +152,7 @@ export async function readVersionForWorkspace(versionId: string, workspaceId: st
     const normalizedFilePath = normalizeStoragePath(version.file_path);
     const hasAudioObject = await storageObjectExists(normalizedFilePath);
 
-    if (hasAudioObject) {
+    if (hasAudioObject !== false) {
       audioUrl = audioDeliveryUrl(version.id);
     } else {
       audioMissing = true;
